@@ -29,9 +29,10 @@ page =
 
 view : Html Msg
 view =
-    div
-        [ class "columns" ]
-        [ div [ class "column" ] [ text "1" ]
-        , div [ class "column" ] [ text "2" ]
-        , text "SkuStatic"
+    div [ class "container is-fluid" ]
+        [ div [ class "columns" ]
+            [ div [ class "column" ] [ text "1" ]
+            , div [ class "column" ] [ text "2" ]
+            ]
+        , div [] [ text "SkuStatic" ]
         ]

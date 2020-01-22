@@ -7,14 +7,19 @@
     <title>our-elm-spa</title>
     <link rel="stylesheet" href="my.css">
   </head>
-  <body>
+
+  <!--don't work yet-->
+  <body class="has-navbar-fixed-top">
+
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
     <script src="/dist/elm.compiled.js"></script>
     <script src="/ports.js"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
     <script>
       window.addEventListener('load', _ =>
         window.ports.init(Elm.Main.init())
       )
     </script>
   </body>
+
 </html>
