@@ -12,3 +12,11 @@ log message =
         { action = "LOG"
         , data = Json.string message
         }
+
+
+alert : String -> Cmd msg
+alert message =
+    outgoing
+        { action = "ALERT"
+        , data = Json.string message
+        }

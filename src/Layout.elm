@@ -10,7 +10,7 @@ view : Spa.LayoutContext msg -> Html msg
 view { page, route } =
     div [ class "app" ]
         [ viewHeader route
-        , page
+        , div [ class "section" ] [ page ]
         ]
 
 
@@ -24,11 +24,22 @@ view { page, route } =
 viewHeader : Route -> Html msg
 viewHeader currentRoute =
     header [ class "hero is-light" ]
-        [ nav [ class "navbar has-shadow", attribute "role" "navigation", attribute "aria-label" "main navigation" ]
+        [ nav
+            [ class "navbar has-shadow"
+            , attribute "role" "navigation"
+            , attribute "aria-label" "main navigation"
+            ]
             [ div [ class "container is-fluid" ]
                 [ div [ class "navbar-brand" ]
-                    [ a [ class "navbar-item" ] [ img [ alt "Fractal", attribute "height" "28", src "https://bulma.io/images/bulma-logo.png", attribute "width" "112" ] [] ]
-                    , a [ attribute "aria-expanded" "false", attribute "aria-label" "menu", class "navbar-burger burger", attribute "data-target" "navMenu", attribute "role" "button" ]
+                    [ a [ class "navbar-item", href "/" ]
+                        [ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
+                    , div
+                        [ class "navbar-burger burger"
+                        , attribute "data-target" "navMenu"
+                        , attribute "aria-expanded" "false"
+                        , attribute "aria-label" "menu"
+                        , attribute "role" "button"
+                        ]
                         [ span [ attribute "aria-hidden" "true" ] []
                         , span [ attribute "aria-hidden" "true" ] []
                         , span [ attribute "aria-hidden" "true" ] []

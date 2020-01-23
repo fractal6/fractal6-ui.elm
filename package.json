@@ -12,7 +12,7 @@
     "elm:live": "elm-live src/Main.elm --dir=public --start-page=index.html --open --pushstate --port=1234 -- --output=public/dist/elm.compiled.js --debug",
     "elm:spa:build": "elm-spa build .",
     "elm:spa:watch": "chokidar src/Pages -c \"npm run elm:spa:build\"",
-    "css-build": "node-sass --omit-source-map-url static/sass/my.scss public/my.css",
+    "css-build": "node-sass --omit-source-map-url assets/sass/my.scss public/my.css",
     "grapql-build": "./node_modules/.bin/elm-graphql https://localhost:3000 --base Fractal6 --output ./src --header 'headerKey: header value'"
   },
   "keywords": [],

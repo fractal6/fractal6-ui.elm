@@ -29,7 +29,7 @@ page =
 
 view : Html Msg
 view =
-    div [ class "container is-fluid" ]
+    div []
         [ div [ class "columns" ]
             [ div [ class "column" ] [ text "1" ]
             , div [ class "column" ] [ text "2" ]
