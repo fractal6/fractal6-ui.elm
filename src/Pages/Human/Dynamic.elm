@@ -1,14 +1,16 @@
 module Pages.Human.Dynamic exposing (Model, Msg, page)
 
 import Generated.Human.Params as Params
+import Global
 import Html exposing (..)
+import Ports
 import Spa.Page
 import Utils.Spa exposing (Page)
 
 
 page : Page Params.Dynamic Model Msg model msg appMsg
 page =
-    Spa.Page.element
+    Spa.Page.component
         { title = \{ model } -> String.join " | " [ model.asked_user ]
         , init = always init
         , update = always update
@@ -25,10 +27,11 @@ type alias Model =
     { asked_user : String }
 
 
-init : Params.Dynamic -> ( Model, Cmd Msg )
+init : Params.Dynamic -> ( Model, Cmd Msg, Cmd Global.Msg )
 init params =
     ( { asked_user = params.param1 }
     , Cmd.none
+    , Ports.bulma_driver
     )
 
 
@@ -40,9 +43,10 @@ type Msg
     = Msg
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update msg model =
     ( model
+    , Cmd.none
     , Cmd.none
     )
 

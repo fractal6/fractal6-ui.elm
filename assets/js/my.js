@@ -1,9 +1,9 @@
 
-document.addEventListener('DOMContentLoaded', () => {
+//document.addEventListener('DOMContentLoaded', () => {
+export function BulmaDriver() {
 
   // Get all "navbar-burger" elements
   const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
-  console.log($navbarBurgers.length)
 
   // Check if there are any navbar burgers
   if ($navbarBurgers.length > 0) {
@@ -24,5 +24,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-});
+}
 

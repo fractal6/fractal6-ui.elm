@@ -1,4 +1,4 @@
-port module Ports exposing (log)
+port module Ports exposing (bulma_driver, log)
 
 import Json.Encode as Json
 
@@ -14,9 +14,9 @@ log message =
         }
 
 
-alert : String -> Cmd msg
-alert message =
+bulma_driver : Cmd msg
+bulma_driver =
     outgoing
-        { action = "ALERT"
-        , data = Json.string message
+        { action = "BULMA"
+        , data = Json.string ""
         }
