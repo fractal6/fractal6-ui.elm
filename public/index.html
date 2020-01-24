@@ -5,22 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>our-elm-spa</title>
-    <link rel="stylesheet" href="/my.css">
-  </head>
+    <link rel="stylesheet" type="text/css" media="all" href="/my.css" id="cssTheme">
+<!--		<link rel="stylesheet" href="https://unpkg.com/bulmaswatch/darkly/bulmaswatch.min.css">-->
+	</head>
+
 
   <!--don't work yet-->
   <body class="has-navbar-fixed-top">
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <script src="/my.js"></script>
     <script src="/dist/elm.compiled.js"></script>
-    <script src="/ports.js"></script>
-    <script defer src="/my.js"></script>
+    <script src="/ports.js" ></script>
 
     <script>
       window.addEventListener('load', _ =>
         window.ports.init(Elm.Main.init())
       )
     </script>
-  </body>
 
+    <button onclick="switchTheme()">Switch Theme</button>
+
+<script>
+function switchTheme() {
+  var check = document
+  .getElementById('cssTheme')
+  .classList[0] === 'light';
+
+  var element = document.getElementById('cssTheme');
+
+
+  if (check) {
+   element.href = '/dark.css';
+   element.classList.remove('light')
+   element.classList.add('dark');
+  } else {
+   element.href = '/my.css';
+   element.classList.remove('dark')
+   element.classList.add('light');
+  }
+
+}
+</script>
+
+  </body>
 </html>

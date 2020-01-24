@@ -8,9 +8,10 @@ import Utils.Spa as Spa
 
 view : Spa.LayoutContext msg -> Html msg
 view { page, route } =
-    div [ class "app" ]
+    div [ id "app" ]
         [ viewHeader route
-        , div [ class "section" ] [ page ]
+        , div [ id "notifAlert" ] []
+        , div [ id "body", class "section" ] [ page ]
         ]
 
 

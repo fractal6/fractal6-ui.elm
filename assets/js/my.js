@@ -1,6 +1,7 @@
+//export default BulmaDriver;
 
 //document.addEventListener('DOMContentLoaded', () => {
-export function BulmaDriver() {
+function BulmaDriver() {
 
   // Get all "navbar-burger" elements
   const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
@@ -24,5 +25,5 @@ export function BulmaDriver() {
     });
   }
 
-}
+};
 
