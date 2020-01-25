@@ -53,7 +53,13 @@ viewHeader currentRoute =
                         , viewLink currentRoute ( "sdkustat", routes.skuStatic )
                         ]
                     , div [ class "navbar-end" ]
-                        [ a [ class "navbar-item" ] [ text "Report an issue" ]
+                        [ a [ class "navbar-item" ]
+                            [ button [ class "button is-warning is-small" ]
+                                [ div [ class "content is-medium" ]
+                                    [ text "Report an issue"
+                                    ]
+                                ]
+                            ]
                         , div [ class "navbar-item has-dropdown is-hoverable" ]
                             [ div [ class "navbar-link" ] [ text "SkuID" ]
                             , div [ class "navbar-dropdown is-right" ]
