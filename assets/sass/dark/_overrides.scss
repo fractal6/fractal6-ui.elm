@@ -105,18 +105,10 @@ a {
   box-shadow: none;
   border: $border-width solid $card-border-color;
   background-color: $grey-darker;
-  border-radius: $radius;
-
-  .card-image {
-    img {
-      border-radius: $radius $radius 0 0;
-    }
-  }
 
   .card-header {
     box-shadow: none;
     background-color: rgba($black-bis, 0.2);
-    border-radius: $radius $radius 0 0;
   }
 
   .card-footer {
@@ -144,9 +136,6 @@ a {
   }
 }
 
-.tag {
-  border-radius: $radius;
-}
 
 .menu-list {
   a {
@@ -175,7 +164,6 @@ a {
 }
 
 .navbar {
-  border-radius: $radius;
 
   &.is-transparent {
     background: none;
@@ -192,15 +180,10 @@ a {
   @include touch {
     .navbar-menu {
       background-color: $navbar-background-color;
-      border-radius: 0 0 $radius $radius;
     }
   }
 }
 
-.hero .navbar,
-body > .navbar {
-  border-radius: 0;
-}
 
 .pagination-link,
 .pagination-next,
