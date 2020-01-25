@@ -181,9 +181,22 @@ a {
     }
   }
 
-  @include touch {
-    .navbar-menu {
-      background-color: $navbar-background-color;
+  &.is-black {
+
+    .navbar-item:hover {
+        background-color: $navbar-item-hover-background-color !important;
+    }
+
+    .navbar-dropdown {
+      .navbar-item:hover {
+          background-color: $navbar-dropdown-item-hover-background-color !important;
+      }
+    }
+
+    @include touch {
+      .navbar-menu {
+        background-color: $navbar-background-color;
+      }
     }
   }
 }
@@ -278,7 +291,7 @@ a {
       .navbar {
         .navbar-dropdown {
           .navbar-item:hover {
-            background-color: $navbar-dropdown-item-hover-background-color;
+            background-color: transparent;
           }
         }
       }

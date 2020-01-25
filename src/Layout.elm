@@ -24,9 +24,9 @@ view { page, route } =
 
 viewHeader : Route -> Html msg
 viewHeader currentRoute =
-    header [ class "hero is-dark" ]
+    header [ class "" ]
         [ nav
-            [ class "navbar has-shadow is-fixed-top"
+            [ class "navbar has-shadow is-fixed-top is-black"
             , attribute "role" "navigation"
             , attribute "aria-label" "main navigation"
             ]
