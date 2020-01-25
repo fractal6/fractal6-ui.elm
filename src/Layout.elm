@@ -24,9 +24,9 @@ view { page, route } =
 
 viewHeader : Route -> Html msg
 viewHeader currentRoute =
-    header [ class "hero is-light" ]
+    header [ class "hero is-dark" ]
         [ nav
-            [ class "navbar has-shadow"
+            [ class "navbar has-shadow is-fixed-top"
             , attribute "role" "navigation"
             , attribute "aria-label" "main navigation"
             ]
@@ -59,6 +59,8 @@ viewHeader currentRoute =
                             , div [ class "navbar-dropdown" ]
                                 [ a [ class "navbar-item" ] [ text "Profile" ]
                                 , a [ class "navbar-item" ] [ text "Settings" ]
+                                , hr [ class "navbar-divider" ] []
+                                , a [ id "themeButton_port", class "navbar-item", href "#" ] [ text "Toggle dark theme" ]
                                 , hr [ class "navbar-divider" ] []
                                 , a [ class "navbar-item" ] [ text "Sign Out" ]
                                 ]

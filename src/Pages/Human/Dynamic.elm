@@ -4,7 +4,6 @@ import Generated.Human.Params as Params
 import Global
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Ports
 import Spa.Page
 import Utils.Spa exposing (Page)
 
@@ -32,7 +31,7 @@ init : Params.Dynamic -> ( Model, Cmd Msg, Cmd Global.Msg )
 init params =
     ( { asked_user = params.param1 }
     , Cmd.none
-    , Ports.bulma_driver
+    , Cmd.none
     )
 
 

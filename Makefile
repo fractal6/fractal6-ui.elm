@@ -3,7 +3,7 @@ default: build_root
 build_root:
 	# weblit !
 	@cp -v assets/js/* public/
-	npm run css-build
+	npm run css_build
 
 setup-css:
 	npm install node-sass --save-dev

@@ -5,14 +5,15 @@
   "scripts": {
     "start": "npm install && npm run dev",
     "dev": "npm run elm:spa:build && npm run build:watch",
-    "build": "npm run css-build  -- --watch && npm run build-elm",
+    "build": "npm run extra_build  && npm run build-elm",
     "build-elm": "npm run elm:spa:build && npm run elm:compile",
-    "build:watch": "concurrently --raw --kill-others \"npm run elm:spa:watch\" \"npm run elm:live\"",
+    "build:watch": "concurrently --raw --kill-others \"npm run elm:spa:watch\" \"npm run elm:live\" \"npm run extra_build\"",
     "elm:compile": "elm make src/Main.elm --output=public/dist/elm.compiled.js --optimize",
     "elm:live": "elm-live src/Main.elm --dir=public --start-page=index.html --open --pushstate --port=1234 -- --output=public/dist/elm.compiled.js --debug",
     "elm:spa:build": "elm-spa build .",
     "elm:spa:watch": "chokidar src/Pages -c \"npm run elm:spa:build\"",
-    "css-build": "node-sass --omit-source-map-url assets/sass/my.scss public/my.css",
+    "extra_build": "chokidar assets/sass/** -c \"npm run css_build\"",
+    "css_build": "for k in light dark; do node-sass --omit-source-map-url assets/sass/$k.scss public/$k.css; done",
     "grapql-build": "./node_modules/.bin/elm-graphql https://localhost:3000 --base Fractal6 --output ./src --header 'headerKey: header value'"
   },
   "keywords": [],

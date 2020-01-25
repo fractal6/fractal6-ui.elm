@@ -20,4 +20,9 @@ const actions = {
     console.log(`Activate Bulma driver:`);
     BulmaDriver();
   },
+  'TOGGLE_TH': (message) => {
+    document.getElementById("themeButton_port").addEventListener("click", function(){
+      toggleTheme();
+    });
+  },
 }

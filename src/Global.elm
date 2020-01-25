@@ -32,7 +32,11 @@ init : Commands msg -> Flags -> ( Model, Cmd Msg, Cmd msg )
 init _ _ =
     ( {}
     , Cmd.none
-    , Ports.log "Hello!"
+    , Cmd.batch
+        [ Ports.log "Hello!"
+        , Ports.bulma_driver
+        , Ports.toggle_theme
+        ]
     )
 
 
