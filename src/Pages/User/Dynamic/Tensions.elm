@@ -1,15 +1,15 @@
-module Pages.Human.Dynamic.Tensions exposing (Model, Msg, page)
+module Pages.User.Dynamic.Tensions exposing (Model, Msg, page)
 
-import Spa.Page
+import Generated.User.Dynamic.Params as Params
 import Html exposing (..)
-import Generated.Human.Dynamic.Params as Params
+import Spa.Page
 import Utils.Spa exposing (Page)
 
 
 page : Page Params.Tensions Model Msg model msg appMsg
 page =
     Spa.Page.element
-        { title = always "Human.Dynamic.Tensions"
+        { title = always "User.Dynamic.Tensions"
         , init = always init
         , update = always update
         , subscriptions = always subscriptions
@@ -48,7 +48,6 @@ update msg model =
 
 
 
-
 -- SUBSCRIPTIONS
 
 
@@ -63,4 +62,4 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    text "Human.Dynamic.Tensions"
+    text "User.Dynamic.Tensions"

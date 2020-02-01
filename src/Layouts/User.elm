@@ -1,11 +1,11 @@
-module Layouts.Human exposing (view)
+module Layouts.User exposing (view)
 
 import Debug
 import Generated.Routes as Routes exposing (Route, routes)
 import Global
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Pages.Human.Dynamic exposing (Model)
+import Pages.User.Dynamic exposing (Model)
 import Utils.Spa as Spa
 
 

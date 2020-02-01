@@ -1,6 +1,6 @@
-module Pages.Human.Dynamic exposing (Model, Msg, page)
+module Pages.User.Dynamic exposing (Model, Msg, page)
 
-import Generated.Human.Params as Params
+import Generated.User.Params as Params
 import Global
 import Html exposing (..)
 import Html.Attributes exposing (..)

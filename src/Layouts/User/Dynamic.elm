@@ -1,4 +1,4 @@
-module Layouts.Human.Dynamic exposing (view)
+module Layouts.User.Dynamic exposing (view)
 
 import Html exposing (..)
 import Utils.Spa as Spa
