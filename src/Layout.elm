@@ -18,7 +18,7 @@ view { page, route } =
 
 {-
    # Issues
-   * FIX-NAV:  class "is-fixed-top in bavbar dont work yet. class on body ?
+   * FIX-NAV: class "is-fixed-top" in bavbar dont work yet. class on body ?
 -}
 
 
