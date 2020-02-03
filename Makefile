@@ -2,7 +2,7 @@ default: build_root
 
 build_root:
 	# weblit !
-	@cp -v assets/js/* public/
+	@cp -v assets/js/*.js public/
 	npm run css_build
 
 setup-css:

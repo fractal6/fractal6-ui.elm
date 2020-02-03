@@ -1,0 +1,62 @@
+{
+  "name": "ROOT",
+  "type": "circle",
+  "children": [
+    {
+      "name": "SKU",
+      "type": "circle",
+      "children": [
+        {
+          "name": "Guide",
+          "type": "role",
+          "ID": 1,
+          "size": 20
+        },
+        {
+          "name": "Guardian",
+          "type": "role",
+          "ID": 2,
+          "size": 25
+        },
+        {
+          "name": "Tech",
+          "type": "circle",
+          "ID": 2,
+          "size": 25
+        },
+        {
+          "name": "Tech",
+          "type": "circle",
+          "ID": 2,
+          "size": 25,
+          "children": [
+            {
+              "name": "Coordo",
+              "type": "role",
+              "ID": 2,
+              "size": 20
+            }
+          ]
+        },
+        {
+          "name": "Communication",
+          "type": "circle",
+          "ID": 2,
+          "size": 25,
+          "children": [
+            {
+              "name": "Coordo",
+              "type": "role",
+              "ID": 2
+            },
+            {
+              "name": "Budget Holder",
+              "type": "role",
+              "ID": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

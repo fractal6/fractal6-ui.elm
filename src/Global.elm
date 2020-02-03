@@ -2,6 +2,7 @@ module Global exposing
     ( Flags
     , Model
     , Msg(..)
+    , NID
     , User(..)
     , UserFocus
     , init
@@ -23,6 +24,7 @@ type alias NID =
 
 type alias UserInfo =
     { username : String
+    , display_name : String
     , nid : String
     }
 
@@ -80,7 +82,10 @@ init _ _ =
             }
 
         user_info_init =
-            { username = "iam Sku", nid = "xzdz54" }
+            { username = "iam Sku"
+            , display_name = "haaouaa"
+            , nid = "xzdz54"
+            }
 
         init_user =
             { user = LoggedIn user_state_init user_info_init }

@@ -1,4 +1,9 @@
-port module Ports exposing (bulma_driver, log, toggle_theme)
+port module Ports exposing
+    ( bulma_driver
+    , init_circlePacking
+    , log
+    , toggle_theme
+    )
 
 import Json.Encode as Json
 
@@ -27,4 +32,12 @@ toggle_theme =
     outgoing
         { action = "TOGGLE_TH"
         , data = Json.string ""
+        }
+
+
+init_circlePacking : String -> Cmd msg
+init_circlePacking data =
+    outgoing
+        { action = "INIT_CIRCLEPACKING"
+        , data = Json.string data
         }

@@ -1,4 +1,4 @@
-module Layouts.User exposing (view)
+module Layouts.Org exposing (view)
 
 import Generated.Routes as Routes exposing (Route, routes)
 import Global

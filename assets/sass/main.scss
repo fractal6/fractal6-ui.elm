@@ -26,6 +26,22 @@ html, body {
   margin-bottom: 50px;
 }
 
+
+/* 
+ *
+ * Graph Style
+ * 
+ */
+
+.drawCircle {
+    width: 120px;
+    line-height: 120px;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 32px;
+    border: 2px solid #666;
+}
+
 /* 
  *
  * Ugly focus management

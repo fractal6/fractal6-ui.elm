@@ -2,27 +2,33 @@
 
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
-  window.ports = {
-    init: (app) =>
-      app.ports.outgoing.subscribe(({ action, data }) =>
-        actions[action]
-          ? actions[action](data)
-          : console.warn(`I didn't recognize action "${action}".`)
-      )
-  }
+    window.ports = {
+        init: (app) =>
+        app.ports.outgoing.subscribe(({ action, data }) =>
+            actions[action]
+            ? actions[action](data)
+            : console.warn(`I didn't recognize action "${action}".`)
+        )
+    }
 })
 
 // maps actions to functions!
 const actions = {
-  'LOG': (message) =>
+    'LOG': (message) =>
     console.log(`From Elm:`, message),
-  'BULMA': (message) => {
-    console.log(`Activate Bulma driver:`);
-    BulmaDriver();
-  },
-  'TOGGLE_TH': (message) => {
-    document.getElementById("themeButton_port").addEventListener("click", function(){
-      toggleTheme();
-    });
-  },
+    'BULMA': (message) => {
+        console.log(`Activate Bulma driver...`);
+        BulmaDriver();
+    },
+    'TOGGLE_TH': (message) => {
+        document.getElementById("themeButton_port").addEventListener("click", function(){
+            toggleTheme();
+        });
+    },
+    'INIT_CIRCLEPACKING': (message) => {
+        var data = JSON.parse(message);
+        //window.addEventListener('DOMContentReady',function(){
+            drawAll(data);
+        //});
+    },
 }
