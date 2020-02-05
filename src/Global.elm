@@ -10,6 +10,7 @@ module Global exposing
     , update
     )
 
+import Debug
 import Generated.Routes as Routes exposing (Route)
 import Ports
 
@@ -50,7 +51,7 @@ type alias Model =
 
 
 type Msg
-    = Msg
+    = UpdateFocus String
 
 
 
@@ -101,8 +102,10 @@ init _ _ =
 
 
 update : Commands msg -> Msg -> Model -> ( Model, Cmd Msg, Cmd msg )
-update _ _ model =
+update a b model =
     ( model
+      --Debug.log "a" a
+      --Debug.log "b" b
     , Cmd.none
     , Cmd.none
     )

@@ -55,5 +55,6 @@ function toggleTheme() {
         element.classList.remove('light_theme')
         element.classList.add('dark_theme');
     }
+
 }
 

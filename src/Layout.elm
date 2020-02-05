@@ -33,7 +33,8 @@ viewHeader currentRoute =
             [ div [ class "container is-fluid" ]
                 [ div [ class "navbar-brand" ]
                     [ a [ class "navbar-item", href "/" ]
-                        [ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
+                        --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
+                        [ div [ attribute "height" "28", attribute "width" "112" ] [ text "Fractal6" ] ]
                     , div
                         [ class "navbar-burger burger"
                         , attribute "data-target" "navMenu"

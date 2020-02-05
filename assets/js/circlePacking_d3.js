@@ -1,33 +1,46 @@
 
-function setpixelated(context, v){
-    context['imageSmoothingEnabled'] = v;       /* standard */
-    context['mozImageSmoothingEnabled'] = v;    /* Firefox */
-    context['oImageSmoothingEnabled'] = v;      /* Opera */
-    context['webkitImageSmoothingEnabled'] = v; /* Safari */
-    context['msImageSmoothingEnabled'] = v;     /* IE */
+function setpixelated(ctx, v){
+    ctx['imageSmoothingEnabled'] = v;       /* standard */
+    ctx['mozImageSmoothingEnabled'] = v;    /* Firefox */
+    ctx['oImageSmoothingEnabled'] = v;      /* Opera */
+    ctx['webkitImageSmoothingEnabled'] = v; /* Safari */
+    ctx['msImageSmoothingEnabled'] = v;     /* IE */
 }
 
-function drawAll(dataset) {
+function drawAll(app, dataset) {
 
     /*************************
      ****** Constants ********
      ************************/
 
-    //var backgroundColor = window.getComputedStyle(document.getElementById("body"), null).getPropertyValue("background-color");
-    //var backgroundColor = "#ECECEC";  // lighter
-    var backgroundColor = "#404040";    // darker
+    var backgroundColor = "#404040";  // darker
     //var backgroundColor = "#272a2f";  // darker
-	var canvasParentId = "chart";
+    //var backgroundColor = "#ECECEC";  // lighter
+    //var backgroundColor = "#DDE6F9";  // lighter
+    //var backgroundColor = window.getComputedStyle(document.getElementById("body"), null).getPropertyValue("background-color");
+    //
+    var colorDarker1 = "#303030";
+    var colorDarker2 = "#313131";
+    //var colorDarker1 = "#DFE1E2";
+    //var colorDarker2 = "#DFE1E2";
+    var colorDarker1 = "#EDFCFF";
+    var colorDarker2 = "#EDFCFF";
+
+    //var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'];
+    var colorCircleRange = ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'];
+
+
+    var canvasParentId = "chart";
     var canvasId = "canvasOrga";
     var hiddenCanvasId = "hiddenCanvasOrga";
     var $canvasParent = document.getElementById(canvasParentId);
 
     var leafColor = "white",
-        minZoomDuration = 1800,
+        minZoomDuration = 1500,
         zoomFactorCircle = 2.05,
         zoomFactorRole = 2.2,
         hoverCircleColor =  "black",
-        hoverCircleWidth = 1.5;
+        hoverCircleWidth = 1.5; // waring, can brake stroke with canvas drawing.
 
     //////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
@@ -81,8 +94,8 @@ function drawAll(dataset) {
     //////////////////////////////////////////////////////////////
 
     var colorCircle = d3.scaleOrdinal()
-        .domain([0,1,2,3])
-        .range(['#bfbfbf','#838383','#4c4c4c','#1c1c1c']);
+        .domain(Array.from({length:colorCircleRange.length},(v,k)=>k))
+        .range(colorCircleRange);
 
     var diameter = Math.min(width*0.9, height*0.9),
         radius = diameter / 2;
@@ -143,11 +156,15 @@ function drawAll(dataset) {
     var cHeight = canvas.attr("height");
     var nodeCount = nodes.length;
 
+    var backgoundGrd = context.createLinearGradient(0, 0, cWidth, 0);
+	backgoundGrd.addColorStop(0, colorDarker1);
+	backgoundGrd.addColorStop(1, colorDarker2);
+
     //The draw function of the canvas that gets called on each frame
     function drawCanvas(ctx, hidden) {
 
         //Clear canvas
-        ctx.fillStyle = backgroundColor;
+        ctx.fillStyle = backgoundGrd;
         ctx.rect(0,0,cWidth,cHeight);
         ctx.fill();
 
@@ -231,6 +248,7 @@ function drawAll(dataset) {
         var node = colToCircle[colString];
 
         var zoomFactor = zoomFactorCircle;
+        var isUpdated = false;
         if (node) {
             if (node.data.type == 'role') {
                 var zoomFactor = zoomFactorRole;
@@ -238,13 +256,22 @@ function drawAll(dataset) {
 
             if (focus !== node) {
                 zoomToCanvas(node, zoomFactor);
+                isUpdated = true;
             } else {
                 zoomToCanvas(root, zoomFactor);
+                isUpdated = true;
+                node = root;
             }
-        } else {
-            zoomToCanvas(root, zoomFactor);
         }
 
+        if (isUpdated) {
+            app.ports.receiveData.send({
+                name:node.data.name,
+                nodeType:node.data.type,
+                nid:"0"});
+        }
+
+        // doest work !?
         e.preventDefault();
         return false;
     });
@@ -253,6 +280,7 @@ function drawAll(dataset) {
     /////////////////// Hoover functionality //////////////////////
     ///////////////////////////////////////////////////////////////
 
+    // Listen for mouse moves on the main canvas
     document.getElementById(canvasId).addEventListener("mousemove", function(e){
       // We actually only need to draw the hidden canvas when there is an interaction.
       // This sketch can draw it on each loop, but that is only for demonstration.
@@ -311,28 +339,6 @@ function drawAll(dataset) {
         }
     }
     });
-
-    //document.getElementById(canvasId).addEventListener("mouseout", function(e){
-    //  // We actually only need to draw the hidden canvas when there is an interaction.
-    //  // This sketch can draw it on each loop, but that is only for demonstration.
-    //  //drawCanvas(hiddenContext, true);
-
-    //  //Figure out where the mouse click occurred.
-    //  var rect = $hidden_canvas.getBoundingClientRect();
-    //  var mouseX = (e.layerX - rect.left) * zoomInfo.scale;
-    //  var mouseY = (e.layerY - rect.top) * zoomInfo.scale;
-
-    //  // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
-    //  // This will return that pixel's color
-    //  var col = hiddenContext.getImageData(mouseX, mouseY, 1, 1).data;
-    //  //Our map uses these rgb strings as keys to nodes.
-    //  var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
-    //  var node = colToCircle[colString];
-    //  if(node) {
-    //    ctx = node.getContext("2d");
-    //    ctx.attr("stroke", null);
-    //  }//if
-    //});
 
     //////////////////////////////////////////////////////////////
     ///////////////////// Zoom Function //////////////////////////
