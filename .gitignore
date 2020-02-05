@@ -2,4 +2,3 @@ elm-stuff
 node_modules
 public/
 !public/index.html
-.issues
