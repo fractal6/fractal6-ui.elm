@@ -1,4 +1,0 @@
-Mouse hover tooltip bad behavior when zooming circle
-
-Preventdefault is not working when zomming in.out the circles.
-It causes the hovering feature the behaves badly becaus it is not redraw during zomming in/out.

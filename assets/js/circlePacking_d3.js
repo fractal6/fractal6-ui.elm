@@ -53,7 +53,7 @@ function drawAll(app, dataset) {
 	$tooltip.style.background = "#555";
 	$tooltip.style.color = "white";
 	$tooltip.style.borderRadius = "3px";
-	$tooltip.style.borderWidth = "3px";
+	$tooltip.style.borderWidth = "1px";
 	$tooltip.style.borderStyle = "solid";
 	//$tooltip.style.borderColor = "transparent transparent transparent black";
 
@@ -344,7 +344,7 @@ function drawAll(app, dataset) {
             var tw = ($tooltip.clientWidth);
             var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
             $tooltip.style.left = (nattr.node_center_x + rect.left - ( tw/2 + 1)) + "px";
-            $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 12)) + "px";
+            $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 20)) + "px";
 
             hovered = node;
         }
