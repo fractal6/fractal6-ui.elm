@@ -179,6 +179,7 @@ view model =
                             ]
                         ]
                     , div [ id "chart" ] []
+                    , div [ id "nodeTooltip" ] []
                     ]
                 ]
             ]

@@ -29,12 +29,9 @@ function drawAll(app, dataset) {
     //var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'];
     var colorCircleRange = ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'];
 
-
     var canvasParentId = "chart";
     var canvasId = "canvasOrga";
     var hiddenCanvasId = "hiddenCanvasOrga";
-    var $canvasParent = document.getElementById(canvasParentId);
-
     var leafColor = "white",
         minZoomDuration = 1500,
         zoomFactorCircle = 2.05,
@@ -45,6 +42,21 @@ function drawAll(app, dataset) {
     //////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
     //////////////////////////////////////////////////////////////
+
+    // Get the chart div
+    var $canvasParent = document.getElementById(canvasParentId);
+
+    // Add the tooltip
+    var $tooltip = document.getElementById('nodeTooltip');
+	$tooltip.style.position = "absolute";
+	$tooltip.style.textAlign = "center";
+	$tooltip.style.background = "#555";
+	$tooltip.style.color = "white";
+	$tooltip.style.borderRadius = "3px";
+	$tooltip.style.borderWidth = "3px";
+	$tooltip.style.borderStyle = "solid";
+	//$tooltip.style.borderColor = "transparent transparent transparent black";
+
 
     var minWidth = 400;
     var minHeight = 400;
@@ -247,6 +259,7 @@ function drawAll(app, dataset) {
         var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
         var node = colToCircle[colString];
 
+
         var zoomFactor = zoomFactorCircle;
         var isUpdated = false;
         if (node) {
@@ -265,6 +278,7 @@ function drawAll(app, dataset) {
         }
 
         if (isUpdated) {
+			$tooltip.style.display = "none";
             app.ports.receiveData.send({
                 name:node.data.name,
                 nodeType:node.data.type,
@@ -302,7 +316,7 @@ function drawAll(app, dataset) {
     if (node && node !== root) {
         if (node !== hovered) {
             if (hovered) {
-                // ==  clean Hovered node
+                // ==  clean hovered node
                 var nattr = getNodeAttr(hovered);
                 ctx.beginPath();
                 ctx.arc(nattr.node_center_x, nattr.node_center_y,
@@ -311,22 +325,32 @@ function drawAll(app, dataset) {
                 ctx.strokeStyle = colorCircle(hovered.depth-1);
                 ctx.stroke();
                 hovered.isHovered = false;
+                $tooltip.style.display = "none";
             }
 
+            // == add hovered circle
             var nattr = getNodeAttr(node);
             ctx.beginPath();
             ctx.arc(nattr.node_center_x, nattr.node_center_y,
                 nattr.rayon * zoomInfo.scale+1, 0,  2 * Math.PI, true);
-            //ctx.translate(0.5, 0.5);
             ctx.lineWidth = hoverCircleWidth;
             ctx.strokeStyle = hoverCircleColor;
             ctx.stroke();
             node.isHovered = true;
+
+            var rect = $canvas.getBoundingClientRect();
+            $tooltip.style.display = "block";
+            $tooltip.textContent = node.data.name;
+            var tw = ($tooltip.clientWidth);
+            var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
+            $tooltip.style.left = (nattr.node_center_x + rect.left - ( tw/2 + 1)) + "px";
+            $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 12)) + "px";
+
             hovered = node;
         }
     } else {
         if (hovered) {
-            // == clean Hovered node
+            // == clean hovered node
             var nattr = getNodeAttr(hovered);
             ctx.beginPath();
             ctx.arc(nattr.node_center_x, nattr.node_center_y,
@@ -336,6 +360,7 @@ function drawAll(app, dataset) {
             ctx.stroke();
             hovered.isHovered = false;
             hovered = null;
+            $tooltip.style.display = "none";
         }
     }
     });

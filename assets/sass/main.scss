@@ -38,6 +38,22 @@ html, body {
   border-radius: 7px;
 }
 
+
+/* doesn't work! ::slotted ? */
+#nodeTooltip {
+	display: none;
+	position: absolute;
+	background-color: #8512d5;
+	color: white;
+	text-align: center;
+	border-radius: 3px; 
+	border-width: 10px;
+	border-style: solid;
+	border-color: black transparent transparent transparent; /* This will make the top border black*/
+}
+
+
+
 /* 
  *
  * Ugly focus management
