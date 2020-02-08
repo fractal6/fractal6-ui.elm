@@ -47,21 +47,28 @@ function drawAll(app, dataset) {
     var $canvasParent = document.getElementById(canvasParentId);
 
     // Add the tooltip
-    var $tooltip = document.getElementById('nodeTooltip');
+    //var $tooltip = document.getElementById('nodeTooltip');
+    var $tooltip = document.createElement('div');
+    document.body.appendChild($tooltip);
+	$tooltip.setAttribute('id', 'nodeTooltip');
+
 	$tooltip.style.position = "absolute";
 	$tooltip.style.textAlign = "center";
 	$tooltip.style.background = "#555";
 	$tooltip.style.color = "white";
-	$tooltip.style.borderRadius = "3px";
+	$tooltip.style.paddingLeft = "5px";
+	$tooltip.style.paddingRight = "5px";
+	$tooltip.style.paddingTop = "1px";
+	$tooltip.style.paddingbottom = "1px";
+	$tooltip.style.borderRadius = "4px";
 	$tooltip.style.borderWidth = "1px";
 	$tooltip.style.borderStyle = "solid";
-	//$tooltip.style.borderColor = "transparent transparent transparent black";
-
+	$tooltip.style.borderColor = "black";
 
     var minWidth = 400;
     var minHeight = 400;
-    var computedWidth = $canvasParent.offsetWidth - 20;
-    var computedHeight = (window.innerHeight)/2 - 20;
+    var computedWidth = $canvasParent.offsetWidth ;
+    var computedHeight = (window.innerHeight)/2;
 
     var width = Math.max(computedWidth, minWidth),
         height = Math.max(computedHeight, minHeight);
@@ -316,7 +323,7 @@ function drawAll(app, dataset) {
     if (node && node !== root) {
         if (node !== hovered) {
             if (hovered) {
-                // ==  clean hovered node
+                // ==  clean hovered node + tooltip
                 var nattr = getNodeAttr(hovered);
                 ctx.beginPath();
                 ctx.arc(nattr.node_center_x, nattr.node_center_y,
@@ -338,19 +345,32 @@ function drawAll(app, dataset) {
             ctx.stroke();
             node.isHovered = true;
 
+            // == add tooltip
             var rect = $canvas.getBoundingClientRect();
             $tooltip.style.display = "block";
             $tooltip.textContent = node.data.name;
             var tw = ($tooltip.clientWidth);
             var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
-            $tooltip.style.left = (nattr.node_center_x + rect.left - ( tw/2 + 1)) + "px";
-            $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 20)) + "px";
+            $tooltip.style.left = (nattr.node_center_x + rect.left - (tw/2 + 1)) + "px";
+            $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 21)) + "px";
+            $tooltip.innerHTML += `<style>
+#nodeTooltip:after {
+    content: "";
+    position: absolute;
+    top: 100%; /* This will position the arrow at the bottom of the tooltip */
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent; /* This will make the top border black*/
+    }
+</style>`
 
             hovered = node;
         }
     } else {
         if (hovered) {
-            // == clean hovered node
+            // == clean hovered node + tooltip
             var nattr = getNodeAttr(hovered);
             ctx.beginPath();
             ctx.arc(nattr.node_center_x, nattr.node_center_y,
@@ -474,6 +494,7 @@ function drawAll(app, dataset) {
         //$canvas.style.height = canvas.style.height * .75;
 
         //redrawCanvas(focus);
+        //drawAll(app, dataset);
         console.log("redrawCanvas not implemented yet !")
     }
 

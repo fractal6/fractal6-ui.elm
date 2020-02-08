@@ -102,10 +102,8 @@ init _ _ =
 
 
 update : Commands msg -> Msg -> Model -> ( Model, Cmd Msg, Cmd msg )
-update a b model =
+update _ _ model =
     ( model
-      --Debug.log "a" a
-      --Debug.log "b" b
     , Cmd.none
     , Cmd.none
     )

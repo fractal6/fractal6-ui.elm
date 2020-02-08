@@ -11,7 +11,7 @@ view { page, route } =
     div [ id "app" ]
         [ viewHeader route
         , div [ id "notifAlert" ] []
-        , div [ id "body", class "section" ] [ page ]
+        , div [ id "body", class "section is-paddingless" ] [ page ]
         ]
 
 
@@ -24,7 +24,7 @@ view { page, route } =
 
 viewHeader : Route -> Html msg
 viewHeader currentRoute =
-    header [ class "" ]
+    header [ class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar has-shadow is-fixed-top is-black"
             , attribute "role" "navigation"
