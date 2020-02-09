@@ -279,17 +279,23 @@ function drawAll(app, dataset) {
                 isUpdated = true;
             } else {
                 zoomToCanvas(root, zoomFactor);
-                isUpdated = true;
                 node = root;
+                isUpdated = true;
             }
         }
 
         if (isUpdated) {
 			$tooltip.style.display = "none";
+            var path = pack.path(node).map(n => {
+                return { name: n.data.name,
+                         nidjs: n.color }
+            });
             app.ports.receiveData.send({
+                nidjs:node.color,
                 name:node.data.name,
                 nodeType:node.data.type,
-                nid:"0"});
+                path:path
+                });
         }
 
         // doest work !?
@@ -320,7 +326,8 @@ function drawAll(app, dataset) {
       var node = colToCircle[colString];
 
     var ctx = context;
-    if (node && node !== root) {
+    //if (node && node !== root) {
+    if (node) {
         if (node !== hovered) {
             if (hovered) {
                 // ==  clean hovered node + tooltip
@@ -497,5 +504,11 @@ function drawAll(app, dataset) {
         //drawAll(app, dataset);
         console.log("redrawCanvas not implemented yet !")
     }
+
+
+    app.ports.sendNodeFocus.subscribe(function(nid) {
+        var zoomFactor = zoomFactorCircle;
+        zoomToCanvas(colToCircle[nid], zoomFactor);
+    });
 
 }//drawAll

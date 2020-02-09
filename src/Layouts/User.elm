@@ -21,14 +21,14 @@ view { page, route, global } =
     in
     div
         [ class "columns" ]
-        [ div [ id "leftPane", class "column is-2" ] [ viewLeftPane route focus ]
+        [ div [ id "leftPane", class "column is-2 is-hidden-mobile" ] [ viewLeftPane route focus ]
         , div [ class "column is-10" ] [ page ]
         ]
 
 
 viewLeftPane : Route -> Global.UserFocus -> Html msg
 viewLeftPane currentRoute focus =
-    nav [ class "menu is-hidden-mobile" ]
+    nav [ class "menu" ]
         [ p [ class "menu-label" ]
             [ div [ class "hero is-small is-primary is-bold" ]
                 [ div [ class "hero-body has-text-centered" ] [ text focus.orga_name ] ]

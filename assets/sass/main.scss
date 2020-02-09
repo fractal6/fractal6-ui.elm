@@ -11,19 +11,19 @@ html, body {
  */
 
 #body {
-		// fix the fix-top-navbar padding
-    padding-top: calc(#{$navbar-height} + #{$navbar-padding}) !important;
+		// fix the fix-top-navbar padding (for the #mainPane}
+    padding-top: calc(#{$navbar-height}  ) !important;
 }
 
 .column {
   /*  Fix/scrollable column */
   &.is-fullheight {
-    min-height: calc(100vh - ( #{$navbar-height} + #{$navbar-padding} ) );
-    max-height: calc(100vh - ( #{$navbar-height} + #{$navbar-padding} ) );
-    height:     calc(100vh - ( #{$navbar-height} + #{$navbar-padding} ) );
-    display: flex;
-    flex-direction: row;
-    justify-content: stretch;
+    min-height: calc(100vh - #{$navbar-height} + #{$size-small});
+    max-height: calc(100vh - #{$navbar-height} + #{$size-small});
+    height:     calc(100vh - #{$navbar-height} + #{$size-small});
+    //display: flex;
+    //flex-direction: row;
+    //justify-content: stretch;
 
     overflow-y: auto;
     }
@@ -41,21 +41,36 @@ html, body {
 
 #leftPane {
 
+  min-width: 155px !important;
+  max-width: 225px !important
+	width: 13% !important;
   position: sticky;
-  top: calc(#{$navbar-height} + #{$navbar-padding}) ;
+  top: calc(#{$navbar-height} - #{$size-small});
+  background-color: #55555555;
+
+  &.column {
+    margin-top: 0;
+  }
 
   .menu .hero {
-    margin-bottom: 50px;
+    margin-bottom: 20px;
+    margin-right: -$size-small;
+  }
+
+	.menu-list {
+    //padding-left: 0;
+    margin-left: 0;
+    border-left: none;
   }
 
 }
 
 #mainPane {
   /* is-offest-1 is too large */
-  margin-left: 6.5%;
+  margin-left: 5%;
   
   /* is-paddingless compatibility */
-  padding-top: 1rem;
+  padding-top: 2rem;
 }
 
 
@@ -82,11 +97,6 @@ html, body {
 	border-width: 10px;
 	border-style: solid;
 	border-color: black transparent transparent transparent; /* This will make the top border black*/
-}
-
-
-.kaka {
-  background-color: red;
 }
 
 /* 
