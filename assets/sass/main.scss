@@ -83,14 +83,24 @@ header > .navbar {
   
   /* is-paddingless compatibility */
   padding-top: 2rem;
-}
 
-.heroViewer {
+  .is-child + .is-child {
+    padding-right: $size-small !important;
+    padding-left: $size-small !important;
+  }
 
-	h1 {
-		margin-bottom: -6px !important;
-		margin-top: -6px !important;
-	}
+  .is-child:first-child {
+    padding-right: $size-small !important;
+  }
+
+  .heroViewer {
+
+    h1 {
+      margin-bottom: -6px !important;
+      margin-top: -6px !important;
+    }
+  }
+
 }
 
 
@@ -109,15 +119,15 @@ header > .navbar {
 
 /* doesn't work! ::slotted ? */
 #nodeTooltip {
-	display: none;
-	position: absolute;
-	background-color: #8512d5;
-	color: white;
-	text-align: center;
-	border-radius: 3px; 
-	border-width: 10px;
-	border-style: solid;
-	border-color: black transparent transparent transparent; /* This will make the top border black*/
+  display: none;
+  position: absolute;
+  background-color: #8512d5;
+  color: white;
+  text-align: center;
+  border-radius: 3px; 
+  border-width: 10px;
+  border-style: solid;
+  border-color: black transparent transparent transparent; /* This will make the top border black*/
 }
 
 /* 
@@ -127,14 +137,14 @@ header > .navbar {
  */
 
 .text-input:focus {
-/* a subtle focus style for keyboard-input elements */
+  /* a subtle focus style for keyboard-input elements */
   outline: 1px solid #aaa; /* Adjust to suit your tastes */
 }
 
 button:focus,
 select:focus,
 a:focus {
-/* no outline for non-keyboard-inputs elements */
+  /* no outline for non-keyboard-inputs elements */
   outline: none;
 }
 

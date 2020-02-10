@@ -67,7 +67,8 @@ function drawAll(app, dataset) {
 
     var minWidth = 400;
     var minHeight = 400;
-    var computedWidth = $canvasParent.offsetWidth ;
+    var computedWidth = $canvasParent.offsetWidth;
+    //var computedWidth = parseInt(window.getComputedStyle($canvasParent).width, 10);
     var computedHeight = (window.innerHeight)/2;
 
     var width = Math.max(computedWidth, minWidth),
@@ -90,6 +91,13 @@ function drawAll(app, dataset) {
     var context = canvas.node().getContext("2d");
     setpixelated(context, true);
     context.clearRect(0, 0, width, height);
+
+    // Set height of parent sibling
+    var $nextToChart = document.getElementById('nextToChart')
+    $nextToChart.style.minHeight = 2*height+"px";
+    $nextToChart.style.display = "flex";
+    $nextToChart.style.flexDirection = "column";
+    //$nextToChart.style.overflowY = "auto";
 
     //Create a hidden canvas in which each circle will have a different color
     //We can use this to capture the clicked on circle
