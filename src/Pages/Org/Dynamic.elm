@@ -186,7 +186,9 @@ view model =
                     , br [] []
                     , viewMandate model
                     ]
-                , div [ class "column is-5", attribute "style" "width: 45%;" ] [ viewTensions model ]
+                , div [ class "column is-5", attribute "style" "width: 45%;" ]
+                    [ viewTensions model
+                    ]
                 ]
             ]
         ]
@@ -215,7 +217,7 @@ viewHelperBar model =
 
 viewMandate : Model -> Html mgs
 viewMandate model =
-    div [ class "hero is-small is-light" ]
+    div [ class "hero is-small is-light heroViewer box" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
                 [ i [ class "fas fa-scroll fa-xs" ] []
@@ -236,7 +238,7 @@ viewMandate model =
 
 viewTensions : Model -> Html Msg
 viewTensions model =
-    div [ class "hero is-small is-light" ]
+    div [ class "hero is-small is-light heroViewer box" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
                 [ i [ class "fas fa-exchange-alt fa-xs" ] []

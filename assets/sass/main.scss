@@ -15,6 +15,11 @@ html, body {
     padding-top: calc(#{$navbar-height}  ) !important;
 }
 
+header > .navbar {
+	background-color: #092029;
+	//background-color: #0a0a0a; // is-black
+}
+
 .column {
   /*  Fix/scrollable column */
   &.is-fullheight {
@@ -78,6 +83,14 @@ html, body {
   
   /* is-paddingless compatibility */
   padding-top: 2rem;
+}
+
+.heroViewer {
+
+	h1 {
+		margin-bottom: -6px !important;
+		margin-top: -6px !important;
+	}
 }
 
 
