@@ -2,3 +2,10 @@
 $navbar-height: 2.5rem;
 $navbar-item-img-max-height: 1.5rem;
 $navbar-padding: 0rem;
+
+//@import url("http://use.fontawesome.com/releases/v5.6.1/css/all.css");
+$fa-font-path: "fonts";
+@import '../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome';
+@import '../../node_modules/@fortawesome/fontawesome-free/scss/regular';
+@import '../../node_modules/@fortawesome/fontawesome-free/scss/solid';
+//@import '../../node_modules/@fortawesome/fontawesome-free/scss/brands';

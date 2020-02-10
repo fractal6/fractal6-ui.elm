@@ -22,9 +22,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.12.1",
     "d3": "^5.15.0",
-    "d3-scale": "^3.2.1",
-    "font-awesome": "^4.7.0"
+    "d3-scale": "^3.2.1"
   },
   "devDependencies": {
     "@dillonkearns/elm-graphql": "^4.0.0",

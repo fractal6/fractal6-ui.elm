@@ -42,11 +42,14 @@ html, body {
 #leftPane {
 
   min-width: 155px !important;
-  max-width: 225px !important
+  max-width: 225px !important;
 	width: 13% !important;
   position: sticky;
   top: calc(#{$navbar-height} - #{$size-small});
-  background-color: #55555555;
+
+  background-color: $menu-left-background-color;
+  box-shadow: inset -1px 0 0 $menu-left-border-color;
+  transform: translate3d(0, 0, 0);
 
   &.column {
     margin-top: 0;
@@ -61,6 +64,10 @@ html, body {
     //padding-left: 0;
     margin-left: 0;
     border-left: none;
+  }
+
+  .menu-list > li {
+    padding-bottom: 7px;
   }
 
 }
@@ -81,8 +88,9 @@ html, body {
  */
 
 #canvasOrga {
-  //background-image: linear-gradient(white, black) ;
   border-radius: 7px;
+  box-shadow: 0 0px 2px 1px #22101087;
+  //background-image: linear-gradient(white, black) ;
 }
 
 
