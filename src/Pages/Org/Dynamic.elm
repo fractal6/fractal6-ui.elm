@@ -28,36 +28,6 @@ page =
 
 
 -- Model
-{-
-   type alias Organisation =
-       { graph : OrgaGraph }
-
-
-   type alias OrgaGraph =
-       Dict NID Node
-
-
-   type NodeType
-       = Circle
-       | Role
-
-
-   type alias Node =
-       -- A node is either a circle or a role
-       { display_name : String
-       , children : List NID
-       , parent : NID
-       , ispublic : Bool
-       , ntype : NodeType
-       , root : Bool
-       }
-
-
-   type alias Model =
-       { asked_orga : String
-       , orga : Maybe Organisation
-       }
--}
 
 
 type alias CircleFocusState =
@@ -68,12 +38,24 @@ type alias CircleFocusState =
     }
 
 
+type alias OrgaGraph =
+    String
+
+
+type Status a
+    = Loading
+    | LoadingSlowly
+    | Loaded a
+    | Failed;
+
+
 type alias Model =
-    { asked_orga : String
-    , data : String
+    { route : Route
+    , asked_orga : String
+
+    -- Loaded indepedently from server
+    , orga_data : Status OrgaGraph
     , circle_focus : CircleFocusState
-    , isLoading : Bool
-    , route : Route
     }
 
 
@@ -84,16 +66,19 @@ type alias Model =
 init : PageContext -> Params.Dynamic -> ( Model, Cmd Msg, Cmd Global.Msg )
 init { route } params =
     let
+        orga_name =
+            params.param1
+
         focus =
-            { nidjs = "545687"
-            , name = "Sku Root"
-            , nodeType = "Circle"
-            , path = Array.fromList [ { name = "root", nidjs = "" } ]
+            { nidjs = ""
+            , name = orga_name
+            , nodeType = ""
+            , path = Array.fromList [ { name = "", nidjs = "" } ]
             }
 
         model =
-            { asked_orga = params.param1
-            , data = ""
+            { asked_orga = orga_name
+            , orga_data = ""
             , circle_focus = focus
             , isLoading = True
             , route = route
