@@ -13,6 +13,11 @@
       "ID": 2
     },
     {
+      "name": "external Coordo",
+      "type": "role",
+      "ID": 2
+    },
+    {
       "name": "Tech",
       "type": "circle",
       "ID": 2,
@@ -36,6 +41,16 @@
         },
         {
           "name": "Budget Holder",
+          "type": "role",
+          "ID": 2
+        },
+        {
+          "name": "Budget Holder",
+          "type": "role",
+          "ID": 2
+        },
+        {
+          "name": "Evengasilator",
           "type": "role",
           "ID": 2
         }

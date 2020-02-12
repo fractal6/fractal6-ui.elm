@@ -7,6 +7,41 @@ function setpixelated(ctx, v){
     ctx['msImageSmoothingEnabled'] = v;     /* IE */
 }
 
+hackDepth = function (obj, depth, neigbor) {
+    // Add a `depth` attribute to  each node
+    // Returns: the max depth (the number of depth starting from 0.
+    var maxdepth = 0;
+    var cumchild = 0
+
+    if (depth === undefined) {
+        var currentdepth = 0;
+        var neigbor = 1
+    } else {
+        var currentdepth = depth;
+        neigbor = neigbor
+    }
+
+    obj.depth = currentdepth;
+    obj.neigbor = neigbor
+
+    if (obj.children) {
+        obj.children.forEach(function (d) {
+            var d = hackDepth(d, currentdepth+1, obj.children.length)
+            var tmpDepth = d.maxdepth;
+            cumchild += d.cumchild;
+            if (tmpDepth > maxdepth) {
+                maxdepth = tmpDepth;
+            }
+        })
+    }
+    maxdepth = maxdepth + 1;
+    cumchild = cumchild + 1;
+
+    obj.cumchild = cumchild;
+
+    return {maxdepth, cumchild };
+}
+
 function drawAll(app, dataset) {
 
     /*************************
@@ -26,18 +61,32 @@ function drawAll(app, dataset) {
     var colorDarker1 = "#EDFCFF";
     var colorDarker2 = "#EDFCFF";
 
-    //var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'];
-    var colorCircleRange = ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'];
+    var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'];
+    //var colorCircleRange = ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'];
 
     var canvasParentId = "chart";
     var canvasId = "canvasOrga";
     var hiddenCanvasId = "hiddenCanvasOrga";
-    var leafColor = "white",
-        minZoomDuration = 1500,
+    var leafColor = "white";
+    var minZoomDuration = 1500,
         zoomFactorCircle = 2.05,
-        zoomFactorRole = 2.2,
-        hoverCircleColor =  "black",
+        zoomFactorRole = 2.2;
+
+    var hoverCircleColor =  "black",
         hoverCircleWidth = 1.5; // waring, can brake stroke with canvas drawing.
+
+    var tooltipCss = `<style>
+#nodeTooltip:after {
+    content: "";
+    position: absolute;
+    top: 100%; /* This will position the arrow at the bottom of the tooltip */
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent; /* This will make the top border black*/
+    }
+</style>`;
 
     //////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
@@ -84,7 +133,7 @@ function drawAll(app, dataset) {
     //////////////////////////////////////////////////////////////
 
     //Create the visible canvas and context
-    var canvas  = d3.select("#"+canvasParentId).append("canvas")
+    var canvas = d3.select("#"+canvasParentId).append("canvas")
         .attr("id", canvasId)
         .attr("width", width)
         .attr("height", height);
@@ -101,7 +150,7 @@ function drawAll(app, dataset) {
 
     //Create a hidden canvas in which each circle will have a different color
     //We can use this to capture the clicked on circle
-    var hiddenCanvas  = d3.select("#"+canvasParentId).append("canvas")
+    var hiddenCanvas = d3.select("#"+canvasParentId).append("canvas")
         .attr("id", hiddenCanvasId)
         .attr("width", width)
         .attr("height", height)
@@ -124,7 +173,7 @@ function drawAll(app, dataset) {
         .domain(Array.from({length:colorCircleRange.length},(v,k)=>k))
         .range(colorCircleRange);
 
-    var diameter = Math.min(width*0.9, height*0.9),
+    var diameter = Math.min(width*0.97, height*0.97),
         radius = diameter / 2;
 
     var zoomInfo = {
@@ -140,13 +189,16 @@ function drawAll(app, dataset) {
     ////////////////// Create Circle Packing /////////////////////
     //////////////////////////////////////////////////////////////
 
+    // hack dataset (do that in the backend!?)
+    var _d = hackDepth(dataset);
+    var maxdepth = _d.maxdepth;
 
     var pack = d3.pack()
-        .padding(8)
+        .padding(1)
         .size([diameter, diameter])
     (d3.hierarchy(dataset)
-        .sum(d => d.size)
-        .sort((a, b) => 0)); //a.id < b.id
+        .sum(d => 10000/(maxdepth)**(Math.max(2,d.depth))) // d.neigbor // node size
+        .sort((a, b) => 0)); //a.id < b.ID // node order
 
     var root = dataset;
     var nodes = pack.descendants(root);
@@ -166,14 +218,13 @@ function drawAll(app, dataset) {
         node_center_x = ((node.x - zoomInfo.centerX) * zoomInfo.scale) + centerX;
         node_center_y = ((node.y - zoomInfo.centerY) * zoomInfo.scale) + centerY;
         if (node.data.type == "role") {
-            rayon = node.r * 0.8;
+            rayon = node.r * 0.95;
         } else {
             rayon = node.r;
         }
 
-        return {node_center_x, node_center_y, rayon}
+        return {node_center_x, node_center_y, rayon};
     }
-
 
     //////////////////////////////////////////////////////////////
     ///////////////// Canvas draw function ///////////////////////
@@ -201,11 +252,15 @@ function drawAll(app, dataset) {
         for (var i = 0; i < nodeCount; i++) {
             node = nodes[i];
 
+            if (node.data.type == undefined) node.data.type = "circle";
+
             var _name = node.data.name,
-                _type = node.data.type;
+                _type = node.data.type,
+                nattr = getNodeAttr(node);
 
             //If the hidden canvas was send into this function and it does not yet have a color, generate a unique one
-            var circleColor;
+            var circleColor,
+                rayon;
             if(hidden) {
                 if(node.color == null) {
                     // If we have never drawn the node to the hidden canvas get a new color for it and put it in the dictionary.
@@ -218,33 +273,49 @@ function drawAll(app, dataset) {
                 circleColor = node.children ? colorCircle(node.depth) : leafColor;
             }
 
-            var nattr = getNodeAttr(node);
+            rayon = nattr.rayon * zoomInfo.scale;
 
             //Draw each circle
             ctx.beginPath();
             ctx.fillStyle = circleColor;
             ctx.arc(nattr.node_center_x, nattr.node_center_y,
-                nattr.rayon * zoomInfo.scale, 0,  2 * Math.PI, true);
+                rayon, 0,  2 * Math.PI, true);
             ctx.fill();
-            if (node.isHovered) {
-                ctx.lineWidth = hoverCircleWidth;
-                ctx.strokeStyle = hoverCircleColor;
-                ctx.stroke();
-            }
 
             if (!hidden) {
-                if (_type == "role") {
-                    var displayName = _name.substring(0,2).replace(/./,x=>x.toUpperCase())
-                    ctx.beginPath();
-                    ctx.font = "22px Arial";
-                    ctx.fillStyle = "black";
-                    ctx.textAlign = "center";
-                    ctx.fillText(_name.substring(0,3), nattr.node_center_x, nattr.node_center_y+7);
-                    //ctx.shadowColor = '#999';
-                    //ctx.shadowBlur = 20;
-                    //ctx.shadowOffsetX = 5;
-                    //ctx.shadowOffsetY = 5;
-                    ctx.fill();
+
+                if (node.isHovered) {
+                    ctx.lineWidth = hoverCircleWidth;
+                    ctx.strokeStyle = hoverCircleColor;
+                    ctx.stroke();
+                }
+
+                if (_type === "role") {
+                    var text = _name.substring(0,2).replace(/./,x=>x.toUpperCase())
+                    var font_size = 19;
+                    var text_display = false;
+                    //for (var ii=0; ii < 2; ii++) {
+                    // Search font that fit
+                    ctx.font = font_size +"px Arial";
+                    if (ctx.measureText(text).width+1 < rayon*2) {
+                        text_display = true;
+                        //break;
+                    } else {
+                        font_size--;
+                    }
+                    //}
+
+                    if (text_display) {
+                        ctx.beginPath();
+                        ctx.fillStyle = "black";
+                        ctx.textAlign = "center";
+                        ctx.fillText(text, nattr.node_center_x, nattr.node_center_y+7);
+                        //ctx.shadowColor = '#999';
+                        //ctx.shadowBlur = 20;
+                        //ctx.shadowOffsetX = 5;
+                        //ctx.shadowOffsetY = 5;
+                        ctx.fill();
+                    }
                 }
             }
         }//for i
@@ -256,8 +327,7 @@ function drawAll(app, dataset) {
 
     // @DEBUG: d3.event.preventDefault(); ??
 
-    // Listen for clicks on the main canvas
-    document.getElementById(canvasId).addEventListener("click", function(e){
+    function getNodeUnderPointer(e) {
         // We actually only need to draw the hidden canvas when there is an interaction.
         // This sketch can draw it on each loop, but that is only for demonstration.
         drawCanvas(hiddenContext, true);
@@ -273,37 +343,41 @@ function drawAll(app, dataset) {
         //Our map uses these rgb strings as keys to nodes.
         var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
         var node = colToCircle[colString];
+        return node;
+    }
 
-
+    // Listen for clicks on the main canvas
+    document.getElementById(canvasId).addEventListener("click", function(e){
+        var node = getNodeUnderPointer(e);
         var zoomFactor = zoomFactorCircle;
         var isUpdated = false;
         if (node) {
-            if (node.data.type == 'role') {
+            if (node.data.type === 'role') {
                 var zoomFactor = zoomFactorRole;
             }
 
-            if (focus !== node) {
-                zoomToCanvas(node, zoomFactor);
-                isUpdated = true;
-            } else {
-                zoomToCanvas(root, zoomFactor);
-                node = root;
-                isUpdated = true;
+            if (focus === node) {
+                // got to the parent node
+                if (node !== root) {
+                    node = node.parent;
+                }
             }
+            zoomToCanvas(node, zoomFactor);
+            isUpdated = true;
         }
 
         if (isUpdated) {
-			$tooltip.style.display = "none";
+            $tooltip.style.display = "none";
             var path = pack.path(node).map(n => {
                 return { name: n.data.name,
-                         nidjs: n.color }
+                    nidjs: n.color };
             });
             app.ports.receiveData.send({
                 nidjs:node.color,
                 name:node.data.name,
                 nodeType:node.data.type,
                 path:path
-                });
+            });
         }
 
         // doest work !?
@@ -317,28 +391,49 @@ function drawAll(app, dataset) {
 
     // Listen for mouse moves on the main canvas
     document.getElementById(canvasId).addEventListener("mousemove", function(e){
-      // We actually only need to draw the hidden canvas when there is an interaction.
-      // This sketch can draw it on each loop, but that is only for demonstration.
-      drawCanvas(hiddenContext, true);
+        var node = getNodeUnderPointer(e);
+        var ctx = context;
+        //if (node && node !== root) {
+        if (node) {
+            if (node !== hovered) {
+                if (hovered) {
+                    // ==  clean hovered node + tooltip
+                    var nattr = getNodeAttr(hovered);
+                    ctx.beginPath();
+                    ctx.arc(nattr.node_center_x, nattr.node_center_y,
+                        nattr.rayon * zoomInfo.scale+1, 0, 2 * Math.PI, true);
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = colorCircle(hovered.depth-1);
+                    ctx.stroke();
+                    hovered.isHovered = false;
+                    $tooltip.style.display = "none";
+                }
 
-      //Figure out where the mouse click occurred.
-      var rect = $canvas.getBoundingClientRect();
-      var mouseX = (e.layerX - rect.left);
-      var mouseY = (e.layerY - rect.top);
+                // == add hovered circle
+                var nattr = getNodeAttr(node);
+                ctx.beginPath();
+                ctx.arc(nattr.node_center_x, nattr.node_center_y,
+                    nattr.rayon * zoomInfo.scale+1, 0,  2 * Math.PI, true);
+                ctx.lineWidth = hoverCircleWidth;
+                ctx.strokeStyle = hoverCircleColor;
+                ctx.stroke();
+                node.isHovered = true;
 
-      // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
-      // This will return that pixel's color
-      var col = hiddenContext.getImageData(mouseX, mouseY, 1, 1).data;
-      //Our map uses these rgb strings as keys to nodes.
-      var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
-      var node = colToCircle[colString];
+                // == add tooltip
+                var rect = $canvas.getBoundingClientRect();
+                $tooltip.style.display = "block";
+                $tooltip.textContent = node.data.name;
+                var tw = ($tooltip.clientWidth);
+                var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
+                $tooltip.style.left = (nattr.node_center_x + rect.left - (tw/2 + 1)) + "px";
+                $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 21)) + "px";
+                $tooltip.innerHTML += tooltipCss;
 
-    var ctx = context;
-    //if (node && node !== root) {
-    if (node) {
-        if (node !== hovered) {
+                hovered = node;
+            }
+        } else {
             if (hovered) {
-                // ==  clean hovered node + tooltip
+                // == clean hovered node + tooltip
                 var nattr = getNodeAttr(hovered);
                 ctx.beginPath();
                 ctx.arc(nattr.node_center_x, nattr.node_center_y,
@@ -347,57 +442,10 @@ function drawAll(app, dataset) {
                 ctx.strokeStyle = colorCircle(hovered.depth-1);
                 ctx.stroke();
                 hovered.isHovered = false;
+                hovered = null;
                 $tooltip.style.display = "none";
             }
-
-            // == add hovered circle
-            var nattr = getNodeAttr(node);
-            ctx.beginPath();
-            ctx.arc(nattr.node_center_x, nattr.node_center_y,
-                nattr.rayon * zoomInfo.scale+1, 0,  2 * Math.PI, true);
-            ctx.lineWidth = hoverCircleWidth;
-            ctx.strokeStyle = hoverCircleColor;
-            ctx.stroke();
-            node.isHovered = true;
-
-            // == add tooltip
-            var rect = $canvas.getBoundingClientRect();
-            $tooltip.style.display = "block";
-            $tooltip.textContent = node.data.name;
-            var tw = ($tooltip.clientWidth);
-            var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
-            $tooltip.style.left = (nattr.node_center_x + rect.left - (tw/2 + 1)) + "px";
-            $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 21)) + "px";
-            $tooltip.innerHTML += `<style>
-#nodeTooltip:after {
-    content: "";
-    position: absolute;
-    top: 100%; /* This will position the arrow at the bottom of the tooltip */
-    left: 50%;
-    margin-left: -6px;
-    border-width: 6px;
-    border-style: solid;
-    border-color: #555 transparent transparent transparent; /* This will make the top border black*/
-    }
-</style>`
-
-            hovered = node;
         }
-    } else {
-        if (hovered) {
-            // == clean hovered node + tooltip
-            var nattr = getNodeAttr(hovered);
-            ctx.beginPath();
-            ctx.arc(nattr.node_center_x, nattr.node_center_y,
-                nattr.rayon * zoomInfo.scale+1, 0, 2 * Math.PI, true);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = colorCircle(hovered.depth-1);
-            ctx.stroke();
-            hovered.isHovered = false;
-            hovered = null;
-            $tooltip.style.display = "none";
-        }
-    }
     });
 
     //////////////////////////////////////////////////////////////
@@ -452,7 +500,7 @@ function drawAll(app, dataset) {
                 interpolator = null;
                 return true;
             } else {
-                return false
+                return false;
             }
         }
     }//function interpolateZoom

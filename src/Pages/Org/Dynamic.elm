@@ -100,7 +100,7 @@ init { route } params =
             }
     in
     ( model
-    , Http.get { url = "/data1.json", expect = Http.expectString GotText }
+    , Http.get { url = "/" ++ model.asked_orga ++ ".json", expect = Http.expectString GotText }
     , Cmd.none
       --Ports.init_circlePacking data_json
     )
