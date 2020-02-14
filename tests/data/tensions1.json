@@ -1,0 +1,38 @@
+[
+    {
+        "title": "do a graphql request",
+        "severity": 4,
+        "tensionType": "personal",
+        "description": "",
+        "n_comments": 0,
+        "from": "",
+        "to": ""
+    },
+    {
+        "title": "do a graphql request, and other maiocal yaaaa thinkk",
+        "severity": 4,
+        "tensionType": "tactical",
+        "description": "",
+        "n_comments": 0,
+        "from": "",
+        "to": ""
+    },
+    {
+        "title": "do a graphql request",
+        "severity": 4,
+        "tensionType": "governance",
+        "description": "",
+        "n_comments": 1,
+        "from": "",
+        "to": ""
+    },
+    {
+        "title": "do a graphql request",
+        "severity": 4,
+        "tensionType": "operational",
+        "description": "",
+        "n_comments": 0,
+        "from": "",
+        "to": ""
+    }
+]

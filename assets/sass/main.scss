@@ -16,7 +16,7 @@ html, body {
 }
 
 header > .navbar {
-	background-color: #092029;
+	background-color: #172335;
 	//background-color: #0a0a0a; // is-black
 }
 
@@ -33,6 +33,11 @@ header > .navbar {
     overflow-y: auto;
     }
 }
+
+.tooltip.has-tooltip-multiline::before {
+  white-space: pre-line !important;
+}
+
 
 /* 
  *
@@ -101,6 +106,34 @@ header > .navbar {
     }
   }
 
+}
+
+.Footer {
+    position: absolute;
+    bottom: 0;
+    align-self: flex-end;
+}
+
+.Box {
+    //border-bottom: 1px solid #e1e4e8;
+    //padding: 10px 10px;
+}
+
+.Circle:before {
+    content: ' \25CF';
+    font-size: 8px;
+}
+
+#tensionsTab  {
+    .tooltip {
+		border: 8px solid transparent;
+        margin: -8px;		
+     }
+
+    .tooltip::before {
+        opacity: 1 !important; //don't work
+        font-size: $size-6 !important;
+     }
 }
 
 

@@ -55,22 +55,8 @@
         {"name": "Chief executives", "ID": "1.1.1.1", "type":"role"},
         {"name": "General and operations managers", "ID": "1.1.1.2", "type":"role"},
         {"name": "Legislators", "ID": "1.1.1.3", "type":"role"},
-        {"name": "Advertising and promotions managers", "ID": "1.1.1.4", "type":"role"},
-        {"name": "Marketing and sales managers", "ID": "1.1.1.5", "type":"role"},
         {"name": "Public relations and fundraising managers", "ID": "1.1.1.6", "type":"role"},
-        {"name": "Administrative services managers", "ID": "1.1.1.7", "type":"role"},
-        {"name": "Computer and information systems managers", "ID": "1.1.1.8", "type":"role"},
-        {"name": "Financial managers", "ID": "1.1.1.9", "type":"role"},
-        {"name": "Compensation and benefits managers", "ID": "1.1.1.10", "type":"role"},
-        {"name": "Human resources managers", "ID": "1.1.1.11", "type":"role"},
-        {"name": "Training and development managers", "ID": "1.1.1.12", "type":"role"},
-        {"name": "Industrial production managers", "ID": "1.1.1.13", "type":"role"},
-        {"name": "Purchasing managers", "ID": "1.1.1.14", "type":"role"},
-        {"name": "Transportation, storage, and distribution managers", "ID": "1.1.1.15", "type":"role"},
-        {"name": "Farmers, ranchers, and other agricultural managers", "ID": "1.1.1.16", "type":"role"},
-        {"name": "Construction managers", "ID": "1.1.1.17", "type":"role"},
         {"name": "Education administrators", "ID": "1.1.1.18", "type":"role"},
-        {"name": "Architectural and engineering managers", "ID": "1.1.1.19", "type":"role"},
         {"name": "Food service managers", "ID": "1.1.1.20", "type":"role"},
         {"name": "Funeral service managers", "ID": "1.1.1.21", "type":"role"},
         {"name": "Gaming managers", "ID": "1.1.1.22", "type":"role"},
@@ -80,8 +66,7 @@
         {"name": "Postmasters and mail superintendents", "ID": "1.1.1.26", "type":"role"},
         {"name": "Property, real estate, and community association managers", "ID": "1.1.1.27", "type":"role"},
         {"name": "Social and community service managers", "ID": "1.1.1.28", "type":"role"},
-        {"name": "Emergency management directors", "ID": "1.1.1.29", "type":"role"},
-        {"name": "Managers, all other", "ID": "1.1.1.30", "type":"role"}
+        {"name": "Emergency management directors", "ID": "1.1.1.29", "type":"role"}
        ]
       }
      ]

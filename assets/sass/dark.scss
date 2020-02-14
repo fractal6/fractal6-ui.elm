@@ -1,6 +1,8 @@
 @import "dark/variables";
 @import "variables";
 @import "../../node_modules/bulma/bulma.sass";
+@import "../../node_modules/bulma-tooltip/src/sass/index.sass";
+@import "../../node_modules/bulma-badge/dist/css/bulma-badge.sass";
 @import "dark/overrides";
 @import "main.scss";
 

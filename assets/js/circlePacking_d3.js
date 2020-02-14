@@ -591,6 +591,23 @@ function drawAll(app, dataset) {
         }
     });
 
+    document.getElementById(canvasId).addEventListener("mouseleave", function(e){
+        var ctx = context;
+        if (hovered) {
+            // == clean hovered node + tooltip
+            var nattr = getNodeAttr(hovered);
+            ctx.beginPath();
+            ctx.arc(nattr.node_center_x, nattr.node_center_y,
+                nattr.rayon * zoomInfo.scale+1, 0, 2 * Math.PI, true);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = colorCircle(hovered.depth-1);
+            ctx.stroke();
+            hovered.isHovered = false;
+            hovered = null;
+            $tooltip.style.display = "none";
+        }
+    });
+
     //////////////////////////////////////////////////////////////
     ///////////////////// Zoom Function //////////////////////////
     //////////////////////////////////////////////////////////////

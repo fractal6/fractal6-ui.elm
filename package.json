@@ -23,6 +23,8 @@
   "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.1",
+    "bulma-badge": "^3.0.1",
+    "bulma-tooltip": "^3.0.2",
     "d3": "^5.15.0",
     "d3-scale": "^3.2.1"
   },
