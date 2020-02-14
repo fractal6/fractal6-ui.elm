@@ -334,7 +334,7 @@ mTension tension =
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" ("type: <strong>" ++ tension.tensionType ++ "</strong>")
+                , attribute "data-tooltip" ("type: " ++ tension.tensionType)
                 ]
                 [ if tension.tensionType == "personal" then
                     div [ class "Circle has-text-danger" ] [ text "" ]
@@ -358,14 +358,14 @@ mTension tension =
         , div [ class "media-right" ]
             [ div
                 [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" "severity"
+                , attribute "data-tooltip" ("severity: " ++ String.fromInt tension.severity)
                 ]
                 [ Fa.icon_ "fas fa-fire" (String.fromInt tension.severity)
                 ]
             , if tension.n_comments > 0 then
                 div
                     [ class "tooltip has-tooltip-top has-tooltip-light"
-                    , attribute "data-tooltip" "number of comments"
+                    , attribute "data-tooltip" ("comments: " ++ String.fromInt tension.n_comments)
                     ]
                     [ Fa.icon "fas fa-comment-dots" (String.fromInt tension.n_comments)
                     ]
