@@ -96,7 +96,7 @@ init { route } params =
     ( model
     , Cmd.batch
         [ Http.get { url = "/data/" ++ model.asked_orga ++ ".json", expect = Http.expectString GotText }
-        , Http.get { url = "/data/tensions2.json", expect = Http.expectJson GotTensions tensionsDecoder }
+        , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
@@ -240,8 +240,12 @@ view model =
                     , br [] []
                     , viewMandate model
                     ]
-                , div [ class "column is-5", attribute "style" "width: 44%;", id "nextToChart" ]
-                    [ viewActivies model ]
+                , div [ class "column is-6" ]
+                    [ div [ class "columns is-gapless" ]
+                        [ div [ class "column is-11", id "nextToChart" ]
+                            [ viewActivies model ]
+                        ]
+                    ]
                 ]
             ]
         ]
@@ -330,7 +334,7 @@ mTension tension =
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" ("type: " ++ tension.tensionType)
+                , attribute "data-tooltip" ("type: <strong>" ++ tension.tensionType ++ "</strong>")
                 ]
                 [ if tension.tensionType == "personal" then
                     div [ class "Circle has-text-danger" ] [ text "" ]
