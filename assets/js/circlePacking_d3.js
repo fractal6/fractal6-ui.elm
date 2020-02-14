@@ -209,17 +209,26 @@ function drawAll(app, dataset) {
     var hoverCircleColor =  "black",
         hoverCircleWidth = 1.5; // waring, can brake stroke with canvas drawing.
 
+    // http://www.cssarrowplease.com/
     var tooltipCss = `<style>
-#nodeTooltip:after {
+#nodeTooltip:after, #nodeTooltip:before{
     content: "";
     position: absolute;
     top: 100%; /* This will position the arrow at the bottom of the tooltip */
     left: 50%;
+    pointer-events: none;
+    border: solid transparent;
+    }
+#nodeTooltip:after {
     margin-left: -6px;
     border-width: 6px;
-    border-style: solid;
-    border-color: #555 transparent transparent transparent; /* This will make the top border black*/
-    }
+    border-top-color: #eee;
+}
+#nodeTooltip:before {
+    margin-left: -7px;
+    border-width: 7px;
+    border-top-color: #333;
+}
 </style>`;
 
     //////////////////////////////////////////////////////////////
@@ -235,18 +244,15 @@ function drawAll(app, dataset) {
     document.body.appendChild($tooltip);
 	$tooltip.setAttribute('id', 'nodeTooltip');
 
-	$tooltip.style.position = "absolute";
 	$tooltip.style.textAlign = "center";
-	$tooltip.style.background = "#555";
-	$tooltip.style.color = "white";
-	$tooltip.style.paddingLeft = "5px";
-	$tooltip.style.paddingRight = "5px";
-	$tooltip.style.paddingTop = "1px";
-	$tooltip.style.paddingbottom = "1px";
+	$tooltip.style.color = "black";
+	$tooltip.style.background = "#eee";
 	$tooltip.style.borderRadius = "4px";
-	$tooltip.style.borderWidth = "1px";
-	$tooltip.style.borderStyle = "solid";
-	$tooltip.style.borderColor = "black";
+	$tooltip.style.border = "1px solid #333";
+	$tooltip.style.paddingLeft = "6px";
+	$tooltip.style.paddingRight = "6px";
+	$tooltip.style.paddingTop = "2px";
+	$tooltip.style.paddingBottom = "2px";
 
     var minWidth = 400;
     var minHeight = 400;
@@ -569,7 +575,7 @@ function drawAll(app, dataset) {
                 var tw = ($tooltip.clientWidth);
                 var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
                 $tooltip.style.left = (nattr.node_center_x + rect.left - (tw/2 + 1)) + "px";
-                $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 21)) + "px";
+                $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 23)) + "px";
                 $tooltip.innerHTML += tooltipCss;
 
                 hovered = node;

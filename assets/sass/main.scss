@@ -67,7 +67,7 @@ header > .navbar {
 
   .menu .hero {
     margin-bottom: 20px;
-    margin-right: -$size-small;
+    margin-right: -$size-small + 0.01rem;
   }
 
 	.menu-list {

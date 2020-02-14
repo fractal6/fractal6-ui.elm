@@ -394,8 +394,9 @@ viewLeftPane model =
                         ]
                     , li []
                         [ a []
-                            --  fa-exclamation-circle
                             [ Fa.icon1 "fas fa-exchange-alt fa-xs" "Tensions" ]
+
+                        --  fa-exclamation-circle
                         ]
                     , li []
                         [ a []
