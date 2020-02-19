@@ -11,7 +11,7 @@ html, body {
  */
 
 #body {
-		// fix the fix-top-navbar padding (for the #mainPane}
+    // fix the fix-top-navbar padding (for the #mainPane}
     padding-top: calc(#{$navbar-height}  ) !important;
 }
 
@@ -47,6 +47,22 @@ header > .navbar {
 
 .menu .menu-label {
     font-weight: bold !important;
+}
+
+
+#navbarTop {
+
+    #logo {
+        height: $navbar-height;
+        width: $navbar-height;
+    }
+
+    .navbar-brand  a {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-left: $size-small;
+        //margin-right: 20px;
+    }
 }
 
 #leftPane {

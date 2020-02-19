@@ -1,4 +1,4 @@
-module Components.Asset exposing (Image, defaultAvatar, error, loading)
+module Components.Asset exposing (Image, defaultAvatar, error, loading, logo)
 
 {-| Assets, such as images, videos, and audio. (We only have images for now.)
 
@@ -26,6 +26,10 @@ loading =
 
 defaultAvatar =
     image "smiley-cyrus.jpg"
+
+
+logo =
+    image "logo.svg"
 
 
 image : String -> String

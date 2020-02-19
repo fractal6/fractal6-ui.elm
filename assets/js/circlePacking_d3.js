@@ -542,12 +542,72 @@ function drawAll(app, dataset) {
     document.getElementById(canvasId).addEventListener("mousemove", function(e){
         var node = getNodeUnderPointer(e);
         var ctx = context;
+        var clean_hover = true;
         //if (node && node !== root) {
         if (node) {
             if (node !== hovered) {
                 if (hovered) {
                     // ==  clean hovered node + tooltip
                     var nattr = getNodeAttr(hovered);
+
+                    var rect = $canvas.getBoundingClientRect();
+                    var mouseX = (e.layerX - rect.left);
+                    var mouseY = (e.layerY - rect.top);
+                    var x1 = nattr.node_center_x - nattr.rayon;
+                    var x2 = nattr.node_center_x + nattr.rayon;
+                    var y1 = nattr.node_center_y + nattr.rayon - 10;
+                    var y2 = nattr.node_center_y + nattr.rayon + 10;
+                    clean_hover = !( (mouseY > y1) && (mouseY < y2) && (x1 < mouseX) && (mouseX < x2))
+                    if (clean_hover) {
+                            ctx.beginPath();
+                            ctx.arc(nattr.node_center_x, nattr.node_center_y,
+                                nattr.rayon * zoomInfo.scale+1, 0, 2 * Math.PI, true);
+                            ctx.lineWidth = 3;
+                            ctx.strokeStyle = colorCircle(hovered.depth-1);
+                            ctx.stroke();
+                            hovered.isHovered = false;
+                            $tooltip.style.display = "none";
+                        }
+                }
+
+                if (clean_hover) {
+                    // == add hovered circle
+                    var nattr = getNodeAttr(node);
+                    ctx.beginPath();
+                    ctx.arc(nattr.node_center_x, nattr.node_center_y,
+                        nattr.rayon * zoomInfo.scale+1, 0,  2 * Math.PI, true);
+                    ctx.lineWidth = hoverCircleWidth;
+                    ctx.strokeStyle = hoverCircleColor;
+                    ctx.stroke();
+                    node.isHovered = true;
+
+                    // == add tooltip
+                    var rect = $canvas.getBoundingClientRect();
+                    $tooltip.style.display = "block";
+                    $tooltip.textContent = node.data.name;
+                    var tw = ($tooltip.clientWidth);
+                    var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
+                    $tooltip.style.left = (nattr.node_center_x + rect.left - (tw/2 + 1)) + "px";
+                    $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 23)) + "px";
+                    $tooltip.innerHTML += tooltipCss;
+
+                    hovered = node;
+                }
+            }
+        } else {
+            if (hovered) {
+                // == clean hovered node + tooltip
+                var nattr = getNodeAttr(hovered);
+
+                var rect = $canvas.getBoundingClientRect();
+                var mouseX = (e.layerX - rect.left);
+                var mouseY = (e.layerY - rect.top);
+                var y1 = nattr.node_center_x - nattr.rayon;
+                var y2 = nattr.node_center_x + nattr.rayon;
+                var x1 = nattr.node_center_y + nattr.rayon -10;
+                var x2 = nattr.node_center_y + nattr.rayon + 10;
+                clean_hover = !( (mouseY > y1) && (mouseY < y2) && (x1 < mouseX) && (mouseX < x2))
+                if (clean_hover) {
                     ctx.beginPath();
                     ctx.arc(nattr.node_center_x, nattr.node_center_y,
                         nattr.rayon * zoomInfo.scale+1, 0, 2 * Math.PI, true);
@@ -555,44 +615,9 @@ function drawAll(app, dataset) {
                     ctx.strokeStyle = colorCircle(hovered.depth-1);
                     ctx.stroke();
                     hovered.isHovered = false;
+                    hovered = null;
                     $tooltip.style.display = "none";
                 }
-
-                // == add hovered circle
-                var nattr = getNodeAttr(node);
-                ctx.beginPath();
-                ctx.arc(nattr.node_center_x, nattr.node_center_y,
-                    nattr.rayon * zoomInfo.scale+1, 0,  2 * Math.PI, true);
-                ctx.lineWidth = hoverCircleWidth;
-                ctx.strokeStyle = hoverCircleColor;
-                ctx.stroke();
-                node.isHovered = true;
-
-                // == add tooltip
-                var rect = $canvas.getBoundingClientRect();
-                $tooltip.style.display = "block";
-                $tooltip.textContent = node.data.name;
-                var tw = ($tooltip.clientWidth);
-                var hw = (2*nattr.rayon * zoomInfo.scale + $tooltip.clientHeight);
-                $tooltip.style.left = (nattr.node_center_x + rect.left - (tw/2 + 1)) + "px";
-                $tooltip.style.top = (nattr.node_center_y + rect.top - (hw/2 + 23)) + "px";
-                $tooltip.innerHTML += tooltipCss;
-
-                hovered = node;
-            }
-        } else {
-            if (hovered) {
-                // == clean hovered node + tooltip
-                var nattr = getNodeAttr(hovered);
-                ctx.beginPath();
-                ctx.arc(nattr.node_center_x, nattr.node_center_y,
-                    nattr.rayon * zoomInfo.scale+1, 0, 2 * Math.PI, true);
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = colorCircle(hovered.depth-1);
-                ctx.stroke();
-                hovered.isHovered = false;
-                hovered = null;
-                $tooltip.style.display = "none";
             }
         }
     });

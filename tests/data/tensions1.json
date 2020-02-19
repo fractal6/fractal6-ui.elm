@@ -1,15 +1,6 @@
 [
     {
-        "title": "do a graphql request",
-        "severity": 4,
-        "tensionType": "personal",
-        "description": "",
-        "n_comments": 0,
-        "from": "",
-        "to": ""
-    },
-    {
-        "title": "do a graphql request, and other maiocal yaaaa thinkk",
+        "title": "Gin backend development",
         "severity": 4,
         "tensionType": "tactical",
         "description": "",
@@ -18,18 +9,45 @@
         "to": ""
     },
     {
-        "title": "do a graphql request",
+        "title": "Implement a Graphql Resolver (N+1 problem)",
         "severity": 4,
-        "tensionType": "governance",
+        "tensionType": "operational",
+        "description": "",
+        "n_comments": 0,
+        "from": "",
+        "to": ""
+    },
+    {
+        "title": "Dgraph vs Prisma",
+        "severity": 4,
+        "tensionType": "personal",
         "description": "",
         "n_comments": 1,
         "from": "",
         "to": ""
     },
     {
-        "title": "do a graphql request",
+        "title": "Choose a internationalisation system (i18n)",
         "severity": 4,
         "tensionType": "operational",
+        "description": "",
+        "n_comments": 0,
+        "from": "",
+        "to": ""
+    },
+    {
+        "title": "Interface with git",
+        "severity": 4,
+        "tensionType": "operational",
+        "description": "",
+        "n_comments": 0,
+        "from": "",
+        "to": ""
+    },
+    {
+        "title": "White paper, pitches and green paper.",
+        "severity": 4,
+        "tensionType": "governance",
         "description": "",
         "n_comments": 0,
         "from": "",
