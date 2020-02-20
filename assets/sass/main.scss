@@ -57,11 +57,16 @@ header > .navbar {
         width: $navbar-height;
     }
 
-    .navbar-brand  a {
+    .navbar-brand a {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         margin-left: $size-small;
-        //margin-right: 20px;
+        margin-left: 0;
+		background-color: #02071ac4;
+    }
+
+    .navbar-brand svg {
+        //transform: rotate(100deg);
     }
 }
 
