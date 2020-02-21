@@ -2,118 +2,118 @@
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "governance",
+        "type_": "governance",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request, and other maiocal yaaaa thinkk",
         "severity": 4,
-        "tensionType": "governance",
+        "type_": "governance",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "tactical",
+        "type_": "tactical",
         "description": "",
         "n_comments": 1,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "operational",
+        "type_": "operational",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request, and other maiocal yaaaa thinkk",
         "severity": 4,
-        "tensionType": "personal",
+        "type_": "personal",
         "description": "",
         "n_comments": 2,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "personal",
+        "type_": "personal",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request, and other maiocal yaaaa thinkk",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request, and other maiocal yaaaa thinkk",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "do a graphql request",
         "severity": 4,
-        "tensionType": "Xtp",
+        "type_": "Xtp",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     }
 ]

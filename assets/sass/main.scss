@@ -66,8 +66,17 @@ header > .navbar {
     }
 
     .navbar-brand svg {
-        //transform: rotate(100deg);
+        -webkit-transform: rotate(45deg);
+        transform: rotate(45deg);
+
+        -webkit-transition: -webkit-transform .666s ease-in-out;
+        transition: transform .666s ease-in-out;
     }
+
+    //.navbar-brand svg:hover {
+    //    -webkit-transform: rotate(225deg);
+    //    transform: rotate(225deg);
+    //}
 }
 
 #leftPane {

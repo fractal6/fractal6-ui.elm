@@ -49,9 +49,9 @@ type alias OrgaGraph =
 type alias Tension =
     { title : String
     , description : String
-    , tensionType : String
-    , from : String
-    , to : String
+    , type_ : String
+    , emitter : String
+    , receivers : String
     , severity : Int
     , n_comments : Int
     }
@@ -192,11 +192,11 @@ tsDecoder : Decoder Tension
 tsDecoder =
     JD.map7
         Tension
+        (field "type_" string)
         (field "title" string)
+        (field "emitter" string)
+        (field "receivers" string)
         (field "description" string)
-        (field "tensionType" string)
-        (field "from" string)
-        (field "to" string)
         (field "severity" int)
         (field "n_comments" int)
 
@@ -339,15 +339,15 @@ mTension tension =
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" ("type: " ++ tension.tensionType)
+                , attribute "data-tooltip" ("type: " ++ tension.type_)
                 ]
-                [ if tension.tensionType == "personal" then
+                [ if tension.type_ == "personal" then
                     div [ class "Circle has-text-danger" ] [ text "" ]
 
-                  else if tension.tensionType == "governance" then
+                  else if tension.type_ == "governance" then
                     div [ class "Circle has-text-info" ] [ text "" ]
 
-                  else if tension.tensionType == "operational" then
+                  else if tension.type_ == "operational" then
                     div [ class "Circle has-text-warning" ] [ text "" ]
 
                   else

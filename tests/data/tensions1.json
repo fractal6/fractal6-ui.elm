@@ -2,55 +2,55 @@
     {
         "title": "Gin backend development",
         "severity": 4,
-        "tensionType": "tactical",
+        "type_": "tactical",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "Implement a Graphql Resolver (N+1 problem)",
         "severity": 4,
-        "tensionType": "operational",
+        "type_": "operational",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "Dgraph vs Prisma",
         "severity": 4,
-        "tensionType": "personal",
+        "type_": "personal",
         "description": "",
         "n_comments": 1,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "Choose a internationalisation system (i18n)",
         "severity": 4,
-        "tensionType": "operational",
+        "type_": "operational",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "Interface with git",
         "severity": 4,
-        "tensionType": "operational",
+        "type_": "operational",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     },
     {
         "title": "White paper, pitches and green paper.",
         "severity": 4,
-        "tensionType": "governance",
+        "type_": "governance",
         "description": "",
         "n_comments": 0,
-        "from": "",
-        "to": ""
+        "emitter": "",
+        "receivers": ""
     }
 ]

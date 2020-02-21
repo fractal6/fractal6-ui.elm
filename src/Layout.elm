@@ -36,7 +36,6 @@ viewHeader currentRoute =
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ Logo.logo_fractal
 
-                    --, text "\u{00A0} "
                     --, span [ class "is-size-5" ] [ text "Fractal6" ]
                     ]
                 , div
