@@ -18,6 +18,33 @@
         "receivers": ""
     },
     {
+        "title": "Who is in charge of X",
+        "severity": 4,
+        "type_": "help",
+        "description": "",
+        "n_comments": 0,
+        "emitter": "",
+        "receivers": ""
+    },
+    {
+        "title": "Who is in charge of Y",
+        "severity": 4,
+        "type_": "help",
+        "description": "",
+        "n_comments": 0,
+        "emitter": "",
+        "receivers": ""
+    },
+    {
+        "title": "Implement a Graphql Resolver (N+1 problem)",
+        "severity": 4,
+        "type_": "operational",
+        "description": "",
+        "n_comments": 0,
+        "emitter": "",
+        "receivers": ""
+    },
+    {
         "title": "Dgraph vs Prisma",
         "severity": 4,
         "type_": "personal",

@@ -192,11 +192,11 @@ tsDecoder : Decoder Tension
 tsDecoder =
     JD.map7
         Tension
-        (field "type_" string)
         (field "title" string)
+        (field "description" string)
+        (field "type_" string)
         (field "emitter" string)
         (field "receivers" string)
-        (field "description" string)
         (field "severity" int)
         (field "n_comments" int)
 
@@ -349,6 +349,9 @@ mTension tension =
 
                   else if tension.type_ == "operational" then
                     div [ class "Circle has-text-warning" ] [ text "" ]
+
+                  else if tension.type_ == "help" then
+                    div [ class "Circle has-text-success" ] [ text "" ]
 
                   else
                     div [ class "Circle has-text-black" ] [ text "" ]
