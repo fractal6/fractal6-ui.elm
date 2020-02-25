@@ -251,6 +251,46 @@ view model =
         ]
 
 
+viewLeftPane : Model -> Html Msg
+viewLeftPane model =
+    nav [ class "menu" ]
+        [ p [ class "menu-label" ]
+            [ div [ class "hero is-small is-primary is-bold" ]
+                [ div [ class "hero-body has-text-centered" ] [ text model.asked_orga ] ]
+            ]
+        , ul [ class "menu-list" ]
+            [ li [ class "menu-label" ]
+                [ div [ class "hero is-small is-info is-bold" ]
+                    [ div [ class "hero-body" ]
+                        [ Fa.icon1 "far fa-circle fa-lg" model.circle_focus.name ]
+                    ]
+                ]
+            , li []
+                [ ul [ class "menu-list" ]
+                    [ li []
+                        [ a []
+                            [ Fa.icon1 "fas fa-scroll fa-xs" "Mandates" ]
+                        ]
+                    , li []
+                        [ a []
+                            [ Fa.icon1 "fas fa-exchange-alt fa-xs" "Tensions" ]
+
+                        --  fa-exclamation-circle
+                        ]
+                    , li []
+                        [ a []
+                            [ Fa.icon1 "fas fa-history fa-xs" "Journal" ]
+                        ]
+                    , li []
+                        [ a []
+                            [ Fa.icon1 "fas fa-user fa-xs" "Members" ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+
 viewHelperBar : Model -> Html Msg
 viewHelperBar model =
     nav
@@ -380,45 +420,5 @@ mTension tension =
 
               else
                 text ""
-            ]
-        ]
-
-
-viewLeftPane : Model -> Html Msg
-viewLeftPane model =
-    nav [ class "menu" ]
-        [ p [ class "menu-label" ]
-            [ div [ class "hero is-small is-primary is-bold" ]
-                [ div [ class "hero-body has-text-centered" ] [ text model.asked_orga ] ]
-            ]
-        , ul [ class "menu-list" ]
-            [ li [ class "menu-label" ]
-                [ div [ class "hero is-small is-info is-bold" ]
-                    [ div [ class "hero-body" ]
-                        [ Fa.icon1 "far fa-circle fa-lg" model.circle_focus.name ]
-                    ]
-                ]
-            , li []
-                [ ul [ class "menu-list" ]
-                    [ li []
-                        [ a []
-                            [ Fa.icon1 "fas fa-scroll fa-xs" "Mandates" ]
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon1 "fas fa-exchange-alt fa-xs" "Tensions" ]
-
-                        --  fa-exclamation-circle
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon1 "fas fa-history fa-xs" "Journal" ]
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon1 "fas fa-user fa-xs" "Members" ]
-                        ]
-                    ]
-                ]
             ]
         ]
