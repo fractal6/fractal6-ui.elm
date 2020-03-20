@@ -29,7 +29,7 @@
     "d3-scale": "^3.2.1"
   },
   "devDependencies": {
-    "@dillonkearns/elm-graphql": "^4.0.0",
+    "@dillonkearns/elm-graphql": "^4.0.2",
     "bulma": "^0.8.0",
     "chokidar-cli": "2.1.0",
     "concurrently": "5.0.0",
