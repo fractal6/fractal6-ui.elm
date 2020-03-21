@@ -51,12 +51,6 @@ id =
 
 
 {-| -}
-title : SelectionSet String Fractal.Interface.Post
-title =
-    Object.selectionForField "String" "title" [] Decode.string
-
-
-{-| -}
 message : SelectionSet (Maybe String) Fractal.Interface.Post
 message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
@@ -66,3 +60,9 @@ message =
 createdAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Interface.Post
 createdAt =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+{-| -}
+author : SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Interface.Post
+author object_ =
+    Object.selectionForCompositeField "author" [] object_ identity

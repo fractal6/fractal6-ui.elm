@@ -60,8 +60,8 @@ type alias OrgaGraph =
 type alias Tension =
     { title : String
     , type_ : TensionType
-    , severity : Int
-    , n_comments : Int
+    , severity : Maybe Int
+    , n_comments : Maybe Int
 
     --, emitter : String
     --, receivers : String
@@ -211,11 +211,7 @@ update msg model =
                     )
 
         TensionsSuccess result ->
-            let
-                remoteData =
-                    decodeGQLResponse result
-            in
-            case remoteData of
+            case result of
                 RemoteData.Success data ->
                     ( { model | circle_tensions = Loaded data }
                     , Cmd.none

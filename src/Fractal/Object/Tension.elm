@@ -27,6 +27,12 @@ nth =
 
 
 {-| -}
+title : SelectionSet String Fractal.Object.Tension
+title =
+    Object.selectionForField "String" "title" [] Decode.string
+
+
+{-| -}
 type_ : SelectionSet Fractal.Enum.TensionType.TensionType Fractal.Object.Tension
 type_ =
     Object.selectionForField "Enum.TensionType.TensionType" "type_" [] Fractal.Enum.TensionType.decoder
@@ -45,27 +51,27 @@ receivers object_ =
 
 
 {-| -}
-severity : SelectionSet (Maybe Int) Fractal.Object.Tension
-severity =
-    Object.selectionForField "(Maybe Int)" "severity" [] (Decode.int |> Decode.nullable)
-
-
-{-| -}
 isAnonymous : SelectionSet (Maybe Bool) Fractal.Object.Tension
 isAnonymous =
     Object.selectionForField "(Maybe Bool)" "isAnonymous" [] (Decode.bool |> Decode.nullable)
 
 
 {-| -}
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Tension
-id =
-    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+severity : SelectionSet (Maybe Int) Fractal.Object.Tension
+severity =
+    Object.selectionForField "(Maybe Int)" "severity" [] (Decode.int |> Decode.nullable)
 
 
 {-| -}
-title : SelectionSet String Fractal.Object.Tension
-title =
-    Object.selectionForField "String" "title" [] Decode.string
+n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension
+n_comments =
+    Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
+
+
+{-| -}
+id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Tension
+id =
+    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
 {-| -}
@@ -78,3 +84,9 @@ message =
 createdAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Tension
 createdAt =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+{-| -}
+author : SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Tension
+author object_ =
+    Object.selectionForCompositeField "author" [] object_ identity
