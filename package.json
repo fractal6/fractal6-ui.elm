@@ -16,7 +16,7 @@
     "js_build:watch": "chokidar assets/js/**.js -c \"npm run js_build\"",
     "css_build": "for k in light dark; do node-sass --omit-source-map-url assets/sass/$k.scss public/$k.css; done",
     "js_build": "cp -v assets/js/*.js public/",
-    "grapql-build": "./node_modules/.bin/elm-graphql https://localhost:3000 --base Fractal6 --output ./src --header 'headerKey: header value'"
+    "graphql_build": "./node_modules/.bin/elm-graphql http://localhost:8888/api --base Fractal --output ./src"
   },
   "keywords": [],
   "author": "",
