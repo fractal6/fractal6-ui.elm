@@ -5,15 +5,26 @@ import Components.Fa as Fa
 import Components.Loading as Loading exposing (Status(..), showWhatsup)
 import Debug
 import Dict exposing (Dict)
+import Fractal.Enum.TensionType exposing (TensionType)
+import Fractal.InputObject
+import Fractal.Object
+import Fractal.Object.Tension
+import Fractal.Query as Query
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
+import GqlClient exposing (GQLResponse, decodeGQLResponse, makeGQLMutation, makeGQLQuery)
+import Graphql.Http
+import Graphql.Operation exposing (RootQuery)
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as JD exposing (Decoder, field, int, string)
 import Ports
+import RemoteData exposing (RemoteData)
 import Spa.Page
 import Task
 import Utils.Spa exposing (Page, PageContext)
@@ -48,13 +59,21 @@ type alias OrgaGraph =
 
 type alias Tension =
     { title : String
-    , description : String
-    , type_ : String
-    , emitter : String
-    , receivers : String
+    , type_ : TensionType
     , severity : Int
     , n_comments : Int
+
+    --, emitter : String
+    --, receivers : String
     }
+
+
+type alias Tensions =
+    Maybe (List (Maybe Tension))
+
+
+type alias TensionsData =
+    RemoteData (Graphql.Http.Error Tensions) Tensions
 
 
 type alias Model =
@@ -64,11 +83,48 @@ type alias Model =
     -- Loaded indepedently from server
     , circle_focus : CircleFocusState
     , orga_data : Status OrgaGraph
-    , circle_tensions : Status (List Tension)
+    , circle_tensions : Status Tensions
     }
 
 
 
+-- GraphQL decoder
+
+
+tensionSelection : SelectionSet Tension Fractal.Object.Tension
+tensionSelection =
+    SelectionSet.map4 Tension
+        Fractal.Object.Tension.title
+        Fractal.Object.Tension.type_
+        Fractal.Object.Tension.n_comments
+        Fractal.Object.Tension.severity
+
+
+fetchTensions : Cmd Msg
+fetchTensions =
+    makeGQLQuery
+        (Query.queryTension tensionSelection)
+        (RemoteData.fromResult >> TensionsSuccess)
+
+
+
+-- HTTP and Json Decoder
+--
+-- tsDecoder : Decoder Tension
+-- tsDecoder =
+--     JD.map7
+--         Tension
+--         (field "title" string)
+--         (field "type_" string)
+--         (field "emitter" string)
+--         (field "receivers" string)
+--         (field "severity" int)
+--         (field "n_comments" int)
+--
+--
+-- tensionsDecoder : Decoder Tensions
+-- tensionsDecoder =
+--     JD.list tsDecoder
 -- INIT
 
 
@@ -94,9 +150,12 @@ init { route } params =
             }
     in
     ( model
+      --, Cmd.batch
+      --    [ Http.get { url = "/data/" ++ model.asked_orga ++ ".json", expect = Http.expectString GotText }
+      --    , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
+      --    ]
     , Cmd.batch
-        [ Http.get { url = "/data/" ++ model.asked_orga ++ ".json", expect = Http.expectString GotText }
-        , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
+        [ fetchTensions
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
@@ -109,7 +168,8 @@ init { route } params =
 
 type Msg
     = GotText (Result Http.Error String)
-    | GotTensions (Result Http.Error (List Tension))
+    | GotTensions (Result Http.Error Tensions)
+    | TensionsSuccess TensionsData
     | CircleClick CircleFocusState
     | ChangeNodeFocus Int
     | PassedSlowLoadTreshold
@@ -150,6 +210,27 @@ update msg model =
                     , Cmd.none
                     )
 
+        TensionsSuccess result ->
+            let
+                remoteData =
+                    decodeGQLResponse result
+            in
+            case remoteData of
+                RemoteData.Success data ->
+                    ( { model | circle_tensions = Loaded data }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                --RemoteData.Failure err ->
+                --    ( model, Cmd.none, Cmd.none )
+                --RemoteData.Loading ->
+                --    ( model, Cmd.none, Cmd.none )
+                --RemoteData.NotAsked ->
+                --    ( model, Cmd.none, Cmd.none )
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
         CircleClick focus ->
             ( { model | circle_focus = focus }
             , Cmd.none
@@ -182,28 +263,6 @@ update msg model =
             , Cmd.none
             , Cmd.none
             )
-
-
-
--- HTTP and Json Decoder
-
-
-tsDecoder : Decoder Tension
-tsDecoder =
-    JD.map7
-        Tension
-        (field "title" string)
-        (field "description" string)
-        (field "type_" string)
-        (field "emitter" string)
-        (field "receivers" string)
-        (field "severity" int)
-        (field "n_comments" int)
-
-
-tensionsDecoder : Decoder (List Tension)
-tensionsDecoder =
-    JD.list tsDecoder
 
 
 

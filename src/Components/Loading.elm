@@ -4,6 +4,7 @@ import Components.Asset as Asset
 import Html exposing (Html, img, text)
 import Html.Attributes exposing (alt, height, src, width)
 import Process
+import RemoteData exposing (RemoteData)
 import Task
 
 
