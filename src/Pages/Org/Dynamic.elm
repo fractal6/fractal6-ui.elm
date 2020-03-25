@@ -3,9 +3,8 @@ port module Pages.Org.Dynamic exposing (Model, Msg, page)
 import Array
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (Status(..), showWhatsup)
-import Debug
 import Dict exposing (Dict)
-import Fractal.Enum.TensionType exposing (TensionType)
+import Fractal.Enum.TensionType as TensionEnum exposing (TensionType, toString)
 import Fractal.InputObject
 import Fractal.Object
 import Fractal.Object.Tension
@@ -60,20 +59,12 @@ type alias OrgaGraph =
 type alias Tension =
     { title : String
     , type_ : TensionType
-    , severity : Maybe Int
-    , n_comments : Maybe Int
+    , severity : Int
+    , n_comments : Int
 
     --, emitter : String
     --, receivers : String
     }
-
-
-type alias Tensions =
-    Maybe (List (Maybe Tension))
-
-
-type alias TensionsData =
-    RemoteData (Graphql.Http.Error Tensions) Tensions
 
 
 type alias Model =
@@ -83,7 +74,7 @@ type alias Model =
     -- Loaded indepedently from server
     , circle_focus : CircleFocusState
     , orga_data : Status OrgaGraph
-    , circle_tensions : Status Tensions
+    , circle_tensions : Status (List Tension)
     }
 
 
@@ -105,6 +96,20 @@ fetchTensions =
     makeGQLQuery
         (Query.queryTension tensionSelection)
         (RemoteData.fromResult >> TensionsSuccess)
+
+
+
+{-
+   Schema Type Utils (should be auto generated !)
+-}
+
+
+type alias TensionsData =
+    Maybe (List (Maybe Tension))
+
+
+type alias TensionsResult =
+    RemoteData (Graphql.Http.Error TensionsData) TensionsData
 
 
 
@@ -167,9 +172,9 @@ init { route } params =
 
 
 type Msg
-    = GotText (Result Http.Error String)
-    | GotTensions (Result Http.Error Tensions)
-    | TensionsSuccess TensionsData
+    = --GotText (Result Http.Error String)
+      --| GotTensions (Result Http.Error Tensions)
+      TensionsSuccess TensionsResult
     | CircleClick CircleFocusState
     | ChangeNodeFocus Int
     | PassedSlowLoadTreshold
@@ -178,42 +183,42 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update msg model =
     case msg of
-        GotText result ->
-            case result of
-                Ok data ->
-                    ( { model | orga_data = Loaded data }
-                    , Cmd.none
-                    , Ports.init_circlePacking data
-                    )
-
-                Err _ ->
-                    ( { model | orga_data = Failed }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-        GotTensions result ->
-            case result of
-                Ok data ->
-                    ( { model | circle_tensions = Loaded data }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                Err errmsg ->
-                    let
-                        c =
-                            Debug.log "dede" errmsg
-                    in
-                    ( { model | circle_tensions = Failed }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
+        --GotText result ->
+        --    case result of
+        --        Ok data ->
+        --            ( { model | orga_data = Loaded data }
+        --            , Cmd.none
+        --            , Ports.init_circlePacking data
+        --            )
+        --        Err _ ->
+        --            ( { model | orga_data = Failed }
+        --            , Cmd.none
+        --            , Cmd.none
+        --            )
+        --GotTensions result ->
+        --    case result of
+        --        Ok data ->
+        --            ( { model | circle_tensions = Loaded data }
+        --            , Cmd.none
+        --            , Cmd.none
+        --            )
+        --        Err errmsg ->
+        --            let
+        --                c =
+        --                    Debug.log "dede" errmsg
+        --            in
+        --            ( { model | circle_tensions = Failed }
+        --            , Cmd.none
+        --            , Cmd.none
+        --            )
         TensionsSuccess result ->
             case result of
                 RemoteData.Success data ->
-                    ( { model | circle_tensions = Loaded data }
+                    let
+                        decodedData =
+                            decodeGQLResponse data
+                    in
+                    ( { model | circle_tensions = Loaded decodedData }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -434,22 +439,20 @@ mTension tension =
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" ("type: " ++ tension.type_)
+                , attribute "data-tooltip" ("type: " ++ TensionEnum.toString tension.type_)
                 ]
-                [ if tension.type_ == "personal" then
-                    div [ class "Circle has-text-danger" ] [ text "" ]
+                [ case tension.type_ of
+                    TensionEnum.Personal ->
+                        div [ class "Circle has-text-danger" ] [ text "" ]
 
-                  else if tension.type_ == "governance" then
-                    div [ class "Circle has-text-info" ] [ text "" ]
+                    TensionEnum.Governance ->
+                        div [ class "Circle has-text-info" ] [ text "" ]
 
-                  else if tension.type_ == "operational" then
-                    div [ class "Circle has-text-warning" ] [ text "" ]
+                    TensionEnum.Operational ->
+                        div [ class "Circle has-text-warning" ] [ text "" ]
 
-                  else if tension.type_ == "help" then
-                    div [ class "Circle has-text-success" ] [ text "" ]
-
-                  else
-                    div [ class "Circle has-text-black" ] [ text "" ]
+                    TensionEnum.Help ->
+                        div [ class "Circle has-text-success" ] [ text "" ]
                 ]
             ]
         , div [ class "media-content" ]

@@ -57,15 +57,15 @@ isAnonymous =
 
 
 {-| -}
-severity : SelectionSet (Maybe Int) Fractal.Object.Tension
+severity : SelectionSet Int Fractal.Object.Tension
 severity =
-    Object.selectionForField "(Maybe Int)" "severity" [] (Decode.int |> Decode.nullable)
+    Object.selectionForField "Int" "severity" [] Decode.int
 
 
 {-| -}
-n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension
+n_comments : SelectionSet Int Fractal.Object.Tension
 n_comments =
-    Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
+    Object.selectionForField "Int" "n_comments" [] Decode.int
 
 
 {-| -}

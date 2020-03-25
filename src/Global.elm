@@ -10,7 +10,6 @@ module Global exposing
     , update
     )
 
-import Debug
 import Generated.Routes as Routes exposing (Route)
 import Ports
 
