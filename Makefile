@@ -12,3 +12,6 @@ setup-css:
 generate:
 	npm run graphql_build
 
+generate_starwars:
+	./node_modules/.bin/elm-graphql https://elm-graphql.herokuapp.com/ --base StarWars --output ./src
+
