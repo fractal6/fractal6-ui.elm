@@ -8,7 +8,7 @@ import Fractal.Enum.TensionType as TensionEnum exposing (TensionType, toString)
 import Fractal.InputObject
 import Fractal.Object
 import Fractal.Object.Tension
-import Fractal.Query as Query
+import Fractal.Query as Q
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
@@ -60,7 +60,7 @@ type alias Tension =
     { title : String
     , type_ : TensionType
     , severity : Int
-    , n_comments : Int
+    , n_comments : Maybe Int
 
     --, emitter : String
     --, receivers : String
@@ -87,14 +87,25 @@ tensionSelection =
     SelectionSet.map4 Tension
         Fractal.Object.Tension.title
         Fractal.Object.Tension.type_
-        Fractal.Object.Tension.n_comments
         Fractal.Object.Tension.severity
+        Fractal.Object.Tension.n_comments
 
 
-fetchTensions : Cmd Msg
-fetchTensions =
+
+--todoListOptionalArgument : TodosOptionalArguments -> TodosOptionalArguments
+--todoListOptionalArgument optionalArgs =
+--    { optionalArgs | where_ = whereIsPublic False, order_by = orderByCreatedAt Desc }
+
+
+tensionsPageArg : Q.QueryTensionOptionalArguments -> Q.QueryTensionOptionalArguments
+tensionsPageArg args =
+    args
+
+
+fetchTensionsPage : Cmd Msg
+fetchTensionsPage =
     makeGQLQuery
-        (Query.queryTension tensionSelection)
+        (Q.queryTension tensionsPageArg tensionSelection)
         (RemoteData.fromResult >> TensionsSuccess)
 
 
@@ -160,7 +171,7 @@ init { route } params =
       --    , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
       --    ]
     , Cmd.batch
-        [ fetchTensions
+        [ fetchTensionsPage
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
@@ -364,7 +375,8 @@ viewHelperBar model =
                     li [] [ a [ href "#", onClick (ChangeNodeFocus i) ] [ text x.name ] ]
 
                 else
-                    li [ class "is-active has-text-weight-semibold" ] [ a [ attribute "aria-current" "page", href "#" ] [ text x.name ] ]
+                    li [ class "is-active has-text-weight-semibold" ]
+                        [ a [ attribute "aria-current" "page", href "#" ] [ text x.name ] ]
             )
             model.circle_focus.path
             |> Array.toList
@@ -453,6 +465,9 @@ mTension tension =
 
                     TensionEnum.Help ->
                         div [ class "Circle has-text-success" ] [ text "" ]
+
+                    TensionEnum.Alert ->
+                        div [ class "Circle has-text-alert" ] [ text "" ]
                 ]
             ]
         , div [ class "media-content" ]
@@ -468,15 +483,16 @@ mTension tension =
                 ]
                 [ Fa.icon_ "fas fa-fire" (String.fromInt tension.severity)
                 ]
-            , if tension.n_comments > 0 then
-                div
-                    [ class "tooltip has-tooltip-top has-tooltip-light"
-                    , attribute "data-tooltip" ("comments: " ++ String.fromInt tension.n_comments)
-                    ]
-                    [ Fa.icon "fas fa-comment-dots" (String.fromInt tension.n_comments)
-                    ]
+            , case tension.n_comments of
+                Just n_comments ->
+                    div
+                        [ class "tooltip has-tooltip-top has-tooltip-light"
+                        , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
+                        ]
+                        [ Fa.icon "fas fa-comment-dots" (String.fromInt n_comments)
+                        ]
 
-              else
-                text ""
+                Nothing ->
+                    text ""
             ]
         ]
