@@ -26,9 +26,21 @@ id =
 
 
 {-| -}
+createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.User
+createdAt =
+    Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
+
+
+{-| -}
 username : SelectionSet String Fractal.Object.User
 username =
     Object.selectionForField "String" "username" [] Decode.string
+
+
+{-| -}
+fullname : SelectionSet (Maybe String) Fractal.Object.User
+fullname =
+    Object.selectionForField "(Maybe String)" "fullname" [] (Decode.string |> Decode.nullable)
 
 
 {-| -}
@@ -37,7 +49,65 @@ password =
     Object.selectionForField "String" "password" [] Decode.string
 
 
+type alias RolesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.RoleFilter
+    , order : OptionalArgument Fractal.InputObject.RoleOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+roles : (RolesOptionalArguments -> RolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+roles fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeRoleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeRoleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "roles" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type alias BackedRolesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.RoleFilter
+    , order : OptionalArgument Fractal.InputObject.RoleOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+backed_roles : (BackedRolesOptionalArguments -> BackedRolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+backed_roles fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeRoleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeRoleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "backed_roles" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
 {-| -}
-roles : SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
-roles object_ =
-    Object.selectionForCompositeField "roles" [] object_ (identity >> Decode.list >> Decode.nullable)
+bio : SelectionSet (Maybe String) Fractal.Object.User
+bio =
+    Object.selectionForField "(Maybe String)" "bio" [] (Decode.string |> Decode.nullable)

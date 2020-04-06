@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddUserPayload exposing (..)
+module Fractal.Object.UpdateUserPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -35,7 +35,7 @@ type alias UserOptionalArguments =
   - offset -
 
 -}
-user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserPayload
+user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateUserPayload
 user fillInOptionals object_ =
     let
         filledInOptionals =
@@ -49,6 +49,6 @@ user fillInOptionals object_ =
 
 
 {-| -}
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddUserPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateUserPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

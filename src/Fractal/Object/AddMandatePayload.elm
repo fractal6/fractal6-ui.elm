@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddUserPayload exposing (..)
+module Fractal.Object.AddMandatePayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,9 +19,9 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias UserOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.UserFilter
-    , order : OptionalArgument Fractal.InputObject.UserOrder
+type alias MandateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.MandateFilter
+    , order : OptionalArgument Fractal.InputObject.MandateOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -35,20 +35,20 @@ type alias UserOptionalArguments =
   - offset -
 
 -}
-user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserPayload
-user fillInOptionals object_ =
+mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddMandatePayload
+mandate fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeUserOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeMandateOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "user" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 {-| -}
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddUserPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.AddMandatePayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

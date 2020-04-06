@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.Circle exposing (..)
+module Fractal.Object.Node exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -20,19 +20,13 @@ import Json.Decode as Decode
 
 
 {-| -}
-isRoot : SelectionSet Bool Fractal.Object.Circle
-isRoot =
-    Object.selectionForField "Bool" "isRoot" [] Decode.bool
-
-
-{-| -}
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Circle
+id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Node
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
 {-| -}
-createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Circle
+createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Node
 createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
 
@@ -46,7 +40,7 @@ type alias CreatedByOptionalArguments =
   - filter -
 
 -}
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Circle
+createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Node
 createdBy fillInOptionals object_ =
     let
         filledInOptionals =
@@ -68,7 +62,7 @@ type alias ParentOptionalArguments =
   - filter -
 
 -}
-parent : (ParentOptionalArguments -> ParentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) Fractal.Object.Circle
+parent : (ParentOptionalArguments -> ParentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 parent fillInOptionals object_ =
     let
         filledInOptionals =
@@ -97,7 +91,7 @@ type alias ChildrenOptionalArguments =
   - offset -
 
 -}
-children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Circle
+children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
 children fillInOptionals object_ =
     let
         filledInOptionals =
@@ -111,13 +105,13 @@ children fillInOptionals object_ =
 
 
 {-| -}
-name : SelectionSet String Fractal.Object.Circle
+name : SelectionSet String Fractal.Object.Node
 name =
     Object.selectionForField "String" "name" [] Decode.string
 
 
 {-| -}
-nameid : SelectionSet String Fractal.Object.Circle
+nameid : SelectionSet String Fractal.Object.Node
 nameid =
     Object.selectionForField "String" "nameid" [] Decode.string
 
@@ -131,7 +125,7 @@ type alias MandateOptionalArguments =
   - filter -
 
 -}
-mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Circle
+mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 mandate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -160,7 +154,7 @@ type alias TensionsOutOptionalArguments =
   - offset -
 
 -}
-tensions_out : (TensionsOutOptionalArguments -> TensionsOutOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Circle
+tensions_out : (TensionsOutOptionalArguments -> TensionsOutOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
 tensions_out fillInOptionals object_ =
     let
         filledInOptionals =
@@ -189,7 +183,7 @@ type alias TensionsInOptionalArguments =
   - offset -
 
 -}
-tensions_in : (TensionsInOptionalArguments -> TensionsInOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Circle
+tensions_in : (TensionsInOptionalArguments -> TensionsInOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
 tensions_in fillInOptionals object_ =
     let
         filledInOptionals =

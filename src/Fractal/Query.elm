@@ -19,19 +19,346 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-| -}
-queryUser : SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
-queryUser object_ =
-    Object.selectionForCompositeField "queryUser" [] object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+type alias GetNodeOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , nameid : OptionalArgument String
+    }
 
 
-{-| -}
-queryMandate : SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
-queryMandate object_ =
-    Object.selectionForCompositeField "queryMandate" [] object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+{-|
+
+  - id -
+  - nameid -
+
+-}
+getNode : (GetNodeOptionalArguments -> GetNodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) RootQuery
+getNode fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { id = Absent, nameid = Absent }
+
+        optionalArgs =
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "nameid" filledInOptionals.nameid Encode.string ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "getNode" optionalArgs object_ (identity >> Decode.nullable)
 
 
-{-| -}
-queryTension : SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
-queryTension object_ =
-    Object.selectionForCompositeField "queryTension" [] object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+type alias QueryNodeOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter
+    , order : OptionalArgument Fractal.InputObject.NodeOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryNode : (QueryNodeOptionalArguments -> QueryNodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNode fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias GetCircleOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , nameid : OptionalArgument String
+    }
+
+
+{-|
+
+  - id -
+  - nameid -
+
+-}
+getCircle : (GetCircleOptionalArguments -> GetCircleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Circle -> SelectionSet (Maybe decodesTo) RootQuery
+getCircle fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { id = Absent, nameid = Absent }
+
+        optionalArgs =
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "nameid" filledInOptionals.nameid Encode.string ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "getCircle" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias QueryCircleOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CircleFilter
+    , order : OptionalArgument Fractal.InputObject.CircleOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryCircle : (QueryCircleOptionalArguments -> QueryCircleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Circle -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryCircle fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCircleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeCircleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryCircle" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias GetRoleOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , nameid : OptionalArgument String
+    }
+
+
+{-|
+
+  - id -
+  - nameid -
+
+-}
+getRole : (GetRoleOptionalArguments -> GetRoleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe decodesTo) RootQuery
+getRole fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { id = Absent, nameid = Absent }
+
+        optionalArgs =
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "nameid" filledInOptionals.nameid Encode.string ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "getRole" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias QueryRoleOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.RoleFilter
+    , order : OptionalArgument Fractal.InputObject.RoleOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryRole : (QueryRoleOptionalArguments -> QueryRoleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryRole fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeRoleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeRoleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryRole" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias GetPostRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+{-|
+
+  - id -
+
+-}
+getPost : GetPostRequiredArguments -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe decodesTo) RootQuery
+getPost requiredArgs object_ =
+    Object.selectionForCompositeField "getPost" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+
+
+type alias QueryPostOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PostFilter
+    , order : OptionalArgument Fractal.InputObject.PostOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryPost : (QueryPostOptionalArguments -> QueryPostOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryPost fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodePostFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodePostOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryPost" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias GetTensionRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+{-|
+
+  - id -
+
+-}
+getTension : GetTensionRequiredArguments -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe decodesTo) RootQuery
+getTension requiredArgs object_ =
+    Object.selectionForCompositeField "getTension" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+
+
+type alias QueryTensionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryTension : (QueryTensionOptionalArguments -> QueryTensionOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryTension fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryTension" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias GetMandateRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+{-|
+
+  - id -
+
+-}
+getMandate : GetMandateRequiredArguments -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) RootQuery
+getMandate requiredArgs object_ =
+    Object.selectionForCompositeField "getMandate" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+
+
+type alias QueryMandateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.MandateFilter
+    , order : OptionalArgument Fractal.InputObject.MandateOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryMandate : (QueryMandateOptionalArguments -> QueryMandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryMandate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeMandateOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryMandate" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias GetUserOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , username : OptionalArgument String
+    }
+
+
+{-|
+
+  - id -
+  - username -
+
+-}
+getUser : (GetUserOptionalArguments -> GetUserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) RootQuery
+getUser fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { id = Absent, username = Absent }
+
+        optionalArgs =
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "username" filledInOptionals.username Encode.string ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "getUser" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias QueryUserOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter
+    , order : OptionalArgument Fractal.InputObject.UserOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+{-|
+
+  - filter -
+  - order -
+  - first -
+  - offset -
+
+-}
+queryUser : (QueryUserOptionalArguments -> QueryUserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryUser fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeUserOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryUser" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)

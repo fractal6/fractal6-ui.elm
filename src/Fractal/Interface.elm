@@ -5,9 +5,6 @@
 module Fractal.Interface exposing (..)
 
 
-type Node
-    = Node
-
-
-type Post
-    = Post
+placeholder : String
+placeholder =
+    ""

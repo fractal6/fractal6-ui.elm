@@ -4,7 +4,14 @@
 
 module Fractal.InputObject exposing (..)
 
+import Fractal.Enum.CircleOrderable
+import Fractal.Enum.MandateOrderable
+import Fractal.Enum.NodeOrderable
+import Fractal.Enum.PostOrderable
+import Fractal.Enum.RoleOrderable
+import Fractal.Enum.TensionOrderable
 import Fractal.Enum.TensionType
+import Fractal.Enum.UserOrderable
 import Fractal.Interface
 import Fractal.Object
 import Fractal.Scalar
@@ -18,54 +25,246 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+buildAddCircleInput : AddCircleInputRequiredFields -> (AddCircleInputOptionalFields -> AddCircleInputOptionalFields) -> AddCircleInput
+buildAddCircleInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { parent = Absent, children = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent }
+    in
+    AddCircleInput { createdAt = required.createdAt, createdBy = required.createdBy, parent = optionals.parent, children = optionals.children, name = required.name, nameid = required.nameid, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, isRoot = required.isRoot }
+
+
+type alias AddCircleInputRequiredFields =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , name : String
+    , nameid : String
+    , isRoot : Bool
+    }
+
+
+type alias AddCircleInputOptionalFields =
+    { parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    }
+
+
+{-| Type alias for the `AddCircleInput` attributes. Note that this type
+needs to use the `AddCircleInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddCircleInputRaw =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : String
+    , nameid : String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , isRoot : Bool
+    }
+
+
+{-| Type for the AddCircleInput input object.
+-}
+type AddCircleInput
+    = AddCircleInput AddCircleInputRaw
+
+
+{-| Encode a AddCircleInput into a value that can be used as an argument.
+-}
+encodeAddCircleInput : AddCircleInput -> Value
+encodeAddCircleInput (AddCircleInput input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string input.name |> Just ), ( "nameid", Encode.string input.nameid |> Just ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "isRoot", Encode.bool input.isRoot |> Just ) ]
+
+
+buildAddMandateInput : AddMandateInputRequiredFields -> (AddMandateInputOptionalFields -> AddMandateInputOptionalFields) -> AddMandateInput
+buildAddMandateInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { message = Absent, responsabilities = Absent, domains = Absent }
+    in
+    AddMandateInput { createdAt = required.createdAt, createdBy = required.createdBy, message = optionals.message, purpose = required.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains }
+
+
+type alias AddMandateInputRequiredFields =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , purpose : String
+    }
+
+
+type alias AddMandateInputOptionalFields =
+    { message : OptionalArgument String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument (List String)
+    }
+
+
+{-| Type alias for the `AddMandateInput` attributes. Note that this type
+needs to use the `AddMandateInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddMandateInputRaw =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , message : OptionalArgument String
+    , purpose : String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument (List String)
+    }
+
+
+{-| Type for the AddMandateInput input object.
+-}
+type AddMandateInput
+    = AddMandateInput AddMandateInputRaw
+
+
+{-| Encode a AddMandateInput into a value that can be used as an argument.
+-}
+encodeAddMandateInput : AddMandateInput -> Value
+encodeAddMandateInput (AddMandateInput input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "purpose", Encode.string input.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", (Encode.string |> Encode.list) |> Encode.optional input.domains ) ]
+
+
+buildAddRoleInput : AddRoleInputRequiredFields -> (AddRoleInputOptionalFields -> AddRoleInputOptionalFields) -> AddRoleInput
+buildAddRoleInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { parent = Absent, children = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent, user = Absent, second = Absent, skills = Absent }
+    in
+    AddRoleInput { createdAt = required.createdAt, createdBy = required.createdBy, parent = optionals.parent, children = optionals.children, name = required.name, nameid = required.nameid, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, user = optionals.user, second = optionals.second, skills = optionals.skills }
+
+
+type alias AddRoleInputRequiredFields =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , name : String
+    , nameid : String
+    }
+
+
+type alias AddRoleInputOptionalFields =
+    { parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , user : OptionalArgument UserRef
+    , second : OptionalArgument UserRef
+    , skills : OptionalArgument (List String)
+    }
+
+
+{-| Type alias for the `AddRoleInput` attributes. Note that this type
+needs to use the `AddRoleInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddRoleInputRaw =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : String
+    , nameid : String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , user : OptionalArgument UserRef
+    , second : OptionalArgument UserRef
+    , skills : OptionalArgument (List String)
+    }
+
+
+{-| Type for the AddRoleInput input object.
+-}
+type AddRoleInput
+    = AddRoleInput AddRoleInputRaw
+
+
+{-| Encode a AddRoleInput into a value that can be used as an argument.
+-}
+encodeAddRoleInput : AddRoleInput -> Value
+encodeAddRoleInput (AddRoleInput input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string input.name |> Just ), ( "nameid", Encode.string input.nameid |> Just ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "user", encodeUserRef |> Encode.optional input.user ), ( "second", encodeUserRef |> Encode.optional input.second ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ) ]
+
+
 buildAddTensionInput : AddTensionInputRequiredFields -> (AddTensionInputOptionalFields -> AddTensionInputOptionalFields) -> AddTensionInput
 buildAddTensionInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { message = Absent, createdAt = Absent, nth = Absent, emitter = Absent, receivers = Absent, severity = Absent, isAnonymous = Absent }
+                { message = Absent, receivers = Absent, comments = Absent }
     in
-    { title = required.title, message = optionals.message, createdAt = optionals.createdAt, nth = optionals.nth, type_ = required.type_, emitter = optionals.emitter, receivers = optionals.receivers, severity = optionals.severity, isAnonymous = optionals.isAnonymous }
+    AddTensionInput { createdAt = required.createdAt, createdBy = required.createdBy, message = optionals.message, nth = required.nth, title = required.title, type_ = required.type_, emitter = required.emitter, receivers = optionals.receivers, isAnonymous = required.isAnonymous, severity = required.severity, comments = optionals.comments }
 
 
 type alias AddTensionInputRequiredFields =
-    { title : String
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , nth : Int
+    , title : String
     , type_ : Fractal.Enum.TensionType.TensionType
+    , emitter : NodeRef
+    , isAnonymous : Bool
+    , severity : Int
     }
 
 
 type alias AddTensionInputOptionalFields =
     { message : OptionalArgument String
-    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
-    , nth : OptionalArgument Int
-    , emitter : OptionalArgument NodeRef
     , receivers : OptionalArgument (List NodeRef)
-    , severity : OptionalArgument Int
-    , isAnonymous : OptionalArgument Bool
+    , comments : OptionalArgument (List PostRef)
+    }
+
+
+{-| Type alias for the `AddTensionInput` attributes. Note that this type
+needs to use the `AddTensionInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddTensionInputRaw =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , createdBy : UserRef
+    , message : OptionalArgument String
+    , nth : Int
+    , title : String
+    , type_ : Fractal.Enum.TensionType.TensionType
+    , emitter : NodeRef
+    , receivers : OptionalArgument (List NodeRef)
+    , isAnonymous : Bool
+    , severity : Int
+    , comments : OptionalArgument (List PostRef)
     }
 
 
 {-| Type for the AddTensionInput input object.
 -}
-type alias AddTensionInput =
-    { title : String
-    , message : OptionalArgument String
-    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
-    , nth : OptionalArgument Int
-    , type_ : Fractal.Enum.TensionType.TensionType
-    , emitter : OptionalArgument NodeRef
-    , receivers : OptionalArgument (List NodeRef)
-    , severity : OptionalArgument Int
-    , isAnonymous : OptionalArgument Bool
-    }
+type AddTensionInput
+    = AddTensionInput AddTensionInputRaw
 
 
 {-| Encode a AddTensionInput into a value that can be used as an argument.
 -}
 encodeAddTensionInput : AddTensionInput -> Value
-encodeAddTensionInput input =
+encodeAddTensionInput (AddTensionInput input) =
     Encode.maybeObject
-        [ ( "title", Encode.string input.title |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "nth", Encode.int |> Encode.optional input.nth ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receivers", (encodeNodeRef |> Encode.list) |> Encode.optional input.receivers ), ( "severity", Encode.int |> Encode.optional input.severity ), ( "isAnonymous", Encode.bool |> Encode.optional input.isAnonymous ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.int input.nth |> Just ), ( "title", Encode.string input.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitter", encodeNodeRef input.emitter |> Just ), ( "receivers", (encodeNodeRef |> Encode.list) |> Encode.optional input.receivers ), ( "isAnonymous", Encode.bool input.isAnonymous |> Just ), ( "severity", Encode.int input.severity |> Just ), ( "comments", (encodePostRef |> Encode.list) |> Encode.optional input.comments ) ]
 
 
 buildAddUserInput : AddUserInputRequiredFields -> (AddUserInputOptionalFields -> AddUserInputOptionalFields) -> AddUserInput
@@ -73,19 +272,24 @@ buildAddUserInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { roles = Absent }
+                { fullname = Absent, roles = Absent, backed_roles = Absent, bio = Absent }
     in
-    AddUserInput { username = required.username, password = required.password, roles = optionals.roles }
+    AddUserInput { createdAt = required.createdAt, username = required.username, fullname = optionals.fullname, password = required.password, roles = optionals.roles, backed_roles = optionals.backed_roles, bio = optionals.bio }
 
 
 type alias AddUserInputRequiredFields =
-    { username : String
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , username : String
     , password : String
     }
 
 
 type alias AddUserInputOptionalFields =
-    { roles : OptionalArgument (List RoleRef) }
+    { fullname : OptionalArgument String
+    , roles : OptionalArgument (List RoleRef)
+    , backed_roles : OptionalArgument (List RoleRef)
+    , bio : OptionalArgument String
+    }
 
 
 {-| Type alias for the `AddUserInput` attributes. Note that this type
@@ -94,9 +298,13 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias AddUserInputRaw =
-    { username : String
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , username : String
+    , fullname : OptionalArgument String
     , password : String
     , roles : OptionalArgument (List RoleRef)
+    , backed_roles : OptionalArgument (List RoleRef)
+    , bio : OptionalArgument String
     }
 
 
@@ -111,22 +319,694 @@ type AddUserInput
 encodeAddUserInput : AddUserInput -> Value
 encodeAddUserInput (AddUserInput input) =
     Encode.maybeObject
-        [ ( "username", Encode.string input.username |> Just ), ( "password", Encode.string input.password |> Just ), ( "roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.roles ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "username", Encode.string input.username |> Just ), ( "fullname", Encode.string |> Encode.optional input.fullname ), ( "password", Encode.string input.password |> Just ), ( "roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "bio", Encode.string |> Encode.optional input.bio ) ]
 
 
-buildNodeRef : NodeRefRequiredFields -> NodeRef
-buildNodeRef required =
-    { id = required.id }
+buildCircleFilter : (CircleFilterOptionalFields -> CircleFilterOptionalFields) -> CircleFilter
+buildCircleFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    CircleFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
-type alias NodeRefRequiredFields =
-    { id : Fractal.ScalarCodecs.Id }
+type alias CircleFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , name : OptionalArgument StringTermFilter
+    , nameid : OptionalArgument StringHashFilter
+    , and : OptionalArgument CircleFilter
+    , or : OptionalArgument CircleFilter
+    , not : OptionalArgument CircleFilter
+    }
+
+
+{-| Type alias for the `CircleFilter` attributes. Note that this type
+needs to use the `CircleFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias CircleFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , name : OptionalArgument StringTermFilter
+    , nameid : OptionalArgument StringHashFilter
+    , and : OptionalArgument CircleFilter
+    , or : OptionalArgument CircleFilter
+    , not : OptionalArgument CircleFilter
+    }
+
+
+{-| Type for the CircleFilter input object.
+-}
+type CircleFilter
+    = CircleFilter CircleFilterRaw
+
+
+{-| Encode a CircleFilter into a value that can be used as an argument.
+-}
+encodeCircleFilter : CircleFilter -> Value
+encodeCircleFilter (CircleFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter |> Encode.optional input.nameid ), ( "and", encodeCircleFilter |> Encode.optional input.and ), ( "or", encodeCircleFilter |> Encode.optional input.or ), ( "not", encodeCircleFilter |> Encode.optional input.not ) ]
+
+
+buildCircleOrder : (CircleOrderOptionalFields -> CircleOrderOptionalFields) -> CircleOrder
+buildCircleOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    CircleOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias CircleOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.CircleOrderable.CircleOrderable
+    , desc : OptionalArgument Fractal.Enum.CircleOrderable.CircleOrderable
+    , then_ : OptionalArgument CircleOrder
+    }
+
+
+{-| Type alias for the `CircleOrder` attributes. Note that this type
+needs to use the `CircleOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias CircleOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.CircleOrderable.CircleOrderable
+    , desc : OptionalArgument Fractal.Enum.CircleOrderable.CircleOrderable
+    , then_ : OptionalArgument CircleOrder
+    }
+
+
+{-| Type for the CircleOrder input object.
+-}
+type CircleOrder
+    = CircleOrder CircleOrderRaw
+
+
+{-| Encode a CircleOrder into a value that can be used as an argument.
+-}
+encodeCircleOrder : CircleOrder -> Value
+encodeCircleOrder (CircleOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.CircleOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.CircleOrderable.toString |> Encode.optional input.desc ), ( "then", encodeCircleOrder |> Encode.optional input.then_ ) ]
+
+
+buildCirclePatch : (CirclePatchOptionalFields -> CirclePatchOptionalFields) -> CirclePatch
+buildCirclePatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, createdBy = Absent, parent = Absent, children = Absent, name = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent, isRoot = Absent }
+    in
+    CirclePatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, parent = optionals.parent, children = optionals.children, name = optionals.name, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, isRoot = optionals.isRoot }
+
+
+type alias CirclePatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , isRoot : OptionalArgument Bool
+    }
+
+
+{-| Type alias for the `CirclePatch` attributes. Note that this type
+needs to use the `CirclePatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias CirclePatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , isRoot : OptionalArgument Bool
+    }
+
+
+{-| Type for the CirclePatch input object.
+-}
+type CirclePatch
+    = CirclePatch CirclePatchRaw
+
+
+{-| Encode a CirclePatch into a value that can be used as an argument.
+-}
+encodeCirclePatch : CirclePatch -> Value
+encodeCirclePatch (CirclePatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string |> Encode.optional input.name ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ) ]
+
+
+buildCircleRef : (CircleRefOptionalFields -> CircleRefOptionalFields) -> CircleRef
+buildCircleRef fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, createdBy = Absent, parent = Absent, children = Absent, name = Absent, nameid = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent, isRoot = Absent }
+    in
+    CircleRef { id = optionals.id, createdAt = optionals.createdAt, createdBy = optionals.createdBy, parent = optionals.parent, children = optionals.children, name = optionals.name, nameid = optionals.nameid, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, isRoot = optionals.isRoot }
+
+
+type alias CircleRefOptionalFields =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , nameid : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , isRoot : OptionalArgument Bool
+    }
+
+
+{-| Type alias for the `CircleRef` attributes. Note that this type
+needs to use the `CircleRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias CircleRefRaw =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , nameid : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , isRoot : OptionalArgument Bool
+    }
+
+
+{-| Type for the CircleRef input object.
+-}
+type CircleRef
+    = CircleRef CircleRefRaw
+
+
+{-| Encode a CircleRef into a value that can be used as an argument.
+-}
+encodeCircleRef : CircleRef -> Value
+encodeCircleRef (CircleRef input) =
+    Encode.maybeObject
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ) ]
+
+
+buildDateTimeFilter : (DateTimeFilterOptionalFields -> DateTimeFilterOptionalFields) -> DateTimeFilter
+buildDateTimeFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq = Absent, le = Absent, lt = Absent, ge = Absent, gt = Absent }
+    in
+    { eq = optionals.eq, le = optionals.le, lt = optionals.lt, ge = optionals.ge, gt = optionals.gt }
+
+
+type alias DateTimeFilterOptionalFields =
+    { eq : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , le : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , lt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , ge : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , gt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    }
+
+
+{-| Type for the DateTimeFilter input object.
+-}
+type alias DateTimeFilter =
+    { eq : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , le : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , lt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , ge : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , gt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    }
+
+
+{-| Encode a DateTimeFilter into a value that can be used as an argument.
+-}
+encodeDateTimeFilter : DateTimeFilter -> Value
+encodeDateTimeFilter input =
+    Encode.maybeObject
+        [ ( "eq", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.eq ), ( "le", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.le ), ( "lt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.lt ), ( "ge", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.ge ), ( "gt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.gt ) ]
+
+
+buildFloatFilter : (FloatFilterOptionalFields -> FloatFilterOptionalFields) -> FloatFilter
+buildFloatFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq = Absent, le = Absent, lt = Absent, ge = Absent, gt = Absent }
+    in
+    { eq = optionals.eq, le = optionals.le, lt = optionals.lt, ge = optionals.ge, gt = optionals.gt }
+
+
+type alias FloatFilterOptionalFields =
+    { eq : OptionalArgument Float
+    , le : OptionalArgument Float
+    , lt : OptionalArgument Float
+    , ge : OptionalArgument Float
+    , gt : OptionalArgument Float
+    }
+
+
+{-| Type for the FloatFilter input object.
+-}
+type alias FloatFilter =
+    { eq : OptionalArgument Float
+    , le : OptionalArgument Float
+    , lt : OptionalArgument Float
+    , ge : OptionalArgument Float
+    , gt : OptionalArgument Float
+    }
+
+
+{-| Encode a FloatFilter into a value that can be used as an argument.
+-}
+encodeFloatFilter : FloatFilter -> Value
+encodeFloatFilter input =
+    Encode.maybeObject
+        [ ( "eq", Encode.float |> Encode.optional input.eq ), ( "le", Encode.float |> Encode.optional input.le ), ( "lt", Encode.float |> Encode.optional input.lt ), ( "ge", Encode.float |> Encode.optional input.ge ), ( "gt", Encode.float |> Encode.optional input.gt ) ]
+
+
+buildIntFilter : (IntFilterOptionalFields -> IntFilterOptionalFields) -> IntFilter
+buildIntFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq = Absent, le = Absent, lt = Absent, ge = Absent, gt = Absent }
+    in
+    { eq = optionals.eq, le = optionals.le, lt = optionals.lt, ge = optionals.ge, gt = optionals.gt }
+
+
+type alias IntFilterOptionalFields =
+    { eq : OptionalArgument Int
+    , le : OptionalArgument Int
+    , lt : OptionalArgument Int
+    , ge : OptionalArgument Int
+    , gt : OptionalArgument Int
+    }
+
+
+{-| Type for the IntFilter input object.
+-}
+type alias IntFilter =
+    { eq : OptionalArgument Int
+    , le : OptionalArgument Int
+    , lt : OptionalArgument Int
+    , ge : OptionalArgument Int
+    , gt : OptionalArgument Int
+    }
+
+
+{-| Encode a IntFilter into a value that can be used as an argument.
+-}
+encodeIntFilter : IntFilter -> Value
+encodeIntFilter input =
+    Encode.maybeObject
+        [ ( "eq", Encode.int |> Encode.optional input.eq ), ( "le", Encode.int |> Encode.optional input.le ), ( "lt", Encode.int |> Encode.optional input.lt ), ( "ge", Encode.int |> Encode.optional input.ge ), ( "gt", Encode.int |> Encode.optional input.gt ) ]
+
+
+buildMandateFilter : (MandateFilterOptionalFields -> MandateFilterOptionalFields) -> MandateFilter
+buildMandateFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, message = Absent, purpose = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    MandateFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, purpose = optionals.purpose, and = optionals.and, or = optionals.or, not = optionals.not }
+
+
+type alias MandateFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , purpose : OptionalArgument StringFullTextFilter
+    , and : OptionalArgument MandateFilter
+    , or : OptionalArgument MandateFilter
+    , not : OptionalArgument MandateFilter
+    }
+
+
+{-| Type alias for the `MandateFilter` attributes. Note that this type
+needs to use the `MandateFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias MandateFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , purpose : OptionalArgument StringFullTextFilter
+    , and : OptionalArgument MandateFilter
+    , or : OptionalArgument MandateFilter
+    , not : OptionalArgument MandateFilter
+    }
+
+
+{-| Type for the MandateFilter input object.
+-}
+type MandateFilter
+    = MandateFilter MandateFilterRaw
+
+
+{-| Encode a MandateFilter into a value that can be used as an argument.
+-}
+encodeMandateFilter : MandateFilter -> Value
+encodeMandateFilter (MandateFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "purpose", encodeStringFullTextFilter |> Encode.optional input.purpose ), ( "and", encodeMandateFilter |> Encode.optional input.and ), ( "or", encodeMandateFilter |> Encode.optional input.or ), ( "not", encodeMandateFilter |> Encode.optional input.not ) ]
+
+
+buildMandateOrder : (MandateOrderOptionalFields -> MandateOrderOptionalFields) -> MandateOrder
+buildMandateOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    MandateOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias MandateOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.MandateOrderable.MandateOrderable
+    , desc : OptionalArgument Fractal.Enum.MandateOrderable.MandateOrderable
+    , then_ : OptionalArgument MandateOrder
+    }
+
+
+{-| Type alias for the `MandateOrder` attributes. Note that this type
+needs to use the `MandateOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias MandateOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.MandateOrderable.MandateOrderable
+    , desc : OptionalArgument Fractal.Enum.MandateOrderable.MandateOrderable
+    , then_ : OptionalArgument MandateOrder
+    }
+
+
+{-| Type for the MandateOrder input object.
+-}
+type MandateOrder
+    = MandateOrder MandateOrderRaw
+
+
+{-| Encode a MandateOrder into a value that can be used as an argument.
+-}
+encodeMandateOrder : MandateOrder -> Value
+encodeMandateOrder (MandateOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.MandateOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.MandateOrderable.toString |> Encode.optional input.desc ), ( "then", encodeMandateOrder |> Encode.optional input.then_ ) ]
+
+
+buildMandatePatch : (MandatePatchOptionalFields -> MandatePatchOptionalFields) -> MandatePatch
+buildMandatePatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, createdBy = Absent, message = Absent, purpose = Absent, responsabilities = Absent, domains = Absent }
+    in
+    MandatePatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, message = optionals.message, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains }
+
+
+type alias MandatePatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , purpose : OptionalArgument String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument (List String)
+    }
+
+
+{-| Type alias for the `MandatePatch` attributes. Note that this type
+needs to use the `MandatePatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias MandatePatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , purpose : OptionalArgument String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument (List String)
+    }
+
+
+{-| Type for the MandatePatch input object.
+-}
+type MandatePatch
+    = MandatePatch MandatePatchRaw
+
+
+{-| Encode a MandatePatch into a value that can be used as an argument.
+-}
+encodeMandatePatch : MandatePatch -> Value
+encodeMandatePatch (MandatePatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", (Encode.string |> Encode.list) |> Encode.optional input.domains ) ]
+
+
+buildMandateRef : (MandateRefOptionalFields -> MandateRefOptionalFields) -> MandateRef
+buildMandateRef fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, createdBy = Absent, message = Absent, purpose = Absent, responsabilities = Absent, domains = Absent }
+    in
+    MandateRef { id = optionals.id, createdAt = optionals.createdAt, createdBy = optionals.createdBy, message = optionals.message, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains }
+
+
+type alias MandateRefOptionalFields =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , purpose : OptionalArgument String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument (List String)
+    }
+
+
+{-| Type alias for the `MandateRef` attributes. Note that this type
+needs to use the `MandateRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias MandateRefRaw =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , purpose : OptionalArgument String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument (List String)
+    }
+
+
+{-| Type for the MandateRef input object.
+-}
+type MandateRef
+    = MandateRef MandateRefRaw
+
+
+{-| Encode a MandateRef into a value that can be used as an argument.
+-}
+encodeMandateRef : MandateRef -> Value
+encodeMandateRef (MandateRef input) =
+    Encode.maybeObject
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", (Encode.string |> Encode.list) |> Encode.optional input.domains ) ]
+
+
+buildNodeFilter : (NodeFilterOptionalFields -> NodeFilterOptionalFields) -> NodeFilter
+buildNodeFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, and = optionals.and, or = optionals.or, not = optionals.not }
+
+
+type alias NodeFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , name : OptionalArgument StringTermFilter
+    , nameid : OptionalArgument StringHashFilter
+    , and : OptionalArgument NodeFilter
+    , or : OptionalArgument NodeFilter
+    , not : OptionalArgument NodeFilter
+    }
+
+
+{-| Type alias for the `NodeFilter` attributes. Note that this type
+needs to use the `NodeFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NodeFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , name : OptionalArgument StringTermFilter
+    , nameid : OptionalArgument StringHashFilter
+    , and : OptionalArgument NodeFilter
+    , or : OptionalArgument NodeFilter
+    , not : OptionalArgument NodeFilter
+    }
+
+
+{-| Type for the NodeFilter input object.
+-}
+type NodeFilter
+    = NodeFilter NodeFilterRaw
+
+
+{-| Encode a NodeFilter into a value that can be used as an argument.
+-}
+encodeNodeFilter : NodeFilter -> Value
+encodeNodeFilter (NodeFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter |> Encode.optional input.nameid ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
+
+
+buildNodeOrder : (NodeOrderOptionalFields -> NodeOrderOptionalFields) -> NodeOrder
+buildNodeOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    NodeOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias NodeOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.NodeOrderable.NodeOrderable
+    , desc : OptionalArgument Fractal.Enum.NodeOrderable.NodeOrderable
+    , then_ : OptionalArgument NodeOrder
+    }
+
+
+{-| Type alias for the `NodeOrder` attributes. Note that this type
+needs to use the `NodeOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NodeOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.NodeOrderable.NodeOrderable
+    , desc : OptionalArgument Fractal.Enum.NodeOrderable.NodeOrderable
+    , then_ : OptionalArgument NodeOrder
+    }
+
+
+{-| Type for the NodeOrder input object.
+-}
+type NodeOrder
+    = NodeOrder NodeOrderRaw
+
+
+{-| Encode a NodeOrder into a value that can be used as an argument.
+-}
+encodeNodeOrder : NodeOrder -> Value
+encodeNodeOrder (NodeOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.NodeOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.NodeOrderable.toString |> Encode.optional input.desc ), ( "then", encodeNodeOrder |> Encode.optional input.then_ ) ]
+
+
+buildNodePatch : (NodePatchOptionalFields -> NodePatchOptionalFields) -> NodePatch
+buildNodePatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, createdBy = Absent, parent = Absent, children = Absent, name = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent }
+    in
+    NodePatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, parent = optionals.parent, children = optionals.children, name = optionals.name, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in }
+
+
+type alias NodePatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    }
+
+
+{-| Type alias for the `NodePatch` attributes. Note that this type
+needs to use the `NodePatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NodePatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    }
+
+
+{-| Type for the NodePatch input object.
+-}
+type NodePatch
+    = NodePatch NodePatchRaw
+
+
+{-| Encode a NodePatch into a value that can be used as an argument.
+-}
+encodeNodePatch : NodePatch -> Value
+encodeNodePatch (NodePatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string |> Encode.optional input.name ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ) ]
+
+
+buildNodeRef : (NodeRefOptionalFields -> NodeRefOptionalFields) -> NodeRef
+buildNodeRef fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, nameid = Absent }
+    in
+    { id = optionals.id, nameid = optionals.nameid }
+
+
+type alias NodeRefOptionalFields =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , nameid : OptionalArgument String
+    }
 
 
 {-| Type for the NodeRef input object.
 -}
 type alias NodeRef =
-    { id : Fractal.ScalarCodecs.Id }
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , nameid : OptionalArgument String
+    }
 
 
 {-| Encode a NodeRef into a value that can be used as an argument.
@@ -134,7 +1014,320 @@ type alias NodeRef =
 encodeNodeRef : NodeRef -> Value
 encodeNodeRef input =
     Encode.maybeObject
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "nameid", Encode.string |> Encode.optional input.nameid ) ]
+
+
+buildPostFilter : (PostFilterOptionalFields -> PostFilterOptionalFields) -> PostFilter
+buildPostFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, message = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    PostFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, and = optionals.and, or = optionals.or, not = optionals.not }
+
+
+type alias PostFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , and : OptionalArgument PostFilter
+    , or : OptionalArgument PostFilter
+    , not : OptionalArgument PostFilter
+    }
+
+
+{-| Type alias for the `PostFilter` attributes. Note that this type
+needs to use the `PostFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias PostFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , and : OptionalArgument PostFilter
+    , or : OptionalArgument PostFilter
+    , not : OptionalArgument PostFilter
+    }
+
+
+{-| Type for the PostFilter input object.
+-}
+type PostFilter
+    = PostFilter PostFilterRaw
+
+
+{-| Encode a PostFilter into a value that can be used as an argument.
+-}
+encodePostFilter : PostFilter -> Value
+encodePostFilter (PostFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "and", encodePostFilter |> Encode.optional input.and ), ( "or", encodePostFilter |> Encode.optional input.or ), ( "not", encodePostFilter |> Encode.optional input.not ) ]
+
+
+buildPostOrder : (PostOrderOptionalFields -> PostOrderOptionalFields) -> PostOrder
+buildPostOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    PostOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias PostOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.PostOrderable.PostOrderable
+    , desc : OptionalArgument Fractal.Enum.PostOrderable.PostOrderable
+    , then_ : OptionalArgument PostOrder
+    }
+
+
+{-| Type alias for the `PostOrder` attributes. Note that this type
+needs to use the `PostOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias PostOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.PostOrderable.PostOrderable
+    , desc : OptionalArgument Fractal.Enum.PostOrderable.PostOrderable
+    , then_ : OptionalArgument PostOrder
+    }
+
+
+{-| Type for the PostOrder input object.
+-}
+type PostOrder
+    = PostOrder PostOrderRaw
+
+
+{-| Encode a PostOrder into a value that can be used as an argument.
+-}
+encodePostOrder : PostOrder -> Value
+encodePostOrder (PostOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.PostOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.PostOrderable.toString |> Encode.optional input.desc ), ( "then", encodePostOrder |> Encode.optional input.then_ ) ]
+
+
+buildPostPatch : (PostPatchOptionalFields -> PostPatchOptionalFields) -> PostPatch
+buildPostPatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, createdBy = Absent, message = Absent }
+    in
+    PostPatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, message = optionals.message }
+
+
+type alias PostPatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    }
+
+
+{-| Type alias for the `PostPatch` attributes. Note that this type
+needs to use the `PostPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias PostPatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    }
+
+
+{-| Type for the PostPatch input object.
+-}
+type PostPatch
+    = PostPatch PostPatchRaw
+
+
+{-| Encode a PostPatch into a value that can be used as an argument.
+-}
+encodePostPatch : PostPatch -> Value
+encodePostPatch (PostPatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ) ]
+
+
+buildPostRef : PostRefRequiredFields -> PostRef
+buildPostRef required =
+    { id = required.id }
+
+
+type alias PostRefRequiredFields =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+{-| Type for the PostRef input object.
+-}
+type alias PostRef =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+{-| Encode a PostRef into a value that can be used as an argument.
+-}
+encodePostRef : PostRef -> Value
+encodePostRef input =
+    Encode.maybeObject
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) input.id |> Just ) ]
+
+
+buildRoleFilter : (RoleFilterOptionalFields -> RoleFilterOptionalFields) -> RoleFilter
+buildRoleFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, skills = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    RoleFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, skills = optionals.skills, and = optionals.and, or = optionals.or, not = optionals.not }
+
+
+type alias RoleFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , name : OptionalArgument StringTermFilter
+    , nameid : OptionalArgument StringHashFilter
+    , skills : OptionalArgument StringTermFilter
+    , and : OptionalArgument RoleFilter
+    , or : OptionalArgument RoleFilter
+    , not : OptionalArgument RoleFilter
+    }
+
+
+{-| Type alias for the `RoleFilter` attributes. Note that this type
+needs to use the `RoleFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias RoleFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , name : OptionalArgument StringTermFilter
+    , nameid : OptionalArgument StringHashFilter
+    , skills : OptionalArgument StringTermFilter
+    , and : OptionalArgument RoleFilter
+    , or : OptionalArgument RoleFilter
+    , not : OptionalArgument RoleFilter
+    }
+
+
+{-| Type for the RoleFilter input object.
+-}
+type RoleFilter
+    = RoleFilter RoleFilterRaw
+
+
+{-| Encode a RoleFilter into a value that can be used as an argument.
+-}
+encodeRoleFilter : RoleFilter -> Value
+encodeRoleFilter (RoleFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter |> Encode.optional input.nameid ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "and", encodeRoleFilter |> Encode.optional input.and ), ( "or", encodeRoleFilter |> Encode.optional input.or ), ( "not", encodeRoleFilter |> Encode.optional input.not ) ]
+
+
+buildRoleOrder : (RoleOrderOptionalFields -> RoleOrderOptionalFields) -> RoleOrder
+buildRoleOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    RoleOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias RoleOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.RoleOrderable.RoleOrderable
+    , desc : OptionalArgument Fractal.Enum.RoleOrderable.RoleOrderable
+    , then_ : OptionalArgument RoleOrder
+    }
+
+
+{-| Type alias for the `RoleOrder` attributes. Note that this type
+needs to use the `RoleOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias RoleOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.RoleOrderable.RoleOrderable
+    , desc : OptionalArgument Fractal.Enum.RoleOrderable.RoleOrderable
+    , then_ : OptionalArgument RoleOrder
+    }
+
+
+{-| Type for the RoleOrder input object.
+-}
+type RoleOrder
+    = RoleOrder RoleOrderRaw
+
+
+{-| Encode a RoleOrder into a value that can be used as an argument.
+-}
+encodeRoleOrder : RoleOrder -> Value
+encodeRoleOrder (RoleOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.RoleOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.RoleOrderable.toString |> Encode.optional input.desc ), ( "then", encodeRoleOrder |> Encode.optional input.then_ ) ]
+
+
+buildRolePatch : (RolePatchOptionalFields -> RolePatchOptionalFields) -> RolePatch
+buildRolePatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, createdBy = Absent, parent = Absent, children = Absent, name = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent, user = Absent, second = Absent, skills = Absent }
+    in
+    RolePatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, parent = optionals.parent, children = optionals.children, name = optionals.name, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, user = optionals.user, second = optionals.second, skills = optionals.skills }
+
+
+type alias RolePatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , user : OptionalArgument UserRef
+    , second : OptionalArgument UserRef
+    , skills : OptionalArgument (List String)
+    }
+
+
+{-| Type alias for the `RolePatch` attributes. Note that this type
+needs to use the `RolePatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias RolePatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , parent : OptionalArgument NodeRef
+    , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , tensions_out : OptionalArgument (List TensionRef)
+    , tensions_in : OptionalArgument (List TensionRef)
+    , user : OptionalArgument UserRef
+    , second : OptionalArgument UserRef
+    , skills : OptionalArgument (List String)
+    }
+
+
+{-| Type for the RolePatch input object.
+-}
+type RolePatch
+    = RolePatch RolePatchRaw
+
+
+{-| Encode a RolePatch into a value that can be used as an argument.
+-}
+encodeRolePatch : RolePatch -> Value
+encodeRolePatch (RolePatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string |> Encode.optional input.name ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "user", encodeUserRef |> Encode.optional input.user ), ( "second", encodeUserRef |> Encode.optional input.second ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ) ]
 
 
 buildRoleRef : (RoleRefOptionalFields -> RoleRefOptionalFields) -> RoleRef
@@ -142,24 +1335,25 @@ buildRoleRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, title = Absent, mandate = Absent, createdAt = Absent, createdBy = Absent, parent = Absent, children = Absent, tensions_out = Absent, tensions_in = Absent, skills = Absent, user = Absent, second = Absent }
+                { id = Absent, createdAt = Absent, createdBy = Absent, parent = Absent, children = Absent, name = Absent, nameid = Absent, mandate = Absent, tensions_out = Absent, tensions_in = Absent, user = Absent, second = Absent, skills = Absent }
     in
-    RoleRef { id = optionals.id, title = optionals.title, mandate = optionals.mandate, createdAt = optionals.createdAt, createdBy = optionals.createdBy, parent = optionals.parent, children = optionals.children, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, skills = optionals.skills, user = optionals.user, second = optionals.second }
+    RoleRef { id = optionals.id, createdAt = optionals.createdAt, createdBy = optionals.createdBy, parent = optionals.parent, children = optionals.children, name = optionals.name, nameid = optionals.nameid, mandate = optionals.mandate, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, user = optionals.user, second = optionals.second, skills = optionals.skills }
 
 
 type alias RoleRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , title : OptionalArgument String
-    , mandate : OptionalArgument String
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , createdBy : OptionalArgument UserRef
     , parent : OptionalArgument NodeRef
     , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , nameid : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
     , tensions_out : OptionalArgument (List TensionRef)
     , tensions_in : OptionalArgument (List TensionRef)
-    , skills : OptionalArgument (List String)
     , user : OptionalArgument UserRef
     , second : OptionalArgument UserRef
+    , skills : OptionalArgument (List String)
     }
 
 
@@ -170,17 +1364,18 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias RoleRefRaw =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , title : OptionalArgument String
-    , mandate : OptionalArgument String
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , createdBy : OptionalArgument UserRef
     , parent : OptionalArgument NodeRef
     , children : OptionalArgument (List NodeRef)
+    , name : OptionalArgument String
+    , nameid : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
     , tensions_out : OptionalArgument (List TensionRef)
     , tensions_in : OptionalArgument (List TensionRef)
-    , skills : OptionalArgument (List String)
     , user : OptionalArgument UserRef
     , second : OptionalArgument UserRef
+    , skills : OptionalArgument (List String)
     }
 
 
@@ -195,7 +1390,320 @@ type RoleRef
 encodeRoleRef : RoleRef -> Value
 encodeRoleRef (RoleRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "title", Encode.string |> Encode.optional input.title ), ( "mandate", Encode.string |> Encode.optional input.mandate ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "user", encodeUserRef |> Encode.optional input.user ), ( "second", encodeUserRef |> Encode.optional input.second ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "user", encodeUserRef |> Encode.optional input.user ), ( "second", encodeUserRef |> Encode.optional input.second ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ) ]
+
+
+buildStringExactFilter : (StringExactFilterOptionalFields -> StringExactFilterOptionalFields) -> StringExactFilter
+buildStringExactFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq = Absent, le = Absent, lt = Absent, ge = Absent, gt = Absent }
+    in
+    { eq = optionals.eq, le = optionals.le, lt = optionals.lt, ge = optionals.ge, gt = optionals.gt }
+
+
+type alias StringExactFilterOptionalFields =
+    { eq : OptionalArgument String
+    , le : OptionalArgument String
+    , lt : OptionalArgument String
+    , ge : OptionalArgument String
+    , gt : OptionalArgument String
+    }
+
+
+{-| Type for the StringExactFilter input object.
+-}
+type alias StringExactFilter =
+    { eq : OptionalArgument String
+    , le : OptionalArgument String
+    , lt : OptionalArgument String
+    , ge : OptionalArgument String
+    , gt : OptionalArgument String
+    }
+
+
+{-| Encode a StringExactFilter into a value that can be used as an argument.
+-}
+encodeStringExactFilter : StringExactFilter -> Value
+encodeStringExactFilter input =
+    Encode.maybeObject
+        [ ( "eq", Encode.string |> Encode.optional input.eq ), ( "le", Encode.string |> Encode.optional input.le ), ( "lt", Encode.string |> Encode.optional input.lt ), ( "ge", Encode.string |> Encode.optional input.ge ), ( "gt", Encode.string |> Encode.optional input.gt ) ]
+
+
+buildStringFullTextFilter : (StringFullTextFilterOptionalFields -> StringFullTextFilterOptionalFields) -> StringFullTextFilter
+buildStringFullTextFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { alloftext = Absent, anyoftext = Absent }
+    in
+    { alloftext = optionals.alloftext, anyoftext = optionals.anyoftext }
+
+
+type alias StringFullTextFilterOptionalFields =
+    { alloftext : OptionalArgument String
+    , anyoftext : OptionalArgument String
+    }
+
+
+{-| Type for the StringFullTextFilter input object.
+-}
+type alias StringFullTextFilter =
+    { alloftext : OptionalArgument String
+    , anyoftext : OptionalArgument String
+    }
+
+
+{-| Encode a StringFullTextFilter into a value that can be used as an argument.
+-}
+encodeStringFullTextFilter : StringFullTextFilter -> Value
+encodeStringFullTextFilter input =
+    Encode.maybeObject
+        [ ( "alloftext", Encode.string |> Encode.optional input.alloftext ), ( "anyoftext", Encode.string |> Encode.optional input.anyoftext ) ]
+
+
+buildStringHashFilter : (StringHashFilterOptionalFields -> StringHashFilterOptionalFields) -> StringHashFilter
+buildStringHashFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq = Absent }
+    in
+    { eq = optionals.eq }
+
+
+type alias StringHashFilterOptionalFields =
+    { eq : OptionalArgument String }
+
+
+{-| Type for the StringHashFilter input object.
+-}
+type alias StringHashFilter =
+    { eq : OptionalArgument String }
+
+
+{-| Encode a StringHashFilter into a value that can be used as an argument.
+-}
+encodeStringHashFilter : StringHashFilter -> Value
+encodeStringHashFilter input =
+    Encode.maybeObject
+        [ ( "eq", Encode.string |> Encode.optional input.eq ) ]
+
+
+buildStringRegExpFilter : (StringRegExpFilterOptionalFields -> StringRegExpFilterOptionalFields) -> StringRegExpFilter
+buildStringRegExpFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { regexp = Absent }
+    in
+    { regexp = optionals.regexp }
+
+
+type alias StringRegExpFilterOptionalFields =
+    { regexp : OptionalArgument String }
+
+
+{-| Type for the StringRegExpFilter input object.
+-}
+type alias StringRegExpFilter =
+    { regexp : OptionalArgument String }
+
+
+{-| Encode a StringRegExpFilter into a value that can be used as an argument.
+-}
+encodeStringRegExpFilter : StringRegExpFilter -> Value
+encodeStringRegExpFilter input =
+    Encode.maybeObject
+        [ ( "regexp", Encode.string |> Encode.optional input.regexp ) ]
+
+
+buildStringTermFilter : (StringTermFilterOptionalFields -> StringTermFilterOptionalFields) -> StringTermFilter
+buildStringTermFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { allofterms = Absent, anyofterms = Absent }
+    in
+    { allofterms = optionals.allofterms, anyofterms = optionals.anyofterms }
+
+
+type alias StringTermFilterOptionalFields =
+    { allofterms : OptionalArgument String
+    , anyofterms : OptionalArgument String
+    }
+
+
+{-| Type for the StringTermFilter input object.
+-}
+type alias StringTermFilter =
+    { allofterms : OptionalArgument String
+    , anyofterms : OptionalArgument String
+    }
+
+
+{-| Encode a StringTermFilter into a value that can be used as an argument.
+-}
+encodeStringTermFilter : StringTermFilter -> Value
+encodeStringTermFilter input =
+    Encode.maybeObject
+        [ ( "allofterms", Encode.string |> Encode.optional input.allofterms ), ( "anyofterms", Encode.string |> Encode.optional input.anyofterms ) ]
+
+
+buildTensionFilter : (TensionFilterOptionalFields -> TensionFilterOptionalFields) -> TensionFilter
+buildTensionFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, message = Absent, title = Absent, type_ = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    TensionFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, title = optionals.title, type_ = optionals.type_, and = optionals.and, or = optionals.or, not = optionals.not }
+
+
+type alias TensionFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , title : OptionalArgument StringTermFilter
+    , type_ : OptionalArgument TensionType_hash
+    , and : OptionalArgument TensionFilter
+    , or : OptionalArgument TensionFilter
+    , not : OptionalArgument TensionFilter
+    }
+
+
+{-| Type alias for the `TensionFilter` attributes. Note that this type
+needs to use the `TensionFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias TensionFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , title : OptionalArgument StringTermFilter
+    , type_ : OptionalArgument TensionType_hash
+    , and : OptionalArgument TensionFilter
+    , or : OptionalArgument TensionFilter
+    , not : OptionalArgument TensionFilter
+    }
+
+
+{-| Type for the TensionFilter input object.
+-}
+type TensionFilter
+    = TensionFilter TensionFilterRaw
+
+
+{-| Encode a TensionFilter into a value that can be used as an argument.
+-}
+encodeTensionFilter : TensionFilter -> Value
+encodeTensionFilter (TensionFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "title", encodeStringTermFilter |> Encode.optional input.title ), ( "type_", encodeTensionType_hash |> Encode.optional input.type_ ), ( "and", encodeTensionFilter |> Encode.optional input.and ), ( "or", encodeTensionFilter |> Encode.optional input.or ), ( "not", encodeTensionFilter |> Encode.optional input.not ) ]
+
+
+buildTensionOrder : (TensionOrderOptionalFields -> TensionOrderOptionalFields) -> TensionOrder
+buildTensionOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    TensionOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias TensionOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.TensionOrderable.TensionOrderable
+    , desc : OptionalArgument Fractal.Enum.TensionOrderable.TensionOrderable
+    , then_ : OptionalArgument TensionOrder
+    }
+
+
+{-| Type alias for the `TensionOrder` attributes. Note that this type
+needs to use the `TensionOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias TensionOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.TensionOrderable.TensionOrderable
+    , desc : OptionalArgument Fractal.Enum.TensionOrderable.TensionOrderable
+    , then_ : OptionalArgument TensionOrder
+    }
+
+
+{-| Type for the TensionOrder input object.
+-}
+type TensionOrder
+    = TensionOrder TensionOrderRaw
+
+
+{-| Encode a TensionOrder into a value that can be used as an argument.
+-}
+encodeTensionOrder : TensionOrder -> Value
+encodeTensionOrder (TensionOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.TensionOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.TensionOrderable.toString |> Encode.optional input.desc ), ( "then", encodeTensionOrder |> Encode.optional input.then_ ) ]
+
+
+buildTensionPatch : (TensionPatchOptionalFields -> TensionPatchOptionalFields) -> TensionPatch
+buildTensionPatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, createdBy = Absent, message = Absent, nth = Absent, title = Absent, type_ = Absent, emitter = Absent, receivers = Absent, isAnonymous = Absent, severity = Absent, comments = Absent }
+    in
+    TensionPatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, message = optionals.message, nth = optionals.nth, title = optionals.title, type_ = optionals.type_, emitter = optionals.emitter, receivers = optionals.receivers, isAnonymous = optionals.isAnonymous, severity = optionals.severity, comments = optionals.comments }
+
+
+type alias TensionPatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , nth : OptionalArgument Int
+    , title : OptionalArgument String
+    , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
+    , emitter : OptionalArgument NodeRef
+    , receivers : OptionalArgument (List NodeRef)
+    , isAnonymous : OptionalArgument Bool
+    , severity : OptionalArgument Int
+    , comments : OptionalArgument (List PostRef)
+    }
+
+
+{-| Type alias for the `TensionPatch` attributes. Note that this type
+needs to use the `TensionPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias TensionPatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , nth : OptionalArgument Int
+    , title : OptionalArgument String
+    , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
+    , emitter : OptionalArgument NodeRef
+    , receivers : OptionalArgument (List NodeRef)
+    , isAnonymous : OptionalArgument Bool
+    , severity : OptionalArgument Int
+    , comments : OptionalArgument (List PostRef)
+    }
+
+
+{-| Type for the TensionPatch input object.
+-}
+type TensionPatch
+    = TensionPatch TensionPatchRaw
+
+
+{-| Encode a TensionPatch into a value that can be used as an argument.
+-}
+encodeTensionPatch : TensionPatch -> Value
+encodeTensionPatch (TensionPatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.int |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receivers", (encodeNodeRef |> Encode.list) |> Encode.optional input.receivers ), ( "isAnonymous", Encode.bool |> Encode.optional input.isAnonymous ), ( "severity", Encode.int |> Encode.optional input.severity ), ( "comments", (encodePostRef |> Encode.list) |> Encode.optional input.comments ) ]
 
 
 buildTensionRef : (TensionRefOptionalFields -> TensionRefOptionalFields) -> TensionRef
@@ -203,47 +1711,546 @@ buildTensionRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, title = Absent, message = Absent, createdAt = Absent, nth = Absent, type_ = Absent, emitter = Absent, receivers = Absent, severity = Absent, isAnonymous = Absent }
+                { id = Absent, createdAt = Absent, createdBy = Absent, message = Absent, nth = Absent, title = Absent, type_ = Absent, emitter = Absent, receivers = Absent, isAnonymous = Absent, severity = Absent, comments = Absent }
     in
-    { id = optionals.id, title = optionals.title, message = optionals.message, createdAt = optionals.createdAt, nth = optionals.nth, type_ = optionals.type_, emitter = optionals.emitter, receivers = optionals.receivers, severity = optionals.severity, isAnonymous = optionals.isAnonymous }
+    TensionRef { id = optionals.id, createdAt = optionals.createdAt, createdBy = optionals.createdBy, message = optionals.message, nth = optionals.nth, title = optionals.title, type_ = optionals.type_, emitter = optionals.emitter, receivers = optionals.receivers, isAnonymous = optionals.isAnonymous, severity = optionals.severity, comments = optionals.comments }
 
 
 type alias TensionRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , title : OptionalArgument String
-    , message : OptionalArgument String
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
     , nth : OptionalArgument Int
+    , title : OptionalArgument String
     , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
     , emitter : OptionalArgument NodeRef
     , receivers : OptionalArgument (List NodeRef)
-    , severity : OptionalArgument Int
     , isAnonymous : OptionalArgument Bool
+    , severity : OptionalArgument Int
+    , comments : OptionalArgument (List PostRef)
+    }
+
+
+{-| Type alias for the `TensionRef` attributes. Note that this type
+needs to use the `TensionRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias TensionRefRaw =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , createdBy : OptionalArgument UserRef
+    , message : OptionalArgument String
+    , nth : OptionalArgument Int
+    , title : OptionalArgument String
+    , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
+    , emitter : OptionalArgument NodeRef
+    , receivers : OptionalArgument (List NodeRef)
+    , isAnonymous : OptionalArgument Bool
+    , severity : OptionalArgument Int
+    , comments : OptionalArgument (List PostRef)
     }
 
 
 {-| Type for the TensionRef input object.
 -}
-type alias TensionRef =
-    { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , title : OptionalArgument String
-    , message : OptionalArgument String
-    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
-    , nth : OptionalArgument Int
-    , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
-    , emitter : OptionalArgument NodeRef
-    , receivers : OptionalArgument (List NodeRef)
-    , severity : OptionalArgument Int
-    , isAnonymous : OptionalArgument Bool
-    }
+type TensionRef
+    = TensionRef TensionRefRaw
 
 
 {-| Encode a TensionRef into a value that can be used as an argument.
 -}
 encodeTensionRef : TensionRef -> Value
-encodeTensionRef input =
+encodeTensionRef (TensionRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "title", Encode.string |> Encode.optional input.title ), ( "message", Encode.string |> Encode.optional input.message ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "nth", Encode.int |> Encode.optional input.nth ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receivers", (encodeNodeRef |> Encode.list) |> Encode.optional input.receivers ), ( "severity", Encode.int |> Encode.optional input.severity ), ( "isAnonymous", Encode.bool |> Encode.optional input.isAnonymous ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.int |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receivers", (encodeNodeRef |> Encode.list) |> Encode.optional input.receivers ), ( "isAnonymous", Encode.bool |> Encode.optional input.isAnonymous ), ( "severity", Encode.int |> Encode.optional input.severity ), ( "comments", (encodePostRef |> Encode.list) |> Encode.optional input.comments ) ]
+
+
+buildTensionType_hash : TensionType_hashRequiredFields -> TensionType_hash
+buildTensionType_hash required =
+    { eq = required.eq }
+
+
+type alias TensionType_hashRequiredFields =
+    { eq : Fractal.Enum.TensionType.TensionType }
+
+
+{-| Type for the TensionType\_hash input object.
+-}
+type alias TensionType_hash =
+    { eq : Fractal.Enum.TensionType.TensionType }
+
+
+{-| Encode a TensionType\_hash into a value that can be used as an argument.
+-}
+encodeTensionType_hash : TensionType_hash -> Value
+encodeTensionType_hash input =
+    Encode.maybeObject
+        [ ( "eq", Encode.enum Fractal.Enum.TensionType.toString input.eq |> Just ) ]
+
+
+buildUpdateCircleInput : UpdateCircleInputRequiredFields -> (UpdateCircleInputOptionalFields -> UpdateCircleInputOptionalFields) -> UpdateCircleInput
+buildUpdateCircleInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateCircleInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateCircleInputRequiredFields =
+    { filter : CircleFilter }
+
+
+type alias UpdateCircleInputOptionalFields =
+    { set : OptionalArgument CirclePatch
+    , remove : OptionalArgument CirclePatch
+    }
+
+
+{-| Type alias for the `UpdateCircleInput` attributes. Note that this type
+needs to use the `UpdateCircleInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateCircleInputRaw =
+    { filter : CircleFilter
+    , set : OptionalArgument CirclePatch
+    , remove : OptionalArgument CirclePatch
+    }
+
+
+{-| Type for the UpdateCircleInput input object.
+-}
+type UpdateCircleInput
+    = UpdateCircleInput UpdateCircleInputRaw
+
+
+{-| Encode a UpdateCircleInput into a value that can be used as an argument.
+-}
+encodeUpdateCircleInput : UpdateCircleInput -> Value
+encodeUpdateCircleInput (UpdateCircleInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeCircleFilter input.filter |> Just ), ( "set", encodeCirclePatch |> Encode.optional input.set ), ( "remove", encodeCirclePatch |> Encode.optional input.remove ) ]
+
+
+buildUpdateMandateInput : UpdateMandateInputRequiredFields -> (UpdateMandateInputOptionalFields -> UpdateMandateInputOptionalFields) -> UpdateMandateInput
+buildUpdateMandateInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateMandateInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateMandateInputRequiredFields =
+    { filter : MandateFilter }
+
+
+type alias UpdateMandateInputOptionalFields =
+    { set : OptionalArgument MandatePatch
+    , remove : OptionalArgument MandatePatch
+    }
+
+
+{-| Type alias for the `UpdateMandateInput` attributes. Note that this type
+needs to use the `UpdateMandateInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateMandateInputRaw =
+    { filter : MandateFilter
+    , set : OptionalArgument MandatePatch
+    , remove : OptionalArgument MandatePatch
+    }
+
+
+{-| Type for the UpdateMandateInput input object.
+-}
+type UpdateMandateInput
+    = UpdateMandateInput UpdateMandateInputRaw
+
+
+{-| Encode a UpdateMandateInput into a value that can be used as an argument.
+-}
+encodeUpdateMandateInput : UpdateMandateInput -> Value
+encodeUpdateMandateInput (UpdateMandateInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeMandateFilter input.filter |> Just ), ( "set", encodeMandatePatch |> Encode.optional input.set ), ( "remove", encodeMandatePatch |> Encode.optional input.remove ) ]
+
+
+buildUpdateNodeInput : UpdateNodeInputRequiredFields -> (UpdateNodeInputOptionalFields -> UpdateNodeInputOptionalFields) -> UpdateNodeInput
+buildUpdateNodeInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateNodeInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateNodeInputRequiredFields =
+    { filter : NodeFilter }
+
+
+type alias UpdateNodeInputOptionalFields =
+    { set : OptionalArgument NodePatch
+    , remove : OptionalArgument NodePatch
+    }
+
+
+{-| Type alias for the `UpdateNodeInput` attributes. Note that this type
+needs to use the `UpdateNodeInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateNodeInputRaw =
+    { filter : NodeFilter
+    , set : OptionalArgument NodePatch
+    , remove : OptionalArgument NodePatch
+    }
+
+
+{-| Type for the UpdateNodeInput input object.
+-}
+type UpdateNodeInput
+    = UpdateNodeInput UpdateNodeInputRaw
+
+
+{-| Encode a UpdateNodeInput into a value that can be used as an argument.
+-}
+encodeUpdateNodeInput : UpdateNodeInput -> Value
+encodeUpdateNodeInput (UpdateNodeInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeNodeFilter input.filter |> Just ), ( "set", encodeNodePatch |> Encode.optional input.set ), ( "remove", encodeNodePatch |> Encode.optional input.remove ) ]
+
+
+buildUpdatePostInput : UpdatePostInputRequiredFields -> (UpdatePostInputOptionalFields -> UpdatePostInputOptionalFields) -> UpdatePostInput
+buildUpdatePostInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdatePostInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdatePostInputRequiredFields =
+    { filter : PostFilter }
+
+
+type alias UpdatePostInputOptionalFields =
+    { set : OptionalArgument PostPatch
+    , remove : OptionalArgument PostPatch
+    }
+
+
+{-| Type alias for the `UpdatePostInput` attributes. Note that this type
+needs to use the `UpdatePostInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdatePostInputRaw =
+    { filter : PostFilter
+    , set : OptionalArgument PostPatch
+    , remove : OptionalArgument PostPatch
+    }
+
+
+{-| Type for the UpdatePostInput input object.
+-}
+type UpdatePostInput
+    = UpdatePostInput UpdatePostInputRaw
+
+
+{-| Encode a UpdatePostInput into a value that can be used as an argument.
+-}
+encodeUpdatePostInput : UpdatePostInput -> Value
+encodeUpdatePostInput (UpdatePostInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodePostFilter input.filter |> Just ), ( "set", encodePostPatch |> Encode.optional input.set ), ( "remove", encodePostPatch |> Encode.optional input.remove ) ]
+
+
+buildUpdateRoleInput : UpdateRoleInputRequiredFields -> (UpdateRoleInputOptionalFields -> UpdateRoleInputOptionalFields) -> UpdateRoleInput
+buildUpdateRoleInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateRoleInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateRoleInputRequiredFields =
+    { filter : RoleFilter }
+
+
+type alias UpdateRoleInputOptionalFields =
+    { set : OptionalArgument RolePatch
+    , remove : OptionalArgument RolePatch
+    }
+
+
+{-| Type alias for the `UpdateRoleInput` attributes. Note that this type
+needs to use the `UpdateRoleInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateRoleInputRaw =
+    { filter : RoleFilter
+    , set : OptionalArgument RolePatch
+    , remove : OptionalArgument RolePatch
+    }
+
+
+{-| Type for the UpdateRoleInput input object.
+-}
+type UpdateRoleInput
+    = UpdateRoleInput UpdateRoleInputRaw
+
+
+{-| Encode a UpdateRoleInput into a value that can be used as an argument.
+-}
+encodeUpdateRoleInput : UpdateRoleInput -> Value
+encodeUpdateRoleInput (UpdateRoleInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeRoleFilter input.filter |> Just ), ( "set", encodeRolePatch |> Encode.optional input.set ), ( "remove", encodeRolePatch |> Encode.optional input.remove ) ]
+
+
+buildUpdateTensionInput : UpdateTensionInputRequiredFields -> (UpdateTensionInputOptionalFields -> UpdateTensionInputOptionalFields) -> UpdateTensionInput
+buildUpdateTensionInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateTensionInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateTensionInputRequiredFields =
+    { filter : TensionFilter }
+
+
+type alias UpdateTensionInputOptionalFields =
+    { set : OptionalArgument TensionPatch
+    , remove : OptionalArgument TensionPatch
+    }
+
+
+{-| Type alias for the `UpdateTensionInput` attributes. Note that this type
+needs to use the `UpdateTensionInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateTensionInputRaw =
+    { filter : TensionFilter
+    , set : OptionalArgument TensionPatch
+    , remove : OptionalArgument TensionPatch
+    }
+
+
+{-| Type for the UpdateTensionInput input object.
+-}
+type UpdateTensionInput
+    = UpdateTensionInput UpdateTensionInputRaw
+
+
+{-| Encode a UpdateTensionInput into a value that can be used as an argument.
+-}
+encodeUpdateTensionInput : UpdateTensionInput -> Value
+encodeUpdateTensionInput (UpdateTensionInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeTensionFilter input.filter |> Just ), ( "set", encodeTensionPatch |> Encode.optional input.set ), ( "remove", encodeTensionPatch |> Encode.optional input.remove ) ]
+
+
+buildUpdateUserInput : UpdateUserInputRequiredFields -> (UpdateUserInputOptionalFields -> UpdateUserInputOptionalFields) -> UpdateUserInput
+buildUpdateUserInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateUserInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateUserInputRequiredFields =
+    { filter : UserFilter }
+
+
+type alias UpdateUserInputOptionalFields =
+    { set : OptionalArgument UserPatch
+    , remove : OptionalArgument UserPatch
+    }
+
+
+{-| Type alias for the `UpdateUserInput` attributes. Note that this type
+needs to use the `UpdateUserInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateUserInputRaw =
+    { filter : UserFilter
+    , set : OptionalArgument UserPatch
+    , remove : OptionalArgument UserPatch
+    }
+
+
+{-| Type for the UpdateUserInput input object.
+-}
+type UpdateUserInput
+    = UpdateUserInput UpdateUserInputRaw
+
+
+{-| Encode a UpdateUserInput into a value that can be used as an argument.
+-}
+encodeUpdateUserInput : UpdateUserInput -> Value
+encodeUpdateUserInput (UpdateUserInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeUserFilter input.filter |> Just ), ( "set", encodeUserPatch |> Encode.optional input.set ), ( "remove", encodeUserPatch |> Encode.optional input.remove ) ]
+
+
+buildUserFilter : (UserFilterOptionalFields -> UserFilterOptionalFields) -> UserFilter
+buildUserFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, createdAt = Absent, username = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    UserFilter { id = optionals.id, createdAt = optionals.createdAt, username = optionals.username, and = optionals.and, or = optionals.or, not = optionals.not }
+
+
+type alias UserFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , username : OptionalArgument StringHashFilter
+    , and : OptionalArgument UserFilter
+    , or : OptionalArgument UserFilter
+    , not : OptionalArgument UserFilter
+    }
+
+
+{-| Type alias for the `UserFilter` attributes. Note that this type
+needs to use the `UserFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , username : OptionalArgument StringHashFilter
+    , and : OptionalArgument UserFilter
+    , or : OptionalArgument UserFilter
+    , not : OptionalArgument UserFilter
+    }
+
+
+{-| Type for the UserFilter input object.
+-}
+type UserFilter
+    = UserFilter UserFilterRaw
+
+
+{-| Encode a UserFilter into a value that can be used as an argument.
+-}
+encodeUserFilter : UserFilter -> Value
+encodeUserFilter (UserFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "username", encodeStringHashFilter |> Encode.optional input.username ), ( "and", encodeUserFilter |> Encode.optional input.and ), ( "or", encodeUserFilter |> Encode.optional input.or ), ( "not", encodeUserFilter |> Encode.optional input.not ) ]
+
+
+buildUserOrder : (UserOrderOptionalFields -> UserOrderOptionalFields) -> UserOrder
+buildUserOrder fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    UserOrder { asc = optionals.asc, desc = optionals.desc, then_ = optionals.then_ }
+
+
+type alias UserOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.UserOrderable.UserOrderable
+    , desc : OptionalArgument Fractal.Enum.UserOrderable.UserOrderable
+    , then_ : OptionalArgument UserOrder
+    }
+
+
+{-| Type alias for the `UserOrder` attributes. Note that this type
+needs to use the `UserOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.UserOrderable.UserOrderable
+    , desc : OptionalArgument Fractal.Enum.UserOrderable.UserOrderable
+    , then_ : OptionalArgument UserOrder
+    }
+
+
+{-| Type for the UserOrder input object.
+-}
+type UserOrder
+    = UserOrder UserOrderRaw
+
+
+{-| Encode a UserOrder into a value that can be used as an argument.
+-}
+encodeUserOrder : UserOrder -> Value
+encodeUserOrder (UserOrder input) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.UserOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.UserOrderable.toString |> Encode.optional input.desc ), ( "then", encodeUserOrder |> Encode.optional input.then_ ) ]
+
+
+buildUserPatch : (UserPatchOptionalFields -> UserPatchOptionalFields) -> UserPatch
+buildUserPatch fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { createdAt = Absent, fullname = Absent, password = Absent, roles = Absent, backed_roles = Absent, bio = Absent }
+    in
+    UserPatch { createdAt = optionals.createdAt, fullname = optionals.fullname, password = optionals.password, roles = optionals.roles, backed_roles = optionals.backed_roles, bio = optionals.bio }
+
+
+type alias UserPatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , fullname : OptionalArgument String
+    , password : OptionalArgument String
+    , roles : OptionalArgument (List RoleRef)
+    , backed_roles : OptionalArgument (List RoleRef)
+    , bio : OptionalArgument String
+    }
+
+
+{-| Type alias for the `UserPatch` attributes. Note that this type
+needs to use the `UserPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserPatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , fullname : OptionalArgument String
+    , password : OptionalArgument String
+    , roles : OptionalArgument (List RoleRef)
+    , backed_roles : OptionalArgument (List RoleRef)
+    , bio : OptionalArgument String
+    }
+
+
+{-| Type for the UserPatch input object.
+-}
+type UserPatch
+    = UserPatch UserPatchRaw
+
+
+{-| Encode a UserPatch into a value that can be used as an argument.
+-}
+encodeUserPatch : UserPatch -> Value
+encodeUserPatch (UserPatch input) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "fullname", Encode.string |> Encode.optional input.fullname ), ( "password", Encode.string |> Encode.optional input.password ), ( "roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "bio", Encode.string |> Encode.optional input.bio ) ]
 
 
 buildUserRef : (UserRefOptionalFields -> UserRefOptionalFields) -> UserRef
@@ -251,16 +2258,20 @@ buildUserRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, username = Absent, password = Absent, roles = Absent }
+                { id = Absent, createdAt = Absent, username = Absent, fullname = Absent, password = Absent, roles = Absent, backed_roles = Absent, bio = Absent }
     in
-    UserRef { id = optionals.id, username = optionals.username, password = optionals.password, roles = optionals.roles }
+    UserRef { id = optionals.id, createdAt = optionals.createdAt, username = optionals.username, fullname = optionals.fullname, password = optionals.password, roles = optionals.roles, backed_roles = optionals.backed_roles, bio = optionals.bio }
 
 
 type alias UserRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , username : OptionalArgument String
+    , fullname : OptionalArgument String
     , password : OptionalArgument String
     , roles : OptionalArgument (List RoleRef)
+    , backed_roles : OptionalArgument (List RoleRef)
+    , bio : OptionalArgument String
     }
 
 
@@ -271,9 +2282,13 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias UserRefRaw =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , username : OptionalArgument String
+    , fullname : OptionalArgument String
     , password : OptionalArgument String
     , roles : OptionalArgument (List RoleRef)
+    , backed_roles : OptionalArgument (List RoleRef)
+    , bio : OptionalArgument String
     }
 
 
@@ -288,4 +2303,4 @@ type UserRef
 encodeUserRef : UserRef -> Value
 encodeUserRef (UserRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "username", Encode.string |> Encode.optional input.username ), ( "password", Encode.string |> Encode.optional input.password ), ( "roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.roles ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "username", Encode.string |> Encode.optional input.username ), ( "fullname", Encode.string |> Encode.optional input.fullname ), ( "password", Encode.string |> Encode.optional input.password ), ( "roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeRoleRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "bio", Encode.string |> Encode.optional input.bio ) ]

@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.Mandate exposing (..)
+module Fractal.Object.Post exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -20,31 +20,13 @@ import Json.Decode as Decode
 
 
 {-| -}
-purpose : SelectionSet String Fractal.Object.Mandate
-purpose =
-    Object.selectionForField "String" "purpose" [] Decode.string
-
-
-{-| -}
-responsabilities : SelectionSet (Maybe String) Fractal.Object.Mandate
-responsabilities =
-    Object.selectionForField "(Maybe String)" "responsabilities" [] (Decode.string |> Decode.nullable)
-
-
-{-| -}
-domains : SelectionSet (Maybe (List String)) Fractal.Object.Mandate
-domains =
-    Object.selectionForField "(Maybe (List String))" "domains" [] (Decode.string |> Decode.list |> Decode.nullable)
-
-
-{-| -}
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Mandate
+id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Post
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
 {-| -}
-createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Mandate
+createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Post
 createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
 
@@ -58,7 +40,7 @@ type alias CreatedByOptionalArguments =
   - filter -
 
 -}
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Mandate
+createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Post
 createdBy fillInOptionals object_ =
     let
         filledInOptionals =
@@ -72,6 +54,6 @@ createdBy fillInOptionals object_ =
 
 
 {-| -}
-message : SelectionSet (Maybe String) Fractal.Object.Mandate
+message : SelectionSet (Maybe String) Fractal.Object.Post
 message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
