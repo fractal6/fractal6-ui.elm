@@ -27,14 +27,6 @@ type alias TensionOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 tension : (TensionOptionalArguments -> TensionOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateTensionPayload
 tension fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ tension fillInOptionals object_ =
     Object.selectionForCompositeField "tension" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateTensionPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

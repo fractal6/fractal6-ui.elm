@@ -9,7 +9,7 @@ setup-css:
 	npm install node-sass --save-dev
 	npm install bulma --save-dev
 
-generate:
+gen:
 	npm run graphql_build
 
 generate_starwars:

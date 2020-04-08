@@ -27,14 +27,6 @@ type alias UserOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserPayload
 user fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ user fillInOptionals object_ =
     Object.selectionForCompositeField "user" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.AddUserPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

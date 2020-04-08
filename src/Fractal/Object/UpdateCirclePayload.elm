@@ -27,14 +27,6 @@ type alias CircleOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 circle : (CircleOptionalArguments -> CircleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Circle -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateCirclePayload
 circle fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ circle fillInOptionals object_ =
     Object.selectionForCompositeField "circle" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateCirclePayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

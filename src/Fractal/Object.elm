@@ -9,6 +9,14 @@ type AddCirclePayload
     = AddCirclePayload
 
 
+type AddCommentPayload
+    = AddCommentPayload
+
+
+type AddLabelPayload
+    = AddLabelPayload
+
+
 type AddMandatePayload
     = AddMandatePayload
 
@@ -29,8 +37,20 @@ type Circle
     = Circle
 
 
+type Comment
+    = Comment
+
+
 type DeleteCirclePayload
     = DeleteCirclePayload
+
+
+type DeleteCommentPayload
+    = DeleteCommentPayload
+
+
+type DeleteLabelPayload
+    = DeleteLabelPayload
 
 
 type DeleteMandatePayload
@@ -57,6 +77,10 @@ type DeleteUserPayload
     = DeleteUserPayload
 
 
+type Label
+    = Label
+
+
 type Mandate
     = Mandate
 
@@ -79,6 +103,10 @@ type Tension
 
 type UpdateCirclePayload
     = UpdateCirclePayload
+
+
+type UpdateCommentPayload
+    = UpdateCommentPayload
 
 
 type UpdateMandatePayload

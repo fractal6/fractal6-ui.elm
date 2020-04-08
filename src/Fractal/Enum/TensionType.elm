@@ -7,15 +7,6 @@ module Fractal.Enum.TensionType exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - Governance -
-  - Operational -
-  - Personal -
-  - Help -
-  - Alert -
-
--}
 type TensionType
     = Governance
     | Operational

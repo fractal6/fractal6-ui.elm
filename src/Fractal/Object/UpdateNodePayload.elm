@@ -27,14 +27,6 @@ type alias NodeOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 node : (NodeOptionalArguments -> NodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateNodePayload
 node fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ node fillInOptionals object_ =
     Object.selectionForCompositeField "node" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateNodePayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

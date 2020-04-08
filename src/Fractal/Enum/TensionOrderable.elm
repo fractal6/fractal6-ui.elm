@@ -7,26 +7,17 @@ module Fractal.Enum.TensionOrderable exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - CreatedAt -
-  - Message -
-  - Nth -
-  - Title -
-  - Severity -
-
--}
 type TensionOrderable
     = CreatedAt
     | Message
     | Nth
     | Title
-    | Severity
+    | N_comments
 
 
 list : List TensionOrderable
 list =
-    [ CreatedAt, Message, Nth, Title, Severity ]
+    [ CreatedAt, Message, Nth, Title, N_comments ]
 
 
 decoder : Decoder TensionOrderable
@@ -47,8 +38,8 @@ decoder =
                     "title" ->
                         Decode.succeed Title
 
-                    "severity" ->
-                        Decode.succeed Severity
+                    "n_comments" ->
+                        Decode.succeed N_comments
 
                     _ ->
                         Decode.fail ("Invalid TensionOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -72,8 +63,8 @@ toString enum =
         Title ->
             "title"
 
-        Severity ->
-            "severity"
+        N_comments ->
+            "n_comments"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -102,8 +93,8 @@ fromString enumString =
         "title" ->
             Just Title
 
-        "severity" ->
-            Just Severity
+        "n_comments" ->
+            Just N_comments
 
         _ ->
             Nothing

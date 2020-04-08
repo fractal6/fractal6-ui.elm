@@ -7,22 +7,17 @@ module Fractal.Enum.CircleOrderable exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - CreatedAt -
-  - Name -
-  - Nameid -
-
--}
 type CircleOrderable
     = CreatedAt
     | Name
     | Nameid
+    | N_tensions_out
+    | N_tensions_in
 
 
 list : List CircleOrderable
 list =
-    [ CreatedAt, Name, Nameid ]
+    [ CreatedAt, Name, Nameid, N_tensions_out, N_tensions_in ]
 
 
 decoder : Decoder CircleOrderable
@@ -39,6 +34,12 @@ decoder =
 
                     "nameid" ->
                         Decode.succeed Nameid
+
+                    "n_tensions_out" ->
+                        Decode.succeed N_tensions_out
+
+                    "n_tensions_in" ->
+                        Decode.succeed N_tensions_in
 
                     _ ->
                         Decode.fail ("Invalid CircleOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -58,6 +59,12 @@ toString enum =
 
         Nameid ->
             "nameid"
+
+        N_tensions_out ->
+            "n_tensions_out"
+
+        N_tensions_in ->
+            "n_tensions_in"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -82,6 +89,12 @@ fromString enumString =
 
         "nameid" ->
             Just Nameid
+
+        "n_tensions_out" ->
+            Just N_tensions_out
+
+        "n_tensions_in" ->
+            Just N_tensions_in
 
         _ ->
             Nothing

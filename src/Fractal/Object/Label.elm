@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.DeleteUserPayload exposing (..)
+module Fractal.Object.Label exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,11 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-msg : SelectionSet (Maybe String) Fractal.Object.DeleteUserPayload
-msg =
-    Object.selectionForField "(Maybe String)" "msg" [] (Decode.string |> Decode.nullable)
+id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Label
+id =
+    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.DeleteUserPayload
-numUids =
-    Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)
+name : SelectionSet String Fractal.Object.Label
+name =
+    Object.selectionForField "String" "name" [] Decode.string

@@ -7,12 +7,6 @@ module Fractal.Enum.PostOrderable exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - CreatedAt -
-  - Message -
-
--}
 type PostOrderable
     = CreatedAt
     | Message

@@ -19,19 +19,16 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-{-| -}
 isRoot : SelectionSet Bool Fractal.Object.Circle
 isRoot =
     Object.selectionForField "Bool" "isRoot" [] Decode.bool
 
 
-{-| -}
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Circle
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-{-| -}
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Circle
 createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
@@ -41,11 +38,6 @@ type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-{-|
-
-  - filter -
-
--}
 createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Circle
 createdBy fillInOptionals object_ =
     let
@@ -63,11 +55,6 @@ type alias ParentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
 
-{-|
-
-  - filter -
-
--}
 parent : (ParentOptionalArguments -> ParentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) Fractal.Object.Circle
 parent fillInOptionals object_ =
     let
@@ -89,14 +76,6 @@ type alias ChildrenOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Circle
 children fillInOptionals object_ =
     let
@@ -110,13 +89,11 @@ children fillInOptionals object_ =
     Object.selectionForCompositeField "children" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 name : SelectionSet String Fractal.Object.Circle
 name =
     Object.selectionForField "String" "name" [] Decode.string
 
 
-{-| -}
 nameid : SelectionSet String Fractal.Object.Circle
 nameid =
     Object.selectionForField "String" "nameid" [] Decode.string
@@ -126,11 +103,6 @@ type alias MandateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.MandateFilter }
 
 
-{-|
-
-  - filter -
-
--}
 mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Circle
 mandate fillInOptionals object_ =
     let
@@ -152,14 +124,6 @@ type alias TensionsOutOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 tensions_out : (TensionsOutOptionalArguments -> TensionsOutOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Circle
 tensions_out fillInOptionals object_ =
     let
@@ -181,14 +145,6 @@ type alias TensionsInOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 tensions_in : (TensionsInOptionalArguments -> TensionsInOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Circle
 tensions_in fillInOptionals object_ =
     let
@@ -200,3 +156,13 @@ tensions_in fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "tensions_in" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+n_tensions_out : SelectionSet (Maybe Int) Fractal.Object.Circle
+n_tensions_out =
+    Object.selectionForField "(Maybe Int)" "n_tensions_out" [] (Decode.int |> Decode.nullable)
+
+
+n_tensions_in : SelectionSet (Maybe Int) Fractal.Object.Circle
+n_tensions_in =
+    Object.selectionForField "(Maybe Int)" "n_tensions_in" [] (Decode.int |> Decode.nullable)

@@ -19,31 +19,26 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-{-| -}
 purpose : SelectionSet String Fractal.Object.Mandate
 purpose =
     Object.selectionForField "String" "purpose" [] Decode.string
 
 
-{-| -}
 responsabilities : SelectionSet (Maybe String) Fractal.Object.Mandate
 responsabilities =
     Object.selectionForField "(Maybe String)" "responsabilities" [] (Decode.string |> Decode.nullable)
 
 
-{-| -}
 domains : SelectionSet (Maybe (List String)) Fractal.Object.Mandate
 domains =
     Object.selectionForField "(Maybe (List String))" "domains" [] (Decode.string |> Decode.list |> Decode.nullable)
 
 
-{-| -}
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Mandate
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-{-| -}
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Mandate
 createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
@@ -53,11 +48,6 @@ type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-{-|
-
-  - filter -
-
--}
 createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Mandate
 createdBy fillInOptionals object_ =
     let
@@ -71,7 +61,6 @@ createdBy fillInOptionals object_ =
     Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
 
 
-{-| -}
 message : SelectionSet (Maybe String) Fractal.Object.Mandate
 message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)

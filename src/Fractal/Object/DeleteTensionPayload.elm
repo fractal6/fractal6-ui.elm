@@ -19,13 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-{-| -}
 msg : SelectionSet (Maybe String) Fractal.Object.DeleteTensionPayload
 msg =
     Object.selectionForField "(Maybe String)" "msg" [] (Decode.string |> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.DeleteTensionPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

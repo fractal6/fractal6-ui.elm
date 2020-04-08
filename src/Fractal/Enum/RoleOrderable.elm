@@ -7,24 +7,18 @@ module Fractal.Enum.RoleOrderable exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - CreatedAt -
-  - Name -
-  - Nameid -
-  - Skills -
-
--}
 type RoleOrderable
     = CreatedAt
     | Name
     | Nameid
+    | N_tensions_out
+    | N_tensions_in
     | Skills
 
 
 list : List RoleOrderable
 list =
-    [ CreatedAt, Name, Nameid, Skills ]
+    [ CreatedAt, Name, Nameid, N_tensions_out, N_tensions_in, Skills ]
 
 
 decoder : Decoder RoleOrderable
@@ -41,6 +35,12 @@ decoder =
 
                     "nameid" ->
                         Decode.succeed Nameid
+
+                    "n_tensions_out" ->
+                        Decode.succeed N_tensions_out
+
+                    "n_tensions_in" ->
+                        Decode.succeed N_tensions_in
 
                     "skills" ->
                         Decode.succeed Skills
@@ -63,6 +63,12 @@ toString enum =
 
         Nameid ->
             "nameid"
+
+        N_tensions_out ->
+            "n_tensions_out"
+
+        N_tensions_in ->
+            "n_tensions_in"
 
         Skills ->
             "skills"
@@ -90,6 +96,12 @@ fromString enumString =
 
         "nameid" ->
             Just Nameid
+
+        "n_tensions_out" ->
+            Just N_tensions_out
+
+        "n_tensions_in" ->
+            Just N_tensions_in
 
         "skills" ->
             Just Skills

@@ -7,23 +7,6 @@ module Fractal.Enum.DgraphIndex exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - Int -
-  - Float -
-  - Bool -
-  - Hash -
-  - Exact -
-  - Term -
-  - Fulltext -
-  - Trigram -
-  - Regexp -
-  - Year -
-  - Month -
-  - Day -
-  - Hour -
-
--}
 type DgraphIndex
     = Int
     | Float

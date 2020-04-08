@@ -27,14 +27,6 @@ type alias PostOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 post : (PostOptionalArguments -> PostOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdatePostPayload
 post fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ post fillInOptionals object_ =
     Object.selectionForCompositeField "post" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.UpdatePostPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

@@ -2,48 +2,41 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.NodeType exposing (..)
+module Fractal.Enum.LabelOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type NodeType
-    = Circle
-    | Role
+type LabelOrderable
+    = Name
 
 
-list : List NodeType
+list : List LabelOrderable
 list =
-    [ Circle, Role ]
+    [ Name ]
 
 
-decoder : Decoder NodeType
+decoder : Decoder LabelOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "Circle" ->
-                        Decode.succeed Circle
-
-                    "Role" ->
-                        Decode.succeed Role
+                    "name" ->
+                        Decode.succeed Name
 
                     _ ->
-                        Decode.fail ("Invalid NodeType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid LabelOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representating the Enum to a string that the GraphQL server will recognize.
 -}
-toString : NodeType -> String
+toString : LabelOrderable -> String
 toString enum =
     case enum of
-        Circle ->
-            "Circle"
-
-        Role ->
-            "Role"
+        Name ->
+            "name"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -57,14 +50,11 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe NodeType
+fromString : String -> Maybe LabelOrderable
 fromString enumString =
     case enumString of
-        "Circle" ->
-            Just Circle
-
-        "Role" ->
-            Just Role
+        "name" ->
+            Just Name
 
         _ ->
             Nothing

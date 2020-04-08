@@ -7,16 +7,18 @@ import Dict exposing (Dict)
 import Fractal.Enum.TensionType as TensionEnum exposing (TensionType, toString)
 import Fractal.InputObject
 import Fractal.Object
+import Fractal.Object.Label
 import Fractal.Object.Tension
 import Fractal.Query as Q
+import Fractal.ScalarCodecs
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
 import GqlClient exposing (GQLResponse, decodeGQLResponse, makeGQLMutation, makeGQLQuery)
 import Graphql.Http
 import Graphql.Operation exposing (RootQuery)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
+import Graphql.OptionalArgument as OptionalArgument
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -56,10 +58,17 @@ type alias OrgaGraph =
     String
 
 
+type alias Label =
+    { name : String }
+
+
 type alias Tension =
-    { title : String
+    { id : Fractal.ScalarCodecs.Id
+    , title : String
     , type_ : TensionType
-    , severity : Int
+    , labels : Maybe (List Label)
+
+    --, labels : (\opts -> Fractal.Object.Tension.LabelsOptionalArguments) (Fractal.Object.Tension Fractal.Object.Label)
     , n_comments : Maybe Int
 
     --, emitter : String
@@ -82,19 +91,20 @@ type alias Model =
 -- GraphQL decoder
 
 
-tensionSelection : SelectionSet Tension Fractal.Object.Tension
-tensionSelection =
-    SelectionSet.map4 Tension
-        Fractal.Object.Tension.title
-        Fractal.Object.Tension.type_
-        Fractal.Object.Tension.severity
-        Fractal.Object.Tension.n_comments
-
-
-
---todoListOptionalArgument : TodosOptionalArguments -> TodosOptionalArguments
---todoListOptionalArgument optionalArgs =
---    { optionalArgs | where_ = whereIsPublic False, order_by = orderByCreatedAt Desc }
+tensionOverviewQ : SelectionSet Tension Fractal.Object.Tension
+tensionOverviewQ =
+    SelectionSet.succeed Tension
+        |> with Fractal.Object.Tension.id
+        |> with Fractal.Object.Tension.title
+        |> with Fractal.Object.Tension.type_
+        |> with
+            (Fractal.Object.Tension.labels
+                labelFilter
+                (SelectionSet.succeed Label
+                    |> with Fractal.Object.Label.name
+                )
+            )
+        |> with Fractal.Object.Tension.n_comments
 
 
 tensionsPageArg : Q.QueryTensionOptionalArguments -> Q.QueryTensionOptionalArguments
@@ -102,10 +112,15 @@ tensionsPageArg args =
     args
 
 
+labelFilter : Fractal.Object.Tension.LabelsOptionalArguments -> Fractal.Object.Tension.LabelsOptionalArguments
+labelFilter args =
+    { args | first = OptionalArgument.Present 3 }
+
+
 fetchTensionsPage : Cmd Msg
 fetchTensionsPage =
     makeGQLQuery
-        (Q.queryTension tensionsPageArg tensionSelection)
+        (Q.queryTension tensionsPageArg tensionOverviewQ)
         (RemoteData.fromResult >> TensionsSuccess)
 
 
@@ -134,7 +149,6 @@ type alias TensionsResult =
 --         (field "type_" string)
 --         (field "emitter" string)
 --         (field "receivers" string)
---         (field "severity" int)
 --         (field "n_comments" int)
 --
 --
@@ -477,12 +491,13 @@ mTension tension =
                 ]
             ]
         , div [ class "media-right" ]
-            [ div
-                [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" ("severity: " ++ String.fromInt tension.severity)
-                ]
-                [ Fa.icon_ "fas fa-fire" (String.fromInt tension.severity)
-                ]
+            [ div [] []
+
+            --[ class "tooltip has-tooltip-top has-tooltip-light"
+            --, attribute "data-tooltip" ("severity: " ++ String.fromInt tension.severity)
+            --]
+            --[ Fa.icon_ "fas fa-fire" (String.fromInt tension.severity)
+            --]
             , case tension.n_comments of
                 Just n_comments ->
                     div

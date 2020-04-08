@@ -19,31 +19,26 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-{-| -}
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.User
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-{-| -}
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.User
 createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
 
 
-{-| -}
 username : SelectionSet String Fractal.Object.User
 username =
     Object.selectionForField "String" "username" [] Decode.string
 
 
-{-| -}
 fullname : SelectionSet (Maybe String) Fractal.Object.User
 fullname =
     Object.selectionForField "(Maybe String)" "fullname" [] (Decode.string |> Decode.nullable)
 
 
-{-| -}
 password : SelectionSet String Fractal.Object.User
 password =
     Object.selectionForField "String" "password" [] Decode.string
@@ -57,14 +52,6 @@ type alias RolesOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 roles : (RolesOptionalArguments -> RolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 roles fillInOptionals object_ =
     let
@@ -86,14 +73,6 @@ type alias BackedRolesOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 backed_roles : (BackedRolesOptionalArguments -> BackedRolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 backed_roles fillInOptionals object_ =
     let
@@ -107,7 +86,6 @@ backed_roles fillInOptionals object_ =
     Object.selectionForCompositeField "backed_roles" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 bio : SelectionSet (Maybe String) Fractal.Object.User
 bio =
     Object.selectionForField "(Maybe String)" "bio" [] (Decode.string |> Decode.nullable)

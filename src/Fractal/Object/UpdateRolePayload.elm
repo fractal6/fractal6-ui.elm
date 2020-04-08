@@ -27,14 +27,6 @@ type alias RoleOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 role : (RoleOptionalArguments -> RoleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateRolePayload
 role fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ role fillInOptionals object_ =
     Object.selectionForCompositeField "role" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateRolePayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

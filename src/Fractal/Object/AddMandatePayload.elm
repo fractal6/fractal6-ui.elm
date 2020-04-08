@@ -27,14 +27,6 @@ type alias MandateOptionalArguments =
     }
 
 
-{-|
-
-  - filter -
-  - order -
-  - first -
-  - offset -
-
--}
 mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddMandatePayload
 mandate fillInOptionals object_ =
     let
@@ -48,7 +40,6 @@ mandate fillInOptionals object_ =
     Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-{-| -}
 numUids : SelectionSet (Maybe Int) Fractal.Object.AddMandatePayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

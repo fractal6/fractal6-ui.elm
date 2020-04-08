@@ -7,15 +7,6 @@ module Fractal.Enum.MandateOrderable exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 
 
-{-|
-
-  - CreatedAt -
-  - Message -
-  - Purpose -
-  - Responsabilities -
-  - Domains -
-
--}
 type MandateOrderable
     = CreatedAt
     | Message

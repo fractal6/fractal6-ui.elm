@@ -2,25 +2,23 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.UserOrderable exposing (..)
+module Fractal.Enum.CommentOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type UserOrderable
+type CommentOrderable
     = CreatedAt
-    | Username
-    | Fullname
-    | Password
-    | Bio
+    | Message
+    | Void_
 
 
-list : List UserOrderable
+list : List CommentOrderable
 list =
-    [ CreatedAt, Username, Fullname, Password, Bio ]
+    [ CreatedAt, Message, Void_ ]
 
 
-decoder : Decoder UserOrderable
+decoder : Decoder CommentOrderable
 decoder =
     Decode.string
         |> Decode.andThen
@@ -29,42 +27,30 @@ decoder =
                     "createdAt" ->
                         Decode.succeed CreatedAt
 
-                    "username" ->
-                        Decode.succeed Username
+                    "message" ->
+                        Decode.succeed Message
 
-                    "fullname" ->
-                        Decode.succeed Fullname
-
-                    "password" ->
-                        Decode.succeed Password
-
-                    "bio" ->
-                        Decode.succeed Bio
+                    "_VOID" ->
+                        Decode.succeed Void_
 
                     _ ->
-                        Decode.fail ("Invalid UserOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid CommentOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representating the Enum to a string that the GraphQL server will recognize.
 -}
-toString : UserOrderable -> String
+toString : CommentOrderable -> String
 toString enum =
     case enum of
         CreatedAt ->
             "createdAt"
 
-        Username ->
-            "username"
+        Message ->
+            "message"
 
-        Fullname ->
-            "fullname"
-
-        Password ->
-            "password"
-
-        Bio ->
-            "bio"
+        Void_ ->
+            "_VOID"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -78,23 +64,17 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe UserOrderable
+fromString : String -> Maybe CommentOrderable
 fromString enumString =
     case enumString of
         "createdAt" ->
             Just CreatedAt
 
-        "username" ->
-            Just Username
+        "message" ->
+            Just Message
 
-        "fullname" ->
-            Just Fullname
-
-        "password" ->
-            Just Password
-
-        "bio" ->
-            Just Bio
+        "_VOID" ->
+            Just Void_
 
         _ ->
             Nothing
