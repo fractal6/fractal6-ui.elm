@@ -132,14 +132,17 @@ header > .navbar {
   /* is-paddingless compatibility */
   padding-top: 2rem;
 
+  // the first children
+  .is-child:first-child {
+    padding-right: $size-small !important;
+  }
+
+  // all children except the first
   .is-child + .is-child {
     padding-right: $size-small !important;
     padding-left: $size-small !important;
   }
 
-  .is-child:first-child {
-    padding-right: $size-small !important;
-  }
 
   .heroViewer {
 
@@ -167,18 +170,31 @@ header > .navbar {
     font-size: 8px;
 }
 
+/*
+ *
+ * Organisation Page
+ *
+ */
+
 #tensionsTab  {
     .tooltip {
-		border: 8px solid transparent;
+        // Increase the area of activation (better UX)
         margin: -8px;		
+		border: 8px solid transparent;
      }
 
     .tooltip::before {
         opacity: 1 !important; //don't work
         font-size: $size-6 !important;
      }
-}
 
+     .labelsList {
+         // all children except first
+         .tag + .tag {
+             margin-left: 7px !important;
+         }
+     }
+}
 
 /* 
  *

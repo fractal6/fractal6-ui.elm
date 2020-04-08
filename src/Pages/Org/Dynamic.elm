@@ -358,9 +358,8 @@ viewLeftPane model =
                         ]
                     , li []
                         [ a []
+                            --  fa-exclamation-circle
                             [ Fa.icon1 "fas fa-exchange-alt fa-xs" "Tensions" ]
-
-                        --  fa-exclamation-circle
                         ]
                     , li []
                         [ a []
@@ -485,29 +484,43 @@ mTension tension =
                 ]
             ]
         , div [ class "media-content" ]
-            [ div [ class "" ]
+            [ div [ class "content" ]
                 [ div [ class "has-text-weight-semibold" ]
                     [ text tension.title ]
                 ]
+            , div [ class "labelsList" ]
+                (case tension.labels of
+                    Just labels ->
+                        List.map
+                            (\label ->
+                                span [ class "tag" ] [ text label.name ]
+                            )
+                            labels
+
+                    Nothing ->
+                        []
+                )
             ]
-        , div [ class "media-right" ]
-            [ div [] []
+        , div
+            [ class "media-right" ]
+            [ let
+                n_comments =
+                    case tension.n_comments of
+                        Just n ->
+                            n
 
-            --[ class "tooltip has-tooltip-top has-tooltip-light"
-            --, attribute "data-tooltip" ("severity: " ++ String.fromInt tension.severity)
-            --]
-            --[ Fa.icon_ "fas fa-fire" (String.fromInt tension.severity)
-            --]
-            , case tension.n_comments of
-                Just n_comments ->
-                    div
-                        [ class "tooltip has-tooltip-top has-tooltip-light"
-                        , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
-                        ]
-                        [ Fa.icon "fas fa-comment-dots" (String.fromInt n_comments)
-                        ]
+                        Nothing ->
+                            0
+              in
+              if n_comments > 0 then
+                div
+                    [ class "tooltip has-tooltip-top has-tooltip-light"
+                    , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
+                    ]
+                    [ Fa.icon "fas fa-comment-dots" (String.fromInt n_comments)
+                    ]
 
-                Nothing ->
-                    text ""
+              else
+                text ""
             ]
         ]
