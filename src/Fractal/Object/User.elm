@@ -45,42 +45,42 @@ password =
 
 
 type alias RolesOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.RoleFilter
-    , order : OptionalArgument Fractal.InputObject.RoleOrder
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter
+    , order : OptionalArgument Fractal.InputObject.NodeOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-roles : (RolesOptionalArguments -> RolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+roles : (RolesOptionalArguments -> RolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 roles fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeRoleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeRoleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "roles" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
 type alias BackedRolesOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.RoleFilter
-    , order : OptionalArgument Fractal.InputObject.RoleOrder
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter
+    , order : OptionalArgument Fractal.InputObject.NodeOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-backed_roles : (BackedRolesOptionalArguments -> BackedRolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Role -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+backed_roles : (BackedRolesOptionalArguments -> BackedRolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 backed_roles fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeRoleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeRoleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "backed_roles" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)

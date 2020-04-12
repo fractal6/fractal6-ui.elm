@@ -9,11 +9,12 @@ import Json.Decode as Decode exposing (Decoder)
 
 type LabelOrderable
     = Name
+    | Color
 
 
 list : List LabelOrderable
 list =
-    [ Name ]
+    [ Name, Color ]
 
 
 decoder : Decoder LabelOrderable
@@ -24,6 +25,9 @@ decoder =
                 case string of
                     "name" ->
                         Decode.succeed Name
+
+                    "color" ->
+                        Decode.succeed Color
 
                     _ ->
                         Decode.fail ("Invalid LabelOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -37,6 +41,9 @@ toString enum =
     case enum of
         Name ->
             "name"
+
+        Color ->
+            "color"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -55,6 +62,9 @@ fromString enumString =
     case enumString of
         "name" ->
             Just Name
+
+        "color" ->
+            Just Color
 
         _ ->
             Nothing

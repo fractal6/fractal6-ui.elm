@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddCirclePayload exposing (..)
+module Fractal.Object.UpdateLabelPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,27 +19,27 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias CircleOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.CircleFilter
-    , order : OptionalArgument Fractal.InputObject.CircleOrder
+type alias LabelOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.LabelFilter
+    , order : OptionalArgument Fractal.InputObject.LabelOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-circle : (CircleOptionalArguments -> CircleOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Circle -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddCirclePayload
-circle fillInOptionals object_ =
+label : (LabelOptionalArguments -> LabelOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Label -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateLabelPayload
+label fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCircleFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeCircleOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeLabelFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeLabelOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "circle" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "label" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddCirclePayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateLabelPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

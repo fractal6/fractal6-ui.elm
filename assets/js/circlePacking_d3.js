@@ -1,3 +1,9 @@
+
+/*
+ *
+ * Extend canvas context to write circle texte around arc/circle.
+ *
+ */
 (function(){
     const FILL = 0;        // const to indicate filltext render
     const STROKE = 1;

@@ -4,6 +4,7 @@
 
 module Fractal.Object.Node exposing (..)
 
+import Fractal.Enum.NodeType
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -46,6 +47,23 @@ createdBy fillInOptionals object_ =
     Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
 
 
+type alias RootOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
+
+
+root : (RootOptionalArguments -> RootOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+root fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "root" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias ParentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -82,6 +100,11 @@ children fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "children" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type_ : SelectionSet Fractal.Enum.NodeType.NodeType Fractal.Object.Node
+type_ =
+    Object.selectionForField "Enum.NodeType.NodeType" "type_" [] Fractal.Enum.NodeType.decoder
 
 
 name : SelectionSet String Fractal.Object.Node
@@ -161,3 +184,52 @@ n_tensions_out =
 n_tensions_in : SelectionSet (Maybe Int) Fractal.Object.Node
 n_tensions_in =
     Object.selectionForField "(Maybe Int)" "n_tensions_in" [] (Decode.int |> Decode.nullable)
+
+
+n_children : SelectionSet (Maybe Int) Fractal.Object.Node
+n_children =
+    Object.selectionForField "(Maybe Int)" "n_children" [] (Decode.int |> Decode.nullable)
+
+
+isRoot : SelectionSet Bool Fractal.Object.Node
+isRoot =
+    Object.selectionForField "Bool" "isRoot" [] Decode.bool
+
+
+type alias UserOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+user fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "user" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias SecondOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+second : (SecondOptionalArguments -> SecondOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+second fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "second" optionalArgs object_ (identity >> Decode.nullable)
+
+
+skills : SelectionSet (Maybe (List String)) Fractal.Object.Node
+skills =
+    Object.selectionForField "(Maybe (List String))" "skills" [] (Decode.string |> Decode.list |> Decode.nullable)

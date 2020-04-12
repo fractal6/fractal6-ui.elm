@@ -5,10 +5,6 @@
 module Fractal.Object exposing (..)
 
 
-type AddCirclePayload
-    = AddCirclePayload
-
-
 type AddCommentPayload
     = AddCommentPayload
 
@@ -21,8 +17,8 @@ type AddMandatePayload
     = AddMandatePayload
 
 
-type AddRolePayload
-    = AddRolePayload
+type AddNodePayload
+    = AddNodePayload
 
 
 type AddTensionPayload
@@ -33,16 +29,8 @@ type AddUserPayload
     = AddUserPayload
 
 
-type Circle
-    = Circle
-
-
 type Comment
     = Comment
-
-
-type DeleteCirclePayload
-    = DeleteCirclePayload
 
 
 type DeleteCommentPayload
@@ -63,10 +51,6 @@ type DeleteNodePayload
 
 type DeletePostPayload
     = DeletePostPayload
-
-
-type DeleteRolePayload
-    = DeleteRolePayload
 
 
 type DeleteTensionPayload
@@ -93,20 +77,16 @@ type Post
     = Post
 
 
-type Role
-    = Role
-
-
 type Tension
     = Tension
 
 
-type UpdateCirclePayload
-    = UpdateCirclePayload
-
-
 type UpdateCommentPayload
     = UpdateCommentPayload
+
+
+type UpdateLabelPayload
+    = UpdateLabelPayload
 
 
 type UpdateMandatePayload
@@ -119,10 +99,6 @@ type UpdateNodePayload
 
 type UpdatePostPayload
     = UpdatePostPayload
-
-
-type UpdateRolePayload
-    = UpdateRolePayload
 
 
 type UpdateTensionPayload

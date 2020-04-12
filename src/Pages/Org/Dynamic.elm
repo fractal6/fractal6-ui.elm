@@ -44,18 +44,16 @@ page =
 
 
 -- Model
-
-
-type alias CircleFocusState =
-    { nidjs : NID
-    , name : String
-    , nodeType : String
-    , path : Array.Array { name : String, nidjs : NID }
-    }
+{-
+   Schema Data
+-}
 
 
 type alias OrgaGraph =
-    String
+    { id : Fractal.ScalarCodecs.Id
+    , nameid : String
+    , name : String
+    }
 
 
 type alias Label =
@@ -76,6 +74,26 @@ type alias Tension =
     }
 
 
+
+{-
+   Session Data
+-}
+
+
+type alias CircleFocusState =
+    { nidjs : NID
+    , name : String
+    , nodeType : String
+    , path : Array.Array { name : String, nidjs : NID }
+    }
+
+
+
+{-
+   Main model data
+-}
+
+
 type alias Model =
     { route : Route
     , asked_orga : String
@@ -91,6 +109,11 @@ type alias Model =
 -- GraphQL decoder
 
 
+labelFilter : Fractal.Object.Tension.LabelsOptionalArguments -> Fractal.Object.Tension.LabelsOptionalArguments
+labelFilter args =
+    { args | first = OptionalArgument.Present 3 }
+
+
 tensionOverviewQ : SelectionSet Tension Fractal.Object.Tension
 tensionOverviewQ =
     SelectionSet.succeed Tension
@@ -98,8 +121,7 @@ tensionOverviewQ =
         |> with Fractal.Object.Tension.title
         |> with Fractal.Object.Tension.type_
         |> with
-            (Fractal.Object.Tension.labels
-                labelFilter
+            (Fractal.Object.Tension.labels labelFilter
                 (SelectionSet.succeed Label
                     |> with Fractal.Object.Label.name
                 )
@@ -107,20 +129,12 @@ tensionOverviewQ =
         |> with Fractal.Object.Tension.n_comments
 
 
-tensionsPageArg : Q.QueryTensionOptionalArguments -> Q.QueryTensionOptionalArguments
-tensionsPageArg args =
-    args
-
-
-labelFilter : Fractal.Object.Tension.LabelsOptionalArguments -> Fractal.Object.Tension.LabelsOptionalArguments
-labelFilter args =
-    { args | first = OptionalArgument.Present 3 }
-
-
-fetchTensionsPage : Cmd Msg
-fetchTensionsPage =
+fetchTensionsBunch : Cmd Msg
+fetchTensionsBunch =
     makeGQLQuery
-        (Q.queryTension tensionsPageArg tensionOverviewQ)
+        (Q.queryTension (\args -> { args | first = OptionalArgument.Present 1 })
+            tensionOverviewQ
+        )
         (RemoteData.fromResult >> TensionsSuccess)
 
 
@@ -185,7 +199,7 @@ init { route } params =
       --    , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
       --    ]
     , Cmd.batch
-        [ fetchTensionsPage
+        [ fetchTensionsBunch
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
