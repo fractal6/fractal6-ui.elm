@@ -1,8 +1,8 @@
-module GqlClient exposing (GQLResponse, decodeGQLResponse, makeGQLMutation, makeGQLQuery)
+module GqlClient exposing (..)
 
 import Graphql.Http
 import Graphql.Operation exposing (RootMutation, RootQuery)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import RemoteData exposing (RemoteData)
 
 
@@ -27,7 +27,6 @@ makeGQLQuery query decodesTo =
     --makeGQLQuery authToken query decodesTo =
     query
         |> Graphql.Http.queryRequest graphql_url
-        --|> Graphql.Http.queryRequestWithHttpGet graphql_url Graphql.Http.AlwaysGet
         {-
            queryRequest signature is of the form
                String -> SelectionSet decodesTo RootQuery -> Request decodesTo
@@ -49,23 +48,3 @@ makeGQLMutation query decodesTo =
         -}
         --|> getAuthHeader authToken
         |> Graphql.Http.send decodesTo
-
-
-type GQLResponse decodesTo
-    = GQLResponse (RemoteData (Graphql.Http.Error decodesTo) decodesTo)
-
-
-decodeGQLResponse : Maybe (List (Maybe a)) -> List a
-decodeGQLResponse data =
-    --decodeGQLResponse : GQLResponse decodesTo -> RemoteData (Graphql.Http.Error decodesTo) decodesTo
-    -- Convert empty data to empty list
-    case data of
-        Just d ->
-            if List.length d == 0 then
-                []
-
-            else
-                List.filterMap identity d
-
-        Nothing ->
-            []

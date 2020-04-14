@@ -2,28 +2,18 @@ port module Pages.Org.Dynamic exposing (Model, Msg, page)
 
 import Array
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (Status(..), showWhatsup)
-import Dict exposing (Dict)
-import Fractal.Enum.TensionType as TensionEnum exposing (TensionType, toString)
-import Fractal.InputObject
-import Fractal.Object
-import Fractal.Object.Label
-import Fractal.Object.Tension
-import Fractal.Query as Q
-import Fractal.ScalarCodecs
+import Components.Loading as Loading exposing (Status(..), showMaybeError)
+import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
-import GqlClient exposing (GQLResponse, decodeGQLResponse, makeGQLMutation, makeGQLQuery)
-import Graphql.Http
-import Graphql.Operation exposing (RootQuery)
-import Graphql.OptionalArgument as OptionalArgument
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, a, br, div, h1, h2, hr, li, nav, p, span, text, ul)
+import Html.Attributes exposing (attribute, class, href, id)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as JD exposing (Decoder, field, int, string)
+import Model exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)
 import Spa.Page
@@ -45,32 +35,20 @@ page =
 
 -- Model
 {-
-   Schema Data
+   Main model data
 -}
 
 
-type alias OrgaGraph =
-    { id : Fractal.ScalarCodecs.Id
-    , nameid : String
-    , name : String
-    }
+type alias ErrorData =
+    String
 
 
-type alias Label =
-    { name : String }
-
-
-type alias Tension =
-    { id : Fractal.ScalarCodecs.Id
-    , title : String
-    , type_ : TensionType
-    , labels : Maybe (List Label)
-
-    --, labels : (\opts -> Fractal.Object.Tension.LabelsOptionalArguments) (Fractal.Object.Tension Fractal.Object.Label)
-    , n_comments : Maybe Int
-
-    --, emitter : String
-    --, receivers : String
+type alias Model =
+    { route : Route
+    , asked_orga : String
+    , orga_data : Status ErrorData OrgaData
+    , circle_tensions : Status ErrorData (List Tension)
+    , circle_focus : CircleFocusState
     }
 
 
@@ -86,70 +64,6 @@ type alias CircleFocusState =
     , nodeType : String
     , path : Array.Array { name : String, nidjs : NID }
     }
-
-
-
-{-
-   Main model data
--}
-
-
-type alias Model =
-    { route : Route
-    , asked_orga : String
-
-    -- Loaded indepedently from server
-    , circle_focus : CircleFocusState
-    , orga_data : Status OrgaGraph
-    , circle_tensions : Status (List Tension)
-    }
-
-
-
--- GraphQL decoder
-
-
-labelFilter : Fractal.Object.Tension.LabelsOptionalArguments -> Fractal.Object.Tension.LabelsOptionalArguments
-labelFilter args =
-    { args | first = OptionalArgument.Present 3 }
-
-
-tensionOverviewQ : SelectionSet Tension Fractal.Object.Tension
-tensionOverviewQ =
-    SelectionSet.succeed Tension
-        |> with Fractal.Object.Tension.id
-        |> with Fractal.Object.Tension.title
-        |> with Fractal.Object.Tension.type_
-        |> with
-            (Fractal.Object.Tension.labels labelFilter
-                (SelectionSet.succeed Label
-                    |> with Fractal.Object.Label.name
-                )
-            )
-        |> with Fractal.Object.Tension.n_comments
-
-
-fetchTensionsBunch : Cmd Msg
-fetchTensionsBunch =
-    makeGQLQuery
-        (Q.queryTension (\args -> { args | first = OptionalArgument.Present 1 })
-            tensionOverviewQ
-        )
-        (RemoteData.fromResult >> TensionsSuccess)
-
-
-
-{-
-   Schema Type Utils (should be auto generated !)
--}
-
-
-type alias TensionsData =
-    Maybe (List (Maybe Tension))
-
-
-type alias TensionsResult =
-    RemoteData (Graphql.Http.Error TensionsData) TensionsData
 
 
 
@@ -189,8 +103,8 @@ init { route } params =
             { route = route
             , asked_orga = orga_name
             , orga_data = Loading
-            , circle_focus = focus
             , circle_tensions = Loading
+            , circle_focus = focus
             }
     in
     ( model
@@ -199,7 +113,7 @@ init { route } params =
       --    , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
       --    ]
     , Cmd.batch
-        [ fetchTensionsBunch
+        [ fetchTensionsBunch GotTensions
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
@@ -213,7 +127,7 @@ init { route } params =
 type Msg
     = --GotText (Result Http.Error String)
       --| GotTensions (Result Http.Error Tensions)
-      TensionsSuccess TensionsResult
+      GotTensions (RequestResult ErrorData TensionsData)
     | CircleClick CircleFocusState
     | ChangeNodeFocus Int
     | PassedSlowLoadTreshold
@@ -250,20 +164,20 @@ update msg model =
         --            , Cmd.none
         --            , Cmd.none
         --            )
-        TensionsSuccess result ->
+        GotTensions result ->
             case result of
-                RemoteData.Success data ->
-                    let
-                        decodedData =
-                            decodeGQLResponse data
-                    in
-                    ( { model | circle_tensions = Loaded decodedData }
+                Success data ->
+                    ( { model | circle_tensions = Loaded data }
                     , Cmd.none
                     , Cmd.none
                     )
 
-                --RemoteData.Failure err ->
-                --    ( model, Cmd.none, Cmd.none )
+                Failure err ->
+                    ( { model | circle_tensions = Failed err }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
                 --RemoteData.Loading ->
                 --    ( model, Cmd.none, Cmd.none )
                 --RemoteData.NotAsked ->
@@ -335,7 +249,7 @@ view model =
                 [ viewHelperBar model ]
             , div [ class "columns is-variable is-4" ]
                 [ div [ class "column is-6" ]
-                    [ div [ id "chart" ] [ showWhatsup (text "") model.orga_data ]
+                    [ div [ id "chart" ] [ showMaybeError model.orga_data ]
                     , br [] []
                     , viewMandate model
                     ]
@@ -463,7 +377,7 @@ viewActivies model =
 
                 -- why it doesnt work?
                 other ->
-                    [ showWhatsup (text "") other ]
+                    [ showMaybeError other ]
                         |> div []
             ]
 
@@ -478,22 +392,22 @@ mTension tension =
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top has-tooltip-light"
-                , attribute "data-tooltip" ("type: " ++ TensionEnum.toString tension.type_)
+                , attribute "data-tooltip" ("type: " ++ TensionType.toString tension.type_)
                 ]
                 [ case tension.type_ of
-                    TensionEnum.Personal ->
+                    TensionType.Personal ->
                         div [ class "Circle has-text-danger" ] [ text "" ]
 
-                    TensionEnum.Governance ->
+                    TensionType.Governance ->
                         div [ class "Circle has-text-info" ] [ text "" ]
 
-                    TensionEnum.Operational ->
+                    TensionType.Operational ->
                         div [ class "Circle has-text-warning" ] [ text "" ]
 
-                    TensionEnum.Help ->
+                    TensionType.Help ->
                         div [ class "Circle has-text-success" ] [ text "" ]
 
-                    TensionEnum.Alert ->
+                    TensionType.Alert ->
                         div [ class "Circle has-text-alert" ] [ text "" ]
                 ]
             ]

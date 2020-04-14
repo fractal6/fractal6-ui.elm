@@ -1,10 +1,9 @@
-module Components.Loading exposing (Status(..), icon, showWhatsup, slowTreshold)
+module Components.Loading exposing (Status(..), showMaybeError, slowTreshold)
 
 import Components.Asset as Asset
 import Html exposing (Html, img, text)
 import Html.Attributes exposing (alt, height, src, width)
 import Process
-import RemoteData exposing (RemoteData)
 import Task
 
 
@@ -12,8 +11,8 @@ import Task
 -- Viewer
 
 
-icon : Html msg
-icon =
+spinner : Html msg
+spinner =
     img
         [ src Asset.loading
         , width 64
@@ -23,20 +22,20 @@ icon =
         []
 
 
-error : String -> Html msg
-error str =
-    text ("Error loading " ++ str ++ ".")
+showError : String -> Html msg
+showError err =
+    text ("Loading Error: " ++ err)
 
 
 
 -- Logics
 
 
-type Status a
+type Status errorMsg data
     = Loading
     | LoadingSlowly
-    | Failed
-    | Loaded a
+    | Failed errorMsg
+    | Loaded data
 
 
 slowTreshold : Task.Task x ()
@@ -44,17 +43,17 @@ slowTreshold =
     Process.sleep 500
 
 
-showWhatsup : Html msg -> Status a -> Html msg
-showWhatsup htmlMsg status =
+showMaybeError : Status String data -> Html msg
+showMaybeError status =
     case status of
+        Loaded _ ->
+            text ""
+
         Loading ->
             text ""
 
         LoadingSlowly ->
-            icon
+            spinner
 
-        Failed ->
-            error "data"
-
-        Loaded _ ->
-            htmlMsg
+        Failed err ->
+            showError err

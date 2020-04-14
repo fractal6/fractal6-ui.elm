@@ -11,6 +11,7 @@ type NodeOrderable
     = CreatedAt
     | Name
     | Nameid
+    | Rootnameid
     | N_tensions_out
     | N_tensions_in
     | N_children
@@ -19,7 +20,7 @@ type NodeOrderable
 
 list : List NodeOrderable
 list =
-    [ CreatedAt, Name, Nameid, N_tensions_out, N_tensions_in, N_children, Skills ]
+    [ CreatedAt, Name, Nameid, Rootnameid, N_tensions_out, N_tensions_in, N_children, Skills ]
 
 
 decoder : Decoder NodeOrderable
@@ -36,6 +37,9 @@ decoder =
 
                     "nameid" ->
                         Decode.succeed Nameid
+
+                    "rootnameid" ->
+                        Decode.succeed Rootnameid
 
                     "n_tensions_out" ->
                         Decode.succeed N_tensions_out
@@ -67,6 +71,9 @@ toString enum =
 
         Nameid ->
             "nameid"
+
+        Rootnameid ->
+            "rootnameid"
 
         N_tensions_out ->
             "n_tensions_out"
@@ -103,6 +110,9 @@ fromString enumString =
 
         "nameid" ->
             Just Nameid
+
+        "rootnameid" ->
+            Just Rootnameid
 
         "n_tensions_out" ->
             Just N_tensions_out

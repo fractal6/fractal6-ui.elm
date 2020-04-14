@@ -47,23 +47,6 @@ createdBy fillInOptionals object_ =
     Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
 
 
-type alias RootOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
-
-
-root : (RootOptionalArguments -> RootOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-root fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "root" optionalArgs object_ (identity >> Decode.nullable)
-
-
 type alias ParentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -115,6 +98,11 @@ name =
 nameid : SelectionSet String Fractal.Object.Node
 nameid =
     Object.selectionForField "String" "nameid" [] Decode.string
+
+
+rootnameid : SelectionSet String Fractal.Object.Node
+rootnameid =
+    Object.selectionForField "String" "rootnameid" [] Decode.string
 
 
 type alias MandateOptionalArguments =
