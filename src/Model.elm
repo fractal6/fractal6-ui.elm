@@ -7,8 +7,10 @@ import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Label
+import Fractal.Object.Node
 import Fractal.Object.Tension
 import Fractal.Query as Query
+import Fractal.Scalar
 import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.Http
@@ -18,9 +20,9 @@ import RemoteData exposing (RemoteData)
 
 
 
-{-
-   Frontend Data structure
--}
+{------------------------------------------------}
+-- Frontend Data structure
+{------------------------------------------------}
 
 
 type alias ErrorData =
@@ -41,9 +43,10 @@ type RequestResult errors data
 
 
 type alias Node =
-    { id : Fractal.ScalarCodecs.Id
-    , nameid : String
+    { id : String
     , name : String
+    , nameid : String
+    , rootnameid : String
     , type_ : NodeType.NodeType
     }
 
@@ -53,7 +56,7 @@ type alias Label =
 
 
 type alias Tension =
-    { id : Fractal.ScalarCodecs.Id
+    { id : String
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
@@ -65,16 +68,16 @@ type alias Tension =
 
 
 
-{-
-   Data Responses
--}
+{------------------------------------------------}
+-- Data Responses
+{------------------------------------------------}
 
 
-type alias OrgaResponse =
+type alias NodesResponse =
     Maybe (List (Maybe Node))
 
 
-type alias OrgaData =
+type alias NodesData =
     List Node
 
 
@@ -87,13 +90,105 @@ type alias TensionsData =
 
 
 
+{------------------------------------------------}
+-- Request decoder
+{------------------------------------------------}
+--
+-- Nodes
+--
+
+
+nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodeOrgaFilter nameid a =
+    { a
+        | filter =
+            OptionalArgument.Present
+                (Input.buildNodeFilter
+                    (\b ->
+                        { b | rootnameid = OptionalArgument.Present { eq = OptionalArgument.Present nameid } }
+                    )
+                )
+    }
+
+
+nodePayload : SelectionSet Node Fractal.Object.Node
+nodePayload =
+    SelectionSet.succeed Node
+        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.rootnameid
+        |> with Fractal.Object.Node.type_
+
+
+fetchNodesOrga nameid msg =
+    makeGQLQuery
+        (Query.queryNode
+            (nodeOrgaFilter nameid)
+            nodePayload
+        )
+        (RemoteData.fromResult >> decodeQueryResponse >> msg)
+
+
+
+--
+-- Tensions
+--
+
+
+tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+tensionPgFilter a =
+    { a
+        | first = OptionalArgument.Present 10
+        , order =
+            OptionalArgument.Present
+                (Input.buildTensionOrder
+                    (\b ->
+                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
+                    )
+                )
+    }
+
+
+tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
+tensionPgPayload =
+    SelectionSet.succeed Tension
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Tension.title
+        |> with Fractal.Object.Tension.type_
+        |> with
+            (Fractal.Object.Tension.labels
+                (\args -> { args | first = OptionalArgument.Present 3 })
+                (SelectionSet.succeed Label
+                    |> with Fractal.Object.Label.name
+                )
+            )
+        |> with Fractal.Object.Tension.n_comments
+
+
+fetchTensionsBunch msg =
+    --fetchTensionsBunch : Cmd Msg
+    makeGQLQuery
+        (Query.queryTension
+            tensionPgFilter
+            tensionPgPayload
+        )
+        (RemoteData.fromResult >> decodeQueryResponse >> msg)
+
+
+
+{------------------------------------------------}
+-- Response decoder
+{------------------------------------------------}
+--decodeQueryResponse : RemoteData (Graphql.Http.Error TensionsResponse) TensionsResponse -> RequestResult ErrorData TensionsData
 {-
-   Response Decoder
+   This decoder take a generic *Response type that is used for
+   all gql query (get, query).
+   @DEBUG: how to set the type in the function signature.
 -}
 
 
-tensionsResponse : RemoteData (Graphql.Http.Error TensionsResponse) TensionsResponse -> RequestResult ErrorData TensionsData
-tensionsResponse response =
+decodeQueryResponse response =
     case response of
         RemoteData.Failure errors ->
             case errors of
@@ -118,59 +213,13 @@ tensionsResponse response =
 
 
 
-{-
-
-   Request decoder
-
--}
+--decodedId : Fractal.ScalarCodecs.Id -> String
 
 
-fetchTensionsBunch msg =
-    --fetchTensionsBunch : Cmd Msg
-    makeGQLQuery
-        (Query.queryTension
-            tensionPgFilter
-            tensionPgPayload
-        )
-        (RemoteData.fromResult >> tensionsResponse >> msg)
-
-
-tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-tensionPgFilter a =
-    { a
-        | first = OptionalArgument.Present 10
-        , order =
-            OptionalArgument.Present
-                (Input.buildTensionOrder
-                    (\b ->
-                        { b
-                            | desc = OptionalArgument.Present TensionOrderable.CreatedAt
-                        }
-                    )
-                )
-    }
-
-
-tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
-tensionPgPayload =
-    SelectionSet.succeed Tension
-        |> with Fractal.Object.Tension.id
-        |> with Fractal.Object.Tension.title
-        |> with Fractal.Object.Tension.type_
-        |> with
-            (Fractal.Object.Tension.labels
-                (\args -> { args | first = OptionalArgument.Present 3 })
-                (SelectionSet.succeed Label
-                    |> with Fractal.Object.Label.name
-                )
-            )
-        |> with Fractal.Object.Tension.n_comments
-
-
-
-{-
-   Utils decoder
--}
+decodedId codecId =
+    case codecId of
+        Fractal.Scalar.Id id ->
+            id
 
 
 gqlQueryDecoder : Maybe (List (Maybe a)) -> List a

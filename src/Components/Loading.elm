@@ -24,7 +24,7 @@ spinner =
 
 showError : String -> Html msg
 showError err =
-    text ("Loading Error: " ++ err)
+    text ("Error: " ++ err)
 
 
 

@@ -46,8 +46,8 @@ type alias ErrorData =
 type alias Model =
     { route : Route
     , asked_orga : String
-    , orga_data : Status ErrorData OrgaData
-    , circle_tensions : Status ErrorData (List Tension)
+    , orga_data : Status ErrorData NodesData
+    , circle_tensions : Status ErrorData TensionsData
     , circle_focus : CircleFocusState
     }
 
@@ -67,22 +67,39 @@ type alias CircleFocusState =
 
 
 
--- HTTP and Json Decoder
---
--- tsDecoder : Decoder Tension
--- tsDecoder =
---     JD.map7
---         Tension
---         (field "title" string)
---         (field "type_" string)
---         (field "emitter" string)
---         (field "receivers" string)
---         (field "n_comments" int)
---
---
--- tensionsDecoder : Decoder Tensions
--- tensionsDecoder =
---     JD.list tsDecoder
+{-
+   HTTP and Json Decoder
+-}
+
+
+nodeDecoder : Decoder (NodeType.NodeType -> Node)
+
+
+
+--nodeDecoder : Decoder Node
+
+
+nodeDecoder =
+    JD.map4
+        Node
+        (field "id" string)
+        (field "name" string)
+        (field "nameid" string)
+        (field "type_" string)
+
+
+nodesDecoder : Decoder (List (NodeType.NodeType -> Node))
+
+
+
+--nodesDecoder : Decoder NodesData
+
+
+nodesDecoder =
+    JD.list nodeDecoder
+
+
+
 -- INIT
 
 
@@ -113,7 +130,8 @@ init { route } params =
       --    , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
       --    ]
     , Cmd.batch
-        [ fetchTensionsBunch GotTensions
+        [ fetchNodesOrga model.asked_orga GotOrga
+        , fetchTensionsBunch GotTensions
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
@@ -126,8 +144,8 @@ init { route } params =
 
 type Msg
     = --GotText (Result Http.Error String)
-      --| GotTensions (Result Http.Error Tensions)
-      GotTensions (RequestResult ErrorData TensionsData)
+      GotOrga (RequestResult ErrorData NodesData)
+    | GotTensions (RequestResult ErrorData TensionsData)
     | CircleClick CircleFocusState
     | ChangeNodeFocus Int
     | PassedSlowLoadTreshold
@@ -136,34 +154,30 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update msg model =
     case msg of
-        --GotText result ->
-        --    case result of
-        --        Ok data ->
-        --            ( { model | orga_data = Loaded data }
-        --            , Cmd.none
-        --            , Ports.init_circlePacking data
-        --            )
-        --        Err _ ->
-        --            ( { model | orga_data = Failed }
-        --            , Cmd.none
-        --            , Cmd.none
-        --            )
-        --GotTensions result ->
-        --    case result of
-        --        Ok data ->
-        --            ( { model | circle_tensions = Loaded data }
-        --            , Cmd.none
-        --            , Cmd.none
-        --            )
-        --        Err errmsg ->
-        --            let
-        --                c =
-        --                    Debug.log "dede" errmsg
-        --            in
-        --            ( { model | circle_tensions = Failed }
-        --            , Cmd.none
-        --            , Cmd.none
-        --            )
+        GotOrga result ->
+            case result of
+                Success data ->
+                    ( { model | orga_data = Loaded data }
+                    , Cmd.none
+                    , Cmd.none
+                      --, Ports.init_circlePacking data
+                    )
+
+                Failure err ->
+                    ( { model | orga_data = Failed err }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                RemoteLoading ->
+                    ( { model | orga_data = Loading }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                NotAsked ->
+                    ( model, Cmd.none, Cmd.none )
+
         GotTensions result ->
             case result of
                 Success data ->
@@ -178,11 +192,13 @@ update msg model =
                     , Cmd.none
                     )
 
-                --RemoteData.Loading ->
-                --    ( model, Cmd.none, Cmd.none )
-                --RemoteData.NotAsked ->
-                --    ( model, Cmd.none, Cmd.none )
-                _ ->
+                RemoteLoading ->
+                    ( { model | circle_tensions = Loading }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                NotAsked ->
                     ( model, Cmd.none, Cmd.none )
 
         CircleClick focus ->
