@@ -13,6 +13,7 @@ import Html.Attributes exposing (attribute, class, href, id)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as JD exposing (Decoder, field, int, string)
+import Json.Encode as JE
 import Model exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)
@@ -33,7 +34,9 @@ page =
 
 
 
+--
 -- Model
+--
 {-
    Main model data
 -}
@@ -68,39 +71,29 @@ type alias CircleFocusState =
 
 
 {-
-   HTTP and Json Decoder
+   Json encoder/decoder
 -}
 
 
-nodeDecoder : Decoder (NodeType.NodeType -> Node)
+nodesEncoder : NodesData -> JE.Value
+nodesEncoder nodes =
+    JE.list JE.object <| List.map nodeEncoder nodes
+
+
+nodeEncoder : Node -> List ( String, JE.Value )
+nodeEncoder node =
+    [ ( "id", JE.string node.id )
+    , ( "name", JE.string node.name )
+    , ( "nameid", JE.string node.nameid )
+    , ( "rootnameid", JE.string node.rootnameid )
+    , ( "type_", JE.string <| NodeType.toString node.type_ )
+    ]
 
 
 
---nodeDecoder : Decoder Node
-
-
-nodeDecoder =
-    JD.map4
-        Node
-        (field "id" string)
-        (field "name" string)
-        (field "nameid" string)
-        (field "type_" string)
-
-
-nodesDecoder : Decoder (List (NodeType.NodeType -> Node))
-
-
-
---nodesDecoder : Decoder NodesData
-
-
-nodesDecoder =
-    JD.list nodeDecoder
-
-
-
+--
 -- INIT
+--
 
 
 init : PageContext -> Params.Dynamic -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -139,12 +132,13 @@ init { route } params =
 
 
 
+--
 -- UPDATE
+--
 
 
 type Msg
-    = --GotText (Result Http.Error String)
-      GotOrga (RequestResult ErrorData NodesData)
+    = GotOrga (RequestResult ErrorData NodesData)
     | GotTensions (RequestResult ErrorData TensionsData)
     | CircleClick CircleFocusState
     | ChangeNodeFocus Int
@@ -159,8 +153,7 @@ update msg model =
                 Success data ->
                     ( { model | orga_data = Loaded data }
                     , Cmd.none
-                    , Cmd.none
-                      --, Ports.init_circlePacking data
+                    , Ports.init_circlePacking <| JE.encode 0 <| nodesEncoder data
                     )
 
                 Failure err ->

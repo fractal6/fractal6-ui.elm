@@ -20,9 +20,9 @@ import RemoteData exposing (RemoteData)
 
 
 
-{------------------------------------------------}
+--
 -- Frontend Data structure
-{------------------------------------------------}
+--
 
 
 type alias ErrorData =
@@ -68,9 +68,9 @@ type alias Tension =
 
 
 
-{------------------------------------------------}
+--
 -- Data Responses
-{------------------------------------------------}
+--
 
 
 type alias NodesResponse =
@@ -90,12 +90,12 @@ type alias TensionsData =
 
 
 
-{------------------------------------------------}
+--
 -- Request decoder
-{------------------------------------------------}
 --
--- Nodes
---
+{-
+   Nodes
+-}
 
 
 nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
@@ -131,9 +131,9 @@ fetchNodesOrga nameid msg =
 
 
 
---
--- Tensions
---
+{-
+   Tensions
+-}
 
 
 tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
@@ -177,10 +177,9 @@ fetchTensionsBunch msg =
 
 
 
-{------------------------------------------------}
+--
 -- Response decoder
-{------------------------------------------------}
---decodeQueryResponse : RemoteData (Graphql.Http.Error TensionsResponse) TensionsResponse -> RequestResult ErrorData TensionsData
+--
 {-
    This decoder take a generic *Response type that is used for
    all gql query (get, query).
@@ -189,6 +188,7 @@ fetchTensionsBunch msg =
 
 
 decodeQueryResponse response =
+    --decodeQueryResponse : RemoteData (Graphql.Http.Error TensionsResponse) TensionsResponse -> RequestResult ErrorData TensionsData
     case response of
         RemoteData.Failure errors ->
             case errors of
@@ -212,10 +212,7 @@ decodeQueryResponse response =
             gqlQueryDecoder data |> Success
 
 
-
---decodedId : Fractal.ScalarCodecs.Id -> String
-
-
+decodedId : Fractal.ScalarCodecs.Id -> String
 decodedId codecId =
     case codecId of
         Fractal.Scalar.Id id ->

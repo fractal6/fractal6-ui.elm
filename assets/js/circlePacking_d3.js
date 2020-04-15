@@ -179,10 +179,10 @@ hackDepth = function (obj, depth, neigbor) {
 
     obj.cumchild = cumchild;
 
-    return {maxdepth, cumchild };
+    return {maxdepth, cumchild};
 }
 
-function drawAll(app, dataset) {
+function drawAll(app, graph) {
 
     /*************************
      ****** Constants ********
@@ -217,25 +217,25 @@ function drawAll(app, dataset) {
 
     // http://www.cssarrowplease.com/
     var tooltipCss = `<style>
-#nodeTooltip:after, #nodeTooltip:before{
-    content: "";
-    position: absolute;
-    top: 100%; /* This will position the arrow at the bottom of the tooltip */
-    left: 50%;
-    pointer-events: none;
-    border: solid transparent;
+    #nodeTooltip:after, #nodeTooltip:before{
+        content: "";
+        position: absolute;
+        top: 100%; /* This will position the arrow at the bottom of the tooltip */
+        left: 50%;
+        pointer-events: none;
+        border: solid transparent;
+        }
+    #nodeTooltip:after {
+        margin-left: -6px;
+        border-width: 6px;
+        border-top-color: #eee;
     }
-#nodeTooltip:after {
-    margin-left: -6px;
-    border-width: 6px;
-    border-top-color: #eee;
-}
-#nodeTooltip:before {
-    margin-left: -7px;
-    border-width: 7px;
-    border-top-color: #333;
-}
-</style>`;
+    #nodeTooltip:before {
+        margin-left: -7px;
+        border-width: 7px;
+        border-top-color: #333;
+    }
+    </style>`;
 
     //////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
@@ -335,18 +335,18 @@ function drawAll(app, dataset) {
     ////////////////// Create Circle Packing /////////////////////
     //////////////////////////////////////////////////////////////
 
-    // hack dataset (do that in the backend!?)
-    var _d = hackDepth(dataset);
+    // hack graph data (do that in the backend!?)
+    var _d = hackDepth(graph);
     var maxdepth = _d.maxdepth;
 
     var pack = d3.pack()
         .padding(1)
         .size([diameter, diameter])
-    (d3.hierarchy(dataset)
+    (d3.hierarchy(graph)
         .sum(d => 10000/(maxdepth)**(Math.max(1.5,d.depth))) // d.neigbor // node size
         .sort((a, b) => 0)); //a.id < b.ID // node order
 
-    var root = dataset;
+    var root = graph;
     var nodes = pack.descendants(root);
 
     root = nodes[0];
@@ -754,7 +754,7 @@ function drawAll(app, dataset) {
         //$canvas.style.height = canvas.style.height * .75;
 
         //redrawCanvas(focus);
-        //drawAll(app, dataset);
+        //drawAll(app, graph);
         console.log("redrawCanvas not implemented yet !")
     }
 
