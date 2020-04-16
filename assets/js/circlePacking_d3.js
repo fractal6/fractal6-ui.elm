@@ -1,172 +1,53 @@
-
-/*
- *
- * Extend canvas context to write circle texte around arc/circle.
- *
- */
-(function(){
-    const FILL = 0;        // const to indicate filltext render
-    const STROKE = 1;
-    var renderType = FILL; // used internal to set fill or stroke text
-    const multiplyCurrentTransform = true; // if true Use current transform when rendering
-                                           // if false use absolute coordinates which is a little quicker
-                                           // after render the currentTransform is restored to default transform
-
-
-
-    // measure circle text
-    // ctx: canvas context
-    // text: string of text to measure
-    // r: radius in pixels
-    //
-    // returns the size metrics of the text
-    //
-    // width: Pixel width of text
-    // angularWidth : angular width of text in radians
-    // pixelAngularSize : angular width of a pixel in radians
-    var measure = function(ctx, text, radius){
-        var textWidth = ctx.measureText(text).width; // get the width of all the text
-        return {
-            width               : textWidth,
-            angularWidth        : (1 / radius) * textWidth,
-            pixelAngularSize    : 1 / radius
-        };
-    }
-
-    // displays text along a circle
-    // ctx: canvas context
-    // text: string of text to measure
-    // x,y: position of circle center
-    // r: radius of circle in pixels
-    // start: angle in radians to start.
-    // [end]: optional. If included text align is ignored and the text is
-    //        scaled to fit between start and end;
-    // [forward]: optional default true. if true text direction is forwards, if false  direction is backward
-    var circleText = function (ctx, text, x, y, radius, start, end, forward) {
-        var i, textWidth, pA, pAS, a, aw, wScale, aligned, dir, fontSize;
-        if(text.trim() === "" || ctx.globalAlpha === 0){ // dont render empty string or transparent
-            return;
-        }
-        if(isNaN(x) || isNaN(y) || isNaN(radius) || isNaN(start) || (end !== undefined && end !== null && isNaN(end))){ //
-            throw TypeError("circle text arguments requires a number for x,y, radius, start, and end.")
-        }
-        aligned = ctx.textAlign;        // save the current textAlign so that it can be restored at end
-        dir = forward ? 1 : forward === false ? -1 : 1;  // set dir if not true or false set forward as true
-        pAS = 1 / radius;               // get the angular size of a pixel in radians
-        textWidth = ctx.measureText(text).width; // get the width of all the text
-        if (end !== undefined && end !== null) { // if end is supplied then fit text between start and end
-            pA = ((end - start) / textWidth) * dir;
-            wScale = (pA / pAS) * dir;
-        } else {                 // if no end is supplied correct start and end for alignment
-            // if forward is not given then swap top of circle text to read the correct direction
-            if(forward === null || forward === undefined){
-                if(((start % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) > Math.PI){
-                    dir = -1;
-                }
-            }
-            pA = -pAS * dir ;
-            wScale = -1 * dir;
-            switch (aligned) {
-            case "center":       // if centered move around half width
-                start -= (pA * textWidth )/2;
-                end = start + pA * textWidth;
-                break;
-            case "right":// intentionally falls through to case "end"
-            case "end":
-                end = start;
-                start -= pA * textWidth;
-                break;
-            case "left":  // intentionally falls through to case "start"
-            case "start":
-                end = start + pA * textWidth;
-            }
-        }
-
-        ctx.textAlign = "center";                     // align for rendering
-        a = start;                                    // set the start angle
-        for (var i = 0; i < text.length; i += 1) {    // for each character
-            aw = ctx.measureText(text[i]).width * pA; // get the angular width of the text
-            var xDx = Math.cos(a + aw / 2);           // get the yAxies vector from the center x,y out
-            var xDy = Math.sin(a + aw / 2);
-            if(multiplyCurrentTransform){ // transform multiplying current transform
-                ctx.save();
-                if (xDy < 0) { // is the text upside down. If it is flip it
-                    ctx.transform(-xDy * wScale, xDx * wScale, -xDx, -xDy, xDx * radius + x, xDy * radius + y);
-                } else {
-                    ctx.transform(-xDy * wScale, xDx * wScale, xDx, xDy, xDx * radius + x, xDy * radius + y);
-                }
-            }else{
-                if (xDy < 0) { // is the text upside down. If it is flip it
-                    ctx.setTransform(-xDy * wScale, xDx * wScale, -xDx, -xDy, xDx * radius + x, xDy * radius + y);
-                } else {
-                    ctx.setTransform(-xDy * wScale, xDx * wScale, xDx, xDy, xDx * radius + x, xDy * radius + y);
-                }
-            }
-            if(renderType === FILL){
-                ctx.fillText(text[i], 0, 0);    // render the character
-            }else{
-                ctx.strokeText(text[i], 0, 0);  // render the character
-            }
-            if(multiplyCurrentTransform){  // restore current transform
-                ctx.restore();
-            }
-            a += aw;                     // step to the next angle
-        }
-        // all done clean up.
-        if(!multiplyCurrentTransform){
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // restore the transform
-        }
-        ctx.textAlign = aligned;            // restore the text alignment
-    }
-    // define fill text
-    var fillCircleText = function(text, x, y, radius, start, end, forward){
-        renderType = FILL;
-        circleText(this, text, x, y, radius, start, end, forward);
-    }
-    // define stroke text
-    var strokeCircleText = function(text, x, y, radius, start, end, forward){
-        renderType = STROKE;
-        circleText(this, text, x, y, radius, start, end, forward);
-    }
-    // define measure text
-    var measureCircleTextExt = function(text,radius){
-        return measure(this, text, radius);
-    }
-    // set the prototypes
-    CanvasRenderingContext2D.prototype.fillCircleText = fillCircleText;
-    CanvasRenderingContext2D.prototype.strokeCircleText = strokeCircleText;
-    CanvasRenderingContext2D.prototype.measureCircleText = measureCircleTextExt;
-})();
-
-
-function setpixelated(ctx, v){
+// @Debug use import with a bundler/webpack !
+//
+const setpixelated = (ctx, v) => {
     ctx['imageSmoothingEnabled'] = v;       /* standard */
-    ctx['mozImageSmoothingEnabled'] = v;    /* Firefox */
     ctx['oImageSmoothingEnabled'] = v;      /* Opera */
     ctx['webkitImageSmoothingEnabled'] = v; /* Safari */
     ctx['msImageSmoothingEnabled'] = v;     /* IE */
+    //ctx['mozImageSmoothingEnabled'] = v;    /* Firefox (deprecated) */
 }
 
-hackDepth = function (obj, depth, neigbor) {
-    // Add a `depth` attribute to  each node
-    // Returns: the max depth (the number of depth starting from 0.
+// Flat list of nodes (unordered) to nested tree structure
+// from: https://stackoverflow.com/questions/18017869/build-tree-array-from-flat-array-in-javascript/40732240#40732240
+const formatGraph = dataset =>  {
+    var dataTree = [];
+    var hashTable = Object.create(null);
+    dataset.forEach( aData => hashTable[aData.ID] = {
+        ...aData,
+        children : [],
+        depth : 0
+    })
+    dataset.forEach( aData => {
+        if(aData.parentID) hashTable[aData.parentID].children.push(hashTable[aData.ID])
+        else dataTree.push(hashTable[aData.ID])
+
+    })
+    return dataTree
+}
+
+// Recursively traverse the graph and add to each nodes the attributes:
+// * depth: depth position (startinf at 0)
+// * cumchild: total number of child
+// * neigbor: number of neogbor
+const computeDepth = (obj, depth, neigbor) => {
     var maxdepth = 0;
-    var cumchild = 0
+    var cumchild = 0;
 
     if (depth === undefined) {
         var currentdepth = 0;
-        var neigbor = 1
+        var neigbor = 1;
     } else {
         var currentdepth = depth;
-        neigbor = neigbor
+        neigbor = neigbor;
     }
 
     obj.depth = currentdepth;
-    obj.neigbor = neigbor
+    obj.neigbor = neigbor;
 
     if (obj.children) {
         obj.children.forEach(function (d) {
-            var d = hackDepth(d, currentdepth+1, obj.children.length)
+            var d = computeDepth(d, currentdepth+1, obj.children.length);
             var tmpDepth = d.maxdepth;
             cumchild += d.cumchild;
             if (tmpDepth > maxdepth) {
@@ -176,9 +57,7 @@ hackDepth = function (obj, depth, neigbor) {
     }
     maxdepth = maxdepth + 1;
     cumchild = cumchild + 1;
-
     obj.cumchild = cumchild;
-
     return {maxdepth, cumchild};
 }
 
@@ -335,15 +214,16 @@ function drawAll(app, graph) {
     ////////////////// Create Circle Packing /////////////////////
     //////////////////////////////////////////////////////////////
 
-    // hack graph data (do that in the backend!?)
-    var _d = hackDepth(graph);
-    var maxdepth = _d.maxdepth;
+    graph = formatGraph(graph);
+    if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.")
+    graph = graph[0]
+    var gStats = computeDepth(graph);
 
     var pack = d3.pack()
         .padding(1)
         .size([diameter, diameter])
     (d3.hierarchy(graph)
-        .sum(d => 10000/(maxdepth)**(Math.max(1.5,d.depth))) // d.neigbor // node size
+        .sum(d => 10000/(gStats.maxdepth)**(Math.max(1.5, d.depth))) // d.neigbor // node size
         .sort((a, b) => 0)); //a.id < b.ID // node order
 
     var root = graph;
@@ -363,7 +243,7 @@ function drawAll(app, graph) {
             rayon;
         node_center_x = ((node.x - zoomInfo.centerX) * zoomInfo.scale) + centerX;
         node_center_y = ((node.y - zoomInfo.centerY) * zoomInfo.scale) + centerY;
-        if (node.data.type == "role") {
+        if (node.data.type_ === "Role") {
             rayon = node.r * 0.95;
         } else {
             rayon = node.r;
@@ -398,17 +278,15 @@ function drawAll(app, graph) {
         for (var i = 0; i < nodeCount; i++) {
             node = nodes[i];
 
-            if (node.data.type == undefined) node.data.type = "circle";
-
             var _name = node.data.name,
-                _type = node.data.type,
+                _type = node.data.type_,
                 nattr = getNodeAttr(node);
 
             //If the hidden canvas was send into this function and it does not yet have a color, generate a unique one
             var circleColor,
                 rayon;
             if(hidden) {
-                if(node.color == null) {
+                if(node.color === null) {
                     // If we have never drawn the node to the hidden canvas get a new color for it and put it in the dictionary.
                     node.color = genColor();
                     colToCircle[node.color] = node;
@@ -436,7 +314,7 @@ function drawAll(app, graph) {
                     ctx.stroke();
                 }
 
-                if (_type === "role") {
+                if (_type === "Role") {
                     var text = _name.substring(0,2).replace(/./,x=>x.toUpperCase())
                     var font_size = 19;
                     var text_display = false;
@@ -507,7 +385,7 @@ function drawAll(app, graph) {
         var zoomFactor = zoomFactorCircle;
         var isUpdated = false;
         if (node) {
-            if (node.data.type === 'role') {
+            if (node.data.type_ === 'Role') {
                 var zoomFactor = zoomFactorRole;
             }
 
@@ -530,7 +408,7 @@ function drawAll(app, graph) {
             app.ports.receiveData.send({
                 nidjs:node.color,
                 name:node.data.name,
-                nodeType:node.data.type,
+                nodeType:node.data.type_,
                 path:path
             });
         }

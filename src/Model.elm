@@ -46,9 +46,13 @@ type alias Node =
     { id : String
     , name : String
     , nameid : String
-    , rootnameid : String
+    , parent : Maybe ParentNode -- see issue with recursive structure
     , type_ : NodeType.NodeType
     }
+
+
+type alias ParentNode =
+    { id : String }
 
 
 type alias Label =
@@ -117,7 +121,8 @@ nodePayload =
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.rootnameid
+        |> with
+            (Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
         |> with Fractal.Object.Node.type_
 
 
@@ -180,15 +185,16 @@ fetchTensionsBunch msg =
 --
 -- Response decoder
 --
-{-
-   This decoder take a generic *Response type that is used for
-   all gql query (get, query).
-   @DEBUG: how to set the type in the function signature.
--}
+--decodeQueryResponse : RemoteData (Graphql.Http.Error dataResponse) dataResponse -> RequestResult ErrorData dataDecoded
 
 
 decodeQueryResponse response =
-    --decodeQueryResponse : RemoteData (Graphql.Http.Error TensionsResponse) TensionsResponse -> RequestResult ErrorData TensionsData
+    {-
+       This decoder take two generic type of data:
+       * `dataResponse` which is directlty related to Graphql data returned by the server.
+       * `dataDecoded` which is the data Model used in Elm code.
+       @DEBUG: how to set the universal type in the function signature.
+    -}
     case response of
         RemoteData.Failure errors ->
             case errors of
@@ -213,10 +219,8 @@ decodeQueryResponse response =
 
 
 decodedId : Fractal.ScalarCodecs.Id -> String
-decodedId codecId =
-    case codecId of
-        Fractal.Scalar.Id id ->
-            id
+decodedId (Fractal.Scalar.Id id) =
+    id
 
 
 gqlQueryDecoder : Maybe (List (Maybe a)) -> List a

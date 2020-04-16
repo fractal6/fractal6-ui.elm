@@ -14,6 +14,7 @@ import Html.Events exposing (onClick)
 import Http
 import Json.Decode as JD exposing (Decoder, field, int, string)
 import Json.Encode as JE
+import Json.Encode.Extra as JEE
 import Model exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)
@@ -75,6 +76,15 @@ type alias CircleFocusState =
 -}
 
 
+decodeNested maybe field =
+    case maybe of
+        Just x ->
+            Just x.id
+
+        Nothing ->
+            Nothing
+
+
 nodesEncoder : NodesData -> JE.Value
 nodesEncoder nodes =
     JE.list JE.object <| List.map nodeEncoder nodes
@@ -82,10 +92,10 @@ nodesEncoder nodes =
 
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
-    [ ( "id", JE.string node.id )
+    [ ( "ID", JE.string node.id )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
-    , ( "rootnameid", JE.string node.rootnameid )
+    , ( "parentID", JEE.maybe JE.string <| decodeNested node.parent "id" )
     , ( "type_", JE.string <| NodeType.toString node.type_ )
     ]
 
