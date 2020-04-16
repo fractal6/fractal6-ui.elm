@@ -63,7 +63,7 @@ viewHeader currentRoute =
                                 ]
                             ]
                         ]
-                    , div [ class "navbar-item has-dropdown is-hoverable" ]
+                    , div [ class "navbar-item has-dropdown" ]
                         [ div [ class "navbar-link" ] [ text "Green" ]
                         , div [ class "navbar-dropdown is-right" ]
                             [ a [ class "navbar-item" ] [ text "Profile" ]

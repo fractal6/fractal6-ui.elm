@@ -325,7 +325,7 @@ viewLeftPane model =
 viewHelperBar : Model -> Html Msg
 viewHelperBar model =
     nav
-        [ class "column is-full breadcrumb has-succeeds-separator"
+        [ class "column is-full breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
         [ Fa.icon1 "fas fa-angle-right" ""

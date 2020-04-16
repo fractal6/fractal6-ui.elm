@@ -16,12 +16,12 @@ h6 {
   background-color: $grey-dark;
 }
 
-a {
-  transition: all 200ms ease;
-}
+//a {
+//  transition: all 200ms ease;
+//}
 
 .button {
-  transition: all 200ms ease;
+  //transition: all 200ms ease;
   border-width: $border-width;
   color: $white;
 
@@ -76,7 +76,7 @@ a {
 
 .input,
 .textarea {
-  transition: all 200ms ease;
+  //transition: all 200ms ease;
   box-shadow: none;
   border-width: $border-width;
   padding-left: 1em;
@@ -141,11 +141,11 @@ a {
 }
 
 
-.menu-list {
-  a {
-    transition: all 300ms ease;
-  }
-}
+//.menu-list {
+//  a {
+//    transition: all 300ms ease;
+//  }
+//}
 
 .modal-card-body {
   background-color: $grey-darker;

@@ -1,4 +1,3 @@
-//import {BulmaDriver} from  './my';
 
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
@@ -14,8 +13,9 @@ window.addEventListener('load', _ => {
 
 // maps actions to functions!
 const actions = {
-    'LOG': (app, message) =>
-    console.log(`From Elm:`, message),
+    'LOG': (app, message) => {
+        console.log(`From Elm:`, message)
+    },
     'BULMA': (app, message) => {
         console.log(`Activate Bulma driver...`);
         BulmaDriver();

@@ -19,9 +19,11 @@ const formatGraph = dataset =>  {
         depth : 0
     })
     dataset.forEach( aData => {
-        if(aData.parentID) hashTable[aData.parentID].children.push(hashTable[aData.ID])
-        else dataTree.push(hashTable[aData.ID])
-
+        if(aData.parentID) {
+            hashTable[aData.parentID].children.push(hashTable[aData.ID])
+        } else {
+            dataTree.push(hashTable[aData.ID])
+        }
     })
     return dataTree
 }
@@ -218,6 +220,7 @@ function drawAll(app, graph) {
     if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.")
     graph = graph[0]
     var gStats = computeDepth(graph);
+    //console.log(graph);
 
     var pack = d3.pack()
         .padding(1)
@@ -286,7 +289,7 @@ function drawAll(app, graph) {
             var circleColor,
                 rayon;
             if(hidden) {
-                if(node.color === null) {
+                if(node.color === undefined) {
                     // If we have never drawn the node to the hidden canvas get a new color for it and put it in the dictionary.
                     node.color = genColor();
                     colToCircle[node.color] = node;
@@ -621,6 +624,7 @@ function drawAll(app, graph) {
 
     //First zoom to get the circles to the right location
 	// then timer the interpolateZoom and rendering
+    console.log("Canvas initalization");
     zoomToCanvas(root, zoomFactorCircle);
     //drawCanvas(context);
 
