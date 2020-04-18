@@ -284,11 +284,23 @@ function drawAll(app, graph) {
         return col;
     }
 
+    // Get the mous coordinate in the canvas.
     function getPointerCtx(e) {
         var rect = $canvas.getBoundingClientRect();
         var mouseX = (e.clientX - rect.left);
         var mouseY = (e.clientY - rect.top);
         return {mouseX, mouseY}
+    }
+
+    // Returns the path from roo to node.
+    function getNodePath(node) {
+        var path = cPack.path(node).map(n => {
+            return {
+                name: n.data.name,
+                nidjs: n.color,
+            };
+        });
+        return path
     }
 
     // Get node position and properties
@@ -413,6 +425,7 @@ function drawAll(app, graph) {
                 break
             case 'InTooltip':
                 var h = $tooltip.clientHeight;
+                var w = $tooltip.clientWidth;
                 var x1 = node.ctx.centerX - node.ctx.rayon;
                 var x2 = node.ctx.centerX + node.ctx.rayon;
                 var y1 = node.ctx.centerY - node.ctx.rayon - h+2;
@@ -529,43 +542,33 @@ function drawAll(app, graph) {
     // Click event
     // Listen for clicks on the main canvas
     var nodeClickEvent = function(e) {
-        // @DEBUG: d3.event.preventDefault(); ??
+        if (isZooming) {
+            return false
+        }
         var node = getNodeUnderPointer(e);
         var zoomFactor = zoomFactorCircle;
         var isUpdated = false;
         if (node) {
+            isUpdated = true;
             if (node.data.type_ === 'Role') {
                 var zoomFactor = zoomFactorRole;
             }
-
             if (node === focusedNode) {
-                // got to the parent node
+                // go to the parent node
                 if (node !== rootNode) {
                     node = node.parent;
+                } else {
+                    isUpdated = false;
                 }
             }
-            zoomToCanvas(node, zoomFactor);
-            isUpdated = true;
         }
 
         if (isUpdated) {
+            zoomToCanvas(node, zoomFactor);
             $tooltip.style.display = "none";
-            var path = cPack.path(node).map(n => {
-                return {
-                    name: n.data.name,
-                    nidjs: n.color,
-                };
-            });
-            app.ports.receiveData.send({
-                nidjs:node.color,
-                name:node.data.name,
-                nodeType:node.data.type_,
-                path:path
-            });
+            updateFocusedNodeElm(node);
         }
 
-        // doest work !?
-        e.preventDefault();
         return false;
     }//MouseClickEvent
 
@@ -607,9 +610,12 @@ function drawAll(app, graph) {
         var ctx = context;
         var p = getPointerCtx(e);
         var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
-        if (hoveredNode && !isInCanvas && !hoveredNode.isHovered) {
-            // == clear hovered node + tooltip
-            clearNodeHover(ctx, hoveredNode);
+        if (hoveredNode && !isInCanvas) {
+            var isInTooltip = checkIf(p, "InTooltip", hoveredNode);
+            if (!isInTooltip) {
+                // == clear hovered node + tooltip
+                clearNodeHover(ctx, hoveredNode);
+            }
         }
         return false
     }//event MouseLeave
@@ -716,9 +722,21 @@ function drawAll(app, graph) {
         console.log("redrawCanvas not implemented yet !")
     }
 
+    function updateFocusedNodeElm(node) {
+        var path = getNodePath(node);
+        app.ports.receiveData.send({
+            nidjs:node.color,
+            name:node.data.name,
+            nodeType:node.data.type_,
+            path:path
+        });
+    }
+
     app.ports.sendNodeFocus.subscribe(function(nid) {
         var zoomFactor = zoomFactorCircle;
-        zoomToCanvas(colToCircle[nid], zoomFactor);
+        var node = colToCircle[nid];
+        zoomToCanvas(node, zoomFactor);
+        updateFocusedNodeElm(node);
     });
 
 }//drawAll
