@@ -88,7 +88,7 @@ function drawAll(app, graph) {
     var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'];
     //var colorCircleRange = ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'];
 
-    var canvasParentId = "chart";
+    var canvasParentId = "canvasParent";
     var canvasId = "canvasOrga";
     var hiddenCanvasId = "hiddenCanvasOrga";
     var leafColor = "white";
@@ -184,12 +184,21 @@ function drawAll(app, graph) {
     var $canvas = document.getElementById(canvasId);
     var $hidden_canvas = document.getElementById(hiddenCanvasId);
 
+    //
+    // Update Html Elemens
+    //
+
     // Set height of parent sibling
     var $nextToChart = document.getElementById('nextToChart')
     $nextToChart.style.minHeight = 2*globalCtx.height+"px";
     $nextToChart.style.display = "flex";
     $nextToChart.style.flexDirection = "column";
     //$nextToChart.style.overflowY = "auto";
+
+    // Set Canvas button
+    var $canvasButtons = document.getElementById('canvasButtons');
+    $canvasButtons.style.top = "-"+ globalCtx.height+"px";
+    $canvasButtons.classList.remove("is-hidden");
 
     /*////////////////////////////////////////////////////////////
     //////////// Create Circle Scales and Propertie /////////////
@@ -212,10 +221,16 @@ function drawAll(app, graph) {
 
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
-    const nodeSize = (n, stats) => {
+    const nodeSizeTopDown = (n, stats) => {
         var size = 10000/(stats.maxdepth)**(Math.max(1.5, n.depth))
         return size
     }
+    const nodeSizeBottomUp = (n, stats) => {
+        var sizeDefault = 4;
+        var size = 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth))
+        return size
+    }
+    var nodeSize = nodeSizeTopDown;
 
     // Determine the node order in the circle packing
     const nodeOrder = (n1, n2) => {
@@ -234,7 +249,7 @@ function drawAll(app, graph) {
     var focusedNode; // The node that has the active focus
     var hoveredNode; // The node that is curently hoovered
     // Dataset to swich between color of a circle (in the hidden canvas) and the node data
-    var colToCircle = {};
+    var colToCircle ;
 
     graph = formatGraph(graph);
     if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.")
@@ -251,6 +266,8 @@ function drawAll(app, graph) {
 
     nodes = cPack.descendants(graph);
     rootNode = nodes[0];
+    // @DEBUG: Reset globalCtx
+    var colToCircle = {};
     focusedNode = rootNode;
     hoveredNode = null;
 
@@ -269,7 +286,7 @@ function drawAll(app, graph) {
 
     //Generates the next color in the sequence, going from 0,0,0 to 255,255,255.
     //From: https://bocoup.com/weblog/2d-picking-in-canvas
-    var nextCol = 1;
+    var nextCol = 1; // how to use this/interface ?
     function genColor() {
         var ret = [];
         // via http://stackoverflow.com/a/15804183
@@ -284,15 +301,15 @@ function drawAll(app, graph) {
         return col;
     }
 
-    // Get the mous coordinate in the canvas.
+    // Get the mouse coordinate whithin the canvas reference.
     function getPointerCtx(e) {
-        var rect = $canvas.getBoundingClientRect();
-        var mouseX = (e.clientX - rect.left);
-        var mouseY = (e.clientY - rect.top);
+        var r = $canvas.getBoundingClientRect();
+        var mouseX = (e.clientX - r.left);
+        var mouseY = (e.clientY - r.top);
         return {mouseX, mouseY}
     }
 
-    // Returns the path from roo to node.
+    // Returns the path from root to node.
     function getNodePath(node) {
         var path = cPack.path(node).map(n => {
             return {
@@ -321,10 +338,6 @@ function drawAll(app, graph) {
     }
 
     function getNodeUnderPointer(e) {
-        // We actually only need to draw the hidden canvas when there is an interaction.
-        // This sketch can draw it on each loop, but that is only for demonstration.
-        drawCanvas(hiddenContext, true);
-
         //Figure out where the mouse click occurred.
         var p = getPointerCtx(e);
 
@@ -342,10 +355,7 @@ function drawAll(app, graph) {
 
     // Draw node border
     function drawNodeHover(ctx, node) {
-        if (hoveredNode) {
-            // Reset the hoovered node
-            clearNodeHover(ctx, hoveredNode);
-        }
+        if (hoveredNode) clearNodeHover(ctx, hoveredNode);
 
         // Draw border
         ctx.beginPath();
@@ -375,7 +385,7 @@ function drawAll(app, graph) {
         ctx.stroke();
 
         // Clear node tooltip
-        clearNodeTooltip()
+        clearNodeTooltip();
 
         // Update context
         node.isHovered = false;
@@ -384,7 +394,7 @@ function drawAll(app, graph) {
     }
 
     function drawNodeTooltip(node) {
-        var rect = $canvas.getBoundingClientRect();
+        var r = $canvas.getBoundingClientRect();
         // == add tooltip
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
         $tooltip.textContent = node.data.name;
@@ -396,10 +406,11 @@ function drawAll(app, graph) {
         var scrollTop = bodyRect.top;
         var tw = ($tooltip.clientWidth);
         var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
-        var l = (node.ctx.centerX + rect.left - scrollLeft  - (tw/2 + 1));
-        var t = (node.ctx.centerY + rect.top - scrollTop  - (hw/2 + 23));
-        if (l+tw-rect.left < 0 || t+hw-rect.top < 0 || rect.left+rect.width-tw-l < 0 ) {
-            $tooltip.style.display = "none";
+        var l = (node.ctx.centerX + r.left - scrollLeft  - (tw/2 + 1));
+        var t = (node.ctx.centerY + r.top - scrollTop  - (hw/2 + 23));
+        if (l+tw-r.left < 0 || t+hw-r.top < 0 || r.left+r.width-tw-l < 0 ) {
+            // the tooltip overflow "too moch" outside the canvas.
+            clearNodeTooltip();
         } else {
             $tooltip.style.left = l + "px";
             $tooltip.style.top = t + "px";
@@ -414,27 +425,39 @@ function drawAll(app, graph) {
     }
 
     // check geometrical condition
-    function checkIf(p, cond, node) {
+    function checkIf(p, cond, nodeOrElt) {
         var test;
         switch(cond) {
             case 'InCanvas':
-                var rect = $canvas.getBoundingClientRect();
-                var x2 = rect.width;
-                var y2 = rect.height;
+                var r = $canvas.getBoundingClientRect();
+                var x2 = r.width;
+                var y2 = r.height;
                 test = (p.mouseX > 0) && (p.mouseY > 0) && (p.mouseX < x2) && (p.mouseY < y2);
                 break
+            case "InButtons":
+                var $btn = nodeOrElt;
+                var r = $canvas.getBoundingClientRect();
+                var rBtn = $btn.getBoundingClientRect();
+                var x1 = rBtn.left - r.left;
+                var y1 = rBtn.top - r.top;
+                var x2 = x1 + rBtn.width;
+                var y2 = y1 + rBtn.height;
+                test = (p.mouseX > x1) && (p.mouseY > y1) && (p.mouseX < x2) && (p.mouseY < y2);
+                break
             case 'InTooltip':
-                var h = $tooltip.clientHeight;
-                var w = $tooltip.clientWidth;
-                var x1 = node.ctx.centerX - node.ctx.rayon;
-                var x2 = node.ctx.centerX + node.ctx.rayon;
-                var y1 = node.ctx.centerY - node.ctx.rayon - h+2;
-                var y2 = node.ctx.centerY - node.ctx.rayon + h+2;
+                var n = nodeOrElt;
+                var h = $tooltip.clientHeight +12;
+                var w = $tooltip.clientWidth/2 +8;
+                var x1 = n.ctx.centerX - w;
+                var x2 = n.ctx.centerX + w;
+                var y1 = n.ctx.centerY - n.ctx.rayon - h;
+                var y2 = n.ctx.centerY - n.ctx.rayon + h;
                 test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 break
             default:
                 console.error("Unknown condition: %s", cond)
         }
+        //console.log(cond, "?", test);
         return test
     }
 
@@ -442,13 +465,16 @@ function drawAll(app, graph) {
     ///////////////// Canvas draw function ///////////////////////
     //////////////////////////////////////////////////////////////
 
-    //The draw function of the canvas that gets called on each frame
-    function drawCanvas(ctx, hidden) {
-
-        //Clear canvas
+    //Clear canvas
+    function clearCanvas(ctx) {
         ctx.fillStyle = backgoundGrd;
         ctx.rect(0,0,cWidth,cHeight);
         ctx.fill();
+    }
+
+    //The draw function of the canvas that gets called on each frame
+    function drawCanvas(ctx, hidden) {
+        clearCanvas(ctx);
 
         //Select our dummy nodes and draw the data to canvas.
         var node,
@@ -539,20 +565,15 @@ function drawAll(app, graph) {
     /////////////////// Event Handler ////////////////////////////
     ////////////////////////////////////////////////////////////*/
 
-    // Click event
     // Listen for clicks on the main canvas
     var nodeClickEvent = function(e) {
         if (isZooming) {
             return false
         }
         var node = getNodeUnderPointer(e);
-        var zoomFactor = zoomFactorCircle;
         var isUpdated = false;
         if (node) {
             isUpdated = true;
-            if (node.data.type_ === 'Role') {
-                var zoomFactor = zoomFactorRole;
-            }
             if (node === focusedNode) {
                 // go to the parent node
                 if (node !== rootNode) {
@@ -564,15 +585,13 @@ function drawAll(app, graph) {
         }
 
         if (isUpdated) {
-            zoomToCanvas(node, zoomFactor);
-            $tooltip.style.display = "none";
-            updateFocusedNodeElm(node);
+            clearNodeTooltip();
+            zoomToNode(node);
         }
 
         return false;
     }//MouseClickEvent
 
-    // Hoover event
     // Listen for mouse moves/hooverin on the main canvas
     var canvasMouseMoveEvent = function(e) {
         if (isZooming) {
@@ -583,7 +602,6 @@ function drawAll(app, graph) {
         var node = getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
         var isInTooltip = false;
         if (hoveredNode) {
-            addNodeCtx(hoveredNode);
             isInTooltip = checkIf(p, "InTooltip", hoveredNode);
         }
 
@@ -591,31 +609,22 @@ function drawAll(app, graph) {
             if (node !== hoveredNode && !isInTooltip) {
                 drawNodeHover(ctx, node);
             }
-        } else {
-            if (hoveredNode) {
-                isInTooltip = checkIf(p, "InTooltip", hoveredNode);
-                var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
-                if (!isInTooltip && isInCanvas) {
-                    // == clear hovered node + tooltip
-                    clearNodeHover(ctx, hoveredNode);
-                }
-            }
+        } else if (hoveredNode) {
+            var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
+            if (!isInTooltip && isInCanvas) clearNodeHover(ctx, hoveredNode);
         }
         return false
-    }//event MouseMouve
+    }//event MouseMove
 
-    // Hoover event
     // Listen for mouse moves/hooverout on the main canvas
     var canvasMouseLeaveEvent = function(e) {
         var ctx = context;
         var p = getPointerCtx(e);
-        var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
-        if (hoveredNode && !isInCanvas) {
+        var isInCanvas = checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
+        if (hoveredNode) {
             var isInTooltip = checkIf(p, "InTooltip", hoveredNode);
-            if (!isInTooltip) {
-                // == clear hovered node + tooltip
-                clearNodeHover(ctx, hoveredNode);
-            }
+            // Keep the focus when getting out from the canvas
+            if (!isInTooltip && !isInCanvas) clearNodeHover(ctx, hoveredNode);
         }
         return false
     }//event MouseLeave
@@ -628,19 +637,26 @@ function drawAll(app, graph) {
     //http://bl.ocks.org/smoli/d7e4f9199c15d71258b5
 
     var isZooming = false;
-    var ease = d3.easePolyInOut.exponent(3),
+    var ease = d3.easePolyInOut.exponent(3)
+    //var ease = d3.easePoly.exponent(4)
     timeElapsed = 0,
     interpolator = null,
     vOld = [focusedNode.x, focusedNode.y, focusedNode.r * zoomFactorCircle];
 
     //Create the interpolation function between current view and the clicked on node
-    function zoomToCanvas(focus, zoomFactor, d) {
+    // If `d:duration` is given, it overwrite the zoom duration. Give a low value for flush reset.
+    function zoomToNode(focus, d) {
         if (isZooming) {
             return false
         }
-        focusedNode = focus;
+        focusedNode = focus; // @DEBUG: global context
+
+        var zoomFactor = zoomFactorCircle;
+        if (focusedNode.data.type_ === 'Role') {
+            zoomFactor = zoomFactorRole;
+        }
         var v = [focusedNode.x, focusedNode.y, focusedNode.r * zoomFactor]; //The center and width of the new "viewport"
-        var maxDuration = (d === undefined ? false : d);
+        var maxDuration = (d === undefined ? minZoomDuration*2 : d);
         interpolator = d3.interpolateZoom(vOld, v); //Create interpolation between current and new "viewport"
         duration = Math.max(interpolator.duration, minZoomDuration); //Interpolation gives back a suggested duration
         timeElapsed = 0; //Set the time elapsed for the interpolateZoom function to 0
@@ -654,14 +670,17 @@ function drawAll(app, graph) {
             dt = elapsed;
             drawCanvas(context);
             //stats.end();
-            if (finished || maxDuration) {
+            if (finished || elapsed > maxDuration) {
                 isZooming = false;
-                drawNodeHover(context, focus);
+                // We actually only need to draw the hidden canvas when there is an interaction.
+                drawCanvas(hiddenContext, true);
+                drawNodeHover(context, focusedNode);
+                updateFocusedNodeElm(focusedNode);
                 t.stop();
             }
         });
 
-    }//function zoomToCanvas
+    }//function zoomToNode
 
     //Perform the interpolation and continuously change the zoomInfo while the "transition" occurs
     function interpolateZoom(dt) {
@@ -683,9 +702,99 @@ function drawAll(app, graph) {
         }
     }//function interpolateZoom
 
-    /*////////////////////////////////////////////////////////////
-    /////////////////////// FPS Stats box ////////////////////////
-    ////////////////////////////////////////////////////////////*/
+    //////////////////////////////////////////////////////////////
+    /////////////////////// Initiate /////////////////////////////
+    //////////////////////////////////////////////////////////////
+
+    document.getElementById(canvasId).addEventListener("mousemove", canvasMouseMoveEvent);
+    document.getElementById(canvasId).addEventListener("mouseleave", canvasMouseLeaveEvent);
+    document.getElementById(canvasId).addEventListener("click", nodeClickEvent);
+    // Canvas Button event redirection
+    document.getElementById("canvasButtons").addEventListener("click", function(e) {
+        if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
+            return nodeClickEvent(e)
+        }
+        return true
+    });
+    document.getElementById("canvasButtons").addEventListener("mousemove", function(e) {
+        if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
+            return canvasMouseMoveEvent(e)
+        }
+        return true
+    });
+
+    //First zoom to get the circles to the right location
+    // then timer the interpolateZoom and rendering
+    console.log("Canvas initalization");
+    zoomToNode(rootNode, 250); //drawCanvas(context);
+
+    // @DEBUG: Implement redrawCanvas() !
+    window.onresize = function () {
+        //$canvas.style.width = '100%';
+        //$canvas.style.height = canvas.style.height * .75;
+
+        //redrawCanvas(focusedNode);
+        //drawAll(app, graph);
+        console.log("redrawCanvas not implemented yet !")
+    }
+
+    //
+    // Elm Ports
+    //
+
+    function updateFocusedNodeElm(node) {
+        var path = getNodePath(node);
+        app.ports.receiveData.send({
+            nidjs    : node.color,
+            name     : node.data.name,
+            nodeType : node.data.type_,
+            path     : path
+        });
+    }
+
+    //
+    // ELM Subscriptions
+    //
+
+    app.ports.sendNodeFocus.subscribe(function(nid) {
+        var node = colToCircle[nid];
+        if (hoveredNode) clearNodeHover(context, hoveredNode);
+        zoomToNode(node);
+    });
+
+    app.ports.sendToggleGraphReverse.subscribe(function(e) {
+        if (nodeSize.name == "nodeSizeTopDown") {
+            nodeSize = nodeSizeBottomUp;
+        } else {
+            nodeSize = nodeSizeTopDown;
+        }
+
+        if (hoveredNode) clearNodeHover(context, hoveredNode);
+
+        cPack = d3.pack()
+            .padding(circlesPadding)
+            .size([diameter, diameter])
+        (d3.hierarchy(graph)
+            .sum(d => nodeSize(d, gStats))
+            .sort(nodeOrder));
+        nodes = cPack.descendants(graph);
+
+        // @Debug: Reset globalCtx
+        rootNode = nodes[0];
+        focusedNode = rootNode;
+        hoveredNode = null;
+        colToCircle = {};
+
+        clearCanvas(context);
+        clearCanvas(hiddenContext);
+        // @debug reset !
+        vOld = [focusedNode.x, focusedNode.y, focusedNode.r * zoomFactorCircle];
+        zoomToNode(rootNode, 10);
+    });
+
+    //
+    // FPS Stats box
+    //
 
     //var stats = new Stats();
     //stats.setMode(0); // 0: fps, 1: ms, 2: mb
@@ -697,46 +806,5 @@ function drawAll(app, graph) {
 
     //document.body.appendChild( stats.domElement );
 
-    //////////////////////////////////////////////////////////////
-    /////////////////////// Initiate /////////////////////////////
-    //////////////////////////////////////////////////////////////
-
-    document.getElementById(canvasId).addEventListener("click", nodeClickEvent);
-    document.getElementById(canvasId).addEventListener("mousemove", canvasMouseMoveEvent);
-    document.getElementById(canvasId).addEventListener("mouseleave", canvasMouseLeaveEvent);
-
-    //First zoom to get the circles to the right location
-    // then timer the interpolateZoom and rendering
-    console.log("Canvas initalization");
-    zoomToCanvas(rootNode, zoomFactorCircle, 10);
-    //drawCanvas(context);
-
-    // @DEBUG: Do not implemented
-    // Implement redrawCanvas() !!!
-    window.onresize = function () {
-        //$canvas.style.width = '100%';
-        //$canvas.style.height = canvas.style.height * .75;
-
-        //redrawCanvas(focusedNode);
-        //drawAll(app, graph);
-        console.log("redrawCanvas not implemented yet !")
-    }
-
-    function updateFocusedNodeElm(node) {
-        var path = getNodePath(node);
-        app.ports.receiveData.send({
-            nidjs:node.color,
-            name:node.data.name,
-            nodeType:node.data.type_,
-            path:path
-        });
-    }
-
-    app.ports.sendNodeFocus.subscribe(function(nid) {
-        var zoomFactor = zoomFactorCircle;
-        var node = colToCircle[nid];
-        zoomToCanvas(node, zoomFactor);
-        updateFocusedNodeElm(node);
-    });
 
 }//drawAll

@@ -12,7 +12,7 @@ const BulmaDriver = () => {
    * Burger open/close rationale
    */
 
-	//Close all burger by removing `is-active` class.
+	// Close all burger by removing `is-active` class.
 	function closeBurgers(objs) {
 		objs.forEach(function(el) {
       const $target = document.getElementById(el.dataset.target)
@@ -49,7 +49,7 @@ const BulmaDriver = () => {
    * Dropdown open/close rationale
    */
 
-	//Close all dorpdown by removing `is-active` class.
+	// Close all dorpdown by removing `is-active` class.
 	function closeDropdowns(objs) {
 		objs.forEach(function(el) {
 			el.classList.remove('is-active');
@@ -81,6 +81,11 @@ const BulmaDriver = () => {
 			closeDropdowns($dropdowns);
 		});
 	}
+
+    /*
+     * Tooltip effect rational
+     */
+    // Todo...
 
 }
 

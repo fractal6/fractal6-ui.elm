@@ -8,7 +8,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
-import Html exposing (Html, a, br, div, h1, h2, hr, li, nav, p, span, text, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id)
 import Html.Events exposing (onClick)
 import Http
@@ -148,11 +148,12 @@ init { route } params =
 
 
 type Msg
-    = GotOrga (RequestResult ErrorData NodesData)
-    | GotTensions (RequestResult ErrorData TensionsData)
-    | CircleClick CircleFocusState
-    | ChangeNodeFocus Int
-    | PassedSlowLoadTreshold
+    = GotOrga (RequestResult ErrorData NodesData) -- graphql
+    | GotTensions (RequestResult ErrorData TensionsData) -- graphql
+    | CircleClick CircleFocusState -- Ports receive
+    | ChangeNodeFocus Int -- Ports send
+    | ToggleGraphReverse -- Ports send
+    | PassedSlowLoadTreshold -- timer
 
 
 update : Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -222,6 +223,9 @@ update msg model =
             in
             ( model, sendNodeFocus nidjs, Cmd.none )
 
+        ToggleGraphReverse ->
+            ( model, () |> sendToggleGraphReverse, Cmd.none )
+
         PassedSlowLoadTreshold ->
             let
                 orga_data =
@@ -247,10 +251,21 @@ subscriptions _ =
     receiveData CircleClick
 
 
+
+-- Receive to Javascript
+
+
 port receiveData : (CircleFocusState -> msg) -> Sub msg
 
 
+
+-- Send to Javascript
+
+
 port sendNodeFocus : NID -> Cmd msg
+
+
+port sendToggleGraphReverse : () -> Cmd msg
 
 
 
@@ -268,7 +283,7 @@ view model =
                 [ viewHelperBar model ]
             , div [ class "columns is-variable is-4" ]
                 [ div [ class "column is-6" ]
-                    [ div [ id "chart" ] [ showMaybeError model.orga_data ]
+                    [ viewCanvas model
                     , br [] []
                     , viewMandate model
                     ]
@@ -344,7 +359,7 @@ viewHelperBar model =
         ]
 
 
-viewMandate : Model -> Html mgs
+viewMandate : Model -> Html Msg
 viewMandate model =
     div [ class "hero is-small is-light heroViewer box" ]
         [ div [ class "hero-body" ]
@@ -364,6 +379,22 @@ viewMandate model =
                 , h2 [ class "title is-4" ] [ text "Domains" ]
                 , div [] [ text "See sub domains." ]
                 ]
+            ]
+        ]
+
+
+viewCanvas : Model -> Html Msg
+viewCanvas model =
+    div []
+        [ div [ id "canvasParent" ] [ showMaybeError model.orga_data ]
+        , div [ id "canvasButtons", class "buttons are-small is-hidden " ]
+            [ div
+                [ id "inv_cvbtn"
+                , class "button tooltip has-tooltip-left "
+                , attribute "data-tooltip" "Reverse the organisation graph."
+                , onClick ToggleGraphReverse
+                ]
+                [ Fa.icon "fas fa-sort-amount-up" "" ]
             ]
         ]
 
@@ -391,7 +422,7 @@ viewActivies model =
         , div [ class "content" ]
             [ case model.circle_tensions of
                 Loaded tensions ->
-                    List.map (\t -> mTension t) tensions
+                    List.map (\t -> vTension t) tensions
                         |> div [ class "is-size-7", id "tensionsTab" ]
 
                 -- why it doesnt work?
@@ -405,8 +436,8 @@ viewActivies model =
         ]
 
 
-mTension : Tension -> Html msg
-mTension tension =
+vTension : Tension -> Html Msg
+vTension tension =
     div [ class "media Box" ]
         [ div [ class "media-left" ]
             [ div
