@@ -29,6 +29,13 @@ h6 {
   &.is-focused,
   &:active,
   &:focus {
+    color: $button-color;
+  }
+
+  &.is-active,
+  &.is-focused,
+  &:active,
+  &:focus {
     box-shadow: 0 0 0 2px rgba($button-focus-border-color, 0.5);
   }
   @each $name, $pair in $colors {

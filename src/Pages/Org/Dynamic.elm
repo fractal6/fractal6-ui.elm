@@ -390,9 +390,7 @@ viewCanvas model =
         , div [ id "canvasButtons", class "buttons are-small is-hidden " ]
             [ div
                 [ id "inv_cvbtn"
-
-                --, class "button"
-                , class "button tooltip has-tooltip-right"
+                , class "button btnToggle tooltip has-tooltip-right"
                 , attribute "data-tooltip" "Reverse the organisation graph."
                 , onClick ToggleGraphReverse
                 ]

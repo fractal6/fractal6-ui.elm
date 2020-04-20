@@ -418,7 +418,7 @@ function drawAll(app, graph) {
                 var x1 = n.ctx.centerX - w;
                 var x2 = n.ctx.centerX + w;
                 var y1 = n.ctx.centerY - n.ctx.rayon - h;
-                var y2 = n.ctx.centerY - n.ctx.rayon + h;
+                var y2 = n.ctx.centerY - n.ctx.rayon*0.6;
                 test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 break
             default:
@@ -675,9 +675,9 @@ function drawAll(app, graph) {
 
     document.getElementById(canvasId).addEventListener("mousemove", canvasMouseMoveEvent);
     document.getElementById(canvasId).addEventListener("mouseleave", canvasMouseLeaveEvent);
-    document.getElementById(canvasId).addEventListener("click", nodeClickEvent);
+    document.getElementById(canvasId).addEventListener("mousedown", nodeClickEvent);
     // Canvas Button event redirection
-    document.getElementById("canvasButtons").addEventListener("click", function(e) {
+    document.getElementById("canvasButtons").addEventListener("mousedown", function(e) {
         if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
             return nodeClickEvent(e)
         }

@@ -83,9 +83,17 @@ const BulmaDriver = () => {
 	}
 
     /*
-     * Tooltip effect rational
+     * Button & Tooltip effect rational
      */
-    // Todo...
+	var $btns = document.querySelectorAll('.btnToggle');
+    if ($btns.length > 0) {
+        $btns.forEach(function(el) {
+            el.addEventListener('mousedown', function(e) {
+                el.classList.toggle('is-active');
+                e.preventDefault() // important: don't let html handle the button element state
+            });
+        });
+    }
 
 }
 
