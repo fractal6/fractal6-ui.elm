@@ -8,7 +8,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, li, nav, p, span, text, ul)
+import Html exposing (Html, a, br, div, h1, h2, hr, i, li, nav, p, span, text, ul)
 import Html.Attributes exposing (attribute, class, href, id)
 import Html.Events exposing (onClick)
 import Http
@@ -309,27 +309,27 @@ viewLeftPane model =
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ Fa.icon1 "far fa-circle fa-lg" model.circle_focus.name ]
+                        [ Fa.icon "far fa-circle fa-lg" model.circle_focus.name ]
                     ]
                 ]
             , li []
                 [ ul [ class "menu-list" ]
                     [ li []
                         [ a []
-                            [ Fa.icon1 "fas fa-scroll fa-xs" "Mandates" ]
+                            [ Fa.icon "fas fa-scroll fa-xs" "Mandates" ]
                         ]
                     , li []
                         [ a []
                             --  fa-exclamation-circle
-                            [ Fa.icon1 "fas fa-exchange-alt fa-xs" "Tensions" ]
+                            [ Fa.icon "fas fa-exchange-alt fa-xs" "Tensions" ]
                         ]
                     , li []
                         [ a []
-                            [ Fa.icon1 "fas fa-history fa-xs" "Journal" ]
+                            [ Fa.icon "fas fa-history fa-xs" "Journal" ]
                         ]
                     , li []
                         [ a []
-                            [ Fa.icon1 "fas fa-user fa-xs" "Members" ]
+                            [ Fa.icon "fas fa-user fa-xs" "Members" ]
                         ]
                     ]
                 ]
@@ -343,7 +343,7 @@ viewHelperBar model =
         [ class "column is-full breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
-        [ Fa.icon1 "fas fa-angle-right" ""
+        [ Fa.icon "fas fa-angle-right" ""
         , Array.indexedMap
             (\i x ->
                 if i < (Array.length model.circle_focus.path - 1) then
@@ -364,7 +364,7 @@ viewMandate model =
     div [ class "hero is-small is-light heroViewer box" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
-                [ Fa.icon1 "fas fa-scroll fa-xs" "Mandate" ]
+                [ Fa.icon "fas fa-scroll fa-xs" "Mandate" ]
             , hr [ class "has-background-grey-light" ] []
             , div [ class "content" ]
                 [ h2 [ class "title is-4" ] [ text "Purpose" ]
@@ -390,11 +390,13 @@ viewCanvas model =
         , div [ id "canvasButtons", class "buttons are-small is-hidden " ]
             [ div
                 [ id "inv_cvbtn"
-                , class "button tooltip has-tooltip-left "
+
+                --, class "button"
+                , class "button tooltip has-tooltip-right"
                 , attribute "data-tooltip" "Reverse the organisation graph."
                 , onClick ToggleGraphReverse
                 ]
-                [ Fa.icon "fas fa-sort-amount-up" "" ]
+                [ Fa.icon0 "fas fa-sort-amount-up" "" ]
             ]
         ]
 
@@ -410,11 +412,11 @@ viewActivies model =
                 [ ul []
                     [ li [ class "is-active" ]
                         [ a []
-                            [ Fa.icon1 "fas fa-exchange-alt fa-sm" "Tensions" ]
+                            [ Fa.icon "fas fa-exchange-alt fa-sm" "Tensions" ]
                         ]
                     , li []
                         [ a [ class "is-" ]
-                            [ Fa.icon1 "fas fa-history fa-sm" "Journal" ]
+                            [ Fa.icon "fas fa-history fa-sm" "Journal" ]
                         ]
                     ]
                 ]
@@ -441,7 +443,7 @@ vTension tension =
     div [ class "media Box" ]
         [ div [ class "media-left" ]
             [ div
-                [ class "tooltip has-tooltip-top has-tooltip-light"
+                [ class "tooltip has-tooltip-top"
                 , attribute "data-tooltip" ("type: " ++ TensionType.toString tension.type_)
                 ]
                 [ case tension.type_ of
@@ -492,10 +494,10 @@ vTension tension =
               in
               if n_comments > 0 then
                 div
-                    [ class "tooltip has-tooltip-top has-tooltip-light"
+                    [ class "tooltip has-tooltip-top"
                     , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
                     ]
-                    [ Fa.icon "fas fa-comment-dots" (String.fromInt n_comments)
+                    [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments)
                     ]
 
               else

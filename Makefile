@@ -1,9 +1,9 @@
-default: build 
+default: build
 
 build:
 	# webkit !
-	npm run css_build
 	npm run js_build
+	npm run css_build
 
 gen:
 	npm run graphql_build

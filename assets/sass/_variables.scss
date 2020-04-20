@@ -11,3 +11,12 @@ $fa-font-path: "fonts";
 @import '../../node_modules/@fortawesome/fontawesome-free/scss/regular';
 @import '../../node_modules/@fortawesome/fontawesome-free/scss/solid';
 //@import '../../node_modules/@fortawesome/fontawesome-free/scss/brands';
+
+//tooltip-hover
+//    &:focus::before,
+//    &:focus::after,
+//    &:hover::before,
+//    &:hover::after,
+//    &.has-tooltip-active::before,
+//    &.has-tooltip-active::after
+//        @content

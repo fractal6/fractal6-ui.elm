@@ -22,7 +22,7 @@ const BulmaDriver = () => {
 	}
 
 	// Toggle is-active on click event for each {navbar-burger}
-	const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+	const $navbarBurgers = document.querySelectorAll('.navbar-burger');
 	// Check if there is any target
 	if ($navbarBurgers.length > 0) {
 		// For each dropdown, add event handler to open on click.

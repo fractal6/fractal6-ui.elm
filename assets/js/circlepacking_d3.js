@@ -99,28 +99,6 @@ function drawAll(app, graph) {
     var hoverCircleColor =  "black",
         hoverCircleWidth = 1.5; // waring, can break stroke with canvas drawing.
 
-    // http://www.cssarrowplease.com/
-    var tooltipCss = `<style>
-      #nodeTooltip:after, #nodeTooltip:before{
-          content: "";
-          position: absolute;
-          top: 100%; /* This will position the arrow at the bottom of the tooltip */
-          left: 50%;
-          pointer-events: none;
-          border: solid transparent;
-          }
-      #nodeTooltip:after {
-          margin-left: -6px;
-          border-width: 6px;
-          border-top-color: #eee;
-      }
-      #nodeTooltip:before {
-          margin-left: -7px;
-          border-width: 7px;
-          border-top-color: #333;
-      }
-      </style>`;
-
     /*////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
     ////////////////////////////////////////////////////////////*/
@@ -133,16 +111,6 @@ function drawAll(app, graph) {
     var $tooltip = document.createElement('div');
     document.body.appendChild($tooltip);
     $tooltip.setAttribute('id', 'nodeTooltip');
-
-    $tooltip.style.textAlign = "center";
-    $tooltip.style.color = "black";
-    $tooltip.style.background = "#eee";
-    $tooltip.style.borderRadius = "4px";
-    $tooltip.style.border = "1px solid #333";
-    $tooltip.style.paddingLeft = "6px";
-    $tooltip.style.paddingRight = "6px";
-    $tooltip.style.paddingTop = "2px";
-    $tooltip.style.paddingBottom = "2px";
 
     // @FIX: put all global variables inside that (shorter name?) !
     var globalCtx = {
@@ -398,7 +366,6 @@ function drawAll(app, graph) {
         // == add tooltip
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
         $tooltip.textContent = node.data.name;
-        $tooltip.innerHTML += tooltipCss;
         $tooltip.style.display = "block";
         // --
         var bodyRect = document.querySelector("body").getBoundingClientRect();
