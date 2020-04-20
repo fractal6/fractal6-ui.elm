@@ -578,7 +578,11 @@ function drawAll(app, graph) {
             }
         } else if (hoveredNode) {
             var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
-            if (!isInTooltip && isInCanvas) clearNodeHover(ctx, hoveredNode);
+            if (hoveredNode == rootNode) {
+                // keep it
+            } else if (!isInTooltip && isInCanvas) clearNodeHover(ctx, hoveredNode);
+        } else {
+            drawNodeHover(ctx, focusedNode);
         }
         return false
     }//event MouseMove
@@ -588,11 +592,16 @@ function drawAll(app, graph) {
         var ctx = context;
         var p = getPointerCtx(e);
         var isInCanvas = checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
-        if (hoveredNode) {
-            var isInTooltip = checkIf(p, "InTooltip", hoveredNode);
-            // Keep the focus when getting out from the canvas
-            if (!isInTooltip && !isInCanvas) clearNodeHover(ctx, hoveredNode);
-        }
+        if (!isInCanvas) drawNodeHover(ctx, focusedNode);
+
+        // Remove hovered except if exiting from an tooltip
+        //var isInCanvas = checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
+        //if (hoveredNode) {
+        //    var isInTooltip = checkIf(p, "InTooltip", hoveredNode);
+        //    // Keep the focus when getting out from the canvas
+        //    if (!isInTooltip && !isInCanvas) clearNodeHover(ctx, hoveredNode);
+        //}
+
         return false
     }//event MouseLeave
 
