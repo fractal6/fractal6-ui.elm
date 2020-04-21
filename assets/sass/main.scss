@@ -1,6 +1,6 @@
 @import "variables";
 
-$node-tooltip-background: $white-ter; //
+$node-tooltip-background: $white-ter;
 $node-tooltip-shadow: #2e47cc24;
 
 html, body {
@@ -229,8 +229,6 @@ header > .navbar {
 
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
-  // better integration of canvas tooltip ?
-  display: none;
   position: absolute;
 
   // Content
@@ -243,8 +241,8 @@ header > .navbar {
       //bottom: 12px;
       //right: -19px;
       ///--
-      margin-left: -10px;
-      margin-right: -10px;
+      margin-left: -4px;
+      margin-right: -4px;
 
       font-size: 13px;
       .far.fa-circle {
@@ -292,20 +290,17 @@ header > .navbar {
   // -> on hover
   cursor: pointer;
   &:hover {
-      //box-shadow: 0 0 0 3px rgba(170, 168, 185, 0.68); //  rgba(0, 123, 255, .5); // rgba(44, 92, 84, 0.5); // rgba(42, 42, 42, 0.666);
-      box-shadow: 0 0 0 3px $node-tooltip-shadow; //  rgba(0, 123, 255, .5); // rgba(44, 92, 84, 0.5); // rgba(42, 42, 42, 0.666);
+      box-shadow: 0 0 0 3px $node-tooltip-shadow;
       transition: all 0.2s ease;
   }
 
 }
 
-
-
 #canvasButtons {
-    position: relative;
-    display: flex;
-    flex-direction: row-reverse;
-    right: 2px;
+    position: absolute;
+    //display: flex;
+    //flex-direction: row-reverse;
+    //right: 2px;
 }
 
 /*

@@ -387,6 +387,8 @@ viewCanvas : Model -> Html Msg
 viewCanvas model =
     div []
         [ div [ id "canvasParent" ] [ showMaybeError model.orga_data ]
+
+        -- Hidden class use in circlepacking_d3.js
         , div [ id "canvasButtons", class "buttons are-small is-hidden " ]
             [ div
                 [ id "inv_cvbtn"
@@ -395,6 +397,16 @@ viewCanvas model =
                 , onClick ToggleGraphReverse
                 ]
                 [ Fa.icon0 "fas fa-sort-amount-up" "" ]
+            ]
+        , div [ id "nodeTooltip", class "is-hidden" ]
+            [ span [] [ text "void" ] -- Node name
+            , span [ class "fa-stack fa-sm ellipsisArt" ]
+                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
+
+                -- To be copied before fa-ellipis !
+                --, i[class "far fa-circle fa-stack-2x"][]
+                --, i[class "fas fa-circle fa-stack-2x"][]
+                ]
             ]
         ]
 

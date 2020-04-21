@@ -99,39 +99,40 @@ function drawAll(app, graph) {
     var hoverCircleColor =  "black",
         hoverCircleWidth = 1.5; // waring, can break stroke with canvas drawing.
 
-    // @FIX: put all global variables inside that (shorter name?) !
-    var globalCtx = {
-        minWidth : 400,
-        minHeight : 400,
-    }
-
     /*////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
     ////////////////////////////////////////////////////////////*/
 
-    // Add the tooltip
-    //var $tooltip = document.getElementById('nodeTooltip');
-    var $tooltip = document.createElement('div');
-    $tooltip.setAttribute('id', 'nodeTooltip');
-    $tooltip.innerHTML = `<span>void</span>
-            <span class="fa-stack fa-sm ellipsisArt">
-                  <i class="fas fa-ellipsis-h fa-stack-1x"></i>
-            </span>`
-                  // To be copied before fa-ellipis !
-                  //<i class="far fa-circle fa-stack-2x"></i>
-                  //<i class="fas fa-circle fa-stack-2x"></i>
-    document.body.appendChild($tooltip);
+    var minWidth = 400;
+    var minHeight = 400;
 
     // Get the chart div
     var $canvasParent = document.getElementById(canvasParentId);
     var computedWidth = $canvasParent.offsetWidth; //var computedWidth = parseInt(window.getComputedStyle($canvasParent).width, 10);
     var computedHeight = (window.innerHeight)/2;
 
-    globalCtx.width = Math.max(computedWidth, globalCtx.minWidth);
-    globalCtx.height = Math.max(computedHeight, globalCtx.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
-    globalCtx.centerX = globalCtx.width/2;
-    globalCtx.centerY = globalCtx.height/2;
-    globalCtx.mobileSize = (window.innerWidth < 768 ? true : false);
+    // @FIX: put all global variables inside that (shorter name?) !
+    var globalCtx = {
+        // Canvas settings
+        width: Math.max(computedWidth, minWidth),
+        height: Math.max(computedHeight, minHeight), //(computedHeight > computedWidth ?  computedWidth: computedHeight );
+        mobileSize: (window.innerWidth < 768 ? true : false),
+
+        // Nodes settings
+        circlesPadding: 1.8,
+        // @debug: add other context variables here
+        // ...
+        };
+
+    globalCtx['centerX'] = globalCtx.width/2;
+    globalCtx['centerY'] = globalCtx.height/2;
+    globalCtx['diameter'] = Math.min(globalCtx.width*0.97, globalCtx.height*0.97);
+    globalCtx['zoomCtx'] = {
+        // Init at CenterX, centerY
+        centerX: globalCtx.centerX,
+        centerY: globalCtx.centerY,
+        scale: 1
+    };
 
     /*////////////////////////////////////////////////////////////
     ////////// Create and Bind Canvas to the DOM  ////////////////
@@ -170,23 +171,23 @@ function drawAll(app, graph) {
     $nextToChart.style.flexDirection = "column";
     //$nextToChart.style.overflowY = "auto";
 
-    // Set Canvas button
+    // Setup Canvas button
     var $canvasButtons = document.getElementById('canvasButtons');
-    $canvasButtons.style.top = "-"+ globalCtx.height+"px";
+    //$canvasButtons.style.top = "-"+ globalCtx.height+"px"; // if position: relative
+    var r = $canvas.getBoundingClientRect();
     $canvasButtons.classList.remove("is-hidden");
+    $canvasButtons.style.left = r.left + r.width - $canvasButtons.offsetWidth -5 + "px";
+    $canvasButtons.style.top = r.top + 10 + "px";
+    //$canvasButtons = document.createElement('div');
+
+    // Set node tooltip
+    var $tooltip = document.getElementById('nodeTooltip');
+    $tooltip.style.display = "none";
+    $tooltip.classList.remove("is-hidden");
 
     /*////////////////////////////////////////////////////////////
-    //////////// Create Circle Scales and Propertie /////////////
+    ////////////////// Create Circle Packing /////////////////////
     ////////////////////////////////////////////////////////////*/
-    var circlesPadding = 1.8;
-    var diameter = Math.min(globalCtx.width*0.97, globalCtx.height*0.97),
-        radius = diameter / 2;
-
-    var zoomInfo = {
-        centerX: globalCtx.centerX,
-        centerY: globalCtx.centerY,
-        scale: 1
-    };
 
     // Mapping function from a node depth to color.
     const colorCircle = d3.scaleOrdinal()
@@ -213,10 +214,6 @@ function drawAll(app, graph) {
         return 0
     }
 
-    /*////////////////////////////////////////////////////////////
-    ////////////////// Create Circle Packing /////////////////////
-    ////////////////////////////////////////////////////////////*/
-
     var gStats; // Receive graph global statistics
     var cPack; // Receive D3 data structure
     var nodes; // List of d3 nodes
@@ -224,7 +221,7 @@ function drawAll(app, graph) {
     var focusedNode; // The node that has the active focus
     var hoveredNode; // The node that is curently hoovered
     // Dataset to swich between color of a circle (in the hidden canvas) and the node data
-    var colToCircle ;
+    var colToCircle;
 
     graph = formatGraph(graph);
     if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.")
@@ -233,8 +230,8 @@ function drawAll(app, graph) {
     //console.log(graph);
 
     cPack = d3.pack()
-        .padding(circlesPadding)
-        .size([diameter, diameter])
+        .padding(globalCtx.circlesPadding)
+        .size([globalCtx.diameter, globalCtx.diameter])
     (d3.hierarchy(graph)
         .sum(d => nodeSize(d, gStats))
         .sort(nodeOrder));
@@ -300,14 +297,14 @@ function drawAll(app, graph) {
         var ctx,
             centerX, centerY, rayon;
 
-        centerX = ((node.x - zoomInfo.centerX) * zoomInfo.scale) + globalCtx.centerX;
-        centerY = ((node.y - zoomInfo.centerY) * zoomInfo.scale) + globalCtx.centerY;
+        centerX = ((node.x - globalCtx.zoomCtx.centerX) * globalCtx.zoomCtx.scale) + globalCtx.centerX;
+        centerY = ((node.y - globalCtx.zoomCtx.centerY) * globalCtx.zoomCtx.scale) + globalCtx.centerY;
         if (node.data.type_ === "Role") {
             rayon = node.r * 0.95 ;
         } else {
             rayon = node.r;
         }
-        rayon *= zoomInfo.scale;
+        rayon *= globalCtx.zoomCtx.scale;
         node.ctx = {centerX, centerY, rayon};
         return
     }
@@ -666,15 +663,15 @@ function drawAll(app, graph) {
 
     }//function zoomToNode
 
-    //Perform the interpolation and continuously change the zoomInfo while the "transition" occurs
+    //Perform the interpolation and continuously change the globalCtx.zoomCtx while the "transition" occurs
     function interpolateZoom(dt) {
         if (interpolator) {
             timeElapsed += dt;
             var t = ease(timeElapsed / duration);
 
-            zoomInfo.centerX = interpolator(t)[0];
-            zoomInfo.centerY = interpolator(t)[1];
-            zoomInfo.scale = diameter / interpolator(t)[2];
+            globalCtx.zoomCtx.centerX = interpolator(t)[0];
+            globalCtx.zoomCtx.centerY = interpolator(t)[1];
+            globalCtx.zoomCtx.scale = globalCtx.diameter / interpolator(t)[2];
 
             if (timeElapsed >= duration)
             {
@@ -700,17 +697,17 @@ function drawAll(app, graph) {
     //
 
     // Mouse event
-    document.getElementById(canvasId).addEventListener("mousemove", canvasMouseMoveEvent);
-    document.getElementById(canvasId).addEventListener("mouseleave", canvasMouseLeaveEvent);
-    document.getElementById(canvasId).addEventListener("mousedown", nodeClickEvent);
+    $canvas.addEventListener("mousemove", canvasMouseMoveEvent);
+    $canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
+    $canvas.addEventListener("mousedown", nodeClickEvent);
     // Canvas Button event redirection
-    document.getElementById("canvasButtons").addEventListener("mousedown", function(e) {
+    $canvasButtons.addEventListener("mousedown", function(e) {
         if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
             return nodeClickEvent(e)
         }
         return true
     });
-    document.getElementById("canvasButtons").addEventListener("mousemove", function(e) {
+    $canvasButtons.addEventListener("mousemove", function(e) {
         if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
             return canvasMouseMoveEvent(e)
         }
@@ -762,8 +759,8 @@ function drawAll(app, graph) {
         if (hoveredNode) clearNodeHover(context, hoveredNode);
 
         cPack = d3.pack()
-            .padding(circlesPadding)
-            .size([diameter, diameter])
+            .padding(globalCtx.circlesPadding)
+            .size([globalCtx.diameter, globalCtx.diameter])
         (d3.hierarchy(graph)
             .sum(d => nodeSize(d, gStats))
             .sort(nodeOrder));
