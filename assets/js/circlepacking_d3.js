@@ -99,24 +99,31 @@ function drawAll(app, graph) {
     var hoverCircleColor =  "black",
         hoverCircleWidth = 1.5; // waring, can break stroke with canvas drawing.
 
-    /*////////////////////////////////////////////////////////////
-    ////////////////// Create Set-up variables  //////////////////
-    ////////////////////////////////////////////////////////////*/
-
-    // Get the chart div
-    var $canvasParent = document.getElementById(canvasParentId);
-
-    // Add the tooltip
-    //var $tooltip = document.getElementById('nodeTooltip');
-    var $tooltip = document.createElement('div');
-    document.body.appendChild($tooltip);
-    $tooltip.setAttribute('id', 'nodeTooltip');
-
     // @FIX: put all global variables inside that (shorter name?) !
     var globalCtx = {
         minWidth : 400,
         minHeight : 400,
     }
+
+    /*////////////////////////////////////////////////////////////
+    ////////////////// Create Set-up variables  //////////////////
+    ////////////////////////////////////////////////////////////*/
+
+    // Add the tooltip
+    //var $tooltip = document.getElementById('nodeTooltip');
+    var $tooltip = document.createElement('div');
+    $tooltip.setAttribute('id', 'nodeTooltip');
+    $tooltip.innerHTML = `<span>void</span>
+            <span class="fa-stack fa-sm ellipsisArt">
+                  <i class="fas fa-ellipsis-h fa-stack-1x"></i>
+            </span>`
+                  // To be copied before fa-ellipis !
+                  //<i class="far fa-circle fa-stack-2x"></i>
+                  //<i class="fas fa-circle fa-stack-2x"></i>
+    document.body.appendChild($tooltip);
+
+    // Get the chart div
+    var $canvasParent = document.getElementById(canvasParentId);
     var computedWidth = $canvasParent.offsetWidth; //var computedWidth = parseInt(window.getComputedStyle($canvasParent).width, 10);
     var computedHeight = (window.innerHeight)/2;
 
@@ -365,7 +372,8 @@ function drawAll(app, graph) {
         var r = $canvas.getBoundingClientRect();
         // == add tooltip
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
-        $tooltip.textContent = node.data.name;
+        //$tooltip.textContent = node.data.name;
+        $tooltip.childNodes[0].textContent = node.data.name;
         $tooltip.style.display = "block";
         // --
         var bodyRect = document.querySelector("body").getBoundingClientRect();
@@ -682,6 +690,16 @@ function drawAll(app, graph) {
     /////////////////////// Initiate /////////////////////////////
     //////////////////////////////////////////////////////////////
 
+    //First zoom to get the circles to the right location
+    // then timer the interpolateZoom and rendering
+    console.log("Canvas initalization");
+    zoomToNode(rootNode, 250); //drawCanvas(context);
+
+    //
+    // Event listeners
+    //
+
+    // Mouse event
     document.getElementById(canvasId).addEventListener("mousemove", canvasMouseMoveEvent);
     document.getElementById(canvasId).addEventListener("mouseleave", canvasMouseLeaveEvent);
     document.getElementById(canvasId).addEventListener("mousedown", nodeClickEvent);
@@ -699,10 +717,6 @@ function drawAll(app, graph) {
         return true
     });
 
-    //First zoom to get the circles to the right location
-    // then timer the interpolateZoom and rendering
-    console.log("Canvas initalization");
-    zoomToNode(rootNode, 250); //drawCanvas(context);
 
     // @DEBUG: Implement redrawCanvas() !
     window.onresize = function () {

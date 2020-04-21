@@ -1,5 +1,8 @@
 @import "variables";
 
+$node-tooltip-background: $white-ter; //
+$node-tooltip-shadow: #2e47cc24;
+
 html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
@@ -184,6 +187,7 @@ header > .navbar {
     font-size: 9px;
 }
 
+
 /*
  *
  * Organisation Page
@@ -207,8 +211,6 @@ header > .navbar {
              font-size: $size-6 !important;
         }
      }
-
-
 }
 
 /*
@@ -231,34 +233,73 @@ header > .navbar {
   display: none;
   position: absolute;
 
-  // Style
+  // Content
   color: black;
-  background-color: #eee; // #8512d5
+  background-color: $node-tooltip-background;
+
+  // Icon font button
+  .ellipsisArt {
+      //position: absolute;
+      //bottom: 12px;
+      //right: -19px;
+      ///--
+      margin-left: -10px;
+      margin-right: -10px;
+
+      font-size: 13px;
+      .far.fa-circle {
+          color: black;
+      }
+      .fas.fa-circle {
+          color: $node-tooltip-background;
+      }
+      .fas.fa-ellipsis-h {
+          color: $primary;
+      }
+  }
+
+  // Box style
   padding: 2px 6px 2px 6px;
   //text-align: center;
-  border: 2px solid #333;
+  border: 1px solid #333;
   border-style: solid;
-  border-radius: 7px;
-}
+  border-radius: 9px;
 
-#nodeTooltip:after, #nodeTooltip:before{
+  // Tooltip style
+  &::after,
+  &::before {
+    //font-family: "Font Awesome 5 Free";
+    //font-weight: 900;
+    //content: "\f007";
     content: "";
     position: absolute;
     top: 100%; /* This will position the arrow at the bottom of the tooltip */
     left: 50%;
     pointer-events: none;
     border: solid transparent;
-}
-#nodeTooltip:after {
+  }
+  &::after {
     margin-left: -6px;
     border-width: 6px;
-    border-top-color: #eee;
-}
-#nodeTooltip:before {
+    border-top-color: $node-tooltip-background;
+  }
+  &::before {
     margin-left: -7px;
     border-width: 7px;
     border-top-color: #333;
+  }
+
+  // -> on hover
+  cursor: pointer;
+  &:hover {
+      //box-shadow: 0 0 0 3px rgba(170, 168, 185, 0.68); //  rgba(0, 123, 255, .5); // rgba(44, 92, 84, 0.5); // rgba(42, 42, 42, 0.666);
+      box-shadow: 0 0 0 3px $node-tooltip-shadow; //  rgba(0, 123, 255, .5); // rgba(44, 92, 84, 0.5); // rgba(42, 42, 42, 0.666);
+      transition: all 0.2s ease;
+  }
+
 }
+
+
 
 #canvasButtons {
     position: relative;

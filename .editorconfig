@@ -12,6 +12,10 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
+[*.css]
+indent_style = space
+indent_size = 2
+
 #[i18n/**.json]
 #indent_size = 2
 #
