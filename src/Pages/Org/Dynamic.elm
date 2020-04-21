@@ -389,7 +389,7 @@ viewCanvas model =
         [ div [ id "canvasParent" ] [ showMaybeError model.orga_data ]
 
         -- Hidden class use in circlepacking_d3.js
-        , div [ id "canvasButtons", class "buttons are-small is-hidden " ]
+        , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             [ div
                 [ id "inv_cvbtn"
                 , class "button btnToggle tooltip has-tooltip-right"
@@ -398,7 +398,7 @@ viewCanvas model =
                 ]
                 [ Fa.icon0 "fas fa-sort-amount-up" "" ]
             ]
-        , div [ id "nodeTooltip", class "is-hidden" ]
+        , div [ id "nodeTooltip", class "is-invisible" ]
             [ span [] [ text "void" ] -- Node name
             , span [ class "fa-stack fa-sm ellipsisArt" ]
                 [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []

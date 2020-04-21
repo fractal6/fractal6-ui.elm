@@ -175,15 +175,15 @@ function drawAll(app, graph) {
     var $canvasButtons = document.getElementById('canvasButtons');
     //$canvasButtons.style.top = "-"+ globalCtx.height+"px"; // if position: relative
     var r = $canvas.getBoundingClientRect();
-    $canvasButtons.classList.remove("is-hidden");
+    $canvasButtons.classList.remove("is-invisible");
     $canvasButtons.style.left = r.left + r.width - $canvasButtons.offsetWidth -5 + "px";
     $canvasButtons.style.top = r.top + 10 + "px";
     //$canvasButtons = document.createElement('div');
 
     // Set node tooltip
     var $tooltip = document.getElementById('nodeTooltip');
-    $tooltip.style.display = "none";
-    $tooltip.classList.remove("is-hidden");
+    $tooltip.classList.remove("is-invisible");
+    clearNodeTooltip()
 
     /*////////////////////////////////////////////////////////////
     ////////////////// Create Circle Packing /////////////////////
@@ -371,7 +371,8 @@ function drawAll(app, graph) {
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
         //$tooltip.textContent = node.data.name;
         $tooltip.childNodes[0].textContent = node.data.name;
-        $tooltip.style.display = "block";
+        $tooltip.classList.remove("fadeOut");
+        $tooltip.classList.add("fadeIn");
         // --
         var bodyRect = document.querySelector("body").getBoundingClientRect();
         var scrollLeft = bodyRect.left;
@@ -391,8 +392,11 @@ function drawAll(app, graph) {
     }
 
     // Clear node tooltip.
+
     function clearNodeTooltip() {
-        $tooltip.style.display = "none";
+        $tooltip.classList.remove("fadeIn");
+        $tooltip.classList.add("fadeOut");
+        //$tooltip.style.display = "none";
         return
     }
 
