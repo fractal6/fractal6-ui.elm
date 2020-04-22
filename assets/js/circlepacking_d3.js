@@ -371,6 +371,7 @@ function drawAll(app, graph) {
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
         //$tooltip.textContent = node.data.name;
         $tooltip.childNodes[0].textContent = node.data.name;
+        $tooltip.dataset.nid = node.data.ID;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
         // --
@@ -700,11 +701,11 @@ function drawAll(app, graph) {
     // Event listeners
     //
 
-    // Mouse event
+    // Canvas mouse event
     $canvas.addEventListener("mousemove", canvasMouseMoveEvent);
     $canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
     $canvas.addEventListener("mousedown", nodeClickEvent);
-    // Canvas Button event redirection
+    // Canvas button events redirection
     $canvasButtons.addEventListener("mousedown", function(e) {
         if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
             return nodeClickEvent(e)
@@ -715,6 +716,12 @@ function drawAll(app, graph) {
         if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
             return canvasMouseMoveEvent(e)
         }
+        return true
+    });
+	// Node Tooltip events
+    $tooltip.addEventListener("mousedown", function(e) {
+        sendNodeDataElm(hoveredNode);
+        document.documentElement.classList.add('has-modal-active');
         return true
     });
 
@@ -735,12 +742,16 @@ function drawAll(app, graph) {
 
     function updateFocusedNodeElm(node) {
         var path = getNodePath(node);
-        app.ports.receiveData.send({
+        app.ports.nodeFocusFromJs.send({
             nidjs    : node.color,
             name     : node.data.name,
             nodeType : node.data.type_,
             path     : path
         });
+    }
+
+    function sendNodeDataElm(node) {
+        app.ports.rawNodeDataFromJs.send(node.data);
     }
 
     //

@@ -1,9 +1,18 @@
 @charset "utf-8";
+
+// Navbar
 $navbar-height: 2.5rem;
 $navbar-item-img-max-height: 1.5rem;
 $navbar-padding: 0rem;
 
+// Tooltip
 $tooltip-background-opacity: 0.95;
+//-- Node tooltip
+$node-tooltip-background: $white-ter;
+$node-tooltip-shadow: rgba(42, 70, 205, 0.5);
+
+// Modal
+//$modal-background-background-color: $grey;
 
 //@import url("http://use.fontawesome.com/releases/v5.6.1/css/all.css");
 $fa-font-path: "fonts";

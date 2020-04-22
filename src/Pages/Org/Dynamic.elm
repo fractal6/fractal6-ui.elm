@@ -8,11 +8,11 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
-import Html exposing (Html, a, br, div, h1, h2, hr, i, li, nav, p, span, text, ul)
-import Html.Attributes exposing (attribute, class, href, id)
-import Html.Events exposing (onClick)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, li, nav, p, span, text, ul)
+import Html.Attributes exposing (attribute, class, classList, href, id)
+import Html.Events exposing (on, onClick)
 import Http
-import Json.Decode as JD exposing (Decoder, field, int, string)
+import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Model exposing (..)
@@ -52,7 +52,8 @@ type alias Model =
     , asked_orga : String
     , orga_data : Status ErrorData NodesData
     , circle_tensions : Status ErrorData TensionsData
-    , circle_focus : CircleFocusState
+    , node_focus : NodeFocusState
+    , node_action : Maybe NodeAction
     }
 
 
@@ -62,7 +63,11 @@ type alias Model =
 -}
 
 
-type alias CircleFocusState =
+type alias NodeAction =
+    Result JD.Error Node
+
+
+type alias NodeFocusState =
     { nidjs : NID
     , name : String
     , nodeType : String
@@ -100,6 +105,17 @@ nodeEncoder node =
     ]
 
 
+nodeDecoder : JD.Decoder Node
+nodeDecoder =
+    -- @DEBUG: Use a dict structure instead to get back node from ID only.
+    JD.map5 Node
+        (JD.field "ID" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "nameid" JD.string)
+        (JD.maybe (JD.map ParentNode <| JD.field "parentID" JD.string))
+        (JD.field "type_" NodeType.decoder)
+
+
 
 --
 -- INIT
@@ -124,7 +140,8 @@ init { route } params =
             , asked_orga = orga_name
             , orga_data = Loading
             , circle_tensions = Loading
-            , circle_focus = focus
+            , node_focus = focus
+            , node_action = Nothing
             }
     in
     ( model
@@ -150,7 +167,8 @@ init { route } params =
 type Msg
     = GotOrga (RequestResult ErrorData NodesData) -- graphql
     | GotTensions (RequestResult ErrorData TensionsData) -- graphql
-    | CircleClick CircleFocusState -- Ports receive
+    | DoNodeAction NodeAction -- Ports receive
+    | NodeClick NodeFocusState -- Ports receive
     | ChangeNodeFocus Int -- Ports send
     | ToggleGraphReverse -- Ports send
     | PassedSlowLoadTreshold -- timer
@@ -205,8 +223,11 @@ update msg model =
                 NotAsked ->
                     ( model, Cmd.none, Cmd.none )
 
-        CircleClick focus ->
-            ( { model | circle_focus = focus }
+        DoNodeAction res ->
+            ( { model | node_action = Just res }, Cmd.none, Cmd.none )
+
+        NodeClick focus ->
+            ( { model | node_focus = focus }
             , Cmd.none
             , Cmd.none
             )
@@ -214,7 +235,7 @@ update msg model =
         ChangeNodeFocus pos ->
             let
                 nidjs =
-                    case Array.get pos model.circle_focus.path of
+                    case Array.get pos model.node_focus.path of
                         Just x ->
                             x.nidjs
 
@@ -248,18 +269,25 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    receiveData CircleClick
+    Sub.batch
+        [ nodeFocusFromJs NodeClick
+        , nodeDataFromJs DoNodeAction
+        ]
 
 
 
 -- Receive to Javascript
 
 
-port receiveData : (CircleFocusState -> msg) -> Sub msg
+port nodeFocusFromJs : (NodeFocusState -> msg) -> Sub msg
 
 
+port rawNodeDataFromJs : (JD.Value -> a) -> Sub a
 
--- Send to Javascript
+
+nodeDataFromJs : (NodeAction -> msg) -> Sub msg
+nodeDataFromJs rawNode =
+    rawNodeDataFromJs (rawNode << JD.decodeValue nodeDecoder)
 
 
 port sendNodeFocus : NID -> Cmd msg
@@ -286,6 +314,7 @@ view model =
                     [ viewCanvas model
                     , br [] []
                     , viewMandate model
+                    , setupActionModal model
                     ]
                 , div [ class "column is-6" ]
                     [ div [ class "columns is-gapless" ]
@@ -309,7 +338,7 @@ viewLeftPane model =
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ Fa.icon "far fa-circle fa-lg" model.circle_focus.name ]
+                        [ Fa.icon "far fa-circle fa-lg" model.node_focus.name ]
                     ]
                 ]
             , li []
@@ -346,16 +375,48 @@ viewHelperBar model =
         [ Fa.icon "fas fa-angle-right" ""
         , Array.indexedMap
             (\i x ->
-                if i < (Array.length model.circle_focus.path - 1) then
+                if i < (Array.length model.node_focus.path - 1) then
                     li [] [ a [ href "#", onClick (ChangeNodeFocus i) ] [ text x.name ] ]
 
                 else
                     li [ class "is-active has-text-weight-semibold" ]
                         [ a [ attribute "aria-current" "page", href "#" ] [ text x.name ] ]
             )
-            model.circle_focus.path
+            model.node_focus.path
             |> Array.toList
             |> ul [ attribute "style" "display: inline-flex;" ]
+        ]
+
+
+viewCanvas : Model -> Html Msg
+viewCanvas model =
+    div []
+        [ div [ id "canvasParent" ] [ showMaybeError model.orga_data ]
+
+        -- Hidden class use in circlepacking_d3.js
+        , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
+            [ div
+                [ id "inv_cvbtn"
+                , class "button btnToggle tooltip has-tooltip-right"
+                , attribute "data-tooltip" "Reverse the organisation graph."
+                , onClick ToggleGraphReverse
+                ]
+                [ Fa.icon0 "fas fa-sort-amount-up" "" ]
+            ]
+        , div
+            [ id "nodeTooltip"
+            , class "is-invisible modalTrigger"
+            , attribute "data-modal" "actionModal"
+            ]
+            [ span [] [ text "void" ] -- Node name
+            , span [ class "fa-stack fa-sm ellipsisArt" ]
+                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
+
+                -- To be copied before fa-ellipis !
+                --, i[class "far fa-circle fa-stack-2x"][]
+                --, i[class "fas fa-circle fa-stack-2x"][]
+                ]
+            ]
         ]
 
 
@@ -378,34 +439,6 @@ viewMandate model =
                     ]
                 , h2 [ class "title is-4" ] [ text "Domains" ]
                 , div [] [ text "See sub domains." ]
-                ]
-            ]
-        ]
-
-
-viewCanvas : Model -> Html Msg
-viewCanvas model =
-    div []
-        [ div [ id "canvasParent" ] [ showMaybeError model.orga_data ]
-
-        -- Hidden class use in circlepacking_d3.js
-        , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            [ div
-                [ id "inv_cvbtn"
-                , class "button btnToggle tooltip has-tooltip-right"
-                , attribute "data-tooltip" "Reverse the organisation graph."
-                , onClick ToggleGraphReverse
-                ]
-                [ Fa.icon0 "fas fa-sort-amount-up" "" ]
-            ]
-        , div [ id "nodeTooltip", class "is-invisible" ]
-            [ span [] [ text "void" ] -- Node name
-            , span [ class "fa-stack fa-sm ellipsisArt" ]
-                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
-
-                -- To be copied before fa-ellipis !
-                --, i[class "far fa-circle fa-stack-2x"][]
-                --, i[class "fas fa-circle fa-stack-2x"][]
                 ]
             ]
         ]
@@ -512,5 +545,56 @@ vTension tension =
 
               else
                 text ""
+            ]
+        ]
+
+
+setupActionModal : Model -> Html Msg
+setupActionModal model =
+    let
+        isActive =
+            case model.node_action of
+                Just a ->
+                    True
+
+                Nothing ->
+                    False
+
+        hasFailed =
+            case model.node_action of
+                Just a ->
+                    case a of
+                        Err _ ->
+                            True
+
+                        _ ->
+                            False
+
+                _ ->
+                    False
+    in
+    div [ class "container is-clipped" ]
+        [ div [ id "actionModal", class "modal" ]
+            [ div [ class "modal-background" ] []
+            , div [ class "modal-content" ]
+                [ div [ classList [ ( "box", True ), ( "has-background-danger", hasFailed ) ] ]
+                    [ case model.node_action of
+                        Just nodeAction ->
+                            case nodeAction of
+                                Ok node ->
+                                    text node.name
+
+                                Err err ->
+                                    let
+                                        p =
+                                            Debug.log "Node action decoding error:" err
+                                    in
+                                    text "Unexpected error."
+
+                        Nothing ->
+                            text ""
+                    ]
+                ]
+            , button [ class "modal-close is-large" ] []
             ]
         ]
