@@ -67,6 +67,28 @@ const computeDepth = (obj, depth, neigbor) => {
     return {maxdepth, cumchild};
 }
 
+// @DEBUG make object with methods
+function clearAll() {
+    var $canvas = document.getElementById("canvasOrga");
+    var $hiddenCanvas = document.getElementById("hiddenCanvasOrga");
+
+    var $canvasButtons = document.getElementById("canvasButtons");
+    var $tooltip = document.getElementById("nodeTooltip");
+
+    $canvasButtons.classList.add("is-invisible");
+    $tooltip.classList.add("is-invisible");
+
+    if ($canvas) {
+        $canvas.parentNode.removeChild($canvas);
+        delete $canvas;
+    }
+    if ($hiddenCanvas)  {
+        $hiddenCanvas.parentNode.removeChild($hiddenCanvas);
+        delete $hiddenCanvas;
+    }
+
+}
+
 // Main drawing function
 function drawAll(app, graph) {
     /*////////////////////////////////////////////////////////////
@@ -97,6 +119,7 @@ function drawAll(app, graph) {
         zoomFactorRole = 2.2;
 
     var hoverCircleColor =  "black",
+        focusCircleColor = "#368ED3", // "blue",
         hoverCircleWidth = 1.5; // waring, can break stroke with canvas drawing.
 
     /*////////////////////////////////////////////////////////////
@@ -143,7 +166,8 @@ function drawAll(app, graph) {
         .attr("id", canvasId)
         .attr("width", globalCtx.width)
         .attr("height", globalCtx.height);
-    var context = canvas.node().getContext("2d");
+    var $canvas = canvas.node();
+    var context = $canvas.getContext("2d");
     context.clearRect(0, 0, globalCtx.width, globalCtx.height);
     setpixelated(context, true); // @debug: do we need this ?
 
@@ -154,17 +178,15 @@ function drawAll(app, graph) {
         .attr("width", globalCtx.width)
         .attr("height", globalCtx.height)
         .style("display","none");
-    var hiddenContext = hiddenCanvas.node().getContext("2d");
+    $hiddenCanvas = hiddenCanvas.node();
+    var hiddenContext = $hiddenCanvas.getContext("2d");
     hiddenContext.clearRect(0, 0, globalCtx.width, globalCtx.height);
-
-    var $canvas = document.getElementById(canvasId);
-    var $hidden_canvas = document.getElementById(hiddenCanvasId);
 
     //
     // Update Html Elemens
     //
 
-    // Set height of parent sibling
+    // Resize height of parent sibling
     var $nextToChart = document.getElementById('nextToChart')
     $nextToChart.style.minHeight = 2*globalCtx.height+"px";
     $nextToChart.style.display = "flex";
@@ -178,7 +200,6 @@ function drawAll(app, graph) {
     $canvasButtons.classList.remove("is-invisible");
     $canvasButtons.style.left = r.left + r.width - $canvasButtons.offsetWidth -5 + "px";
     $canvasButtons.style.top = r.top + 10 + "px";
-    //$canvasButtons = document.createElement('div');
 
     // Set node tooltip
     var $tooltip = document.getElementById('nodeTooltip');
@@ -326,15 +347,24 @@ function drawAll(app, graph) {
     }
 
     // Draw node border
+    // If changeFocus is true, the focused node borer is removed
     function drawNodeHover(ctx, node) {
-        if (hoveredNode) clearNodeHover(ctx, hoveredNode);
+        if (!node.ctx) {
+            console.warn("node.ctx us undefined here; Add a timeout on init event listeners...");
+            return false
+        }
+        clearBorder = hoveredNode && (hoveredNode != focusedNode);
+        if (clearBorder) clearNodeHover(ctx, hoveredNode);
+
+        var circleColor = hoverCircleColor;
+        if (node == focusedNode) circleColor = focusCircleColor;
 
         // Draw border
         ctx.beginPath();
         ctx.arc(node.ctx.centerX, node.ctx.centerY,
             node.ctx.rayon+1, 0, 2 * Math.PI, true);
         ctx.lineWidth = hoverCircleWidth;
-        ctx.strokeStyle = hoverCircleColor;
+        ctx.strokeStyle = circleColor;
         ctx.stroke();
 
         // Draw tooltip
@@ -493,7 +523,7 @@ function drawAll(app, graph) {
             if (!hidden) {
                 if (node.isHovered) {
                     ctx.lineWidth = hoverCircleWidth;
-                    ctx.strokeStyle = hoverCircleColor;
+                    ctx.strokeStyle = focusCircleColor;
                     ctx.stroke();
                 }
 
@@ -587,10 +617,9 @@ function drawAll(app, graph) {
                 drawNodeHover(ctx, node);
             }
         } else if (hoveredNode) {
-            var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
-            if (hoveredNode == rootNode) {
-                // keep it
-            } else if (!isInTooltip && isInCanvas) clearNodeHover(ctx, hoveredNode);
+            //var isInCanvas = checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
+            //if (!isInTooltip && isInCanvas) clearNodeHover(ctx, hoveredNode);
+            // pass...
         } else {
             drawNodeHover(ctx, focusedNode);
         }
@@ -603,14 +632,6 @@ function drawAll(app, graph) {
         var p = getPointerCtx(e);
         var isInCanvas = checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
         if (!isInCanvas) drawNodeHover(ctx, focusedNode);
-
-        // Remove hovered except if exiting from an tooltip
-        //var isInCanvas = checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
-        //if (hoveredNode) {
-        //    var isInTooltip = checkIf(p, "InTooltip", hoveredNode);
-        //    // Keep the focus when getting out from the canvas
-        //    if (!isInTooltip && !isInCanvas) clearNodeHover(ctx, hoveredNode);
-        //}
 
         return false
     }//event MouseLeave
@@ -635,6 +656,8 @@ function drawAll(app, graph) {
         if (isZooming) {
             return false
         }
+
+        if (focusedNode.ctx) clearNodeHover(context, focusedNode);
         focusedNode = focus; // @DEBUG: global context
 
         var zoomFactor = zoomFactorCircle;
@@ -694,7 +717,7 @@ function drawAll(app, graph) {
 
     //First zoom to get the circles to the right location
     // then timer the interpolateZoom and rendering
-    console.log("Canvas initalization");
+    console.log("Orga Canvas Initalization");
     zoomToNode(rootNode, 250); //drawCanvas(context);
 
     //
@@ -706,18 +729,30 @@ function drawAll(app, graph) {
     $canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
     $canvas.addEventListener("mousedown", nodeClickEvent);
     // Canvas button events redirection
+    // Review -- Better implementation ?
     $canvasButtons.addEventListener("mousedown", function(e) {
-        if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
+        var p = getPointerCtx(e);
+        var isInButtons = false;
+        $canvasButtons.childNodes.forEach( o => {
+            isInButtons |= checkIf(p, 'InButtons', o);
+        });
+        if (!isInButtons) {
             return nodeClickEvent(e)
         }
         return true
     });
     $canvasButtons.addEventListener("mousemove", function(e) {
-        if (!checkIf(getPointerCtx(e), 'InButtons', document.getElementById('inv_cvbtn'))) {
+        var p = getPointerCtx(e);
+        var isInButtons = false;
+        $canvasButtons.childNodes.forEach( o => {
+            isInButtons |= checkIf(p, 'InButtons', o);
+        });
+        if (!isInButtons) {
             return canvasMouseMoveEvent(e)
         }
         return true
     });
+
 	// Node Tooltip events
     $tooltip.addEventListener("mousedown", function(e) {
         sendNodeDataElm(hoveredNode);
@@ -725,16 +760,6 @@ function drawAll(app, graph) {
         return true
     });
 
-
-    // @DEBUG: Implement redrawCanvas() !
-    window.onresize = function () {
-        //$canvas.style.width = '100%';
-        //$canvas.style.height = canvas.style.height * .75;
-
-        //redrawCanvas(focusedNode);
-        //drawAll(app, graph);
-        console.log("redrawCanvas not implemented yet !")
-    }
 
     //
     // Elm Ports
@@ -792,6 +817,9 @@ function drawAll(app, graph) {
         // @debug reset !
         vOld = [focusedNode.x, focusedNode.y, focusedNode.r * zoomFactorCircle];
         zoomToNode(rootNode, 10);
+    });
+
+    app.ports.sendToggleTooltips.subscribe(function(e) {
     });
 
     //

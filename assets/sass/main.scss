@@ -52,7 +52,7 @@ header > .navbar {
 }
 
 html.has-modal-active {
-    overflow: hidden !important;
+    //overflow: hidden !important;
     position: fixed;
     width: 100%;
 }
@@ -63,6 +63,14 @@ html.has-modal-active {
  * My style
  *
  */
+
+.is-underline {
+    //text-decoration: underline;
+    border-bottom: 1px ridge;
+}
+.is-underline-dotted {
+    border-bottom: 1px dotted;
+}
 
 .menu .menu-label {
     font-weight: bold !important;
@@ -317,8 +325,18 @@ html.has-modal-active {
 #canvasButtons {
     position: absolute;
     //display: flex;
-    //flex-direction: row-reverse;
-    //right: 2px;
+    flex-direction: column;
+
+    .button {
+        margin-right: 0;
+    }
+}
+
+.modal {
+    .modal-content {
+        //@DEBUG: Add transition on action step.
+        //transition: all 0.5s;
+    }
 }
 
 /*

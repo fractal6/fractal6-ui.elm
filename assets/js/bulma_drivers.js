@@ -88,9 +88,10 @@ const BulmaDriver = () => {
     }
 
     /*
-     * Button & Tooltip effect rational
+     * Button effect rational
      */
-    var $btns = document.querySelectorAll('.btnToggle');
+    // Toggle Button
+    var $btns = document.querySelectorAll('.buttonToggle');
     //
     // * toggle active state on click
     // * preventdefault
@@ -103,6 +104,29 @@ const BulmaDriver = () => {
             });
         });
     }
+    // Radio Button
+    var $btns = document.querySelectorAll('.buttonRadio');
+    //
+    // * switch active state on click on each button child
+    // * preventdefault
+    //
+    if ($btns.length > 0) {
+        $btns.forEach(function(el) {
+            $subBtns = el.querySelectorAll('.button');
+            $subBtns.forEach( btn => {
+                btn.addEventListener('mousedown', function(e) {
+                    $subBtns.forEach( o => {
+                        if (o === btn) {
+                            o.classList.add('is-active');
+                        } else {
+                            o.classList.remove('is-active');
+                        }
+                    });
+                    e.preventDefault() // important: don't let html handle the button element state
+                });
+            });
+        });
+    }
 
     /*
      * Modal logics
@@ -111,22 +135,29 @@ const BulmaDriver = () => {
     // Close all modals if ESC pressed
     const closeModals = objs => {
         objs.forEach(function(el) {
-            el.classList.remove('is-active');
             // Fix block scrolling
             document.documentElement.classList.remove('has-modal-active');
+            // deactivate modal
+            el.classList.remove('is-active');
+            // deactivate all button that are below that modal
+            el.querySelectorAll('.button').forEach(btn => {
+                btn.classList.remove("is-active");
+            });
+
         });
     }
 
     const $modals = document.querySelectorAll('.modal');
     const $modal_closes = document.querySelectorAll('.modal-close');
+    const $modal_background = document.querySelectorAll('.modal-background');
     const $modal_triggers = document.querySelectorAll('.modalTrigger'); // app specific
     //
     // * toggle active modal when clicking *trigger elements.
+    // * fix scroll blocking by activating/deactivating has-modal-active on <html>.
+    // * close when clicking on background
     // * close when clicking *close-modal.
     //
-    // Check if there is any target
     if ($modal_closes.length > 0) {
-        // For each dropdown, add event handler to open on click.
         $modal_closes.forEach( el => {
             el.addEventListener('mousedown', function(e) {
                 closeModals($modals);
@@ -136,7 +167,23 @@ const BulmaDriver = () => {
         eltThatCloseOnEsc.push([closeModals, $modals]);
 
     }
-    // Check if there is any target
+    if ($modal_closes.length > 0) {
+        $modal_closes.forEach( el => {
+            el.addEventListener('mousedown', function(e) {
+                closeModals($modals);
+            });
+        });
+
+        eltThatCloseOnEsc.push([closeModals, $modals]);
+
+    }
+    if ($modal_background.length > 0) {
+        $modal_background.forEach( el => {
+            el.addEventListener('mousedown', function(e) {
+                closeModals($modals);
+            });
+        });
+    }
     if ($modal_triggers.length > 0) {
         $modal_triggers.forEach( el => {
             el.addEventListener('mousedown', function(e) {

@@ -53,7 +53,7 @@ type alias Model =
     , orga_data : Status ErrorData NodesData
     , circle_tensions : Status ErrorData TensionsData
     , node_focus : NodeFocusState
-    , node_action : Maybe NodeAction
+    , node_action : ActionState
     }
 
 
@@ -63,8 +63,25 @@ type alias Model =
 -}
 
 
-type alias NodeAction =
+type alias NodeFragment =
     Result JD.Error Node
+
+
+type alias NodeAction =
+    { n : NodeFragment
+    , step : ActionStep
+    }
+
+
+type ActionState
+    = Ask ActionStep Node
+    | NotAsk
+    | AskErr String
+
+
+type ActionStep
+    = FirstStep
+    | TensionStep
 
 
 type alias NodeFocusState =
@@ -141,7 +158,7 @@ init { route } params =
             , orga_data = Loading
             , circle_tensions = Loading
             , node_focus = focus
-            , node_action = Nothing
+            , node_action = NotAsk
             }
     in
     ( model
@@ -167,10 +184,12 @@ init { route } params =
 type Msg
     = GotOrga (RequestResult ErrorData NodesData) -- graphql
     | GotTensions (RequestResult ErrorData TensionsData) -- graphql
-    | DoNodeAction NodeAction -- Ports receive
-    | NodeClick NodeFocusState -- Ports receive
-    | ChangeNodeFocus Int -- Ports send
-    | ToggleGraphReverse -- Ports send
+    | DoNodeAction NodeFragment -- ports receive
+    | NodeClick NodeFocusState -- ports receive
+    | ChangeNodeFocus Int -- ports send
+    | ToggleGraphReverse -- ports send
+    | ToggleTooltips -- ports send -- Not implemented @DEBUG multiple tooltip/ see name of circle
+    | DoTensionStep
     | PassedSlowLoadTreshold -- timer
 
 
@@ -224,7 +243,16 @@ update msg model =
                     ( model, Cmd.none, Cmd.none )
 
         DoNodeAction res ->
-            ( { model | node_action = Just res }, Cmd.none, Cmd.none )
+            let
+                nodeAction =
+                    case res of
+                        Ok node ->
+                            Ask FirstStep node
+
+                        Err err ->
+                            AskErr <| JD.errorToString err
+            in
+            ( { model | node_action = nodeAction }, Cmd.none, Cmd.none )
 
         NodeClick focus ->
             ( { model | node_focus = focus }
@@ -246,6 +274,21 @@ update msg model =
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
+
+        ToggleTooltips ->
+            ( model, () |> sendToggleTooltips, Cmd.none )
+
+        DoTensionStep ->
+            let
+                newAction =
+                    case model.node_action of
+                        Ask step node ->
+                            Ask TensionStep node
+
+                        default ->
+                            default
+            in
+            ( { model | node_action = newAction }, Cmd.none, Ports.bulma_driver )
 
         PassedSlowLoadTreshold ->
             let
@@ -285,7 +328,7 @@ port nodeFocusFromJs : (NodeFocusState -> msg) -> Sub msg
 port rawNodeDataFromJs : (JD.Value -> a) -> Sub a
 
 
-nodeDataFromJs : (NodeAction -> msg) -> Sub msg
+nodeDataFromJs : (NodeFragment -> msg) -> Sub msg
 nodeDataFromJs rawNode =
     rawNodeDataFromJs (rawNode << JD.decodeValue nodeDecoder)
 
@@ -294,6 +337,9 @@ port sendNodeFocus : NID -> Cmd msg
 
 
 port sendToggleGraphReverse : () -> Cmd msg
+
+
+port sendToggleTooltips : () -> Cmd msg
 
 
 
@@ -397,15 +443,23 @@ viewCanvas model =
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             [ div
                 [ id "inv_cvbtn"
-                , class "button btnToggle tooltip has-tooltip-right"
+                , class "button buttonToggle tooltip has-tooltip-right"
                 , attribute "data-tooltip" "Reverse the organisation graph."
                 , onClick ToggleGraphReverse
                 ]
                 [ Fa.icon0 "fas fa-sort-amount-up" "" ]
+
+            --, div
+            --    [ id "label_cvbtn"
+            --    , class "button buttonToggle tooltip has-tooltip-right"
+            --    , attribute "data-tooltip" "Show/Hide circle tooltips."
+            --    , onClick ToggleTooltips
+            --    ]
+            --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
             ]
         , div
             [ id "nodeTooltip"
-            , class "is-invisible modalTrigger"
+            , class "modalTrigger is-invisible"
             , attribute "data-modal" "actionModal"
             ]
             [ span [] [ text "void" ] -- Node name
@@ -551,50 +605,78 @@ vTension tension =
 
 setupActionModal : Model -> Html Msg
 setupActionModal model =
-    let
-        isActive =
-            case model.node_action of
-                Just a ->
-                    True
-
-                Nothing ->
-                    False
-
-        hasFailed =
-            case model.node_action of
-                Just a ->
-                    case a of
-                        Err _ ->
-                            True
-
-                        _ ->
-                            False
-
-                _ ->
-                    False
-    in
     div [ class "container is-clipped" ]
         [ div [ id "actionModal", class "modal" ]
             [ div [ class "modal-background" ] []
             , div [ class "modal-content" ]
-                [ div [ classList [ ( "box", True ), ( "has-background-danger", hasFailed ) ] ]
-                    [ case model.node_action of
-                        Just nodeAction ->
-                            case nodeAction of
-                                Ok node ->
-                                    text node.name
+                [ case model.node_action of
+                    Ask step node ->
+                        viewActionStep step node
 
-                                Err err ->
-                                    let
-                                        p =
-                                            Debug.log "Node action decoding error:" err
-                                    in
-                                    text "Unexpected error."
+                    NotAsk ->
+                        text ""
 
-                        Nothing ->
-                            text ""
-                    ]
+                    AskErr err ->
+                        div [ classList [ ( "box", True ), ( "has-background-danger", True ) ] ]
+                            [ text <| "Unexpected error:" ++ err ]
                 ]
             , button [ class "modal-close is-large" ] []
             ]
         ]
+
+
+viewActionStep : ActionStep -> Node -> Html Msg
+viewActionStep step node =
+    case step of
+        FirstStep ->
+            div [ class "card" ]
+                [ div [ class "card-header" ]
+                    [ div [ class "card-header-title" ] <|
+                        List.intersperse (text "\u{00A0}")
+                            [ span [ class "has-text-weight-medium" ] [ text "What action do you want to do with the" ]
+                            , span [ class "has-text-weight-bold is-underline-dotted" ] [ text node.name ]
+                            , span [ class "is-lowercase has-text-weight-semibold" ] [ text <| NodeType.toString node.type_ ]
+                            , text "?"
+                            ]
+                    ]
+                , div [ class "card-content" ]
+                    [ div [ class "level" ] <|
+                        if node.type_ == NodeType.Circle then
+                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep ] [ text "New tension" ] ]
+                            , div [ class "level-item" ] [ div [ class "button" ] [ text "New Sub-Circle" ] ]
+                            , div [ class "level-item" ] [ div [ class "button" ] [ text "New Role" ] ]
+                            ]
+
+                        else
+                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep ] [ text "New tension" ] ] ]
+                    ]
+                ]
+
+        TensionStep ->
+            div [ class "card" ]
+                [ div [ class "card-header" ]
+                    [ div [ class "card-header-title" ] <|
+                        List.intersperse (text "\u{00A0}")
+                            [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate" ]
+                            , text ":"
+                            ]
+                    ]
+                , div [ class "card-content" ]
+                    [ div [ class "level buttonRadio" ]
+                      -- @DEBUG: bulma driver won't works since element doesnt exist at creation!
+                      <|
+                        List.map
+                            (\tensionType ->
+                                div [ class "level-item" ]
+                                    [ div
+                                        [ class "button"
+
+                                        --, onClick (DoTensionFormStep tensionType)
+                                        ]
+                                        [ text (TensionType.toString tensionType) ]
+                                    ]
+                            )
+                        <|
+                            TensionType.list
+                    ]
+                ]
