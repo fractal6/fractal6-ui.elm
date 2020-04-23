@@ -16,20 +16,20 @@ const actions = {
     'LOG': (app, message) => {
         console.log(`From Elm:`, message)
     },
-    'BULMA': (app, message) => {
+    'BULMA': (app, eltId) => {
         console.log(`Activate Bulma driver...`);
         // This timeout is needed when bulma driver is called by elm Cmd,
         // to wait foe the Html Msg to be updated by elm in order
         // to have new node accessible by Javascript.
-        setTimeout(BulmaDriver, 750);
+        setTimeout(BulmaDriver, 300, eltId);
     },
     'TOGGLE_TH': (app, message) => {
         document.getElementById("themeButton_port").addEventListener("click", function(){
             toggleTheme();
         });
     },
-    'INIT_CIRCLEPACKING': (app, message) => {
-        var data = JSON.parse(message);
+    'INIT_CIRCLEPACKING': (app, data) => {
+        var data = JSON.parse(data);
         //window.addEventListener('DOMContentReady',function(){
         var $canvas = document.getElementById("canvasOrga");
         if (!$canvas) {

@@ -19,11 +19,11 @@ log message =
         }
 
 
-bulma_driver : Cmd msg
-bulma_driver =
+bulma_driver : String -> Cmd msg
+bulma_driver eltId =
     outgoing
         { action = "BULMA"
-        , data = Json.string ""
+        , data = Json.string eltId
         }
 
 

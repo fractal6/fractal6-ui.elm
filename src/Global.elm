@@ -94,7 +94,7 @@ init _ _ =
     , Cmd.none
     , Cmd.batch
         [ Ports.log "Hello!"
-        , Ports.bulma_driver
+        , Ports.bulma_driver ""
         , Ports.toggle_theme
         ]
     )
