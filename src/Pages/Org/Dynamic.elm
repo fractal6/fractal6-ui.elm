@@ -657,7 +657,7 @@ vTension tension =
 setupActionModal : Model -> Html Msg
 setupActionModal model =
     div []
-        [ div [ id "actionModal", class "modal" ]
+        [ div [ id "actionModal", class "modal modal-fx-fadeIn" ]
             [ div [ class "modal-background" ] []
             , div [ class "modal-content" ]
                 [ case model.node_action of

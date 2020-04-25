@@ -33,6 +33,7 @@
   "devDependencies": {
     "@dillonkearns/elm-graphql": "^4.0.2",
     "bulma": "^0.8.0",
+    "bulma-modal-fx": "^1.1.1",
     "chokidar-cli": "2.1.0",
     "concurrently": "5.0.0",
     "elm-live": "4.0.1",

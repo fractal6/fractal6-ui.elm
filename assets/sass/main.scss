@@ -333,11 +333,90 @@ html.has-modal-active {
 }
 
 .modal {
-    .modal-content {
-        //@DEBUG: Add transition on action step.
-        //transition: all 0.5s;
+    display: flex;
+    visibility: hidden;
+
+    &.is-active {
+        visibility: visible;
+        .modal-background {
+            opacity: 1;
+        }
     }
+
+    &.modal-fx {
+        &-fadeIn {
+            .modal-content {
+                //transform: scale(0.7);
+                opacity: 0;
+                transition: all $modal-transition-duration;
+            }
+
+            &.is-active {
+                .modal-content {
+                    //transform: scale(1);
+                    opacity: 1;
+                }
+            }
+        }
+    }
+
+    .modal-background {
+        background-color: $modal-bg-color;
+        opacity: 0;
+        transition: all $modal-transition-duration;
+    }
+
+    .modal-content {
+        // size
+        &.is-huge {
+            width: 100%;
+            margin: 0px 20px;
+            max-height: calc(100vh - 40px);
+        }
+        @include from($tablet) {
+            &.is-huge {
+                width: 100%;
+                margin: 0px 20px;
+                max-height: calc(100vh - 40px);
+            }
+        }
+        &.is-tiny {
+            max-width: 400px;
+        }
+
+        // type
+        &.is-image {
+            text-align: center;
+
+            &.is-huge {
+                width:auto;
+            }
+
+            img {
+                max-height: calc(100vh - 50px);
+            }
+        }
+    }
+
+    // Positioning, center is default
+    // .modal-pos-top
+    &.modal-pos {
+        &-top {
+            align-items: flex-start;
+            .modal-content {
+                margin-top: 1rem;
+            }
+        }
+        &-bottom {
+            align-items: flex-end;
+            .modal-content {
+                margin-bottom: 1rem;
+            }
+        }
+    }
+
 }
+
 
 /*
  *
