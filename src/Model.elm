@@ -5,7 +5,9 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionOrderable as TensionOrderable
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
+import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.AddTensionPayload
 import Fractal.Object.Label
 import Fractal.Object.Node
 import Fractal.Object.Tension
@@ -17,6 +19,22 @@ import Graphql.Http
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import RemoteData exposing (RemoteData)
+
+
+
+--
+-- Constants
+--
+
+
+nLabelPerTension : Int
+nLabelPerTension =
+    3
+
+
+nTensionPpg : Int
+nTensionPpg =
+    20
 
 
 
@@ -38,7 +56,7 @@ type RequestResult errors data
 
 
 {-
-   Schema Data Structure
+   Schema Data Structure (fetch/Query)
 -}
 
 
@@ -73,7 +91,7 @@ type alias Tension =
 
 
 --
--- Data Responses
+-- Data Query Responses
 --
 
 
@@ -95,10 +113,20 @@ type alias TensionsData =
 
 
 --
--- Request decoder
+-- Data Mutation Response
+--
+
+
+type alias MutationResponse a =
+    Maybe a
+
+
+
+--
+-- Query decoder
 --
 {-
-   Nodes
+   QueryNode
 -}
 
 
@@ -137,14 +165,14 @@ fetchNodesOrga nameid msg =
 
 
 {-
-   Tensions
+   QueryTension
 -}
 
 
 tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
 tensionPgFilter a =
     { a
-        | first = OptionalArgument.Present 10
+        | first = OptionalArgument.Present nTensionPpg
         , order =
             OptionalArgument.Present
                 (Input.buildTensionOrder
@@ -163,7 +191,7 @@ tensionPgPayload =
         |> with Fractal.Object.Tension.type_
         |> with
             (Fractal.Object.Tension.labels
-                (\args -> { args | first = OptionalArgument.Present 3 })
+                (\args -> { args | first = OptionalArgument.Present nLabelPerTension })
                 (SelectionSet.succeed Label
                     |> with Fractal.Object.Label.name
                 )
@@ -183,7 +211,7 @@ fetchTensionsBunch msg =
 
 
 --
--- Response decoder
+-- Query Response decoder
 --
 --decodeQueryResponse : RemoteData (Graphql.Http.Error dataResponse) dataResponse -> RequestResult ErrorData dataDecoded
 
@@ -218,11 +246,6 @@ decodeQueryResponse response =
             gqlQueryDecoder data |> Success
 
 
-decodedId : Fractal.ScalarCodecs.Id -> String
-decodedId (Fractal.Scalar.Id id) =
-    id
-
-
 gqlQueryDecoder : Maybe (List (Maybe a)) -> List a
 gqlQueryDecoder data =
     -- Convert empty data to empty list
@@ -236,3 +259,105 @@ gqlQueryDecoder data =
 
         Nothing ->
             []
+
+
+
+--
+-- Mutation decoder
+--
+
+
+type alias IdPayload =
+    { id : String }
+
+
+type alias AddTensionPayload =
+    { tension : Maybe (List (Maybe IdPayload)) }
+
+
+addOneTension msg tension =
+    makeGQLMutation
+        (Mutation.addTension
+            tensionInputEncoder
+            --(tensionInputEncoder tension)
+            (SelectionSet.map AddTensionPayload <|
+                Fractal.Object.AddTensionPayload.tension identity <|
+                    (SelectionSet.succeed IdPayload
+                        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeMutationResponse >> msg)
+
+
+tensionInputEncoder : Mutation.AddTensionRequiredArguments
+tensionInputEncoder =
+    -- This wiil take the TensionPost !
+    let
+        tension =
+            { createdAt = Fractal.Scalar.DateTime "1 Jan 70 00:00:00 GMT"
+            , createdBy =
+                Input.buildUserRef
+                    (\x -> { x | username = OptionalArgument.Present "clara" })
+            , title = "Tension from elm-graphql"
+            , type_ = TensionType.Operational
+            , emitter =
+                Input.buildNodeRef
+                    (\x -> { x | nameid = OptionalArgument.Present "SKU" })
+            }
+    in
+    { input =
+        [ Input.buildAddTensionInput tension identity ]
+    }
+
+
+gqlMutationDecoder : MutationResponse a -> Maybe a
+gqlMutationDecoder data =
+    -- Convert empty data to empty list
+    case data of
+        Just d ->
+            Just d
+
+        Nothing ->
+            Nothing
+
+
+decodeMutationResponse response =
+    {-
+       This decoder take two generic type of data:
+       * `dataResponse` which is directlty related to Graphql data returned by the server.
+       * `dataDecoded` which is the data Model used in Elm code.
+       @DEBUG: how to set the universal type in the function signature.
+    -}
+    case response of
+        RemoteData.Failure errors ->
+            case errors of
+                Graphql.Http.GraphqlError maybeParsedData err ->
+                    "GraphQL errors: \n"
+                        ++ Debug.toString err
+                        |> Failure
+
+                Graphql.Http.HttpError httpError ->
+                    "Http error "
+                        ++ Debug.toString httpError
+                        |> Failure
+
+        RemoteData.Loading ->
+            RemoteLoading
+
+        RemoteData.NotAsked ->
+            NotAsked
+
+        RemoteData.Success data ->
+            gqlMutationDecoder data |> Success
+
+
+
+--
+-- Utils
+--
+
+
+decodedId : Fractal.ScalarCodecs.Id -> String
+decodedId (Fractal.Scalar.Id id) =
+    id

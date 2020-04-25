@@ -83,7 +83,6 @@ const BulmaDriver = (target) => {
     //
     if ($dropdowns.length > 0) {
         // For each dropdown, add event handler to open on click.
-        console.log("gt dropdown here")
         $dropdowns.forEach(function(el) {
             var evt = "click";
             var h = e => buttonDropdownHandler(e, el);

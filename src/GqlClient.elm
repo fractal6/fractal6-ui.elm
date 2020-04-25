@@ -41,10 +41,5 @@ makeGQLMutation query decodesTo =
     --makeGQLMutation authToken query decodesTo =
     query
         |> Graphql.Http.mutationRequest graphql_url
-        {-
-           queryRequest signature is of the form
-               String -> SelectionSet decodesTo RootQuery -> Request decodesTo
-               url    -> SelectionSet TasksWUser RootQuery -> Request TasksWUser
-        -}
         --|> getAuthHeader authToken
         |> Graphql.Http.send decodesTo

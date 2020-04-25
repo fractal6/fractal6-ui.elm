@@ -184,12 +184,12 @@ isRoot =
     Object.selectionForField "Bool" "isRoot" [] Decode.bool
 
 
-type alias UserOptionalArguments =
+type alias FirstLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-user fillInOptionals object_ =
+first_link : (FirstLinkOptionalArguments -> FirstLinkOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+first_link fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent }
@@ -198,15 +198,15 @@ user fillInOptionals object_ =
             [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "user" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "first_link" optionalArgs object_ (identity >> Decode.nullable)
 
 
-type alias SecondOptionalArguments =
+type alias SecondLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-second : (SecondOptionalArguments -> SecondOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-second fillInOptionals object_ =
+second_link : (SecondLinkOptionalArguments -> SecondLinkOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+second_link fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent }
@@ -215,7 +215,7 @@ second fillInOptionals object_ =
             [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "second" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "second_link" optionalArgs object_ (identity >> Decode.nullable)
 
 
 skills : SelectionSet (Maybe (List String)) Fractal.Object.Node

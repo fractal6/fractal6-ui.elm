@@ -20,11 +20,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-nth : SelectionSet Int Fractal.Object.Tension
-nth =
-    Object.selectionForField "Int" "nth" [] Decode.int
-
-
 title : SelectionSet String Fractal.Object.Tension
 title =
     Object.selectionForField "String" "title" [] Decode.string
@@ -71,11 +66,6 @@ receivers fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "receivers" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
-
-
-isAnonymous : SelectionSet Bool Fractal.Object.Tension
-isAnonymous =
-    Object.selectionForField "Bool" "isAnonymous" [] Decode.bool
 
 
 type alias CommentsOptionalArguments =

@@ -63,32 +63,62 @@ type alias Model =
 -}
 
 
-type alias NodeFragment =
-    Result JD.Error Node
-
-
-type alias NodeAction =
-    { n : NodeFragment
-    , step : ActionStep
-    }
-
-
-type ActionState
-    = Ask ActionStep Node
-    | NotAsk
-    | AskErr String
-
-
-type ActionStep
-    = FirstStep
-    | TensionStep
-
-
 type alias NodeFocusState =
     { nidjs : NID
     , name : String
     , nodeType : String
     , path : Array.Array { name : String, nidjs : NID }
+    }
+
+
+type ActionState
+    = Ask (ActionStep Node)
+    | AskErr String
+    | NotAsk
+
+
+type ActionStep target
+    = FirstStep target
+    | AddTensionStep target TensionForm -- AskNewTension
+
+
+type TensionStep
+    = TensionTypeForm
+    | TensionFinalForm
+    | TensionValidation
+
+
+type alias TensionForm =
+    { step : TensionStep
+    , formData : TensionPost
+    , result : RequestResult ErrorData (Maybe AddTensionPayload)
+    }
+
+
+type alias TensionPost =
+    { title : String
+    , type_ : String
+    , emitter : String
+    }
+
+
+type alias NodeTarget =
+    -- Helper for encoding ActionState
+    Result JD.Error Node
+
+
+
+--
+-- Model setters
+--
+--
+
+
+initTensionForm : TensionForm
+initTensionForm =
+    { step = TensionTypeForm
+    , formData = { title = "", type_ = "", emitter = "" }
+    , result = NotAsked
     }
 
 
@@ -145,7 +175,7 @@ init { route } params =
         orga_name =
             params.param1
 
-        focus =
+        focusInit =
             { name = orga_name
             , nidjs = ""
             , nodeType = ""
@@ -157,7 +187,7 @@ init { route } params =
             , asked_orga = orga_name
             , orga_data = Loading
             , circle_tensions = Loading
-            , node_focus = focus
+            , node_focus = focusInit
             , node_action = NotAsk
             }
     in
@@ -182,20 +212,37 @@ init { route } params =
 
 
 type Msg
-    = GotOrga (RequestResult ErrorData NodesData) -- graphql
+    = PassedSlowLoadTreshold -- timer
+    | GotOrga (RequestResult ErrorData NodesData) -- graphql
     | GotTensions (RequestResult ErrorData TensionsData) -- graphql
-    | DoNodeAction NodeFragment -- ports receive
+    | DoNodeAction NodeTarget -- ports receive
+    | DoTensionStep
+    | SubmitTension
+    | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
     | NodeClick NodeFocusState -- ports receive
     | ChangeNodeFocus Int -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send -- Not implemented @DEBUG multiple tooltip/ see name of circle
-    | DoTensionStep
-    | PassedSlowLoadTreshold -- timer
 
 
 update : Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update msg model =
     case msg of
+        PassedSlowLoadTreshold ->
+            let
+                orga_data =
+                    case model.orga_data of
+                        Loading ->
+                            LoadingSlowly
+
+                        other ->
+                            other
+            in
+            ( { model | orga_data = orga_data }
+            , Cmd.none
+            , Cmd.none
+            )
+
         GotOrga result ->
             case result of
                 Success data ->
@@ -244,15 +291,46 @@ update msg model =
 
         DoNodeAction res ->
             let
-                nodeAction =
+                newAction =
                     case res of
                         Ok node ->
-                            Ask FirstStep node
+                            Ask <| FirstStep node
 
                         Err err ->
                             AskErr <| JD.errorToString err
             in
-            ( { model | node_action = nodeAction }, Cmd.none, Cmd.none )
+            ( { model | node_action = newAction }, Cmd.none, Cmd.none )
+
+        DoTensionStep ->
+            let
+                modelUpdated =
+                    updateTensionStep model TensionTypeForm Nothing
+            in
+            ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
+
+        SubmitTension ->
+            let
+                tensionPost =
+                    ()
+
+                -- getTensionForm model
+            in
+            ( model, addOneTension TensionAck tensionPost, Cmd.none )
+
+        TensionAck result ->
+            let
+                form =
+                    case getTensionForm model of
+                        Just f ->
+                            { f | result = result }
+
+                        Nothing ->
+                            { initTensionForm | result = result }
+
+                modelUpdated =
+                    updateTensionStep model TensionValidation (Just form)
+            in
+            ( modelUpdated, Cmd.none, Cmd.none )
 
         NodeClick focus ->
             ( { model | node_focus = focus }
@@ -278,33 +356,6 @@ update msg model =
         ToggleTooltips ->
             ( model, () |> sendToggleTooltips, Cmd.none )
 
-        DoTensionStep ->
-            let
-                newAction =
-                    case model.node_action of
-                        Ask step node ->
-                            Ask TensionStep node
-
-                        default ->
-                            default
-            in
-            ( { model | node_action = newAction }, Cmd.none, Ports.bulma_driver )
-
-        PassedSlowLoadTreshold ->
-            let
-                orga_data =
-                    case model.orga_data of
-                        Loading ->
-                            LoadingSlowly
-
-                        other ->
-                            other
-            in
-            ( { model | orga_data = orga_data }
-            , Cmd.none
-            , Cmd.none
-            )
-
 
 
 -- SUBSCRIPTIONS
@@ -328,7 +379,7 @@ port nodeFocusFromJs : (NodeFocusState -> msg) -> Sub msg
 port rawNodeDataFromJs : (JD.Value -> a) -> Sub a
 
 
-nodeDataFromJs : (NodeFragment -> msg) -> Sub msg
+nodeDataFromJs : (NodeTarget -> msg) -> Sub msg
 nodeDataFromJs rawNode =
     rawNodeDataFromJs (rawNode << JD.decodeValue nodeDecoder)
 
@@ -605,13 +656,13 @@ vTension tension =
 
 setupActionModal : Model -> Html Msg
 setupActionModal model =
-    div [ class "container is-clipped" ]
+    div []
         [ div [ id "actionModal", class "modal" ]
             [ div [ class "modal-background" ] []
             , div [ class "modal-content" ]
                 [ case model.node_action of
-                    Ask step node ->
-                        viewActionStep step node
+                    Ask step ->
+                        viewActionStep step
 
                     NotAsk ->
                         text ""
@@ -625,10 +676,10 @@ setupActionModal model =
         ]
 
 
-viewActionStep : ActionStep -> Node -> Html Msg
-viewActionStep step node =
+viewActionStep : ActionStep Node -> Html Msg
+viewActionStep step =
     case step of
-        FirstStep ->
+        FirstStep node ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
                     [ div [ class "card-header-title" ] <|
@@ -652,7 +703,14 @@ viewActionStep step node =
                     ]
                 ]
 
-        TensionStep ->
+        AddTensionStep target form ->
+            viewTensionStep target form
+
+
+viewTensionStep : Node -> TensionForm -> Html Msg
+viewTensionStep node form =
+    case form.step of
+        TensionTypeForm ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
                     [ div [ class "card-header-title" ] <|
@@ -668,11 +726,7 @@ viewActionStep step node =
                         List.map
                             (\tensionType ->
                                 div [ class "level-item" ]
-                                    [ div
-                                        [ class "button"
-
-                                        --, onClick (DoTensionFormStep tensionType)
-                                        ]
+                                    [ div [ class "button", onClick SubmitTension ]
                                         [ text (TensionType.toString tensionType) ]
                                     ]
                             )
@@ -680,3 +734,69 @@ viewActionStep step node =
                             TensionType.list
                     ]
                 ]
+
+        TensionValidation ->
+            let
+                errMsg =
+                    case form.result of
+                        Failure err ->
+                            err
+
+                        default ->
+                            "Finish that worh dude !"
+            in
+            div [ class "box has-background-danger" ] [ text errMsg ]
+
+        default ->
+            text "finish that work dude"
+
+
+
+-------------------------------------------------
+-- Model Getters and Setters
+-------------------------------------------------
+
+
+getTensionForm : Model -> Maybe TensionForm
+getTensionForm model =
+    case model.node_action of
+        Ask step ->
+            case step of
+                FirstStep target ->
+                    Nothing
+
+                AddTensionStep _ form ->
+                    Just form
+
+        passing ->
+            Nothing
+
+
+updateTensionStep : Model -> TensionStep -> Maybe TensionForm -> Model
+updateTensionStep model newStep maybeForm =
+    let
+        --formUpdated =
+        newAction =
+            case model.node_action of
+                Ask step ->
+                    Ask <|
+                        case step of
+                            FirstStep target ->
+                                AddTensionStep target initTensionForm
+
+                            AddTensionStep target form ->
+                                let
+                                    newForm =
+                                        case maybeForm of
+                                            Just aform ->
+                                                { aform | step = newStep }
+
+                                            Nothing ->
+                                                { form | step = newStep }
+                                in
+                                AddTensionStep target newForm
+
+                passing ->
+                    passing
+    in
+    { model | node_action = newAction }
