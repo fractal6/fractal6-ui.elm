@@ -12,6 +12,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, li, nav, p, span,
 import Html.Attributes exposing (attribute, class, classList, href, id)
 import Html.Events exposing (on, onClick)
 import Http
+import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
@@ -20,6 +21,7 @@ import Ports
 import RemoteData exposing (RemoteData)
 import Spa.Page
 import Task
+import Time
 import Utils.Spa exposing (Page, PageContext)
 
 
@@ -217,7 +219,8 @@ type Msg
     | GotTensions (RequestResult ErrorData TensionsData) -- graphql
     | DoNodeAction NodeTarget -- ports receive
     | DoTensionStep
-    | SubmitTension
+    | Submit (Time.Posix -> Msg)
+    | SubmitTension Time.Posix
     | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
     | NodeClick NodeFocusState -- ports receive
     | ChangeNodeFocus Int -- ports send
@@ -308,10 +311,16 @@ update msg model =
             in
             ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
 
-        SubmitTension ->
+        Submit nextMsg ->
+            ( model, Task.perform nextMsg Time.now, Cmd.none )
+
+        SubmitTension time ->
             let
                 tensionPost =
                     ()
+
+                timeRFC3339 =
+                    fromTime time
 
                 -- getTensionForm model
             in
@@ -726,7 +735,7 @@ viewTensionStep node form =
                         List.map
                             (\tensionType ->
                                 div [ class "level-item" ]
-                                    [ div [ class "button", onClick SubmitTension ]
+                                    [ div [ class "button", onClick (Submit SubmitTension) ]
                                         [ text (TensionType.toString tensionType) ]
                                     ]
                             )

@@ -295,7 +295,7 @@ tensionInputEncoder =
     -- This wiil take the TensionPost !
     let
         tension =
-            { createdAt = Fractal.Scalar.DateTime "1 Jan 70 00:00:00 GMT"
+            { createdAt = Fractal.Scalar.DateTime "Fri, 11 Jan 2013 08:11:00 GMT"
             , createdBy =
                 Input.buildUserRef
                     (\x -> { x | username = OptionalArgument.Present "clara" })
