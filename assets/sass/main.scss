@@ -31,6 +31,10 @@ header > .navbar {
     }
 }
 
+.help {
+  color: $grey-light;
+}
+
 .tooltip.has-tooltip-multiline::before {
   white-space: pre-line !important;
 }
@@ -46,7 +50,7 @@ header > .navbar {
         &::after,
         &::before {
             transition: all .15s linear !important;
-            transition-delay: 0.3s !important;
+            transition-delay: $tooltip-transition-duration !important;
         }
     }
 }
@@ -71,6 +75,8 @@ html.has-modal-active {
 .is-underline-dotted {
     border-bottom: 1px dotted;
 }
+
+/////
 
 .menu .menu-label {
     font-weight: bold !important;
@@ -414,6 +420,20 @@ html.has-modal-active {
             }
         }
     }
+
+    & input, & textarea {
+        color: #24292e;
+        background-color: #fafbfc;
+
+        &::placeholder {
+            color: #6a737d;
+        }
+
+        &:active, &:focus {
+            background-color: none;
+        }
+    }
+
 
 }
 

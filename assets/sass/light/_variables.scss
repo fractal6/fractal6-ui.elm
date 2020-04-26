@@ -1,2 +1,23 @@
 $menu-left-background-color: #fafafa;
 $menu-left-border-color: #e5e5e5;
+
+
+// FIX TOP MENU
+$_primary: #375a7f !default;
+$_text: #fff;
+$_navbar-divider-background-color: rgba(0, 0, 0, 0.2);
+$_link: $turquoise;
+
+$navbar-background-color: $_primary;
+$navbar-item-color: $_text;
+$navbar-item-hover-color: $_link;
+$navbar-item-hover-background-color: $grey-darker;
+$navbar-item-active-color: $_link;
+$navbar-dropdown-arrow: #fff;
+$navbar-divider-background-color: rgba(0, 0, 0, 0.2);
+$navbar-dropdown-border-top: 1px solid $_navbar-divider-background-color;
+$navbar-dropdown-background-color: $_primary;
+$navbar-dropdown-item-hover-color: $grey-lighter;
+$navbar-dropdown-item-hover-background-color: hsl(210.7, 21.3%, 41.4%);
+$navbar-dropdown-item-active-background-color: transparent;
+$navbar-dropdown-item-active-color: $_link;

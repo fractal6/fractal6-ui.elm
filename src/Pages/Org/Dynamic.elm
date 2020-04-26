@@ -9,9 +9,9 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
 import Global exposing (NID)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, li, nav, p, span, text, ul)
-import Html.Attributes exposing (attribute, class, classList, href, id)
-import Html.Events exposing (on, onClick)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Events exposing (on, onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
@@ -225,6 +225,7 @@ type Msg
     | DoNodeAction NodeTarget -- ports receive
     | DoTensionStep1
     | DoTensionStep2 String
+    | ChangeTensionPost String String
     | Submit (Time.Posix -> Msg)
     | SubmitTension Time.Posix
     | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
@@ -325,9 +326,19 @@ update msg model =
                 modelUpdated =
                     updateTensionStep model TensionFinalForm (Just form)
             in
+            ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
+
+        ChangeTensionPost field content ->
+            let
+                form =
+                    updateTensionPost model field content
+
+                modelUpdated =
+                    updateTensionStep model TensionFinalForm (Just form)
+            in
+            -- No need to reactivate the Bulma drivers here.
             ( modelUpdated, Cmd.none, Cmd.none )
 
-        --( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
@@ -754,7 +765,10 @@ viewTensionStep node form =
                                         TensionType.toString tensionType
                                 in
                                 div [ class "level-item" ]
-                                    [ div [ class "button", onClick (DoTensionStep2 tensionTypeStr) ]
+                                    [ div
+                                        [ class "button"
+                                        , onClick (DoTensionStep2 tensionTypeStr)
+                                        ]
                                         [ text tensionTypeStr ]
                                     ]
                             )
@@ -764,13 +778,60 @@ viewTensionStep node form =
                 ]
 
         TensionFinalForm ->
+            let
+                title =
+                    case Dict.get "title" form.post of
+                        Just t ->
+                            t
+
+                        Nothing ->
+                            ""
+
+                isSendable =
+                    String.length title > 0
+            in
             div [ class "card" ]
-                [ div [ class "card-header" ]
-                    [ div [ class "card-header-title" ] [ text "tension title..." ]
+                [ --div [ class "card-header" ] [ div [ class "card-header-title" ] [ text "tension title..." ] ]
+                  div [ class "card-content" ]
+                    [ div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ input
+                                [ class "input autofocus followFocus"
+                                , attribute "data-nextfocus" "textAreaModal"
+                                , type_ "text"
+                                , placeholder "Title"
+                                , onInput (ChangeTensionPost "title")
+                                ]
+                                []
+                            ]
+                        , p [ class "help" ] [ text "Title that sumarize your tension." ]
+                        ]
+                    , br [] []
+                    , div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ textarea [ id "textAreaModal", class "textarea", rows 12, placeholder "Leave a comment" ] []
+                            ]
+                        , p [ class "help" ] [ text "Add a description to help others understand your issue." ]
+                        ]
+                    , br [] []
+                    , div [ class "field is-grouped is-grouped-right" ]
+                        [ div [ class "control" ]
+                            [ if isSendable then
+                                button
+                                    [ class "button is-success has-text-weight-semibold"
+                                    , onClick (Submit SubmitTension)
+                                    ]
+                                    [ text "Submit new tension" ]
+
+                              else
+                                button
+                                    [ class "button has-text-weight-semibold"
+                                    , disabled True
+                                    ]
+                                    [ text "Submit new tension" ]
+                            ]
+                        ]
                     ]
-                , div [ class "card-content" ]
-                    [ text "tension content" ]
-                , div [ class "button", onClick (Submit SubmitTension) ] [ text "Submit" ]
                 ]
 
         TensionValidation ->

@@ -23,6 +23,42 @@ const BulmaDriver = (target) => {
     var addedHandlers = [];
 
     /*
+     * Activate autofocus
+     */
+    const $autofocuses = $target.querySelectorAll('.autofocus');
+    // * listen for enter to advanced the focus on textarea
+    if ($autofocuses.length > 0) {
+        $autofocuses.forEach( el => {
+            el.focus();
+        });
+    }
+
+    /*
+     * Follow focus
+     */
+
+    function advanceFocus(e, el) {
+        if (e.key == "Enter") {
+            $target = document.getElementById(el.dataset.nextfocus);
+            $target.focus();
+        }
+    }
+
+    // Toggle is-active on click event for each {navbar-burger}
+    const $followFocuses = $target.querySelectorAll('.followFocus');
+    // * listen for enter to advanced the focus on textarea
+    if ($followFocuses.length > 0) {
+        // For each dropdown, add event handler to open on click.
+        $followFocuses.forEach( el => {
+            var evt = "keypress";
+            var h = e => advanceFocus(e, el);
+            el.addEventListener(evt, h);
+            addedHandlers.push([evt, h, el]);
+        });
+    }
+
+
+    /*
      * Burger open/close rationale
      */
 
