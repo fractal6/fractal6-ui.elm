@@ -1,6 +1,7 @@
 module Model exposing (..)
 
 import Debug
+import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionOrderable as TensionOrderable
 import Fractal.Enum.TensionType as TensionType
@@ -18,6 +19,7 @@ import GqlClient exposing (..)
 import Graphql.Http
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Iso8601 exposing (fromTime)
 import RemoteData exposing (RemoteData)
 
 
@@ -52,6 +54,10 @@ type RequestResult errors data
     | Failure errors
     | RemoteLoading
     | NotAsked
+
+
+type alias Post =
+    Dict String String
 
 
 
@@ -275,11 +281,10 @@ type alias AddTensionPayload =
     { tension : Maybe (List (Maybe IdPayload)) }
 
 
-addOneTension msg tension =
+addOneTension msg source target tension =
     makeGQLMutation
         (Mutation.addTension
-            tensionInputEncoder
-            --(tensionInputEncoder tension)
+            (tensionInputEncoder source target tension)
             (SelectionSet.map AddTensionPayload <|
                 Fractal.Object.AddTensionPayload.tension identity <|
                     (SelectionSet.succeed IdPayload
@@ -290,24 +295,56 @@ addOneTension msg tension =
         (RemoteData.fromResult >> decodeMutationResponse >> msg)
 
 
-tensionInputEncoder : Mutation.AddTensionRequiredArguments
-tensionInputEncoder =
-    -- This wiil take the TensionPost !
+assertString x =
+    case x of
+        Just y ->
+            y
+
+        Nothing ->
+            ""
+
+
+assertTensionType x =
+    case x of
+        Just y ->
+            y
+
+        Nothing ->
+            TensionType.Operational
+
+
+tensionInputEncoder : Node -> Node -> Post -> Mutation.AddTensionRequiredArguments
+tensionInputEncoder source target post =
     let
-        tension =
-            { createdAt = Fractal.Scalar.DateTime "Fri, 11 Jan 2013 08:11:00 GMT"
+        time =
+            Dict.get "createdAt" post |> assertString
+
+        title =
+            Dict.get "title" post |> assertString
+
+        type_ =
+            Dict.get "type_" post |> assertString |> TensionType.fromString |> assertTensionType
+
+        createdby =
+            Dict.get "username" post |> assertString
+
+        emitterid =
+            source.nameid
+
+        tensionRequired =
+            { createdAt = Fractal.Scalar.DateTime <| time
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present "clara" })
-            , title = "Tension from elm-graphql"
-            , type_ = TensionType.Operational
+                    (\x -> { x | username = OptionalArgument.Present createdby })
+            , title = title
+            , type_ = type_
             , emitter =
                 Input.buildNodeRef
-                    (\x -> { x | nameid = OptionalArgument.Present "SKU" })
+                    (\x -> { x | nameid = OptionalArgument.Present emitterid })
             }
     in
     { input =
-        [ Input.buildAddTensionInput tension identity ]
+        [ Input.buildAddTensionInput tensionRequired identity ]
     }
 
 

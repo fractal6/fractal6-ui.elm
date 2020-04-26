@@ -82,7 +82,7 @@ type ActionState
 
 type ActionStep target
     = FirstStep target
-    | AddTensionStep target TensionForm -- AskNewTension
+    | AddTensionStep TensionForm -- AskNewTension
 
 
 type TensionStep
@@ -93,13 +93,11 @@ type TensionStep
 
 type alias TensionForm =
     { step : TensionStep
-    , post : TensionPost
+    , post : Post
     , result : RequestResult ErrorData (Maybe AddTensionPayload)
+    , target : Node
+    , source : Node
     }
-
-
-type alias TensionPost =
-    Dict String String
 
 
 
@@ -121,17 +119,19 @@ type alias NodeTarget =
 --
 
 
-initTensionForm : TensionForm
-initTensionForm =
+initTensionForm : Node -> TensionForm
+initTensionForm node =
     { step = TensionTypeForm
-    , post = Dict.empty
+    , post = Dict.fromList [ ( "username", "clara" ) ]
     , result = NotAsked
+    , target = node
+    , source = node
     }
 
 
 
 {-
-   Json encoder/decoder
+   Json encoder/decoder --When receiving data from Javascript
 -}
 
 
@@ -227,7 +227,7 @@ type Msg
     | DoTensionStep2 String
     | ChangeTensionPost String String
     | Submit (Time.Posix -> Msg)
-    | SubmitTension Time.Posix
+    | SubmitTension TensionForm Time.Posix
     | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
     | NodeClick NodeFocusState -- ports receive
     | ChangeNodeFocus Int -- ports send
@@ -320,21 +320,21 @@ update msg model =
 
         DoTensionStep2 tensionType ->
             let
-                form =
+                maybeForm =
                     updateTensionPost model "type_" tensionType
 
                 modelUpdated =
-                    updateTensionStep model TensionFinalForm (Just form)
+                    updateTensionStep model TensionFinalForm maybeForm
             in
             ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
 
         ChangeTensionPost field content ->
             let
-                form =
+                maybeForm =
                     updateTensionPost model field content
 
                 modelUpdated =
-                    updateTensionStep model TensionFinalForm (Just form)
+                    updateTensionStep model TensionFinalForm maybeForm
             in
             -- No need to reactivate the Bulma drivers here.
             ( modelUpdated, Cmd.none, Cmd.none )
@@ -342,30 +342,25 @@ update msg model =
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
-        SubmitTension time ->
+        SubmitTension form time ->
             let
-                tensionPost =
-                    ()
-
-                timeRFC3339 =
-                    fromTime time
-
-                -- getTensionForm model
+                postUpdated =
+                    Dict.insert "createdAt" (fromTime time) form.post
             in
-            ( model, addOneTension TensionAck tensionPost, Cmd.none )
+            ( model, addOneTension TensionAck form.source form.target postUpdated, Cmd.none )
 
         TensionAck result ->
             let
                 form =
                     case getTensionForm model of
                         Just f ->
-                            { f | result = result }
+                            Just { f | result = result }
 
                         Nothing ->
-                            { initTensionForm | result = result }
+                            Nothing
 
                 modelUpdated =
-                    updateTensionStep model TensionValidation (Just form)
+                    updateTensionStep model TensionValidation form
             in
             ( modelUpdated, Cmd.none, Cmd.none )
 
@@ -740,12 +735,12 @@ viewActionStep step =
                     ]
                 ]
 
-        AddTensionStep target form ->
-            viewTensionStep target form
+        AddTensionStep form ->
+            viewTensionStep form
 
 
-viewTensionStep : Node -> TensionForm -> Html Msg
-viewTensionStep node form =
+viewTensionStep : TensionForm -> Html Msg
+viewTensionStep form =
     case form.step of
         TensionTypeForm ->
             div [ class "card" ]
@@ -779,16 +774,8 @@ viewTensionStep node form =
 
         TensionFinalForm ->
             let
-                title =
-                    case Dict.get "title" form.post of
-                        Just t ->
-                            t
-
-                        Nothing ->
-                            ""
-
                 isSendable =
-                    String.length title > 0
+                    isTensionSendable form
             in
             div [ class "card" ]
                 [ --div [ class "card-header" ] [ div [ class "card-header-title" ] [ text "tension title..." ] ]
@@ -809,7 +796,14 @@ viewTensionStep node form =
                     , br [] []
                     , div [ class "field" ]
                         [ div [ class "control" ]
-                            [ textarea [ id "textAreaModal", class "textarea", rows 12, placeholder "Leave a comment" ] []
+                            [ textarea
+                                [ id "textAreaModal"
+                                , class "textarea"
+                                , rows 12
+                                , placeholder "Leave a comment"
+                                , onInput (ChangeTensionPost "message")
+                                ]
+                                []
                             ]
                         , p [ class "help" ] [ text "Add a description to help others understand your issue." ]
                         ]
@@ -819,7 +813,7 @@ viewTensionStep node form =
                             [ if isSendable then
                                 button
                                     [ class "button is-success has-text-weight-semibold"
-                                    , onClick (Submit SubmitTension)
+                                    , onClick (Submit <| SubmitTension form)
                                     ]
                                     [ text "Submit new tension" ]
 
@@ -835,16 +829,16 @@ viewTensionStep node form =
                 ]
 
         TensionValidation ->
-            let
-                errMsg =
-                    case form.result of
-                        Failure err ->
-                            err
+            case form.result of
+                Success res ->
+                    div [ class "box has-background-success" ] [ text "Tension added." ]
 
-                        default ->
-                            "Finish that worh dude !"
-            in
-            div [ class "box has-background-danger" ] [ text errMsg ]
+                Failure err ->
+                    div [ class "box has-background-danger" ] [ text err ]
+
+                default ->
+                    -- handle this with slowremoteloading
+                    div [ class "box is-loading" ] [ text "Loading..." ]
 
 
 
@@ -861,7 +855,7 @@ getTensionForm model =
                 FirstStep target ->
                     Nothing
 
-                AddTensionStep _ form ->
+                AddTensionStep form ->
                     Just form
 
         passing ->
@@ -877,9 +871,9 @@ updateTensionStep model newStep maybeForm =
                     Ask <|
                         case step of
                             FirstStep target ->
-                                AddTensionStep target initTensionForm
+                                AddTensionStep (initTensionForm target)
 
-                            AddTensionStep target form ->
+                            AddTensionStep form ->
                                 let
                                     newForm =
                                         case maybeForm of
@@ -889,7 +883,7 @@ updateTensionStep model newStep maybeForm =
                                             Nothing ->
                                                 { form | step = newStep }
                                 in
-                                AddTensionStep target newForm
+                                AddTensionStep newForm
 
                 passing ->
                     passing
@@ -897,18 +891,28 @@ updateTensionStep model newStep maybeForm =
     { model | node_action = newAction }
 
 
-updateTensionPost : Model -> String -> String -> TensionForm
+updateTensionPost : Model -> String -> String -> Maybe TensionForm
 updateTensionPost model field value =
+    case getTensionForm model of
+        Just form ->
+            Just { form | post = Dict.insert field value form.post }
+
+        Nothing ->
+            Nothing
+
+
+isTensionSendable : TensionForm -> Bool
+isTensionSendable form =
     let
-        form =
-            case getTensionForm model of
-                Just f ->
-                    f
+        title =
+            case Dict.get "title" form.post of
+                Just t ->
+                    t
 
                 Nothing ->
-                    initTensionForm
+                    ""
 
-        post =
-            Dict.insert field value form.post
+        isSendable =
+            String.length title > 0
     in
-    { form | post = post }
+    isSendable
