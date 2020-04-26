@@ -3,6 +3,7 @@ port module Pages.Org.Dynamic exposing (Model, Msg, page)
 import Array
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (Status(..), showMaybeError)
+import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
@@ -92,16 +93,20 @@ type TensionStep
 
 type alias TensionForm =
     { step : TensionStep
-    , formData : TensionPost
+    , post : TensionPost
     , result : RequestResult ErrorData (Maybe AddTensionPayload)
     }
 
 
 type alias TensionPost =
-    { title : String
-    , type_ : String
-    , emitter : String
-    }
+    Dict String String
+
+
+
+--{ title : String
+--, type_ : String
+--, emitter : String
+--}
 
 
 type alias NodeTarget =
@@ -119,7 +124,7 @@ type alias NodeTarget =
 initTensionForm : TensionForm
 initTensionForm =
     { step = TensionTypeForm
-    , formData = { title = "", type_ = "", emitter = "" }
+    , post = Dict.empty
     , result = NotAsked
     }
 
@@ -218,7 +223,8 @@ type Msg
     | GotOrga (RequestResult ErrorData NodesData) -- graphql
     | GotTensions (RequestResult ErrorData TensionsData) -- graphql
     | DoNodeAction NodeTarget -- ports receive
-    | DoTensionStep
+    | DoTensionStep1
+    | DoTensionStep2 String
     | Submit (Time.Posix -> Msg)
     | SubmitTension Time.Posix
     | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
@@ -304,13 +310,24 @@ update msg model =
             in
             ( { model | node_action = newAction }, Cmd.none, Cmd.none )
 
-        DoTensionStep ->
+        DoTensionStep1 ->
             let
                 modelUpdated =
                     updateTensionStep model TensionTypeForm Nothing
             in
             ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
 
+        DoTensionStep2 tensionType ->
+            let
+                form =
+                    updateTensionPost model "type_" tensionType
+
+                modelUpdated =
+                    updateTensionStep model TensionFinalForm (Just form)
+            in
+            ( modelUpdated, Cmd.none, Cmd.none )
+
+        --( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
@@ -702,13 +719,13 @@ viewActionStep step =
                 , div [ class "card-content" ]
                     [ div [ class "level" ] <|
                         if node.type_ == NodeType.Circle then
-                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep ] [ text "New tension" ] ]
+                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep1 ] [ text "New tension" ] ]
                             , div [ class "level-item" ] [ div [ class "button" ] [ text "New Sub-Circle" ] ]
                             , div [ class "level-item" ] [ div [ class "button" ] [ text "New Role" ] ]
                             ]
 
                         else
-                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep ] [ text "New tension" ] ] ]
+                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep1 ] [ text "New tension" ] ] ]
                     ]
                 ]
 
@@ -729,19 +746,31 @@ viewTensionStep node form =
                             ]
                     ]
                 , div [ class "card-content" ]
-                    [ div [ class "level buttonRadio" ]
-                      -- @DEBUG: bulma driver won't works since element doesnt exist at creation!
-                      <|
+                    [ div [ class "level buttonRadio" ] <|
                         List.map
                             (\tensionType ->
+                                let
+                                    tensionTypeStr =
+                                        TensionType.toString tensionType
+                                in
                                 div [ class "level-item" ]
-                                    [ div [ class "button", onClick (Submit SubmitTension) ]
-                                        [ text (TensionType.toString tensionType) ]
+                                    [ div [ class "button", onClick (DoTensionStep2 tensionTypeStr) ]
+                                        [ text tensionTypeStr ]
                                     ]
                             )
                         <|
                             TensionType.list
                     ]
+                ]
+
+        TensionFinalForm ->
+            div [ class "card" ]
+                [ div [ class "card-header" ]
+                    [ div [ class "card-header-title" ] [ text "tension title..." ]
+                    ]
+                , div [ class "card-content" ]
+                    [ text "tension content" ]
+                , div [ class "button", onClick (Submit SubmitTension) ] [ text "Submit" ]
                 ]
 
         TensionValidation ->
@@ -755,9 +784,6 @@ viewTensionStep node form =
                             "Finish that worh dude !"
             in
             div [ class "box has-background-danger" ] [ text errMsg ]
-
-        default ->
-            text "finish that work dude"
 
 
 
@@ -784,7 +810,6 @@ getTensionForm model =
 updateTensionStep : Model -> TensionStep -> Maybe TensionForm -> Model
 updateTensionStep model newStep maybeForm =
     let
-        --formUpdated =
         newAction =
             case model.node_action of
                 Ask step ->
@@ -809,3 +834,20 @@ updateTensionStep model newStep maybeForm =
                     passing
     in
     { model | node_action = newAction }
+
+
+updateTensionPost : Model -> String -> String -> TensionForm
+updateTensionPost model field value =
+    let
+        form =
+            case getTensionForm model of
+                Just f ->
+                    f
+
+                Nothing ->
+                    initTensionForm
+
+        post =
+            Dict.insert field value form.post
+    in
+    { form | post = post }
