@@ -47,25 +47,21 @@ emitter fillInOptionals object_ =
     Object.selectionForCompositeField "emitter" optionalArgs object_ identity
 
 
-type alias ReceiversOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFilter
-    , order : OptionalArgument Fractal.InputObject.NodeOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
+type alias ReceiverOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
 
-receivers : (ReceiversOptionalArguments -> ReceiversOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
-receivers fillInOptionals object_ =
+receiver : (ReceiverOptionalArguments -> ReceiverOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet decodesTo Fractal.Object.Tension
+receiver fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "receivers" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "receiver" optionalArgs object_ identity
 
 
 type alias CommentsOptionalArguments =

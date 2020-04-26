@@ -657,7 +657,10 @@ function drawAll(app, graph) {
             return false
         }
 
-        if (focusedNode.ctx) clearNodeHover(context, focusedNode);
+        if (focusedNode.ctx) {
+            clearNodeHover(context, focusedNode);
+            updateFocusedNodeElm(focus);
+        }
         focusedNode = focus; // @DEBUG: global context
 
         var zoomFactor = zoomFactorCircle;
@@ -684,7 +687,6 @@ function drawAll(app, graph) {
                 // We actually only need to draw the hidden canvas when there is an interaction.
                 drawCanvas(hiddenContext, true);
                 drawNodeHover(context, focusedNode);
-                updateFocusedNodeElm(focusedNode);
                 t.stop();
             }
         });
@@ -770,6 +772,7 @@ function drawAll(app, graph) {
         app.ports.nodeFocusFromJs.send({
             nidjs    : node.color,
             name     : node.data.name,
+            nameid   : node.data.nameid,
             nodeType : node.data.type_,
             path     : path
         });

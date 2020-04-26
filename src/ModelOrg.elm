@@ -1,4 +1,4 @@
-module Model exposing (..)
+module ModelOrg exposing (..)
 
 import Debug
 import Dict exposing (Dict)
@@ -36,7 +36,7 @@ nLabelPerTension =
 
 nTensionPpg : Int
 nTensionPpg =
-    20
+    15
 
 
 
@@ -64,6 +64,7 @@ type alias Post =
 {-
    Schema Data Structure (fetch/Query)
 -}
+-- Node interface
 
 
 type alias Node =
@@ -79,8 +80,26 @@ type alias ParentNode =
     { id : String }
 
 
-type alias Label =
-    { name : String }
+
+--
+
+
+type alias NodesData =
+    List Node
+
+
+type alias NodesResponse =
+    Maybe (List (Maybe Node))
+
+
+
+--- Tension interface
+
+
+type alias NodeTensions =
+    { tensions_in : Maybe (List Tension)
+    , tensions_out : Maybe (List Tension)
+    }
 
 
 type alias Tension =
@@ -88,43 +107,39 @@ type alias Tension =
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
+    , emitter : Emitter
+    , receiver : Receiver
+    , createdAt : String
     , n_comments : Maybe Int
+    }
 
-    --, emitter : String
-    --, receivers : String
+
+type alias Label =
+    { name : String }
+
+
+type alias Emitter =
+    { name : String
+    , nameid : String
+    }
+
+
+type alias Receiver =
+    { name : String
+    , nameid : String
     }
 
 
 
 --
--- Data Query Responses
---
-
-
-type alias NodesResponse =
-    Maybe (List (Maybe Node))
-
-
-type alias NodesData =
-    List Node
-
-
-type alias TensionsResponse =
-    Maybe (List (Maybe Tension))
 
 
 type alias TensionsData =
     List Tension
 
 
-
---
--- Data Mutation Response
---
-
-
-type alias MutationResponse a =
-    Maybe a
+type alias TensionsResponse =
+    Maybe (List (Maybe Tension))
 
 
 
@@ -132,25 +147,25 @@ type alias MutationResponse a =
 -- Query decoder
 --
 {-
-   QueryNode
+   Query Organisation Nodes
 -}
 
 
 nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nodeOrgaFilter nameid a =
+nodeOrgaFilter rootid a =
     { a
         | filter =
             OptionalArgument.Present
                 (Input.buildNodeFilter
                     (\b ->
-                        { b | rootnameid = OptionalArgument.Present { eq = OptionalArgument.Present nameid } }
+                        { b | rootnameid = OptionalArgument.Present { eq = OptionalArgument.Present rootid } }
                     )
                 )
     }
 
 
-nodePayload : SelectionSet Node Fractal.Object.Node
-nodePayload =
+nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
+nodeOrgaPayload =
     SelectionSet.succeed Node
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Node.name
@@ -160,22 +175,27 @@ nodePayload =
         |> with Fractal.Object.Node.type_
 
 
-fetchNodesOrga nameid msg =
+fetchNodesOrga rootid msg =
     makeGQLQuery
         (Query.queryNode
-            (nodeOrgaFilter nameid)
-            nodePayload
+            (nodeOrgaFilter rootid)
+            nodeOrgaPayload
         )
-        (RemoteData.fromResult >> decodeQueryResponse >> msg)
+        (RemoteData.fromResult >> decodeResponse queryDecoder >> msg)
 
 
 
 {-
-   QueryTension
+   Query Circle Tension
 -}
 
 
-tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+circleTensionFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
+circleTensionFilter nid a =
+    { a | nameid = OptionalArgument.Present nid }
+
+
+tensionPgFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
 tensionPgFilter a =
     { a
         | first = OptionalArgument.Present nTensionPpg
@@ -202,72 +222,82 @@ tensionPgPayload =
                     |> with Fractal.Object.Label.name
                 )
             )
+        |> with
+            (Fractal.Object.Tension.emitter identity
+                (SelectionSet.succeed Emitter
+                    |> with Fractal.Object.Node.name
+                    |> with Fractal.Object.Node.nameid
+                )
+            )
+        |> with
+            (Fractal.Object.Tension.receiver identity
+                (SelectionSet.succeed Receiver
+                    |> with Fractal.Object.Node.name
+                    |> with Fractal.Object.Node.nameid
+                )
+            )
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Tension.n_comments
 
 
-fetchTensionsBunch msg =
-    --fetchTensionsBunch : Cmd Msg
+circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
+circleTensionPayload =
+    SelectionSet.succeed NodeTensions
+        |> with
+            (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
+        |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
+
+
+fetchCircleTension targetid msg =
     makeGQLQuery
-        (Query.queryTension
-            tensionPgFilter
-            tensionPgPayload
+        (Query.getNode
+            (circleTensionFilter targetid)
+            circleTensionPayload
         )
-        (RemoteData.fromResult >> decodeQueryResponse >> msg)
+        (RemoteData.fromResult >> decodeResponse circleTensionDecoder >> msg)
 
 
 
+{-
+   Query Tension Page
+-}
+--tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+--tensionPgFilter a =
+--    { a
+--        | first = OptionalArgument.Present nTensionPpg
+--        , order =
+--            OptionalArgument.Present
+--                (Input.buildTensionOrder
+--                    (\b ->
+--                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
+--                    )
+--                )
+--    }
 --
--- Query Response decoder
 --
---decodeQueryResponse : RemoteData (Graphql.Http.Error dataResponse) dataResponse -> RequestResult ErrorData dataDecoded
-
-
-decodeQueryResponse response =
-    {-
-       This decoder take two generic type of data:
-       * `dataResponse` which is directlty related to Graphql data returned by the server.
-       * `dataDecoded` which is the data Model used in Elm code.
-       @DEBUG: how to set the universal type in the function signature.
-    -}
-    case response of
-        RemoteData.Failure errors ->
-            case errors of
-                Graphql.Http.GraphqlError maybeParsedData err ->
-                    "GraphQL errors: \n"
-                        ++ Debug.toString err
-                        |> Failure
-
-                Graphql.Http.HttpError httpError ->
-                    "Http error "
-                        ++ Debug.toString httpError
-                        |> Failure
-
-        RemoteData.Loading ->
-            RemoteLoading
-
-        RemoteData.NotAsked ->
-            NotAsked
-
-        RemoteData.Success data ->
-            gqlQueryDecoder data |> Success
-
-
-gqlQueryDecoder : Maybe (List (Maybe a)) -> List a
-gqlQueryDecoder data =
-    -- Convert empty data to empty list
-    case data of
-        Just d ->
-            if List.length d == 0 then
-                []
-
-            else
-                List.filterMap identity d
-
-        Nothing ->
-            []
-
-
-
+--tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
+--tensionPgPayload =
+--    SelectionSet.succeed Tension
+--        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+--        |> with Fractal.Object.Tension.title
+--        |> with Fractal.Object.Tension.type_
+--        |> with
+--            (Fractal.Object.Tension.labels
+--                (\args -> { args | first = OptionalArgument.Present nLabelPerTension })
+--                (SelectionSet.succeed Label
+--                    |> with Fractal.Object.Label.name
+--                )
+--            )
+--        |> with Fractal.Object.Tension.n_comments
+--
+--
+--fetchTensionsPg msg =
+--    makeGQLQuery
+--        (Query.queryTension
+--            tensionPgFilter
+--            tensionPgPayload
+--        )
+--        (RemoteData.fromResult >> decodeResponse queryDecoder >> msg)
 --
 -- Mutation decoder
 --
@@ -281,7 +311,7 @@ type alias AddTensionPayload =
     { tension : Maybe (List (Maybe IdPayload)) }
 
 
-addOneTension msg source target tension =
+addOneTension source target tension msg =
     makeGQLMutation
         (Mutation.addTension
             (tensionInputEncoder source target tension)
@@ -292,7 +322,7 @@ addOneTension msg source target tension =
                     )
             )
         )
-        (RemoteData.fromResult >> decodeMutationResponse >> msg)
+        (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
 assertString x =
@@ -331,8 +361,11 @@ tensionInputEncoder source target post =
         emitterid =
             source.nameid
 
+        receiverid =
+            target.nameid
+
         tensionRequired =
-            { createdAt = Fractal.Scalar.DateTime <| time
+            { createdAt = Fractal.Scalar.DateTime time
             , createdBy =
                 Input.buildUserRef
                     (\x -> { x | username = OptionalArgument.Present createdby })
@@ -341,6 +374,9 @@ tensionInputEncoder source target post =
             , emitter =
                 Input.buildNodeRef
                     (\x -> { x | nameid = OptionalArgument.Present emitterid })
+            , receiver =
+                Input.buildNodeRef
+                    (\x -> { x | nameid = OptionalArgument.Present receiverid })
             }
     in
     { input =
@@ -348,18 +384,13 @@ tensionInputEncoder source target post =
     }
 
 
-gqlMutationDecoder : MutationResponse a -> Maybe a
-gqlMutationDecoder data =
-    -- Convert empty data to empty list
-    case data of
-        Just d ->
-            Just d
 
-        Nothing ->
-            Nothing
+--
+-- Response decoder
+--
 
 
-decodeMutationResponse response =
+decodeResponse decoder response =
     {-
        This decoder take two generic type of data:
        * `dataResponse` which is directlty related to Graphql data returned by the server.
@@ -386,7 +417,54 @@ decodeMutationResponse response =
             NotAsked
 
         RemoteData.Success data ->
-            gqlMutationDecoder data |> Success
+            decoder data |> Success
+
+
+circleTensionDecoder : Maybe NodeTensions -> List Tension
+circleTensionDecoder data =
+    case data of
+        Just node ->
+            let
+                tin =
+                    case node.tensions_in of
+                        Just a ->
+                            a
+
+                        Nothing ->
+                            []
+
+                tout =
+                    case node.tensions_out of
+                        Just a ->
+                            a
+
+                        Nothing ->
+                            []
+            in
+            List.sortBy .createdAt (tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout) |> List.reverse
+
+        Nothing ->
+            []
+
+
+queryDecoder : Maybe (List (Maybe a)) -> List a
+queryDecoder data =
+    -- Convert empty data to empty list
+    case data of
+        Just d ->
+            if List.length d == 0 then
+                []
+
+            else
+                List.filterMap identity d
+
+        Nothing ->
+            []
+
+
+mutationDecoder : Maybe a -> Maybe a
+mutationDecoder =
+    identity
 
 
 
@@ -398,3 +476,8 @@ decodeMutationResponse response =
 decodedId : Fractal.ScalarCodecs.Id -> String
 decodedId (Fractal.Scalar.Id id) =
     id
+
+
+decodedTime : Fractal.ScalarCodecs.DateTime -> String
+decodedTime (Fractal.Scalar.DateTime time) =
+    time

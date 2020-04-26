@@ -17,7 +17,7 @@ import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
-import Model exposing (..)
+import ModelOrg exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)
 import Spa.Page
@@ -68,6 +68,7 @@ type alias Model =
 
 type alias NodeFocusState =
     { nidjs : NID
+    , nameid : String
     , name : String
     , nodeType : String
     , path : Array.Array { name : String, nidjs : NID }
@@ -184,6 +185,7 @@ init { route } params =
 
         focusInit =
             { name = orga_name
+            , nameid = ""
             , nidjs = ""
             , nodeType = ""
             , path = Array.fromList [ { name = orga_name, nidjs = "" } ]
@@ -205,7 +207,9 @@ init { route } params =
       --    ]
     , Cmd.batch
         [ fetchNodesOrga model.asked_orga GotOrga
-        , fetchTensionsBunch GotTensions
+        , fetchCircleTension model.asked_orga GotTensions
+
+        --, fetchTensionsPg GotTensions
         , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
         ]
     , Cmd.none
@@ -347,7 +351,7 @@ update msg model =
                 postUpdated =
                     Dict.insert "createdAt" (fromTime time) form.post
             in
-            ( model, addOneTension TensionAck form.source form.target postUpdated, Cmd.none )
+            ( model, addOneTension form.source form.target postUpdated TensionAck, Cmd.none )
 
         TensionAck result ->
             let
@@ -366,7 +370,7 @@ update msg model =
 
         NodeClick focus ->
             ( { model | node_focus = focus }
-            , Cmd.none
+            , fetchCircleTension focus.nameid GotTensions
             , Cmd.none
             )
 
@@ -778,8 +782,17 @@ viewTensionStep form =
                     isTensionSendable form
             in
             div [ class "card" ]
-                [ --div [ class "card-header" ] [ div [ class "card-header-title" ] [ text "tension title..." ] ]
-                  div [ class "card-content" ]
+                [ div [ class "card-header" ]
+                    [ div [ class "card-header-title" ]
+                        [ span [ class "has-text-weight-medium has-text-center" ]
+                            [ text "Create tension from "
+                            , div [ class "button is-small" ] [ text form.target.name ]
+                            , text " to "
+                            , div [ class "button is-small" ] [ text form.target.name ]
+                            ]
+                        ]
+                    ]
+                , div [ class "card-content" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
@@ -837,7 +850,7 @@ viewTensionStep form =
                     div [ class "box has-background-danger" ] [ text err ]
 
                 default ->
-                    -- handle this with slowremoteloading
+                    -- @TODO: better handle this with an uniform interface with slowRemoteLoading
                     div [ class "box is-loading" ] [ text "Loading..." ]
 
 
