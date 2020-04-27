@@ -52,7 +52,8 @@ type alias ErrorData =
 type RequestResult errors data
     = Success data
     | Failure errors
-    | RemoteLoading
+    | Loading -- we don't make the difference between RemoteLoading and Loading here
+    | LoadingSlowly
     | NotAsked
 
 
@@ -411,7 +412,7 @@ decodeResponse decoder response =
                         |> Failure
 
         RemoteData.Loading ->
-            RemoteLoading
+            Loading
 
         RemoteData.NotAsked ->
             NotAsked

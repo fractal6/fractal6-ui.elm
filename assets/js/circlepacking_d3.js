@@ -95,39 +95,37 @@ function drawAll(app, graph) {
     //////////////// Style Constants  ////////////////////////////
     ////////////////////////////////////////////////////////////*/
 
-    //var colorDarker1 = "#303030";
-    //var colorDarker2 = "#313131";
-    //var colorDarker1 = "#DFE1E2";
-    //var colorDarker2 = "#DFE1E2";
-    var colorDarker1 = "#EDFCFF";
-    var colorDarker2 = "#EDFCFF";
-
-    //var backgroundColor = "#404040";  // darker
-    //var backgroundColor = "#DDE6F9";  // lighter
+    // Background Colors
+    var colorDarker1 = "#EDFCFF",
+        colorDarker2 = "#EDFCFF";
     //var backgroundColor = window.getComputedStyle(document.getElementById("body"), null).getPropertyValue("background-color");
     var backgroundColor = colorDarker1;
 
-    var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'];
+    // Graph Colors
     //var colorCircleRange = ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'];
+    var colorCircleRange = ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
+        leafColor = "white",
+        hoverCircleColor =  "black",
+        focusCircleColor = "#368ED3", // "blue",
+        hoverCircleWidth = 1.5; // waring, can break stroke with canvas drawing.
 
-    var canvasParentId = "canvasParent";
-    var canvasId = "canvasOrga";
-    var hiddenCanvasId = "hiddenCanvasOrga";
-    var leafColor = "white";
+    // Html element ID
+    var canvasParentId = "canvasParent",
+        canvasId = "canvasOrga",
+        hiddenCanvasId = "hiddenCanvasOrga";
+
+    // Graph fx settings
     var minZoomDuration = 1250, // 1500
         zoomFactorCircle = 2.05,
         zoomFactorRole = 2.2;
 
-    var hoverCircleColor =  "black",
-        focusCircleColor = "#368ED3", // "blue",
-        hoverCircleWidth = 1.5; // waring, can break stroke with canvas drawing.
+    // Canvas Min dimension
+    var minWidth = 400,
+        minHeight = 400;
 
     /*////////////////////////////////////////////////////////////
     ////////////////// Create Set-up variables  //////////////////
     ////////////////////////////////////////////////////////////*/
-
-    var minWidth = 400;
-    var minHeight = 400;
 
     // Get the chart div
     var $canvasParent = document.getElementById(canvasParentId);
@@ -193,15 +191,17 @@ function drawAll(app, graph) {
     $nextToChart.style.flexDirection = "column";
     //$nextToChart.style.overflowY = "auto";
 
-    // Setup Canvas button
-    var $canvasButtons = document.getElementById('canvasButtons');
-    //$canvasButtons.style.top = "-"+ globalCtx.height+"px"; // if position: relative
-    var r = $canvas.getBoundingClientRect();
-    $canvasButtons.classList.remove("is-invisible");
-    $canvasButtons.style.left = r.left + r.width - $canvasButtons.offsetWidth -5 + "px";
-    $canvasButtons.style.top = r.top + 10 + "px";
+	// Setup canvasButtons Buttons
+	setTimeout(function() {
+		var $canvasButtons = document.getElementById('canvasButtons');
+		//$canvasButtons.style.top = "-"+ globalCtx.height+"px"; // if position: relative
+		var r = $canvas.getBoundingClientRect();
+		$canvasButtons.classList.remove("is-invisible");
+		$canvasButtons.style.left = r.left + r.width - $canvasButtons.offsetWidth -5 + "px";
+		$canvasButtons.style.top = r.top + 10 + "px";
+	}, 200);
 
-    // Set node tooltip
+    // Setup nodeTooltip Tooltip
     var $tooltip = document.getElementById('nodeTooltip');
     $tooltip.classList.remove("is-invisible");
     clearNodeTooltip()

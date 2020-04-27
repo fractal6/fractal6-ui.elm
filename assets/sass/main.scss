@@ -13,10 +13,6 @@ html, body {
     padding-top: calc(#{$navbar-height}  ) !important;
 }
 
-header > .navbar {
-    background-color: #172335; // #0a0a0a;
-}
-
 .column {
   /*  Fix/scrollable column */
   &.is-fullheight {
@@ -94,7 +90,7 @@ html.has-modal-active {
         padding-bottom: 0 !important;
         margin-left: $size-small;
         margin-left: 0;
-		background-color: #02071ac4;
+		background-color: $navbar-brand-background-color;
     }
 
     .navbar-brand svg {
@@ -233,6 +229,10 @@ html.has-modal-active {
  * Orga Packging graph
  *
  */
+
+#canvasParent {
+    min-height: 400px;
+}
 
 #canvasOrga {
   border-radius: 7px;
@@ -435,6 +435,44 @@ html.has-modal-active {
     }
 
 
+}
+
+/*
+ *
+ * Spinner
+ *
+ */
+
+@keyframes spinner {
+0% {
+	transform: translate3d(-50%, -50%, 0) rotate(0deg);
+}
+100% {
+	 transform: translate3d(-50%, -50%, 0) rotate(360deg);
+}
+
+}.spinner {
+    // The height here is just for demo purposes
+    height: 100vh;
+    opacity: 1;
+    position: relative;
+    transition: opacity linear 0.1s;
+	&::before {
+		animation: 1.3s linear infinite spinner;
+		border: solid 3px #eee;
+		border-bottom-color: #6588EF;
+		border-radius: 50%;
+		content: "";
+		height: 40px;
+		left: 50%;
+		opacity: inherit;
+		position: absolute;
+		top: 50%;
+		transform: translate3d(-50%, -50%, 0);
+		transform-origin: center;
+		width: 40px;
+		will-change: transform;
+	}
 }
 
 

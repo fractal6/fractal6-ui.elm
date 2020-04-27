@@ -2,7 +2,7 @@ port module Pages.Org.Dynamic exposing (Model, Msg, page)
 
 import Array
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (Status(..), showMaybeError)
+import Components.Loading as Loading exposing (viewErrors)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
@@ -53,8 +53,8 @@ type alias ErrorData =
 type alias Model =
     { route : Route
     , asked_orga : String
-    , orga_data : Status ErrorData NodesData
-    , circle_tensions : Status ErrorData TensionsData
+    , orga_data : RequestResult ErrorData NodesData
+    , circle_tensions : RequestResult ErrorData TensionsData
     , node_focus : NodeFocusState
     , node_action : ActionState
     }
@@ -251,62 +251,35 @@ update msg model =
 
                         other ->
                             other
+
+                circle_tensions =
+                    case model.circle_tensions of
+                        Loading ->
+                            LoadingSlowly
+
+                        other ->
+                            other
             in
-            ( { model | orga_data = orga_data }
-            , Cmd.none
-            , Cmd.none
-            )
+            ( { model | orga_data = orga_data, circle_tensions = circle_tensions }, Cmd.none, Cmd.none )
 
         GotOrga result ->
             case result of
                 Success data ->
-                    ( { model | orga_data = Loaded data }
+                    ( { model | orga_data = result }
                     , Cmd.none
                     , Ports.init_circlePacking <| JE.encode 0 <| nodesEncoder data
                     )
 
-                Failure err ->
-                    ( { model | orga_data = Failed err }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                RemoteLoading ->
-                    ( { model | orga_data = Loading }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                NotAsked ->
-                    ( model, Cmd.none, Cmd.none )
+                default ->
+                    ( { model | orga_data = result }, Cmd.none, Cmd.none )
 
         GotTensions result ->
-            case result of
-                Success data ->
-                    ( { model | circle_tensions = Loaded data }
-                    , Cmd.none
-                    , Cmd.none
-                    )
+            ( { model | circle_tensions = result }, Cmd.none, Cmd.none )
 
-                Failure err ->
-                    ( { model | circle_tensions = Failed err }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                RemoteLoading ->
-                    ( { model | circle_tensions = Loading }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                NotAsked ->
-                    ( model, Cmd.none, Cmd.none )
-
-        DoNodeAction res ->
+        DoNodeAction action ->
             let
                 newAction =
-                    case res of
+                    case action of
                         Ok node ->
                             Ask <| FirstStep node
 
@@ -523,8 +496,40 @@ viewHelperBar model =
 
 viewCanvas : Model -> Html Msg
 viewCanvas model =
+    let
+        isLoading =
+            case model.orga_data of
+                LoadingSlowly ->
+                    True
+
+                default ->
+                    False
+
+        error =
+            case model.orga_data of
+                Failure err ->
+                    ( True, err )
+
+                default ->
+                    ( False, "" )
+
+        hasErr =
+            Tuple.first error
+
+        errMsg =
+            Tuple.second error
+    in
     div []
-        [ div [ id "canvasParent" ] [ showMaybeError model.orga_data ]
+        [ div
+            [ id "canvasParent"
+            , classList [ ( "spinner", isLoading ) ]
+            ]
+          <|
+            if hasErr then
+                [ viewErrors errMsg ]
+
+            else
+                []
 
         -- Hidden class use in circlepacking_d3.js
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
@@ -587,6 +592,15 @@ viewMandate model =
 
 viewActivies : Model -> Html Msg
 viewActivies model =
+    let
+        isLoading =
+            case model.circle_tensions of
+                LoadingSlowly ->
+                    True
+
+                default ->
+                    False
+    in
     div
         [ class "box"
         , attribute "style" "flex-grow: 1;"
@@ -605,16 +619,22 @@ viewActivies model =
                     ]
                 ]
             ]
-        , div [ class "content" ]
+        , div [ classList [ ( "content", True ), ( "spinner", isLoading ) ] ]
             [ case model.circle_tensions of
-                Loaded tensions ->
-                    List.map (\t -> vTension t) tensions
-                        |> div [ class "is-size-7", id "tensionsTab" ]
+                Success tensions ->
+                    if List.length tensions > 0 then
+                        List.map (\t -> vTension t) tensions
+                            |> div [ class "is-size-7", id "tensionsTab" ]
 
-                -- why it doesnt work?
-                other ->
-                    [ showMaybeError other ]
-                        |> div []
+                    else
+                        -- @DEBUG: for this role/circle
+                        div [] [ text "No tensions for this circle yet." ]
+
+                Failure err ->
+                    viewErrors err
+
+                default ->
+                    div [] []
             ]
 
         --, a [ class "Footer has-text-centered" ] [ text "See more" ]

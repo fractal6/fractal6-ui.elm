@@ -1,10 +1,20 @@
-module Components.Loading exposing (Status(..), showMaybeError, slowTreshold)
+module Components.Loading exposing (slowTreshold, spinner, viewErrors)
 
 import Components.Asset as Asset
-import Html exposing (Html, img, text)
-import Html.Attributes exposing (alt, height, src, width)
+import Html exposing (Html, div, img, text)
+import Html.Attributes exposing (alt, class, height, src, width)
 import Process
 import Task
+
+
+
+-- Logics
+
+
+slowTreshold : Task.Task x ()
+slowTreshold =
+    -- before passing to Slow Loading status
+    Process.sleep 500
 
 
 
@@ -22,38 +32,6 @@ spinner =
         []
 
 
-showError : String -> Html msg
-showError err =
-    text ("Error: " ++ err)
-
-
-
--- Logics
-
-
-type Status errorMsg data
-    = Loading
-    | LoadingSlowly
-    | Failed errorMsg
-    | Loaded data
-
-
-slowTreshold : Task.Task x ()
-slowTreshold =
-    Process.sleep 500
-
-
-showMaybeError : Status String data -> Html msg
-showMaybeError status =
-    case status of
-        Loaded _ ->
-            text ""
-
-        Loading ->
-            text ""
-
-        LoadingSlowly ->
-            spinner
-
-        Failed err ->
-            showError err
+viewErrors : String -> Html msg
+viewErrors errMsg =
+    div [ class "box has-background-danger" ] [ text errMsg ]
