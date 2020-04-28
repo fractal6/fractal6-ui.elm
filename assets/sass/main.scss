@@ -72,6 +72,12 @@ html.has-modal-active {
     border-bottom: 1px dotted;
 }
 
+.right-arrow::after {
+    content: " \27F6 ";
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
 /////
 
 .menu .menu-label {

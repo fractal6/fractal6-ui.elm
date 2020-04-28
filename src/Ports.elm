@@ -11,6 +11,9 @@ import Json.Encode as Json
 port outgoing : { action : String, data : Json.Value } -> Cmd msg
 
 
+port ingoing : String -> Cmd msg
+
+
 log : String -> Cmd msg
 log message =
     outgoing

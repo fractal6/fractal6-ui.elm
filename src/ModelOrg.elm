@@ -19,7 +19,10 @@ import GqlClient exposing (..)
 import Graphql.Http
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Html exposing (Html, a, div, span, text)
+import Html.Attributes exposing (class)
 import Iso8601 exposing (fromTime)
+import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
 
 
@@ -98,6 +101,13 @@ type alias NodesResponse =
 
 
 type alias NodeTensions =
+    { tensions_in : Maybe (List Tension)
+    , tensions_out : Maybe (List Tension)
+    , children : Maybe (List SubNodeTensions)
+    }
+
+
+type alias SubNodeTensions =
     { tensions_in : Maybe (List Tension)
     , tensions_out : Maybe (List Tension)
     }
@@ -200,13 +210,9 @@ tensionPgFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Obj
 tensionPgFilter a =
     { a
         | first = OptionalArgument.Present nTensionPpg
-        , order =
-            OptionalArgument.Present
-                (Input.buildTensionOrder
-                    (\b ->
-                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
-                    )
-                )
+
+        -- we reorder it anyway !
+        --, order = OptionalArgument.Present (Input.buildTensionOrder (\b -> { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }))
     }
 
 
@@ -244,9 +250,15 @@ tensionPgPayload =
 circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
 circleTensionPayload =
     SelectionSet.succeed NodeTensions
-        |> with
-            (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
+        |> with (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
         |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
+        |> with
+            (Fractal.Object.Node.children identity
+                (SelectionSet.succeed SubNodeTensions
+                    |> with (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
+                    |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
+                )
+            )
 
 
 fetchCircleTension targetid msg =
@@ -326,38 +338,20 @@ addOneTension source target tension msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-assertString x =
-    case x of
-        Just y ->
-            y
-
-        Nothing ->
-            ""
-
-
-assertTensionType x =
-    case x of
-        Just y ->
-            y
-
-        Nothing ->
-            TensionType.Operational
-
-
 tensionInputEncoder : Node -> Node -> Post -> Mutation.AddTensionRequiredArguments
 tensionInputEncoder source target post =
     let
         time =
-            Dict.get "createdAt" post |> assertString
+            Dict.get "createdAt" post |> withDefault ""
 
         title =
-            Dict.get "title" post |> assertString
+            Dict.get "title" post |> withDefault ""
 
         type_ =
-            Dict.get "type_" post |> assertString |> TensionType.fromString |> assertTensionType
+            Dict.get "type_" post |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Alert
 
         createdby =
-            Dict.get "username" post |> assertString
+            Dict.get "username" post |> withDefault ""
 
         emitterid =
             source.nameid
@@ -427,25 +421,30 @@ circleTensionDecoder data =
         Just node ->
             let
                 tin =
-                    case node.tensions_in of
-                        Just a ->
-                            a
-
-                        Nothing ->
-                            []
+                    node.tensions_in |> withDefault []
 
                 tout =
-                    case node.tensions_out of
-                        Just a ->
-                            a
+                    node.tensions_out |> withDefault []
 
-                        Nothing ->
-                            []
+                tchild =
+                    node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
             in
-            List.sortBy .createdAt (tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout) |> List.reverse
+            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout) |> List.reverse
 
         Nothing ->
             []
+
+
+subCircleTensionDecoder : SubNodeTensions -> List Tension
+subCircleTensionDecoder child =
+    let
+        tin =
+            child.tensions_in |> withDefault []
+
+        tout =
+            child.tensions_out |> withDefault []
+    in
+    tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout
 
 
 queryDecoder : Maybe (List (Maybe a)) -> List a
@@ -482,3 +481,63 @@ decodedId (Fractal.Scalar.Id id) =
 decodedTime : Fractal.ScalarCodecs.DateTime -> String
 decodedTime (Fractal.Scalar.DateTime time) =
     time
+
+
+tensionTypeColor : String -> TensionType.TensionType -> String
+tensionTypeColor elt tt =
+    case tt of
+        TensionType.Governance ->
+            "has-" ++ elt ++ "-info"
+
+        TensionType.Operational ->
+            "has-" ++ elt ++ "-success"
+
+        TensionType.Personal ->
+            "has-" ++ elt ++ "-warning"
+
+        TensionType.Help ->
+            "has-" ++ elt ++ "-link"
+
+        TensionType.Alert ->
+            "has-" ++ elt ++ "-danger"
+
+
+
+--
+-- View
+--
+
+
+tensionTypeSpan : String -> String -> Post -> Html msg
+tensionTypeSpan cls elt post =
+    let
+        maybeTTypeString =
+            Dict.get "type_" post
+
+        ttDecoded =
+            case maybeTTypeString of
+                Just ts ->
+                    case TensionType.fromString ts of
+                        Just td ->
+                            Just ( ts, td )
+
+                        Nothing ->
+                            Nothing
+
+                Nothing ->
+                    Nothing
+    in
+    case ttDecoded of
+        Just tt ->
+            span [ class <| cls ++ " " ++ tensionTypeColor elt (Tuple.second tt) ] [ text (Tuple.first tt) ]
+
+        Nothing ->
+            span [ class "" ] [ text "Unknown" ]
+
+
+tensionTypeArrow : String -> String -> String -> List (Html msg)
+tensionTypeArrow cls source target =
+    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ text source ]
+    , span [ class <| "right-arrow" ] []
+    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ text target ]
+    ]

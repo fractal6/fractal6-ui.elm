@@ -2,12 +2,18 @@
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
     window.ports = {
-        init: (app) =>
-        app.ports.outgoing.subscribe(({ action, data }) =>
-            actions[action]
-            ? actions[action](app, data)
-            : console.warn(`I didn't recognize action "${action}".`)
-        )
+        init: (app) => {
+            app.ports.outgoing.subscribe(({ action, data }) =>
+                actions[action]
+                ? actions[action](app, data)
+                : console.warn(`I didn't recognize action "${action}".`)
+            )
+        }
+
+        //'GET_MOMENT': (app, time) => {
+        //    dayjs.from(dayjs.unix(time))
+        //    moment("20111031", "YYYYMMDD").fromNow()
+        //}
     }
 })
 

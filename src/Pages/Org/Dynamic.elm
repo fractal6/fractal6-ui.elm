@@ -17,6 +17,7 @@ import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
+import Maybe exposing (withDefault)
 import ModelOrg exposing (..)
 import Ports
 import RemoteData exposing (RemoteData)
@@ -534,7 +535,7 @@ viewCanvas model =
         -- Hidden class use in circlepacking_d3.js
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             [ div
-                [ id "inv_cvbtn"
+                [ id "invGraph_cvbtn"
                 , class "button buttonToggle tooltip has-tooltip-right"
                 , attribute "data-tooltip" "Reverse the organisation graph."
                 , onClick ToggleGraphReverse
@@ -542,7 +543,7 @@ viewCanvas model =
                 [ Fa.icon0 "fas fa-sort-amount-up" "" ]
 
             --, div
-            --    [ id "label_cvbtn"
+            --    [ id "showLabel_cvbtn"
             --    , class "button buttonToggle tooltip has-tooltip-right"
             --    , attribute "data-tooltip" "Show/Hide circle tooltips."
             --    , onClick ToggleTooltips
@@ -623,7 +624,7 @@ viewActivies model =
             [ case model.circle_tensions of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> vTension t) tensions
+                        List.map (\t -> mediaTension t) tensions
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else
@@ -642,59 +643,38 @@ viewActivies model =
         ]
 
 
-vTension : Tension -> Html Msg
-vTension tension =
+mediaTension : Tension -> Html Msg
+mediaTension tension =
     div [ class "media Box" ]
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top"
                 , attribute "data-tooltip" ("type: " ++ TensionType.toString tension.type_)
                 ]
-                [ case tension.type_ of
-                    TensionType.Personal ->
-                        div [ class "Circle has-text-danger" ] [ text "" ]
-
-                    TensionType.Governance ->
-                        div [ class "Circle has-text-info" ] [ text "" ]
-
-                    TensionType.Operational ->
-                        div [ class "Circle has-text-warning" ] [ text "" ]
-
-                    TensionType.Help ->
-                        div [ class "Circle has-text-success" ] [ text "" ]
-
-                    TensionType.Alert ->
-                        div [ class "Circle has-text-alert" ] [ text "" ]
-                ]
+                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
             ]
         , div [ class "media-content" ]
             [ div [ class "content" ]
                 [ div [ class "has-text-weight-semibold" ]
                     [ text tension.title ]
                 ]
-            , div [ class "labelsList" ]
-                (case tension.labels of
-                    Just labels ->
-                        List.map
-                            (\label ->
-                                span [ class "tag" ] [ text label.name ]
-                            )
-                            labels
-
-                    Nothing ->
-                        []
+            , div [ class "labelsList" ] <|
+                (tension.labels
+                    |> withDefault []
+                    |> List.map
+                        (\label ->
+                            span [ class "tag" ] [ text label.name ]
+                        )
                 )
+            , br [ class "is-block" ] []
+            , span [] <| tensionTypeArrow "" tension.emitter.name tension.receiver.name
+            , span [ class "is-pulled-right has-text-weight-light" ] [ text <| " created at " ++ tension.createdAt ]
             ]
         , div
             [ class "media-right" ]
             [ let
                 n_comments =
-                    case tension.n_comments of
-                        Just n ->
-                            n
-
-                        Nothing ->
-                            0
+                    tension.n_comments |> withDefault 0
               in
               if n_comments > 0 then
                 div
@@ -749,13 +729,13 @@ viewActionStep step =
                 , div [ class "card-content" ]
                     [ div [ class "level" ] <|
                         if node.type_ == NodeType.Circle then
-                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep1 ] [ text "New tension" ] ]
-                            , div [ class "level-item" ] [ div [ class "button" ] [ text "New Sub-Circle" ] ]
-                            , div [ class "level-item" ] [ div [ class "button" ] [ text "New Role" ] ]
+                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionStep1 ] [ text "New tension" ] ]
+                            , div [ class "level-item" ] [ div [ class "button is-info" ] [ text "New Role" ] ]
+                            , div [ class "level-item" ] [ div [ class "button is-link" ] [ text "New Sub-Circle" ] ]
                             ]
 
                         else
-                            [ div [ class "level-item" ] [ div [ class "button", onClick DoTensionStep1 ] [ text "New tension" ] ] ]
+                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionStep1 ] [ text "New tension" ] ] ]
                     ]
                 ]
 
@@ -769,11 +749,8 @@ viewTensionStep form =
         TensionTypeForm ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
-                    [ div [ class "card-header-title" ] <|
-                        List.intersperse (text "\u{00A0}")
-                            [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate" ]
-                            , text ":"
-                            ]
+                    [ div [ class "card-header-title" ]
+                        [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate:" ] ]
                     ]
                 , div [ class "card-content" ]
                     [ div [ class "level buttonRadio" ] <|
@@ -785,7 +762,7 @@ viewTensionStep form =
                                 in
                                 div [ class "level-item" ]
                                     [ div
-                                        [ class "button"
+                                        [ class <| "button " ++ tensionTypeColor "background" tensionType
                                         , onClick (DoTensionStep2 tensionTypeStr)
                                         ]
                                         [ text tensionTypeStr ]
@@ -804,13 +781,12 @@ viewTensionStep form =
             div [ class "card" ]
                 [ div [ class "card-header" ]
                     [ div [ class "card-header-title" ]
-                        [ span [ class "has-text-weight-medium has-text-center" ]
-                            [ text "Create tension from "
-                            , div [ class "button is-small" ] [ text form.target.name ]
-                            , text " to "
-                            , div [ class "button is-small" ] [ text form.target.name ]
-                            ]
+                        [ div [] <|
+                            List.intersperse (text "\u{00A0}")
+                                [ span [ class "is-size-6" ] [ text "Create tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ]
+                                ]
                         ]
+                    , div [ class "card-content" ] <| tensionTypeArrow "button" form.target.name form.target.name
                     ]
                 , div [ class "card-content" ]
                     [ div [ class "field" ]
@@ -851,10 +827,7 @@ viewTensionStep form =
                                     [ text "Submit new tension" ]
 
                               else
-                                button
-                                    [ class "button has-text-weight-semibold"
-                                    , disabled True
-                                    ]
+                                button [ class "button has-text-weight-semibold", disabled True ]
                                     [ text "Submit new tension" ]
                             ]
                         ]
@@ -938,12 +911,7 @@ isTensionSendable : TensionForm -> Bool
 isTensionSendable form =
     let
         title =
-            case Dict.get "title" form.post of
-                Just t ->
-                    t
-
-                Nothing ->
-                    ""
+            Dict.get "title" form.post |> withDefault ""
 
         isSendable =
             String.length title > 0

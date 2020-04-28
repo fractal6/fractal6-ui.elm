@@ -192,8 +192,8 @@ function drawAll(app, graph) {
     //$nextToChart.style.overflowY = "auto";
 
 	// Setup canvasButtons Buttons
+    var $canvasButtons = document.getElementById('canvasButtons');
 	setTimeout(function() {
-		var $canvasButtons = document.getElementById('canvasButtons');
 		//$canvasButtons.style.top = "-"+ globalCtx.height+"px"; // if position: relative
 		var r = $canvas.getBoundingClientRect();
 		$canvasButtons.classList.remove("is-invisible");
@@ -458,7 +458,12 @@ function drawAll(app, graph) {
                 var x1 = n.ctx.centerX - w;
                 var x2 = n.ctx.centerX + w;
                 var y1 = n.ctx.centerY - n.ctx.rayon - h;
-                var y2 = n.ctx.centerY - n.ctx.rayon*0.6;
+                var y2;
+                if ( n === focusedNode) {
+                    y2 = n.ctx.centerY - n.ctx.rayon*0.85;
+                } else {
+                    y2 = n.ctx.centerY - n.ctx.rayon*0.6;
+                }
                 test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 break
             default:
@@ -823,6 +828,7 @@ function drawAll(app, graph) {
     });
 
     app.ports.sendToggleTooltips.subscribe(function(e) {
+        //DEBUG: TODO
     });
 
     //

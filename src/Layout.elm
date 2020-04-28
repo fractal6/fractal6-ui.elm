@@ -58,7 +58,7 @@ viewHeader currentRoute =
                 , div [ class "navbar-end" ]
                     [ a [ class "navbar-item" ]
                         [ div [ class "button is-warning is-small" ]
-                            [ div [ class "content is-medium" ]
+                            [ div [ class "content" ]
                                 [ text "Report an issue"
                                 ]
                             ]
