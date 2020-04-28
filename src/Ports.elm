@@ -8,10 +8,14 @@ port module Ports exposing
 import Json.Encode as Json
 
 
+
+-- Ingoing
+--port getBackTimeFrom : (String -> msg) -> Sub msg
+-- How to use that ? (dayjs tipically or other use of a general library (updated nested data?)
+-- Outgoing
+
+
 port outgoing : { action : String, data : Json.Value } -> Cmd msg
-
-
-port ingoing : String -> Cmd msg
 
 
 log : String -> Cmd msg

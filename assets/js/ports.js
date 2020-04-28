@@ -9,11 +9,6 @@ window.addEventListener('load', _ => {
                 : console.warn(`I didn't recognize action "${action}".`)
             )
         }
-
-        //'GET_MOMENT': (app, time) => {
-        //    dayjs.from(dayjs.unix(time))
-        //    moment("20111031", "YYYYMMDD").fromNow()
-        //}
     }
 })
 

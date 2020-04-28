@@ -2,7 +2,7 @@ port module Pages.Org.Dynamic exposing (Model, Msg, page)
 
 import Array
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (viewErrors)
+import Components.Loading as Loading exposing (formatTime, viewErrors)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
@@ -668,7 +668,7 @@ mediaTension tension =
                 )
             , br [ class "is-block" ] []
             , span [] <| tensionTypeArrow "" tension.emitter.name tension.receiver.name
-            , span [ class "is-pulled-right has-text-weight-light" ] [ text <| " created at " ++ tension.createdAt ]
+            , span [ class "is-pulled-right has-text-weight-light" ] [ text <| " opened the " ++ formatTime tension.createdAt ]
             ]
         , div
             [ class "media-right" ]
