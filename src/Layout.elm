@@ -11,7 +11,6 @@ view : Spa.LayoutContext msg -> Html msg
 view { page, route } =
     div [ id "app" ]
         [ viewHeader route
-        , div [ id "notifAlert" ] []
         , div [ id "body", class "section is-paddingless" ] [ page ]
         ]
 

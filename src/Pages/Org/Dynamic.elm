@@ -2,7 +2,8 @@ port module Pages.Org.Dynamic exposing (Model, Msg, page)
 
 import Array
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (formatTime, viewErrors)
+import Components.Loading as Loading exposing (viewErrors)
+import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
@@ -411,9 +412,8 @@ view : Model -> Html Msg
 view model =
     div
         [ class "columns" ]
-        [ div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ]
-            [ viewLeftPane model ]
-        , div [ class "column is-10", id "mainPane" ]
+        [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+          div [ class "column is-10", id "mainPane" ]
             [ div [ class "columns" ]
                 [ viewHelperBar model ]
             , div [ class "columns is-variable is-4" ]
@@ -667,7 +667,7 @@ mediaTension tension =
                         )
                 )
             , br [ class "is-block" ] []
-            , span [] <| tensionTypeArrow "" tension.emitter.name tension.receiver.name
+            , span [] <| tensionTypeArrow "has-text-weight-light" tension.emitter.name tension.receiver.name
             , span [ class "is-pulled-right has-text-weight-light" ] [ text <| " opened the " ++ formatTime tension.createdAt ]
             ]
         , div
