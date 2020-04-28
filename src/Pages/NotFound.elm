@@ -1,11 +1,11 @@
-module Pages.NotFound exposing (Model, Msg, page)
+module Pages.NotFound exposing (Flags, Model, Msg, page)
 
-import Generated.Params as Params
-import Generated.Routes as Routes exposing (routes)
-import Html exposing (..)
-import Html.Attributes as Attr
-import Spa.Page
-import Utils.Spa exposing (Page)
+import Html
+import Page exposing (Document, Page)
+
+
+type alias Flags =
+    ()
 
 
 type alias Model =
@@ -16,27 +16,15 @@ type alias Msg =
     Never
 
 
-page : Page Params.NotFound Model Msg model msg appMsg
+page : Page Flags Model Msg
 page =
-    Spa.Page.static
-        { title = always "not found | elm-spa"
-        , view = always view
+    Page.static
+        { view = view
         }
 
 
-
--- VIEW
-
-
-view : Html Msg
+view : Document Msg
 view =
-    div [ Attr.class "page" ]
-        [ h1
-            [ Attr.class "page__title" ]
-            [ text "404 is life." ]
-        , a
-            [ Attr.class "page__link"
-            , Attr.href (Routes.toPath routes.top)
-            ]
-            [ text "back home?" ]
-        ]
+    { title = "NotFound"
+    , body = [ Html.text "NotFound" ]
+    }

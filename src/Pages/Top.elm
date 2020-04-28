@@ -1,10 +1,11 @@
-module Pages.Top exposing (Model, Msg, page)
+module Pages.Top exposing (Flags, Model, Msg, page)
 
-import Generated.Params as Params
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Spa.Page
-import Utils.Spa exposing (Page)
+import Html
+import Page exposing (Document, Page)
+
+
+type alias Flags =
+    ()
 
 
 type alias Model =
@@ -15,20 +16,15 @@ type alias Msg =
     Never
 
 
-page : Page Params.Top Model Msg model msg appMsg
+page : Page Flags Model Msg
 page =
-    Spa.Page.static
-        { title = always "homepage"
-        , view = always view
+    Page.static
+        { view = view
         }
 
 
-
--- VIEW
-
-
-view : Html Msg
+view : Document Msg
 view =
-    div []
-        [ h1 [] [ text "Welcome" ]
-        ]
+    { title = "Top"
+    , body = [ Html.text "Top" ]
+    }

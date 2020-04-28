@@ -1,15 +1,29 @@
 module Global exposing
     ( Flags
     , Model
-    , Msg(..)
-    , User(..)
+    , Msg
     , init
+    , navigate
     , subscriptions
     , update
+    , view
     )
 
-import Generated.Routes as Routes exposing (Route)
+import Browser exposing (Document)
+import Browser.Navigation as Nav
+import Components
+import Generated.Route as Route exposing (Route)
 import Ports
+import Task
+import Url exposing (Url)
+
+
+
+-- INIT
+
+
+type alias Flags =
+    ()
 
 
 
@@ -31,16 +45,20 @@ type User
     | LoggedIn UserSession UserInfo
 
 
+
+--type alias Model =
+--    { user : User }
+
+
 type alias Model =
-    { user : User }
+    { flags : Flags
+    , url : Url
+    , key : Nav.Key
+    }
 
 
-
--- Init
-
-
-init : Commands msg -> Flags -> ( Model, Cmd Msg, Cmd msg )
-init _ _ =
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
     let
         session =
             { node_focus = "aahahah"
@@ -54,8 +72,7 @@ init _ _ =
         init_user =
             { user = LoggedIn session userInfo }
     in
-    ( init_user
-    , Cmd.none
+    ( Model flags url key
     , Cmd.batch
         [ Ports.log "Hello!"
         , Ports.bulma_driver ""
@@ -64,27 +81,57 @@ init _ _ =
     )
 
 
+
+-- UPDATE
+
+
 type Msg
-    = Never
+    = Navigate Route
 
 
-type alias Flags =
-    ()
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Navigate route ->
+            ( model
+            , Nav.pushUrl model.key (Route.toHref route)
+            )
 
 
-type alias Commands msg =
-    { navigate : Route -> Cmd msg
-    }
 
-
-update : Commands msg -> Msg -> Model -> ( Model, Cmd Msg, Cmd msg )
-update _ _ model =
-    ( model
-    , Cmd.none
-    , Cmd.none
-    )
+-- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Sub.none
+
+
+
+-- VIEW
+
+
+view :
+    { page : Document msg
+    , global : Model
+    , toMsg : Msg -> msg
+    }
+    -> Document msg
+view { page, global, toMsg } =
+    Components.layout
+        { page = page
+        }
+
+
+
+-- COMMANDS
+
+
+send : msg -> Cmd msg
+send =
+    Task.succeed >> Task.perform identity
+
+
+navigate : Route -> Cmd Msg
+navigate route =
+    send (Navigate route)
