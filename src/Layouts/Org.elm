@@ -10,13 +10,12 @@ import Utils.Spa as Spa
 view : Spa.LayoutContext msg -> Html msg
 view { page, route, global } =
     let
-        --Debug.log "trying" global
         focus =
             case global.user of
-                Global.LoggedOut state ->
-                    state.focus
+                Global.LoggedOut session ->
+                    session.node_focus
 
-                Global.LoggedIn state _ ->
-                    state.focus
+                Global.LoggedIn session _ ->
+                    session.node_focus
     in
     page

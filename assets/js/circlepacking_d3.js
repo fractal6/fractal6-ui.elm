@@ -94,6 +94,10 @@ function drawAll(app, graph) {
     /*////////////////////////////////////////////////////////////
     //////////////// Style Constants  ////////////////////////////
     ////////////////////////////////////////////////////////////*/
+    if (graph.length == 0) {
+        console.warn("Graph is empty, aborting")
+        return
+    }
 
     // Background Colors
     var colorDarker1 = "#EDFCFF",
@@ -306,8 +310,9 @@ function drawAll(app, graph) {
     function getNodePath(node) {
         var path = cPack.path(node).map(n => {
             return {
-                name: n.data.name,
                 nidjs: n.color,
+                nameid: n.data.nameid,
+                name: n.data.name,
             };
         });
         return path
@@ -773,13 +778,11 @@ function drawAll(app, graph) {
     //
 
     function updateFocusedNodeElm(node) {
-        var path = getNodePath(node);
         app.ports.nodeFocusFromJs.send({
             nidjs    : node.color,
             name     : node.data.name,
             nameid   : node.data.nameid,
-            nodeType : node.data.type_,
-            path     : path
+            path     : getNodePath(node)
         });
     }
 

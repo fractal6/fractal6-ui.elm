@@ -2,9 +2,7 @@ module Global exposing
     ( Flags
     , Model
     , Msg(..)
-    , NID
     , User(..)
-    , UserFocus
     , init
     , subscriptions
     , update
@@ -18,52 +16,23 @@ import Ports
 -- Model
 
 
-type alias NID =
-    String
-
-
 type alias UserInfo =
     { username : String
     , display_name : String
-    , nid : String
     }
 
 
-type alias UserState =
-    { focus : UserFocus }
-
-
-type alias UserFocus =
-    { circle_focus : NID
-    , circle_name : String
-    , orga_name : String
-    }
+type alias UserSession =
+    { node_focus : String }
 
 
 type User
-    = LoggedOut UserState
-    | LoggedIn UserState UserInfo
+    = LoggedOut UserSession
+    | LoggedIn UserSession UserInfo
 
 
 type alias Model =
     { user : User }
-
-
-type Msg
-    = UpdateFocus String
-
-
-
---
-
-
-type alias Flags =
-    ()
-
-
-type alias Commands msg =
-    { navigate : Route -> Cmd msg
-    }
 
 
 
@@ -73,22 +42,17 @@ type alias Commands msg =
 init : Commands msg -> Flags -> ( Model, Cmd Msg, Cmd msg )
 init _ _ =
     let
-        user_state_init =
-            { focus =
-                { circle_focus = "545687"
-                , circle_name = "Sku Branck"
-                , orga_name = "<> SkuSku"
-                }
+        session =
+            { node_focus = "aahahah"
             }
 
-        user_info_init =
-            { username = "iam Sku"
-            , display_name = "haaouaa"
-            , nid = "xzdz54"
+        userInfo =
+            { username = "abcdefghijklmnop"
+            , display_name = "My name is DorVa"
             }
 
         init_user =
-            { user = LoggedIn user_state_init user_info_init }
+            { user = LoggedIn session userInfo }
     in
     ( init_user
     , Cmd.none
@@ -98,6 +62,19 @@ init _ _ =
         , Ports.toggle_theme
         ]
     )
+
+
+type Msg
+    = Never
+
+
+type alias Flags =
+    ()
+
+
+type alias Commands msg =
+    { navigate : Route -> Cmd msg
+    }
 
 
 update : Commands msg -> Msg -> Model -> ( Model, Cmd Msg, Cmd msg )

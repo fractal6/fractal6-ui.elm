@@ -9,7 +9,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
 import Generated.Org.Params as Params
 import Generated.Routes exposing (Route)
-import Global exposing (NID)
+import Global
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (on, onClick, onInput)
@@ -69,11 +69,10 @@ type alias Model =
 
 
 type alias NodeFocusState =
-    { nidjs : NID
-    , nameid : String
-    , name : String
-    , nodeType : String
-    , path : Array.Array { name : String, nidjs : NID }
+    { nidjs : String --
+    , nameid : String -- This is redundant with the path[-1]
+    , name : String --
+    , path : Array.Array { nidjs : String, nameid : String, name : String }
     }
 
 
@@ -103,13 +102,6 @@ type alias TensionForm =
     }
 
 
-
---{ title : String
---, type_ : String
---, emitter : String
---}
-
-
 type alias NodeTarget =
     -- Helper for encoding ActionState
     Result JD.Error Node
@@ -129,6 +121,15 @@ initTensionForm node =
     , result = NotAsked
     , target = node
     , source = node
+    }
+
+
+initNodeFocus : String -> NodeFocusState
+initNodeFocus n =
+    { nidjs = ""
+    , nameid = ""
+    , name = n
+    , path = Array.fromList [ { nidjs = "", nameid = "", name = n } ]
     }
 
 
@@ -186,12 +187,7 @@ init { route } params =
             params.param1
 
         focusInit =
-            { name = orga_name
-            , nameid = ""
-            , nidjs = ""
-            , nodeType = ""
-            , path = Array.fromList [ { name = orga_name, nidjs = "" } ]
-            }
+            initNodeFocus orga_name
 
         model =
             { route = route
@@ -267,10 +263,15 @@ update msg model =
         GotOrga result ->
             case result of
                 Success data ->
-                    ( { model | orga_data = result }
-                    , Cmd.none
-                    , Ports.init_circlePacking <| JE.encode 0 <| nodesEncoder data
-                    )
+                    if List.length data > 0 then
+                        ( { model | orga_data = result }
+                        , Cmd.none
+                        , Ports.init_circlePacking <| JE.encode 0 <| nodesEncoder data
+                        )
+
+                    else
+                        --( model, MoveTo404, Cmd.none )
+                        ( model, Cmd.none, Cmd.none )
 
                 default ->
                     ( { model | orga_data = result }, Cmd.none, Cmd.none )
@@ -350,16 +351,12 @@ update msg model =
             )
 
         ChangeNodeFocus pos ->
-            let
-                nidjs =
-                    case Array.get pos model.node_focus.path of
-                        Just x ->
-                            x.nidjs
+            case Array.get pos model.node_focus.path of
+                Just f ->
+                    ( model, sendNodeFocus f.nidjs, Cmd.none )
 
-                        Nothing ->
-                            ""
-            in
-            ( model, sendNodeFocus nidjs, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -395,7 +392,7 @@ nodeDataFromJs rawNode =
     rawNodeDataFromJs (rawNode << JD.decodeValue nodeDecoder)
 
 
-port sendNodeFocus : NID -> Cmd msg
+port sendNodeFocus : String -> Cmd msg
 
 
 port sendToggleGraphReverse : () -> Cmd msg
@@ -483,7 +480,7 @@ viewHelperBar model =
         , Array.indexedMap
             (\i x ->
                 if i < (Array.length model.node_focus.path - 1) then
-                    li [] [ a [ href "#", onClick (ChangeNodeFocus i) ] [ text x.name ] ]
+                    li [] [ a [ href (uriFromFocus model), onClick (ChangeNodeFocus i) ] [ text x.name ] ]
 
                 else
                     li [ class "is-active has-text-weight-semibold" ]
@@ -907,6 +904,10 @@ updateTensionPost model field value =
             Nothing
 
 
+
+-- getters
+
+
 isTensionSendable : TensionForm -> Bool
 isTensionSendable form =
     let
@@ -917,3 +918,17 @@ isTensionSendable form =
             String.length title > 0
     in
     isSendable
+
+
+uriFromFocus : Model -> String
+uriFromFocus model =
+    let
+        root =
+            model.node_focus.path
+                |> Array.get 0
+                |> withDefault { nidjs = "", nameid = "", name = "" }
+
+        leaf =
+            model.node_focus
+    in
+    String.join "/" [ root.nameid, leaf.nameid ]
