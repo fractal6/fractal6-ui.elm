@@ -1,13 +1,15 @@
 port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewErrors)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
+import Extra exposing (onClickLink, onClickPD)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
-import Global
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (on, onClick, onInput)
@@ -17,6 +19,7 @@ import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
+import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -39,134 +42,14 @@ page =
 --
 -- Model
 --
-{-
-   Main model data
--}
-
-
-type alias ErrorData =
-    String
 
 
 type alias Model =
-    { asked_orga : String
-    , orga_data : RequestResult ErrorData NodesData
-    , circle_tensions : RequestResult ErrorData TensionsData
-    , node_focus : NodeFocusState
+    { node_focus : NodeFocusState
+    , orga_data : OrgaData
+    , circle_tensions : CircleTensionsData
     , node_action : ActionState
     }
-
-
-
-{-
-   Session Data
--}
-
-
-type alias NodeFocusState =
-    { nidjs : String --
-    , nameid : String -- This is redundant with the path[-1]
-    , name : String --
-    , path : Array.Array { nidjs : String, nameid : String, name : String }
-    }
-
-
-type ActionState
-    = Ask (ActionStep Node)
-    | AskErr String
-    | NotAsk
-
-
-type ActionStep target
-    = FirstStep target
-    | AddTensionStep TensionForm -- AskNewTension
-
-
-type TensionStep
-    = TensionTypeForm
-    | TensionFinalForm
-    | TensionValidation
-
-
-type alias TensionForm =
-    { step : TensionStep
-    , post : Post
-    , result : RequestResult ErrorData (Maybe AddTensionPayload)
-    , target : Node
-    , source : Node
-    }
-
-
-type alias NodeTarget =
-    -- Helper for encoding ActionState
-    Result JD.Error Node
-
-
-
---
--- Model setters
---
---
-
-
-initTensionForm : Node -> TensionForm
-initTensionForm node =
-    { step = TensionTypeForm
-    , post = Dict.fromList [ ( "username", "clara" ) ]
-    , result = NotAsked
-    , target = node
-    , source = node
-    }
-
-
-initNodeFocus : String -> NodeFocusState
-initNodeFocus n =
-    { nidjs = ""
-    , nameid = ""
-    , name = n
-    , path = Array.fromList [ { nidjs = "", nameid = "", name = n } ]
-    }
-
-
-
-{-
-   Json encoder/decoder --When receiving data from Javascript
--}
-
-
-decodeNested maybe field =
-    case maybe of
-        Just x ->
-            Just x.id
-
-        Nothing ->
-            Nothing
-
-
-nodesEncoder : NodesData -> JE.Value
-nodesEncoder nodes =
-    JE.list JE.object <| List.map nodeEncoder nodes
-
-
-nodeEncoder : Node -> List ( String, JE.Value )
-nodeEncoder node =
-    [ ( "ID", JE.string node.id )
-    , ( "name", JE.string node.name )
-    , ( "nameid", JE.string node.nameid )
-    , ( "parentID", JEE.maybe JE.string <| decodeNested node.parent "id" )
-    , ( "type_", JE.string <| NodeType.toString node.type_ )
-    ]
-
-
-nodeDecoder : JD.Decoder Node
-nodeDecoder =
-    -- @DEBUG: Use a dict structure instead to get back node from ID only.
-    JD.map5 Node
-        (JD.field "ID" JD.string)
-        (JD.field "name" JD.string)
-        (JD.field "nameid" JD.string)
-        (JD.maybe (JD.map ParentNode <| JD.field "parentID" JD.string))
-        (JD.field "type_" NodeType.decoder)
 
 
 
@@ -182,38 +65,53 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        orga_name =
+        rootid =
             flags.param1
 
-        p =
-            Debug.log "1" flags.param1
+        focusid =
+            flags.param2
 
-        pp =
-            Debug.log "2" flags.param2
+        session =
+            global.session
 
-        focusInit =
-            initNodeFocus orga_name
+        --
+        focus =
+            session.node_focus
+                |> withDefault (initNodeFocus rootid (focusid |> withDefault rootid))
 
+        cmds =
+            case session.orga_data of
+                Just data ->
+                    []
+
+                Nothing ->
+                    [ fetchNodesOrga model.node_focus.rootid GotOrga ]
+
+        cmds =
+            case session.circle_tensions of
+                all ->
+                    cmds :: fetchCircleTension model.node_focus.nameid GotTensions
+
+        --if rootid /= focus.rootid || global.session.node_focus == Nothing then
+        --    Cmd.batch
+        --        [ fetchNodesOrga model.node_focus.rootid GotOrga
+        --        , fetchCircleTension model.node_focus.nameid GotTensions
+        --        , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
+        --        ]
+        --else
+        --    Cmd.batch
+        --        [ fetchCircleTension model.node_focus.nameid GotTensions
+        --        , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
+        --        ]
         model =
-            { asked_orga = orga_name
-            , orga_data = Loading
-            , circle_tensions = Loading
-            , node_focus = focusInit
-            , node_action = NotAsk
+            { orga_data = session.orga_data |> withDefault Loading
+            , circle_tensions = session.circle_tensions |> withDefault Loading
+            , node_action = session.node_actions |> withDefault NotAsk
+            , node_focus = focus
             }
     in
     ( model
-      --, Cmd.batch
-      --    [ Http.get { url = "/data/" ++ model.asked_orga ++ ".json", expect = Http.expectString GotText }
-      --    , Http.get { url = "/data/tensions1.json", expect = Http.expectJson GotTensions tensionsDecoder }
-      --    ]
-    , Cmd.batch
-        [ fetchNodesOrga model.asked_orga GotOrga
-        , fetchCircleTension model.asked_orga GotTensions
-
-        --, fetchTensionsPg GotTensions
-        , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
-        ]
+    , cmds
     , Cmd.none
     )
 
@@ -267,10 +165,10 @@ update global msg model =
         GotOrga result ->
             case result of
                 Success data ->
-                    if List.length data > 0 then
-                        ( { model | orga_data = result }
+                    if Dict.size data > 0 then
+                        ( { model | orga_data = Success data }
                         , Cmd.none
-                        , Ports.init_circlePacking <| JE.encode 0 <| nodesEncoder data
+                        , Ports.init_circlePacking <| JE.encode 0 <| nodesDataEncoder data model.node_focus.nameid
                         )
 
                     else
@@ -351,14 +249,15 @@ update global msg model =
         NodeClick focus ->
             ( { model | node_focus = focus }
             , fetchCircleTension focus.nameid GotTensions
-            , Cmd.none
+            , Task.perform (always (UpdateSessionFocus focus)) (Task.succeed ())
             )
 
         ChangeNodeFocus pos ->
             case Array.get pos model.node_focus.path of
                 Just f ->
-                    ( model, sendNodeFocus f.nidjs, Cmd.none )
+                    ( model, Cmd.none, Nav.replaceUrl global.key (uriFromFocus model pos) )
 
+                --( model, sendNodeFocus f.nidjs, Nav.replaceUrl global.key (uriFromFocus model pos) )
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
 
@@ -396,6 +295,10 @@ nodeDataFromJs rawNode =
     rawNodeDataFromJs (rawNode << JD.decodeValue nodeDecoder)
 
 
+
+-- Send to JS
+
+
 port sendNodeFocus : String -> Cmd msg
 
 
@@ -413,29 +316,29 @@ port sendToggleTooltips : () -> Cmd msg
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Org.Dynamic" -- get title from flag
-    , body = [ view_ model ]
+    , body = [ view_ global model ]
     }
 
 
-view_ : Model -> Html Msg
-view_ model =
+view_ : Global.Model -> Model -> Html Msg
+view_ global model =
     div
-        [ class "columns" ]
+        [ class "columns is-centered" ]
         [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
           div [ class "column is-10", id "mainPane" ]
             [ div [ class "columns" ]
-                [ viewHelperBar model ]
+                [ viewHelperBar global model ]
             , div [ class "columns is-variable is-4" ]
                 [ div [ class "column is-6" ]
-                    [ viewCanvas model
+                    [ viewCanvas global model
                     , br [] []
-                    , viewMandate model
-                    , setupActionModal model
+                    , viewMandate global model
+                    , setupActionModal global model
                     ]
                 , div [ class "column is-6" ]
                     [ div [ class "columns is-gapless" ]
-                        [ div [ class "column is-11", id "nextToChart" ]
-                            [ viewActivies model ]
+                        [ div [ class "column is-12", id "nextToChart" ]
+                            [ viewActivies global model ]
                         ]
                     ]
                 ]
@@ -448,7 +351,7 @@ viewLeftPane model =
     nav [ class "menu" ]
         [ p [ class "menu-label" ]
             [ div [ class "hero is-small is-primary is-bold" ]
-                [ div [ class "hero-body has-text-centered" ] [ text model.asked_orga ] ]
+                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.nameid ] ]
             ]
         , ul [ class "menu-list" ]
             [ li [ class "menu-label" ]
@@ -482,21 +385,21 @@ viewLeftPane model =
         ]
 
 
-viewHelperBar : Model -> Html Msg
-viewHelperBar model =
+viewHelperBar : Global.Model -> Model -> Html Msg
+viewHelperBar global model =
     nav
         [ class "column is-full breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
         [ Fa.icon "fas fa-angle-right" ""
         , Array.indexedMap
-            (\i x ->
+            (\i p ->
                 if i < (Array.length model.node_focus.path - 1) then
-                    li [] [ a [ href (uriFromFocus model x.nameid), onClick (ChangeNodeFocus i) ] [ text x.name ] ]
+                    li [] [ a [ href (uriFromFocus model i), onClickPD (ChangeNodeFocus i), attribute "target" "_self" ] [ text p.name ] ]
 
                 else
                     li [ class "is-active has-text-weight-semibold" ]
-                        [ a [ attribute "aria-current" "page", href "#" ] [ text x.name ] ]
+                        [ a [ attribute "aria-current" "page", href "#" ] [ text p.name ] ]
             )
             model.node_focus.path
             |> Array.toList
@@ -504,8 +407,8 @@ viewHelperBar model =
         ]
 
 
-viewCanvas : Model -> Html Msg
-viewCanvas model =
+viewCanvas : Global.Model -> Model -> Html Msg
+viewCanvas global model =
     let
         isLoading =
             case model.orga_data of
@@ -576,32 +479,32 @@ viewCanvas model =
         ]
 
 
-viewMandate : Model -> Html Msg
-viewMandate model =
-    div [ class "hero is-small is-light heroViewer box" ]
+viewMandate : Global.Model -> Model -> Html Msg
+viewMandate global model =
+    div [ id "mandateContainer", class "hero is-small is-light heroViewer box" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
                 [ Fa.icon "fas fa-scroll fa-xs" "Mandate" ]
             , hr [ class "has-background-grey-light" ] []
             , div [ class "content" ]
-                [ h2 [ class "title is-4" ] [ text "Purpose" ]
-                , div [] [ text "Helping people and human organisations to find resillient, efficient and anti alienating models and praxis for self organisation." ]
-                , h2 [ class "title is-4" ] [ text "Responsabilities" ]
-                , div []
+                [ h2 [ class "title is-5" ] [ text "Purpose" ]
+                , p [] [ text "Helping people and human organisations to find resillient, efficient and anti alienating models and praxis for self organisation." ]
+                , h2 [ class "title is-5" ] [ text "Responsabilities" ]
+                , p []
                     [ ul []
                         [ li [] [ text "Develop, maintains and push forward Fractal6." ]
                         , li [] [ text "Find a business model for fractal6." ]
                         ]
                     ]
-                , h2 [ class "title is-4" ] [ text "Domains" ]
-                , div [] [ text "See sub domains." ]
+                , h2 [ class "title is-5" ] [ text "Domains" ]
+                , p [] [ text "See sub domains." ]
                 ]
             ]
         ]
 
 
-viewActivies : Model -> Html Msg
-viewActivies model =
+viewActivies : Global.Model -> Model -> Html Msg
+viewActivies global model =
     let
         isLoading =
             case model.circle_tensions of
@@ -699,8 +602,8 @@ mediaTension tension =
         ]
 
 
-setupActionModal : Model -> Html Msg
-setupActionModal model =
+setupActionModal : Global.Model -> Model -> Html Msg
+setupActionModal global model =
     div []
         [ div [ id "actionModal", class "modal modal-fx-fadeIn" ]
             [ div [ class "modal-background" ] []
@@ -860,6 +763,27 @@ viewTensionStep form =
 -------------------------------------------------
 -- Model Getters and Setters
 -------------------------------------------------
+-- Setters
+
+
+initTensionForm : Node -> TensionForm
+initTensionForm node =
+    { step = TensionTypeForm
+    , post = Dict.fromList [ ( "username", "clara" ) ]
+    , result = NotAsked
+    , target = node
+    , source = node
+    }
+
+
+initNodeFocus : String -> String -> NodeFocusState
+initNodeFocus rootid focusid =
+    { nidjs = ""
+    , nameid = focusid
+    , rootid = rootid
+    , name = ""
+    , path = Array.fromList [ { nidjs = "", nameid = "", name = "" } ]
+    }
 
 
 getTensionForm : Model -> Maybe TensionForm
@@ -932,12 +856,68 @@ isTensionSendable form =
     isSendable
 
 
-uriFromFocus : Model -> String -> String
-uriFromFocus model leaf =
+uriFromFocus : Model -> Int -> String
+uriFromFocus model i =
     let
         root =
             model.node_focus.path
                 |> Array.get 0
                 |> withDefault { nidjs = "", nameid = "", name = "" }
+
+        leaf =
+            model.node_focus.path
+                |> Array.get i
+                |> withDefault { nidjs = "", nameid = "", name = "" }
     in
-    String.join "/" [ "/org", root.nameid, leaf ]
+    if i > 0 then
+        String.join "/" [ "/org", root.nameid, leaf.nameid ]
+
+    else
+        String.join "/" [ "/org", root.nameid ]
+
+
+
+-- Json encoder/decoder --When receiving data from Javascript
+
+
+decodeNested maybe field =
+    case maybe of
+        Just x ->
+            Just x.id
+
+        Nothing ->
+            Nothing
+
+
+nodesDataEncoder : NodesData -> String -> JE.Value
+nodesDataEncoder data focus =
+    JE.object
+        [ ( "data", nodesEncoder data )
+        , ( "focus", JE.string focus )
+        ]
+
+
+nodesEncoder : NodesData -> JE.Value
+nodesEncoder nodes =
+    JE.list JE.object <| List.map nodeEncoder <| Dict.values nodes
+
+
+nodeEncoder : Node -> List ( String, JE.Value )
+nodeEncoder node =
+    [ ( "ID", JE.string node.id )
+    , ( "name", JE.string node.name )
+    , ( "nameid", JE.string node.nameid )
+    , ( "parentID", JEE.maybe JE.string <| decodeNested node.parent "id" )
+    , ( "type_", JE.string <| NodeType.toString node.type_ )
+    ]
+
+
+nodeDecoder : JD.Decoder Node
+nodeDecoder =
+    -- @DEBUG: Use a dict structure instead to get back node from ID only.
+    JD.map5 Node
+        (JD.field "ID" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "nameid" JD.string)
+        (JD.maybe (JD.map ParentNode <| JD.field "parentID" JD.string))
+        (JD.field "type_" NodeType.decoder)

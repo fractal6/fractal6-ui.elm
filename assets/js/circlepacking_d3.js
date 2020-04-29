@@ -18,12 +18,14 @@ const formatGraph = dataset =>  {
         children : [],
         depth : 0
     })
+    var focus;
     dataset.forEach( aData => {
         if(aData.parentID) {
             hashTable[aData.parentID].children.push(hashTable[aData.ID])
         } else {
             dataTree.push(hashTable[aData.ID])
         }
+
     })
     return dataTree
 }
@@ -65,9 +67,8 @@ const computeDepth = (obj, depth, neigbor) => {
     cumchild = cumchild + 1;
     obj.cumchild = cumchild;
     return {maxdepth, cumchild};
-}
+}//computeDepth function
 
-// @DEBUG make object with methods
 function clearAll() {
     var $canvas = document.getElementById("canvasOrga");
     var $hiddenCanvas = document.getElementById("hiddenCanvasOrga");
@@ -87,13 +88,17 @@ function clearAll() {
         delete $hiddenCanvas;
     }
 
-}
+}//clearCanvas function
+
 
 // Main drawing function
-function drawAll(app, graph) {
+function drawAll(app, data, reason) {
     /*////////////////////////////////////////////////////////////
     //////////////// Style Constants  ////////////////////////////
     ////////////////////////////////////////////////////////////*/
+    var graph = data.data;
+    var focusid = data.focus;
+    var reason = reason;
     if (graph.length == 0) {
         console.warn("Graph is empty, aborting")
         return
@@ -124,7 +129,7 @@ function drawAll(app, graph) {
         zoomFactorRole = 2.2;
 
     // Canvas Min dimension
-    var minWidth = 400,
+    var minWidth = 300,
         minHeight = 400;
 
     /*////////////////////////////////////////////////////////////
@@ -265,13 +270,20 @@ function drawAll(app, graph) {
     rootNode = nodes[0];
     // @DEBUG: Reset globalCtx
     var colToCircle = {};
-    focusedNode = rootNode;
+    if (focusid) {
+        for (var i=0; i<nodes.length; i++) {
+            if (nodes[i].data.nameid == focusid) {
+                focusedNode = nodes[i];
+                break
+            }
+        }
+    }
+    if (!focusedNode) focusedNode = rootNode;
     hoveredNode = null;
 
     // @Ddebug global context
     var cWidth = canvas.attr("width");
     var cHeight = canvas.attr("height");
-    var nodeCount = nodes.length;
 
     var backgoundGrd = context.createLinearGradient(0, 0, cWidth, 0);
     backgoundGrd.addColorStop(0, colorDarker1);
@@ -498,7 +510,7 @@ function drawAll(app, graph) {
             _name , type_ ,
             circleColor;
         // It's slightly faster than nodes.forEach()
-        for (var i = 0; i < nodeCount; i++) {
+        for (var i = 0; i < nodes.length; i++) {
             node = nodes[i];
             _name = node.data.name;
             type_ = node.data.type_;
@@ -667,11 +679,14 @@ function drawAll(app, graph) {
             return false
         }
 
+        var elmHasBeenUpdated = false;
         if (focusedNode.ctx) {
             clearNodeHover(context, focusedNode);
             updateFocusedNodeElm(focus);
+            elmHasBeenUpdated = true;
         }
         focusedNode = focus; // @DEBUG: global context
+        $canvasParent.dataset.focusid = focus.data.nameid;//
 
         var zoomFactor = zoomFactorCircle;
         if (focusedNode.data.type_ === 'Role') {
@@ -696,6 +711,7 @@ function drawAll(app, graph) {
                 isZooming = false;
                 // We actually only need to draw the hidden canvas when there is an interaction.
                 drawCanvas(hiddenContext, true);
+                if (!elmHasBeenUpdated) updateFocusedNodeElm(focusedNode); // INIT
                 drawNodeHover(context, focusedNode);
                 t.stop();
             }
@@ -730,7 +746,7 @@ function drawAll(app, graph) {
     //First zoom to get the circles to the right location
     // then timer the interpolateZoom and rendering
     console.log("Orga Canvas Initalization");
-    zoomToNode(rootNode, 250); //drawCanvas(context);
+    zoomToNode(focusedNode, 250); //drawCanvas(context);
 
     //
     // Event listeners
@@ -778,10 +794,16 @@ function drawAll(app, graph) {
     //
 
     function updateFocusedNodeElm(node) {
+        if (!node || reason == "resize") {
+            // @DEBUG: why / where node is undefined ?
+            reason = "";
+            return
+        }
         app.ports.nodeFocusFromJs.send({
             nidjs    : node.color,
-            name     : node.data.name,
             nameid   : node.data.nameid,
+            rootid   : rootNode.data.nameid,
+            name     : node.data.name,
             path     : getNodePath(node)
         });
     }
@@ -794,11 +816,11 @@ function drawAll(app, graph) {
     // ELM Subscriptions
     //
 
-    app.ports.sendNodeFocus.subscribe(function(nid) {
-        var node = colToCircle[nid];
-        if (hoveredNode) clearNodeHover(context, hoveredNode);
-        zoomToNode(node);
-    });
+    //app.ports.sendNodeFocus.subscribe(function(nid) {
+    //    var node = colToCircle[nid];
+    //    if (hoveredNode) clearNodeHover(context, hoveredNode);
+    //    zoomToNode(node);
+    //});
 
     app.ports.sendToggleGraphReverse.subscribe(function(e) {
         if (nodeSize.name == "nodeSizeTopDown") {

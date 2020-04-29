@@ -9,7 +9,7 @@ html, body {
  */
 
 #body {
-    // fix the fix-top-navbar padding (for the #mainPane}
+    // FIX the fix-top-navbar padding (for the #mainPane}
     padding-top: calc(#{$navbar-height}  ) !important;
 }
 
@@ -160,11 +160,13 @@ html.has-modal-active {
 }
 
 #mainPane {
-  /* is-offest-1 is too large */
-  margin-left: 5%;
+  /********** Bulma FIX ***********/
+  /* Adjust left offet is too large */
+  //margin-left: 5%;
 
   /* is-paddingless compatibility */
   padding-top: 2rem;
+  /*********************************/
 
   // the first children
   .is-child:first-child {
@@ -228,6 +230,12 @@ html.has-modal-active {
              font-size: $size-6 !important;
         }
      }
+}
+
+#mandateContainer {
+    & .content p {
+        font-size: 15px !important;
+    }
 }
 
 /*

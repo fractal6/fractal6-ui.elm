@@ -1,7 +1,7 @@
 module Global exposing
     ( Flags
     , Model
-    , Msg
+    , Msg(..)
     , init
     , navigate
     , subscriptions
@@ -13,6 +13,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Components
 import Generated.Route as Route exposing (Route)
+import ModelCommon exposing (..)
 import Ports
 import Task
 import Url exposing (Url)
@@ -30,30 +31,11 @@ type alias Flags =
 -- Model
 
 
-type alias UserInfo =
-    { username : String
-    , display_name : String
-    }
-
-
-type alias UserSession =
-    { node_focus : String }
-
-
-type User
-    = LoggedOut UserSession
-    | LoggedIn UserSession UserInfo
-
-
-
---type alias Model =
---    { user : User }
-
-
 type alias Model =
     { flags : Flags
     , url : Url
     , key : Nav.Key
+    , session : Session
     }
 
 
@@ -61,18 +43,19 @@ init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         session =
-            { node_focus = "aahahah"
+            { user = LoggedOut
+            , node_focus = Nothing
+            , orga_data = Nothing
+            , circle_tensions = Nothing
+            , node_action = Nothing
             }
 
-        userInfo =
-            { username = "abcdefghijklmnop"
-            , display_name = "My name is DorVa"
-            }
-
-        init_user =
-            { user = LoggedIn session userInfo }
+        --userInfo =
+        --    { username = "abcdefghijklmnop"
+        --    , display_name = "My name is DorVa"
+        --    }
     in
-    ( Model flags url key
+    ( Model flags url key session
     , Cmd.batch
         [ Ports.log "Hello!"
         , Ports.bulma_driver ""
@@ -87,6 +70,7 @@ init flags url key =
 
 type Msg
     = Navigate Route
+    | UpdateSessionFocus NodeFocusState
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -96,6 +80,13 @@ update msg model =
             ( model
             , Nav.pushUrl model.key (Route.toHref route)
             )
+
+        UpdateSessionFocus focus ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | node_focus = Just focus } }, Cmd.none )
 
 
 

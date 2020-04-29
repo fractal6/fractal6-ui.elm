@@ -48,10 +48,6 @@ nTensionPpg =
 --
 
 
-type alias ErrorData =
-    String
-
-
 type RequestResult errors data
     = Success data
     | Failure errors
@@ -80,16 +76,22 @@ type alias Node =
     }
 
 
+emptyNode : Node
+emptyNode =
+    { id = "", name = "", nameid = "", parent = Nothing, type_ = NodeType.Circle }
+
+
 type alias ParentNode =
     { id : String }
 
 
 
---
+-- Node Interface
 
 
 type alias NodesData =
-    List Node
+    --List Node
+    Dict String Node
 
 
 type alias NodesResponse =
@@ -142,7 +144,7 @@ type alias Receiver =
 
 
 
---
+-- Response Data
 
 
 type alias TensionsData =
@@ -192,7 +194,7 @@ fetchNodesOrga rootid msg =
             (nodeOrgaFilter rootid)
             nodeOrgaPayload
         )
-        (RemoteData.fromResult >> decodeResponse queryDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse nodeOrgaDecoder >> msg)
 
 
 
@@ -429,7 +431,9 @@ circleTensionDecoder data =
                 tchild =
                     node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
             in
-            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout) |> List.reverse
+            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout)
+                |> List.reverse
+                |> List.take nTensionPpg
 
         Nothing ->
             []
@@ -447,9 +451,27 @@ subCircleTensionDecoder child =
     tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout
 
 
+nodeOrgaDecoder : Maybe (List (Maybe Node)) -> Dict String Node
+nodeOrgaDecoder data =
+    case data of
+        Just d ->
+            if List.length d == 0 then
+                Dict.empty
+
+            else
+                d
+                    |> List.filterMap identity
+                    |> List.map (\n -> ( n.nameid, n ))
+                    |> Dict.fromList
+
+        Nothing ->
+            Dict.empty
+
+
 queryDecoder : Maybe (List (Maybe a)) -> List a
 queryDecoder data =
     -- Convert empty data to empty list
+    -- Standard decoder to get list of result from a gql query
     case data of
         Just d ->
             if List.length d == 0 then

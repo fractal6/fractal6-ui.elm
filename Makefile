@@ -5,6 +5,9 @@ build:
 	npm run js_build
 	npm run css_build
 
+run:
+	npm run start
+
 gen:
 	npm run graphql_build
 

@@ -36,6 +36,7 @@ const actions = {
         if (!$canvas) {
             drawAll(app, data);
 
+
             // On Resize handle
             var rtime;
             var timeout = false;
@@ -44,17 +45,22 @@ const actions = {
                 rtime = new Date();
                 if (timeout === false) {
                     timeout = true;
-                    setTimeout(resizeend, delta);
+                    // Update the focus
+                    var focusid = document.getElementById("canvasParent").dataset.focusid;
+                    data.focus = focusid
+
+                    // Smooth redraw
+                    setTimeout(resizeMe, delta, focusid);
                 }
             };
 
-            function resizeend() {
+            function resizeMe() {
                 if (new Date() - rtime < delta) {
-                    setTimeout(resizeend, delta);
+                    setTimeout(resizeMe, delta);
                 } else {
                     timeout = false;
                     clearAll();
-                    drawAll(app, data);
+                    drawAll(app, data, "resize");
                 }
             }
         }

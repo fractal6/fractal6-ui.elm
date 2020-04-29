@@ -12,15 +12,15 @@ layout { page } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ viewHeader -- page.route / current route ?
+            [ viewNavBar -- page.route / current route ?
             , div [ id "body", class "section is-paddingless" ] page.body
             ]
         ]
     }
 
 
-viewHeader : Html msg
-viewHeader =
+viewNavBar : Html msg
+viewNavBar =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar has-shadow is-fixed-top"
