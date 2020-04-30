@@ -92,12 +92,6 @@ init global flags =
         focusChange =
             (focusid /= oldFocus.nameid) || isInit
 
-        d =
-            Debug.log "isInit, orgChange focuChange" [ isInit, orgChange, focusChange ]
-
-        dd =
-            Debug.log "newfocus" [ newFocus ]
-
         -- init Model
         model =
             { orga_data =
@@ -121,7 +115,8 @@ init global flags =
                 ]
 
             else if focusChange then
-                [ fetchCircleTension newFocus.nameid GotTensions
+                [ Ports.focusGraphPack newFocus.nameid
+                , fetchCircleTension newFocus.nameid GotTensions
                 , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
                 ]
 
@@ -182,7 +177,7 @@ update global msg model =
                 Success data ->
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
-                        , Ports.init_graphPack <| JE.encode 0 <| nodesDataEncoder data model.node_focus.nameid
+                        , Ports.initGraphPack <| JE.encode 0 <| nodesDataEncoder data model.node_focus.nameid
                         , updateGlobalOrga data
                         )
 

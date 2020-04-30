@@ -1,6 +1,7 @@
 port module Ports exposing
     ( bulma_driver
-    , init_graphPack
+    , focusGraphPack
+    , initGraphPack
     , log
     , toggle_theme
     )
@@ -42,9 +43,17 @@ toggle_theme =
         }
 
 
-init_graphPack : String -> Cmd msg
-init_graphPack data =
+initGraphPack : String -> Cmd msg
+initGraphPack data =
     outgoing
         { action = "INIT_GRAPHPACK"
         , data = Json.string data
+        }
+
+
+focusGraphPack : String -> Cmd msg
+focusGraphPack focusid =
+    outgoing
+        { action = "FOCUS_GRAPHPACK"
+        , data = Json.string focusid
         }
