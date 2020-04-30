@@ -264,6 +264,7 @@ circleTensionPayload =
 
 
 fetchCircleTension targetid msg =
+    --@DEBUG: Infered type...
     makeGQLQuery
         (Query.getNode
             (circleTensionFilter targetid)
@@ -327,6 +328,7 @@ type alias AddTensionPayload =
 
 
 addOneTension source target tension msg =
+    --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addTension
             (tensionInputEncoder source target tension)
@@ -388,6 +390,7 @@ tensionInputEncoder source target post =
 
 
 decodeResponse decoder response =
+    --@DEBUG: Infered type...
     {-
        This decoder take two generic type of data:
        * `dataResponse` which is directlty related to Graphql data returned by the server.

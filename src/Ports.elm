@@ -1,6 +1,6 @@
 port module Ports exposing
     ( bulma_driver
-    , init_circlePacking
+    , init_graphPack
     , log
     , toggle_theme
     )
@@ -42,9 +42,9 @@ toggle_theme =
         }
 
 
-init_circlePacking : String -> Cmd msg
-init_circlePacking data =
+init_graphPack : String -> Cmd msg
+init_graphPack data =
     outgoing
-        { action = "INIT_CIRCLEPACKING"
+        { action = "INIT_GRAPHPACK"
         , data = Json.string data
         }

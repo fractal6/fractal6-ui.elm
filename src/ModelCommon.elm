@@ -12,9 +12,10 @@ import ModelOrg exposing (..)
 
 type alias Session =
     { user : UserState
-    , node_focus : Maybe NodeFocusState
-    , orga_data : Maybe OrgaData
-    , circle_tensions : Maybe CircleTensionsData
+    , node_focus : Maybe NodeFocus
+    , node_path : Maybe NodePath
+    , orga_data : Maybe NodesData
+    , circle_tensions : Maybe TensionsData
     , node_action : Maybe ActionState
     }
 
@@ -38,13 +39,17 @@ type alias UserInfo =
 -- Focus
 
 
-type alias NodeFocusState =
-    { nidjs : String -- This is redundant with the path[-1]
-    , nameid : String --
-    , rootid : String --
-    , name : String --
-    , path : Array.Array { nidjs : String, nameid : String, name : String }
+type alias NodeFocus =
+    { rootid : String
+    , nameid : String
+    , isRoot : Bool
+
+    --, name : Maybe String // get the name when JS/D3 finished the rendering Job
     }
+
+
+type alias NodePath =
+    Array.Array { nidjs : String, nameid : String, name : String }
 
 
 
@@ -74,7 +79,7 @@ type ActionState
 
 
 type ActionStep target
-    = FirstStep target
+    = FirstStep target -- AskActions
     | AddTensionStep TensionForm -- AskNewTension
 
 
@@ -94,5 +99,5 @@ type alias TensionForm =
 
 
 type alias NodeTarget =
-    -- Helper for encoding ActionState
+    -- Helper for encoding ActionState / Receiving Node from JS.
     Result JD.Error Node

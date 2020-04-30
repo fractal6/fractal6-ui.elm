@@ -45,7 +45,8 @@ page =
 
 
 type alias Model =
-    { node_focus : NodeFocusState
+    { node_focus : NodeFocus
+    , node_path : Maybe NodePath
     , orga_data : OrgaData
     , circle_tensions : CircleTensionsData
     , node_action : ActionState
@@ -65,55 +66,69 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        -- init Flags and Session
+        session =
+            global.session
+
         rootid =
             flags.param1
 
         focusid =
-            flags.param2
+            flags.param2 |> withDefault rootid
 
-        session =
-            global.session
+        newFocus =
+            NodeFocus rootid focusid (flags.param2 == Nothing)
 
-        --
-        focus =
-            session.node_focus
-                |> withDefault (initNodeFocus rootid (focusid |> withDefault rootid))
+        -- What has changed
+        oldFocus =
+            session.node_focus |> withDefault newFocus
 
-        cmds =
-            case session.orga_data of
-                Just data ->
-                    []
+        isInit =
+            session.node_focus == Nothing
 
-                Nothing ->
-                    [ fetchNodesOrga model.node_focus.rootid GotOrga ]
+        orgChange =
+            (rootid /= oldFocus.rootid) || isInit
 
-        cmds =
-            case session.circle_tensions of
-                all ->
-                    cmds :: fetchCircleTension model.node_focus.nameid GotTensions
+        focusChange =
+            (focusid /= oldFocus.nameid) || isInit
 
-        --if rootid /= focus.rootid || global.session.node_focus == Nothing then
-        --    Cmd.batch
-        --        [ fetchNodesOrga model.node_focus.rootid GotOrga
-        --        , fetchCircleTension model.node_focus.nameid GotTensions
-        --        , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
-        --        ]
-        --else
-        --    Cmd.batch
-        --        [ fetchCircleTension model.node_focus.nameid GotTensions
-        --        , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
-        --        ]
+        d =
+            Debug.log "isInit, orgChange focuChange" [ isInit, orgChange, focusChange ]
+
+        dd =
+            Debug.log "newfocus" [ newFocus ]
+
+        -- init Model
         model =
-            { orga_data = session.orga_data |> withDefault Loading
-            , circle_tensions = session.circle_tensions |> withDefault Loading
-            , node_action = session.node_actions |> withDefault NotAsk
-            , node_focus = focus
+            { orga_data =
+                session.orga_data
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
+            , circle_tensions =
+                session.circle_tensions
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
+            , node_action = session.node_action |> withDefault NotAsk
+            , node_focus = newFocus
+            , node_path = session.node_path
             }
+
+        cmds =
+            if orgChange then
+                [ fetchNodesOrga newFocus.rootid GotOrga
+                , fetchCircleTension newFocus.nameid GotTensions
+                , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
+                ]
+
+            else if focusChange then
+                [ fetchCircleTension newFocus.nameid GotTensions
+                , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
+                ]
+
+            else
+                []
     in
-    ( model
-    , cmds
-    , Cmd.none
-    )
+    ( model, Cmd.batch cmds, Cmd.none )
 
 
 
@@ -133,8 +148,8 @@ type Msg
     | Submit (Time.Posix -> Msg)
     | SubmitTension TensionForm Time.Posix
     | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
-    | NodeClick NodeFocusState -- ports receive
-    | ChangeNodeFocus Int -- ports send
+    | NodeClicked NodeFocus -- ports receive
+    | NodeFocused NodePath -- ports receive
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send -- Not implemented @DEBUG multiple tooltip/ see name of circle
 
@@ -167,8 +182,8 @@ update global msg model =
                 Success data ->
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
-                        , Cmd.none
-                        , Ports.init_circlePacking <| JE.encode 0 <| nodesDataEncoder data model.node_focus.nameid
+                        , Ports.init_graphPack <| JE.encode 0 <| nodesDataEncoder data model.node_focus.nameid
+                        , updateGlobalOrga data
                         )
 
                     else
@@ -246,20 +261,15 @@ update global msg model =
             in
             ( modelUpdated, Cmd.none, Cmd.none )
 
-        NodeClick focus ->
-            ( { model | node_focus = focus }
-            , fetchCircleTension focus.nameid GotTensions
-            , Task.perform (always (UpdateSessionFocus focus)) (Task.succeed ())
+        NodeClicked focus ->
+            ( model
+              --( { model | node_focus = focus }
+            , Cmd.none
+            , Nav.replaceUrl global.key (uriFromFocus focus)
             )
 
-        ChangeNodeFocus pos ->
-            case Array.get pos model.node_focus.path of
-                Just f ->
-                    ( model, Cmd.none, Nav.replaceUrl global.key (uriFromFocus model pos) )
-
-                --( model, sendNodeFocus f.nidjs, Nav.replaceUrl global.key (uriFromFocus model pos) )
-                Nothing ->
-                    ( model, Cmd.none, Cmd.none )
+        NodeFocused path ->
+            ( { model | node_path = Just path }, Cmd.none, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -275,7 +285,8 @@ update global msg model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
-        [ nodeFocusFromJs NodeClick
+        [ nodeClickedFromJs NodeClicked
+        , nodeFocusedFromJs NodeFocused
         , nodeDataFromJs DoNodeAction
         ]
 
@@ -284,7 +295,10 @@ subscriptions _ _ =
 -- Receive to Javascript
 
 
-port nodeFocusFromJs : (NodeFocusState -> msg) -> Sub msg
+port nodeClickedFromJs : (NodeFocus -> msg) -> Sub msg
+
+
+port nodeFocusedFromJs : (NodePath -> msg) -> Sub msg
 
 
 port rawNodeDataFromJs : (JD.Value -> a) -> Sub a
@@ -297,9 +311,6 @@ nodeDataFromJs rawNode =
 
 
 -- Send to JS
-
-
-port sendNodeFocus : String -> Cmd msg
 
 
 port sendToggleGraphReverse : () -> Cmd msg
@@ -351,13 +362,13 @@ viewLeftPane model =
     nav [ class "menu" ]
         [ p [ class "menu-label" ]
             [ div [ class "hero is-small is-primary is-bold" ]
-                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.nameid ] ]
+                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.rootid ] ]
             ]
         , ul [ class "menu-list" ]
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ Fa.icon "far fa-circle fa-lg" model.node_focus.name ]
+                        [ Fa.icon "far fa-circle fa-lg" model.node_focus.nameid ]
                     ]
                 ]
             , li []
@@ -387,6 +398,10 @@ viewLeftPane model =
 
 viewHelperBar : Global.Model -> Model -> Html Msg
 viewHelperBar global model =
+    let
+        nodePath =
+            model.node_path |> withDefault (Array.fromList [])
+    in
     nav
         [ class "column is-full breadcrumb"
         , attribute "aria-label" "breadcrumbs"
@@ -394,14 +409,18 @@ viewHelperBar global model =
         [ Fa.icon "fas fa-angle-right" ""
         , Array.indexedMap
             (\i p ->
-                if i < (Array.length model.node_focus.path - 1) then
-                    li [] [ a [ href (uriFromFocus model i), onClickPD (ChangeNodeFocus i), attribute "target" "_self" ] [ text p.name ] ]
+                let
+                    hereFocus =
+                        NodeFocus model.node_focus.rootid p.nameid (i == 0)
+                in
+                if i < (Array.length nodePath - 1) then
+                    li [] [ a [ href (uriFromFocus hereFocus), onClickPD (NodeClicked hereFocus), attribute "target" "_self" ] [ text p.name ] ]
 
                 else
                     li [ class "is-active has-text-weight-semibold" ]
                         [ a [ attribute "aria-current" "page", href "#" ] [ text p.name ] ]
             )
-            model.node_focus.path
+            nodePath
             |> Array.toList
             |> ul [ attribute "style" "display: inline-flex;" ]
         ]
@@ -763,6 +782,20 @@ viewTensionStep form =
 -------------------------------------------------
 -- Model Getters and Setters
 -------------------------------------------------
+-- Global Setters
+
+
+updateGlobalFocus : NodeFocus -> Cmd Global.Msg
+updateGlobalFocus focus =
+    Task.perform (always (UpdateSessionFocus focus)) (Task.succeed ())
+
+
+updateGlobalOrga : NodesData -> Cmd Global.Msg
+updateGlobalOrga data =
+    Task.perform (always (UpdateSessionOrga data)) (Task.succeed ())
+
+
+
 -- Setters
 
 
@@ -774,31 +807,6 @@ initTensionForm node =
     , target = node
     , source = node
     }
-
-
-initNodeFocus : String -> String -> NodeFocusState
-initNodeFocus rootid focusid =
-    { nidjs = ""
-    , nameid = focusid
-    , rootid = rootid
-    , name = ""
-    , path = Array.fromList [ { nidjs = "", nameid = "", name = "" } ]
-    }
-
-
-getTensionForm : Model -> Maybe TensionForm
-getTensionForm model =
-    case model.node_action of
-        Ask step ->
-            case step of
-                FirstStep target ->
-                    Nothing
-
-                AddTensionStep form ->
-                    Just form
-
-        passing ->
-            Nothing
 
 
 updateTensionStep : Model -> TensionStep -> Maybe TensionForm -> Model
@@ -856,24 +864,28 @@ isTensionSendable form =
     isSendable
 
 
-uriFromFocus : Model -> Int -> String
-uriFromFocus model i =
-    let
-        root =
-            model.node_focus.path
-                |> Array.get 0
-                |> withDefault { nidjs = "", nameid = "", name = "" }
-
-        leaf =
-            model.node_focus.path
-                |> Array.get i
-                |> withDefault { nidjs = "", nameid = "", name = "" }
-    in
-    if i > 0 then
-        String.join "/" [ "/org", root.nameid, leaf.nameid ]
+uriFromFocus : NodeFocus -> String
+uriFromFocus focus =
+    if focus.isRoot then
+        String.join "/" [ "/org", focus.rootid ]
 
     else
-        String.join "/" [ "/org", root.nameid ]
+        String.join "/" [ "/org", focus.rootid, focus.nameid ]
+
+
+getTensionForm : Model -> Maybe TensionForm
+getTensionForm model =
+    case model.node_action of
+        Ask step ->
+            case step of
+                FirstStep target ->
+                    Nothing
+
+                AddTensionStep form ->
+                    Just form
+
+        passing ->
+            Nothing
 
 
 

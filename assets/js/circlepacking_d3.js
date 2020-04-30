@@ -615,7 +615,8 @@ function drawAll(app, data, reason) {
 
         if (isUpdated) {
             clearNodeTooltip();
-            zoomToNode(node);
+            //zoomToNode(node); @DEBUG: change behaviour, zoom from elm init
+            nodeClickedFromJs(node);
         }
 
         return false;
@@ -682,7 +683,7 @@ function drawAll(app, data, reason) {
         var elmHasBeenUpdated = false;
         if (focusedNode.ctx) {
             clearNodeHover(context, focusedNode);
-            updateFocusedNodeElm(focus);
+            nodeFocusedFromJs(focus);
             elmHasBeenUpdated = true;
         }
         focusedNode = focus; // @DEBUG: global context
@@ -711,7 +712,7 @@ function drawAll(app, data, reason) {
                 isZooming = false;
                 // We actually only need to draw the hidden canvas when there is an interaction.
                 drawCanvas(hiddenContext, true);
-                if (!elmHasBeenUpdated) updateFocusedNodeElm(focusedNode); // INIT
+                if (!elmHasBeenUpdated) nodeFocusedFromJs(focusedNode); // INIT
                 drawNodeHover(context, focusedNode);
                 t.stop();
             }
@@ -783,7 +784,7 @@ function drawAll(app, data, reason) {
 
 	// Node Tooltip events
     $tooltip.addEventListener("mousedown", function(e) {
-        sendNodeDataElm(hoveredNode);
+        sendNodeDataFromJs(hoveredNode);
         document.documentElement.classList.add('has-modal-active');
         return true
     });
@@ -793,22 +794,29 @@ function drawAll(app, data, reason) {
     // Elm Ports
     //
 
-    function updateFocusedNodeElm(node) {
+    function nodeClickedFromJs(node) {
+        var nodeFocus = {
+            rootid   : rootNode.data.nameid,
+            nameid   : node.data.nameid,
+            isRoot : node === rootNode
+        };
+        app.ports.nodeClickedFromJs.send(nodeFocus);
+    }
+
+    function nodeFocusedFromJs(node) {
         if (!node || reason == "resize") {
             // @DEBUG: why / where node is undefined ?
             reason = "";
             return
         }
-        app.ports.nodeFocusFromJs.send({
-            nidjs    : node.color,
-            nameid   : node.data.nameid,
-            rootid   : rootNode.data.nameid,
-            name     : node.data.name,
-            path     : getNodePath(node)
-        });
+        var nodePath = getNodePath(node);
+        app.ports.nodeFocusedFromJs.send(nodePath);
+            //nidjs    : node.color,
+            //name     : node.data.name,
+            //path     : getNodePath(node)
     }
 
-    function sendNodeDataElm(node) {
+    function sendNodeDataFromJs(node) {
         app.ports.rawNodeDataFromJs.send(node.data);
     }
 

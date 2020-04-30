@@ -29,7 +29,7 @@ const actions = {
             toggleTheme();
         });
     },
-    'INIT_CIRCLEPACKING': (app, data) => {
+    'INIT_GRAPHPACK': (app, data) => {
         var data = JSON.parse(data);
         //window.addEventListener('DOMContentReady',function(){
         var $canvas = document.getElementById("canvasOrga");

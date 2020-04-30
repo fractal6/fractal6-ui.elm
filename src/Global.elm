@@ -14,6 +14,7 @@ import Browser.Navigation as Nav
 import Components
 import Generated.Route as Route exposing (Route)
 import ModelCommon exposing (..)
+import ModelOrg exposing (..)
 import Ports
 import Task
 import Url exposing (Url)
@@ -45,15 +46,11 @@ init flags url key =
         session =
             { user = LoggedOut
             , node_focus = Nothing
+            , node_path = Nothing
             , orga_data = Nothing
             , circle_tensions = Nothing
             , node_action = Nothing
             }
-
-        --userInfo =
-        --    { username = "abcdefghijklmnop"
-        --    , display_name = "My name is DorVa"
-        --    }
     in
     ( Model flags url key session
     , Cmd.batch
@@ -70,7 +67,8 @@ init flags url key =
 
 type Msg
     = Navigate Route
-    | UpdateSessionFocus NodeFocusState
+    | UpdateSessionFocus NodeFocus
+    | UpdateSessionOrga NodesData
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -81,12 +79,19 @@ update msg model =
             , Nav.pushUrl model.key (Route.toHref route)
             )
 
-        UpdateSessionFocus focus ->
+        UpdateSessionFocus data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | node_focus = Just focus } }, Cmd.none )
+            ( { model | session = { session | node_focus = Just data } }, Cmd.none )
+
+        UpdateSessionOrga data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | orga_data = Just data } }, Cmd.none )
 
 
 
