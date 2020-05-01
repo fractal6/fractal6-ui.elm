@@ -5,7 +5,7 @@ window.addEventListener('load', _ => {
         init: (app) => {
             // Session Objects
             var session = {
-                i : 0
+                gp : Object.create(GraphPack)
             };
 
             app.ports.outgoing.subscribe(({ action, data }) =>
@@ -36,41 +36,19 @@ const actions = {
         });
     },
     'INIT_GRAPHPACK': (app, session, data) => {
-        var data = JSON.parse(data);
         //window.addEventListener('DOMContentReady',function(){
         var $canvas = document.getElementById("canvasOrga");
         if (!$canvas) {
-            drawAll(app, data);
+            var gp = session.gp;
+            var data = JSON.parse(data);
 
-
-            // On Resize handle
-            var rtime;
-            var timeout = false;
-            var delta = 200;
-            window.onresize = function () {
-                rtime = new Date();
-                if (timeout === false) {
-                    timeout = true;
-                    // Update the focus
-                    var focusid = document.getElementById("canvasParent").dataset.focusid;
-                    data.focus = focusid
-
-                    // Smooth redraw
-                    setTimeout(resizeMe, delta, focusid);
-                }
-            };
-
-            function resizeMe() {
-                if (new Date() - rtime < delta) {
-                    setTimeout(resizeMe, delta);
-                } else {
-                    timeout = false;
-                    clearAll();
-                    drawAll(app, data, "resize");
-                }
-            }
+            gp.init(app, data);
+            gp.zoomToNode(data.focusid, 0.5);
         }
-
         //});
+    },
+    'FOCUS_GRAPHPACK': (app, session, focusid) => {
+        var gp = session.gp;
+        gp.zoomToNode(focusid);
     },
 }

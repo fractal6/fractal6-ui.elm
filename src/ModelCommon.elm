@@ -101,3 +101,18 @@ type alias TensionForm =
 type alias NodeTarget =
     -- Helper for encoding ActionState / Receiving Node from JS.
     Result JD.Error Node
+
+
+
+--
+-- Getters
+--
+
+
+uriFromFocus : NodeFocus -> String
+uriFromFocus focus =
+    if focus.isRoot then
+        String.join "/" [ "/org", focus.rootid ]
+
+    else
+        String.join "/" [ "/org", focus.rootid, focus.nameid ]

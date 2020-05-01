@@ -82,7 +82,8 @@ emptyNode =
 
 
 type alias ParentNode =
-    { id : String }
+    { nameid : String
+    }
 
 
 
@@ -184,7 +185,8 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with
-            (Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
+            --(Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
+            (Fractal.Object.Node.parent identity (SelectionSet.map ParentNode Fractal.Object.Node.nameid))
         |> with Fractal.Object.Node.type_
 
 

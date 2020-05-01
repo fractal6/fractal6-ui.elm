@@ -92,7 +92,10 @@ init global flags =
         focusChange =
             (focusid /= oldFocus.nameid) || isInit
 
-        -- init Model
+        --d =
+        --    Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
+        --dd =
+        --    Debug.log "newfocus" [ newFocus ]
         model =
             { orga_data =
                 session.orga_data
@@ -111,19 +114,22 @@ init global flags =
             if orgChange then
                 [ fetchNodesOrga newFocus.rootid GotOrga
                 , fetchCircleTension newFocus.nameid GotTensions
-                , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
+                , Task.perform (\_ -> PassedSlowLoadTreshold) (Loading.slowTreshold 500)
                 ]
 
             else if focusChange then
                 [ Ports.focusGraphPack newFocus.nameid
                 , fetchCircleTension newFocus.nameid GotTensions
-                , Task.perform (\_ -> PassedSlowLoadTreshold) Loading.slowTreshold
+                , Task.perform (\_ -> PassedSlowLoadTreshold) (Loading.slowTreshold 500)
                 ]
 
             else
                 []
     in
-    ( model, Cmd.batch cmds, Cmd.none )
+    ( model
+    , Cmd.batch cmds
+    , updateGlobalFocus newFocus
+    )
 
 
 
@@ -177,7 +183,7 @@ update global msg model =
                 Success data ->
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
-                        , Ports.initGraphPack <| JE.encode 0 <| nodesDataEncoder data model.node_focus.nameid
+                        , Ports.initGraphPack <| JE.encode 0 <| graphPackEncoder data model.node_focus.nameid
                         , updateGlobalOrga data
                         )
 
@@ -258,7 +264,6 @@ update global msg model =
 
         NodeClicked focus ->
             ( model
-              --( { model | node_focus = focus }
             , Cmd.none
             , Nav.replaceUrl global.key (uriFromFocus focus)
             )
@@ -887,20 +892,11 @@ getTensionForm model =
 -- Json encoder/decoder --When receiving data from Javascript
 
 
-decodeNested maybe field =
-    case maybe of
-        Just x ->
-            Just x.id
-
-        Nothing ->
-            Nothing
-
-
-nodesDataEncoder : NodesData -> String -> JE.Value
-nodesDataEncoder data focus =
+graphPackEncoder : NodesData -> String -> JE.Value
+graphPackEncoder data focus =
     JE.object
         [ ( "data", nodesEncoder data )
-        , ( "focus", JE.string focus )
+        , ( "focusid", JE.string focus )
         ]
 
 
@@ -911,10 +907,10 @@ nodesEncoder nodes =
 
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
-    [ ( "ID", JE.string node.id )
+    [ ( "id", JE.string node.id )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
-    , ( "parentID", JEE.maybe JE.string <| decodeNested node.parent "id" )
+    , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
     , ( "type_", JE.string <| NodeType.toString node.type_ )
     ]
 
@@ -923,8 +919,8 @@ nodeDecoder : JD.Decoder Node
 nodeDecoder =
     -- @DEBUG: Use a dict structure instead to get back node from ID only.
     JD.map5 Node
-        (JD.field "ID" JD.string)
+        (JD.field "id" JD.string)
         (JD.field "name" JD.string)
         (JD.field "nameid" JD.string)
-        (JD.maybe (JD.map ParentNode <| JD.field "parentID" JD.string))
+        (JD.maybe (JD.map ParentNode <| JD.field "parentid" JD.string))
         (JD.field "type_" NodeType.decoder)

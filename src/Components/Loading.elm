@@ -13,10 +13,10 @@ import Task
 -- Logics
 
 
-slowTreshold : Task.Task x ()
-slowTreshold =
+slowTreshold : Float -> Task.Task x ()
+slowTreshold t =
     -- before passing to Slow Loading status
-    Process.sleep 500
+    Process.sleep t
 
 
 
