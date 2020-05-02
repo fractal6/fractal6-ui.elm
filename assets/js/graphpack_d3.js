@@ -217,6 +217,9 @@ const GraphPack = {
         //$canvasButtons.style.top = "-"+ height+"px"; // if position: relative
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -5 + "px";
         this.$canvasButtons.style.top = r.top + 10 + "px";
+
+        this.$canvasButtons.classList.remove("is-invisible");
+        this.$tooltip.classList.remove("is-invisible");
     },
 
     //The draw function of the canvas that gets called on each frame
@@ -694,6 +697,9 @@ const GraphPack = {
         } else {
             this.timeout = false;
 
+            this.$canvasButtons.classList.add("is-invisible");
+            this.$tooltip.classList.add("is-invisible");
+
             this.computeGeometry();
             this.sizeDom();
             this.zoomToNode(this.focusedNode, 0.9);
@@ -752,11 +758,9 @@ const GraphPack = {
 
         // Setup canvasButtons Buttons
         this.$canvasButtons = document.getElementById('canvasButtons');
-        this.$canvasButtons.classList.remove("is-invisible");
 
         // Setup nodeTooltip Tooltip
         this.$tooltip = document.getElementById('nodeTooltip');
-        this.$tooltip.classList.remove("is-invisible");
         this.clearNodeTooltip()
 
         this.sizeDom();
