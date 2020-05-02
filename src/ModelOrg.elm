@@ -354,7 +354,7 @@ tensionInputEncoder source target post =
             Dict.get "title" post |> withDefault ""
 
         type_ =
-            Dict.get "type_" post |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Alert
+            Dict.get "type_" post |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational
 
         createdby =
             Dict.get "username" post |> withDefault ""
@@ -525,11 +525,10 @@ tensionTypeColor elt tt =
         TensionType.Help ->
             "has-" ++ elt ++ "-link"
 
-        TensionType.Alert ->
-            "has-" ++ elt ++ "-danger"
 
 
-
+--TensionType.Alert ->
+--    "has-" ++ elt ++ "-danger"
 --
 -- View
 --

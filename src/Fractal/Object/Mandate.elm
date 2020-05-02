@@ -24,14 +24,38 @@ purpose =
     Object.selectionForField "String" "purpose" [] Decode.string
 
 
-responsabilities : SelectionSet (Maybe String) Fractal.Object.Mandate
-responsabilities =
-    Object.selectionForField "(Maybe String)" "responsabilities" [] (Decode.string |> Decode.nullable)
+type alias ResponsabilitiesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PostFilter }
 
 
-domains : SelectionSet (Maybe (List String)) Fractal.Object.Mandate
-domains =
-    Object.selectionForField "(Maybe (List String))" "domains" [] (Decode.string |> Decode.list |> Decode.nullable)
+responsabilities : (ResponsabilitiesOptionalArguments -> ResponsabilitiesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe decodesTo) Fractal.Object.Mandate
+responsabilities fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodePostFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "responsabilities" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias DomainsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PostFilter }
+
+
+domains : (DomainsOptionalArguments -> DomainsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe decodesTo) Fractal.Object.Mandate
+domains fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodePostFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "domains" optionalArgs object_ (identity >> Decode.nullable)
 
 
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Mandate
@@ -64,3 +88,8 @@ createdBy fillInOptionals object_ =
 message : SelectionSet (Maybe String) Fractal.Object.Mandate
 message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
+
+
+items : SelectionSet (Maybe (List String)) Fractal.Object.Mandate
+items =
+    Object.selectionForField "(Maybe (List String))" "items" [] (Decode.string |> Decode.list |> Decode.nullable)

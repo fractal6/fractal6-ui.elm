@@ -89,3 +89,8 @@ backed_roles fillInOptionals object_ =
 bio : SelectionSet (Maybe String) Fractal.Object.User
 bio =
     Object.selectionForField "(Maybe String)" "bio" [] (Decode.string |> Decode.nullable)
+
+
+utc : SelectionSet (Maybe String) Fractal.Object.User
+utc =
+    Object.selectionForField "(Maybe String)" "utc" [] (Decode.string |> Decode.nullable)

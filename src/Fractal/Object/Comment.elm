@@ -49,3 +49,8 @@ createdBy fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+
+
+items : SelectionSet (Maybe (List String)) Fractal.Object.Comment
+items =
+    Object.selectionForField "(Maybe (List String))" "items" [] (Decode.string |> Decode.list |> Decode.nullable)

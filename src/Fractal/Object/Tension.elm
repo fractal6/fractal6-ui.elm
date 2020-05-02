@@ -20,6 +20,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+nth : SelectionSet (Maybe String) Fractal.Object.Tension
+nth =
+    Object.selectionForField "(Maybe String)" "nth" [] (Decode.string |> Decode.nullable)
+
+
 title : SelectionSet String Fractal.Object.Tension
 title =
     Object.selectionForField "String" "title" [] Decode.string
@@ -141,3 +146,8 @@ createdBy fillInOptionals object_ =
 message : SelectionSet (Maybe String) Fractal.Object.Tension
 message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
+
+
+items : SelectionSet (Maybe (List String)) Fractal.Object.Tension
+items =
+    Object.selectionForField "(Maybe (List String))" "items" [] (Decode.string |> Decode.list |> Decode.nullable)

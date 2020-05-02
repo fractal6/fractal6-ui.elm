@@ -463,7 +463,7 @@ viewCanvas global model =
             else
                 []
 
-        -- Hidden class use in circlepacking_d3.js
+        -- Hidden class use in graphpack_d3.js
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             [ div
                 [ id "invGraph_cvbtn"

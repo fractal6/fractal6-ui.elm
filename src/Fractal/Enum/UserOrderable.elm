@@ -13,11 +13,12 @@ type UserOrderable
     | Fullname
     | Password
     | Bio
+    | Utc
 
 
 list : List UserOrderable
 list =
-    [ CreatedAt, Username, Fullname, Password, Bio ]
+    [ CreatedAt, Username, Fullname, Password, Bio, Utc ]
 
 
 decoder : Decoder UserOrderable
@@ -40,6 +41,9 @@ decoder =
 
                     "bio" ->
                         Decode.succeed Bio
+
+                    "utc" ->
+                        Decode.succeed Utc
 
                     _ ->
                         Decode.fail ("Invalid UserOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -65,6 +69,9 @@ toString enum =
 
         Bio ->
             "bio"
+
+        Utc ->
+            "utc"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -95,6 +102,9 @@ fromString enumString =
 
         "bio" ->
             Just Bio
+
+        "utc" ->
+            Just Utc
 
         _ ->
             Nothing
