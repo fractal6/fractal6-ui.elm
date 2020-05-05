@@ -21,6 +21,10 @@ type AddNodePayload
     = AddNodePayload
 
 
+type AddRightsPayload
+    = AddRightsPayload
+
+
 type AddTensionPayload
     = AddTensionPayload
 
@@ -75,6 +79,10 @@ type Node
 
 type Post
     = Post
+
+
+type Rights
+    = Rights
 
 
 type Tension

@@ -34,9 +34,24 @@ username =
     Object.selectionForField "String" "username" [] Decode.string
 
 
-fullname : SelectionSet (Maybe String) Fractal.Object.User
-fullname =
-    Object.selectionForField "(Maybe String)" "fullname" [] (Decode.string |> Decode.nullable)
+email : SelectionSet String Fractal.Object.User
+email =
+    Object.selectionForField "String" "email" [] Decode.string
+
+
+emailHash : SelectionSet (Maybe String) Fractal.Object.User
+emailHash =
+    Object.selectionForField "(Maybe String)" "emailHash" [] (Decode.string |> Decode.nullable)
+
+
+emailValidated : SelectionSet Bool Fractal.Object.User
+emailValidated =
+    Object.selectionForField "Bool" "emailValidated" [] Decode.bool
+
+
+name : SelectionSet (Maybe String) Fractal.Object.User
+name =
+    Object.selectionForField "(Maybe String)" "name" [] (Decode.string |> Decode.nullable)
 
 
 password : SelectionSet String Fractal.Object.User

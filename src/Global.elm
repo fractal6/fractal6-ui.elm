@@ -116,6 +116,7 @@ view :
 view { page, global, toMsg } =
     Components.layout
         { page = page
+        , session = global.session
         }
 
 

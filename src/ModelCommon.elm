@@ -26,12 +26,13 @@ type alias Session =
 
 type UserState
     = LoggedOut
-    | LoggedIn UserInfo
+    | LoggedIn UserCtx
 
 
-type alias UserInfo =
+type alias UserCtx =
     { username : String
-    , display_name : String
+    , name : Maybe String
+    , roles : List { nameid : String, role_type : String }
     }
 
 

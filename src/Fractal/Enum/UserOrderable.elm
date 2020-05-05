@@ -10,7 +10,9 @@ import Json.Decode as Decode exposing (Decoder)
 type UserOrderable
     = CreatedAt
     | Username
-    | Fullname
+    | Email
+    | EmailHash
+    | Name
     | Password
     | Bio
     | Utc
@@ -18,7 +20,7 @@ type UserOrderable
 
 list : List UserOrderable
 list =
-    [ CreatedAt, Username, Fullname, Password, Bio, Utc ]
+    [ CreatedAt, Username, Email, EmailHash, Name, Password, Bio, Utc ]
 
 
 decoder : Decoder UserOrderable
@@ -33,8 +35,14 @@ decoder =
                     "username" ->
                         Decode.succeed Username
 
-                    "fullname" ->
-                        Decode.succeed Fullname
+                    "email" ->
+                        Decode.succeed Email
+
+                    "emailHash" ->
+                        Decode.succeed EmailHash
+
+                    "name" ->
+                        Decode.succeed Name
 
                     "password" ->
                         Decode.succeed Password
@@ -61,8 +69,14 @@ toString enum =
         Username ->
             "username"
 
-        Fullname ->
-            "fullname"
+        Email ->
+            "email"
+
+        EmailHash ->
+            "emailHash"
+
+        Name ->
+            "name"
 
         Password ->
             "password"
@@ -94,8 +108,14 @@ fromString enumString =
         "username" ->
             Just Username
 
-        "fullname" ->
-            Just Fullname
+        "email" ->
+            Just Email
+
+        "emailHash" ->
+            Just EmailHash
+
+        "name" ->
+            Just Name
 
         "password" ->
             Just Password

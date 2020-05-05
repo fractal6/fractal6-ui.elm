@@ -5,6 +5,7 @@
 module Fractal.Object.Node exposing (..)
 
 import Fractal.Enum.NodeType
+import Fractal.Enum.RoleType
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -221,3 +222,8 @@ second_link fillInOptionals object_ =
 skills : SelectionSet (Maybe (List String)) Fractal.Object.Node
 skills =
     Object.selectionForField "(Maybe (List String))" "skills" [] (Decode.string |> Decode.list |> Decode.nullable)
+
+
+role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.Node
+role_type =
+    Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
