@@ -305,3 +305,21 @@ a {
     }
   }
 }
+
+//
+// Fixes
+//
+
+input, textarea {
+    color: #24292e !important;
+    background-color: #fafbfc !important;
+
+    &::placeholder {
+        color: #6a737d !important;
+    }
+
+    &:active, &:focus {
+        background-color: none !important;
+    }
+}
+

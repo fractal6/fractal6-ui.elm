@@ -36,8 +36,8 @@ viewNavbar session =
                 ]
             , div [ id "navMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ viewLink "Help" Route.Top
-                    , viewLink "Explore" Route.NotFound
+                    [ viewLink "navbar-item" "Help" Route.Top
+                    , viewLink "navbar-item" "Explore" Route.NotFound
                     ]
                 , div [ class "navbar-end" ]
                     [ a [ class "navbar-item" ]
@@ -70,14 +70,14 @@ userButton session =
                 ]
 
         LoggedOut ->
-            div [ class "button is-primary" ]
-                [ viewLink "Login" Route.Login ]
+            div [ class "navbar-item" ]
+                [ viewLink "button is-small is-primary has-text-weight-bold" "Login" Route.Login ]
 
 
-viewLink : String -> Route.Route -> Html msg
-viewLink link route =
+viewLink : String -> String -> Route.Route -> Html msg
+viewLink classes link route =
     a
-        [ class "navbar-item"
+        [ class classes
         , href (Route.toHref route)
         ]
         [ text link ]

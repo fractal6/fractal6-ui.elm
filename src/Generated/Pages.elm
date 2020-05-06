@@ -11,7 +11,9 @@ import Generated.Route as Route exposing (Route)
 import Global
 import Page exposing (Bundle, Document)
 import Pages.Top
+import Pages.Login
 import Pages.NotFound
+import Pages.Signup
 import Pages.Test.Testa
 import Pages.Org.Dynamic
 import Pages.Org.Dynamic.Dynamic
@@ -23,7 +25,9 @@ import Pages.Org.Dynamic.Dynamic
 
 type Model
     = Top_Model Pages.Top.Model
+    | Login_Model Pages.Login.Model
     | NotFound_Model Pages.NotFound.Model
+    | Signup_Model Pages.Signup.Model
     | Test_Testa_Model Pages.Test.Testa.Model
     | Org_Dynamic_Model Pages.Org.Dynamic.Model
     | Org_Dynamic_Dynamic_Model Pages.Org.Dynamic.Dynamic.Model
@@ -31,7 +35,9 @@ type Model
 
 type Msg
     = Top_Msg Pages.Top.Msg
+    | Login_Msg Pages.Login.Msg
     | NotFound_Msg Pages.NotFound.Msg
+    | Signup_Msg Pages.Signup.Msg
     | Test_Testa_Msg Pages.Test.Testa.Msg
     | Org_Dynamic_Msg Pages.Org.Dynamic.Msg
     | Org_Dynamic_Dynamic_Msg Pages.Org.Dynamic.Dynamic.Msg
@@ -50,7 +56,9 @@ type alias UpgradedPage flags model msg =
 
 type alias UpgradedPages =
     { top : UpgradedPage Pages.Top.Flags Pages.Top.Model Pages.Top.Msg
+    , login : UpgradedPage Pages.Login.Flags Pages.Login.Model Pages.Login.Msg
     , notFound : UpgradedPage Pages.NotFound.Flags Pages.NotFound.Model Pages.NotFound.Msg
+    , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
     , test_testa : UpgradedPage Pages.Test.Testa.Flags Pages.Test.Testa.Model Pages.Test.Testa.Msg
     , org_dynamic : UpgradedPage Pages.Org.Dynamic.Flags Pages.Org.Dynamic.Model Pages.Org.Dynamic.Msg
     , org_dynamic_dynamic : UpgradedPage Pages.Org.Dynamic.Dynamic.Flags Pages.Org.Dynamic.Dynamic.Model Pages.Org.Dynamic.Dynamic.Msg
@@ -60,7 +68,9 @@ type alias UpgradedPages =
 pages : UpgradedPages
 pages =
     { top = Pages.Top.page |> Page.upgrade Top_Model Top_Msg
+    , login = Pages.Login.page |> Page.upgrade Login_Model Login_Msg
     , notFound = Pages.NotFound.page |> Page.upgrade NotFound_Model NotFound_Msg
+    , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
     , test_testa = Pages.Test.Testa.page |> Page.upgrade Test_Testa_Model Test_Testa_Msg
     , org_dynamic = Pages.Org.Dynamic.page |> Page.upgrade Org_Dynamic_Model Org_Dynamic_Msg
     , org_dynamic_dynamic = Pages.Org.Dynamic.Dynamic.page |> Page.upgrade Org_Dynamic_Dynamic_Model Org_Dynamic_Dynamic_Msg
@@ -77,8 +87,14 @@ init route =
         Route.Top ->
             pages.top.init ()
         
+        Route.Login ->
+            pages.login.init ()
+        
         Route.NotFound ->
             pages.notFound.init ()
+        
+        Route.Signup ->
+            pages.signup.init ()
         
         Route.Test_Testa ->
             pages.test_testa.init ()
@@ -100,8 +116,14 @@ update bigMsg bigModel =
         ( Top_Msg msg, Top_Model model ) ->
             pages.top.update msg model
         
+        ( Login_Msg msg, Login_Model model ) ->
+            pages.login.update msg model
+        
         ( NotFound_Msg msg, NotFound_Model model ) ->
             pages.notFound.update msg model
+        
+        ( Signup_Msg msg, Signup_Model model ) ->
+            pages.signup.update msg model
         
         ( Test_Testa_Msg msg, Test_Testa_Model model ) ->
             pages.test_testa.update msg model
@@ -126,8 +148,14 @@ bundle bigModel =
         Top_Model model ->
             pages.top.bundle model
         
+        Login_Model model ->
+            pages.login.bundle model
+        
         NotFound_Model model ->
             pages.notFound.bundle model
+        
+        Signup_Model model ->
+            pages.signup.bundle model
         
         Test_Testa_Model model ->
             pages.test_testa.bundle model

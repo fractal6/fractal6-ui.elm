@@ -31,9 +31,12 @@ const actions = {
         setTimeout(BulmaDriver, 300, eltId);
     },
     'TOGGLE_TH': (app, session, message) => {
-        document.getElementById("themeButton_port").addEventListener("click", function(){
-            toggleTheme();
-        });
+        $tt = document.getElementById("themeButton_port");
+        if ($tt) {
+            $tt.addEventListener("click", function(){
+                toggleTheme();
+            });
+        }
     },
     'INIT_GRAPHPACK': (app, session, data) => {
         //window.addEventListener('DOMContentReady',function(){

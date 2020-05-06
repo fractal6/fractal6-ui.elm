@@ -40,7 +40,9 @@ const BulmaDriver = (target) => {
     function advanceFocus(e, el) {
         if (e.key == "Enter") {
             $target = document.getElementById(el.dataset.nextfocus);
-            $target.focus();
+            if ($target) {
+                $target.focus();
+            }
         }
     }
 

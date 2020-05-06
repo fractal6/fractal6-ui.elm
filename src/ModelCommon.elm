@@ -32,8 +32,12 @@ type UserState
 type alias UserCtx =
     { username : String
     , name : Maybe String
-    , roles : List { nameid : String, role_type : String }
+    , roles : List UserRole
     }
+
+
+type alias UserRole =
+    { nameid : String, role_type : String }
 
 
 

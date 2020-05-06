@@ -13,7 +13,6 @@ import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (on, onClick, onInput)
-import Http
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
@@ -23,7 +22,6 @@ import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import RemoteData exposing (RemoteData)
 import Task
 import Time
 
@@ -140,15 +138,18 @@ init global flags =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+      --
     | GotOrga (RequestResult ErrorData NodesData) -- graphql
     | GotTensions (RequestResult ErrorData TensionsData) -- graphql
-    | DoNodeAction NodeTarget -- ports receive
+      --
+    | DoNodeAction NodeTarget -- ports receive / tooltip click
     | DoTensionStep1
-    | DoTensionStep2 String
+    | DoTensionStep2 String --
     | ChangeTensionPost String String
     | Submit (Time.Posix -> Msg)
-    | SubmitTension TensionForm Time.Posix
+    | SubmitTension TensionForm Time.Posix -- model ends
     | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
+      --
     | NodeClicked NodeFocus -- ports receive
     | NodeFocused NodePath -- ports receive
     | ToggleGraphReverse -- ports send
@@ -226,10 +227,10 @@ update global msg model =
             in
             ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
 
-        ChangeTensionPost field content ->
+        ChangeTensionPost field value ->
             let
                 maybeForm =
-                    updateTensionPost model field content
+                    updateTensionPost model field value
 
                 modelUpdated =
                     updateTensionStep model TensionFinalForm maybeForm
@@ -719,7 +720,9 @@ viewTensionStep form =
                         ]
                     , div [ class "card-content" ] <| tensionTypeArrow "button" form.target.name form.target.name
                     ]
-                , div [ class "card-content" ]
+                , div
+                    [ class "card-content"
+                    ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
@@ -849,7 +852,7 @@ updateTensionPost model field value =
 
 
 
--- getters
+-- Getters
 
 
 isTensionSendable : TensionForm -> Bool
