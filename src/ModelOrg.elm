@@ -48,12 +48,20 @@ nTensionPpg =
 --
 
 
+type alias GqlData a =
+    RequestResult ErrorData a
+
+
 type RequestResult errors data
     = Success data
     | Failure errors
-    | Loading -- we don't make the difference between RemoteLoading and Loading here
+    | Loading
     | LoadingSlowly
     | NotAsked
+
+
+type alias ErrorData =
+    String
 
 
 type alias Post =

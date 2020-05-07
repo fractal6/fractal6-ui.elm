@@ -139,8 +139,8 @@ init global flags =
 type Msg
     = PassedSlowLoadTreshold -- timer
       --
-    | GotOrga (RequestResult ErrorData NodesData) -- graphql
-    | GotTensions (RequestResult ErrorData TensionsData) -- graphql
+    | GotOrga (GqlData NodesData) -- graphql
+    | GotTensions (GqlData TensionsData) -- graphql
       --
     | DoNodeAction NodeTarget -- ports receive / tooltip click
     | DoTensionStep1
@@ -148,7 +148,7 @@ type Msg
     | ChangeTensionPost String String
     | Submit (Time.Posix -> Msg)
     | SubmitTension TensionForm Time.Posix -- model ends
-    | TensionAck (RequestResult ErrorData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
+    | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
       --
     | NodeClicked NodeFocus -- ports receive
     | NodeFocused NodePath -- ports receive

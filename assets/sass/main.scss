@@ -435,20 +435,6 @@ html.has-modal-active {
         }
     }
 
-    & input, & textarea {
-        color: #24292e;
-        background-color: #fafbfc;
-
-        &::placeholder {
-            color: #6a737d;
-        }
-
-        &:active, &:focus {
-            background-color: none;
-        }
-    }
-
-
 }
 
 /*

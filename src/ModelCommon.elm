@@ -61,16 +61,12 @@ type alias NodePath =
 -- Data Structures
 
 
-type alias ErrorData =
-    String
-
-
 type alias OrgaData =
-    RequestResult ErrorData NodesData
+    GqlData NodesData
 
 
 type alias CircleTensionsData =
-    RequestResult ErrorData TensionsData
+    GqlData TensionsData
 
 
 
@@ -97,7 +93,7 @@ type TensionStep
 type alias TensionForm =
     { step : TensionStep
     , post : Post
-    , result : RequestResult ErrorData (Maybe AddTensionPayload)
+    , result : GqlData (Maybe AddTensionPayload)
     , target : Node
     , source : Node
     }

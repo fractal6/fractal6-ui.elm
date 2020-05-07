@@ -1,5 +1,6 @@
 module Pages.Signup exposing (Flags, Model, Msg, page)
 
+import Components.Loading as Loading exposing (HttpError, expectJson, viewErrors, viewHttpErrors)
 import Dict exposing (Dict)
 import Global
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -25,6 +26,12 @@ page =
         }
 
 
+
+--
+-- Model
+--
+
+
 type alias Model =
     { form : UserForm
     }
@@ -37,7 +44,7 @@ type alias UserForm =
 
 
 type alias WebData a =
-    RemoteData Http.Error a
+    RemoteData (HttpError String) a
 
 
 userDecoder : JD.Decoder UserCtx
@@ -106,7 +113,7 @@ update global msg model =
             , Http.post
                 { url = "http://localhost:8888/signup"
                 , body = Http.jsonBody <| JE.dict identity JE.string form.post
-                , expect = Http.expectJson (RemoteData.fromResult >> GotSignin) userDecoder
+                , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
                 }
             , Cmd.none
             )
@@ -154,13 +161,13 @@ viewLogin global model =
                 [ text "Sign up" ]
             ]
         , div [ class "card-content" ]
-            [ div [ class "field is-horizontal" ]
-                [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Username" ] ]
+            [ div [ class "field is-horizntl" ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
-                                [ class "input is-small autofocus followFocus"
+                                [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "emailInput"
                                 , type_ "text"
                                 , placeholder "username"
@@ -171,14 +178,14 @@ viewLogin global model =
                         ]
                     ]
                 ]
-            , div [ class "field is-horizontal" ]
-                [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Email" ] ]
+            , div [ class "field is-horizntl" ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
                                 [ id "emailInput"
-                                , class "input is-small followFocus"
+                                , class "input followFocus"
                                 , attribute "data-nextfocus" "passwordInput"
                                 , type_ "text"
                                 , placeholder "email"
@@ -189,14 +196,14 @@ viewLogin global model =
                         ]
                     ]
                 ]
-            , div [ class "field is-horizontal" ]
-                [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Password" ] ]
+            , div [ class "field is-horizntl" ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
                                 [ id "passwordInput"
-                                , class "input is-small followFocus"
+                                , class "input followFocus"
                                 , attribute "data-nextfocus" "submitButton"
                                 , type_ "text"
                                 , placeholder "password"
