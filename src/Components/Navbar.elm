@@ -43,7 +43,7 @@ viewNavbar session =
                     [ a [ class "navbar-item" ]
                         [ div [ class "button is-warning is-small" ]
                             [ div [ class "content" ]
-                                [ text "Report an issue" ]
+                                [ text "Contact" ]
                             ]
                         ]
                     , userButton session

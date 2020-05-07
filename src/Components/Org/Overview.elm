@@ -22,6 +22,7 @@ import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Process
 import Task
 import Time
 
@@ -112,13 +113,13 @@ init global flags =
             if orgChange then
                 [ fetchNodesOrga newFocus.rootid GotOrga
                 , fetchCircleTension newFocus.nameid GotTensions
-                , Task.perform (\_ -> PassedSlowLoadTreshold) (Loading.slowTreshold 500)
+                , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
 
             else if focusChange then
                 [ Ports.focusGraphPack newFocus.nameid
                 , fetchCircleTension newFocus.nameid GotTensions
-                , Task.perform (\_ -> PassedSlowLoadTreshold) (Loading.slowTreshold 500)
+                , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
 
             else

@@ -7,7 +7,9 @@ import ModelOrg exposing (..)
 
 
 
--- Session
+--
+-- Session / Global
+--
 
 
 type alias Session =
@@ -21,7 +23,9 @@ type alias Session =
 
 
 
+--
 -- User
+--
 
 
 type UserState
@@ -32,7 +36,7 @@ type UserState
 type alias UserCtx =
     { username : String
     , name : Maybe String
-    , roles : List UserRole
+    , roles : Maybe (List UserRole)
     }
 
 
@@ -41,7 +45,9 @@ type alias UserRole =
 
 
 
+--
 -- Focus
+--
 
 
 type alias NodeFocus =
@@ -58,7 +64,9 @@ type alias NodePath =
 
 
 
+--
 -- Data Structures
+--
 
 
 type alias OrgaData =
@@ -70,7 +78,9 @@ type alias CircleTensionsData =
 
 
 
+--
 -- Action Step and Form Data
+--
 
 
 type ActionState
@@ -117,3 +127,23 @@ uriFromFocus focus =
 
     else
         String.join "/" [ "/org", focus.rootid, focus.nameid ]
+
+
+
+--
+-- Json Decoders
+--
+
+
+userDecoder : JD.Decoder UserCtx
+userDecoder =
+    JD.map3 UserCtx
+        (JD.field "username" JD.string)
+        (JD.maybe <| JD.field "name" JD.string)
+        (JD.maybe <|
+            JD.field "roles" <|
+                JD.list <|
+                    JD.map2 UserRole
+                        (JD.field "nameid" JD.string)
+                        (JD.field "role_type" JD.string)
+        )

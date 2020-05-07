@@ -1,6 +1,6 @@
 module Pages.Signup exposing (Flags, Model, Msg, page)
 
-import Components.Loading as Loading exposing (HttpError, expectJson, viewErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (HttpError, WebData, expectJson, viewErrors, viewHttpErrors)
 import Dict exposing (Dict)
 import Global
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -41,23 +41,6 @@ type alias UserForm =
     { post : Dict String String
     , result : WebData UserCtx
     }
-
-
-type alias WebData a =
-    RemoteData (HttpError String) a
-
-
-userDecoder : JD.Decoder UserCtx
-userDecoder =
-    JD.map3 UserCtx
-        (JD.field "username" JD.string)
-        (JD.maybe (JD.field "name" JD.string))
-        (JD.field "roles" <|
-            JD.list <|
-                JD.map2 UserRole
-                    (JD.field "nameid" JD.string)
-                    (JD.field "role_type" JD.string)
-        )
 
 
 
@@ -155,81 +138,91 @@ viewLogin global model =
         isSendable =
             isUserSendable model.form
     in
-    div [ class "card" ]
-        [ div [ class "card-header" ]
-            [ div [ class "card-header-title" ]
-                [ text "Sign up" ]
-            ]
-        , div [ class "card-content" ]
-            [ div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
-                , div [ class "field-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ class "input autofocus followFocus"
-                                , attribute "data-nextfocus" "emailInput"
-                                , type_ "text"
-                                , placeholder "username"
-                                , onInput (ChangeUserPost "username")
+    div [ class "form" ]
+        [ div [ class "card" ]
+            [ div [ class "card-header" ]
+                [ div [ class "card-header-title" ]
+                    [ text "Signup" ]
+                ]
+            , div [ class "card-content" ]
+                [ div [ class "field is-horizntl" ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control" ]
+                                [ input
+                                    [ class "input autofocus followFocus"
+                                    , attribute "data-nextfocus" "emailInput"
+                                    , type_ "text"
+                                    , placeholder "username"
+                                    , onInput (ChangeUserPost "username")
+                                    ]
+                                    []
                                 ]
-                                []
                             ]
                         ]
                     ]
-                ]
-            , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
-                , div [ class "field-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ id "emailInput"
-                                , class "input followFocus"
-                                , attribute "data-nextfocus" "passwordInput"
-                                , type_ "text"
-                                , placeholder "email"
-                                , onInput (ChangeUserPost "email")
+                , div [ class "field is-horizntl" ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control" ]
+                                [ input
+                                    [ id "emailInput"
+                                    , class "input followFocus"
+                                    , attribute "data-nextfocus" "passwordInput"
+                                    , type_ "text"
+                                    , placeholder "email"
+                                    , onInput (ChangeUserPost "email")
+                                    ]
+                                    []
                                 ]
-                                []
                             ]
                         ]
                     ]
-                ]
-            , div [ class "field is-horizntl" ]
-                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
-                , div [ class "field-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ id "passwordInput"
-                                , class "input followFocus"
-                                , attribute "data-nextfocus" "submitButton"
-                                , type_ "text"
-                                , placeholder "password"
-                                , onInput (ChangeUserPost "password")
+                , div [ class "field is-horizntl" ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control" ]
+                                [ input
+                                    [ id "passwordInput"
+                                    , class "input followFocus"
+                                    , attribute "data-nextfocus" "submitButton"
+                                    , type_ "text"
+                                    , placeholder "password"
+                                    , onInput (ChangeUserPost "password")
+                                    ]
+                                    []
                                 ]
-                                []
                             ]
                         ]
                     ]
-                ]
-            , br [] []
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ if isSendable then
-                        button
-                            [ id "submitButton"
-                            , class "button is-success has-text-weight-semibold"
-                            , onClick (SubmitUser model.form)
-                            ]
-                            [ text "Sign up" ]
+                , br [] []
+                , div [ class "field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ if isSendable then
+                            button
+                                [ id "submitButton"
+                                , class "button is-success has-text-weight-semibold"
+                                , onClick (SubmitUser model.form)
+                                ]
+                                [ text "Sign up" ]
 
-                      else
-                        button [ class "button has-text-weight-semibold", disabled True ]
-                            [ text "Sign up" ]
+                          else
+                            button [ class "button has-text-weight-semibold", disabled True ]
+                                [ text "Sign up" ]
+                        ]
                     ]
                 ]
+            ]
+        , div []
+            [ case model.form.result of
+                RemoteData.Failure err ->
+                    viewHttpErrors err
+
+                default ->
+                    text ""
             ]
         ]
 

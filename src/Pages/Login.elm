@@ -1,6 +1,6 @@
 module Pages.Login exposing (Flags, Model, Msg, page)
 
-import Components.Loading as Loading exposing (HttpError, expectJson, viewErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (HttpError, WebData, expectJson, viewErrors, viewHttpErrors)
 import Dict exposing (Dict)
 import Global
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -40,23 +40,6 @@ type alias UserForm =
     { post : Dict String String
     , result : WebData UserCtx
     }
-
-
-type alias WebData a =
-    RemoteData (HttpError String) a
-
-
-userDecoder : JD.Decoder UserCtx
-userDecoder =
-    JD.map3 UserCtx
-        (JD.field "username" JD.string)
-        (JD.maybe (JD.field "name" JD.string))
-        (JD.field "roles" <|
-            JD.list <|
-                JD.map2 UserRole
-                    (JD.field "nameid" JD.string)
-                    (JD.field "role_type" JD.string)
-        )
 
 
 
@@ -215,13 +198,14 @@ viewLogin global model =
                     ]
                 ]
             ]
-        , div [] <|
-            case model.form.result of
+        , div []
+            [ case model.form.result of
                 RemoteData.Failure err ->
-                    [ text <| viewHttpErrors err ]
+                    viewHttpErrors err
 
                 default ->
-                    []
+                    text ""
+            ]
         ]
 
 

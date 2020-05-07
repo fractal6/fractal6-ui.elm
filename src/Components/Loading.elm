@@ -1,4 +1,4 @@
-module Components.Loading exposing (HttpError, expectJson, slowTreshold, spinner, viewErrors, viewHttpErrors)
+module Components.Loading exposing (HttpError, WebData, expectJson, spinner, viewErrors, viewHttpErrors)
 
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
@@ -7,8 +7,29 @@ import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (alt, class, height, src, width)
 import Http
 import Json.Decode as JD
-import Process
-import Task
+import RemoteData exposing (RemoteData)
+
+
+
+--
+-- Model
+--
+
+
+type alias WebData a =
+    RemoteData (HttpError String) a
+
+
+type alias ErrorAuth =
+    { user_ctx :
+        ErrorMsg
+    }
+
+
+type alias ErrorMsg =
+    { field : String
+    , msg : String
+    }
 
 
 type HttpError body
@@ -16,18 +37,12 @@ type HttpError body
     | Timeout
     | NetworkError
     | BadStatus Int body
+      --| BadBody Http.Metadata body String
     | BadBody String
 
 
 
---| BadBody Http.Metadata body String
 -- Logics
-
-
-slowTreshold : Float -> Task.Task x ()
-slowTreshold t =
-    -- before passing to Slow Loading status
-    Process.sleep t
 
 
 expectJson : (Result (HttpError String) a -> msg) -> JD.Decoder a -> Http.Expect msg
@@ -56,6 +71,47 @@ expectJson toMsg decoder =
                             Err (BadBody (JD.errorToString err))
 
 
+errorDecoder : JD.Decoder ErrorAuth
+errorDecoder =
+    JD.map ErrorAuth <|
+        JD.field "user_ctx" <|
+            JD.map2 ErrorMsg
+                (JD.field "field" JD.string)
+                (JD.field "msg" JD.string)
+
+
+errorHttpToString : HttpError String -> String
+errorHttpToString httpError =
+    case httpError of
+        BadUrl message ->
+            message
+
+        Timeout ->
+            "Server is taking too long to respond. Please try again later."
+
+        NetworkError ->
+            "Unable to reach server."
+
+        BadStatus statusCode body ->
+            if statusCode == 401 then
+                let
+                    errMsg =
+                        case JD.decodeString errorDecoder body of
+                            Ok err ->
+                                err.user_ctx.msg
+
+                            Err errJD ->
+                                "unknown error;\n" ++ JD.errorToString errJD
+                in
+                "Unauthaurized: " ++ errMsg
+
+            else
+                "Request failed with status code: " ++ String.fromInt statusCode ++ "!!!" ++ body
+
+        BadBody message ->
+            message
+
+
 
 -- Viewer
 
@@ -76,21 +132,6 @@ viewErrors errMsg =
     div [ class "box has-background-danger" ] [ text errMsg ]
 
 
-viewHttpErrors : HttpError String -> String
+viewHttpErrors : HttpError String -> Html msg
 viewHttpErrors httpError =
-    case httpError of
-        BadUrl message ->
-            message
-
-        Timeout ->
-            "Server is taking too long to respond. Please try again later."
-
-        NetworkError ->
-            "Unable to reach server."
-
-        BadStatus statusCode body ->
-            --if statusCode ==
-            "Request failed with status code: " ++ String.fromInt statusCode ++ "!!!" ++ body
-
-        BadBody message ->
-            message
+    errorHttpToString httpError |> viewErrors
