@@ -25,7 +25,7 @@ import Url exposing (Url)
 
 
 type alias Flags =
-    ()
+    Maybe UserCtx
 
 
 
@@ -43,8 +43,16 @@ type alias Model =
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
+        userState =
+            case flags of
+                Just userCtx ->
+                    LoggedIn userCtx
+
+                Nothing ->
+                    LoggedOut
+
         session =
-            { user = LoggedOut
+            { user = userState
             , node_focus = Nothing
             , node_path = Nothing
             , orga_data = Nothing
@@ -69,6 +77,7 @@ type Msg
     = Navigate Route
     | UpdateSessionFocus NodeFocus
     | UpdateSessionOrga NodesData
+    | UpdateUserSession UserCtx
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -92,6 +101,9 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | orga_data = Just data } }, Cmd.none )
+
+        UpdateUserSession userCtx ->
+            ( model, Ports.saveUserCtx userCtx )
 
 
 

@@ -1,8 +1,12 @@
 module ModelCommon exposing (..)
 
 import Array
+import Dict exposing (Dict)
+import Fractal.Enum.NodeType as NodeType
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
+import Json.Encode.Extra as JEE
+import Maybe exposing (withDefault)
 import ModelOrg exposing (..)
 
 
@@ -73,6 +77,10 @@ type alias OrgaData =
     GqlData NodesData
 
 
+type alias NodesData =
+    Dict String Node
+
+
 type alias CircleTensionsData =
     GqlData TensionsData
 
@@ -131,7 +139,7 @@ uriFromFocus focus =
 
 
 --
--- Json Decoders
+-- Json Decoders/Encoders
 --
 
 
@@ -147,3 +155,50 @@ userDecoder =
                         (JD.field "nameid" JD.string)
                         (JD.field "role_type" JD.string)
         )
+
+
+userEncoder : UserCtx -> JE.Value
+userEncoder userCtx =
+    JE.object
+        [ ( "username", JE.string userCtx.username )
+        , ( "name", JEE.maybe JE.string userCtx.name )
+        , ( "roles"
+          , JE.list JE.object <|
+                List.map
+                    (\r ->
+                        [ ( "nameid", JE.string r.nameid )
+                        , ( "role_type", JE.string r.role_type )
+                        ]
+                    )
+                    (userCtx.roles |> withDefault [])
+          )
+        ]
+
+
+
+--
+-- GraphPack and Nodes Encoder
+--
+
+
+graphPackEncoder : NodesData -> String -> JE.Value
+graphPackEncoder data focus =
+    JE.object
+        [ ( "data", nodesEncoder data )
+        , ( "focusid", JE.string focus )
+        ]
+
+
+nodesEncoder : NodesData -> JE.Value
+nodesEncoder nodes =
+    JE.list JE.object <| List.map nodeEncoder <| Dict.values nodes
+
+
+nodeEncoder : Node -> List ( String, JE.Value )
+nodeEncoder node =
+    [ ( "id", JE.string node.id )
+    , ( "name", JE.string node.name )
+    , ( "nameid", JE.string node.nameid )
+    , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
+    , ( "type_", JE.string <| NodeType.toString node.type_ )
+    ]

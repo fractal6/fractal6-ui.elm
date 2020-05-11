@@ -2,9 +2,9 @@ module Pages.Login exposing (Flags, Model, Msg, page)
 
 import Components.Loading as Loading exposing (HttpError, WebData, expectJson, viewErrors, viewHttpErrors)
 import Dict exposing (Dict)
-import Global
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
@@ -14,6 +14,7 @@ import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
+import Task
 
 
 page : Page Flags Model Msg
@@ -92,10 +93,20 @@ update global msg model =
 
         SubmitUser form ->
             ( model
-            , Http.post
-                { url = "http://localhost:8888/login"
+              --, Http.post
+              --    { url = "http://localhost:8888/login"
+              --    , body = Http.jsonBody <| JE.dict identity JE.string form.post
+              --    , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
+              --    }
+            , Http.riskyRequest
+                -- This method is needed to set cookies on the client through CORS.
+                { method = "POST"
+                , headers = []
+                , url = "http://localhost:8888/login"
                 , body = Http.jsonBody <| JE.dict identity JE.string form.post
                 , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
+                , timeout = Nothing
+                , tracker = Nothing
                 }
             , Cmd.none
             )
@@ -103,13 +114,21 @@ update global msg model =
         GotSignin res ->
             let
                 -- Set localstorage res == Success
+                cmd =
+                    case res of
+                        RemoteData.Success userCtx ->
+                            updateGlobalUserSession userCtx
+
+                        default ->
+                            Cmd.none
+
                 form =
                     model.form
 
                 formUpdated =
                     { form | result = res }
             in
-            ( { model | form = formUpdated }, Cmd.none, Cmd.none )
+            ( { model | form = formUpdated }, Cmd.none, cmd )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -155,6 +174,9 @@ viewLogin global model =
                                     , attribute "data-nextfocus" "passwordInput"
                                     , type_ "text"
                                     , placeholder "username or email"
+                                    , name "username"
+                                    , attribute "autocomplete" "username"
+                                    , required True
                                     , onInput (ChangeUserPost "username")
                                     ]
                                     []
@@ -173,6 +195,9 @@ viewLogin global model =
                                     , attribute "data-nextfocus" "submitButton"
                                     , type_ "text"
                                     , placeholder "password"
+                                    , name "password"
+                                    , attribute "autocomplete" "password"
+                                    , required True
                                     , onInput (ChangeUserPost "password")
                                     ]
                                     []
@@ -207,6 +232,18 @@ viewLogin global model =
                     text ""
             ]
         ]
+
+
+
+-------------------------------------------------
+-- Model Getters and Setters
+-------------------------------------------------
+-- Global Setters
+
+
+updateGlobalUserSession : UserCtx -> Cmd Global.Msg
+updateGlobalUserSession userCtx =
+    Task.perform (always (UpdateUserSession userCtx)) (Task.succeed ())
 
 
 

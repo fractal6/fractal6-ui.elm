@@ -3,10 +3,13 @@ port module Ports exposing
     , focusGraphPack
     , initGraphPack
     , log
+    , saveUserCtx
     , toggle_theme
     )
 
-import Json.Encode as Json
+import Dict exposing (Dict)
+import Json.Encode as JE
+import ModelCommon exposing (NodesData, UserCtx, graphPackEncoder, userEncoder)
 
 
 
@@ -16,14 +19,14 @@ import Json.Encode as Json
 -- Outgoing
 
 
-port outgoing : { action : String, data : Json.Value } -> Cmd msg
+port outgoing : { action : String, data : JE.Value } -> Cmd msg
 
 
 log : String -> Cmd msg
 log message =
     outgoing
         { action = "LOG"
-        , data = Json.string message
+        , data = JE.string message
         }
 
 
@@ -31,7 +34,7 @@ bulma_driver : String -> Cmd msg
 bulma_driver eltId =
     outgoing
         { action = "BULMA"
-        , data = Json.string eltId
+        , data = JE.string eltId
         }
 
 
@@ -39,15 +42,15 @@ toggle_theme : Cmd msg
 toggle_theme =
     outgoing
         { action = "TOGGLE_TH"
-        , data = Json.string ""
+        , data = JE.string ""
         }
 
 
-initGraphPack : String -> Cmd msg
-initGraphPack data =
+initGraphPack : NodesData -> String -> Cmd msg
+initGraphPack data focus =
     outgoing
         { action = "INIT_GRAPHPACK"
-        , data = Json.string data
+        , data = graphPackEncoder data focus
         }
 
 
@@ -55,5 +58,47 @@ focusGraphPack : String -> Cmd msg
 focusGraphPack focusid =
     outgoing
         { action = "FOCUS_GRAPHPACK"
-        , data = Json.string focusid
+        , data = JE.string focusid
+        }
+
+
+
+--
+-- Session functions
+--
+
+
+saveUserCtx : UserCtx -> Cmd msg
+saveUserCtx userCtx =
+    let
+        -- Stringigy a Dict
+        --dataD = Dict.fromList [ ( "key", "user_ctx" ++ userCtx.username ), ( "data", JE.encode 0 <| userEncoder userCtx ) ]
+        --datad = JE.dict identity JE.string dataD
+        --
+        -- Turn the dict into Json string
+        data =
+            JE.object
+                [ ( "key", JE.string <| "user_ctx" ++ userCtx.username )
+                , ( "data", userEncoder userCtx )
+                ]
+    in
+    outgoing
+        { action = "SAVE_USERCTX"
+        , data = data
+        }
+
+
+loadUserCtx : String -> Cmd msg
+loadUserCtx key =
+    outgoing
+        { action = "LOAD_USERCTX"
+        , data = JE.string key
+        }
+
+
+removeUserCtx : String -> Cmd msg
+removeUserCtx key =
+    outgoing
+        { action = "REMOVE_USERCTX"
+        , data = JE.string key
         }

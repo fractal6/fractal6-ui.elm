@@ -24,8 +24,10 @@
     <script src="/ports.js" ></script>
 
     <script>
-      window.addEventListener('load', _ =>
-        window.ports.init(Elm.Main.init())
+        window.addEventListener('load', _ => {
+            var uctx = JSON.parse(localStorage.getItem(localStorage.key(0)));
+            window.ports.init(Elm.Main.init({flags: uctx}));
+        }
       )
     </script>
 

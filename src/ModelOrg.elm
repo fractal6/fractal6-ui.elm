@@ -95,19 +95,6 @@ type alias ParentNode =
 
 
 
--- Node Interface
-
-
-type alias NodesData =
-    --List Node
-    Dict String Node
-
-
-type alias NodesResponse =
-    Maybe (List (Maybe Node))
-
-
-
 --- Tension interface
 
 

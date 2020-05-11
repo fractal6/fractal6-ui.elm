@@ -33,6 +33,7 @@ makeGQLQuery query decodesTo =
                url    -> SelectionSet TasksWUser RootQuery -> Request TasksWUser
         -}
         --|> getAuthHeader authToken
+        |> Graphql.Http.withCredentials
         |> Graphql.Http.send decodesTo
 
 
@@ -42,4 +43,5 @@ makeGQLMutation query decodesTo =
     query
         |> Graphql.Http.mutationRequest graphql_url
         --|> getAuthHeader authToken
+        |> Graphql.Http.withCredentials
         |> Graphql.Http.send decodesTo

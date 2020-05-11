@@ -26,7 +26,7 @@ main =
 
 
 type alias Flags =
-    ()
+    Global.Flags
 
 
 type alias Model =

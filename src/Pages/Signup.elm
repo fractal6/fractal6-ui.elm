@@ -2,7 +2,7 @@ module Pages.Signup exposing (Flags, Model, Msg, page)
 
 import Components.Loading as Loading exposing (HttpError, WebData, expectJson, viewErrors, viewHttpErrors)
 import Dict exposing (Dict)
-import Global
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput)
@@ -14,6 +14,7 @@ import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
+import Task
 
 
 page : Page Flags Model Msg

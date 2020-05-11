@@ -11,7 +11,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (on, onClick, onInput)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
@@ -185,7 +185,7 @@ update global msg model =
                 Success data ->
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
-                        , Ports.initGraphPack <| JE.encode 0 <| graphPackEncoder data model.node_focus.nameid
+                        , Ports.initGraphPack data model.node_focus.nameid
                         , updateGlobalOrga data
                         )
 
@@ -894,29 +894,6 @@ getTensionForm model =
 
 
 -- Json encoder/decoder --When receiving data from Javascript
-
-
-graphPackEncoder : NodesData -> String -> JE.Value
-graphPackEncoder data focus =
-    JE.object
-        [ ( "data", nodesEncoder data )
-        , ( "focusid", JE.string focus )
-        ]
-
-
-nodesEncoder : NodesData -> JE.Value
-nodesEncoder nodes =
-    JE.list JE.object <| List.map nodeEncoder <| Dict.values nodes
-
-
-nodeEncoder : Node -> List ( String, JE.Value )
-nodeEncoder node =
-    [ ( "id", JE.string node.id )
-    , ( "name", JE.string node.name )
-    , ( "nameid", JE.string node.nameid )
-    , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
-    , ( "type_", JE.string <| NodeType.toString node.type_ )
-    ]
 
 
 nodeDecoder : JD.Decoder Node
