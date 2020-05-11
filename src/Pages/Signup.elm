@@ -2,6 +2,7 @@ module Pages.Signup exposing (Flags, Model, Msg, page)
 
 import Components.Loading as Loading exposing (HttpError, WebData, expectJson, viewErrors, viewHttpErrors)
 import Dict exposing (Dict)
+import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
@@ -13,6 +14,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
+import Process
 import RemoteData exposing (RemoteData)
 import Task
 
@@ -57,6 +59,14 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        gcmd =
+            case global.session.user of
+                LoggedIn uctx ->
+                    Global.navigate <| Route.User_Dynamic { param1 = uctx.username }
+
+                LoggedOut ->
+                    Cmd.none
+
         model =
             { form =
                 { post = Dict.empty
@@ -64,7 +74,7 @@ init global flags =
                 }
             }
     in
-    ( model, Cmd.none, Cmd.none )
+    ( model, Cmd.none, gcmd )
 
 
 
@@ -94,23 +104,41 @@ update global msg model =
 
         SubmitUser form ->
             ( model
-            , Http.post
-                { url = "http://localhost:8888/signup"
+            , Http.riskyRequest
+                -- This method is needed to set cookies on the client through CORS.
+                { method = "POST"
+                , headers = []
+                , url = "http://localhost:8888/login"
                 , body = Http.jsonBody <| JE.dict identity JE.string form.post
                 , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
+                , timeout = Nothing
+                , tracker = Nothing
                 }
             , Cmd.none
             )
 
         GotSignin res ->
             let
+                cmds =
+                    case res of
+                        RemoteData.Success uctx ->
+                            [ Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
+                            , Global.send (UpdateUserSession uctx)
+                            ]
+
+                        default ->
+                            []
+
                 form =
                     model.form
 
                 formUpdated =
                     { form | result = res }
             in
-            ( { model | form = formUpdated }, Cmd.none, Cmd.none )
+            ( { model | form = formUpdated }
+            , Cmd.none
+            , Cmd.batch cmds
+            )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg

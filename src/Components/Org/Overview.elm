@@ -91,10 +91,12 @@ init global flags =
         focusChange =
             (focusid /= oldFocus.nameid) || isInit
 
-        --d =
-        --    Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
-        --dd =
-        --    Debug.log "newfocus" [ newFocus ]
+        d =
+            Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
+
+        dd =
+            Debug.log "newfocus" [ newFocus ]
+
         model =
             { orga_data =
                 session.orga_data
@@ -127,7 +129,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , updateGlobalFocus newFocus
+    , Global.send (UpdateSessionFocus newFocus)
     )
 
 
@@ -186,7 +188,7 @@ update global msg model =
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
                         , Ports.initGraphPack data model.node_focus.nameid
-                        , updateGlobalOrga data
+                        , Global.send (UpdateSessionOrga data)
                         )
 
                     else
@@ -513,12 +515,21 @@ viewMandate global model =
                 , h2 [ class "title is-5" ] [ text "Responsabilities" ]
                 , p []
                     [ ul []
-                        [ li [] [ text "Develop, maintains and push forward Fractal6." ]
-                        , li [] [ text "Find a business model for fractal6." ]
+                        [ li [] [ text "Develop, and push forward Fractal6." ]
+                        , li [] [ text "Maintain the security of the platform." ]
+
+                        --, li [] [ text "Find a business model for fractal6." ]
                         ]
                     ]
                 , h2 [ class "title is-5" ] [ text "Domains" ]
-                , p [] [ text "See sub domains." ]
+                , p []
+                    [ ul []
+                        [ li [] [ text "Pubic repo of fractal6." ]
+                        , li [] [ text "Public machine database of fractal6." ]
+
+                        --, li [] [ text "Find a business model for fractal6." ]
+                        ]
+                    ]
                 ]
             ]
         ]
@@ -786,20 +797,6 @@ viewTensionStep form =
 -------------------------------------------------
 -- Model Getters and Setters
 -------------------------------------------------
--- Global Setters
-
-
-updateGlobalFocus : NodeFocus -> Cmd Global.Msg
-updateGlobalFocus focus =
-    Task.perform (always (UpdateSessionFocus focus)) (Task.succeed ())
-
-
-updateGlobalOrga : NodesData -> Cmd Global.Msg
-updateGlobalOrga data =
-    Task.perform (always (UpdateSessionOrga data)) (Task.succeed ())
-
-
-
 -- Setters
 
 

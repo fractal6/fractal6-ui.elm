@@ -1,9 +1,10 @@
-module Global exposing
+port module Global exposing
     ( Flags
     , Model
     , Msg(..)
     , init
     , navigate
+    , send
     , subscriptions
     , update
     , view
@@ -16,6 +17,7 @@ import Generated.Route as Route exposing (Route)
 import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Ports
+import Process
 import Task
 import Url exposing (Url)
 
@@ -63,8 +65,8 @@ init flags url key =
     ( Model flags url key session
     , Cmd.batch
         [ Ports.log "Hello!"
-        , Ports.bulma_driver ""
         , Ports.toggle_theme
+        , Ports.bulma_driver ""
         ]
     )
 
@@ -77,7 +79,10 @@ type Msg
     = Navigate Route
     | UpdateSessionFocus NodeFocus
     | UpdateSessionOrga NodesData
-    | UpdateUserSession UserCtx
+    | UpdateUserSession UserCtx -- user is logged In !
+    | LoggedOutUser
+    | LoggedOutUserOk
+    | RedirectOnLoggedIn -- user is logged In !
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -88,22 +93,60 @@ update msg model =
             , Nav.pushUrl model.key (Route.toHref route)
             )
 
+        RedirectOnLoggedIn ->
+            let
+                cmd =
+                    case model.session.user of
+                        LoggedIn uctx ->
+                            navigate <| Route.User_Dynamic { param1 = uctx.username }
+
+                        --Nav.replaceUrl global.key (String.join "/" [ "/user", uctx.username ])
+                        LoggedOut ->
+                            Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
+            in
+            ( model, cmd )
+
+        LoggedOutUser ->
+            case model.session.user of
+                LoggedIn uctx ->
+                    let
+                        session =
+                            model.session
+                    in
+                    ( { model | session = { session | user = LoggedOut } }, Ports.removeUserCtx uctx )
+
+                LoggedOut ->
+                    ( model, Cmd.none )
+
+        LoggedOutUserOk ->
+            ( model, navigate Route.Top )
+
         UpdateSessionFocus data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | node_focus = Just data } }, Cmd.none )
+            ( { model | session = { session | node_focus = Just data } }
+            , Cmd.none
+            )
 
         UpdateSessionOrga data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | orga_data = Just data } }, Cmd.none )
+            ( { model | session = { session | orga_data = Just data } }
+            , Cmd.none
+            )
 
         UpdateUserSession userCtx ->
-            ( model, Ports.saveUserCtx userCtx )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = LoggedIn userCtx } }
+            , Ports.saveUserCtx userCtx
+            )
 
 
 
@@ -112,7 +155,12 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch
+        [ loggedOutOkFromJs (always LoggedOutUserOk)
+        ]
+
+
+port loggedOutOkFromJs : (() -> msg) -> Sub msg
 
 
 

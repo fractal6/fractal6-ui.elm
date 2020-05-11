@@ -69,9 +69,11 @@ const actions = {
         localStorage.setItem(user_ctx.key, JSON.stringify(user_ctx.data));
     },
     'LOAD_USERCTX' : (app, session, user_ctx_key) => {
-        app.ports.loadUserCtx.send(JSON.parse(localStorage.getItem(user_ctx_key)));
+        app.ports.loadUserCtxFromJs.send(JSON.parse(localStorage.getItem(user_ctx_key)));
     },
     'REMOVE_USERCTX' : (app, session, user_ctx_key) => {
         localStorage.removeItem(user_ctx_key);
+        document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+        app.ports.loggedOutOkFromJs.send(null);
     },
 }

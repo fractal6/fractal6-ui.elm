@@ -6,6 +6,7 @@ import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route)
 import Global
 import Html
+import Ports
 import Url exposing (Url)
 
 
@@ -80,6 +81,7 @@ update msg model =
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
+                , Ports.bulma_driver ""
                 ]
             )
 

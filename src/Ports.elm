@@ -2,7 +2,9 @@ port module Ports exposing
     ( bulma_driver
     , focusGraphPack
     , initGraphPack
+    , loadUserCtx
     , log
+    , removeUserCtx
     , saveUserCtx
     , toggle_theme
     )
@@ -96,9 +98,9 @@ loadUserCtx key =
         }
 
 
-removeUserCtx : String -> Cmd msg
-removeUserCtx key =
+removeUserCtx : UserCtx -> Cmd msg
+removeUserCtx userCtx =
     outgoing
         { action = "REMOVE_USERCTX"
-        , data = JE.string key
+        , data = JE.string <| "user_ctx" ++ userCtx.username
         }
