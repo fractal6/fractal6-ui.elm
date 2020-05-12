@@ -36,8 +36,8 @@ viewNavbar session =
                 ]
             , div [ id "navMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ viewLink "navbar-item" "Help" Route.Top
-                    , viewLink "navbar-item" "Explore" Route.NotFound
+                    [ viewLink "navbar-item" Route.Top "Help"
+                    , viewLink "navbar-item" Route.NotFound "Explore"
                     ]
                 , div [ class "navbar-end" ]
                     [ a [ class "navbar-item" ]
@@ -56,14 +56,15 @@ viewNavbar session =
 userButton : Session -> Html msg
 userButton session =
     case session.user of
-        LoggedIn userCtx ->
+        LoggedIn uctx ->
             div [ class "navbar-item has-dropdown" ]
-                [ div [ class "navbar-link" ] [ text "Green" ]
+                [ div [ class "navbar-link" ] [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
-                    [ a [ class "navbar-item" ] [ text "Profile" ]
-                    , a [ class "navbar-item" ] [ text "Settings" ]
-                    , hr [ class "navbar-divider" ] []
-                    , a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "fas fa-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
+                    [ viewLink "navbar-item" (Route.User_Dynamic { param1 = uctx.username }) "Profile"
+                    , a [ class "navbar-item", href "#" ] [ text "Settings" ]
+
+                    --, hr [ class "navbar-divider" ] []
+                    --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "fas fa-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ] [ text "Sign Out" ]
                     ]
@@ -71,13 +72,13 @@ userButton session =
 
         LoggedOut ->
             div [ class "navbar-item" ]
-                [ viewLink "button is-small is-primary has-text-weight-bold" "Login" Route.Login ]
+                [ viewLink "button is-small is-primary has-text-weight-bold" Route.Login "Login" ]
 
 
-viewLink : String -> String -> Route.Route -> Html msg
-viewLink classes link route =
+viewLink : String -> Route.Route -> String -> Html msg
+viewLink classes route txt =
     a
         [ class classes
         , href (Route.toHref route)
         ]
-        [ text link ]
+        [ text txt ]

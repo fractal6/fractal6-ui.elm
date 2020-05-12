@@ -49,6 +49,7 @@ type alias Model =
     , orga_data : OrgaData
     , circle_tensions : CircleTensionsData
     , node_action : ActionState
+    , user : UserState
     }
 
 
@@ -91,12 +92,8 @@ init global flags =
         focusChange =
             (focusid /= oldFocus.nameid) || isInit
 
-        d =
-            Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
-
-        dd =
-            Debug.log "newfocus" [ newFocus ]
-
+        --d1 = Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
+        --d2 = Debug.log "newfocus" [ newFocus ]
         model =
             { orga_data =
                 session.orga_data
@@ -109,6 +106,7 @@ init global flags =
             , node_action = session.node_action |> withDefault NotAsk
             , node_focus = newFocus
             , node_path = session.node_path
+            , user = session.user
             }
 
         cmds =
@@ -659,6 +657,11 @@ setupActionModal global model =
 viewActionStep : ActionStep Node -> Html Msg
 viewActionStep step =
     case step of
+        AuthNeeded ->
+            div [ class "box " ]
+                [ p [] [ text "Please create an account to perform this action." ]
+                ]
+
         FirstStep node ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
@@ -800,13 +803,23 @@ viewTensionStep form =
 -- Setters
 
 
-initTensionForm : Node -> TensionForm
-initTensionForm node =
+initTensionForm : UserCtx -> Node -> TensionForm
+initTensionForm uctx node =
+    --let
+    --    -- Bluid partialSource from user Role (need to guess it !)
+    --    -- need to find all role with that circle ID
+    --     -- enjoy this to create a special color for role member.
+    --    partialSource = { id = ""
+    --    ...
+    --        }
+    --in
     { step = TensionTypeForm
-    , post = Dict.fromList [ ( "username", "clara" ) ]
+    , post = Dict.empty
     , result = NotAsked
-    , target = node
     , source = node
+
+    --, source = partialSource
+    , target = node
     }
 
 
@@ -819,7 +832,12 @@ updateTensionStep model newStep maybeForm =
                     Ask <|
                         case step of
                             FirstStep target ->
-                                AddTensionStep (initTensionForm target)
+                                case model.user of
+                                    LoggedIn uctx ->
+                                        AddTensionStep (initTensionForm uctx target)
+
+                                    LoggedOut ->
+                                        AuthNeeded
 
                             AddTensionStep form ->
                                 let
@@ -832,6 +850,9 @@ updateTensionStep model newStep maybeForm =
                                                 { form | step = newStep }
                                 in
                                 AddTensionStep newForm
+
+                            AuthNeeded ->
+                                AuthNeeded
 
                 passing ->
                     passing
@@ -879,13 +900,13 @@ getTensionForm model =
     case model.node_action of
         Ask step ->
             case step of
-                FirstStep target ->
-                    Nothing
-
                 AddTensionStep form ->
                     Just form
 
-        passing ->
+                default ->
+                    Nothing
+
+        default ->
             Nothing
 
 

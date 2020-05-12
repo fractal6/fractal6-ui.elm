@@ -5,8 +5,13 @@
  *
  */
 
+
 //document.addEventListener('DOMContentLoaded', () => {
-const BulmaDriver = (target) => {
+const BulmaDriver = (target, handlers) => {
+
+    //
+    // Setup
+    //
 
     var $target;
     if (!target) {
@@ -19,8 +24,43 @@ const BulmaDriver = (target) => {
         $target = document.getElementById(target).parentNode;
     }
 
-    var eltThatCloseOnEsc = [];
-    var addedHandlers = [];
+    var eltThatCloseOnEsc = []; // Get along with handlers ?
+
+    //
+    // Object Behaviours
+    //
+
+    function setupHandler(evt, hdl, elt) {
+        if (!hasHandler(elt)) {
+            elt.addEventListener(evt, hdl);
+            handlers.push([evt, hdl, elt]);
+        } else {
+            // pass
+        }
+    }
+
+    // @DEBUG: use a HashMap instead!
+    function hasHandler(el) {
+        // Check if the object is already in the list of handler return true
+        for (var i=0; i < handlers.length; i++) {
+            obj = handlers[i][2];
+            // check if it belongs to modal
+            if (obj === el) return true;
+        }
+        return false
+    }
+    // @DEBUG: use a HashMap instead!
+    function removeChildHandler(el) {
+        // Remove added handlers below the given element
+        for (var i=0; i < handlers.length; i++) {
+            evt = handlers[i][0];
+            func = handlers[i][1];
+            obj = handlers[i][2];
+            // check if it belongs to modal
+            if (el.contains(obj)) obj.removeEventListener(evt, func);
+        }
+    }
+    ////////////////////////////////////////Bulma Behaviours
 
     /*
      * Activate autofocus
@@ -54,8 +94,7 @@ const BulmaDriver = (target) => {
         $followFocuses.forEach( el => {
             var evt = "keypress";
             var h = e => advanceFocus(e, el);
-            el.addEventListener(evt, h);
-            addedHandlers.push([evt, h, el]);
+            setupHandler("keypress", h, el);
         });
     }
 
@@ -63,6 +102,14 @@ const BulmaDriver = (target) => {
     /*
      * Burger open/close rationale
      */
+
+    function burgerToggleHandler(e, el) {
+        // Get the target from the "data-target" attribute
+        const $target_ = document.getElementById(el.dataset.target);
+        // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+        el.classList.toggle('is-active');
+        $target_.classList.toggle('is-active');
+    }
 
     // Close all burger by removing `is-active` class.
     const closeBurgers = objs => {
@@ -83,13 +130,8 @@ const BulmaDriver = (target) => {
     if ($navbarBurgers.length > 0) {
         // For each dropdown, add event handler to open on click.
         $navbarBurgers.forEach( el => {
-            el.addEventListener('click', () => {
-                // Get the target from the "data-target" attribute
-                const $target_ = document.getElementById(el.dataset.target);
-                // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
-                el.classList.toggle('is-active');
-                $target_.classList.toggle('is-active');
-            });
+            var h = e => burgerToggleHandler(e, el);
+            setupHandler("click", h, el);
         });
 
         // Close burger menu if ESC pressed
@@ -122,10 +164,8 @@ const BulmaDriver = (target) => {
     if ($dropdowns.length > 0) {
         // For each dropdown, add event handler to open on click.
         $dropdowns.forEach(function(el) {
-            var evt = "click";
             var h = e => buttonDropdownHandler(e, el);
-            el.addEventListener(evt, h);
-            addedHandlers.push([evt, h, el]);
+            setupHandler("click", h, el);
         });
 
         // If user clicks outside dropdown, close it.
@@ -156,8 +196,7 @@ const BulmaDriver = (target) => {
         $btns.forEach(function(el) {
             var evt = "mousedown";
             var h = e => buttonToggleHandler(e, el);
-            el.addEventListener(evt, h);
-            addedHandlers.push([evt, h, el]);
+            setupHandler("mousedown", h, el);
         });
     }
 
@@ -188,8 +227,7 @@ const BulmaDriver = (target) => {
             $subBtns.forEach( btn => {
                 var evt = "mousedown";
                 var h = e => buttonRadioHandler(e, btn, $subBtns);
-                btn.addEventListener(evt, h);
-                addedHandlers.push([evt, h, btn]);
+                setupHandler("mousedown", h, el);
             });
         });
     }
@@ -206,14 +244,7 @@ const BulmaDriver = (target) => {
                 btn.classList.remove('is-active');
             });
 
-            // Remove added handlers below that modal
-            for (var i=0; i < addedHandlers.length; i++) {
-                evt = addedHandlers[i][0];
-                func = addedHandlers[i][1];
-                obj = addedHandlers[i][2];
-                // check if it belongs to modal
-                if (el.contains(obj)) obj.removeEventListener(evt, func);
-            }
+            removeChildHandler(el);
 
             // Fix block scrolling
             document.documentElement.classList.remove('has-modal-active');
@@ -260,7 +291,6 @@ const BulmaDriver = (target) => {
             });
         });
     }
-
 
     //
     //

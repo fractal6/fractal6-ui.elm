@@ -7,7 +7,8 @@ window.addEventListener('load', _ => {
             // Ephemere Objects
             var session = {
                 gp: Object.create(GraphPack),
-                user_ctx: null // from localstorage
+                user_ctx: null, // from localstorage
+                bulmaHandlers: []
             };
 
             app.ports.outgoing.subscribe(({ action, data }) =>
@@ -31,7 +32,8 @@ const actions = {
         // This timeout is needed when bulma driver is called by elm Cmd,
         // to wait foe the Html Msg to be updated by elm in order
         // to have new node accessible by Javascript.
-        setTimeout(BulmaDriver, 300, eltId);
+        var handlers = session.bulmaHandlers;
+        setTimeout(BulmaDriver, 300, eltId, handlers);
     },
     'TOGGLE_TH': (app, session, message) => {
         $tt = document.getElementById("themeButton_port");

@@ -1,3 +1,4 @@
+
 html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
@@ -31,6 +32,8 @@ html, body {
   color: $grey-light;
 }
 
+// Tooltip
+
 .tooltip.has-tooltip-multiline::before {
   white-space: pre-line !important;
 }
@@ -51,10 +54,18 @@ html, body {
     }
 }
 
+// Modal
+
 html.has-modal-active {
     //overflow: hidden !important;
     position: fixed;
     width: 100%;
+}
+
+// Breadcrumb
+.breadcrumb a {
+    padding-right:0.4em;
+    padding-left:0.4em;
 }
 
 

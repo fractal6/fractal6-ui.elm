@@ -108,7 +108,7 @@ update global msg model =
                 -- This method is needed to set cookies on the client through CORS.
                 { method = "POST"
                 , headers = []
-                , url = "http://localhost:8888/login"
+                , url = "http://localhost:8888/signup"
                 , body = Http.jsonBody <| JE.dict identity JE.string form.post
                 , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
                 , timeout = Nothing

@@ -45,7 +45,11 @@ type alias UserCtx =
 
 
 type alias UserRole =
-    { nameid : String, role_type : String }
+    { rootnameid : String
+    , nameid : String
+    , name : String
+    , role_type : String
+    }
 
 
 
@@ -100,6 +104,7 @@ type ActionState
 type ActionStep target
     = FirstStep target -- AskActions
     | AddTensionStep TensionForm -- AskNewTension
+    | AuthNeeded
 
 
 type TensionStep
@@ -151,8 +156,10 @@ userDecoder =
         (JD.maybe <|
             JD.field "roles" <|
                 JD.list <|
-                    JD.map2 UserRole
+                    JD.map4 UserRole
+                        (JD.field "rootnameid" JD.string)
                         (JD.field "nameid" JD.string)
+                        (JD.field "name" JD.string)
                         (JD.field "role_type" JD.string)
         )
 
@@ -166,7 +173,9 @@ userEncoder userCtx =
           , JE.list JE.object <|
                 List.map
                     (\r ->
-                        [ ( "nameid", JE.string r.nameid )
+                        [ ( "rootnameid", JE.string r.rootnameid )
+                        , ( "nameid", JE.string r.nameid )
+                        , ( "name", JE.string r.name )
                         , ( "role_type", JE.string r.role_type )
                         ]
                     )

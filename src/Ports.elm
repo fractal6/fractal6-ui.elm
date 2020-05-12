@@ -80,7 +80,8 @@ saveUserCtx userCtx =
         -- Turn the dict into Json string
         data =
             JE.object
-                [ ( "key", JE.string <| "user_ctx" ++ userCtx.username )
+                --[ ( "key", JE.string <| "user_ctx" ++ userCtx.username )
+                [ ( "key", JE.string <| "user_ctx" )
                 , ( "data", userEncoder userCtx )
                 ]
     in
@@ -102,5 +103,7 @@ removeUserCtx : UserCtx -> Cmd msg
 removeUserCtx userCtx =
     outgoing
         { action = "REMOVE_USERCTX"
-        , data = JE.string <| "user_ctx" ++ userCtx.username
+        , data = JE.string <| "user_ctx"
+
+        --, data = JE.string <| "user_ctx" ++ userCtx.username
         }
