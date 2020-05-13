@@ -333,6 +333,7 @@ const GraphPack = {
             var maybeFocus = this.nodesDict[unescape(focus)];
             if (!maybeFocus) {
                 console.warn("Unknown node:", focus );
+                this.app.ports.nodeFocusedFromJs.send([]);
                 return
             }
             focus = maybeFocus;
@@ -665,12 +666,13 @@ const GraphPack = {
     //
 
     nodeClickedFromJs(node) {
-        var nodeFocus = {
-            rootid: this.rootNode.data.nameid,
-            nameid: node.data.nameid,
-            isRoot: node === this.rootNode,
-        };
-        this.app.ports.nodeClickedFromJs.send(nodeFocus);
+        //var nodeFocus = {
+        //    rootnameid: this.rootNode.data.nameid,
+        //    nameid: node.data.nameid,
+        //    isRoot: node === this.rootNode,
+        //};
+        var nameid = node.data.nameid;
+        this.app.ports.nodeClickedFromJs.send(nameid);
     },
 
     nodeFocusedFromJs(node) {

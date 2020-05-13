@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddRightsPayload exposing (..)
+module Fractal.Object.AddUserRightsPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,14 +19,14 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias RightsOptionalArguments =
+type alias UserrightsOptionalArguments =
     { first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-rights : (RightsOptionalArguments -> RightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Rights -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddRightsPayload
-rights fillInOptionals object_ =
+userrights : (UserrightsOptionalArguments -> UserrightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserRightsPayload
+userrights fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { first = Absent, offset = Absent }
@@ -35,9 +35,9 @@ rights fillInOptionals object_ =
             [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "rights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "userrights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddRightsPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.AddUserRightsPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

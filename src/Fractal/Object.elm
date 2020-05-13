@@ -21,16 +21,16 @@ type AddNodePayload
     = AddNodePayload
 
 
-type AddRightsPayload
-    = AddRightsPayload
-
-
 type AddTensionPayload
     = AddTensionPayload
 
 
 type AddUserPayload
     = AddUserPayload
+
+
+type AddUserRightsPayload
+    = AddUserRightsPayload
 
 
 type Comment
@@ -81,10 +81,6 @@ type Post
     = Post
 
 
-type Rights
-    = Rights
-
-
 type Tension
     = Tension
 
@@ -119,3 +115,7 @@ type UpdateUserPayload
 
 type User
     = User
+
+
+type UserRights
+    = UserRights

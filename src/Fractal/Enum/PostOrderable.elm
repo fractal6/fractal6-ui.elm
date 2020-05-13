@@ -10,12 +10,11 @@ import Json.Decode as Decode exposing (Decoder)
 type PostOrderable
     = CreatedAt
     | Message
-    | Items
 
 
 list : List PostOrderable
 list =
-    [ CreatedAt, Message, Items ]
+    [ CreatedAt, Message ]
 
 
 decoder : Decoder PostOrderable
@@ -29,9 +28,6 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
-
-                    "items" ->
-                        Decode.succeed Items
 
                     _ ->
                         Decode.fail ("Invalid PostOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -48,9 +44,6 @@ toString enum =
 
         Message ->
             "message"
-
-        Items ->
-            "items"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -72,9 +65,6 @@ fromString enumString =
 
         "message" ->
             Just Message
-
-        "items" ->
-            Just Items
 
         _ ->
             Nothing

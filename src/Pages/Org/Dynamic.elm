@@ -33,4 +33,5 @@ init global { param1 } =
     Org.init global
         { param1 = param1
         , param2 = Nothing
+        , param3 = Nothing
         }

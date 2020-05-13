@@ -59,25 +59,6 @@ queryNode fillInOptionals object_ =
     Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-type alias QueryRightsOptionalArguments =
-    { first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
-
-
-queryRights : (QueryRightsOptionalArguments -> QueryRightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Rights -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
-queryRights fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { first = Absent, offset = Absent }
-
-        optionalArgs =
-            [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "queryRights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
-
-
 type alias GetPostRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -236,6 +217,25 @@ queryUser fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryUser" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias QueryUserRightsOptionalArguments =
+    { first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryUserRights : (QueryUserRightsOptionalArguments -> QueryUserRightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryUserRights fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryUserRights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 type alias GetLabelOptionalArguments =

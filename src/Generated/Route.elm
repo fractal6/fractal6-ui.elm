@@ -18,6 +18,7 @@ type Route
     | Org_Dynamic { param1 : String }
     | User_Dynamic { param1 : String }
     | Org_Dynamic_Dynamic { param1 : String, param2 : String }
+    | Org_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
 
 
 fromUrl : Url -> Maybe Route
@@ -43,6 +44,9 @@ routes =
         , (Parser.s "org" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map Org_Dynamic_Dynamic
+        , (Parser.s "org" </> Parser.string </> Parser.string </> Parser.string)
+          |> Parser.map (\param1 param2 param3 -> { param1 = param1, param2 = param2, param3 = param3 })
+          |> Parser.map Org_Dynamic_Dynamic_Dynamic
         ]
 
 
@@ -78,6 +82,9 @@ toHref route =
                 
                 Org_Dynamic_Dynamic { param1, param2 } ->
                     [ "org", param1, param2 ]
+                
+                Org_Dynamic_Dynamic_Dynamic { param1, param2, param3 } ->
+                    [ "org", param1, param2, param3 ]
     in
     segments
         |> String.join "/"

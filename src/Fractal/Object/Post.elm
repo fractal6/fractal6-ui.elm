@@ -49,8 +49,3 @@ createdBy fillInOptionals object_ =
 message : SelectionSet (Maybe String) Fractal.Object.Post
 message =
     Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
-
-
-items : SelectionSet (Maybe (List String)) Fractal.Object.Post
-items =
-    Object.selectionForField "(Maybe (List String))" "items" [] (Decode.string |> Decode.list |> Decode.nullable)

@@ -59,6 +59,11 @@ password =
     Object.selectionForField "String" "password" [] Decode.string
 
 
+rights : SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet decodesTo Fractal.Object.User
+rights object_ =
+    Object.selectionForCompositeField "rights" [] object_ identity
+
+
 type alias RolesOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter
     , order : OptionalArgument Fractal.InputObject.NodeOrder

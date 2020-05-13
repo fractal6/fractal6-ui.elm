@@ -10,7 +10,6 @@ import Json.Decode as Decode exposing (Decoder)
 type TensionOrderable
     = CreatedAt
     | Message
-    | Items
     | Nth
     | Title
     | N_comments
@@ -18,7 +17,7 @@ type TensionOrderable
 
 list : List TensionOrderable
 list =
-    [ CreatedAt, Message, Items, Nth, Title, N_comments ]
+    [ CreatedAt, Message, Nth, Title, N_comments ]
 
 
 decoder : Decoder TensionOrderable
@@ -32,9 +31,6 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
-
-                    "items" ->
-                        Decode.succeed Items
 
                     "nth" ->
                         Decode.succeed Nth
@@ -60,9 +56,6 @@ toString enum =
 
         Message ->
             "message"
-
-        Items ->
-            "items"
 
         Nth ->
             "nth"
@@ -93,9 +86,6 @@ fromString enumString =
 
         "message" ->
             Just Message
-
-        "items" ->
-            Just Items
 
         "nth" ->
             Just Nth

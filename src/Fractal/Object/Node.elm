@@ -91,14 +91,14 @@ type_ =
     Object.selectionForField "Enum.NodeType.NodeType" "type_" [] Fractal.Enum.NodeType.decoder
 
 
-name : SelectionSet String Fractal.Object.Node
-name =
-    Object.selectionForField "String" "name" [] Decode.string
-
-
 nameid : SelectionSet String Fractal.Object.Node
 nameid =
     Object.selectionForField "String" "nameid" [] Decode.string
+
+
+name : SelectionSet String Fractal.Object.Node
+name =
+    Object.selectionForField "String" "name" [] Decode.string
 
 
 rootnameid : SelectionSet String Fractal.Object.Node

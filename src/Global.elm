@@ -14,6 +14,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Components
 import Generated.Route as Route exposing (Route)
+import Json.Decode as JD
 import ModelCommon exposing (..)
 import ModelOrg exposing (..)
 import Ports
@@ -27,7 +28,7 @@ import Url exposing (Url)
 
 
 type alias Flags =
-    Maybe UserCtx
+    Maybe JD.Value
 
 
 
@@ -47,8 +48,21 @@ init flags url key =
     let
         userState =
             case flags of
-                Just userCtx ->
-                    LoggedIn userCtx
+                Just userCtxRaw ->
+                    let
+                        dd =
+                            Debug.log "r" userCtxRaw
+                    in
+                    case JD.decodeValue userDecoder userCtxRaw of
+                        Ok uctx ->
+                            LoggedIn uctx
+
+                        Err err ->
+                            let
+                                d =
+                                    Debug.log "error" err
+                            in
+                            LoggedOut
 
                 Nothing ->
                     LoggedOut

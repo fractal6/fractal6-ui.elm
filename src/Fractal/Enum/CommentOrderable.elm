@@ -10,13 +10,12 @@ import Json.Decode as Decode exposing (Decoder)
 type CommentOrderable
     = CreatedAt
     | Message
-    | Items
     | Void_
 
 
 list : List CommentOrderable
 list =
-    [ CreatedAt, Message, Items, Void_ ]
+    [ CreatedAt, Message, Void_ ]
 
 
 decoder : Decoder CommentOrderable
@@ -30,9 +29,6 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
-
-                    "items" ->
-                        Decode.succeed Items
 
                     "_VOID" ->
                         Decode.succeed Void_
@@ -52,9 +48,6 @@ toString enum =
 
         Message ->
             "message"
-
-        Items ->
-            "items"
 
         Void_ ->
             "_VOID"
@@ -79,9 +72,6 @@ fromString enumString =
 
         "message" ->
             Just Message
-
-        "items" ->
-            Just Items
 
         "_VOID" ->
             Just Void_

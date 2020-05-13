@@ -8,6 +8,7 @@ import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (onClickLink, onClickPD)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
@@ -60,7 +61,7 @@ type alias Model =
 
 
 type alias Flags =
-    { param1 : String, param2 : Maybe String }
+    { param1 : String, param2 : Maybe String, param3 : Maybe String }
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -70,14 +71,14 @@ init global flags =
         session =
             global.session
 
-        rootid =
+        rootnameid =
             flags.param1
 
-        focusid =
-            flags.param2 |> withDefault rootid
+        focusFragment =
+            String.join "#" [ flags.param2 |> withDefault "", flags.param3 |> withDefault "" ]
 
         newFocus =
-            NodeFocus rootid focusid (flags.param2 == Nothing)
+            focusFromNameid <| String.join "#" [ rootnameid, focusFragment ]
 
         -- What has changed
         oldFocus =
@@ -87,10 +88,10 @@ init global flags =
             session.node_focus == Nothing
 
         orgChange =
-            (rootid /= oldFocus.rootid) || isInit
+            (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
 
         focusChange =
-            (focusid /= oldFocus.nameid) || isInit
+            (newFocus.nameid /= oldFocus.nameid) || isInit
 
         --d1 = Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
         --d2 = Debug.log "newfocus" [ newFocus ]
@@ -111,7 +112,7 @@ init global flags =
 
         cmds =
             if orgChange then
-                [ fetchNodesOrga newFocus.rootid GotOrga
+                [ fetchNodesOrga newFocus.rootnameid GotOrga
                 , fetchCircleTension newFocus.nameid GotTensions
                 , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
@@ -144,14 +145,15 @@ type Msg
     | GotTensions (GqlData TensionsData) -- graphql
       --
     | DoNodeAction NodeTarget -- ports receive / tooltip click
-    | DoTensionStep1
-    | DoTensionStep2 String --
-    | ChangeTensionPost String String
+    | DoTensionTypeForm
+    | DoTensionSourceForm String -- <- {tensionType}
+    | DoTensionFinalForm Node -- <- {source}
+    | ChangeTensionPost String String -- { field value}
     | Submit (Time.Posix -> Msg)
     | SubmitTension TensionForm Time.Posix -- model ends
     | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
       --
-    | NodeClicked NodeFocus -- ports receive
+    | NodeClicked String -- ports receive
     | NodeFocused NodePath -- ports receive
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send -- Not implemented @DEBUG multiple tooltip/ see name of circle
@@ -211,20 +213,50 @@ update global msg model =
             in
             ( { model | node_action = newAction }, Cmd.none, Cmd.none )
 
-        DoTensionStep1 ->
+        DoTensionTypeForm ->
             let
                 modelUpdated =
                     updateTensionStep model TensionTypeForm Nothing
             in
             ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
 
-        DoTensionStep2 tensionType ->
+        DoTensionSourceForm tensionType ->
             let
                 maybeForm =
                     updateTensionPost model "type_" tensionType
 
+                nextStep =
+                    maybeForm
+                        |> Maybe.map
+                            (\form ->
+                                case form.user.roles of
+                                    [] ->
+                                        TensionNotAuthorized "You are not a member of this organisation. Please, Join this organisation to be able to create a tension."
+
+                                    [ r ] ->
+                                        TensionFinalForm (Just r)
+
+                                    roles ->
+                                        TensionSourceForm roles
+                            )
+                        |> withDefault TensionTypeForm
+
                 modelUpdated =
-                    updateTensionStep model TensionFinalForm maybeForm
+                    updateTensionStep model nextStep maybeForm
+            in
+            ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
+
+        DoTensionFinalForm source ->
+            let
+                maybeForm =
+                    getTensionForm model
+                        |> Maybe.map
+                            (\f ->
+                                { f | source = Just source }
+                            )
+
+                modelUpdated =
+                    updateTensionStep model (TensionFinalForm Nothing) maybeForm
             in
             ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -234,7 +266,7 @@ update global msg model =
                     updateTensionPost model field value
 
                 modelUpdated =
-                    updateTensionStep model TensionFinalForm maybeForm
+                    updateTensionStep model (TensionFinalForm Nothing) maybeForm
             in
             -- No need to reactivate the Bulma drivers here.
             ( modelUpdated, Cmd.none, Cmd.none )
@@ -247,27 +279,31 @@ update global msg model =
                 postUpdated =
                     Dict.insert "createdAt" (fromTime time) form.post
             in
-            ( model, addOneTension form.source form.target postUpdated TensionAck, Cmd.none )
+            case form.source of
+                Just source ->
+                    ( model, addOneTension source form.target postUpdated TensionAck, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
 
         TensionAck result ->
             let
-                form =
-                    case getTensionForm model of
-                        Just f ->
-                            Just { f | result = result }
-
-                        Nothing ->
-                            Nothing
+                maybeForm =
+                    getTensionForm model
+                        |> Maybe.map
+                            (\f ->
+                                { f | result = result }
+                            )
 
                 modelUpdated =
-                    updateTensionStep model TensionValidation form
+                    updateTensionStep model TensionValidation maybeForm
             in
             ( modelUpdated, Cmd.none, Cmd.none )
 
-        NodeClicked focus ->
+        NodeClicked nameid ->
             ( model
             , Cmd.none
-            , Nav.replaceUrl global.key (uriFromFocus focus)
+            , Nav.replaceUrl global.key (uriFromNameid nameid)
             )
 
         NodeFocused path ->
@@ -297,7 +333,7 @@ subscriptions _ _ =
 -- Receive to Javascript
 
 
-port nodeClickedFromJs : (NodeFocus -> msg) -> Sub msg
+port nodeClickedFromJs : (String -> msg) -> Sub msg
 
 
 port nodeFocusedFromJs : (NodePath -> msg) -> Sub msg
@@ -335,28 +371,51 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div
-        [ class "columns is-centered" ]
-        [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
-          div [ class "column is-10", id "mainPane" ]
-            [ div [ class "columns" ]
-                [ viewHelperBar global model ]
-            , div [ class "columns is-variable is-4" ]
-                [ div [ class "column is-6" ]
-                    [ viewCanvas global model
-                    , br [] []
-                    , viewMandate global model
-                    , setupActionModal global model
-                    ]
-                , div [ class "column is-6" ]
-                    [ div [ class "columns is-gapless" ]
-                        [ div [ class "column is-12", id "nextToChart" ]
-                            [ viewActivies global model ]
+    let
+        nodePathErr =
+            case model.node_path of
+                Just path ->
+                    if Array.length path > 0 then
+                        ( Just path, False )
+
+                    else
+                        ( Nothing, True )
+
+                Nothing ->
+                    ( Nothing, False )
+
+        nodePath =
+            Tuple.first nodePathErr
+
+        pathErr =
+            Tuple.second nodePathErr
+    in
+    if pathErr then
+        div [] [ text "Sorry, this node doesn exist yet." ]
+
+    else
+        div
+            [ class "columns is-centered" ]
+            [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+              div [ class "column is-10", id "mainPane" ]
+                [ div [ class "columns" ]
+                    [ viewHelperBar nodePath ]
+                , div [ class "columns is-variable is-4" ]
+                    [ div [ class "column is-6" ]
+                        [ viewCanvas global model
+                        , br [] []
+                        , viewMandate global model
+                        , setupActionModal global model
+                        ]
+                    , div [ class "column is-6" ]
+                        [ div [ class "columns is-gapless" ]
+                            [ div [ class "column is-12", id "nextToChart" ]
+                                [ viewActivies global model ]
+                            ]
                         ]
                     ]
                 ]
             ]
-        ]
 
 
 viewLeftPane : Model -> Html Msg
@@ -364,7 +423,7 @@ viewLeftPane model =
     nav [ class "menu" ]
         [ p [ class "menu-label" ]
             [ div [ class "hero is-small is-primary is-bold" ]
-                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.rootid ] ]
+                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.rootnameid ] ]
             ]
         , ul [ class "menu-list" ]
             [ li [ class "menu-label" ]
@@ -398,11 +457,11 @@ viewLeftPane model =
         ]
 
 
-viewHelperBar : Global.Model -> Model -> Html Msg
-viewHelperBar global model =
+viewHelperBar : Maybe NodePath -> Html Msg
+viewHelperBar maybeNodePath =
     let
         nodePath =
-            model.node_path |> withDefault (Array.fromList [])
+            maybeNodePath |> withDefault (Array.fromList [])
     in
     nav
         [ class "column is-full breadcrumb"
@@ -411,12 +470,8 @@ viewHelperBar global model =
         [ Fa.icon "fas fa-angle-right" ""
         , Array.indexedMap
             (\i p ->
-                let
-                    hereFocus =
-                        NodeFocus model.node_focus.rootid p.nameid (i == 0)
-                in
                 if i < (Array.length nodePath - 1) then
-                    li [] [ a [ href (uriFromFocus hereFocus), onClickPD (NodeClicked hereFocus), attribute "target" "_self" ] [ text p.name ] ]
+                    li [] [ a [ href (uriFromNameid p.nameid), onClickPD (NodeClicked p.nameid), attribute "target" "_self" ] [ text p.name ] ]
 
                 else
                     li [ class "is-active has-text-weight-semibold" ]
@@ -543,6 +598,9 @@ viewActivies global model =
 
                 default ->
                     False
+
+        focus =
+            model.node_focus
     in
     div
         [ class "box"
@@ -570,8 +628,7 @@ viewActivies global model =
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else
-                        -- @DEBUG: for this role/circle
-                        div [] [ text "No tensions for this circle yet." ]
+                        div [] [ text <| "No tensions for this " ++ NodeType.toString focus.type_ ++ " yet." ]
 
                 Failure err ->
                     viewErrors err
@@ -646,8 +703,7 @@ setupActionModal global model =
                         text ""
 
                     AskErr err ->
-                        div [ classList [ ( "box", True ), ( "has-background-danger", True ) ] ]
-                            [ text <| "Unexpected error:" ++ err ]
+                        viewErrors err
                 ]
             , button [ class "modal-close is-large" ] []
             ]
@@ -658,8 +714,8 @@ viewActionStep : ActionStep Node -> Html Msg
 viewActionStep step =
     case step of
         AuthNeeded ->
-            div [ class "box " ]
-                [ p [] [ text "Please create an account to perform this action." ]
+            div [ class "box has-background-info" ]
+                [ p [] [ text "Please login or create an account to perform this action." ]
                 ]
 
         FirstStep node ->
@@ -676,13 +732,13 @@ viewActionStep step =
                 , div [ class "card-content" ]
                     [ div [ class "level" ] <|
                         if node.type_ == NodeType.Circle then
-                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionStep1 ] [ text "New tension" ] ]
+                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionTypeForm ] [ text "New tension" ] ]
                             , div [ class "level-item" ] [ div [ class "button is-info" ] [ text "New Role" ] ]
                             , div [ class "level-item" ] [ div [ class "button is-link" ] [ text "New Sub-Circle" ] ]
                             ]
 
                         else
-                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionStep1 ] [ text "New tension" ] ] ]
+                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionTypeForm ] [ text "New tension" ] ] ]
                     ]
                 ]
 
@@ -710,7 +766,7 @@ viewTensionStep form =
                                 div [ class "level-item" ]
                                     [ div
                                         [ class <| "button " ++ tensionTypeColor "background" tensionType
-                                        , onClick (DoTensionStep2 tensionTypeStr)
+                                        , onClick (DoTensionSourceForm tensionTypeStr)
                                         ]
                                         [ text tensionTypeStr ]
                                     ]
@@ -720,8 +776,39 @@ viewTensionStep form =
                     ]
                 ]
 
-        TensionFinalForm ->
+        TensionSourceForm roles ->
+            div [ class "card" ]
+                [ div [ class "card-header" ]
+                    [ div [ class "card-header-title" ]
+                        [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this tension:" ] ]
+                    ]
+                , div [ class "card-content" ]
+                    [ div [ class "level buttonRadio" ] <|
+                        List.map
+                            (\role ->
+                                div [ class "level-item" ]
+                                    [ div
+                                        [ class "button"
+                                        , onClick (DoTensionFinalForm <| nodeSourceFromRole role)
+                                        ]
+                                        [ text role.name ]
+
+                                    -- get the parent namid from the dict !!
+                                    ]
+                            )
+                        <|
+                            roles
+                    ]
+                ]
+
+        TensionFinalForm maybeRole ->
             let
+                role =
+                    maybeRole |> withDefault (UserRole "" "" "" RoleType.Guest)
+
+                source =
+                    form.source |> withDefault (nodeSourceFromRole role)
+
                 isSendable =
                     isTensionSendable form
             in
@@ -789,11 +876,14 @@ viewTensionStep form =
                     div [ class "box has-background-success" ] [ text "Tension added." ]
 
                 Failure err ->
-                    div [ class "box has-background-danger" ] [ text err ]
+                    viewErrors err
 
                 default ->
                     -- @TODO: better handle this with an uniform interface with slowRemoteLoading
                     div [ class "box is-loading" ] [ text "Loading..." ]
+
+        TensionNotAuthorized msg ->
+            viewErrors msg
 
 
 
@@ -803,38 +893,39 @@ viewTensionStep form =
 -- Setters
 
 
-initTensionForm : UserCtx -> Node -> TensionForm
-initTensionForm uctx node =
-    --let
-    --    -- Bluid partialSource from user Role (need to guess it !)
-    --    -- need to find all role with that circle ID
-    --     -- enjoy this to create a special color for role member.
-    --    partialSource = { id = ""
-    --    ...
-    --        }
-    --in
+initTensionForm : String -> UserCtx -> Node -> TensionForm
+initTensionForm rootnameid uctx node =
+    let
+        -- filter role that are not in this orga
+        roles =
+            uctx.roles |> List.filter (\r -> r.rootnameid == rootnameid)
+    in
     { step = TensionTypeForm
     , post = Dict.empty
     , result = NotAsked
-    , source = node
-
-    --, source = partialSource
+    , source = Nothing
     , target = node
+    , user = { uctx | roles = roles }
+    , rootnameid = rootnameid
     }
 
 
 updateTensionStep : Model -> TensionStep -> Maybe TensionForm -> Model
 updateTensionStep model newStep maybeForm =
     let
+        rootnameid =
+            model.node_focus.nameid
+
         newAction =
             case model.node_action of
                 Ask step ->
                     Ask <|
                         case step of
                             FirstStep target ->
+                                -- TensionStep is ignored here is reinitialized t firsst step
                                 case model.user of
                                     LoggedIn uctx ->
-                                        AddTensionStep (initTensionForm uctx target)
+                                        AddTensionStep (initTensionForm rootnameid uctx target)
 
                                     LoggedOut ->
                                         AuthNeeded
@@ -886,15 +977,6 @@ isTensionSendable form =
     isSendable
 
 
-uriFromFocus : NodeFocus -> String
-uriFromFocus focus =
-    if focus.isRoot then
-        String.join "/" [ "/org", focus.rootid ]
-
-    else
-        String.join "/" [ "/org", focus.rootid, focus.nameid ]
-
-
 getTensionForm : Model -> Maybe TensionForm
 getTensionForm model =
     case model.node_action of
@@ -912,6 +994,16 @@ getTensionForm model =
 
 
 -- Json encoder/decoder --When receiving data from Javascript
+
+
+nodeSourceFromRole : UserRole -> Node
+nodeSourceFromRole ur =
+    { id = "" -- obsolete ?
+    , nameid = ur.nameid
+    , name = ur.name
+    , parent = Nothing
+    , type_ = NodeType.Role
+    }
 
 
 nodeDecoder : JD.Decoder Node

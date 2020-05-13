@@ -10,13 +10,12 @@ import Json.Decode as Decode exposing (Decoder)
 type MandateOrderable
     = CreatedAt
     | Message
-    | Items
     | Purpose
 
 
 list : List MandateOrderable
 list =
-    [ CreatedAt, Message, Items, Purpose ]
+    [ CreatedAt, Message, Purpose ]
 
 
 decoder : Decoder MandateOrderable
@@ -30,9 +29,6 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
-
-                    "items" ->
-                        Decode.succeed Items
 
                     "purpose" ->
                         Decode.succeed Purpose
@@ -52,9 +48,6 @@ toString enum =
 
         Message ->
             "message"
-
-        Items ->
-            "items"
 
         Purpose ->
             "purpose"
@@ -79,9 +72,6 @@ fromString enumString =
 
         "message" ->
             Just Message
-
-        "items" ->
-            Just Items
 
         "purpose" ->
             Just Purpose
