@@ -1,4 +1,4 @@
-module Pages.Org.Dynamic.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
+module Pages.O.Dynamic.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
 
 import Components.Org.Overview as Org exposing (Model, Msg, init, subscriptions, update, view)
 import Global

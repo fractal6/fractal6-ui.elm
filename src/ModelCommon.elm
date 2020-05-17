@@ -5,11 +5,13 @@ import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (Route)
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
+import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..))
 import ModelOrg exposing (..)
 
 
@@ -148,13 +150,23 @@ type alias NodeTarget =
 --
 
 
-uriFromNameid : String -> String
-uriFromNameid nameid =
+uriFromNameid : FractalBaseRoute -> String -> String
+uriFromNameid loc nameid =
     let
         path =
             String.split "#" nameid
+
+        b =
+            Uri.toString loc
     in
-    String.join "/" ([ "/org" ] ++ path)
+    [ b ]
+        ++ path
+        |> String.join "/"
+        |> String.append "/"
+
+
+
+--|> String.append "/"
 
 
 focusFromNameid : String -> NodeFocus

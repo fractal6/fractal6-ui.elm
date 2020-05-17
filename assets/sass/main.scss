@@ -170,6 +170,13 @@ html.has-modal-active {
 
 }
 
+#mainHeader {
+
+    .tabs {
+        font-size: 0.85rem;
+    }
+}
+
 #mainPane {
   /********** Bulma FIX ***********/
   /* Adjust left offet is too large */

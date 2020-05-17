@@ -3,10 +3,10 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Browser.Navigation as Nav
 import Components.Fa as Fa
+import Components.HelperBar exposing (viewHelperBar)
 import Components.Loading as Loading exposing (viewErrors)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (onClickLink, onClickPD)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
@@ -20,6 +20,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Uri exposing (FractalBaseRoute(..))
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -302,7 +303,7 @@ update global msg model =
         NodeClicked nameid ->
             ( model
             , Cmd.none
-            , Nav.replaceUrl global.key (uriFromNameid nameid)
+            , Nav.replaceUrl global.key (uriFromNameid OverviewBaseUri nameid)
             )
 
         NodeFocused path ->
@@ -392,7 +393,7 @@ view_ global model =
         -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
         [ div [ class "column is-10", id "mainPane" ]
             [ div [ class "columns" ]
-                [ viewHelperBar model.node_path ]
+                [ viewHelperBar global model.node_path ]
             , div [ class "columns is-variable is-4" ]
                 [ div [ class "column is-6" ]
                     [ viewCanvas maybeOrg
@@ -447,37 +448,6 @@ viewLeftPane model =
                     ]
                 ]
             ]
-        ]
-
-
-viewHelperBar : Maybe NodePath -> Html Msg
-viewHelperBar maybeNodePath =
-    let
-        nodePath =
-            maybeNodePath |> withDefault (Array.fromList [])
-    in
-    nav
-        [ class "column is-full breadcrumb"
-        , attribute "aria-label" "breadcrumbs"
-        ]
-        [ Fa.icon "fas fa-angle-right" ""
-        , Array.indexedMap
-            (\i p ->
-                if i < (Array.length nodePath - 1) then
-                    li []
-                        [ a [ href (uriFromNameid p.nameid), onClickPD (NodeClicked p.nameid), attribute "target" "_self" ]
-                            [ div [ classList [ ( "has-text-weight-bold", i == 0 ) ] ] [ text p.name ] ]
-                        ]
-
-                else
-                    li [ class "is-active has-text-weight-semibold" ]
-                        [ a [ attribute "aria-current" "page", href "#" ]
-                            [ div [ classList [ ( "has-text-weight-bold", i == 0 ) ] ] [ text p.name ] ]
-                        ]
-            )
-            nodePath
-            |> Array.toList
-            |> ul [ attribute "style" "display: inline-flex;" ]
         ]
 
 
@@ -590,18 +560,21 @@ viewActivies global model =
     in
     div
         [ class "box"
-        , attribute "style" "flex-grow: 1;"
+        , attribute "style" "flex-grow: 1; padding-top: 0px;"
         ]
-        [ div [ class "title" ]
-            [ div [ class "tabs" ]
+        [ span
+            [ class "help has-text-weight-semibold"
+            , attribute "style" "top: 20px; position: relative;" -- @DEBUG: How to Jump line when flex overflow occurs?
+            ]
+            [ text "Recent activities:" ]
+        , div [ class "title" ]
+            [ div [ class "tabs is-right" ]
                 [ ul []
                     [ li [ class "is-active" ]
-                        [ a []
-                            [ Fa.icon "fas fa-exchange-alt fa-sm" "Tensions" ]
+                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" "Tensions" ]
                         ]
                     , li []
-                        [ a [ class "is-" ]
-                            [ Fa.icon "fas fa-history fa-sm" "Journal" ]
+                        [ a [] [ Fa.icon "fas fa-history fa-sm" "Journal" ]
                         ]
                     ]
                 ]

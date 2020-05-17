@@ -1,6 +1,4 @@
-module Components.Logo exposing (..)
-
---module Components.Logo exposing (logo, logo_fractal)
+module Components.Logo exposing (logo_fractal)
 
 import Components.Asset as Asset
 import Html exposing (Html, img, text)

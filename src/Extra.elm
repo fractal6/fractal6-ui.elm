@@ -2,7 +2,7 @@ module Extra exposing (onClickLink, onClickPD)
 
 import Html
 import Html.Events exposing (custom, preventDefaultOn)
-import Json.Decode as JD exposing (Value, decodeValue)
+import Json.Decode as JD
 
 
 

@@ -16,10 +16,10 @@ import Pages.Logout
 import Pages.NotFound
 import Pages.Signup
 import Pages.Test.Testa
-import Pages.Org.Dynamic
+import Pages.O.Dynamic
 import Pages.User.Dynamic
-import Pages.Org.Dynamic.Dynamic
-import Pages.Org.Dynamic.Dynamic.Dynamic
+import Pages.O.Dynamic.Dynamic
+import Pages.O.Dynamic.Dynamic.Dynamic
 
 
 
@@ -33,10 +33,10 @@ type Model
     | NotFound_Model Pages.NotFound.Model
     | Signup_Model Pages.Signup.Model
     | Test_Testa_Model Pages.Test.Testa.Model
-    | Org_Dynamic_Model Pages.Org.Dynamic.Model
+    | O_Dynamic_Model Pages.O.Dynamic.Model
     | User_Dynamic_Model Pages.User.Dynamic.Model
-    | Org_Dynamic_Dynamic_Model Pages.Org.Dynamic.Dynamic.Model
-    | Org_Dynamic_Dynamic_Dynamic_Model Pages.Org.Dynamic.Dynamic.Dynamic.Model
+    | O_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Model
+    | O_Dynamic_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Dynamic.Model
 
 
 type Msg
@@ -46,10 +46,10 @@ type Msg
     | NotFound_Msg Pages.NotFound.Msg
     | Signup_Msg Pages.Signup.Msg
     | Test_Testa_Msg Pages.Test.Testa.Msg
-    | Org_Dynamic_Msg Pages.Org.Dynamic.Msg
+    | O_Dynamic_Msg Pages.O.Dynamic.Msg
     | User_Dynamic_Msg Pages.User.Dynamic.Msg
-    | Org_Dynamic_Dynamic_Msg Pages.Org.Dynamic.Dynamic.Msg
-    | Org_Dynamic_Dynamic_Dynamic_Msg Pages.Org.Dynamic.Dynamic.Dynamic.Msg
+    | O_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Msg
+    | O_Dynamic_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Dynamic.Msg
 
 
 
@@ -70,10 +70,10 @@ type alias UpgradedPages =
     , notFound : UpgradedPage Pages.NotFound.Flags Pages.NotFound.Model Pages.NotFound.Msg
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
     , test_testa : UpgradedPage Pages.Test.Testa.Flags Pages.Test.Testa.Model Pages.Test.Testa.Msg
-    , org_dynamic : UpgradedPage Pages.Org.Dynamic.Flags Pages.Org.Dynamic.Model Pages.Org.Dynamic.Msg
+    , o_dynamic : UpgradedPage Pages.O.Dynamic.Flags Pages.O.Dynamic.Model Pages.O.Dynamic.Msg
     , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
-    , org_dynamic_dynamic : UpgradedPage Pages.Org.Dynamic.Dynamic.Flags Pages.Org.Dynamic.Dynamic.Model Pages.Org.Dynamic.Dynamic.Msg
-    , org_dynamic_dynamic_dynamic : UpgradedPage Pages.Org.Dynamic.Dynamic.Dynamic.Flags Pages.Org.Dynamic.Dynamic.Dynamic.Model Pages.Org.Dynamic.Dynamic.Dynamic.Msg
+    , o_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Msg
+    , o_dynamic_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Dynamic.Msg
     }
 
 
@@ -85,10 +85,10 @@ pages =
     , notFound = Pages.NotFound.page |> Page.upgrade NotFound_Model NotFound_Msg
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
     , test_testa = Pages.Test.Testa.page |> Page.upgrade Test_Testa_Model Test_Testa_Msg
-    , org_dynamic = Pages.Org.Dynamic.page |> Page.upgrade Org_Dynamic_Model Org_Dynamic_Msg
+    , o_dynamic = Pages.O.Dynamic.page |> Page.upgrade O_Dynamic_Model O_Dynamic_Msg
     , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
-    , org_dynamic_dynamic = Pages.Org.Dynamic.Dynamic.page |> Page.upgrade Org_Dynamic_Dynamic_Model Org_Dynamic_Dynamic_Msg
-    , org_dynamic_dynamic_dynamic = Pages.Org.Dynamic.Dynamic.Dynamic.page |> Page.upgrade Org_Dynamic_Dynamic_Dynamic_Model Org_Dynamic_Dynamic_Dynamic_Msg
+    , o_dynamic_dynamic = Pages.O.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Msg
+    , o_dynamic_dynamic_dynamic = Pages.O.Dynamic.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Dynamic_Msg
     }
 
 
@@ -117,17 +117,17 @@ init route =
         Route.Test_Testa ->
             pages.test_testa.init ()
         
-        Route.Org_Dynamic params ->
-            pages.org_dynamic.init params
+        Route.O_Dynamic params ->
+            pages.o_dynamic.init params
         
         Route.User_Dynamic params ->
             pages.user_dynamic.init params
         
-        Route.Org_Dynamic_Dynamic params ->
-            pages.org_dynamic_dynamic.init params
+        Route.O_Dynamic_Dynamic params ->
+            pages.o_dynamic_dynamic.init params
         
-        Route.Org_Dynamic_Dynamic_Dynamic params ->
-            pages.org_dynamic_dynamic_dynamic.init params
+        Route.O_Dynamic_Dynamic_Dynamic params ->
+            pages.o_dynamic_dynamic_dynamic.init params
 
 
 
@@ -155,17 +155,17 @@ update bigMsg bigModel =
         ( Test_Testa_Msg msg, Test_Testa_Model model ) ->
             pages.test_testa.update msg model
         
-        ( Org_Dynamic_Msg msg, Org_Dynamic_Model model ) ->
-            pages.org_dynamic.update msg model
+        ( O_Dynamic_Msg msg, O_Dynamic_Model model ) ->
+            pages.o_dynamic.update msg model
         
         ( User_Dynamic_Msg msg, User_Dynamic_Model model ) ->
             pages.user_dynamic.update msg model
         
-        ( Org_Dynamic_Dynamic_Msg msg, Org_Dynamic_Dynamic_Model model ) ->
-            pages.org_dynamic_dynamic.update msg model
+        ( O_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Model model ) ->
+            pages.o_dynamic_dynamic.update msg model
         
-        ( Org_Dynamic_Dynamic_Dynamic_Msg msg, Org_Dynamic_Dynamic_Dynamic_Model model ) ->
-            pages.org_dynamic_dynamic_dynamic.update msg model
+        ( O_Dynamic_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Dynamic_Model model ) ->
+            pages.o_dynamic_dynamic_dynamic.update msg model
         
         _ ->
             always ( bigModel, Cmd.none, Cmd.none )
@@ -196,17 +196,17 @@ bundle bigModel =
         Test_Testa_Model model ->
             pages.test_testa.bundle model
         
-        Org_Dynamic_Model model ->
-            pages.org_dynamic.bundle model
+        O_Dynamic_Model model ->
+            pages.o_dynamic.bundle model
         
         User_Dynamic_Model model ->
             pages.user_dynamic.bundle model
         
-        Org_Dynamic_Dynamic_Model model ->
-            pages.org_dynamic_dynamic.bundle model
+        O_Dynamic_Dynamic_Model model ->
+            pages.o_dynamic_dynamic.bundle model
         
-        Org_Dynamic_Dynamic_Dynamic_Model model ->
-            pages.org_dynamic_dynamic_dynamic.bundle model
+        O_Dynamic_Dynamic_Dynamic_Model model ->
+            pages.o_dynamic_dynamic_dynamic.bundle model
 
 
 view : Model -> Global.Model -> Document Msg

@@ -1,4 +1,4 @@
-module Pages.Org.Dynamic exposing (Flags, Model, Msg, page)
+module Pages.O.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
 
 import Components.Org.Overview as Org exposing (Model, Msg, init, subscriptions, update, view)
 import Global
@@ -7,7 +7,7 @@ import Page exposing (Document, Page)
 
 
 type alias Flags =
-    { param1 : String }
+    { param1 : String, param2 : String }
 
 
 type alias Model =
@@ -29,9 +29,9 @@ page =
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
-init global { param1 } =
+init global { param1, param2 } =
     Org.init global
         { param1 = param1
-        , param2 = Nothing
+        , param2 = Just param2
         , param3 = Nothing
         }
