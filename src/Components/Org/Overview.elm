@@ -192,8 +192,7 @@ update global msg model =
                         )
 
                     else
-                        --( model, MoveTo404, Cmd.none )
-                        ( model, Cmd.none, Cmd.none )
+                        ( { model | orga_data = Failure [ "Sorry, this node doesn't exist yet." ] }, Cmd.none, Cmd.none )
 
                 default ->
                     ( { model | orga_data = result }, Cmd.none, Cmd.none )
@@ -231,7 +230,7 @@ update global msg model =
                             (\form ->
                                 case form.user.roles of
                                     [] ->
-                                        TensionNotAuthorized "You are not a member of this organisation. Please, Join this organisation to be able to create a tension."
+                                        TensionNotAuthorized [ "You are not a member of this organisation.", "Please, Join this organisation to be able to create a tension." ]
 
                                     [ r ] ->
                                         TensionFinalForm (Just r)
@@ -372,50 +371,44 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
-        nodePathErr =
-            case model.node_path of
-                Just path ->
-                    if Array.length path > 0 then
-                        ( Just path, False )
+        maybeOrg =
+            case model.orga_data of
+                Success d ->
+                    case model.node_path of
+                        Just path ->
+                            if Array.length path > 0 then
+                                Success d
 
-                    else
-                        ( Nothing, True )
+                            else
+                                Failure [ "Sorry, this node doesn't exist yet." ]
 
-                Nothing ->
-                    ( Nothing, False )
+                        Nothing ->
+                            Success d
 
-        nodePath =
-            Tuple.first nodePathErr
-
-        pathErr =
-            Tuple.second nodePathErr
+                default ->
+                    default
     in
-    if pathErr then
-        div [] [ text "Sorry, this node doesn exist yet." ]
-
-    else
-        div
-            [ class "columns is-centered" ]
-            [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
-              div [ class "column is-10", id "mainPane" ]
-                [ div [ class "columns" ]
-                    [ viewHelperBar nodePath ]
-                , div [ class "columns is-variable is-4" ]
-                    [ div [ class "column is-6" ]
-                        [ viewCanvas global model
-                        , br [] []
-                        , viewMandate global model
-                        , setupActionModal global model
-                        ]
-                    , div [ class "column is-6" ]
-                        [ div [ class "columns is-gapless" ]
-                            [ div [ class "column is-12", id "nextToChart" ]
-                                [ viewActivies global model ]
-                            ]
+    div [ class "columns is-centered" ]
+        -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+        [ div [ class "column is-10", id "mainPane" ]
+            [ div [ class "columns" ]
+                [ viewHelperBar model.node_path ]
+            , div [ class "columns is-variable is-4" ]
+                [ div [ class "column is-6" ]
+                    [ viewCanvas maybeOrg
+                    , br [] []
+                    , viewMandate global model
+                    , setupActionModal global model
+                    ]
+                , div [ class "column is-6" ]
+                    [ div [ class "columns is-gapless" ]
+                        [ div [ class "column is-12", id "nextToChart" ]
+                            [ viewActivies global model ]
                         ]
                     ]
                 ]
             ]
+        ]
 
 
 viewLeftPane : Model -> Html Msg
@@ -471,11 +464,16 @@ viewHelperBar maybeNodePath =
         , Array.indexedMap
             (\i p ->
                 if i < (Array.length nodePath - 1) then
-                    li [] [ a [ href (uriFromNameid p.nameid), onClickPD (NodeClicked p.nameid), attribute "target" "_self" ] [ text p.name ] ]
+                    li []
+                        [ a [ href (uriFromNameid p.nameid), onClickPD (NodeClicked p.nameid), attribute "target" "_self" ]
+                            [ div [ classList [ ( "has-text-weight-bold", i == 0 ) ] ] [ text p.name ] ]
+                        ]
 
                 else
                     li [ class "is-active has-text-weight-semibold" ]
-                        [ a [ attribute "aria-current" "page", href "#" ] [ text p.name ] ]
+                        [ a [ attribute "aria-current" "page", href "#" ]
+                            [ div [ classList [ ( "has-text-weight-bold", i == 0 ) ] ] [ text p.name ] ]
+                        ]
             )
             nodePath
             |> Array.toList
@@ -483,76 +481,64 @@ viewHelperBar maybeNodePath =
         ]
 
 
-viewCanvas : Global.Model -> Model -> Html Msg
-viewCanvas global model =
+viewCanvas : OrgaData -> Html Msg
+viewCanvas orgaData =
     let
         isLoading =
-            case model.orga_data of
+            case orgaData of
                 LoadingSlowly ->
                     True
 
                 default ->
                     False
 
-        error =
-            case model.orga_data of
+        maybeError =
+            case orgaData of
                 Failure err ->
-                    ( True, err )
+                    Just err
 
-                default ->
-                    ( False, "" )
-
-        hasErr =
-            Tuple.first error
-
-        errMsg =
-            Tuple.second error
+                _ ->
+                    Nothing
     in
-    div []
-        [ div
-            [ id "canvasParent"
-            , classList [ ( "spinner", isLoading ) ]
-            ]
-          <|
-            if hasErr then
-                [ viewErrors errMsg ]
+    div [ id "canvasParent", classList [ ( "spinner", isLoading ) ] ] <|
+        case maybeError of
+            Just err ->
+                [ viewErrors err ]
 
-            else
-                []
+            _ ->
+                [ div [ id "canvasButtons", class "buttons are-small is-invisible" ]
+                    -- Hidden class use in graphpack_d3.js
+                    [ div
+                        [ id "invGraph_cvbtn"
+                        , class "button buttonToggle tooltip has-tooltip-right"
+                        , attribute "data-tooltip" "Reverse the organisation graph."
+                        , onClick ToggleGraphReverse
+                        ]
+                        [ Fa.icon0 "fas fa-sort-amount-up" "" ]
 
-        -- Hidden class use in graphpack_d3.js
-        , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            [ div
-                [ id "invGraph_cvbtn"
-                , class "button buttonToggle tooltip has-tooltip-right"
-                , attribute "data-tooltip" "Reverse the organisation graph."
-                , onClick ToggleGraphReverse
+                    --, div
+                    --    [ id "showLabel_cvbtn"
+                    --    , class "button buttonToggle tooltip has-tooltip-right"
+                    --    , attribute "data-tooltip" "Show/Hide circle tooltips."
+                    --    , onClick ToggleTooltips
+                    --    ]
+                    --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
+                    ]
+                , div
+                    [ id "nodeTooltip"
+                    , class "modalTrigger is-invisible"
+                    , attribute "data-modal" "actionModal"
+                    ]
+                    [ span [] [ text "void" ] -- Node name
+                    , span [ class "fa-stack fa-sm ellipsisArt" ]
+                        [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
+
+                        -- To be copied before fa-ellipis !
+                        --, i[class "far fa-circle fa-stack-2x"][]
+                        --, i[class "fas fa-circle fa-stack-2x"][]
+                        ]
+                    ]
                 ]
-                [ Fa.icon0 "fas fa-sort-amount-up" "" ]
-
-            --, div
-            --    [ id "showLabel_cvbtn"
-            --    , class "button buttonToggle tooltip has-tooltip-right"
-            --    , attribute "data-tooltip" "Show/Hide circle tooltips."
-            --    , onClick ToggleTooltips
-            --    ]
-            --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
-            ]
-        , div
-            [ id "nodeTooltip"
-            , class "modalTrigger is-invisible"
-            , attribute "data-modal" "actionModal"
-            ]
-            [ span [] [ text "void" ] -- Node name
-            , span [ class "fa-stack fa-sm ellipsisArt" ]
-                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
-
-                -- To be copied before fa-ellipis !
-                --, i[class "far fa-circle fa-stack-2x"][]
-                --, i[class "fas fa-circle fa-stack-2x"][]
-                ]
-            ]
-        ]
 
 
 viewMandate : Global.Model -> Model -> Html Msg
@@ -636,9 +622,6 @@ viewActivies global model =
                 default ->
                     div [] []
             ]
-
-        --, a [ class "Footer has-text-centered" ] [ text "See more" ]
-        --]
         ]
 
 
@@ -703,7 +686,7 @@ setupActionModal global model =
                         text ""
 
                     AskErr err ->
-                        viewErrors err
+                        viewErrors [ err ]
                 ]
             , button [ class "modal-close is-large" ] []
             ]
@@ -882,8 +865,8 @@ viewTensionStep form =
                     -- @TODO: better handle this with an uniform interface with slowRemoteLoading
                     div [ class "box is-loading" ] [ text "Loading..." ]
 
-        TensionNotAuthorized msg ->
-            viewErrors msg
+        TensionNotAuthorized errMsg ->
+            viewErrors errMsg
 
 
 

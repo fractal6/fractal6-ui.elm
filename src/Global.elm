@@ -49,10 +49,6 @@ init flags url key =
         userState =
             case flags of
                 Just userCtxRaw ->
-                    let
-                        dd =
-                            Debug.log "r" userCtxRaw
-                    in
                     case JD.decodeValue userDecoder userCtxRaw of
                         Ok uctx ->
                             LoggedIn uctx

@@ -134,7 +134,7 @@ type TensionStep
     | TensionSourceForm (List UserRole)
     | TensionFinalForm (Maybe UserRole)
     | TensionValidation
-    | TensionNotAuthorized String
+    | TensionNotAuthorized ErrorData
 
 
 type alias NodeTarget =

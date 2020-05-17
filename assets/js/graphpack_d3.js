@@ -80,9 +80,9 @@ const GraphPack = {
     //var colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
     leafColor: "white",
-    hoverCircleColor:  "black",
+    hoverCircleColor: "#3f3f3f",
     focusCircleColor: "#368ED3", // "blue",
-    hoverCircleWidth: 1.5, // waring, can break stroke with canvas drawing.
+    hoverCircleWidth: 1.5, // warning, can break stroke with canvas drawing.
 
     // Html element ID
     canvasParentId: "canvasParent",
@@ -101,9 +101,11 @@ const GraphPack = {
     diameter: null,
     zoomCtx: null,
     circlesPadding: 1.8,
+    fontsizeCircle_start: 19,
+    fontstyleCircle: "Arial",
 
     // Graph fx settings
-    minZoomDuration: 1250, // 1500
+    minZoomDuration: 666, // 1250
     zoomFactorCircle: 2.05,
     zoomFactorRole: 2.2,
 
@@ -234,88 +236,90 @@ const GraphPack = {
         this.clearCanvas(ctx2d);
 
         //Select our dummy nodes and draw the data to canvas.
-        var node,
-            _name , type_ ,
-            circleColor;
+        var node;
         // It's slightly faster than nodes.forEach()
         for (var i = 0; i < this.nodes.length; i++) {
             node = this.nodes[i];
-            _name = node.data.name;
-            type_ = node.data.type_;
-
-            if (type_ === "Hidden") {
-                continue;
-            } else {
-                this.addNodeCtx(node);
-            }
-
-            //If the hidden canvas was send into this function and it does not yet have a color,
-            //generate a unique one.
-            if(isHidden) {
-                if(node.color === undefined) {
-                    // If we have never drawn the node to the hidden canvas get a new color for it and put it in the dictionary.
-                    node.color = this.genColor();
-                    this.colToCircle[node.color] = node;
-                }
-                // On the hidden canvas each rectangle gets a unique color.
-                circleColor = node.color;
-            } else {
-                circleColor = (type_ === "Circle") ? this.colorCircle(node.depth) : this.leafColor;
-            }
-
-            //Draw each circle
-            ctx2d.beginPath();
-            ctx2d.fillStyle = circleColor;
-            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon,
-                0, 2 * Math.PI, true);
-            ctx2d.fill();
-
-            if (!isHidden) {
-                if (node.isHovered) {
-                    ctx2d.lineWidth = this.hoverCircleWidth;
-                    ctx2d.strokeStyle = this.focusCircleColor;
-                    ctx2d.stroke();
-                }
-
-                if (type_ === "Role") {
-                    var text = _name.substring(0,3).replace(/./,x=>x.toUpperCase())
-                    var font_size = 19;
-                    var text_display = false;
-                    //for (var ii=0; ii < 2; ii++) {
-                    // Search font that fit
-                    ctx2d.font = font_size +"px Arial";
-                    if (ctx2d.measureText(text).width+1 < node.ctx.rayon*2) {
-                        text_display = true;
-                        //break;
-                    } else {
-                        font_size--;
-                    }
-                    //}
-
-                    if (text_display) {
-                        ctx2d.beginPath();
-                        ctx2d.fillStyle = "black";
-                        ctx2d.textAlign = "center";
-                        ctx2d.fillText(text,
-                            node.ctx.centerX, node.ctx.centerY+7);
-                        //ctx2d.shadowColor = '#999';
-                        //ctx2d.shadowBlur = 20;
-                        //ctx2d.shadowOffsetX = 5;
-                        //ctx2d.shadowOffsetY = 5;
-                        ctx2d.fill();
-                    }
-                } else {
-                    //if (focusedNode.depth == node.depth || focusedNode.depth == node.depth-1 ) {
-                    //    ctx2d.beginPath();
-                    //    ctx2d.fillStyle = "white";
-                    //    ctx2d.fillCircleText(_name,
-                    //        node.ctx.centerX, node.ctx.centerY,
-                    //        node.ctx.rayon, -Math.PI*0.7);
-                    //    ctx2d.fill()
-                    //}
-                }
-            }
+            this.drawNode(isHidden, ctx2d, node);
         }//for i
+    },
+
+    drawNode(isHidden, ctx2d, node) {
+        var _name = node.data.name;
+        var type_ = node.data.type_;
+        var circleColor;
+
+        if (type_ === "Hidden") {
+            return
+        } else {
+            this.addNodeCtx(node);
+        }
+
+        // If the hidden canvas was send into this function and it does not yet have a color,
+        // generate a unique one.
+        if(isHidden) {
+            if(node.color === undefined) {
+                // If we have never drawn the node to the hidden canvas get a new color for it and put it in the dictionary.
+                node.color = this.genColor();
+                this.colToCircle[node.color] = node;
+            }
+            // On the hidden canvas each rectangle gets a unique color.
+            circleColor = node.color;
+        } else {
+            circleColor = (type_ === "Circle") ? this.colorCircle(node.depth) : this.leafColor;
+        }
+
+        // Draw circle
+        ctx2d.beginPath();
+        ctx2d.fillStyle = circleColor;
+        ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon,
+            0, 2 * Math.PI, true);
+        ctx2d.fill();
+
+        if (!isHidden) {
+            if (node === this.hoveredNode) {
+                ctx2d.lineWidth = this.hoverCircleWidth;
+                ctx2d.strokeStyle = this.focusCircleColor;
+                ctx2d.stroke();
+            }
+
+            if (type_ === "Role") {
+                var text = "";
+                var font_size = this.fontsizeCircle_start;
+                var textLong = _name;
+                var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase()) + ".";
+                ctx2d.font = font_size + "px " + this.fontstyleCircle;
+                if (ctx2d.measureText(textLong).width+7 < node.ctx.rayon*2) {
+                    text = textLong;
+                } else if (ctx2d.measureText(textShort).width+1 < node.ctx.rayon*2) {
+                    text = textShort;
+                } else {
+                    font_size--;
+                }
+
+                if (text) {
+                    ctx2d.beginPath();
+                    ctx2d.fillStyle = "black";
+                    ctx2d.textAlign = "center";
+                    ctx2d.fillText(text,
+                        node.ctx.centerX, node.ctx.centerY+7);
+                    //ctx2d.shadowColor = '#999';
+                    //ctx2d.shadowBlur = 10;
+                    //ctx2d.shadowOffsetX = 1;
+                    //ctx2d.shadowOffsetY = 1;
+                    ctx2d.fill();
+                }
+            } else {
+                //if (focusedNode.depth == node.depth || focusedNode.depth == node.depth-1 ) {
+                //    ctx2d.beginPath();
+                //    ctx2d.fillStyle = "white";
+                //    ctx2d.fillCircleText(_name,
+                //        node.ctx.centerX, node.ctx.centerY,
+                //        node.ctx.rayon, -Math.PI*0.7);
+                //    ctx2d.fill()
+                //}
+            }
+        }
     },
 
     // Create the interpolation function between current view and the clicked on node.
@@ -332,7 +336,7 @@ const GraphPack = {
         if (focus && typeof(focus) === 'string') {
             var maybeFocus = this.nodesDict[unescape(focus)];
             if (!maybeFocus) {
-                console.warn("Unknown node:", focus );
+                console.warn("Unknown node:", focus);
                 this.app.ports.nodeFocusedFromJs.send([]);
                 return
             }
@@ -393,7 +397,7 @@ const GraphPack = {
             //stats.end();
             if (finished || elapsed > maxDuration) {
                 this.isZooming = false;
-                //this.drawCanvas();
+                this.drawCanvas();
                 this.drawCanvas(true);
                 if (!elmHasBeenUpdated) this.nodeFocusedFromJs(this.focusedNode); // INIT
                 this.drawNodeHover(this.focusedNode);
@@ -541,22 +545,28 @@ const GraphPack = {
         clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
         if (clearBorder) this.clearNodeHover(this.hoveredNode);
 
-        var circleColor = this.hoverCircleColor;
-        if (node == this.focusedNode) circleColor = this.focusCircleColor;
+        var hoverColor,
+            hoverWidth;
+        if (node == this.focusedNode) {
+            hoverColor = this.focusCircleColor;
+            hoverWidth = this.hoverCircleWidth * 1.5;
+        } else {
+            hoverColor = this.hoverCircleColor;
+            hoverWidth = this.hoverCircleWidth;
+        }
 
         // Draw border
         ctx2d.beginPath();
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-            node.ctx.rayon+1, 0, 2 * Math.PI, true);
-        ctx2d.lineWidth = this.hoverCircleWidth;
-        ctx2d.strokeStyle = circleColor;
+            node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
+        ctx2d.lineWidth = hoverWidth;
+        ctx2d.strokeStyle = hoverColor;
         ctx2d.stroke();
 
         // Draw tooltip
         this.drawNodeTooltip(node);
 
         // Update global context
-        node.isHovered = true;
         this.hoveredNode = node; //@debug: use globCtx
         return
     },
@@ -565,11 +575,18 @@ const GraphPack = {
     clearNodeHover(node) {
         var ctx2d = this.ctx2d;
 
+        var hoverWidth;
+        if (node == this.focusedNode) {
+            hoverWidth = this.hoverCircleWidth * 1.25;
+        } else {
+            hoverWidth = this.hoverCircleWidth;
+        }
+
         // Clear node Border
         ctx2d.beginPath();
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-            node.ctx.rayon+1, 0, 2 * Math.PI, true);
-        ctx2d.lineWidth = 3;
+            node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
+        ctx2d.lineWidth = hoverWidth*1.75;
         ctx2d.strokeStyle = this.colorCircle(node.depth-1);
         ctx2d.stroke();
 
@@ -577,7 +594,6 @@ const GraphPack = {
         this.clearNodeTooltip();
 
         // Update context
-        node.isHovered = false;
         this.hoveredNode = null; //@debug: use globCtx
         return
     },
@@ -721,6 +737,10 @@ const GraphPack = {
 
         // Set the parent element
         this.$canvasParent = document.getElementById(this.canvasParentId);
+        if (!this.$canvasParent) {
+            console.warn("Canvas object not found, aborting")
+            return
+        }
         this.computeGeometry();
 
         //
@@ -943,6 +963,7 @@ const GraphPack = {
         //stats.domElement.style.left = '0px';
         //stats.domElement.style.top = '0px';
         //document.body.appendChild( stats.domElement );
+        return true
 
     },
 

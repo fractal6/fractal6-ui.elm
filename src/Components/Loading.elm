@@ -3,10 +3,11 @@ module Components.Loading exposing (HttpError, WebData, expectJson, spinner, vie
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
-import Html exposing (Html, div, img, text)
+import Html exposing (Html, div, img, p, text)
 import Html.Attributes exposing (alt, class, height, src, width)
 import Http
 import Json.Decode as JD
+import ModelOrg exposing (ErrorData)
 import RemoteData exposing (RemoteData)
 
 
@@ -22,11 +23,11 @@ type alias WebData a =
 
 type alias ErrorAuth =
     { user_ctx :
-        ErrorMsg
+        ErrorDebug
     }
 
 
-type alias ErrorMsg =
+type alias ErrorDebug =
     { field : String
     , msg : String
     }
@@ -75,7 +76,7 @@ errorDecoder : JD.Decoder ErrorAuth
 errorDecoder =
     JD.map ErrorAuth <|
         JD.field "user_ctx" <|
-            JD.map2 ErrorMsg
+            JD.map2 ErrorDebug
                 (JD.field "field" JD.string)
                 (JD.field "msg" JD.string)
 
@@ -127,11 +128,12 @@ spinner =
         []
 
 
-viewErrors : String -> Html msg
+viewErrors : ErrorData -> Html msg
 viewErrors errMsg =
-    div [ class "box has-background-danger" ] [ text errMsg ]
+    List.map (\e -> p [] [ text e ]) errMsg
+        |> div [ class "box has-background-danger" ]
 
 
 viewHttpErrors : HttpError String -> Html msg
 viewHttpErrors httpError =
-    errorHttpToString httpError |> viewErrors
+    [ errorHttpToString httpError ] |> viewErrors

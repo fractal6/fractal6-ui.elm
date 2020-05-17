@@ -53,8 +53,10 @@ const actions = {
             var gp = session.gp;
             //var data = JSON.parse(data);
 
-            gp.init(app, data);
-            gp.zoomToNode(data.focusid, 0.5);
+            var err = gp.init(app, data);
+            if (err) {
+                gp.zoomToNode(data.focusid, 0.5);
+            }
         }
         //});
     },

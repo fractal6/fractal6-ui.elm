@@ -61,7 +61,7 @@ type RequestResult errors data
 
 
 type alias ErrorData =
-    String
+    List String
 
 
 type alias Post =
@@ -398,13 +398,13 @@ decodeResponse decoder response =
         RemoteData.Failure errors ->
             case errors of
                 Graphql.Http.GraphqlError maybeParsedData err ->
-                    "GraphQL errors: \n"
-                        ++ Debug.toString err
+                    -- Graphql error
+                    err
+                        |> List.map (\e -> e.message)
                         |> Failure
 
                 Graphql.Http.HttpError httpError ->
-                    "Http error "
-                        ++ Debug.toString httpError
+                    [ "Http error: " ++ Debug.toString httpError ]
                         |> Failure
 
         RemoteData.Loading ->
