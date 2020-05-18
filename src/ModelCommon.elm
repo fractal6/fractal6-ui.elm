@@ -5,7 +5,6 @@ import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route)
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE

@@ -63,9 +63,34 @@ html.has-modal-active {
 }
 
 // Breadcrumb
-.breadcrumb a {
-    padding-right:0.4em;
-    padding-left:0.4em;
+.breadcrumb {
+    a {
+        padding-right:0.4em;
+        padding-left:0.4em;
+    }
+}
+
+
+// Tabs
+.tabs {
+
+    ul {
+        border-bottom-color: #dbdee085;
+    }
+
+    &.is-boxed {
+
+        li a:hover {
+            background-color: $tabs-boxed-link-hover-background-color;
+            border-bottom-color: $tabs-boxed-link-hover-border-bottom-color;
+        }
+
+        li.is-active a {
+            background-color: $body-background-color;
+            border-color: #dbdee085;
+            border-bottom-color: $tabs-boxed-link-active-border-bottom-color !important;
+        }
+    }
 }
 
 
@@ -171,10 +196,23 @@ html.has-modal-active {
 }
 
 #mainHeader {
+    background-color: $header-background-color;
+    //box-shadow: 0 1px 0 0 #66737378;
+
+    & > .column {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .breadcrumb {
+        margin-top: 1.25rem;
+        margin-bottom: 1.75rem;
+    }
 
     .tabs {
         font-size: 0.85rem;
     }
+
 }
 
 #mainPane {
@@ -183,7 +221,7 @@ html.has-modal-active {
   //margin-left: 5%;
 
   /* is-paddingless compatibility */
-  padding-top: 2rem;
+  padding-top: 1.25rem;
   /*********************************/
 
   // the first children

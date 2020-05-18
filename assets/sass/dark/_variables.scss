@@ -6,7 +6,8 @@ $primary: #375a7f !default;
 $border-color: $grey;
 $border-width: 2px;
 
-$body-background-color: #3f4a57d9; // #2e424bf2; darken($grey-darker, 4);
+$body-background-color: #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
+$header-background-color: #44444d;
 $background: $grey-darker;
 $subtitle-color: $grey-dark;
 $footer-background-color: $background;
@@ -25,7 +26,7 @@ $box-color: $text;
 $box-background-color: $grey-dark;
 $box-shadow: none;
 
-$link: $turquoise;
+$link: $green2; // $turquoise
 $link-hover: lighten($link, 5);
 $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
@@ -79,5 +80,8 @@ $menu-left-border-color: #464646;
 // Tooltip
 $tooltip-background-color: $grey-lighter;
 $tooltip-color: black;
+
+// Tabs
+$tabs-boxed-link-active-background-color: #3f4a57;
 
 $bulmaswatch-import-font: false !default;

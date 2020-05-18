@@ -74,15 +74,15 @@ const computeDepth = (obj, depth, neigbor) => {
 const GraphPack = {
 
     // Background Colors
-    backgroundColor: "#EDFCFF",
+    backgroundColor: "#edfcff",
 
     // Graph Colors
     //var colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
     leafColor: "white",
-    hoverCircleColor: "#3f3f3f",
-    focusCircleColor: "#368ED3", // "blue",
-    hoverCircleWidth: 1.5, // warning, can break stroke with canvas drawing.
+    hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
+    focusCircleColor: "#375a7fcc", // blue>"#368ed3"
+    hoverCircleWidth: 1.66, // warning, can break stroke with canvas drawing.
 
     // Html element ID
     canvasParentId: "canvasParent",

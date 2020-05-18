@@ -3,7 +3,7 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Browser.Navigation as Nav
 import Components.Fa as Fa
-import Components.HelperBar exposing (viewHelperBar)
+import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewErrors)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -389,23 +389,20 @@ view_ global model =
                 default ->
                     default
     in
-    div [ class "columns is-centered" ]
-        -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
-        [ div [ class "column is-10", id "mainPane" ]
-            [ div [ class "columns" ]
-                [ viewHelperBar global model.node_path ]
-            , div [ class "columns is-variable is-4" ]
-                [ div [ class "column is-6" ]
-                    [ viewCanvas maybeOrg
-                    , br [] []
-                    , viewMandate global model
-                    , setupActionModal global model
-                    ]
-                , div [ class "column is-6" ]
-                    [ div [ class "columns is-gapless" ]
-                        [ div [ class "column is-12", id "nextToChart" ]
-                            [ viewActivies global model ]
-                        ]
+    -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+    div [ id "mainPane" ]
+        [ HelperBar.view OverviewBaseUri model.node_path
+        , div [ class "columns is-centered is-variable is-4" ]
+            [ div [ class "column is-5" ]
+                [ viewCanvas maybeOrg
+                , br [] []
+                , viewMandate global model
+                , setupActionModal global model
+                ]
+            , div [ class "column is-5" ]
+                [ div [ class "columns is-gapless" ]
+                    [ div [ class "column is-12", id "nextToChart" ]
+                        [ viewActivies global model ]
                     ]
                 ]
             ]
@@ -562,13 +559,13 @@ viewActivies global model =
         [ class "box"
         , attribute "style" "flex-grow: 1; padding-top: 0px;"
         ]
-        [ span
-            [ class "help has-text-weight-semibold"
-            , attribute "style" "top: 20px; position: relative;" -- @DEBUG: How to Jump line when flex overflow occurs?
-            ]
-            [ text "Recent activities:" ]
-        , div [ class "title" ]
-            [ div [ class "tabs is-right" ]
+        [ div [ class "title" ]
+            [ span
+                [ class "help has-text-weight-semibold"
+                , attribute "style" "top: 20px; position: relative;" -- @DEBUG: How to Jump line when flex overflow occurs?
+                ]
+                [ text "Recent activities:" ]
+            , div [ class "tabs is-right is-small" ]
                 [ ul []
                     [ li [ class "is-active" ]
                         [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" "Tensions" ]

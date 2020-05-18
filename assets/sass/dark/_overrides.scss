@@ -256,37 +256,6 @@ a {
   }
 }
 
-.tabs {
-  a {
-    border-bottom-width: $border-width;
-    margin-bottom: -$border-width;
-  }
-
-  ul {
-    border-bottom-width: $border-width;
-  }
-
-  &.is-boxed {
-    a {
-      border-width: $border-width;
-    }
-
-    li.is-active a {
-      background-color: darken($grey-darker, 4);
-    }
-  }
-
-  &.is-toggle {
-    li a {
-      border-width: $border-width;
-      margin-bottom: 0;
-    }
-
-    li + li {
-      margin-left: -$border-width;
-    }
-  }
-}
 
 .hero {
   // Colors
