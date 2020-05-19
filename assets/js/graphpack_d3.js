@@ -82,7 +82,8 @@ const GraphPack = {
     leafColor: "white",
     hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
     focusCircleColor: "#375a7fcc", // blue>"#368ed3"
-    hoverCircleWidth: 1.66, // warning, can break stroke with canvas drawing.
+    hoverCircleWidth: 1.66,
+    focusCircleWidth: 1.66*1.5, // warning, can break stroke with canvas drawing.
 
     // Html element ID
     canvasParentId: "canvasParent",
@@ -278,8 +279,14 @@ const GraphPack = {
 
         if (!isHidden) {
             if (node === this.hoveredNode) {
-                ctx2d.lineWidth = this.hoverCircleWidth;
-                ctx2d.strokeStyle = this.focusCircleColor;
+                var hoverWidth = this.focusCircleWidth;
+                var hoverColor = this.focusCircleColor;
+                // Draw border
+                ctx2d.beginPath();
+                ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
+                    node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
+                ctx2d.lineWidth   = hoverWidth;
+                ctx2d.strokeStyle = hoverColor;
                 ctx2d.stroke();
             }
 
@@ -549,13 +556,13 @@ const GraphPack = {
             hoverWidth;
         if (node == this.focusedNode) {
             hoverColor = this.focusCircleColor;
-            hoverWidth = this.hoverCircleWidth * 1.5;
+            hoverWidth = this.focusCircleWidth;
         } else {
             hoverColor = this.hoverCircleColor;
             hoverWidth = this.hoverCircleWidth;
         }
 
-        // Draw border
+        // Draw Circle border
         ctx2d.beginPath();
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
             node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
@@ -577,12 +584,13 @@ const GraphPack = {
 
         var hoverWidth;
         if (node == this.focusedNode) {
-            hoverWidth = this.hoverCircleWidth * 1.25;
+            //hoverWidth = this.focusCircleWidth * 1.25;
+            hoverWidth = this.focusCircleWidth;
         } else {
             hoverWidth = this.hoverCircleWidth;
         }
 
-        // Clear node Border
+        // Clear Circle Border
         ctx2d.beginPath();
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
             node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
@@ -922,7 +930,6 @@ const GraphPack = {
         // Node Tooltip events
         this.$tooltip.addEventListener("mousedown", e => {
             this.sendNodeDataFromJs(this.hoveredNode);
-            document.documentElement.classList.add('has-modal-active');
             return true
         });
 

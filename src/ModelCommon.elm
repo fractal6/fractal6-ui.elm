@@ -108,15 +108,22 @@ type alias CircleTensionsData =
 
 
 type ActionState
-    = Ask (ActionStep Node)
+    = Ask (ActionStep Node) -- Node actions
+    | JoinOrga (JoinStep JoinOrgaForm)
     | AskErr String
     | NotAsk
 
 
-type ActionStep target
-    = FirstStep target -- AskActions
+type
+    ActionStep target
+    -- Actions shows up in a Modal
+    = FirstStep target -- Pick an actions
     | AddTensionStep TensionForm -- AskNewTension
-    | AuthNeeded
+    | ActionAuthNeeded
+
+
+
+-- Tension Form
 
 
 type alias TensionForm =
@@ -138,15 +145,43 @@ type TensionStep
     | TensionNotAuthorized ErrorData
 
 
-type alias NodeTarget =
-    -- Helper for encoding ActionState / Receiving Node from JS.
-    Result JD.Error Node
+
+-- Join Form
+
+
+type JoinStep form
+    = JoinInit form
+    | JoinValidation form (GqlData Int)
+    | JoinNotAuthorized ErrorData
+    | JoinAuthNeeded
+
+
+type alias JoinOrgaForm =
+    { user : UserCtx
+    , rootnameid : String
+    }
 
 
 
 --
 -- Getters
 --
+
+
+getNodeName : OrgaData -> String -> String
+getNodeName oData nameid =
+    let
+        errMsg =
+            "Error: Node unknown"
+    in
+    case oData of
+        Success nodes ->
+            Dict.get nameid nodes
+                |> Maybe.map (\n -> n.name)
+                |> withDefault errMsg
+
+        _ ->
+            errMsg
 
 
 uriFromNameid : FractalBaseRoute -> String -> String
@@ -291,3 +326,12 @@ nodeEncoder node =
     , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
     , ( "type_", JE.string <| NodeType.toString node.type_ )
     ]
+
+
+
+-- Utils
+
+
+type alias NodeTarget =
+    -- Helper for encoding ActionState / Receiving Node from JS.
+    Result JD.Error Node

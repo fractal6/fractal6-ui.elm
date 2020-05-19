@@ -11,18 +11,29 @@ import ModelCommon exposing (NodePath, uriFromNameid)
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..))
 
 
-view : FractalBaseRoute -> Maybe NodePath -> Html msg
-view baseUri maybeNodePath =
+view : FractalBaseRoute -> Maybe NodePath -> msg -> Html msg
+view baseUri maybeNodePath joinMsg =
     div [ id "mainHeader", class "columns is-centered" ]
         [ div [ class "column is-10" ]
-            [ viewHelperBar baseUri maybeNodePath ]
+            [ viewHelperBar baseUri maybeNodePath joinMsg ]
         ]
 
 
-viewHelperBar : FractalBaseRoute -> Maybe NodePath -> Html msg
-viewHelperBar baseUri maybePath =
+viewHelperBar : FractalBaseRoute -> Maybe NodePath -> msg -> Html msg
+viewHelperBar baseUri maybePath joinMsg =
+    let
+        path =
+            maybePath |> withDefault (Array.fromList [])
+    in
     nav [ id "mainHeader" ]
-        [ viewPath baseUri maybePath
+        [ div [ class "level" ]
+            [ div [ class "level-left" ]
+                [ div [ class "level-item" ] [ viewPath baseUri path ]
+                ]
+            , div [ class "level-right" ]
+                [ div [ class "level-item" ] [ viewButtons joinMsg ]
+                ]
+            ]
         , div [ class "tabs is-boxed" ]
             [ ul []
                 [ li [ class "is-active" ]
@@ -36,12 +47,8 @@ viewHelperBar baseUri maybePath =
         ]
 
 
-viewPath : FractalBaseRoute -> Maybe NodePath -> Html msg
-viewPath baseUri maybePath =
-    let
-        path =
-            maybePath |> withDefault (Array.fromList [])
-    in
+viewPath : FractalBaseRoute -> NodePath -> Html msg
+viewPath baseUri path =
     div
         [ class "breadcrumb"
         , attribute "aria-label" "breadcrumbs"
@@ -67,3 +74,13 @@ viewPath baseUri maybePath =
             |> Array.toList
             |> ul [ attribute "style" "display: inline-flex;" ]
         ]
+
+
+viewButtons : msg -> Html msg
+viewButtons joinMsg =
+    div
+        [ class "button is-small has-text-weight-semibold is-primary modalTrigger  tooltip has-tooltip-bottom"
+        , attribute "data-tooltip" "Join this organisation."
+        , onClick joinMsg
+        ]
+        [ text "Join" ]

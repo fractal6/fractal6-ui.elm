@@ -7,7 +7,7 @@
 
 
 //document.addEventListener('DOMContentLoaded', () => {
-const BulmaDriver = (target, handlers) => {
+const BulmaDriver = (app, target, handlers) => {
 
     //
     // Setup
@@ -249,7 +249,12 @@ const BulmaDriver = (target, handlers) => {
             // Fix block scrolling
             document.documentElement.classList.remove('has-modal-active');
             // deactivate modal
-            el.classList.remove('is-active');
+            if (el.classList.contains("protected_")) {
+                // Close modal with elm
+                app.ports.closeModalFromJs.send("")
+            } else {
+                el.classList.remove('is-active');
+            }
 
         });
     }
@@ -270,6 +275,7 @@ const BulmaDriver = (target, handlers) => {
             el.addEventListener('mousedown', function(e) {
                 var $target_ = document.getElementById(el.dataset.modal);
                 // Activate modal
+                document.documentElement.classList.add('has-modal-active');
                 $target_.classList.add("is-active");
             });
         });

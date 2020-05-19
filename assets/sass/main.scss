@@ -58,7 +58,7 @@ html, body {
 
 html.has-modal-active {
     //overflow: hidden !important;
-    position: fixed;
+    //position: fixed;
     width: 100%;
 }
 
@@ -81,7 +81,7 @@ html.has-modal-active {
     &.is-boxed {
 
         li a:hover {
-            background-color: $tabs-boxed-link-hover-background-color;
+            background-color: $grey-dark;
             border-bottom-color: $tabs-boxed-link-hover-border-bottom-color;
         }
 
@@ -204,9 +204,9 @@ html.has-modal-active {
         padding-bottom: 0 !important;
     }
 
-    .breadcrumb {
-        margin-top: 1.25rem;
-        margin-bottom: 1.75rem;
+    & > .level {
+        margin-top: 1rem;
+        //margin-bottom: 1.75rem;
     }
 
     .tabs {
@@ -509,7 +509,7 @@ html.has-modal-active {
 
 }.spinner {
     // The height here is just for demo purposes
-    height: 100vh;
+    height: 25vh;
     opacity: 1;
     position: relative;
     transition: opacity linear 0.1s;

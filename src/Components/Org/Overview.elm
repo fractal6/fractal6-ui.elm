@@ -4,7 +4,7 @@ import Array
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewErrors)
+import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -52,6 +52,7 @@ type alias Model =
     , circle_tensions : CircleTensionsData
     , node_action : ActionState
     , user : UserState
+    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers
     }
 
 
@@ -109,6 +110,7 @@ init global flags =
             , node_focus = newFocus
             , node_path = session.node_path
             , user = session.user
+            , isModalActive = False
             }
 
         cmds =
@@ -141,19 +143,23 @@ init global flags =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
-      --
+      -- Gql Data Queries
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
-      --
+      -- Nodes Actions
     | DoNodeAction NodeTarget -- ports receive / tooltip click
     | DoTensionTypeForm
     | DoTensionSourceForm String -- <- {tensionType}
     | DoTensionFinalForm Node -- <- {source}
-    | ChangeTensionPost String String -- { field value}
-    | Submit (Time.Posix -> Msg)
-    | SubmitTension TensionForm Time.Posix -- model ends
-    | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode beter to get IdPayload
-      --
+    | ChangeTensionPost String String -- {field value}
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+    | SubmitTension TensionForm Time.Posix -- Send form
+    | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode better to get IdPayload
+      -- Join Actions
+    | DoJoinOrga String
+    | JoinAck (GqlData Int)
+    | DoCloseModal String
+      -- JS Interop
     | NodeClicked String -- ports receive
     | NodeFocused NodePath -- ports receive
     | ToggleGraphReverse -- ports send
@@ -215,10 +221,10 @@ update global msg model =
 
         DoTensionTypeForm ->
             let
-                modelUpdated =
+                newModel =
                     updateTensionStep model TensionTypeForm Nothing
             in
-            ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
+            ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
         DoTensionSourceForm tensionType ->
             let
@@ -241,10 +247,10 @@ update global msg model =
                             )
                         |> withDefault TensionTypeForm
 
-                modelUpdated =
+                newModel =
                     updateTensionStep model nextStep maybeForm
             in
-            ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
+            ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
         DoTensionFinalForm source ->
             let
@@ -255,33 +261,33 @@ update global msg model =
                                 { f | source = Just source }
                             )
 
-                modelUpdated =
+                newModel =
                     updateTensionStep model (TensionFinalForm Nothing) maybeForm
             in
-            ( modelUpdated, Cmd.none, Ports.bulma_driver "actionModal" )
+            ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
         ChangeTensionPost field value ->
             let
                 maybeForm =
                     updateTensionPost model field value
 
-                modelUpdated =
+                newModel =
                     updateTensionStep model (TensionFinalForm Nothing) maybeForm
             in
             -- No need to reactivate the Bulma drivers here.
-            ( modelUpdated, Cmd.none, Cmd.none )
+            ( newModel, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         SubmitTension form time ->
             let
-                postUpdated =
+                post =
                     Dict.insert "createdAt" (fromTime time) form.post
             in
             case form.source of
                 Just source ->
-                    ( model, addOneTension source form.target postUpdated TensionAck, Cmd.none )
+                    ( model, addOneTension source form.target post TensionAck, Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
@@ -295,10 +301,10 @@ update global msg model =
                                 { f | result = result }
                             )
 
-                modelUpdated =
+                newModel =
                     updateTensionStep model TensionValidation maybeForm
             in
-            ( modelUpdated, Cmd.none, Cmd.none )
+            ( newModel, Cmd.none, Cmd.none )
 
         NodeClicked nameid ->
             ( model
@@ -315,6 +321,35 @@ update global msg model =
         ToggleTooltips ->
             ( model, () |> sendToggleTooltips, Cmd.none )
 
+        DoJoinOrga rootnameid ->
+            case model.user of
+                LoggedOut ->
+                    ( { model | node_action = JoinOrga JoinAuthNeeded, isModalActive = True }, Cmd.none, Cmd.none )
+
+                LoggedIn uctx ->
+                    let
+                        form =
+                            { user = uctx
+                            , rootnameid = rootnameid
+                            }
+
+                        newModel =
+                            { model | node_action = JoinOrga (JoinInit form), isModalActive = True }
+                    in
+                    -- add a new node (from parent or by pushing children ?)
+                    ( newModel, Cmd.none, Cmd.none )
+
+        JoinAck result ->
+            case model.node_action of
+                JoinOrga (JoinInit form) ->
+                    ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        DoCloseModal _ ->
+            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -326,11 +361,15 @@ subscriptions _ _ =
         [ nodeClickedFromJs NodeClicked
         , nodeFocusedFromJs NodeFocused
         , nodeDataFromJs DoNodeAction
+        , closeModalFromJs DoCloseModal
         ]
 
 
 
 -- Receive to Javascript
+
+
+port closeModalFromJs : (String -> msg) -> Sub msg
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg
@@ -391,7 +430,7 @@ view_ global model =
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
-        [ HelperBar.view OverviewBaseUri model.node_path
+        [ HelperBar.view OverviewBaseUri model.node_path (DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5" ]
                 [ viewCanvas maybeOrg
@@ -644,32 +683,52 @@ mediaTension tension =
 
 setupActionModal : Global.Model -> Model -> Html Msg
 setupActionModal global model =
-    div []
-        [ div [ id "actionModal", class "modal modal-fx-fadeIn" ]
-            [ div [ class "modal-background" ] []
-            , div [ class "modal-content" ]
-                [ case model.node_action of
-                    Ask step ->
-                        viewActionStep step
-
-                    NotAsk ->
-                        text ""
-
-                    AskErr err ->
-                        viewErrors [ err ]
-                ]
-            , button [ class "modal-close is-large" ] []
+    div
+        [ id "actionModal"
+        , classList
+            [ ( "modal", True )
+            , ( "modal-fx-fadeIn", True )
+            , ( "is-active", model.isModalActive )
+            , ( "protected_", model.isModalActive )
             ]
+        ]
+        [ div
+            [ classList
+                [ ( "modal-background", True )
+                , ( "protected_", model.isModalActive )
+                ]
+            ]
+            []
+        , div [ class "modal-content" ]
+            [ case model.node_action of
+                Ask step ->
+                    viewActionStep step
+
+                JoinOrga step ->
+                    div [ class "card" ] [ viewJoinOrgaStep model step ]
+
+                NotAsk ->
+                    text ""
+
+                AskErr err ->
+                    viewErrors [ err ]
+            ]
+        , button
+            [ classList
+                [ ( "modal-close", True )
+                , ( "is-large", True )
+                , ( "protected_", model.isModalActive )
+                ]
+            ]
+            []
         ]
 
 
 viewActionStep : ActionStep Node -> Html Msg
 viewActionStep step =
     case step of
-        AuthNeeded ->
-            div [ class "box has-background-info" ]
-                [ p [] [ text "Please login or create an account to perform this action." ]
-                ]
+        ActionAuthNeeded ->
+            viewAuthNeeded
 
         FirstStep node ->
             div [ class "card" ]
@@ -825,18 +884,44 @@ viewTensionStep form =
 
         TensionValidation ->
             case form.result of
-                Success res ->
+                Success _ ->
                     div [ class "box has-background-success" ] [ text "Tension added." ]
 
                 Failure err ->
                     viewErrors err
 
                 default ->
-                    -- @TODO: better handle this with an uniform interface with slowRemoteLoading
-                    div [ class "box is-loading" ] [ text "Loading..." ]
+                    -- @TODO: slowRemoteLoading
+                    div [ class "box spinner" ] [ text "loading..." ]
 
         TensionNotAuthorized errMsg ->
             viewErrors errMsg
+
+
+viewJoinOrgaStep : Model -> JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep model step =
+    case step of
+        JoinInit _ ->
+            -- @TODO: slowRemoteLoading
+            div [ class "box spinner" ] [ text "loading..." ]
+
+        JoinAuthNeeded ->
+            viewAuthNeeded
+
+        JoinNotAuthorized errMsg ->
+            viewErrors errMsg
+
+        JoinValidation form result ->
+            case result of
+                Success _ ->
+                    div [] [ "Welcome in " ++ getNodeName model.orga_data form.rootnameid |> text ]
+
+                Failure err ->
+                    viewErrors err
+
+                default ->
+                    -- @TODO: slowRemoteLoading
+                    div [ class "box spinner" ] [ text "loading..." ]
 
 
 
@@ -875,13 +960,13 @@ updateTensionStep model newStep maybeForm =
                     Ask <|
                         case step of
                             FirstStep target ->
-                                -- TensionStep is ignored here is reinitialized t firsst step
+                                -- TensionStep is ignored here. We reinitialized to the first step.
                                 case model.user of
                                     LoggedIn uctx ->
                                         AddTensionStep (initTensionForm rootnameid uctx target)
 
                                     LoggedOut ->
-                                        AuthNeeded
+                                        ActionAuthNeeded
 
                             AddTensionStep form ->
                                 let
@@ -895,11 +980,11 @@ updateTensionStep model newStep maybeForm =
                                 in
                                 AddTensionStep newForm
 
-                            AuthNeeded ->
-                                AuthNeeded
+                            default ->
+                                default
 
-                passing ->
-                    passing
+                default ->
+                    default
     in
     { model | node_action = newAction }
 

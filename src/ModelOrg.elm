@@ -152,9 +152,6 @@ type alias TensionsResponse =
 
 
 
---
--- Query decoder
---
 {-
    Query Organisation Nodes
 -}

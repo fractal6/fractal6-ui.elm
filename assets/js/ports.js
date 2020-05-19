@@ -33,7 +33,7 @@ const actions = {
         // to wait foe the Html Msg to be updated by elm in order
         // to have new node accessible by Javascript.
         var handlers = session.bulmaHandlers;
-        setTimeout(BulmaDriver, 300, eltId, handlers);
+        setTimeout(BulmaDriver, 300, app, eltId, handlers);
     },
     'TOGGLE_TH': (app, session, message) => {
         $tt = document.getElementById("themeButton_port");

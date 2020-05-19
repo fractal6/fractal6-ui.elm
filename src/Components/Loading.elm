@@ -1,4 +1,4 @@
-module Components.Loading exposing (HttpError, WebData, expectJson, spinner, viewErrors, viewHttpErrors)
+module Components.Loading exposing (HttpError, WebData, expectJson, spinner, viewAuthNeeded, viewErrors, viewHttpErrors)
 
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
@@ -126,6 +126,13 @@ spinner =
         , alt "Loading..."
         ]
         []
+
+
+viewAuthNeeded : Html msg
+viewAuthNeeded =
+    div [ class "box has-background-info" ]
+        [ p [] [ text "Please login or create an account to perform this action." ]
+        ]
 
 
 viewErrors : ErrorData -> Html msg
