@@ -7,8 +7,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (custom, on, onClick, onInput, preventDefaultOn)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon exposing (NodePath, uriFromNameid)
-import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..))
+import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodePath, uriFromNameid)
 
 
 view : FractalBaseRoute -> Maybe NodePath -> msg -> Html msg
@@ -79,7 +78,8 @@ viewPath baseUri path =
 viewButtons : msg -> Html msg
 viewButtons joinMsg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary modalTrigger  tooltip has-tooltip-bottom"
+        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  tooltip has-tooltip-bottom"
+        , attribute "data-modal" "actionModal" -- JS/Elm confcli, msg is not sent !
         , attribute "data-tooltip" "Join this organisation."
         , onClick joinMsg
         ]

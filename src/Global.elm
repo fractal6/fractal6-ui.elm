@@ -16,6 +16,7 @@ import Components
 import Generated.Route as Route exposing (Route)
 import Json.Decode as JD
 import ModelCommon exposing (..)
+import ModelCommon.Uri exposing (NodeFocus)
 import ModelOrg exposing (..)
 import Ports
 import Process

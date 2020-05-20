@@ -20,7 +20,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (FractalBaseRoute(..))
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, focusFromNameid, nameidFromFlags, uriFromNameid)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -63,7 +63,7 @@ type alias Model =
 
 
 type alias Flags =
-    { param1 : String, param2 : Maybe String, param3 : Maybe String }
+    Flags_
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -73,14 +73,10 @@ init global flags =
         session =
             global.session
 
-        rootnameid =
-            flags.param1
-
-        focusFragment =
-            String.join "#" [ flags.param2 |> withDefault "", flags.param3 |> withDefault "" ]
-
         newFocus =
-            focusFromNameid <| String.join "#" [ rootnameid, focusFragment ]
+            flags
+                |> nameidFromFlags
+                |> focusFromNameid
 
         -- What has changed
         oldFocus =
@@ -156,8 +152,8 @@ type Msg
     | SubmitTension TensionForm Time.Posix -- Send form
     | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode better to get IdPayload
       -- Join Actions
-    | DoJoinOrga String
-    | JoinAck (GqlData Int)
+    | DoJoinOrga String Time.Posix
+    | JoinAck (GqlData (Maybe AddNodePayload))
     | DoCloseModal String
       -- JS Interop
     | NodeClicked String -- ports receive
@@ -287,7 +283,7 @@ update global msg model =
             in
             case form.source of
                 Just source ->
-                    ( model, addOneTension source form.target post TensionAck, Cmd.none )
+                    ( model, addOneTension post source form.target TensionAck, Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
@@ -321,7 +317,7 @@ update global msg model =
         ToggleTooltips ->
             ( model, () |> sendToggleTooltips, Cmd.none )
 
-        DoJoinOrga rootnameid ->
+        DoJoinOrga rootnameid time ->
             case model.user of
                 LoggedOut ->
                     ( { model | node_action = JoinOrga JoinAuthNeeded, isModalActive = True }, Cmd.none, Cmd.none )
@@ -333,11 +329,16 @@ update global msg model =
                             , rootnameid = rootnameid
                             }
 
+                        post =
+                            Dict.fromList
+                                [ ( "createdAt", fromTime time )
+                                , ( "username", uctx.username )
+                                ]
+
                         newModel =
                             { model | node_action = JoinOrga (JoinInit form), isModalActive = True }
                     in
-                    -- add a new node (from parent or by pushing children ?)
-                    ( newModel, Cmd.none, Cmd.none )
+                    ( newModel, addNewMember post rootnameid JoinAck, Cmd.none )
 
         JoinAck result ->
             case model.node_action of
@@ -430,7 +431,7 @@ view_ global model =
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
-        [ HelperBar.view OverviewBaseUri model.node_path (DoJoinOrga model.node_focus.rootnameid)
+        [ HelperBar.view OverviewBaseUri model.node_path (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5" ]
                 [ viewCanvas maybeOrg

@@ -57,14 +57,22 @@ html, body {
 // Modal
 
 html.has-modal-active {
-    //overflow: hidden !important;
+    // @DEBUG: make a unpleaser window glitch when scollbar diseaper !
+    overflow: hidden !important;
+    padding-right: 14px; /* Avoid width reflow */
     //position: fixed;
-    width: 100%;
+    //width: 100%;
+}
+#navbarTop.has-modal-active {
+    .navbar {
+        padding-right: 14px; /* Avoid width reflow */
+    }
 }
 
 // Breadcrumb
 .breadcrumb {
     a {
+        color: $green2;
         padding-right:0.4em;
         padding-left:0.4em;
     }
@@ -86,6 +94,7 @@ html.has-modal-active {
         }
 
         li.is-active a {
+            color: $green2;
             background-color: $body-background-color;
             border-color: #dbdee085;
             border-bottom-color: $tabs-boxed-link-active-border-bottom-color !important;

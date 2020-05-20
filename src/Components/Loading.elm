@@ -22,14 +22,12 @@ type alias WebData a =
 
 
 type alias ErrorAuth =
-    { user_ctx :
-        ErrorDebug
-    }
+    { errors : List ErrorDebug }
 
 
 type alias ErrorDebug =
-    { field : String
-    , msg : String
+    { message : String
+    , location : String
     }
 
 
@@ -75,10 +73,12 @@ expectJson toMsg decoder =
 errorDecoder : JD.Decoder ErrorAuth
 errorDecoder =
     JD.map ErrorAuth <|
-        JD.field "user_ctx" <|
-            JD.map2 ErrorDebug
-                (JD.field "field" JD.string)
-                (JD.field "msg" JD.string)
+        JD.field "errors" <|
+            (JD.list <|
+                JD.map2 ErrorDebug
+                    (JD.field "message" JD.string)
+                    (JD.field "location" JD.string)
+            )
 
 
 errorHttpToString : HttpError String -> String
@@ -99,7 +99,7 @@ errorHttpToString httpError =
                     errMsg =
                         case JD.decodeString errorDecoder body of
                             Ok err ->
-                                err.user_ctx.msg
+                                err.errors |> List.map (\e -> e.message) |> String.join "\n"
 
                             Err errJD ->
                                 "unknown error;\n" ++ JD.errorToString errJD

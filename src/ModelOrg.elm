@@ -3,11 +3,13 @@ module ModelOrg exposing (..)
 import Debug
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionOrderable as TensionOrderable
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.AddNodePayload
 import Fractal.Object.AddTensionPayload
 import Fractal.Object.Label
 import Fractal.Object.Node
@@ -23,12 +25,13 @@ import Html exposing (Html, a, div, span, text)
 import Html.Attributes exposing (class)
 import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
+import ModelCommon.Uri exposing (guestIdCodec)
 import RemoteData exposing (RemoteData)
 
 
 
 --
--- Constants
+-- Queries Parameters
 --
 
 
@@ -44,8 +47,24 @@ nTensionPpg =
 
 
 --
--- Frontend Data structure
+-- Frontend Data Structure
 --
+
+
+type alias OrgaData =
+    GqlData NodesData
+
+
+type alias NodesData =
+    Dict String Node
+
+
+type alias CircleTensionsData =
+    GqlData TensionsData
+
+
+
+-- Remote Data and Sinks
 
 
 type alias GqlData a =
@@ -72,7 +91,9 @@ type alias Post =
 {-
    Schema Data Structure (fetch/Query)
 -}
+--
 -- Node interface
+--
 
 
 type alias Node =
@@ -95,7 +116,9 @@ type alias ParentNode =
 
 
 
---- Tension interface
+--
+-- Tension interface
+--
 
 
 type alias NodeTensions =
@@ -152,9 +175,11 @@ type alias TensionsResponse =
 
 
 
+---------------------------------------
 {-
    Query Organisation Nodes
 -}
+---------------------------------------
 
 
 nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
@@ -268,9 +293,11 @@ fetchCircleTension targetid msg =
 
 
 
+---------------------------------------
 {-
    Query Tension Page
 -}
+---------------------------------------
 --tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
 --tensionPgFilter a =
 --    { a
@@ -309,8 +336,11 @@ fetchCircleTension targetid msg =
 --        )
 --        (RemoteData.fromResult >> decodeResponse queryDecoder >> msg)
 --
--- Mutation decoder
---
+---------------------------------------
+{-
+   Mutation: Add One Tension
+-}
+---------------------------------------
 
 
 type alias IdPayload =
@@ -321,11 +351,11 @@ type alias AddTensionPayload =
     { tension : Maybe (List (Maybe IdPayload)) }
 
 
-addOneTension source target tension msg =
+addOneTension tension source target msg =
     --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addTension
-            (tensionInputEncoder source target tension)
+            (tensionInputEncoder tension source target)
             (SelectionSet.map AddTensionPayload <|
                 Fractal.Object.AddTensionPayload.tension identity <|
                     (SelectionSet.succeed IdPayload
@@ -336,11 +366,11 @@ addOneTension source target tension msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-tensionInputEncoder : Node -> Node -> Post -> Mutation.AddTensionRequiredArguments
-tensionInputEncoder source target post =
+tensionInputEncoder : Post -> Node -> Node -> Mutation.AddTensionRequiredArguments
+tensionInputEncoder post source target =
     let
-        time =
-            Dict.get "createdAt" post |> withDefault ""
+        username =
+            Dict.get "username" post |> withDefault ""
 
         title =
             Dict.get "title" post |> withDefault ""
@@ -348,32 +378,89 @@ tensionInputEncoder source target post =
         type_ =
             Dict.get "type_" post |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational
 
-        createdby =
-            Dict.get "username" post |> withDefault ""
-
-        emitterid =
-            source.nameid
-
-        receiverid =
-            target.nameid
+        createdAt =
+            Dict.get "createdAt" post |> withDefault ""
 
         tensionRequired =
-            { createdAt = Fractal.Scalar.DateTime time
+            { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present createdby })
+                    (\x -> { x | username = OptionalArgument.Present username })
             , title = title
             , type_ = type_
             , emitter =
                 Input.buildNodeRef
-                    (\x -> { x | nameid = OptionalArgument.Present emitterid })
+                    (\x -> { x | nameid = OptionalArgument.Present source.nameid })
             , receiver =
                 Input.buildNodeRef
-                    (\x -> { x | nameid = OptionalArgument.Present receiverid })
+                    (\x -> { x | nameid = OptionalArgument.Present target.nameid })
             }
     in
     { input =
         [ Input.buildAddTensionInput tensionRequired identity ]
+    }
+
+
+
+---------------------------------------
+{-
+   Mutation: Add a Role / Join Orga
+-}
+---------------------------------------
+
+
+type alias AddNodePayload =
+    { node : Maybe (List (Maybe IdPayload)) }
+
+
+addNewMember post targetid msg =
+    --@DEBUG: Infered type...
+    makeGQLMutation
+        (Mutation.addNode
+            (newMemberInputEncoder post targetid)
+            (SelectionSet.map AddNodePayload <|
+                Fractal.Object.AddNodePayload.node identity <|
+                    (SelectionSet.succeed IdPayload
+                        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
+
+
+newMemberInputEncoder : Post -> String -> Mutation.AddNodeRequiredArguments
+newMemberInputEncoder post targetid =
+    let
+        username =
+            Dict.get "username" post |> withDefault ""
+
+        createdAt =
+            Dict.get "createdAt" post |> withDefault ""
+
+        nodeRequired =
+            { createdAt = createdAt |> Fractal.Scalar.DateTime
+            , createdBy =
+                Input.buildUserRef
+                    (\u -> { u | username = OptionalArgument.Present username })
+            , type_ = NodeType.Role
+            , nameid = guestIdCodec targetid username
+            , name = "Guest"
+            , rootnameid = targetid
+            , isRoot = False
+            }
+
+        nodeOptional =
+            \n ->
+                { n
+                    | role_type = OptionalArgument.Present RoleType.Guest
+                    , parent =
+                        Input.buildNodeRef
+                            (\p -> { p | nameid = OptionalArgument.Present targetid })
+                            |> OptionalArgument.Present
+                }
+    in
+    { input =
+        [ Input.buildAddNodeInput nodeRequired nodeOptional ]
     }
 
 

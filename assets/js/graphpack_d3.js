@@ -216,10 +216,13 @@ const GraphPack = {
         this.$nextToChart.style.minHeight = 2*this.height+"px";
 
         // Buttons
+        var b = document.querySelector("body").getBoundingClientRect();
+        var scrollLeft = b.left;
+        var scrollTop = b.top;
         var r = this.$canvas.getBoundingClientRect();
         //$canvasButtons.style.top = "-"+ height+"px"; // if position: relative
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -5 + "px";
-        this.$canvasButtons.style.top = r.top + 10 + "px";
+        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -5 -scrollLeft +"px";
+        this.$canvasButtons.style.top = r.top + 10 -scrollTop +"px";
 
         this.$canvasButtons.classList.remove("is-invisible");
         this.$tooltip.classList.remove("is-invisible");
