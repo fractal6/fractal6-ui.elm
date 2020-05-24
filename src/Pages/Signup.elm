@@ -1,6 +1,6 @@
 module Pages.Signup exposing (Flags, Model, Msg, page)
 
-import Components.Loading as Loading exposing (HttpError, WebData, expectJson, viewErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..))
@@ -117,10 +117,10 @@ update global msg model =
             , Cmd.none
             )
 
-        GotSignin res ->
+        GotSignin result ->
             let
                 cmds =
-                    case res of
+                    case result of
                         RemoteData.Success uctx ->
                             [ Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
                             , Global.send (UpdateUserSession uctx)
@@ -133,7 +133,7 @@ update global msg model =
                     model.form
 
                 formUpdated =
-                    { form | result = res }
+                    { form | result = result }
             in
             ( { model | form = formUpdated }
             , Cmd.none

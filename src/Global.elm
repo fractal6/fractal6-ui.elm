@@ -13,13 +13,16 @@ port module Global exposing
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Components
+import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
 import Generated.Route as Route exposing (Route)
+import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (NodeFocus)
 import ModelOrg exposing (..)
 import Ports
 import Process
+import RemoteData exposing (RemoteData)
 import Task
 import Url exposing (Url)
 
@@ -71,6 +74,7 @@ init flags url key =
             , orga_data = Nothing
             , circle_tensions = Nothing
             , node_action = Nothing
+            , token_data = RemoteData.NotAsked
             }
     in
     ( Model flags url key session
@@ -91,6 +95,8 @@ type Msg
     | UpdateSessionFocus NodeFocus
     | UpdateSessionOrga NodesData
     | UpdateUserSession UserCtx -- user is logged In !
+    | UpdateUserToken
+    | UpdateUserTokenAck (WebData UserCtx)
     | LoggedOutUser
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
@@ -158,6 +164,41 @@ update msg model =
             ( { model | session = { session | user = LoggedIn userCtx } }
             , Ports.saveUserCtx userCtx
             )
+
+        UpdateUserToken ->
+            let
+                session =
+                    model.session
+            in
+            ( model
+            , Http.riskyRequest
+                -- This method is needed to set cookies on the client through CORS.
+                { method = "POST"
+                , headers = []
+                , url = "http://localhost:8888/tokenack"
+                , body = Http.emptyBody
+                , expect = expectJson (RemoteData.fromResult >> UpdateUserTokenAck) userDecoder
+                , timeout = Nothing
+                , tracker = Nothing
+                }
+            )
+
+        UpdateUserTokenAck result ->
+            let
+                session =
+                    model.session
+
+                newModel =
+                    { model | session = { session | token_data = result } }
+            in
+            case result of
+                RemoteData.Success uctx ->
+                    ( newModel
+                    , send <| UpdateUserSession uctx
+                    )
+
+                default ->
+                    ( newModel, Cmd.none )
 
 
 

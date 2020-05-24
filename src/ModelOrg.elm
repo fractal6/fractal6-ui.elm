@@ -404,7 +404,7 @@ tensionInputEncoder post source target =
 
 ---------------------------------------
 {-
-   Mutation: Add a Role / Join Orga
+   Mutation: Add a new Role or Cirlce
 -}
 ---------------------------------------
 
@@ -456,6 +456,10 @@ newMemberInputEncoder post targetid =
                     , parent =
                         Input.buildNodeRef
                             (\p -> { p | nameid = OptionalArgument.Present targetid })
+                            |> OptionalArgument.Present
+                    , first_link =
+                        Input.buildUserRef
+                            (\u -> { u | username = OptionalArgument.Present username })
                             |> OptionalArgument.Present
                 }
     in

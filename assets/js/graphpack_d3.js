@@ -221,7 +221,7 @@ const GraphPack = {
         var scrollTop = b.top;
         var r = this.$canvas.getBoundingClientRect();
         //$canvasButtons.style.top = "-"+ height+"px"; // if position: relative
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -5 -scrollLeft +"px";
+        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
         this.$canvasButtons.style.top = r.top + 10 -scrollTop +"px";
 
         this.$canvasButtons.classList.remove("is-invisible");

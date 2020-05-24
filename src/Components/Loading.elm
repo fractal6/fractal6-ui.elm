@@ -1,4 +1,4 @@
-module Components.Loading exposing (HttpError, WebData, expectJson, spinner, viewAuthNeeded, viewErrors, viewHttpErrors)
+module Components.Loading exposing (HttpError, WebData, expectJson, spinner, toErrorData, viewAuthNeeded, viewErrors, viewHttpErrors)
 
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
@@ -113,6 +113,11 @@ errorHttpToString httpError =
             message
 
 
+toErrorData : HttpError String -> ErrorData
+toErrorData httpErr =
+    [ errorHttpToString httpErr ]
+
+
 
 -- Viewer
 
@@ -142,5 +147,7 @@ viewErrors errMsg =
 
 
 viewHttpErrors : HttpError String -> Html msg
-viewHttpErrors httpError =
-    [ errorHttpToString httpError ] |> viewErrors
+viewHttpErrors httpErr =
+    httpErr
+        |> toErrorData
+        |> viewErrors

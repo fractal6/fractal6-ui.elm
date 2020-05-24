@@ -1,5 +1,6 @@
 module ModelCommon exposing (..)
 
+import Components.Loading as Loading exposing (WebData)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -26,6 +27,7 @@ type alias Session =
     , orga_data : Maybe NodesData
     , circle_tensions : Maybe TensionsData
     , node_action : Maybe ActionState
+    , token_data : WebData UserCtx
     }
 
 

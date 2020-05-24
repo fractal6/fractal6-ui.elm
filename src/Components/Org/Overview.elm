@@ -227,24 +227,40 @@ update global msg model =
                 maybeForm =
                     updateTensionPost model "type_" tensionType
 
-                nextStep =
+                nextStepForm =
                     maybeForm
                         |> Maybe.map
                             (\form ->
                                 case form.user.roles of
                                     [] ->
-                                        TensionNotAuthorized [ "You are not a member of this organisation.", "Please, Join this organisation to be able to create a tension." ]
+                                        ( TensionNotAuthorized [ "You are not a member of this organisation.", "Please, Join this organisation to be able to create a tension." ]
+                                        , maybeForm
+                                        )
 
                                     [ r ] ->
-                                        TensionFinalForm (Just r)
+                                        ( TensionFinalForm (Just r)
+                                        , maybeForm
+                                            |> Maybe.map
+                                                (\f ->
+                                                    { f | source = Just (nodeSourceFromRole r) }
+                                                )
+                                        )
 
                                     roles ->
-                                        TensionSourceForm roles
+                                        ( TensionSourceForm roles
+                                        , maybeForm
+                                        )
                             )
-                        |> withDefault TensionTypeForm
+                        |> withDefault ( TensionTypeForm, Nothing )
+
+                nextStep =
+                    Tuple.first nextStepForm
+
+                mForm =
+                    Tuple.second nextStepForm
 
                 newModel =
-                    updateTensionStep model nextStep maybeForm
+                    updateTensionStep model nextStep mForm
             in
             ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -343,7 +359,15 @@ update global msg model =
         JoinAck result ->
             case model.node_action of
                 JoinOrga (JoinInit form) ->
-                    ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
+                    case result of
+                        Success _ ->
+                            ( { model | node_action = JoinOrga (JoinValidation form result) }
+                            , Cmd.none
+                            , Global.send UpdateUserToken
+                            )
+
+                        default ->
+                            ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -816,11 +840,8 @@ viewTensionStep form =
 
         TensionFinalForm maybeRole ->
             let
-                role =
-                    maybeRole |> withDefault (UserRole "" "" "" RoleType.Guest)
-
                 source =
-                    form.source |> withDefault (nodeSourceFromRole role)
+                    form.source |> withDefault (nodeSourceFromRole (maybeRole |> withDefault (UserRole "" "" "" RoleType.Guest)))
 
                 isSendable =
                     isTensionSendable form
@@ -833,7 +854,7 @@ viewTensionStep form =
                                 [ span [ class "is-size-6" ] [ text "Create tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ]
                                 ]
                         ]
-                    , div [ class "card-content" ] <| tensionTypeArrow "button" form.target.name form.target.name
+                    , div [ class "card-content" ] <| tensionTypeArrow "button" source.name form.target.name
                     ]
                 , div
                     [ class "card-content"
