@@ -64,6 +64,10 @@ const actions = {
         var gp = session.gp;
         gp.zoomToNode(focusid);
     },
+    'CLEAR_TOOLTIP': (app, session, message) => {
+        var gp = session.gp;
+        gp.clearNodeTooltip();
+    },
     //
     // User Ctx -- Localstorage
     //

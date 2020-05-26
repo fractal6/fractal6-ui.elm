@@ -1,5 +1,6 @@
 port module Ports exposing
     ( bulma_driver
+    , clearTooltip
     , focusGraphPack
     , initGraphPack
     , loadUserCtx
@@ -25,28 +26,10 @@ import ModelOrg exposing (NodesData)
 port outgoing : { action : String, data : JE.Value } -> Cmd msg
 
 
-log : String -> Cmd msg
-log message =
-    outgoing
-        { action = "LOG"
-        , data = JE.string message
-        }
 
-
-bulma_driver : String -> Cmd msg
-bulma_driver eltId =
-    outgoing
-        { action = "BULMA"
-        , data = JE.string eltId
-        }
-
-
-toggle_theme : Cmd msg
-toggle_theme =
-    outgoing
-        { action = "TOGGLE_TH"
-        , data = JE.string ""
-        }
+--
+-- Graphpack
+--
 
 
 initGraphPack : NodesData -> String -> Cmd msg
@@ -62,6 +45,14 @@ focusGraphPack focusid =
     outgoing
         { action = "FOCUS_GRAPHPACK"
         , data = JE.string focusid
+        }
+
+
+clearTooltip : String -> Cmd msg
+clearTooltip message =
+    outgoing
+        { action = "CLEAR_TOOLTIP"
+        , data = JE.string message
         }
 
 
@@ -107,4 +98,34 @@ removeUserCtx userCtx =
         , data = JE.string <| "user_ctx"
 
         --, data = JE.string <| "user_ctx" ++ userCtx.username
+        }
+
+
+
+--
+-- Utils drivers
+--
+
+
+log : String -> Cmd msg
+log message =
+    outgoing
+        { action = "LOG"
+        , data = JE.string message
+        }
+
+
+bulma_driver : String -> Cmd msg
+bulma_driver eltId =
+    outgoing
+        { action = "BULMA"
+        , data = JE.string eltId
+        }
+
+
+toggle_theme : Cmd msg
+toggle_theme =
+    outgoing
+        { action = "TOGGLE_TH"
+        , data = JE.string ""
         }

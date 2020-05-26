@@ -13,14 +13,14 @@ import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
-import Html.Events exposing (on, onClick, onInput)
+import Html.Events exposing (on, onClick, onInput, onMouseOver)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, focusFromNameid, nameidFromFlags, uriFromNameid)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -51,7 +51,6 @@ type alias Model =
     , orga_data : OrgaData
     , circle_tensions : CircleTensionsData
     , node_action : ActionState
-    , user : UserState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers
     }
 
@@ -93,6 +92,9 @@ init global flags =
 
         --d1 = Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
         --d2 = Debug.log "newfocus" [ newFocus ]
+        refresh =
+            basePathChanged OverviewBaseUri global.referer
+
         model =
             { orga_data =
                 session.orga_data
@@ -105,12 +107,11 @@ init global flags =
             , node_action = session.node_action |> withDefault NotAsk
             , node_focus = newFocus
             , node_path = session.node_path
-            , user = session.user
             , isModalActive = False
             }
 
         cmds =
-            if orgChange then
+            if orgChange || refresh then
                 [ fetchNodesOrga newFocus.rootnameid GotOrga
                 , fetchCircleTension newFocus.nameid GotTensions
                 , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
@@ -151,15 +152,16 @@ type Msg
     | Submit (Time.Posix -> Msg) -- Get Current Time
     | SubmitTension TensionForm Time.Posix -- Send form
     | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode better to get IdPayload
-      -- Join Actions
+      -- JoinOrga Actions
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData (Maybe AddNodePayload))
-    | DoCloseModal String
       -- JS Interop
-    | NodeClicked String -- ports receive
-    | NodeFocused NodePath -- ports receive
+    | NodeClicked String -- ports receive / Node clicked
+    | NodeFocused NodePath -- ports receive / Node focused
+    | DoCloseModal String -- ports receive / Close modal
+    | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
-    | ToggleTooltips -- ports send -- Not implemented @DEBUG multiple tooltip/ see name of circle
+    | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -197,11 +199,16 @@ update global msg model =
                     else
                         ( { model | orga_data = Failure [ "Sorry, this node doesn't exist yet." ] }, Cmd.none, Cmd.none )
 
-                default ->
+                other ->
                     ( { model | orga_data = result }, Cmd.none, Cmd.none )
 
         GotTensions result ->
-            ( { model | circle_tensions = result }, Cmd.none, Cmd.none )
+            case result of
+                Success data ->
+                    ( { model | circle_tensions = result }, Cmd.none, Global.send (UpdateSessionTensions data) )
+
+                other ->
+                    ( { model | circle_tensions = result }, Cmd.none, Cmd.none )
 
         DoNodeAction action ->
             let
@@ -211,14 +218,17 @@ update global msg model =
                             Ask <| FirstStep node
 
                         Err err ->
-                            AskErr <| JD.errorToString err
+                            AskErr err
             in
-            ( { model | node_action = newAction }, Cmd.none, Cmd.none )
+            ( { model | node_action = newAction, isModalActive = True }, Cmd.none, Cmd.none )
 
         DoTensionTypeForm ->
             let
+                user =
+                    global.session.user
+
                 newModel =
-                    updateTensionStep model TensionTypeForm Nothing
+                    updateTensionStep model user TensionTypeForm Nothing
             in
             ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -259,8 +269,11 @@ update global msg model =
                 mForm =
                     Tuple.second nextStepForm
 
+                user =
+                    global.session.user
+
                 newModel =
-                    updateTensionStep model nextStep mForm
+                    updateTensionStep model user nextStep mForm
             in
             ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -273,8 +286,11 @@ update global msg model =
                                 { f | source = Just source }
                             )
 
+                user =
+                    global.session.user
+
                 newModel =
-                    updateTensionStep model (TensionFinalForm Nothing) maybeForm
+                    updateTensionStep model user (TensionFinalForm Nothing) maybeForm
             in
             ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -283,8 +299,11 @@ update global msg model =
                 maybeForm =
                     updateTensionPost model field value
 
+                user =
+                    global.session.user
+
                 newModel =
-                    updateTensionStep model (TensionFinalForm Nothing) maybeForm
+                    updateTensionStep model user (TensionFinalForm Nothing) maybeForm
             in
             -- No need to reactivate the Bulma drivers here.
             ( newModel, Cmd.none, Cmd.none )
@@ -313,8 +332,11 @@ update global msg model =
                                 { f | result = result }
                             )
 
+                user =
+                    global.session.user
+
                 newModel =
-                    updateTensionStep model TensionValidation maybeForm
+                    updateTensionStep model user TensionValidation maybeForm
             in
             ( newModel, Cmd.none, Cmd.none )
 
@@ -325,7 +347,7 @@ update global msg model =
             )
 
         NodeFocused path ->
-            ( { model | node_path = Just path }, Cmd.none, Cmd.none )
+            ( { model | node_path = Just path }, Cmd.none, Global.send (UpdateSessionPath path) )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -334,7 +356,7 @@ update global msg model =
             ( model, () |> sendToggleTooltips, Cmd.none )
 
         DoJoinOrga rootnameid time ->
-            case model.user of
+            case global.session.user of
                 LoggedOut ->
                     ( { model | node_action = JoinOrga JoinAuthNeeded, isModalActive = True }, Cmd.none, Cmd.none )
 
@@ -366,14 +388,17 @@ update global msg model =
                             , Global.send UpdateUserToken
                             )
 
-                        default ->
+                        other ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
-                _ ->
+                default ->
                     ( model, Cmd.none, Cmd.none )
 
         DoCloseModal _ ->
             ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+
+        DoClearTooltip ->
+            ( model, Cmd.none, Ports.clearTooltip "" )
 
 
 
@@ -408,7 +433,18 @@ port rawNodeDataFromJs : (JD.Value -> a) -> Sub a
 
 nodeDataFromJs : (NodeTarget -> msg) -> Sub msg
 nodeDataFromJs rawNode =
-    rawNodeDataFromJs (rawNode << JD.decodeValue nodeDecoder)
+    rawNodeDataFromJs
+        (rawNode
+            << (\x ->
+                    case x of
+                        Ok n ->
+                            Ok n
+
+                        Err err ->
+                            Err (JD.errorToString err)
+               )
+            << JD.decodeValue nodeDecoder
+        )
 
 
 
@@ -428,7 +464,7 @@ port sendToggleTooltips : () -> Cmd msg
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Org.Dynamic" -- get title from flag
+    { title = String.join " · " [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ]
     , body = [ view_ global model ]
     }
 
@@ -450,15 +486,28 @@ view_ global model =
                         Nothing ->
                             Success d
 
-                default ->
-                    default
+                other ->
+                    other
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
-        [ HelperBar.view OverviewBaseUri model.node_path (Submit <| DoJoinOrga model.node_focus.rootnameid)
+        [ HelperBar.view OverviewBaseUri
+            global.session.user
+            model.node_path
+            (Submit <| DoJoinOrga model.node_focus.rootnameid)
+
+        --, div [ class "columns is-variable is-4 is-paddingless" ]
+        --    [ div [ class "column is-5 is-offset-1 " ]
+        --        [ div [ class "control has-icons-left" ]
+        --            [ input [ class "input is-small" ] []
+        --            , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+        --            ]
+        --        ]
+        --    ]
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5" ]
-                [ viewCanvas maybeOrg
+                [ viewSearchBar model.orga_data model.node_path
+                , viewCanvas maybeOrg
                 , br [] []
                 , viewMandate global model
                 , setupActionModal global model
@@ -471,6 +520,49 @@ view_ global model =
                 ]
             ]
         ]
+
+
+viewSearchBar : OrgaData -> Maybe NodePath -> Html Msg
+viewSearchBar nodes maybePath =
+    let
+        maybeLast =
+            maybePath
+                |> withDefault Array.empty
+                |> (\a -> Array.get (Array.length a - 1) a)
+    in
+    case maybeLast of
+        Just last ->
+            let
+                node_ =
+                    case nodes of
+                        Success d ->
+                            Dict.get last.nameid d
+                                |> Maybe.map (\n -> Ok n)
+                                |> withDefault (Err "Node not found")
+
+                        other ->
+                            Err "No nodes data"
+            in
+            div [ class "field has-addons", onMouseOver DoClearTooltip ]
+                [ div [ class "control has-icons-left is-expanded" ]
+                    [ input [ class "input is-small", type_ "text", placeholder "Find a Role or Circle" ] []
+                    , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+                    ]
+                , div [ class "control" ]
+                    [ div
+                        [ class "button is-small is-info _modalTrigger_"
+                        , attribute "data-modal" "actionModal"
+                        , onClick (DoNodeAction node_)
+                        ]
+                        [ span [ class "has-text-weight-semibold" ] [ last.name |> text ] -- Node name
+                        , span [ class "fa-stack  ellipsisArt" ]
+                            [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                        ]
+                    ]
+                ]
+
+        Nothing ->
+            div [ class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder "Find a Role or Circle", disabled True ] [] ] ]
 
 
 viewLeftPane : Model -> Html Msg
@@ -514,29 +606,12 @@ viewLeftPane model =
 
 viewCanvas : OrgaData -> Html Msg
 viewCanvas orgaData =
-    let
-        isLoading =
-            case orgaData of
-                LoadingSlowly ->
-                    True
-
-                default ->
-                    False
-
-        maybeError =
-            case orgaData of
-                Failure err ->
-                    Just err
-
-                _ ->
-                    Nothing
-    in
-    div [ id "canvasParent", classList [ ( "spinner", isLoading ) ] ] <|
-        case maybeError of
-            Just err ->
+    div [ id "canvasParent", classList [ ( "spinner", orgaData == LoadingSlowly ) ] ] <|
+        case orgaData of
+            Failure err ->
                 [ viewErrors err ]
 
-            _ ->
+            default ->
                 [ div [ id "canvasButtons", class "buttons are-small is-invisible" ]
                     -- Hidden class use in graphpack_d3.js
                     [ div
@@ -557,7 +632,7 @@ viewCanvas orgaData =
                     ]
                 , div
                     [ id "nodeTooltip"
-                    , class "modalTrigger is-invisible"
+                    , class "_modalTrigger_ is-invisible"
                     , attribute "data-modal" "actionModal"
                     ]
                     [ span [] [ text "void" ] -- Node name
@@ -607,18 +682,6 @@ viewMandate global model =
 
 viewActivies : Global.Model -> Model -> Html Msg
 viewActivies global model =
-    let
-        isLoading =
-            case model.circle_tensions of
-                LoadingSlowly ->
-                    True
-
-                default ->
-                    False
-
-        focus =
-            model.node_focus
-    in
     div
         [ class "box"
         , attribute "style" "flex-grow: 1; padding-top: 0px;"
@@ -640,7 +703,7 @@ viewActivies global model =
                     ]
                 ]
             ]
-        , div [ classList [ ( "content", True ), ( "spinner", isLoading ) ] ]
+        , div [ classList [ ( "content", True ), ( "spinner", model.circle_tensions == LoadingSlowly ) ] ]
             [ case model.circle_tensions of
                 Success tensions ->
                     if List.length tensions > 0 then
@@ -648,7 +711,7 @@ viewActivies global model =
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else
-                        div [] [ text <| "No tensions for this " ++ NodeType.toString focus.type_ ++ " yet." ]
+                        div [] [ text <| "No tensions for this " ++ NodeType.toString model.node_focus.type_ ++ " yet." ]
 
                 Failure err ->
                     viewErrors err
@@ -683,8 +746,13 @@ mediaTension tension =
                         )
                 )
             , br [ class "is-block" ] []
-            , span [] <| tensionTypeArrow "has-text-weight-light" tension.emitter.name tension.receiver.name
-            , span [ class "is-pulled-right has-text-weight-light" ] [ text <| " opened the " ++ formatTime tension.createdAt ]
+            , span [] <| tensionTypeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
+            , span [ class "is-pulled-right has-text-weight-light" ]
+                [ "opened the " ++ formatTime tension.createdAt ++ " by " |> text
+                , tension.emitter.first_link
+                    |> Maybe.map (\u -> a [ href (uriFromUsername UsersBaseUri u.username) ] [ "@" ++ u.username |> text ])
+                    |> withDefault (a [ href (uriFromNameid OverviewBaseUri tension.emitter.nameid) ] [ tension.emitter.nameid |> text ])
+                ]
             ]
         , div
             [ class "media-right" ]
@@ -730,7 +798,7 @@ setupActionModal global model =
                     viewActionStep step
 
                 JoinOrga step ->
-                    div [ class "card" ] [ viewJoinOrgaStep model step ]
+                    viewJoinOrgaStep model step
 
                 NotAsk ->
                     text ""
@@ -854,7 +922,7 @@ viewTensionStep form =
                                 [ span [ class "is-size-6" ] [ text "Create tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ]
                                 ]
                         ]
-                    , div [ class "card-content" ] <| tensionTypeArrow "button" source.name form.target.name
+                    , div [ class "card-content" ] <| tensionTypeArrow "button" (text source.name) (text form.target.name)
                     ]
                 , div
                     [ class "card-content"
@@ -936,7 +1004,7 @@ viewJoinOrgaStep model step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [] [ "Welcome in " ++ getNodeName model.orga_data form.rootnameid |> text ]
+                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName model.orga_data form.rootnameid |> text ]
 
                 Failure err ->
                     viewErrors err
@@ -961,20 +1029,19 @@ initTensionForm rootnameid uctx node =
             uctx.roles |> List.filter (\r -> r.rootnameid == rootnameid)
     in
     { step = TensionTypeForm
-    , post = Dict.empty
+    , post = Dict.fromList [ ( "username", uctx.username ) ]
     , result = NotAsked
     , source = Nothing
     , target = node
-    , user = { uctx | roles = roles }
-    , rootnameid = rootnameid
+    , user = { uctx | roles = roles } -- with role filtered out (inner orga only)
     }
 
 
-updateTensionStep : Model -> TensionStep -> Maybe TensionForm -> Model
-updateTensionStep model newStep maybeForm =
+updateTensionStep : Model -> UserState -> TensionStep -> Maybe TensionForm -> Model
+updateTensionStep model user newStep maybeForm =
     let
         rootnameid =
-            model.node_focus.nameid
+            model.node_focus.rootnameid
 
         newAction =
             case model.node_action of
@@ -983,7 +1050,7 @@ updateTensionStep model newStep maybeForm =
                         case step of
                             FirstStep target ->
                                 -- TensionStep is ignored here. We reinitialized to the first step.
-                                case model.user of
+                                case user of
                                     LoggedIn uctx ->
                                         AddTensionStep (initTensionForm rootnameid uctx target)
 
@@ -1050,28 +1117,3 @@ getTensionForm model =
 
         default ->
             Nothing
-
-
-
--- Json encoder/decoder --When receiving data from Javascript
-
-
-nodeSourceFromRole : UserRole -> Node
-nodeSourceFromRole ur =
-    { id = "" -- obsolete ?
-    , nameid = ur.nameid
-    , name = ur.name
-    , parent = Nothing
-    , type_ = NodeType.Role
-    }
-
-
-nodeDecoder : JD.Decoder Node
-nodeDecoder =
-    -- @DEBUG: Use a dict structure instead to get back node from ID only.
-    JD.map5 Node
-        (JD.field "id" JD.string)
-        (JD.field "name" JD.string)
-        (JD.field "nameid" JD.string)
-        (JD.maybe (JD.map ParentNode <| JD.field "parentid" JD.string))
-        (JD.field "type_" NodeType.decoder)

@@ -47,8 +47,10 @@ const computeDepth = (obj, depth, neigbor) => {
         var currentdepth = depth;
         neigbor = neigbor;
     }
+
     obj.depth = currentdepth;
     obj.neigbor = neigbor;
+
     if (obj.children) {
         if (obj.children.length == 1) {
             obj.children.push({
@@ -79,7 +81,9 @@ const GraphPack = {
     // Graph Colors
     //var colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
-    leafColor: "white",
+    coordinatorRoleColor: "#FFFFFC", // blue
+    regularRoleColor: "#FFFFF9", // green
+    guestColor: "#F4FDF5", // yellow
     hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
     focusCircleColor: "#375a7fcc", // blue>"#368ed3"
     hoverCircleWidth: 1.66,
@@ -106,9 +110,16 @@ const GraphPack = {
     fontstyleCircle: "Arial",
 
     // Graph fx settings
-    minZoomDuration: 666, // 1250
-    zoomFactorCircle: 2.05,
-    zoomFactorRole: 2.2,
+    minZoomDuration: 500, // 1250
+    zoomFactorCircle: 2.1,
+    zoomFactorRole: 3.5,
+    zoomFactorGuest: 7,
+    // rayon size of the node in the canvas
+    rayonFactorRole: 0.95,
+    rayonFactorGuest: 0.75,
+    guestSizeDivider: 7,
+    // y-axis offset for the top node
+    nodeOffsetY: 0,
 
     // Focus logics
     colToCircle : {}, // Dataset to swich between color of a circle (in the hidden canvas) and the node data
@@ -119,11 +130,9 @@ const GraphPack = {
     hoveredNode : null, // The node that is curently hoovered
 
     // Zooming
-    ease: d3.easePolyInOut.exponent(3),
-    //ease: d3.easePoly.exponent(4),
+    ease: d3.easePolyInOut.exponent(4),
+    //ease: d3.easePolyOut.exponent(4),
     isZooming: false,
-    timeElapsed: 0,
-    interpolator: null,
     vOld: null,
 
     // Resizing
@@ -222,7 +231,7 @@ const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
         //$canvasButtons.style.top = "-"+ height+"px"; // if position: relative
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
-        this.$canvasButtons.style.top = r.top + 10 -scrollTop +"px";
+        this.$canvasButtons.style.top = r.top + 16 -scrollTop +"px";
 
         this.$canvasButtons.classList.remove("is-invisible");
         this.$tooltip.classList.remove("is-invisible");
@@ -251,6 +260,7 @@ const GraphPack = {
     drawNode(isHidden, ctx2d, node) {
         var _name = node.data.name;
         var type_ = node.data.type_;
+        var role_type = node.data.role_type;
         var circleColor;
 
         if (type_ === "Hidden") {
@@ -270,7 +280,20 @@ const GraphPack = {
             // On the hidden canvas each rectangle gets a unique color.
             circleColor = node.color;
         } else {
-            circleColor = (type_ === "Circle") ? this.colorCircle(node.depth) : this.leafColor;
+            if (type_ === "Circle") {
+                circleColor = this.colorCircle(node.depth)
+            } else if (type_ === "Role") {
+                // Check role type code color
+                if (role_type === "Guest") {
+                    circleColor = this.guestColor;
+                } else if (role_type == "Coordinator") {
+                    circleColor = this.coordinatorRoleColor;
+                } else {
+                    circleColor = this.regularRoleColor;
+                }
+            } else {
+                console.warn("Node type unknonw", type_);
+            }
         }
 
         // Draw circle
@@ -294,29 +317,45 @@ const GraphPack = {
             }
 
             if (type_ === "Role") {
-                var text = "";
-                var font_size = this.fontsizeCircle_start;
+                var text = null;
+                var text1 = null;
+                var fontSize = this.fontsizeCircle_start;
+                ctx2d.font = fontSize + "px " + this.fontstyleCircle;
+
                 var textLong = _name;
                 var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase()) + ".";
-                ctx2d.font = font_size + "px " + this.fontstyleCircle;
-                if (ctx2d.measureText(textLong).width+7 < node.ctx.rayon*2) {
+                var user = null;
+                if (node.data.first_link) {
+                    user = "@"+node.data.first_link;
+                }
+
+                var textMeas = ctx2d.measureText(textLong);
+                var textWidth = textMeas.width;
+                var textHeight = fontSize/3;
+                if (textWidth+textHeight < node.ctx.rayon*2) {
                     text = textLong;
+                    if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
+                        text1 = user;
+                    }
                 } else if (ctx2d.measureText(textShort).width+1 < node.ctx.rayon*2) {
                     text = textShort;
                 } else {
-                    font_size--;
+                    fontSize--;
                 }
 
                 if (text) {
                     ctx2d.beginPath();
                     ctx2d.fillStyle = "black";
                     ctx2d.textAlign = "center";
-                    ctx2d.fillText(text,
-                        node.ctx.centerX, node.ctx.centerY+7);
-                    //ctx2d.shadowColor = '#999';
-                    //ctx2d.shadowBlur = 10;
-                    //ctx2d.shadowOffsetX = 1;
-                    //ctx2d.shadowOffsetY = 1;
+                    ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY+textHeight);
+                    //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+                    ctx2d.fill();
+                }
+                if (text1) {
+                    ctx2d.font = fontSize-5 + "px " + this.fontstyleCircle;
+                    ctx2d.beginPath();
+                    ctx2d.fillStyle = "#8282ccee";
+                    ctx2d.fillText(text1, node.ctx.centerX, node.ctx.centerY + 4*textHeight);
                     ctx2d.fill();
                 }
             } else {
@@ -363,18 +402,23 @@ const GraphPack = {
             elmHasBeenUpdated = true;
         }
         this.focusedNode = focus;
+        this.drawNodeHover(this.focusedNode, false);
 
         var zoomFactor = this.zoomFactorCircle;
         if (this.focusedNode.data.type_ === 'Role') {
-            zoomFactor = this.zoomFactorRole;
+            if (this.focusedNode.data.node_type == "Guest") {
+                zoomFactor = this.zoomFactorGuest;
+            } else {
+                zoomFactor = this.zoomFactorRole;
+            }
         }
         var v = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * zoomFactor]; //The center and width of the new "viewport"
         var maxDuration = this.minZoomDuration*2;
         delay = (delay === undefined ? 0 : delay*this.minZoomDuration);
 
-        interpolator = d3.interpolateZoom(this.vOld, v); //Create interpolation between current and new "viewport"
-        duration = Math.max(interpolator.duration, maxDuration/2); //Interpolation gives back a suggested duration
-        timeElapsed = 0+delay; //Set the time elapsed for the interpolateZoom function to 0
+        var interpolator = d3.interpolateZoom(this.vOld, v); //Create interpolation between current and new "viewport"
+        var duration = Math.min(interpolator.duration, maxDuration) || delay; //Interpolation gives back a suggested duration
+        var timeElapsed = 0+delay; //Set the time elapsed for the interpolateZoom function to 0
         this.vOld = v; //Save the "viewport" of the next state as the next "old" state
 
         //Perform the interpolation and continuously change the zoomCtx while the "transition" occurs.
@@ -405,12 +449,12 @@ const GraphPack = {
             dt = elapsed;
             this.drawCanvas();
             //stats.end();
-            if (finished || elapsed > maxDuration) {
+            if (finished) {
                 this.isZooming = false;
                 this.drawCanvas();
                 this.drawCanvas(true);
                 if (!elmHasBeenUpdated) this.nodeFocusedFromJs(this.focusedNode); // INIT
-                this.drawNodeHover(this.focusedNode);
+                this.drawNodeHover(this.focusedNode, true);
                 t.stop();
             }
         });
@@ -426,13 +470,15 @@ const GraphPack = {
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
     nodeSizeTopDown(n, stats) {
-        var size = 10000/(stats.maxdepth)**(Math.max(1.5, n.depth))
+        dvd = (n.role_type == "Guest") ? this.guestSizeDivider : 1;
+        var size = 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
         return size
     },
 
     nodeSizeBottomUp(n, stats) {
+        dvd = (n.role_type == "Guest") ? this.guestSizeDivider : 1;
         var sizeDefault = 4;
-        var size = 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth))
+        var size = 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
         return size
     },
 
@@ -446,8 +492,8 @@ const GraphPack = {
 
         // Determine the node order in the circle packing
         const nodeOrder = (n1, n2) => {
-            // n1.createdAt < n2.createdAt // node order
-            return 0
+            return n1.data.createdAt > n2.data.createdAt // node order
+            //return 0
         }
 
         this.gStats = computeDepth(graph);
@@ -515,10 +561,16 @@ const GraphPack = {
         var ctx, centerX, centerY, rayon;
 
         centerX = ((node.x - zoomCtx.centerX) * zoomCtx.scale) + this.centerX;
-        centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY;
+        centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
         if (node.data.type_ === "Role") {
-            rayon = node.r * 0.95 ;
+            if (node.data.role_type === "Guest") {
+                rayon = node.r * this.rayonFactorGuest ;
+            } else {
+                // Regular member
+                rayon = node.r * this.rayonFactorRole ;
+            }
         } else {
+            // Circle
             rayon = node.r;
         }
         rayon *= zoomCtx.scale;
@@ -545,8 +597,7 @@ const GraphPack = {
     },
 
     // Draw node border
-    // If changeFocus is true, the focused node borer is removed
-    drawNodeHover(node) {
+    drawNodeHover(node, doDrawTooltip) {
         var ctx2d = this.ctx2d;
         if (!node.ctx) {
             console.warn("node.ctx us undefined here; Add a timeout on init event listeners...");
@@ -574,7 +625,9 @@ const GraphPack = {
         ctx2d.stroke();
 
         // Draw tooltip
-        this.drawNodeTooltip(node);
+        if (doDrawTooltip) {
+            this.drawNodeTooltip(node);
+        }
 
         // Update global context
         this.hoveredNode = node; //@debug: use globCtx
@@ -858,14 +911,14 @@ const GraphPack = {
 
             if (node) {
                 if (node !== this.hoveredNode && !isInTooltip) {
-                    this.drawNodeHover(node);
+                    this.drawNodeHover(node, true);
                 }
             } else if (this.hoveredNode) {
                 //var isInCanvas = this.checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
                 //if (!isInTooltip && isInCanvas) this.clearNodeHover(hoveredNode);
-                // pass...
+                this.drawNodeHover(this.focusedNode, true);
             } else {
-                this.drawNodeHover(this.focusedNode);
+                this.drawNodeHover(this.focusedNode, true);
             }
             return false
         };
@@ -874,7 +927,9 @@ const GraphPack = {
         var canvasMouseLeaveEvent = e => {
             var p = this.getPointerCtx(e);
             var isInCanvas = this.checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
-            if (!isInCanvas) this.drawNodeHover(this.focusedNode);
+            if (!isInCanvas) {
+                this.clearNodeTooltip();
+            }
 
             return false
         };

@@ -4,7 +4,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
 import Generated.Pages as Pages
 import Generated.Route as Route exposing (Route)
-import Global
+import Global exposing (Msg(..))
 import Html
 import Ports
 import Url exposing (Url)
@@ -82,6 +82,7 @@ update msg model =
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
                 , Ports.bulma_driver ""
+                , Cmd.map Global (Global.send <| UpdateReferer url)
                 ]
             )
 

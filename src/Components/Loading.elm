@@ -3,8 +3,9 @@ module Components.Loading exposing (HttpError, WebData, expectJson, spinner, toE
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
-import Html exposing (Html, div, img, p, text)
-import Html.Attributes exposing (alt, class, height, src, width)
+import Generated.Route as Route exposing (Route)
+import Html exposing (Html, a, div, img, p, text)
+import Html.Attributes exposing (alt, class, height, href, src, width)
 import Http
 import Json.Decode as JD
 import ModelOrg exposing (ErrorData)
@@ -136,7 +137,11 @@ spinner =
 viewAuthNeeded : Html msg
 viewAuthNeeded =
     div [ class "box has-background-info" ]
-        [ p [] [ text "Please login or create an account to perform this action." ]
+        [ p []
+            [ text "Please "
+            , a [ class "button is-small", href <| Route.toHref Route.Login ] [ text "login" ]
+            , text " or create an account to perform this action."
+            ]
         ]
 
 

@@ -102,6 +102,10 @@ html.has-modal-active {
     }
 }
 
+.icon {
+    color: #11111133 !important;
+}
+
 
 /*
  *
@@ -213,7 +217,7 @@ html.has-modal-active {
         padding-bottom: 0 !important;
     }
 
-    & > .level {
+    & nav > .level {
         margin-top: 1rem;
         //margin-bottom: 1.75rem;
     }

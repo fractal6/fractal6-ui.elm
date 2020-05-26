@@ -18,7 +18,7 @@ import Generated.Route as Route exposing (Route)
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (NodeFocus)
+import ModelCommon.Uri exposing (NodeFocus, NodePath)
 import ModelOrg exposing (..)
 import Ports
 import Process
@@ -42,6 +42,7 @@ type alias Flags =
 type alias Model =
     { flags : Flags
     , url : Url
+    , referer : Url
     , key : Nav.Key
     , session : Session
     }
@@ -77,7 +78,7 @@ init flags url key =
             , token_data = RemoteData.NotAsked
             }
     in
-    ( Model flags url key session
+    ( Model flags url url key session
     , Cmd.batch
         [ Ports.log "Hello!"
         , Ports.toggle_theme
@@ -92,8 +93,11 @@ init flags url key =
 
 type Msg
     = Navigate Route
+    | UpdateReferer Url
     | UpdateSessionFocus NodeFocus
+    | UpdateSessionPath NodePath
     | UpdateSessionOrga NodesData
+    | UpdateSessionTensions TensionsData
     | UpdateUserSession UserCtx -- user is logged In !
     | UpdateUserToken
     | UpdateUserTokenAck (WebData UserCtx)
@@ -109,6 +113,9 @@ update msg model =
             ( model
             , Nav.pushUrl model.key (Route.toHref route)
             )
+
+        UpdateReferer url ->
+            ( { model | referer = url }, Cmd.none )
 
         RedirectOnLoggedIn ->
             let
@@ -147,12 +154,30 @@ update msg model =
             , Cmd.none
             )
 
+        UpdateSessionPath data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | node_path = Just data } }
+            , Cmd.none
+            )
+
         UpdateSessionOrga data ->
             let
                 session =
                     model.session
             in
             ( { model | session = { session | orga_data = Just data } }
+            , Cmd.none
+            )
+
+        UpdateSessionTensions data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | circle_tensions = Just data } }
             , Cmd.none
             )
 

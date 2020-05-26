@@ -14,6 +14,7 @@ import Fractal.Object.AddTensionPayload
 import Fractal.Object.Label
 import Fractal.Object.Node
 import Fractal.Object.Tension
+import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
@@ -22,10 +23,11 @@ import Graphql.Http
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Html exposing (Html, a, div, span, text)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, href)
 import Iso8601 exposing (fromTime)
+import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (guestIdCodec)
+import ModelCommon.Uri exposing (FractalBaseRoute, guestIdCodec, uriFromNameid)
 import RemoteData exposing (RemoteData)
 
 
@@ -98,21 +100,19 @@ type alias Post =
 
 type alias Node =
     { id : String
+    , createdAt : String
     , name : String
     , nameid : String
+    , rootnameid : String
     , parent : Maybe ParentNode -- see issue with recursive structure
     , type_ : NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
+    , first_link : Maybe FirstLink
     }
-
-
-emptyNode : Node
-emptyNode =
-    { id = "", name = "", nameid = "", parent = Nothing, type_ = NodeType.Circle }
 
 
 type alias ParentNode =
-    { nameid : String
-    }
+    { nameid : String }
 
 
 
@@ -136,30 +136,30 @@ type alias SubNodeTensions =
 
 type alias Tension =
     { id : String
+    , createdAt : String
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
-    , emitter : Emitter
-    , receiver : Receiver
-    , createdAt : String
+    , emitter : EmitterOrReceiver
+    , receiver : EmitterOrReceiver
     , n_comments : Maybe Int
     }
 
 
+type alias EmitterOrReceiver =
+    { name : String
+    , nameid : String
+    , type_ : NodeType.NodeType
+    , first_link : Maybe FirstLink
+    }
+
+
+type alias FirstLink =
+    { username : String }
+
+
 type alias Label =
     { name : String }
-
-
-type alias Emitter =
-    { name : String
-    , nameid : String
-    }
-
-
-type alias Receiver =
-    { name : String
-    , nameid : String
-    }
 
 
 
@@ -199,12 +199,16 @@ nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
 nodeOrgaPayload =
     SelectionSet.succeed Node
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.rootnameid
         |> with
             --(Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
             (Fractal.Object.Node.parent identity (SelectionSet.map ParentNode Fractal.Object.Node.nameid))
         |> with Fractal.Object.Node.type_
+        |> with Fractal.Object.Node.role_type
+        |> with (Fractal.Object.Node.first_link identity (SelectionSet.map FirstLink Fractal.Object.User.username))
 
 
 fetchNodesOrga rootid msg =
@@ -217,9 +221,11 @@ fetchNodesOrga rootid msg =
 
 
 
+---------------------------------------
 {-
    Query Circle Tension
 -}
+---------------------------------------
 
 
 circleTensionFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
@@ -241,6 +247,7 @@ tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
 tensionPgPayload =
     SelectionSet.succeed Tension
         |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Tension.title
         |> with Fractal.Object.Tension.type_
         |> with
@@ -252,19 +259,24 @@ tensionPgPayload =
             )
         |> with
             (Fractal.Object.Tension.emitter identity
-                (SelectionSet.succeed Emitter
+                (SelectionSet.succeed EmitterOrReceiver
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
+                    |> with Fractal.Object.Node.type_
+                    |> with
+                        (Fractal.Object.Node.first_link identity (SelectionSet.map FirstLink Fractal.Object.User.username))
                 )
             )
         |> with
             (Fractal.Object.Tension.receiver identity
-                (SelectionSet.succeed Receiver
+                (SelectionSet.succeed EmitterOrReceiver
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
+                    |> with Fractal.Object.Node.type_
+                    |> with
+                        (Fractal.Object.Node.first_link identity (SelectionSet.map FirstLink Fractal.Object.User.username))
                 )
             )
-        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Tension.n_comments
 
 
@@ -390,10 +402,20 @@ tensionInputEncoder post source target =
             , type_ = type_
             , emitter =
                 Input.buildNodeRef
-                    (\x -> { x | nameid = OptionalArgument.Present source.nameid })
+                    (\x ->
+                        { x
+                            | nameid = OptionalArgument.Present source.nameid
+                            , rootnameid = OptionalArgument.Present source.rootnameid
+                        }
+                    )
             , receiver =
                 Input.buildNodeRef
-                    (\x -> { x | nameid = OptionalArgument.Present target.nameid })
+                    (\x ->
+                        { x
+                            | nameid = OptionalArgument.Present target.nameid
+                            , rootnameid = OptionalArgument.Present target.rootnameid
+                        }
+                    )
             }
     in
     { input =
@@ -514,13 +536,15 @@ circleTensionDecoder data =
                     node.tensions_in |> withDefault []
 
                 tout =
+                    -- Empty for now (automatic tensions ?)
                     node.tensions_out |> withDefault []
 
                 tchild =
                     node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
             in
-            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout)
+            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
                 |> List.reverse
+                |> uniqueBy (\t -> t.id)
                 |> List.take nTensionPpg
 
         Nothing ->
@@ -536,7 +560,7 @@ subCircleTensionDecoder child =
         tout =
             child.tensions_out |> withDefault []
     in
-    tin ++ List.filter (\x -> x.emitter.nameid /= x.receiver.nameid) tout
+    tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout
 
 
 nodeOrgaDecoder : Maybe (List (Maybe Node)) -> Dict String Node
@@ -610,11 +634,12 @@ tensionTypeColor elt tt =
 
 
 
---TensionType.Alert ->
---    "has-" ++ elt ++ "-danger"
 --
 -- View
 --
+{-
+   Tension
+-}
 
 
 tensionTypeSpan : String -> String -> Post -> Html msg
@@ -644,9 +669,25 @@ tensionTypeSpan cls elt post =
             span [ class "" ] [ text "Unknown" ]
 
 
-tensionTypeArrow : String -> String -> String -> List (Html msg)
+tensionTypeArrow : String -> Html msg -> Html msg -> List (Html msg)
 tensionTypeArrow cls source target =
-    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ text source ]
+    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
     , span [ class <| "right-arrow" ] []
-    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ text target ]
+    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]
     ]
+
+
+
+{-
+   Node
+-}
+
+
+viewNodeRef : FractalBaseRoute -> EmitterOrReceiver -> Html msg
+viewNodeRef baseUri n =
+    case n.type_ of
+        NodeType.Circle ->
+            a [ href (uriFromNameid baseUri n.nameid) ] [ n.name |> text ]
+
+        NodeType.Role ->
+            a [ href (uriFromNameid baseUri n.nameid) ] [ n.name |> text ]

@@ -1,9 +1,22 @@
-module ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, focusFromNameid, guestIdCodec, nameidFromFlags, toString, uriFromNameid)
+module ModelCommon.Uri exposing
+    ( Flags_
+    , FractalBaseRoute(..)
+    , NodeFocus
+    , NodePath
+    , basePathChanged
+    , focusFromNameid
+    , guestIdCodec
+    , nameidFromFlags
+    , toString
+    , uriFromNameid
+    , uriFromUsername
+    )
 
 import Array
 import Fractal.Enum.NodeType as NodeType
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
+import Url exposing (Url)
 
 
 
@@ -55,20 +68,36 @@ toString route =
 
         UsersBaseUri ->
             -- /users
-            "u"
+            "user"
+
+
+basePathChanged : FractalBaseRoute -> Url -> Bool
+basePathChanged loc url =
+    let
+        base =
+            url.path
+                |> String.dropLeft 1
+                |> String.split "/"
+                |> List.head
+                |> withDefault ""
+
+        baseRef =
+            toString loc
+    in
+    base /= baseRef
 
 
 uriFromNameid : FractalBaseRoute -> String -> String
 uriFromNameid loc nameid =
-    let
-        path =
-            String.split "#" nameid
+    [ toString loc ]
+        ++ String.split "#" nameid
+        |> String.join "/"
+        |> String.append "/"
 
-        b =
-            toString loc
-    in
-    [ b ]
-        ++ path
+
+uriFromUsername : FractalBaseRoute -> String -> String
+uriFromUsername loc username =
+    [ toString loc, username ]
         |> String.join "/"
         |> String.append "/"
 
@@ -119,9 +148,18 @@ nameidFromFlags flags =
     let
         rootnameid =
             flags.param1
+                |> Url.percentDecode
+                |> withDefault ""
 
         focusFragment =
-            String.join "#" [ flags.param2 |> withDefault "", flags.param3 |> withDefault "" ]
+            String.join "#"
+                [ flags.param2
+                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
+                    |> withDefault ""
+                , flags.param3
+                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
+                    |> withDefault ""
+                ]
     in
     String.join "#" [ rootnameid, focusFragment ]
 

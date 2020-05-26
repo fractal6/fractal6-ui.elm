@@ -1,7 +1,8 @@
 module Pages.User.Dynamic exposing (Flags, Model, Msg, page)
 
 import Global
-import Html
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Page exposing (Document, Page)
 
 
@@ -10,7 +11,7 @@ type alias Flags =
 
 
 type alias Model =
-    {}
+    { username : String }
 
 
 type Msg
@@ -29,7 +30,11 @@ page =
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
-    ( {}, Cmd.none, Cmd.none )
+    let
+        model =
+            { username = flags.param1 }
+    in
+    ( model, Cmd.none, Cmd.none )
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -46,6 +51,12 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "User.Dynamic"
-    , body = [ Html.text "User.Dynamic" ]
+    { title = model.username
+    , body = [ view_ global model ]
     }
+
+
+view_ : Global.Model -> Model -> Html Msg
+view_ global model =
+    div []
+        [ "Welcome " ++ model.username |> text ]

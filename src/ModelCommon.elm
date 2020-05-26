@@ -12,6 +12,7 @@ import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodeFocus, NodePath)
 import ModelOrg exposing (..)
+import Url exposing (Url)
 
 
 
@@ -96,7 +97,6 @@ type alias TensionForm =
     , source : Maybe Node
     , target : Node
     , user : UserCtx
-    , rootnameid : String
     }
 
 
@@ -224,11 +224,48 @@ nodesEncoder nodes =
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
     [ ( "id", JE.string node.id )
+    , ( "createdAt", JE.string node.createdAt )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
+    , ( "rootnameid", JE.string node.rootnameid )
     , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
     , ( "type_", JE.string <| NodeType.toString node.type_ )
+    , ( "role_type", JEE.maybe JE.string <| Maybe.map (\t -> RoleType.toString t) node.role_type )
+    , ( "first_link", JEE.maybe JE.string <| Maybe.map (\x -> x.username) node.first_link )
     ]
+
+
+
+-- Json encoder/decoder --When receiving data from Javascript
+
+
+nodeDecoder : JD.Decoder Node
+nodeDecoder =
+    --JD.map9 Node
+    JD.succeed Node
+        |> JDE.andMap (JD.field "id" JD.string)
+        |> JDE.andMap (JD.field "createdAt" JD.string)
+        |> JDE.andMap (JD.field "name" JD.string)
+        |> JDE.andMap (JD.field "nameid" JD.string)
+        |> JDE.andMap (JD.field "rootnameid" JD.string)
+        |> JDE.andMap (JD.maybe (JD.map ParentNode <| JD.field "parentid" JD.string))
+        |> JDE.andMap (JD.field "type_" NodeType.decoder)
+        |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
+        |> JDE.andMap (JD.maybe (JD.map FirstLink <| JD.field "first_link" JD.string))
+
+
+nodeSourceFromRole : UserRole -> Node
+nodeSourceFromRole ur =
+    { id = ""
+    , createdAt = ""
+    , nameid = ur.nameid
+    , name = ur.name
+    , parent = Nothing
+    , rootnameid = ur.rootnameid
+    , type_ = NodeType.Role
+    , role_type = Just ur.role_type
+    , first_link = Nothing -- @FIX
+    }
 
 
 
@@ -237,4 +274,5 @@ nodeEncoder node =
 
 type alias NodeTarget =
     -- Helper for encoding ActionState / Receiving Node from JS.
-    Result JD.Error Node
+    --Result JD.Error Node
+    Result String Node

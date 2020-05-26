@@ -1,4 +1,4 @@
-module Components.HelperBar exposing (view, viewHelperBar)
+module Components.HelperBar exposing (view)
 
 import Array
 import Components.Fa as Fa
@@ -7,40 +7,59 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (custom, on, onClick, onInput, preventDefaultOn)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
+import ModelCommon exposing (UserRole, UserState(..))
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodePath, uriFromNameid)
 
 
-view : FractalBaseRoute -> Maybe NodePath -> msg -> Html msg
-view baseUri maybeNodePath joinMsg =
-    div [ id "mainHeader", class "columns is-centered" ]
-        [ div [ class "column is-10" ]
-            [ viewHelperBar baseUri maybeNodePath joinMsg ]
-        ]
-
-
-viewHelperBar : FractalBaseRoute -> Maybe NodePath -> msg -> Html msg
-viewHelperBar baseUri maybePath joinMsg =
+view : FractalBaseRoute -> UserState -> Maybe NodePath -> msg -> Html msg
+view baseUri user maybePath joinMsg =
     let
         path =
             maybePath |> withDefault (Array.fromList [])
+
+        rootnameid =
+            Array.get 0 path |> Maybe.map (\p -> p.nameid) |> withDefault ""
     in
-    nav [ id "mainHeader" ]
-        [ div [ class "level" ]
-            [ div [ class "level-left" ]
-                [ div [ class "level-item" ] [ viewPath baseUri path ]
+    div [ id "mainHeader", class "columns is-centered" ]
+        [ nav [ class "column is-10" ]
+            [ div [ class "level" ]
+                [ div [ class "level-left" ]
+                    [ div [ class "level-item" ] [ viewPath baseUri path ]
+                    ]
+                , div [ class "level-right" ]
+                    [ div [ class "level-item" ]
+                        [ case user of
+                            LoggedIn uctx ->
+                                case maybePath of
+                                    Just _ ->
+                                        let
+                                            roles =
+                                                List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
+                                        in
+                                        if List.length roles > 0 then
+                                            memberButton baseUri roles
+
+                                        else
+                                            joinButton joinMsg
+
+                                    Nothing ->
+                                        -- Loading
+                                        text ""
+
+                            LoggedOut ->
+                                joinButton joinMsg
+                        ]
+                    ]
                 ]
-            , div [ class "level-right" ]
-                [ div [ class "level-item" ] [ viewButtons joinMsg ]
-                ]
-            ]
-        , div [ class "tabs is-boxed" ]
-            [ ul []
-                [ li [ class "is-active" ]
-                    [ a [] [ Fa.icon "fas fa-circle" "Overview" ] ]
-                , li []
-                    [ a [] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
-                , li []
-                    [ a [] [ Fa.icon "fas fa-user" "Members" ] ]
+            , div [ class "tabs is-boxed" ]
+                [ ul []
+                    [ li [ class "is-active" ]
+                        [ a [] [ Fa.icon "fas fa-circle" "Overview" ] ]
+                    , li []
+                        [ a [] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
+                    , li []
+                        [ a [] [ Fa.icon "fas fa-user" "Members" ] ]
+                    ]
                 ]
             ]
         ]
@@ -75,12 +94,26 @@ viewPath baseUri path =
         ]
 
 
-viewButtons : msg -> Html msg
-viewButtons joinMsg =
+joinButton : msg -> Html msg
+joinButton msg =
     div
         [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  tooltip has-tooltip-bottom"
         , attribute "data-modal" "actionModal" -- JS/Elm confcli, msg is not sent !
         , attribute "data-tooltip" "Join this organisation."
-        , onClick joinMsg
+        , onClick msg
         ]
         [ text "Join" ]
+
+
+memberButton : FractalBaseRoute -> List UserRole -> Html msg
+memberButton baseUri roles =
+    roles
+        |> List.map
+            (\r ->
+                a
+                    [ class "button is-hovered is-small has-text-weight-semibold is-primary tooltip has-tooltip-bottom"
+                    , href <| uriFromNameid baseUri r.nameid
+                    ]
+                    [ text r.name ]
+            )
+        |> div []
