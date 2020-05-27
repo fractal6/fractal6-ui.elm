@@ -5,6 +5,7 @@ port module Ports exposing
     , initGraphPack
     , loadUserCtx
     , log
+    , open_modal
     , removeUserCtx
     , saveUserCtx
     , toggle_theme
@@ -48,11 +49,11 @@ focusGraphPack focusid =
         }
 
 
-clearTooltip : String -> Cmd msg
-clearTooltip message =
+clearTooltip : Cmd msg
+clearTooltip =
     outgoing
         { action = "CLEAR_TOOLTIP"
-        , data = JE.string message
+        , data = JE.string ""
         }
 
 
@@ -127,5 +128,17 @@ toggle_theme : Cmd msg
 toggle_theme =
     outgoing
         { action = "TOGGLE_TH"
+        , data = JE.string ""
+        }
+
+
+
+--- Modal
+
+
+open_modal : Cmd msg
+open_modal =
+    outgoing
+        { action = "OPEN_MODAL"
         , data = JE.string ""
         }

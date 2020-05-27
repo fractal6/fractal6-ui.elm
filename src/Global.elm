@@ -14,6 +14,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Components
 import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
+import Dict
 import Generated.Route as Route exposing (Route)
 import Http
 import Json.Decode as JD
@@ -22,6 +23,7 @@ import ModelCommon.Uri exposing (NodeFocus, NodePath)
 import ModelOrg exposing (..)
 import Ports
 import Process
+import QuickSearch as Qsearch
 import RemoteData exposing (RemoteData)
 import Task
 import Url exposing (Url)
@@ -75,6 +77,7 @@ init flags url key =
             , orga_data = Nothing
             , circle_tensions = Nothing
             , node_action = Nothing
+            , lut = Nothing
             , token_data = RemoteData.NotAsked
             }
     in
@@ -167,8 +170,19 @@ update msg model =
             let
                 session =
                     model.session
+
+                lutList =
+                    data
+                        |> Dict.values
+                        |> List.map (\n -> n.name)
             in
-            ( { model | session = { session | orga_data = Just data } }
+            ( { model
+                | session =
+                    { session
+                        | orga_data = Just data
+                        , lut = Qsearch.makeTable 4 List.singleton |> Qsearch.insertList lutList |> Just
+                    }
+              }
             , Cmd.none
             )
 

@@ -12,6 +12,7 @@ import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodeFocus, NodePath)
 import ModelOrg exposing (..)
+import QuickSearch as Qsearch
 import Url exposing (Url)
 
 
@@ -28,6 +29,7 @@ type alias Session =
     , orga_data : Maybe NodesData
     , circle_tensions : Maybe TensionsData
     , node_action : Maybe ActionState
+    , lut : Maybe (Qsearch.Table String)
     , token_data : WebData UserCtx
     }
 

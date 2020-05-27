@@ -13,7 +13,7 @@ import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
-import Html.Events exposing (on, onClick, onInput, onMouseOver)
+import Html.Events exposing (on, onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
@@ -25,6 +25,7 @@ import ModelOrg exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Process
+import QuickSearch as Qsearch
 import Task
 import Time
 
@@ -51,7 +52,8 @@ type alias Model =
     , orga_data : OrgaData
     , circle_tensions : CircleTensionsData
     , node_action : ActionState
-    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers
+    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+    , lut : Qsearch.Table String
     }
 
 
@@ -108,6 +110,7 @@ init global flags =
             , node_focus = newFocus
             , node_path = session.node_path
             , isModalActive = False
+            , lut = session.lut |> withDefault (Qsearch.makeTable 0 List.singleton |> Qsearch.insertList [])
             }
 
         cmds =
@@ -159,6 +162,7 @@ type Msg
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused NodePath -- ports receive / Node focused
     | DoCloseModal String -- ports receive / Close modal
+    | DoOpenModal -- ports receive / Open  modal
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
@@ -220,7 +224,7 @@ update global msg model =
                         Err err ->
                             AskErr err
             in
-            ( { model | node_action = newAction, isModalActive = True }, Cmd.none, Cmd.none )
+            ( { model | node_action = newAction }, Global.send DoOpenModal, Cmd.none )
 
         DoTensionTypeForm ->
             let
@@ -358,7 +362,7 @@ update global msg model =
         DoJoinOrga rootnameid time ->
             case global.session.user of
                 LoggedOut ->
-                    ( { model | node_action = JoinOrga JoinAuthNeeded, isModalActive = True }, Cmd.none, Cmd.none )
+                    ( { model | node_action = JoinOrga JoinAuthNeeded }, Global.send DoOpenModal, Cmd.none )
 
                 LoggedIn uctx ->
                     let
@@ -374,9 +378,9 @@ update global msg model =
                                 ]
 
                         newModel =
-                            { model | node_action = JoinOrga (JoinInit form), isModalActive = True }
+                            { model | node_action = JoinOrga (JoinInit form) }
                     in
-                    ( newModel, addNewMember post rootnameid JoinAck, Cmd.none )
+                    ( newModel, Cmd.batch [ addNewMember post rootnameid JoinAck, Global.send DoOpenModal ], Cmd.none )
 
         JoinAck result ->
             case model.node_action of
@@ -397,8 +401,11 @@ update global msg model =
         DoCloseModal _ ->
             ( { model | isModalActive = False }, Cmd.none, Cmd.none )
 
+        DoOpenModal ->
+            ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
+
         DoClearTooltip ->
-            ( model, Cmd.none, Ports.clearTooltip "" )
+            ( model, Cmd.none, Ports.clearTooltip )
 
 
 
@@ -543,7 +550,7 @@ viewSearchBar nodes maybePath =
                         other ->
                             Err "No nodes data"
             in
-            div [ class "field has-addons", onMouseOver DoClearTooltip ]
+            div [ class "field has-addons", onMouseEnter DoClearTooltip ]
                 [ div [ class "control has-icons-left is-expanded" ]
                     [ input [ class "input is-small", type_ "text", placeholder "Find a Role or Circle" ] []
                     , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
@@ -649,7 +656,7 @@ viewCanvas orgaData =
 
 viewMandate : Global.Model -> Model -> Html Msg
 viewMandate global model =
-    div [ id "mandateContainer", class "hero is-small is-light heroViewer box" ]
+    div [ id "mandateContainer", class "hero is-small is-light heroViewer" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
                 [ Fa.icon "fas fa-scroll fa-xs" "Mandate" ]
