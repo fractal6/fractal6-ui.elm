@@ -218,7 +218,7 @@ viewLogin global model =
                                     [ id "passwordInput"
                                     , class "input followFocus"
                                     , attribute "data-nextfocus" "submitButton"
-                                    , type_ "text"
+                                    , type_ "password"
                                     , placeholder "password"
                                     , onInput (ChangeUserPost "password")
                                     ]
