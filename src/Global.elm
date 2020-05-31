@@ -72,13 +72,13 @@ init flags url key =
 
         session =
             { user = userState
+            , token_data = RemoteData.NotAsked
             , node_focus = Nothing
             , node_path = Nothing
             , orga_data = Nothing
             , circle_tensions = Nothing
             , node_action = Nothing
-            , lut = Nothing
-            , token_data = RemoteData.NotAsked
+            , node_quickSearch = Nothing
             }
     in
     ( Model flags url url key session
@@ -170,21 +170,8 @@ update msg model =
             let
                 session =
                     model.session
-
-                lutList =
-                    data
-                        |> Dict.values
-                        |> List.map (\n -> n.name)
             in
-            ( { model
-                | session =
-                    { session
-                        | orga_data = Just data
-                        , lut = Qsearch.makeTable 4 List.singleton |> Qsearch.insertList lutList |> Just
-                    }
-              }
-            , Cmd.none
-            )
+            ( { model | session = { session | orga_data = Just data } }, Cmd.none )
 
         UpdateSessionTensions data ->
             let

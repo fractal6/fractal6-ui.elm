@@ -6,16 +6,27 @@ window.addEventListener('load', _ => {
 
             // Ephemere Objects
             var session = {
-                gp: Object.create(GraphPack),
                 user_ctx: null, // from localstorage
-                bulmaHandlers: []
+                bulmaHandlers: [],
+                // Graphpack
+                gp: Object.create(GraphPack),
+                // QuickSearch
+                qs: new MiniSearch({
+                    fields: ['name'], //first_link...
+                    storeFields: ['nameid'],
+                    searchOptions: {
+                        boost: { title: 2 },
+                        fuzzy: 0.2
+                    }
+                })
             };
-
-            app.ports.outgoing.subscribe(({ action, data }) =>
-                actions[action]
-                ? actions[action](app, session, data)
-                : console.warn(`I didn't recognize action "${action}".`)
-            )
+            app.ports.outgoing.subscribe(({ action, data }) => {
+                if (actions[action]) {
+                    actions[action](app, session, data)
+                } else {
+                    console.warn(`I didn't recognize action "${action}".`)
+                }
+            });
 
         }
     }
@@ -24,6 +35,9 @@ window.addEventListener('load', _ => {
 // Elm outgoing Ports Actions.
 // Maps actions to functions!
 const actions = {
+    //
+    // Utils
+    //
     'LOG': (app, session, message) => {
         console.log(`From Elm:`, message)
     },
@@ -43,10 +57,24 @@ const actions = {
             });
         }
     },
+    //
+    // Modal
+    //
     'OPEN_MODAL': (app, session, message) => {
         document.documentElement.classList.add('has-modal-active');
         document.getElementById("navbarTop").classList.add('has-modal-active');
     },
+    'SEARCH_NODES': (app, session, pattern) => {
+        var qs = session.qs;
+        var nodes = session.gp.nodesDict;
+        var res = qs.search(pattern, {prefix:true}).map(n =>
+            nodes[n.nameid].data
+        );
+        app.ports.lookupFromJs.send(res);
+    },
+    //
+    // Quick Search
+    //
     //
     // GraphPack
     //
@@ -63,6 +91,10 @@ const actions = {
             }
         }
         //});
+
+        var qs = session.qs;
+        qs.removeAll();
+        qs.addAll(data.data);
     },
     'FOCUS_GRAPHPACK': (app, session, focusid) => {
         var gp = session.gp;

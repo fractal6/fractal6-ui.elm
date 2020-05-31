@@ -766,7 +766,7 @@ const GraphPack = {
     },
 
     sendNodeDataFromJs(node) {
-        this.app.ports.rawNodeDataFromJs.send(node.data);
+        this.app.ports.nodeDataFromJs.send(node.data);
     },
 
     //

@@ -1,19 +1,21 @@
 port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
+import Extra.Events exposing (onEnter, onKeydown, onTab)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
-import Html.Events exposing (on, onClick, onInput, onMouseEnter)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
+import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
@@ -53,7 +55,7 @@ type alias Model =
     , circle_tensions : CircleTensionsData
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
-    , lut : Qsearch.Table String
+    , node_quickSearch : NodesQuickSearch
     }
 
 
@@ -97,6 +99,9 @@ init global flags =
         refresh =
             basePathChanged OverviewBaseUri global.referer
 
+        qs =
+            session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0 }
+
         model =
             { orga_data =
                 session.orga_data
@@ -110,7 +115,7 @@ init global flags =
             , node_focus = newFocus
             , node_path = session.node_path
             , isModalActive = False
-            , lut = session.lut |> withDefault (Qsearch.makeTable 0 List.singleton |> Qsearch.insertList [])
+            , node_quickSearch = { qs | pattern = "", idx = 0 }
             }
 
         cmds =
@@ -147,7 +152,7 @@ type Msg
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
       -- Nodes Actions
-    | DoNodeAction NodeTarget -- ports receive / tooltip click
+    | DoNodeAction Node_ -- ports receive / tooltip click
     | DoTensionTypeForm
     | DoTensionSourceForm String -- <- {tensionType}
     | DoTensionFinalForm Node -- <- {source}
@@ -158,6 +163,11 @@ type Msg
       -- JoinOrga Actions
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData (Maybe AddNodePayload))
+      -- Quick search
+    | ChangePattern String
+    | ChangeLookup Nodes_
+    | SearchKeyDown Int
+      --| NodeInput String
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused NodePath -- ports receive / Node focused
@@ -191,6 +201,93 @@ update global msg model =
             in
             ( { model | orga_data = orga_data, circle_tensions = circle_tensions }, Cmd.none, Cmd.none )
 
+        ChangePattern pattern ->
+            let
+                qs =
+                    model.node_quickSearch
+
+                newIdx =
+                    if pattern == "" then
+                        0
+
+                    else
+                        qs.idx
+            in
+            ( { model | node_quickSearch = { qs | pattern = pattern, idx = newIdx } }
+            , Cmd.none
+            , Ports.searchNode pattern
+            )
+
+        ChangeLookup nodes_ ->
+            let
+                qs =
+                    model.node_quickSearch
+            in
+            case nodes_ of
+                Ok nodes ->
+                    ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                Err err ->
+                    ( model, Cmd.none, Cmd.none )
+
+        SearchKeyDown key ->
+            let
+                qs =
+                    model.node_quickSearch
+
+                len =
+                    Array.length qs.lookup
+            in
+            case key of
+                13 ->
+                    --ENTER
+                    case Array.get model.node_quickSearch.idx model.node_quickSearch.lookup of
+                        Just n ->
+                            ( model
+                            , Cmd.none
+                            , Nav.replaceUrl global.key (uriFromNameid OverviewBaseUri n.nameid)
+                            )
+
+                        Nothing ->
+                            ( model, Cmd.none, Cmd.none )
+
+                27 ->
+                    --ESC
+                    ( model, Global.send (ChangePattern ""), Cmd.none )
+
+                40 ->
+                    --DOWN
+                    let
+                        newIdx =
+                            if len > 0 && qs.idx < len - 1 then
+                                qs.idx + 1
+
+                            else
+                                0
+                    in
+                    ( { model | node_quickSearch = { qs | idx = newIdx } }, Cmd.none, Cmd.none )
+
+                38 ->
+                    --UP
+                    let
+                        newIdx =
+                            if len > 0 && qs.idx > 0 then
+                                qs.idx - 1
+
+                            else if len > 0 && qs.idx == 0 then
+                                len - 1
+
+                            else
+                                0
+                    in
+                    ( { model | node_quickSearch = { qs | idx = newIdx } }, Cmd.none, Cmd.none )
+
+                other ->
+                    ( model, Cmd.none, Cmd.none )
+
         GotOrga result ->
             case result of
                 Success data ->
@@ -214,10 +311,10 @@ update global msg model =
                 other ->
                     ( { model | circle_tensions = result }, Cmd.none, Cmd.none )
 
-        DoNodeAction action ->
+        DoNodeAction node_ ->
             let
                 newAction =
-                    case action of
+                    case node_ of
                         Ok node ->
                             Ask <| FirstStep node
 
@@ -417,7 +514,8 @@ subscriptions _ _ =
     Sub.batch
         [ nodeClickedFromJs NodeClicked
         , nodeFocusedFromJs NodeFocused
-        , nodeDataFromJs DoNodeAction
+        , nodeDataFromJs_ DoNodeAction
+        , lookupFromJs_ ChangeLookup
         , closeModalFromJs DoCloseModal
         ]
 
@@ -435,12 +533,12 @@ port nodeClickedFromJs : (String -> msg) -> Sub msg
 port nodeFocusedFromJs : (NodePath -> msg) -> Sub msg
 
 
-port rawNodeDataFromJs : (JD.Value -> a) -> Sub a
+port nodeDataFromJs : (JD.Value -> a) -> Sub a
 
 
-nodeDataFromJs : (NodeTarget -> msg) -> Sub msg
-nodeDataFromJs rawNode =
-    rawNodeDataFromJs
+nodeDataFromJs_ : (Node_ -> msg) -> Sub msg
+nodeDataFromJs_ rawNode =
+    nodeDataFromJs
         (rawNode
             << (\x ->
                     case x of
@@ -451,6 +549,25 @@ nodeDataFromJs rawNode =
                             Err (JD.errorToString err)
                )
             << JD.decodeValue nodeDecoder
+        )
+
+
+port lookupFromJs : (JD.Value -> a) -> Sub a
+
+
+lookupFromJs_ : (Nodes_ -> msg) -> Sub msg
+lookupFromJs_ rawNode =
+    lookupFromJs
+        (rawNode
+            << (\x ->
+                    case x of
+                        Ok n ->
+                            Ok n
+
+                        Err err ->
+                            Err (JD.errorToString err)
+               )
+            << JD.decodeValue (JD.list nodeDecoder)
         )
 
 
@@ -513,7 +630,7 @@ view_ global model =
         --    ]
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5" ]
-                [ viewSearchBar model.orga_data model.node_path
+                [ viewSearchBar model.orga_data model.node_path model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
                 , viewMandate global model
@@ -529,8 +646,8 @@ view_ global model =
         ]
 
 
-viewSearchBar : OrgaData -> Maybe NodePath -> Html Msg
-viewSearchBar nodes maybePath =
+viewSearchBar : OrgaData -> Maybe NodePath -> NodesQuickSearch -> Html Msg
+viewSearchBar nodes maybePath qs =
     let
         maybeLast =
             maybePath
@@ -549,11 +666,53 @@ viewSearchBar nodes maybePath =
 
                         other ->
                             Err "No nodes data"
+
+                isActive =
+                    if Array.length qs.lookup > 0 then
+                        " is-active "
+
+                    else
+                        ""
             in
-            div [ class "field has-addons", onMouseEnter DoClearTooltip ]
-                [ div [ class "control has-icons-left is-expanded" ]
-                    [ input [ class "input is-small", type_ "text", placeholder "Find a Role or Circle" ] []
+            div
+                [ id "searchBar"
+                , class "field has-addons"
+                , onMouseEnter DoClearTooltip
+                ]
+                [ div [ class ("control has-icons-left is-expanded dropdown" ++ isActive) ]
+                    [ input
+                        [ class "input is-small autofocus"
+                        , type_ "text"
+                        , placeholder "Find a Role or Circle"
+                        , value qs.pattern
+                        , onInput ChangePattern
+                        , onKeydown SearchKeyDown
+
+                        --, list "searchList" -- impossible interaction !
+                        ]
+                        []
                     , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+                    , div [ id "searchList", class "dropdown-menu" ]
+                        [ qs.lookup
+                            |> Array.indexedMap
+                                (\i n ->
+                                    let
+                                        isSelected =
+                                            if i == qs.idx then
+                                                " is-active "
+
+                                            else
+                                                ""
+                                    in
+                                    a
+                                        [ class ("dropdown-item" ++ isSelected)
+                                        , href (uriFromNameid OverviewBaseUri n.nameid)
+                                        ]
+                                        [ text n.name ]
+                                )
+                            |> Array.toList
+                            |> div [ class "dropdown-content" ]
+                        ]
                     ]
                 , div [ class "control" ]
                     [ div
@@ -569,7 +728,7 @@ viewSearchBar nodes maybePath =
                 ]
 
         Nothing ->
-            div [ class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder "Find a Role or Circle", disabled True ] [] ] ]
+            div [ id "searchBar", class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder "Find a Role or Circle", disabled True ] [] ] ]
 
 
 viewLeftPane : Model -> Html Msg
@@ -613,45 +772,47 @@ viewLeftPane model =
 
 viewCanvas : OrgaData -> Html Msg
 viewCanvas orgaData =
-    div [ id "canvasParent", classList [ ( "spinner", orgaData == LoadingSlowly ) ] ] <|
-        case orgaData of
-            Failure err ->
-                [ viewErrors err ]
+    div []
+        [ div [ id "canvasParent", classList [ ( "spinner", orgaData == LoadingSlowly ) ] ] <|
+            case orgaData of
+                Failure err ->
+                    [ viewErrors err ]
 
-            default ->
-                [ div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-                    -- Hidden class use in graphpack_d3.js
-                    [ div
-                        [ id "invGraph_cvbtn"
-                        , class "button buttonToggle tooltip has-tooltip-right"
-                        , attribute "data-tooltip" "Reverse the organisation graph."
-                        , onClick ToggleGraphReverse
-                        ]
-                        [ Fa.icon0 "fas fa-sort-amount-up" "" ]
+                default ->
+                    [ div [ id "canvasButtons", class "buttons are-small is-invisible" ]
+                        -- Hidden class use in graphpack_d3.js
+                        [ div
+                            [ id "invGraph_cvbtn"
+                            , class "button buttonToggle tooltip has-tooltip-right"
+                            , attribute "data-tooltip" "Reverse the organisation graph."
+                            , onClick ToggleGraphReverse
+                            ]
+                            [ Fa.icon0 "fas fa-sort-amount-up" "" ]
 
-                    --, div
-                    --    [ id "showLabel_cvbtn"
-                    --    , class "button buttonToggle tooltip has-tooltip-right"
-                    --    , attribute "data-tooltip" "Show/Hide circle tooltips."
-                    --    , onClick ToggleTooltips
-                    --    ]
-                    --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
-                    ]
-                , div
-                    [ id "nodeTooltip"
-                    , class "_modalTrigger_ is-invisible"
-                    , attribute "data-modal" "actionModal"
-                    ]
-                    [ span [] [ text "void" ] -- Node name
-                    , span [ class "fa-stack fa-sm ellipsisArt" ]
-                        [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
-
-                        -- To be copied before fa-ellipis !
-                        --, i[class "far fa-circle fa-stack-2x"][]
-                        --, i[class "fas fa-circle fa-stack-2x"][]
+                        --, div
+                        --    [ id "showLabel_cvbtn"
+                        --    , class "button buttonToggle tooltip has-tooltip-right"
+                        --    , attribute "data-tooltip" "Show/Hide circle tooltips."
+                        --    , onClick ToggleTooltips
+                        --    ]
+                        --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
                         ]
                     ]
+        , div
+            [ id "nodeTooltip"
+            , class "_modalTrigger_ is-invisible"
+            , attribute "data-modal" "actionModal"
+            ]
+            [ span [] [ text "void" ] -- Node name
+            , span [ class "fa-stack fa-sm ellipsisArt" ]
+                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
+
+                -- To be copied before fa-ellipis !
+                --, i[class "far fa-circle fa-stack-2x"][]
+                --, i[class "fas fa-circle fa-stack-2x"][]
                 ]
+            ]
+        ]
 
 
 viewMandate : Global.Model -> Model -> Html Msg

@@ -282,6 +282,46 @@ html.has-modal-active {
  *
  */
 
+#searchBar {
+    padding-top: 5px;
+    margin-bottom: 22px;
+}
+
+#searchList {
+    width: 99.9% !important;
+    padding: 0 !important;
+    padding-bottom: 0 !important;
+    &>div {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        max-height: 288px !important;
+        overflow-y: auto;
+    }
+
+    color: #24292e !important;
+    background-color: #fff9d8a3 !important;
+
+    & a,
+    & div,
+    & span {
+        color: #24292e !important;
+        background-color: #fff9d880 !important;
+        line-height: 1.4;
+        font-size: 0.775rem;
+    }
+
+    & a:hover,& a:focus,
+    & span:hover,&  span:focus {
+        background-color: #eee9d8 !important;
+    }
+
+     & a.is-active,
+     & span.is-active {
+        background-color: #d5ceb5 !important;
+    }
+
+}
+
 #tensionsTab  {
      .labelsList {
          // all children except first
@@ -319,96 +359,96 @@ html.has-modal-active {
 }
 
 #canvasOrga {
-  border-radius: 7px;
-  box-shadow: 0 0px 2px 1px #22101087;
-  //background-image: linear-gradient(white, black) ;
+    border-radius: 7px;
+    box-shadow: 0 0px 2px 1px #22101087;
+    //background-image: linear-gradient(white, black) ;
 }
 
 
 
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
-  position: absolute;
-
-  // Content
-  color: black;
-  background-color: $node-tooltip-background;
-
-  // Icon font button
-  .ellipsisArt {
-      //position: absolute;
-      //bottom: 12px;
-      //right: -19px;
-      ///--
-      margin-left: -4px;
-      margin-right: -4px;
-
-      font-size: 13px;
-      .far.fa-circle {
-          color: black;
-      }
-      .fas.fa-circle {
-          color: $node-tooltip-background;
-      }
-      .fas.fa-ellipsis-h {
-          color: $primary;
-      }
-  }
-
-  // Box style
-  padding: 2px 6px 2px 6px;
-  //text-align: center;
-  border: 2px solid #333;
-  border-style: solid;
-  border-radius: 9px;
-
-  // Tooltip style
-  &::after,
-  &::before {
-    //font-family: "Font Awesome 5 Free";
-    //font-weight: 900;
-    //content: "\f007";
-    content: "";
     position: absolute;
-    top: 100%; /* This will position the arrow at the bottom of the tooltip */
-    left: 50%;
-    pointer-events: none;
-    border: solid transparent;
-  }
-  &::after {
-    margin-left: -6px;
-    border-width: 6px;
-    border-top-color: $node-tooltip-background;
-  }
-  &::before {
-    margin-left: -7px;
-    border-width: 7px;
-    border-top-color: #333;
-  }
 
-  // -> on hover
-  cursor: pointer;
-  &:hover {
-      box-shadow: 0 0 1px 2px $node-tooltip-shadow;
-      opacity: 1 !important;
-  }
+    // Content
+    color: black;
+    background-color: $node-tooltip-background;
 
-  // Animate the tooltip
-  //transition: visibility 1s, opacity 1s;
-  &.fadeIn {
-      visibility: inherit;
-      opacity: 0.9;
-      transition: opacity 0.444s;
-      &:hover {
-          transition: opacity 0s;
-      }
-  }
+    // Icon font button
+    .ellipsisArt {
+        //position: absolute;
+        //bottom: 12px;
+        //right: -19px;
+        ///--
+        margin-left: -4px;
+        margin-right: -4px;
 
-  &.fadeOut {
-      visibility: hidden;
-      opacity: 0;
-      //transition: visibility 0s 1s, opacity 1s; // fadOut transition don't works ?
-  }
+        font-size: 13px;
+        .far.fa-circle {
+            color: black;
+        }
+        .fas.fa-circle {
+            color: $node-tooltip-background;
+        }
+        .fas.fa-ellipsis-h {
+            color: $primary;
+        }
+    }
+
+    // Box style
+    padding: 2px 6px 2px 6px;
+    //text-align: center;
+    border: 2px solid #333;
+    border-style: solid;
+    border-radius: 9px;
+
+    // Tooltip style
+    &::after,
+    &::before {
+        //font-family: "Font Awesome 5 Free";
+        //font-weight: 900;
+        //content: "\f007";
+        content: "";
+        position: absolute;
+        top: 100%; /* This will position the arrow at the bottom of the tooltip */
+        left: 50%;
+        pointer-events: none;
+        border: solid transparent;
+    }
+    &::after {
+        margin-left: -6px;
+        border-width: 6px;
+        border-top-color: $node-tooltip-background;
+    }
+    &::before {
+        margin-left: -7px;
+        border-width: 7px;
+        border-top-color: #333;
+    }
+
+    // -> on hover
+    cursor: pointer;
+    &:hover {
+        box-shadow: 0 0 1px 2px $node-tooltip-shadow;
+        opacity: 1 !important;
+    }
+
+    // Animate the tooltip
+    //transition: visibility 1s, opacity 1s;
+    &.fadeIn {
+        visibility: inherit;
+        opacity: 0.9;
+        transition: opacity 0.444s;
+        &:hover {
+            transition: opacity 0s;
+        }
+    }
+
+    &.fadeOut {
+        visibility: hidden;
+        opacity: 0;
+        //transition: visibility 0s 1s, opacity 1s; // fadOut transition don't works ?
+    }
 
 }
 

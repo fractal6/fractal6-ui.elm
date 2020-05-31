@@ -1,5 +1,6 @@
 module ModelCommon exposing (..)
 
+import Array exposing (Array)
 import Components.Loading as Loading exposing (WebData)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -24,13 +25,23 @@ import Url exposing (Url)
 
 type alias Session =
     { user : UserState
+    , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
     , node_path : Maybe NodePath
     , orga_data : Maybe NodesData
     , circle_tensions : Maybe TensionsData
     , node_action : Maybe ActionState
-    , lut : Maybe (Qsearch.Table String)
-    , token_data : WebData UserCtx
+    , node_quickSearch : Maybe NodesQuickSearch
+    }
+
+
+type alias NodesQuickSearch =
+    { pattern : String
+    , lookup : Array Node
+    , idx : Int
+
+    --, lut : Qsearch.Table Node
+    --, lookup : List Node
     }
 
 
@@ -274,7 +285,13 @@ nodeSourceFromRole ur =
 -- Utils
 
 
-type alias NodeTarget =
+type alias Node_ =
     -- Helper for encoding ActionState / Receiving Node from JS.
     --Result JD.Error Node
     Result String Node
+
+
+type alias Nodes_ =
+    -- Helper for encoding ActionState / Receiving Node from JS.
+    --Result JD.Error Node
+    Result String (List Node)

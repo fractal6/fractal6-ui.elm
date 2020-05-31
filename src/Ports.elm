@@ -8,6 +8,7 @@ port module Ports exposing
     , open_modal
     , removeUserCtx
     , saveUserCtx
+    , searchNode
     , toggle_theme
     )
 
@@ -25,6 +26,36 @@ import ModelOrg exposing (NodesData)
 
 
 port outgoing : { action : String, data : JE.Value } -> Cmd msg
+
+
+
+--
+-- Utils drivers
+--
+
+
+log : String -> Cmd msg
+log message =
+    outgoing
+        { action = "LOG"
+        , data = JE.string message
+        }
+
+
+bulma_driver : String -> Cmd msg
+bulma_driver eltId =
+    outgoing
+        { action = "BULMA"
+        , data = JE.string eltId
+        }
+
+
+toggle_theme : Cmd msg
+toggle_theme =
+    outgoing
+        { action = "TOGGLE_TH"
+        , data = JE.string ""
+        }
 
 
 
@@ -103,36 +134,6 @@ removeUserCtx userCtx =
 
 
 
---
--- Utils drivers
---
-
-
-log : String -> Cmd msg
-log message =
-    outgoing
-        { action = "LOG"
-        , data = JE.string message
-        }
-
-
-bulma_driver : String -> Cmd msg
-bulma_driver eltId =
-    outgoing
-        { action = "BULMA"
-        , data = JE.string eltId
-        }
-
-
-toggle_theme : Cmd msg
-toggle_theme =
-    outgoing
-        { action = "TOGGLE_TH"
-        , data = JE.string ""
-        }
-
-
-
 --- Modal
 
 
@@ -141,4 +142,16 @@ open_modal =
     outgoing
         { action = "OPEN_MODAL"
         , data = JE.string ""
+        }
+
+
+
+--- Quick Search
+
+
+searchNode : String -> Cmd msg
+searchNode pattern =
+    outgoing
+        { action = "SEARCH_NODES"
+        , data = JE.string pattern
         }

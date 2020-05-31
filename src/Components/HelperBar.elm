@@ -4,7 +4,7 @@ import Array
 import Components.Fa as Fa
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
-import Html.Events exposing (custom, on, onClick, onInput, preventDefaultOn)
+import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserRole, UserState(..))
@@ -78,7 +78,6 @@ viewPath baseUri path =
                     li []
                         [ a
                             [ href (uriFromNameid baseUri p.nameid) ]
-                            --,onClickPD (NodeClicked p.nameid), attribute "target" "_self" ]
                             [ div [ classList [ ( "has-text-weight-bold", i == 0 ) ] ] [ text p.name ] ]
                         ]
 

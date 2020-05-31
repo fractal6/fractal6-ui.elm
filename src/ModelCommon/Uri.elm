@@ -12,7 +12,7 @@ module ModelCommon.Uri exposing
     , uriFromUsername
     )
 
-import Array
+import Array exposing (Array)
 import Fractal.Enum.NodeType as NodeType
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
@@ -52,7 +52,7 @@ type alias NodeFocus =
 
 
 type alias NodePath =
-    Array.Array { nidjs : String, nameid : String, name : String }
+    Array { nidjs : String, nameid : String, name : String }
 
 
 toString : FractalBaseRoute -> String
