@@ -15,7 +15,6 @@ import Pages.Login
 import Pages.Logout
 import Pages.NotFound
 import Pages.Signup
-import Pages.Test.Testa
 import Pages.O.Dynamic
 import Pages.User.Dynamic
 import Pages.O.Dynamic.Dynamic
@@ -32,7 +31,6 @@ type Model
     | Logout_Model Pages.Logout.Model
     | NotFound_Model Pages.NotFound.Model
     | Signup_Model Pages.Signup.Model
-    | Test_Testa_Model Pages.Test.Testa.Model
     | O_Dynamic_Model Pages.O.Dynamic.Model
     | User_Dynamic_Model Pages.User.Dynamic.Model
     | O_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Model
@@ -45,7 +43,6 @@ type Msg
     | Logout_Msg Pages.Logout.Msg
     | NotFound_Msg Pages.NotFound.Msg
     | Signup_Msg Pages.Signup.Msg
-    | Test_Testa_Msg Pages.Test.Testa.Msg
     | O_Dynamic_Msg Pages.O.Dynamic.Msg
     | User_Dynamic_Msg Pages.User.Dynamic.Msg
     | O_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Msg
@@ -69,7 +66,6 @@ type alias UpgradedPages =
     , logout : UpgradedPage Pages.Logout.Flags Pages.Logout.Model Pages.Logout.Msg
     , notFound : UpgradedPage Pages.NotFound.Flags Pages.NotFound.Model Pages.NotFound.Msg
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
-    , test_testa : UpgradedPage Pages.Test.Testa.Flags Pages.Test.Testa.Model Pages.Test.Testa.Msg
     , o_dynamic : UpgradedPage Pages.O.Dynamic.Flags Pages.O.Dynamic.Model Pages.O.Dynamic.Msg
     , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
     , o_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Msg
@@ -84,7 +80,6 @@ pages =
     , logout = Pages.Logout.page |> Page.upgrade Logout_Model Logout_Msg
     , notFound = Pages.NotFound.page |> Page.upgrade NotFound_Model NotFound_Msg
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
-    , test_testa = Pages.Test.Testa.page |> Page.upgrade Test_Testa_Model Test_Testa_Msg
     , o_dynamic = Pages.O.Dynamic.page |> Page.upgrade O_Dynamic_Model O_Dynamic_Msg
     , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
     , o_dynamic_dynamic = Pages.O.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Msg
@@ -113,9 +108,6 @@ init route =
         
         Route.Signup ->
             pages.signup.init ()
-        
-        Route.Test_Testa ->
-            pages.test_testa.init ()
         
         Route.O_Dynamic params ->
             pages.o_dynamic.init params
@@ -151,9 +143,6 @@ update bigMsg bigModel =
         
         ( Signup_Msg msg, Signup_Model model ) ->
             pages.signup.update msg model
-        
-        ( Test_Testa_Msg msg, Test_Testa_Model model ) ->
-            pages.test_testa.update msg model
         
         ( O_Dynamic_Msg msg, O_Dynamic_Model model ) ->
             pages.o_dynamic.update msg model
@@ -192,9 +181,6 @@ bundle bigModel =
         
         Signup_Model model ->
             pages.signup.bundle model
-        
-        Test_Testa_Model model ->
-            pages.test_testa.bundle model
         
         O_Dynamic_Model model ->
             pages.o_dynamic.bundle model

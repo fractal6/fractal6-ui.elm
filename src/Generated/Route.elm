@@ -14,7 +14,6 @@ type Route
     | Logout
     | NotFound
     | Signup
-    | Test_Testa
     | O_Dynamic { param1 : String }
     | User_Dynamic { param1 : String }
     | O_Dynamic_Dynamic { param1 : String, param2 : String }
@@ -34,7 +33,6 @@ routes =
         , Parser.map Logout (Parser.s "logout")
         , Parser.map NotFound (Parser.s "not-found")
         , Parser.map Signup (Parser.s "signup")
-        , Parser.map Test_Testa (Parser.s "test" </> Parser.s "testa")
         , (Parser.s "o" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map O_Dynamic
@@ -70,9 +68,6 @@ toHref route =
                 
                 Signup ->
                     [ "signup" ]
-                
-                Test_Testa ->
-                    [ "test", "testa" ]
                 
                 O_Dynamic { param1 } ->
                     [ "o", param1 ]

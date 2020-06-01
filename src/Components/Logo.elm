@@ -9,17 +9,15 @@ import Svg.Attributes exposing (..)
 
 
 -- Viewer
-
-
-logo_ : Html msg
-logo_ =
-    img
-        [ Attr.src Asset.logo
-        , Attr.width 64
-        , Attr.height 64
-        , Attr.alt "Home"
-        ]
-        []
+--logo : Html msg
+--logo =
+--    img
+--        [ Attr.src Asset.logo
+--        , Attr.width 64
+--        , Attr.height 64
+--        , Attr.alt "Home"
+--        ]
+--        []
 
 
 logo : Html msg
