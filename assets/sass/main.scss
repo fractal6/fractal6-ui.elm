@@ -301,21 +301,41 @@ html.has-modal-active {
     color: #24292e !important;
     background-color: #fff9d8a3 !important;
 
-    & a,
+    & .table.is-fullwidth {
+        flex-grow: 1;
+        flex-shrink: 1;
+        display: inline-table;
+    }
+
+    & thead th,
+    & thead td {
+        color: #acb6c1 !important;
+    }
+    & tbody th,
+    & tbody td {
+        border: 0 !important;
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+        color: #24292e !important;
+    }
+
+    & a, tr,
     & div,
     & span {
         color: #24292e !important;
         background-color: #fff9d880 !important;
-        line-height: 1.4;
-        font-size: 0.775rem;
+        line-height: 1.4 !important;
+        font-size: 0.775rem !important;
     }
 
     & a:hover,& a:focus,
+    & tr:hover,& tr:focus,
     & span:hover,&  span:focus {
         background-color: #eee9d8 !important;
     }
 
      & a.is-active,
+     & tr.is-active,
      & span.is-active {
         background-color: #d5ceb5 !important;
     }

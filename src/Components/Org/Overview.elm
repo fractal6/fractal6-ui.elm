@@ -13,7 +13,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -704,25 +704,40 @@ viewSearchBar nodes maybePath qs =
                                             else
                                                 ""
                                     in
-                                    a
-                                        [ class ("dropdown-item" ++ isSelected)
-                                        , href (uriFromNameid OverviewBaseUri n.nameid)
-                                        ]
-                                        [ text n.name ]
+                                    --a
+                                    --    [
+                                    --    , href (uriFromNameid OverviewBaseUri n.nameid)
+                                    --    ]
+                                    tr [ class ("drpdwn-item" ++ isSelected) ] <|
+                                        [ th [] [ text n.name ] ]
+                                            ++ (case n.type_ of
+                                                    NodeType.Circle ->
+                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "" |> text ]
+                                                        ]
+
+                                                    NodeType.Role ->
+                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
+                                                        ]
+                                               )
                                 )
                             |> Array.toList
-                            |> div [ class "dropdown-content" ]
+                            |> tbody []
+                            |> List.singleton
+                            |> List.append [ thead [] [ tr [] [ th [] [ text "Name" ], th [] [ text "Circle" ], th [] [ text "First Link" ] ] ] ]
+                            |> div [ class "dropdown-content table is-fullwidth" ]
                         ]
-                    ]
-                , div [ class "control" ]
-                    [ div
-                        [ class "button is-small is-info _modalTrigger_"
-                        , attribute "data-modal" "actionModal"
-                        , onClick (DoNodeAction node_)
-                        ]
-                        [ span [ class "has-text-weight-semibold" ] [ last.name |> text ] -- Node name
-                        , span [ class "fa-stack  ellipsisArt" ]
-                            [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                    , div [ class "control" ]
+                        [ div
+                            [ class "button is-small is-info _modalTrigger_"
+                            , attribute "data-modal" "actionModal"
+                            , onClick (DoNodeAction node_)
+                            ]
+                            [ span [ class "has-text-weight-semibold" ] [ last.name |> text ] -- Node name
+                            , span [ class "fa-stack  ellipsisArt" ]
+                                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                            ]
                         ]
                     ]
                 ]

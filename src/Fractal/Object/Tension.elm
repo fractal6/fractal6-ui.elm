@@ -4,6 +4,7 @@
 
 module Fractal.Object.Tension exposing (..)
 
+import Fractal.Enum.TensionAction
 import Fractal.Enum.TensionType
 import Fractal.InputObject
 import Fractal.Interface
@@ -109,6 +110,11 @@ labels fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "labels" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+action : SelectionSet (Maybe Fractal.Enum.TensionAction.TensionAction) Fractal.Object.Tension
+action =
+    Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
 
 
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension

@@ -46,6 +46,15 @@ deleteNode requiredArgs object_ =
     Object.selectionForCompositeField "deleteNode" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeFilter ] object_ (identity >> Decode.nullable)
 
 
+type alias AddNodeCharachRequiredArguments =
+    { input : List Fractal.InputObject.AddNodeCharachInput }
+
+
+addNodeCharach : AddNodeCharachRequiredArguments -> SelectionSet decodesTo Fractal.Object.AddNodeCharachPayload -> SelectionSet (Maybe decodesTo) RootMutation
+addNodeCharach requiredArgs object_ =
+    Object.selectionForCompositeField "addNodeCharach" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddNodeCharachInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+
+
 type alias UpdatePostRequiredArguments =
     { input : Fractal.InputObject.UpdatePostInput }
 

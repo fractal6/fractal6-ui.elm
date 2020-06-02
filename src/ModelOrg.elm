@@ -2,6 +2,7 @@ module ModelOrg exposing (..)
 
 import Debug
 import Dict exposing (Dict)
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionOrderable as TensionOrderable
@@ -469,6 +470,7 @@ newMemberInputEncoder post targetid =
             , name = "Guest"
             , rootnameid = targetid
             , isRoot = False
+            , charach = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
             }
 
         nodeOptional =

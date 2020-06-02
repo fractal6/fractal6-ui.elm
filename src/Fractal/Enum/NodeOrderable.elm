@@ -9,8 +9,8 @@ import Json.Decode as Decode exposing (Decoder)
 
 type NodeOrderable
     = CreatedAt
-    | Nameid
     | Name
+    | Nameid
     | Rootnameid
     | N_tensions_out
     | N_tensions_in
@@ -20,7 +20,7 @@ type NodeOrderable
 
 list : List NodeOrderable
 list =
-    [ CreatedAt, Nameid, Name, Rootnameid, N_tensions_out, N_tensions_in, N_children, Skills ]
+    [ CreatedAt, Name, Nameid, Rootnameid, N_tensions_out, N_tensions_in, N_children, Skills ]
 
 
 decoder : Decoder NodeOrderable
@@ -32,11 +32,11 @@ decoder =
                     "createdAt" ->
                         Decode.succeed CreatedAt
 
-                    "nameid" ->
-                        Decode.succeed Nameid
-
                     "name" ->
                         Decode.succeed Name
+
+                    "nameid" ->
+                        Decode.succeed Nameid
 
                     "rootnameid" ->
                         Decode.succeed Rootnameid
@@ -66,11 +66,11 @@ toString enum =
         CreatedAt ->
             "createdAt"
 
-        Nameid ->
-            "nameid"
-
         Name ->
             "name"
+
+        Nameid ->
+            "nameid"
 
         Rootnameid ->
             "rootnameid"
@@ -105,11 +105,11 @@ fromString enumString =
         "createdAt" ->
             Just CreatedAt
 
-        "nameid" ->
-            Just Nameid
-
         "name" ->
             Just Name
+
+        "nameid" ->
+            Just Nameid
 
         "rootnameid" ->
             Just Rootnameid

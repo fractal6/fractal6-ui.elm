@@ -91,14 +91,14 @@ type_ =
     Object.selectionForField "Enum.NodeType.NodeType" "type_" [] Fractal.Enum.NodeType.decoder
 
 
-nameid : SelectionSet String Fractal.Object.Node
-nameid =
-    Object.selectionForField "String" "nameid" [] Decode.string
-
-
 name : SelectionSet String Fractal.Object.Node
 name =
     Object.selectionForField "String" "name" [] Decode.string
+
+
+nameid : SelectionSet String Fractal.Object.Node
+nameid =
+    Object.selectionForField "String" "nameid" [] Decode.string
 
 
 rootnameid : SelectionSet String Fractal.Object.Node
@@ -227,3 +227,8 @@ skills =
 role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.Node
 role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
+
+
+charach : SelectionSet decodesTo Fractal.Object.NodeCharach -> SelectionSet decodesTo Fractal.Object.Node
+charach object_ =
+    Object.selectionForCompositeField "charach" [] object_ identity

@@ -17,6 +17,10 @@ type AddMandatePayload
     = AddMandatePayload
 
 
+type AddNodeCharachPayload
+    = AddNodeCharachPayload
+
+
 type AddNodePayload
     = AddNodePayload
 
@@ -75,6 +79,10 @@ type Mandate
 
 type Node
     = Node
+
+
+type NodeCharach
+    = NodeCharach
 
 
 type Post

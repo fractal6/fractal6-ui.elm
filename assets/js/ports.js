@@ -12,11 +12,11 @@ window.addEventListener('load', _ => {
                 gp: Object.create(GraphPack),
                 // QuickSearch
                 qs: new MiniSearch({
-                    fields: ['name'], //first_link...
+                    fields: ['name', 'first_link'],
                     storeFields: ['nameid'],
                     searchOptions: {
-                        boost: { title: 2 },
-                        fuzzy: 0.2
+                        fuzzy: 0.2,
+                        boost: { name: 2 },
                     }
                 })
             };
@@ -67,9 +67,14 @@ const actions = {
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qs;
         var nodes = session.gp.nodesDict;
-        var res = qs.search(pattern, {prefix:true}).map(n =>
-            nodes[n.nameid].data
-        );
+        var res = qs.search(pattern, {prefix:true}).slice(0,10).map(n => {
+            var d = nodes[n.nameid].data;
+            return d
+            //return {
+            //    ...d,
+            //    firstLink: (d.first_link)? d.first_link.username : ""
+            //}
+        });
         app.ports.lookupFromJs.send(res);
     },
     //

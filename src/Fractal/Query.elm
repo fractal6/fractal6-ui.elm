@@ -59,6 +59,25 @@ queryNode fillInOptionals object_ =
     Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias QueryNodeCharachOptionalArguments =
+    { first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryNodeCharach : (QueryNodeCharachOptionalArguments -> QueryNodeCharachOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharach -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNodeCharach fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryNodeCharach" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
 type alias GetPostRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
