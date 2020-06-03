@@ -396,7 +396,7 @@ addOneTension uctx tension source target msg =
     --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addTension
-            (tensionInputEncoder uctx tension source target)
+            (addTensionInputEncoder uctx tension source target)
             (SelectionSet.map AddTensionPayload <|
                 Fractal.Object.AddTensionPayload.tension identity <|
                     (SelectionSet.succeed IdPayload
@@ -407,8 +407,8 @@ addOneTension uctx tension source target msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-tensionInputEncoder : UserCtx -> Post -> Node -> Node -> Mutation.AddTensionRequiredArguments
-tensionInputEncoder uctx post source target =
+addTensionInputEncoder : UserCtx -> Post -> Node -> Node -> Mutation.AddTensionRequiredArguments
+addTensionInputEncoder uctx post source target =
     let
         title =
             Dict.get "title" post |> withDefault ""
@@ -459,6 +459,69 @@ tensionInputEncoder uctx post source target =
 
 type alias AddNodePayload =
     { node : Maybe (List (Maybe IdPayload)) }
+
+
+
+-- New circle
+
+
+addOneCircle uctx post source target msg =
+    --@DEBUG: Infered type...
+    makeGQLMutation
+        (Mutation.addNode
+            (addCircleInputEncoder uctx post source target)
+            (SelectionSet.map AddNodePayload <|
+                Fractal.Object.AddNodePayload.node identity <|
+                    (SelectionSet.succeed IdPayload
+                        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
+
+
+addCircleInputEncoder : UserCtx -> Post -> Node -> Node -> Mutation.AddNodeRequiredArguments
+addCircleInputEncoder uctx post source target =
+    let
+        createdAt =
+            Dict.get "createdAt" post |> withDefault ""
+
+        nameid =
+            Dict.get "nameid" post |> withDefault ""
+
+        name =
+            Dict.get "name" post |> withDefault ""
+
+        -- @TODO mandata !
+        nodeRequired =
+            { createdAt = createdAt |> Fractal.Scalar.DateTime
+            , createdBy =
+                Input.buildUserRef
+                    (\u -> { u | username = OptionalArgument.Present uctx.username })
+            , type_ = NodeType.Circle
+            , nameid = nameid
+            , name = name
+            , rootnameid = target.rootnameid
+            , isRoot = False
+            , charach = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
+            }
+
+        nodeOptional =
+            \n ->
+                { n
+                    | parent =
+                        Input.buildNodeRef
+                            (\p -> { p | nameid = OptionalArgument.Present target.rootnameid })
+                            |> OptionalArgument.Present
+                }
+    in
+    { input =
+        [ Input.buildAddNodeInput nodeRequired nodeOptional ]
+    }
+
+
+
+-- New member
 
 
 addNewMember uctx post targetid msg =

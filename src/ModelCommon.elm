@@ -65,6 +65,7 @@ type UserState
 type ActionState
     = ActionChoice Node
     | AddTension (TensionStep TensionForm)
+    | AddCircle (CircleStep CircleForm)
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
@@ -76,14 +77,34 @@ type ActionState
 
 
 type TensionStep form
-    = TensionTypeForm form
-    | TensionSourceForm form (List UserRole)
-    | TensionFinalForm form
+    = TensionInit form
+    | TensionSource form (List UserRole)
+    | TensionFinal form
     | TensionValidation (GqlData (Maybe AddTensionPayload))
     | TensionNotAuthorized ErrorData
 
 
 type alias TensionForm =
+    { user : UserCtx
+    , source : Maybe Node
+    , target : Node
+    , post : Post
+    }
+
+
+
+-- Circle Form
+
+
+type CircleStep form
+    = CircleInit form
+    | CircleSource form (List UserRole)
+    | CircleFinal form
+    | CircleValidation (GqlData (Maybe AddNodePayload))
+    | CircleNotAuthorized ErrorData
+
+
+type alias CircleForm =
     { user : UserCtx
     , source : Maybe Node
     , target : Node
