@@ -20,7 +20,7 @@ import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (NodeFocus, NodePath)
-import ModelOrg exposing (..)
+import ModelSchema exposing (..)
 import Ports
 import Process
 import QuickSearch as Qsearch

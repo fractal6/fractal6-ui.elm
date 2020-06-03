@@ -14,8 +14,8 @@ port module Ports exposing
 
 import Dict exposing (Dict)
 import Json.Encode as JE
-import ModelCommon exposing (UserCtx, graphPackEncoder, userEncoder)
-import ModelOrg exposing (NodesData)
+import ModelCommon exposing (graphPackEncoder, userEncoder)
+import ModelSchema exposing (NodesData, UserCtx)
 
 
 

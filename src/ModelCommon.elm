@@ -12,7 +12,7 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodeFocus, NodePath)
-import ModelOrg exposing (..)
+import ModelSchema exposing (..)
 import QuickSearch as Qsearch
 import Url exposing (Url)
 
@@ -47,35 +47,13 @@ type alias NodesQuickSearch =
 
 
 --
--- User
+-- User State
 --
 
 
 type UserState
     = LoggedOut
     | LoggedIn UserCtx
-
-
-type alias UserCtx =
-    { username : String
-    , name : Maybe String
-    , rights : UserRights
-    , roles : List UserRole
-    }
-
-
-type alias UserRights =
-    { canLogin : Bool
-    , canCreateRoot : Bool
-    }
-
-
-type alias UserRole =
-    { rootnameid : String
-    , nameid : String
-    , name : String
-    , role_type : RoleType.RoleType
-    }
 
 
 
@@ -85,40 +63,32 @@ type alias UserRole =
 
 
 type ActionState
-    = Ask (ActionStep Node) -- Node actions
+    = ActionChoice Node
+    | AddTension (TensionStep TensionForm)
     | JoinOrga (JoinStep JoinOrgaForm)
+    | ActionAuthNeeded
     | AskErr String
     | NotAsk
-
-
-type
-    ActionStep target
-    -- Actions shows up in a Modal
-    = FirstStep target -- Pick an actions
-    | AddTensionStep TensionForm -- AskNewTension
-    | ActionAuthNeeded
 
 
 
 -- Tension Form
 
 
+type TensionStep form
+    = TensionTypeForm form
+    | TensionSourceForm form (List UserRole)
+    | TensionFinalForm form
+    | TensionValidation (GqlData (Maybe AddTensionPayload))
+    | TensionNotAuthorized ErrorData
+
+
 type alias TensionForm =
-    { step : TensionStep
-    , post : Post
-    , result : GqlData (Maybe AddTensionPayload)
+    { user : UserCtx
     , source : Maybe Node
     , target : Node
-    , user : UserCtx
+    , post : Post
     }
-
-
-type TensionStep
-    = TensionTypeForm
-    | TensionSourceForm (List UserRole)
-    | TensionFinalForm (Maybe UserRole)
-    | TensionValidation
-    | TensionNotAuthorized ErrorData
 
 
 
@@ -161,10 +131,10 @@ getNodeName oData nameid =
 
 
 
---
 -- Json Decoders/Encoders
---
--- User decoder/encoder
+{-
+   User decoder/encoder
+-}
 
 
 userDecoder : JD.Decoder UserCtx
@@ -218,7 +188,9 @@ userEncoder userCtx =
 
 
 
--- GraphPack and Nodes Encoder
+{-
+   Nodes Encoder/Decoder
+-}
 
 
 graphPackEncoder : NodesData -> String -> JE.Value
@@ -249,7 +221,7 @@ nodeEncoder node =
 
 
 
--- Json encoder/decoder --When receiving data from Javascript
+-- Node decoder --When receiving data from Javascript
 
 
 nodeDecoder : JD.Decoder Node

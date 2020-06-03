@@ -23,7 +23,7 @@ import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelOrg exposing (..)
+import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Process
@@ -153,13 +153,15 @@ type Msg
     | GotTensions (GqlData TensionsData) -- graphql
       -- Nodes Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
-    | DoTensionTypeForm
+    | DoTensionTypeForm Node
     | DoTensionSourceForm String -- <- {tensionType}
     | DoTensionFinalForm Node -- <- {source}
     | ChangeTensionPost String String -- {field value}
     | Submit (Time.Posix -> Msg) -- Get Current Time
     | SubmitTension TensionForm Time.Posix -- Send form
     | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode better to get IdPayload
+      --| DoNewRoleForm
+      --| DoNewCIrcleForm
       -- JoinOrga Actions
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData (Maybe AddNodePayload))
@@ -316,98 +318,90 @@ update global msg model =
                 newAction =
                     case node_ of
                         Ok node ->
-                            Ask <| FirstStep node
+                            ActionChoice node
 
                         Err err ->
                             AskErr err
             in
             ( { model | node_action = newAction }, Global.send DoOpenModal, Cmd.none )
 
-        DoTensionTypeForm ->
+        DoTensionTypeForm node ->
             let
-                user =
-                    global.session.user
+                form =
+                    { user = UserCtx "" Nothing (UserRights False False) []
+                    , source = Nothing
+                    , target = node
+                    , post = Dict.empty
+                    }
 
-                newModel =
-                    updateTensionStep model user TensionTypeForm Nothing
+                newStep =
+                    TensionTypeForm form
             in
-            ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
+            ( { model | node_action = AddTension newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
 
         DoTensionSourceForm tensionType ->
-            let
-                maybeForm =
-                    updateTensionPost model "type_" tensionType
+            case global.session.user of
+                LoggedOut ->
+                    ( { model | node_action = ActionAuthNeeded }, Cmd.none, Cmd.none )
 
-                nextStepForm =
-                    maybeForm
-                        |> Maybe.map
-                            (\form ->
-                                case form.user.roles of
-                                    [] ->
-                                        ( TensionNotAuthorized [ "You are not a member of this organisation.", "Please, Join this organisation to be able to create a tension." ]
-                                        , maybeForm
-                                        )
+                LoggedIn uctx ->
+                    case model.node_action of
+                        AddTension (TensionTypeForm form) ->
+                            let
+                                newForm =
+                                    { form | user = uctx, post = Dict.insert "type_" tensionType form.post }
 
-                                    [ r ] ->
-                                        ( TensionFinalForm (Just r)
-                                        , maybeForm
-                                            |> Maybe.map
-                                                (\f ->
-                                                    { f | source = Just (nodeSourceFromRole r) }
-                                                )
-                                        )
+                                newStep =
+                                    case uctx.roles of
+                                        [] ->
+                                            TensionNotAuthorized [ "You are not a member of this organisation.", "Please, Join this organisation to be able to create a tension." ]
 
-                                    roles ->
-                                        ( TensionSourceForm roles
-                                        , maybeForm
-                                        )
-                            )
-                        |> withDefault ( TensionTypeForm, Nothing )
+                                        [ r ] ->
+                                            let
+                                                newForm2 =
+                                                    { newForm | source = Just (nodeSourceFromRole r) }
+                                            in
+                                            TensionFinalForm newForm2
 
-                nextStep =
-                    Tuple.first nextStepForm
+                                        roles ->
+                                            TensionSourceForm newForm roles
+                            in
+                            ( { model | node_action = AddTension newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                mForm =
-                    Tuple.second nextStepForm
-
-                user =
-                    global.session.user
-
-                newModel =
-                    updateTensionStep model user nextStep mForm
-            in
-            ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
+                        other ->
+                            ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         DoTensionFinalForm source ->
-            let
-                maybeForm =
-                    getTensionForm model
-                        |> Maybe.map
-                            (\f ->
-                                { f | source = Just source }
-                            )
+            case model.node_action of
+                AddTension (TensionSourceForm form roles) ->
+                    let
+                        newForm =
+                            { form | source = Just source }
+                    in
+                    ( { model | node_action = AddTension <| TensionFinalForm form }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                user =
-                    global.session.user
-
-                newModel =
-                    updateTensionStep model user (TensionFinalForm Nothing) maybeForm
-            in
-            ( newModel, Cmd.none, Ports.bulma_driver "actionModal" )
+                other ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeTensionPost field value ->
-            let
-                maybeForm =
-                    updateTensionPost model field value
+            case model.node_action of
+                AddTension (TensionFinalForm form) ->
+                    let
+                        newForm =
+                            { form | post = Dict.insert field value form.post }
+                    in
+                    ( { model | node_action = AddTension <| TensionFinalForm newForm }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                user =
-                    global.session.user
+                other ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-                newModel =
-                    updateTensionStep model user (TensionFinalForm Nothing) maybeForm
-            in
-            -- No need to reactivate the Bulma drivers here.
-            ( newModel, Cmd.none, Cmd.none )
+        TensionAck result ->
+            case model.node_action of
+                AddTension (TensionFinalForm form) ->
+                    ( { model | node_action = AddTension <| TensionValidation result }, Cmd.none, Ports.bulma_driver "actionModal" )
+
+                other ->
+                    ( { model | node_action = AskErr "Tension adding method implemented" }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -419,27 +413,10 @@ update global msg model =
             in
             case form.source of
                 Just source ->
-                    ( model, addOneTension post source form.target TensionAck, Cmd.none )
+                    ( model, addOneTension form.user post source form.target TensionAck, Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
-
-        TensionAck result ->
-            let
-                maybeForm =
-                    getTensionForm model
-                        |> Maybe.map
-                            (\f ->
-                                { f | result = result }
-                            )
-
-                user =
-                    global.session.user
-
-                newModel =
-                    updateTensionStep model user TensionValidation maybeForm
-            in
-            ( newModel, Cmd.none, Cmd.none )
 
         NodeClicked nameid ->
             ( model
@@ -469,15 +446,12 @@ update global msg model =
                             }
 
                         post =
-                            Dict.fromList
-                                [ ( "createdAt", fromTime time )
-                                , ( "username", uctx.username )
-                                ]
+                            Dict.fromList [ ( "createdAt", fromTime time ) ]
 
                         newModel =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
-                    ( newModel, Cmd.batch [ addNewMember post rootnameid JoinAck, Global.send DoOpenModal ], Cmd.none )
+                    ( newModel, Cmd.batch [ addNewMember uctx post rootnameid JoinAck, Global.send DoOpenModal ], Cmd.none )
 
         JoinAck result ->
             case model.node_action of
@@ -704,11 +678,10 @@ viewSearchBar nodes maybePath qs =
                                             else
                                                 ""
                                     in
-                                    --a
-                                    --    [
-                                    --    , href (uriFromNameid OverviewBaseUri n.nameid)
-                                    --    ]
-                                    tr [ class ("drpdwn-item" ++ isSelected) ] <|
+                                    --a [ href (uriFromNameid OverviewBaseUri n.nameid) ]
+                                    tr
+                                        [ class ("drpdwn-item" ++ isSelected), onClick (NodeClicked n.nameid) ]
+                                    <|
                                         [ th [] [ text n.name ] ]
                                             ++ (case n.type_ of
                                                     NodeType.Circle ->
@@ -977,17 +950,8 @@ setupActionModal global model =
             []
         , div [ class "modal-content" ]
             [ case model.node_action of
-                Ask step ->
-                    viewActionStep step
-
-                JoinOrga step ->
-                    viewJoinOrgaStep model step
-
-                NotAsk ->
-                    text ""
-
-                AskErr err ->
-                    viewErrors [ err ]
+                action ->
+                    viewActionStep model action
             ]
         , button
             [ classList
@@ -1000,13 +964,10 @@ setupActionModal global model =
         ]
 
 
-viewActionStep : ActionStep Node -> Html Msg
-viewActionStep step =
-    case step of
-        ActionAuthNeeded ->
-            viewAuthNeeded
-
-        FirstStep node ->
+viewActionStep : Model -> ActionState -> Html Msg
+viewActionStep model action =
+    case action of
+        ActionChoice node ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
                     [ div [ class "card-header-title" ] <|
@@ -1020,24 +981,36 @@ viewActionStep step =
                 , div [ class "card-content" ]
                     [ div [ class "level" ] <|
                         if node.type_ == NodeType.Circle then
-                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionTypeForm ] [ text "New tension" ] ]
-                            , div [ class "level-item" ] [ div [ class "button is-info" ] [ text "New Role" ] ]
-                            , div [ class "level-item" ] [ div [ class "button is-link" ] [ text "New Sub-Circle" ] ]
+                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick (DoTensionTypeForm node) ] [ text "New Tension" ] ]
+                            , div [ class "level-item" ] [ div [ class "button is-info", onClick (DoTensionTypeForm node) ] [ text "New Role" ] ]
+                            , div [ class "level-item" ] [ div [ class "button is-link", onClick (DoTensionTypeForm node) ] [ text "New Sub-Circle" ] ]
                             ]
 
                         else
-                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick DoTensionTypeForm ] [ text "New tension" ] ] ]
+                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick (DoTensionTypeForm node) ] [ text "New Tension" ] ] ]
                     ]
                 ]
 
-        AddTensionStep form ->
-            viewTensionStep form
+        AddTension step ->
+            viewTensionStep step
+
+        JoinOrga step ->
+            viewJoinOrgaStep model.orga_data step
+
+        NotAsk ->
+            text ""
+
+        AskErr err ->
+            viewErrors [ err ]
+
+        ActionAuthNeeded ->
+            viewAuthNeeded
 
 
-viewTensionStep : TensionForm -> Html Msg
-viewTensionStep form =
-    case form.step of
-        TensionTypeForm ->
+viewTensionStep : TensionStep TensionForm -> Html Msg
+viewTensionStep step =
+    case step of
+        TensionTypeForm form ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
                     [ div [ class "card-header-title" ]
@@ -1064,7 +1037,7 @@ viewTensionStep form =
                     ]
                 ]
 
-        TensionSourceForm roles ->
+        TensionSourceForm form roles ->
             div [ class "card" ]
                 [ div [ class "card-header" ]
                     [ div [ class "card-header-title" ]
@@ -1089,10 +1062,10 @@ viewTensionStep form =
                     ]
                 ]
 
-        TensionFinalForm maybeRole ->
+        TensionFinalForm form ->
             let
                 source =
-                    form.source |> withDefault (nodeSourceFromRole (maybeRole |> withDefault (UserRole "" "" "" RoleType.Guest)))
+                    form.source |> withDefault (nodeSourceFromRole (UserRole "" "" "" RoleType.Guest))
 
                 isSendable =
                     isTensionSendable form
@@ -1155,8 +1128,8 @@ viewTensionStep form =
                     ]
                 ]
 
-        TensionValidation ->
-            case form.result of
+        TensionValidation result ->
+            case result of
                 Success _ ->
                     div [ class "box has-background-success" ] [ text "Tension added." ]
 
@@ -1171,8 +1144,8 @@ viewTensionStep form =
             viewErrors errMsg
 
 
-viewJoinOrgaStep : Model -> JoinStep JoinOrgaForm -> Html Msg
-viewJoinOrgaStep model step =
+viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
             -- @TODO: slowRemoteLoading
@@ -1187,7 +1160,7 @@ viewJoinOrgaStep model step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName model.orga_data form.rootnameid |> text ]
+                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName orga form.rootnameid |> text ]
 
                 Failure err ->
                     viewErrors err
@@ -1204,77 +1177,6 @@ viewJoinOrgaStep model step =
 -- Setters
 
 
-initTensionForm : String -> UserCtx -> Node -> TensionForm
-initTensionForm rootnameid uctx node =
-    let
-        -- filter role that are not in this orga
-        roles =
-            uctx.roles |> List.filter (\r -> r.rootnameid == rootnameid)
-    in
-    { step = TensionTypeForm
-    , post = Dict.fromList [ ( "username", uctx.username ) ]
-    , result = NotAsked
-    , source = Nothing
-    , target = node
-    , user = { uctx | roles = roles } -- with role filtered out (inner orga only)
-    }
-
-
-updateTensionStep : Model -> UserState -> TensionStep -> Maybe TensionForm -> Model
-updateTensionStep model user newStep maybeForm =
-    let
-        rootnameid =
-            model.node_focus.rootnameid
-
-        newAction =
-            case model.node_action of
-                Ask step ->
-                    Ask <|
-                        case step of
-                            FirstStep target ->
-                                -- TensionStep is ignored here. We reinitialized to the first step.
-                                case user of
-                                    LoggedIn uctx ->
-                                        AddTensionStep (initTensionForm rootnameid uctx target)
-
-                                    LoggedOut ->
-                                        ActionAuthNeeded
-
-                            AddTensionStep form ->
-                                let
-                                    newForm =
-                                        case maybeForm of
-                                            Just aform ->
-                                                { aform | step = newStep }
-
-                                            Nothing ->
-                                                { form | step = newStep }
-                                in
-                                AddTensionStep newForm
-
-                            default ->
-                                default
-
-                default ->
-                    default
-    in
-    { model | node_action = newAction }
-
-
-updateTensionPost : Model -> String -> String -> Maybe TensionForm
-updateTensionPost model field value =
-    case getTensionForm model of
-        Just form ->
-            Just { form | post = Dict.insert field value form.post }
-
-        Nothing ->
-            Nothing
-
-
-
--- Getters
-
-
 isTensionSendable : TensionForm -> Bool
 isTensionSendable form =
     let
@@ -1285,18 +1187,3 @@ isTensionSendable form =
             String.length title > 0
     in
     isSendable
-
-
-getTensionForm : Model -> Maybe TensionForm
-getTensionForm model =
-    case model.node_action of
-        Ask step ->
-            case step of
-                AddTensionStep form ->
-                    Just form
-
-                default ->
-                    Nothing
-
-        default ->
-            Nothing

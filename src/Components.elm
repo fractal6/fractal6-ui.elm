@@ -12,7 +12,7 @@ layout { page, session } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Navbar.viewNavbar session -- page.route / current route ?
+            [ Navbar.viewNavbar session.user -- page.route / current route ?
             , div [ id "body", class "section is-paddingless" ] page.body
             ]
         ]

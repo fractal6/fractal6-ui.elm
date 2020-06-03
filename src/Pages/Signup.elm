@@ -12,7 +12,7 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelOrg exposing (..)
+import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process
 import RemoteData exposing (RemoteData)

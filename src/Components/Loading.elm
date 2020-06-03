@@ -8,7 +8,7 @@ import Html exposing (Html, a, div, img, p, text)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Http
 import Json.Decode as JD
-import ModelOrg exposing (ErrorData)
+import ModelSchema exposing (ErrorData)
 import RemoteData exposing (RemoteData)
 
 

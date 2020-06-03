@@ -7,8 +7,9 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserRole, UserState(..))
+import ModelCommon exposing (UserState(..))
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodePath, uriFromNameid)
+import ModelSchema exposing (UserRole)
 
 
 view : FractalBaseRoute -> UserState -> Maybe NodePath -> msg -> Html msg

@@ -1,4 +1,4 @@
-module ModelOrg exposing (..)
+module ModelSchema exposing (..)
 
 import Debug
 import Dict exposing (Dict)
@@ -95,7 +95,35 @@ type alias Post =
    Schema Data Structure (fetch/Query)
 -}
 --
--- Node interface
+-- User
+--
+
+
+type alias UserCtx =
+    { username : String
+    , name : Maybe String
+    , rights : UserRights
+    , roles : List UserRole
+    }
+
+
+type alias UserRights =
+    { canLogin : Bool
+    , canCreateRoot : Bool
+    }
+
+
+type alias UserRole =
+    { rootnameid : String
+    , nameid : String
+    , name : String
+    , role_type : RoleType.RoleType
+    }
+
+
+
+--
+-- Node
 --
 
 
@@ -118,7 +146,7 @@ type alias ParentNode =
 
 
 --
--- Tension interface
+-- Tension
 --
 
 
@@ -364,11 +392,11 @@ type alias AddTensionPayload =
     { tension : Maybe (List (Maybe IdPayload)) }
 
 
-addOneTension tension source target msg =
+addOneTension uctx tension source target msg =
     --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addTension
-            (tensionInputEncoder tension source target)
+            (tensionInputEncoder uctx tension source target)
             (SelectionSet.map AddTensionPayload <|
                 Fractal.Object.AddTensionPayload.tension identity <|
                     (SelectionSet.succeed IdPayload
@@ -379,12 +407,9 @@ addOneTension tension source target msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-tensionInputEncoder : Post -> Node -> Node -> Mutation.AddTensionRequiredArguments
-tensionInputEncoder post source target =
+tensionInputEncoder : UserCtx -> Post -> Node -> Node -> Mutation.AddTensionRequiredArguments
+tensionInputEncoder uctx post source target =
     let
-        username =
-            Dict.get "username" post |> withDefault ""
-
         title =
             Dict.get "title" post |> withDefault ""
 
@@ -398,7 +423,7 @@ tensionInputEncoder post source target =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present username })
+                    (\x -> { x | username = OptionalArgument.Present uctx.username })
             , title = title
             , type_ = type_
             , emitter =
@@ -436,11 +461,11 @@ type alias AddNodePayload =
     { node : Maybe (List (Maybe IdPayload)) }
 
 
-addNewMember post targetid msg =
+addNewMember uctx post targetid msg =
     --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addNode
-            (newMemberInputEncoder post targetid)
+            (newMemberInputEncoder uctx post targetid)
             (SelectionSet.map AddNodePayload <|
                 Fractal.Object.AddNodePayload.node identity <|
                     (SelectionSet.succeed IdPayload
@@ -451,12 +476,9 @@ addNewMember post targetid msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-newMemberInputEncoder : Post -> String -> Mutation.AddNodeRequiredArguments
-newMemberInputEncoder post targetid =
+newMemberInputEncoder : UserCtx -> Post -> String -> Mutation.AddNodeRequiredArguments
+newMemberInputEncoder uctx post targetid =
     let
-        username =
-            Dict.get "username" post |> withDefault ""
-
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
 
@@ -464,9 +486,9 @@ newMemberInputEncoder post targetid =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\u -> { u | username = OptionalArgument.Present username })
+                    (\u -> { u | username = OptionalArgument.Present uctx.username })
             , type_ = NodeType.Role
-            , nameid = guestIdCodec targetid username
+            , nameid = guestIdCodec targetid uctx.username
             , name = "Guest"
             , rootnameid = targetid
             , isRoot = False
@@ -483,7 +505,7 @@ newMemberInputEncoder post targetid =
                             |> OptionalArgument.Present
                     , first_link =
                         Input.buildUserRef
-                            (\u -> { u | username = OptionalArgument.Present username })
+                            (\u -> { u | username = OptionalArgument.Present uctx.username })
                             |> OptionalArgument.Present
                 }
     in

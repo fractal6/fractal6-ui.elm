@@ -4,11 +4,11 @@ import Components.Logo as Logo
 import Generated.Route as Route exposing (Route)
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
-import ModelCommon exposing (..)
+import ModelCommon exposing (UserState(..))
 
 
-viewNavbar : Session -> Html msg
-viewNavbar session =
+viewNavbar : UserState -> Html msg
+viewNavbar user =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar has-shadow is-fixed-top"
@@ -46,16 +46,16 @@ viewNavbar session =
                                 [ text "Contact" ]
                             ]
                         ]
-                    , userButton session
+                    , userButton user
                     ]
                 ]
             ]
         ]
 
 
-userButton : Session -> Html msg
-userButton session =
-    case session.user of
+userButton : UserState -> Html msg
+userButton user =
+    case user of
         LoggedIn uctx ->
             div [ class "navbar-item has-dropdown" ]
                 [ div [ class "navbar-link" ] [ text uctx.username ]
