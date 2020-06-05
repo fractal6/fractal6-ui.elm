@@ -28,8 +28,16 @@ html, body {
     }
 }
 
+
+.help-label {
+  color: $grey !important;
+  display: block !important;
+  font-size: $help-size !important;
+  margin-top: 0.25rem !important;
+  //font-family: bold !important;
+}
 .help {
-  color: $grey-light;
+  color: $grey-light !important;
 }
 
 // Tooltip
@@ -208,7 +216,7 @@ html.has-modal-active {
 
 }
 
-#mainHeader {
+#helperBar {
     background-color: $header-background-color;
     //box-shadow: 0 1px 0 0 #66737378;
 
@@ -486,6 +494,32 @@ html.has-modal-active {
     display: flex;
     visibility: hidden;
 
+    .modal-content {
+        width: 860px;
+    }
+
+    .card {
+        background-color: #eee;
+    }
+
+
+    .modal-card-body {
+        background-color: #fff !important;
+    }
+
+
+    .modal-card-title,
+    .modal-card-head,
+    .modal-card-foot, {
+        background-color: #e5e5e5 !important;
+        border-color: #ccc !important;
+        color: #111;
+    }
+
+    .card-header-title, .label {
+        color: #363636
+    }
+
     &.is-active {
         visibility: visible;
         .modal-background {
@@ -565,6 +599,14 @@ html.has-modal-active {
         }
     }
 
+}
+
+#autoNodeidBox {
+    padding: 0.666rem 1rem 0.666rem 0 !important;
+
+    .input {
+        background-color: #eee !important;
+    }
 }
 
 /*

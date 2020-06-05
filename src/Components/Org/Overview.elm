@@ -5,17 +5,18 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors)
+import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewWarnings)
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra.Events exposing (onEnter, onKeydown, onTab)
+import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
@@ -28,7 +29,6 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Process
-import QuickSearch as Qsearch
 import Task
 import Time
 
@@ -158,14 +158,14 @@ type Msg
       -- AddTension Action
     | DoTensionInit Node -- {target}
     | DoTensionSource String -- {tensionType}
-    | DoTensionFinal Node --  {source}
+    | DoTensionFinal UserRole --  {source}
     | ChangeTensionPost String String -- {field value}
     | SubmitTension TensionForm Time.Posix -- Send form
     | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode better to get IdPayload
       -- AddCircle Action
     | DoCircleInit Node -- {target}
-    | DoCircleSource String -- {nodeMode}
-    | DoCircleFinal Node -- {source}
+    | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
+    | DoCircleFinal UserRole -- {source}
     | ChangeCirclePost String String -- {field value}
     | SubmitCircle CircleForm Time.Posix -- Send form
     | CircleAck (GqlData (Maybe AddNodePayload)) -- decode better to get IdPayload
@@ -363,17 +363,20 @@ update global msg model =
                                 newForm =
                                     { form | user = uctx, post = Dict.insert "type_" tensionType form.post }
 
+                                orgaRoles =
+                                    uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
+
                                 newStep =
-                                    case uctx.roles of
+                                    case orgaRoles of
                                         [] ->
                                             TensionNotAuthorized [ Text.notOrgMember, Text.joinForTension ]
 
                                         [ r ] ->
                                             let
                                                 newForm2 =
-                                                    { newForm | source = Just (nodeSourceFromRole r) }
+                                                    { newForm | source = Just r }
                                             in
-                                            TensionFinal newForm2
+                                            TensionFinal newForm2 NotAsked
 
                                         roles ->
                                             TensionSource newForm roles
@@ -390,30 +393,22 @@ update global msg model =
                         newForm =
                             { form | source = Just source }
                     in
-                    ( { model | node_action = AddTension <| TensionFinal form }, Cmd.none, Ports.bulma_driver "actionModal" )
+                    ( { model | node_action = AddTension <| TensionFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeTensionPost field value ->
             case model.node_action of
-                AddTension (TensionFinal form) ->
+                AddTension (TensionFinal form result) ->
                     let
                         newForm =
                             { form | post = Dict.insert field value form.post }
                     in
-                    ( { model | node_action = AddTension <| TensionFinal newForm }, Cmd.none, Ports.bulma_driver "actionModal" )
+                    ( { model | node_action = AddTension <| TensionFinal newForm result }, Cmd.none, Cmd.none )
 
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
-
-        TensionAck result ->
-            case model.node_action of
-                AddTension (TensionFinal form) ->
-                    ( { model | node_action = AddTension <| TensionValidation result }, Cmd.none, Ports.bulma_driver "actionModal" )
-
-                other ->
-                    ( { model | node_action = AskErr "Query method implemented" }, Cmd.none, Cmd.none )
 
         SubmitTension form time ->
             let
@@ -426,6 +421,14 @@ update global msg model =
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
+
+        TensionAck result ->
+            case model.node_action of
+                AddTension (TensionFinal form _) ->
+                    ( { model | node_action = AddTension <| TensionFinal form result }, Cmd.none, Ports.bulma_driver "actionModal" )
+
+                other ->
+                    ( { model | node_action = AskErr "Query method implemented" }, Cmd.none, Cmd.none )
 
         -- Circle
         DoCircleInit node ->
@@ -440,9 +443,9 @@ update global msg model =
                 newStep =
                     CircleInit form
             in
-            ( { model | node_action = AddCircle newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
+            ( { model | node_action = AddCircle newStep }, Global.send DoCircleSource, Ports.bulma_driver "actionModal" )
 
-        DoCircleSource nodeMode ->
+        DoCircleSource ->
             case global.session.user of
                 LoggedOut ->
                     ( { model | node_action = ActionAuthNeeded }, Cmd.none, Cmd.none )
@@ -452,31 +455,60 @@ update global msg model =
                         AddCircle (CircleInit form) ->
                             let
                                 newForm =
-                                    { form | user = uctx, post = Dict.insert "node_mode" nodeMode form.post }
+                                    { form | user = uctx, post = Dict.insert "node_mode" (NodeMode.toString nodeMode) form.post }
+
+                                orgaRoles =
+                                    uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
+
+                                nodeMode =
+                                    getNodeMode form.target.rootnameid model.orga_data |> withDefault NodeMode.Coordinated
 
                                 newStep =
-                                    case uctx.roles of
+                                    case orgaRoles of
                                         [] ->
                                             CircleNotAuthorized [ Text.notOrgMember, Text.joinForCircle ]
 
                                         roles ->
                                             let
-                                                coordoRoles =
-                                                    roles |> List.filter (\r -> r.nameid == newForm.target.nameid)
+                                                circleRoles =
+                                                    roles |> List.filter (\r -> getParentidFromRole r == newForm.target.nameid)
                                             in
-                                            case coordoRoles of
+                                            case circleRoles of
                                                 [] ->
-                                                    CircleNotAuthorized [ Text.notCircleCoordo, Text.askCoordo ]
+                                                    CircleNotAuthorized [ Text.notCircleMember, Text.askCoordo ]
 
-                                                [ c ] ->
-                                                    let
-                                                        newForm2 =
-                                                            { newForm | source = Just (nodeSourceFromRole c) }
-                                                    in
-                                                    CircleFinal newForm2
+                                                subRoles ->
+                                                    case nodeMode of
+                                                        NodeMode.Chaos ->
+                                                            case subRoles of
+                                                                [ r ] ->
+                                                                    let
+                                                                        newForm2 =
+                                                                            { newForm | source = Just r }
+                                                                    in
+                                                                    CircleFinal newForm2 NotAsked
 
-                                                coordos ->
-                                                    CircleSource newForm coordos
+                                                                subRoles2 ->
+                                                                    CircleSource newForm subRoles2
+
+                                                        NodeMode.Coordinated ->
+                                                            let
+                                                                coordoRoles =
+                                                                    subRoles |> List.filter (\r -> r.role_type == RoleType.Coordinator)
+                                                            in
+                                                            case coordoRoles of
+                                                                [] ->
+                                                                    CircleNotAuthorized [ Text.notCircleCoordo, Text.askCoordo ]
+
+                                                                [ r ] ->
+                                                                    let
+                                                                        newForm2 =
+                                                                            { newForm | source = Just r }
+                                                                    in
+                                                                    CircleFinal newForm2 NotAsked
+
+                                                                subRoles2 ->
+                                                                    CircleSource newForm subRoles2
                             in
                             ( { model | node_action = AddCircle newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -490,30 +522,52 @@ update global msg model =
                         newForm =
                             { form | source = Just source }
                     in
-                    ( { model | node_action = AddCircle <| CircleFinal form }, Cmd.none, Ports.bulma_driver "actionModal" )
+                    ( { model | node_action = AddCircle <| CircleFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeCirclePost field value ->
             case model.node_action of
-                AddCircle (CircleFinal form) ->
+                AddCircle (CircleFinal form result) ->
                     let
+                        newPost =
+                            Dict.insert field value form.post
+
                         newForm =
-                            { form | post = Dict.insert field value form.post }
+                            case field of
+                                "name" ->
+                                    let
+                                        autoField =
+                                            Dict.fromList
+                                                [ ( "title", "[New Circle] " ++ value )
+                                                , ( "nameid"
+                                                  , value
+                                                        |> String.toLower
+                                                        |> String.trim
+                                                        |> String.map
+                                                            (\c ->
+                                                                if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
+                                                                    '-'
+
+                                                                else if List.member c [ '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
+                                                                    '_'
+
+                                                                else
+                                                                    c
+                                                            )
+                                                  )
+                                                ]
+                                    in
+                                    { form | post = Dict.union autoField newPost }
+
+                                other ->
+                                    { form | post = newPost }
                     in
-                    ( { model | node_action = AddCircle <| CircleFinal newForm }, Cmd.none, Ports.bulma_driver "actionModal" )
+                    ( { model | node_action = AddCircle <| CircleFinal newForm result }, Cmd.none, Cmd.none )
 
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
-
-        CircleAck result ->
-            case model.node_action of
-                AddCircle (CircleFinal form) ->
-                    ( { model | node_action = AddCircle <| CircleValidation result }, Cmd.none, Ports.bulma_driver "actionModal" )
-
-                other ->
-                    ( { model | node_action = AskErr "Query method not implemented" }, Cmd.none, Cmd.none )
 
         SubmitCircle form time ->
             let
@@ -526,6 +580,22 @@ update global msg model =
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
+
+        CircleAck result ->
+            case model.node_action of
+                AddCircle (CircleFinal form _) ->
+                    case result of
+                        Success _ ->
+                            ( { model | node_action = AddCircle <| CircleFinal form result }
+                            , Cmd.none
+                            , Global.send UpdateUserToken
+                            )
+
+                        other ->
+                            ( { model | node_action = AddCircle <| CircleFinal form result }, Cmd.none, Cmd.none )
+
+                other ->
+                    ( { model | node_action = AskErr "Query method not implemented" }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -966,7 +1036,7 @@ viewActivies global model =
                         [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" "Tensions" ]
                         ]
                     , li []
-                        [ a [] [ Fa.icon "fas fa-history fa-sm" "Journal" ]
+                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" "Journal" ]
                         ]
                     ]
                 ]
@@ -1014,7 +1084,7 @@ mediaTension tension =
                         )
                 )
             , br [ class "is-block" ] []
-            , span [] <| tensionTypeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
+            , span [] <| edgeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
             , span [ class "is-pulled-right has-text-weight-light" ]
                 [ "opened the " ++ formatTime tension.createdAt ++ " by " |> text
                 , tension.emitter.first_link
@@ -1080,9 +1150,9 @@ viewActionStep : Model -> ActionState -> Html Msg
 viewActionStep model action =
     case action of
         ActionChoice node ->
-            div [ class "card" ]
-                [ div [ class "card-header" ]
-                    [ div [ class "card-header-title" ] <|
+            div [ class "modal-card" ]
+                [ div [ class "modal-card-head" ]
+                    [ div [] <|
                         List.intersperse (text "\u{00A0}")
                             [ span [ class "has-text-weight-medium" ] [ text "What action do you want to do with the" ]
                             , span [ class "has-text-weight-bold is-underline-dotted" ] [ text node.name ]
@@ -1090,12 +1160,12 @@ viewActionStep model action =
                             , text "?"
                             ]
                     ]
-                , div [ class "card-content" ]
+                , div [ class "modal-card-body" ]
                     [ div [ class "level" ] <|
                         if node.type_ == NodeType.Circle then
-                            [ div [ class "level-item" ] [ div [ class "button is-primary", onClick (DoTensionInit node) ] [ text "New Tension" ] ]
-                            , div [ class "level-item" ] [ div [ class "button is-info", onClick (DoCircleInit node) ] [ text "New Role" ] ]
-                            , div [ class "level-item" ] [ div [ class "button is-link", onClick (DoTensionInit node) ] [ text "New Sub-Circle" ] ]
+                            [ div [ class "level-item" ] [ div [ class "button has-background-primary", onClick (DoTensionInit node) ] [ text "New Tension" ] ]
+                            , div [ class "level-item" ] [ div [ class "button has-background-info", onClick (DoCircleInit node) ] [ text "New Role" ] ]
+                            , div [ class "level-item" ] [ div [ class "button has-background-link", onClick (DoCircleInit node) ] [ text "New Sub-Circle" ] ]
                             ]
 
                         else
@@ -1125,13 +1195,14 @@ viewActionStep model action =
 viewTensionStep : TensionStep TensionForm -> Html Msg
 viewTensionStep step =
     case step of
+        TensionNotAuthorized errMsg ->
+            viewWarnings errMsg
+
         TensionInit form ->
-            div [ class "card" ]
-                [ div [ class "card-header" ]
-                    [ div [ class "card-header-title" ]
-                        [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate:" ] ]
-                    ]
-                , div [ class "card-content" ]
+            div [ class "modal-card" ]
+                [ div [ class "modal-card-head" ]
+                    [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate:" ] ]
+                , div [ class "modal-card-body" ]
                     [ div [ class "level buttonRadio" ] <|
                         List.map
                             (\tensionType ->
@@ -1153,138 +1224,290 @@ viewTensionStep step =
                 ]
 
         TensionSource form roles ->
-            div [ class "card" ]
-                [ div [ class "card-header" ]
-                    [ div [ class "card-header-title" ]
-                        [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this tension:" ] ]
-                    ]
-                , div [ class "card-content" ]
+            div [ class "modal-card" ]
+                [ div [ class "modal-card-head" ]
+                    [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this tension:" ] ]
+                , div [ class "modal-card-body" ]
                     [ div [ class "level buttonRadio" ] <|
                         List.map
                             (\role ->
                                 div [ class "level-item" ]
-                                    [ div
-                                        [ class "button"
-                                        , onClick (DoTensionFinal <| nodeSourceFromRole role)
-                                        ]
-                                        [ text role.name ]
-
-                                    -- get the parent namid from the dict !!
-                                    ]
+                                    [ div [ class "button", onClick (DoTensionFinal role) ] [ text role.name ] ]
                             )
-                        <|
                             roles
                     ]
                 ]
 
-        TensionFinal form ->
+        TensionFinal form result ->
             let
                 source =
-                    form.source |> withDefault (nodeSourceFromRole (UserRole "" "" "" RoleType.Guest))
+                    form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
 
                 isSendable =
-                    isTensionSendable form
+                    isPostSendable [ "title" ] form.post
+
+                isLoading =
+                    result == LoadingSlowly
             in
-            div [ class "card" ]
-                [ div [ class "card-header" ]
-                    [ div [ class "card-header-title" ]
-                        [ div [] <|
-                            List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6" ] [ text "Create tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ]
-                                ]
-                        ]
-                    , div [ class "card-content" ] <| tensionTypeArrow "button" (text source.name) (text form.target.name)
-                    ]
-                , div
-                    [ class "card-content"
-                    ]
-                    [ div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ class "input autofocus followFocus"
-                                , attribute "data-nextfocus" "textAreaModal"
-                                , type_ "text"
-                                , placeholder "Title"
-                                , onInput (ChangeTensionPost "title")
-                                ]
-                                []
-                            ]
-                        , p [ class "help" ] [ text "Title that sumarize your tension." ]
-                        ]
-                    , br [] []
-                    , div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ textarea
-                                [ id "textAreaModal"
-                                , class "textarea"
-                                , rows 12
-                                , placeholder "Leave a comment"
-                                , onInput (ChangeTensionPost "message")
-                                ]
-                                []
-                            ]
-                        , p [ class "help" ] [ text "Add a description to help others understand your issue." ]
-                        ]
-                    , br [] []
-                    , div [ class "field is-grouped is-grouped-right" ]
-                        [ div [ class "control" ]
-                            [ if isSendable then
-                                button
-                                    [ class "button is-success has-text-weight-semibold"
-                                    , onClick (Submit <| SubmitTension form)
-                                    ]
-                                    [ text "Submit new tension" ]
-
-                              else
-                                button [ class "button has-text-weight-semibold", disabled True ]
-                                    [ text "Submit new tension" ]
-                            ]
-                        ]
-                    ]
-                ]
-
-        TensionValidation result ->
             case result of
                 Success _ ->
                     div [ class "box has-background-success" ] [ text "Tension added." ]
 
-                Failure err ->
-                    viewErrors err
+                other ->
+                    div [ class "modal-card finalModal" ]
+                        [ div [ class "modal-card-head" ]
+                            [ div [ class "level modal-card-title" ]
+                                [ div [ class "level-left" ] <|
+                                    List.intersperse (text "\u{00A0}")
+                                        [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ] ]
+                                , div [ class "level-right" ] <| edgeArrow "button" (text source.name) (text form.target.name)
+                                ]
+                            ]
+                        , div [ class "modal-card-body" ]
+                            [ div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ input
+                                        [ class "input autofocus ollowFocus"
+                                        , attribute "data-nextfocus" "textAreaModal"
+                                        , type_ "text"
+                                        , placeholder "Title"
+                                        , onInput (ChangeTensionPost "title")
+                                        ]
+                                        []
+                                    ]
+                                , p [ class "help-label" ] [ text "Title that sumarize your tension." ]
+                                , br [] []
+                                ]
+                            , div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ textarea
+                                        [ id "textAreaModal"
+                                        , class "textarea"
+                                        , rows 10
+                                        , placeholder "Leave a comment"
+                                        , onInput (ChangeTensionPost "message")
+                                        ]
+                                        []
+                                    ]
+                                , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
+                                ]
+                            ]
+                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                            [ case other of
+                                Failure err ->
+                                    viewErrors err
 
-                default ->
-                    -- @TODO: slowRemoteLoading
-                    div [ class "box spinner" ] [ text "loading..." ]
+                                _ ->
+                                    div [] []
+                            , div [ class "field is-grouped is-grouped-right" ]
+                                [ div [ class "control" ]
+                                    [ if isSendable then
+                                        div []
+                                            [ button
+                                                [ class "button is-success has-text-weight-semibold"
+                                                , classList [ ( "is-loading", isLoading ) ]
+                                                , onClick (Submit <| SubmitTension form)
+                                                ]
+                                                [ text "Submit new tension" ]
+                                            ]
 
-        TensionNotAuthorized errMsg ->
-            viewErrors errMsg
+                                      else
+                                        div []
+                                            [ button [ class "button has-text-weight-semibold", disabled True ]
+                                                [ text "Submit new tension" ]
+                                            ]
+                                    ]
+                                ]
+                            ]
+                        ]
 
 
 viewCircleStep : CircleStep CircleForm -> Html Msg
 viewCircleStep step =
     case step of
+        CircleNotAuthorized errMsg ->
+            viewWarnings errMsg
+
         CircleInit form ->
-            div [] [ text "todo" ]
+            -- Node mode selection not implemented yet.
+            div [] [ text "" ]
 
-        CircleSource form role ->
-            div [] [ text "todo" ]
+        CircleSource form roles ->
+            div [ class "modal-card" ]
+                [ div [ class "modal-card-head" ]
+                    [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this Circle:" ] ]
+                , div [ class "modal-card-body" ]
+                    [ div [ class "level buttonRadio" ] <|
+                        List.map
+                            (\role ->
+                                div [ class "level-item" ]
+                                    [ div [ class "button", onClick (DoCircleFinal role) ] [ text role.name ] ]
+                            )
+                            roles
+                    ]
+                ]
 
-        CircleFinal form ->
-            div [] [ text "todo" ]
+        CircleFinal form result ->
+            let
+                source =
+                    form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
 
-        CircleValidation result ->
+                isSendable =
+                    isPostSendable [ "name", "purpose" ] form.post
+
+                isLoading =
+                    result == LoadingSlowly
+            in
             case result of
                 Success _ ->
-                    div [ class "box has-background-success" ] [ text "Tension added." ]
+                    div [ class "box has-background-success" ] [ text "Tension added (new Circle)." ]
 
-                Failure err ->
-                    viewErrors err
+                other ->
+                    let
+                        title =
+                            Dict.get "title" form.post |> withDefault ""
 
-                default ->
-                    -- @TODO: slowRemoteLoading
-                    div [ class "box spinner" ] [ text "loading..." ]
+                        nameid =
+                            Dict.get "nameid" form.post |> withDefault ""
+                    in
+                    div [ class "modal-card finalModal" ]
+                        [ div [ class "modal-card-head" ]
+                            [ div [ class "level modal-card-title" ]
+                                [ div [ class "level-left" ] <|
+                                    List.intersperse (text "\u{00A0}")
+                                        [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New circle" ] ]
+                                , div [ class "level-right" ] <| edgeArrow "button" (text source.name) (text form.target.name)
+                                ]
+                            ]
+                        , div [ class "modal-card-body" ]
+                            [ div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ input
+                                        [ class "input autofocus followFocus"
+                                        , attribute "data-nextfocus" "textAreaModal"
+                                        , type_ "text"
+                                        , placeholder "Name"
+                                        , onInput (ChangeCirclePost "name")
+                                        ]
+                                        []
+                                    ]
+                                , p [ class "help-label" ] [ text "Name of the circle." ]
+                                ]
+                            , div [ id "autoNodeidBox", class "box has-background-grey-lighter" ]
+                                [ div [ class "field is-horizontal" ]
+                                    [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Title" ]
+                                    , div [ class "field-body control" ]
+                                        [ input
+                                            [ class "input is-small"
+                                            , type_ "text"
+                                            , value title
+                                            , onInput (ChangeCirclePost "title")
+                                            ]
+                                            []
+                                        ]
+                                    ]
+                                , div [ class "field is-horizontal" ]
+                                    [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Identifier" ]
+                                    , div [ class "field-body control" ]
+                                        [ input
+                                            [ class "input is-small"
+                                            , type_ "text"
+                                            , value nameid
+                                            , onInput (ChangeCirclePost "nameid")
+                                            ]
+                                            []
+                                        ]
+                                    ]
+                                ]
+                            , br [] []
+                            , div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ textarea
+                                        [ id "textAreaModal"
+                                        , class "textarea"
+                                        , rows 5
+                                        , placeholder "Leave a comment"
+                                        , onInput (ChangeCirclePost "message")
+                                        ]
+                                        []
+                                    ]
+                                , p [ class "help-label" ] [ text "Add a description to help others understand why a new circle should be created." ]
+                                ]
+                            , br [] []
+                            , div [ class "card" ]
+                                [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text "Mandate" ] ]
+                                , div [ class "card-content" ]
+                                    [ div [ class "field" ]
+                                        [ div [ class "label" ] [ text "Purpose" ]
+                                        , div [ class "control" ]
+                                            [ textarea
+                                                [ id "textAreaModal"
+                                                , class "textarea"
+                                                , rows 5
+                                                , placeholder "Define the purpose of the circle."
+                                                , onInput (ChangeCirclePost "purpose")
+                                                ]
+                                                []
+                                            ]
+                                        ]
+                                    , div [ class "field" ]
+                                        [ div [ class "label" ] [ text "Responsabilities" ]
+                                        , div [ class "control" ]
+                                            [ textarea
+                                                [ id "textAreaModal"
+                                                , class "textarea"
+                                                , rows 5
+                                                , placeholder "Define the circle responsabilities."
+                                                , onInput (ChangeCirclePost "responsabilities")
+                                                ]
+                                                []
+                                            ]
+                                        ]
+                                    , div [ class "field" ]
+                                        [ div [ class "label" ] [ text "Domains" ]
+                                        , div [ class "control" ]
+                                            [ textarea
+                                                [ id "textAreaModal"
+                                                , class "textarea"
+                                                , rows 5
+                                                , placeholder "Define the circle domains."
+                                                , onInput (ChangeCirclePost "responsabilities")
+                                                ]
+                                                []
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            , br [] []
+                            ]
+                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                            [ case other of
+                                Failure err ->
+                                    viewErrors err
 
-        CircleNotAuthorized errMsg ->
-            viewErrors errMsg
+                                _ ->
+                                    div [] []
+                            , div [ class "field is-grouped is-grouped-right" ]
+                                [ div [ class "control" ]
+                                    [ if isSendable then
+                                        div []
+                                            [ button
+                                                [ class "button is-success has-text-weight-semibold"
+                                                , classList [ ( "is-loading", isLoading ) ]
+                                                , onClickPD2 (Submit <| SubmitCircle form)
+                                                ]
+                                                [ text "Submit new Circle" ]
+                                            ]
+
+                                      else
+                                        div []
+                                            [ button [ class "button has-text-weight-semibold", disabled True ]
+                                                [ text "Submit new Circle" ]
+                                            ]
+                                    ]
+                                ]
+                            ]
+                        ]
 
 
 viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
@@ -1303,7 +1526,7 @@ viewJoinOrgaStep orga step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName orga form.rootnameid |> text ]
+                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
 
                 Failure err ->
                     viewErrors err
@@ -1320,13 +1543,14 @@ viewJoinOrgaStep orga step =
 -- Setters
 
 
-isTensionSendable : TensionForm -> Bool
-isTensionSendable form =
-    let
-        title =
-            Dict.get "title" form.post |> withDefault ""
-
-        isSendable =
-            String.length title > 0
-    in
-    isSendable
+{-| Test require fields
+-}
+isPostSendable : List String -> Post -> Bool
+isPostSendable keys post =
+    keys
+        |> List.map
+            (\k ->
+                Dict.get k post
+                    |> withDefault ""
+            )
+        |> List.all (\x -> String.length x > 0)

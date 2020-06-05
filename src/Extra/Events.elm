@@ -1,6 +1,6 @@
 module Extra.Events exposing
-    ( onClickLink
-    , onClickPD
+    ( onClickPD
+    , onClickPD2
     , onEnter
     , onKeydown
     , onTab
@@ -20,8 +20,8 @@ onClickPD msg =
     preventDefaultOn "mousedown" <| JD.succeed ( msg, True )
 
 
-onClickLink : msg -> Html.Attribute msg
-onClickLink msg =
+onClickPD2 : msg -> Html.Attribute msg
+onClickPD2 msg =
     custom "mousedown" <|
         JD.map
             (\x ->

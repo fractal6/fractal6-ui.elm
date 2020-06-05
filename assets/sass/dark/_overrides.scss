@@ -86,8 +86,13 @@ a {
   transition: all 200ms ease;
   box-shadow: none;
   border-width: $border-width;
-  padding-left: 1em;
   padding-right: 1em;
+}
+
+.input[disabled],
+.textarea[disabled] {
+  border-width: 1px !important;
+  background-color: $white-ter !important;
 }
 
 .select {

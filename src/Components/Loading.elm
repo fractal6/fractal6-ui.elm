@@ -1,14 +1,27 @@
-module Components.Loading exposing (HttpError, WebData, expectJson, spinner, toErrorData, viewAuthNeeded, viewErrors, viewHttpErrors)
+module Components.Loading exposing
+    ( ErrorData
+    , HttpError
+    , WebData
+    , errorGraphQLHttpToString
+    , errorHttpToString
+    , expectJson
+    , spinner
+    , toErrorData
+    , viewAuthNeeded
+    , viewErrors
+    , viewHttpErrors
+    , viewWarnings
+    )
 
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
 import Generated.Route as Route exposing (Route)
+import Graphql.Http as GqlHttp
 import Html exposing (Html, a, div, img, p, text)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Http
 import Json.Decode as JD
-import ModelSchema exposing (ErrorData)
 import RemoteData exposing (RemoteData)
 
 
@@ -16,6 +29,10 @@ import RemoteData exposing (RemoteData)
 --
 -- Model
 --
+
+
+type alias ErrorData =
+    List String
 
 
 type alias WebData a =
@@ -114,6 +131,38 @@ errorHttpToString httpError =
             message
 
 
+errorGraphQLHttpToString : GqlHttp.HttpError -> String
+errorGraphQLHttpToString httpError =
+    case httpError of
+        GqlHttp.BadUrl message ->
+            message
+
+        GqlHttp.Timeout ->
+            "Server is taking too long to respond. Please try again later."
+
+        GqlHttp.NetworkError ->
+            "Unable to reach server."
+
+        GqlHttp.BadStatus metadata body ->
+            if metadata.statusCode == 401 then
+                let
+                    errMsg =
+                        case JD.decodeString errorDecoder body of
+                            Ok err ->
+                                err.errors |> List.map (\e -> e.message) |> String.join "\n"
+
+                            Err errJD ->
+                                "unknown error;\n" ++ JD.errorToString errJD
+                in
+                "Unauthaurized: " ++ errMsg
+
+            else
+                "Request failed with status code: " ++ String.fromInt metadata.statusCode ++ "!!!" ++ body
+
+        GqlHttp.BadPayload body ->
+            "Graphql Http JSON decoder unexpected error."
+
+
 toErrorData : HttpError String -> ErrorData
 toErrorData httpErr =
     [ errorHttpToString httpErr ]
@@ -149,6 +198,12 @@ viewErrors : ErrorData -> Html msg
 viewErrors errMsg =
     List.map (\e -> p [] [ text e ]) errMsg
         |> div [ class "box has-background-danger" ]
+
+
+viewWarnings : ErrorData -> Html msg
+viewWarnings errMsg =
+    List.map (\e -> p [] [ text e ]) errMsg
+        |> div [ class "box has-background-info" ]
 
 
 viewHttpErrors : HttpError String -> Html msg

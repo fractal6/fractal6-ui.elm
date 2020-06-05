@@ -70,6 +70,7 @@ const BulmaDriver = (app, target, handlers) => {
     if ($autofocuses.length > 0) {
         $autofocuses.forEach( el => {
             el.focus();
+            return true
         });
     }
 
@@ -82,6 +83,7 @@ const BulmaDriver = (app, target, handlers) => {
             $target = document.getElementById(el.dataset.nextfocus);
             if ($target) {
                 $target.focus();
+                return true
             }
         }
     }
@@ -204,33 +206,33 @@ const BulmaDriver = (app, target, handlers) => {
      * Button **Radio** effect rational
      */
 
-    function buttonRadioHandler(e, btn, btns) {
-        btns.forEach( o => {
-            if (o === btn) {
-                o.classList.add('is-active');
-            } else {
-                o.classList.remove('is-active');
-            }
-        });
-        e.preventDefault() // important: don't let html handle the button element state
-    }
+    //function buttonRadioHandler(e, btn, btns) {
+    //    btns.forEach( o => {
+    //        if (o === btn) {
+    //            o.classList.add('is-active');
+    //        } else {
+    //            o.classList.remove('is-active');
+    //        }
+    //    });
+    //    e.preventDefault() // important: don't let html handle the button element state
+    //}
 
-    var $btns = $target.querySelectorAll('.buttonRadio');
-    //
-    // * switch active state on click on each button child
-    // * preventdefault
-    //
-    if ($btns.length > 0) {
-        $btns.forEach(function(el) {
-            $subBtns = el.querySelectorAll('.button');
-            // button click logics
-            $subBtns.forEach( btn => {
-                var evt = "mousedown";
-                var h = e => buttonRadioHandler(e, btn, $subBtns);
-                setupHandler("mousedown", h, el);
-            });
-        });
-    }
+    //var $btns = $target.querySelectorAll('.buttonRadio');
+    ////
+    //// * switch active state on click on each button child
+    //// * preventdefault
+    ////
+    //if ($btns.length > 0) {
+    //    $btns.forEach(function(el) {
+    //        $subBtns = el.querySelectorAll('.button');
+    //        // button click logics
+    //        $subBtns.forEach( btn => {
+    //            var evt = "mousedown";
+    //            var h = e => buttonRadioHandler(e, btn, $subBtns);
+    //            setupHandler("mousedown", h, el);
+    //        });
+    //    });
+    //}
 
     /*
      * Modal logics

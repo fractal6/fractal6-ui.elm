@@ -6,6 +6,11 @@ notOrgMember =
     "You are not a member of this organisation."
 
 
+notCircleMember : String
+notCircleMember =
+    "You are not a member of this circle."
+
+
 notCircleCoordo : String
 notCircleCoordo =
     "You are not a coordinator of this circle."

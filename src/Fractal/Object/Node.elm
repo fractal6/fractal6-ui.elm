@@ -229,6 +229,6 @@ role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
 
 
-charach : SelectionSet decodesTo Fractal.Object.NodeCharach -> SelectionSet decodesTo Fractal.Object.Node
-charach object_ =
-    Object.selectionForCompositeField "charach" [] object_ identity
+charac : SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet decodesTo Fractal.Object.Node
+charac object_ =
+    Object.selectionForCompositeField "charac" [] object_ identity

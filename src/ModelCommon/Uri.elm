@@ -4,6 +4,7 @@ module ModelCommon.Uri exposing
     , NodeFocus
     , NodePath
     , basePathChanged
+    , circleIdCodec
     , focusFromNameid
     , guestIdCodec
     , nameidFromFlags
@@ -164,6 +165,25 @@ nameidFromFlags flags =
     String.join "#" [ rootnameid, focusFragment ]
 
 
+{-|
+
+    Returns the namid of a new Role given an username and a rootnameid
+
+-}
 guestIdCodec : String -> String -> String
 guestIdCodec rootnameid username =
     String.join "#" [ rootnameid, "", username ]
+
+
+{-|
+
+    Returns the namid of a new Circle given the parenid and the nameid fragment.
+
+-}
+circleIdCodec : String -> String -> String
+circleIdCodec parentid targetid =
+    let
+        rootnameid =
+            parentid |> String.split "#" |> List.head |> withDefault ""
+    in
+    String.join "#" [ rootnameid, targetid ]

@@ -24,38 +24,14 @@ purpose =
     Object.selectionForField "String" "purpose" [] Decode.string
 
 
-type alias ResponsabilitiesOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.PostFilter }
+responsabilities : SelectionSet (Maybe String) Fractal.Object.Mandate
+responsabilities =
+    Object.selectionForField "(Maybe String)" "responsabilities" [] (Decode.string |> Decode.nullable)
 
 
-responsabilities : (ResponsabilitiesOptionalArguments -> ResponsabilitiesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe decodesTo) Fractal.Object.Mandate
-responsabilities fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodePostFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "responsabilities" optionalArgs object_ (identity >> Decode.nullable)
-
-
-type alias DomainsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.PostFilter }
-
-
-domains : (DomainsOptionalArguments -> DomainsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe decodesTo) Fractal.Object.Mandate
-domains fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodePostFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "domains" optionalArgs object_ (identity >> Decode.nullable)
+domains : SelectionSet (Maybe String) Fractal.Object.Mandate
+domains =
+    Object.selectionForField "(Maybe String)" "domains" [] (Decode.string |> Decode.nullable)
 
 
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Mandate

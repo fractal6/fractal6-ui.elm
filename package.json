@@ -45,6 +45,7 @@
     "concurrently": "5.2.0",
     "elm-live": "4.0.2",
     "elm-spa": "4.1.0",
-    "node-sass": "^4.14.1"
+    "node-sass": "^4.14.1",
+    "uglify-js": "^3.9.4"
   }
 }

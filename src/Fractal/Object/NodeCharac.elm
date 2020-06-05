@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.NodeCharach exposing (..)
+module Fractal.Object.NodeCharac exposing (..)
 
 import Fractal.Enum.NodeMode
 import Fractal.InputObject
@@ -20,11 +20,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-userCanJoin : SelectionSet Bool Fractal.Object.NodeCharach
+userCanJoin : SelectionSet Bool Fractal.Object.NodeCharac
 userCanJoin =
     Object.selectionForField "Bool" "userCanJoin" [] Decode.bool
 
 
-mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.NodeCharach
+mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.NodeCharac
 mode =
     Object.selectionForField "Enum.NodeMode.NodeMode" "mode" [] Fractal.Enum.NodeMode.decoder

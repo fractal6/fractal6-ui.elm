@@ -1,6 +1,6 @@
 module ModelSchema exposing (..)
 
-import Debug
+import Components.Loading exposing (ErrorData, errorGraphQLHttpToString)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -14,6 +14,7 @@ import Fractal.Object.AddNodePayload
 import Fractal.Object.AddTensionPayload
 import Fractal.Object.Label
 import Fractal.Object.Node
+import Fractal.Object.NodeCharac
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
@@ -28,7 +29,7 @@ import Html.Attributes exposing (class, href)
 import Iso8601 exposing (fromTime)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (FractalBaseRoute, guestIdCodec, uriFromNameid)
+import ModelCommon.Uri exposing (FractalBaseRoute, circleIdCodec, guestIdCodec, uriFromNameid)
 import RemoteData exposing (RemoteData)
 
 
@@ -82,10 +83,6 @@ type RequestResult errors data
     | NotAsked
 
 
-type alias ErrorData =
-    List String
-
-
 type alias Post =
     Dict String String
 
@@ -137,11 +134,18 @@ type alias Node =
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe FirstLink
+    , charac : NodeCharac
     }
 
 
 type alias ParentNode =
     { nameid : String }
+
+
+type alias NodeCharac =
+    { userCanJoin : Bool
+    , mode : NodeMode.NodeMode
+    }
 
 
 
@@ -234,10 +238,16 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.rootnameid
         |> with
             --(Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
-            (Fractal.Object.Node.parent identity (SelectionSet.map ParentNode Fractal.Object.Node.nameid))
+            (Fractal.Object.Node.parent identity <| SelectionSet.map ParentNode Fractal.Object.Node.nameid)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.first_link identity (SelectionSet.map FirstLink Fractal.Object.User.username))
+        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map FirstLink Fractal.Object.User.username)
+        |> with
+            (Fractal.Object.Node.charac <|
+                SelectionSet.map2 NodeCharac
+                    Fractal.Object.NodeCharac.userCanJoin
+                    Fractal.Object.NodeCharac.mode
+            )
 
 
 fetchNodesOrga rootid msg =
@@ -293,7 +303,7 @@ tensionPgPayload =
                     |> with Fractal.Object.Node.nameid
                     |> with Fractal.Object.Node.type_
                     |> with
-                        (Fractal.Object.Node.first_link identity (SelectionSet.map FirstLink Fractal.Object.User.username))
+                        (Fractal.Object.Node.first_link identity <| SelectionSet.map FirstLink Fractal.Object.User.username)
                 )
             )
         |> with
@@ -303,7 +313,7 @@ tensionPgPayload =
                     |> with Fractal.Object.Node.nameid
                     |> with Fractal.Object.Node.type_
                     |> with
-                        (Fractal.Object.Node.first_link identity (SelectionSet.map FirstLink Fractal.Object.User.username))
+                        (Fractal.Object.Node.first_link identity <| SelectionSet.map FirstLink Fractal.Object.User.username)
                 )
             )
         |> with Fractal.Object.Tension.n_comments
@@ -407,7 +417,7 @@ addOneTension uctx tension source target msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-addTensionInputEncoder : UserCtx -> Post -> Node -> Node -> Mutation.AddTensionRequiredArguments
+addTensionInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddTensionRequiredArguments
 addTensionInputEncoder uctx post source target =
     let
         title =
@@ -480,19 +490,23 @@ addOneCircle uctx post source target msg =
         (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
 
 
-addCircleInputEncoder : UserCtx -> Post -> Node -> Node -> Mutation.AddNodeRequiredArguments
+addCircleInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddNodeRequiredArguments
 addCircleInputEncoder uctx post source target =
     let
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
 
         nameid =
-            Dict.get "nameid" post |> withDefault ""
+            Dict.get "nameid" post |> Maybe.map (\nid -> circleIdCodec target.nameid nid) |> withDefault ""
 
         name =
             Dict.get "name" post |> withDefault ""
 
-        -- @TODO mandata !
+        nodeMode =
+            -- @DEBUG: Ignored from now, we inherit the root mode
+            Dict.get "node_mode" post |> withDefault "" |> NodeMode.fromString |> withDefault NodeMode.Coordinated
+
+        -- @TODO mandate !
         nodeRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
@@ -503,7 +517,7 @@ addCircleInputEncoder uctx post source target =
             , name = name
             , rootnameid = target.rootnameid
             , isRoot = False
-            , charach = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
+            , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
             }
 
         nodeOptional =
@@ -511,7 +525,7 @@ addCircleInputEncoder uctx post source target =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = OptionalArgument.Present target.rootnameid })
+                            (\p -> { p | nameid = OptionalArgument.Present target.nameid })
                             |> OptionalArgument.Present
                 }
     in
@@ -555,7 +569,7 @@ newMemberInputEncoder uctx post targetid =
             , name = "Guest"
             , rootnameid = targetid
             , isRoot = False
-            , charach = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
+            , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
             }
 
         nodeOptional =
@@ -601,7 +615,7 @@ decodeResponse decoder response =
                         |> Failure
 
                 Graphql.Http.HttpError httpError ->
-                    [ "Http error: " ++ Debug.toString httpError ]
+                    [ "Http error: " ++ errorGraphQLHttpToString httpError ]
                         |> Failure
 
         RemoteData.Loading ->
@@ -756,8 +770,8 @@ tensionTypeSpan cls elt post =
             span [ class "" ] [ text "Unknown" ]
 
 
-tensionTypeArrow : String -> Html msg -> Html msg -> List (Html msg)
-tensionTypeArrow cls source target =
+edgeArrow : String -> Html msg -> Html msg -> List (Html msg)
+edgeArrow cls source target =
     [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
     , span [ class <| "right-arrow" ] []
     , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]

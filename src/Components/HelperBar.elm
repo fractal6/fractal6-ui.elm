@@ -21,7 +21,7 @@ view baseUri user maybePath joinMsg =
         rootnameid =
             Array.get 0 path |> Maybe.map (\p -> p.nameid) |> withDefault ""
     in
-    div [ id "mainHeader", class "columns is-centered" ]
+    div [ id "helperBar", class "columns is-centered" ]
         [ nav [ class "column is-10" ]
             [ div [ class "level" ]
                 [ div [ class "level-left" ]
@@ -54,11 +54,11 @@ view baseUri user maybePath joinMsg =
                 ]
             , div [ class "tabs is-boxed" ]
                 [ ul []
-                    [ li [ class "is-active" ]
+                    [ li [ classList [ ( "is-active", baseUri == OverviewBaseUri ) ] ]
                         [ a [] [ Fa.icon "fas fa-circle" "Overview" ] ]
-                    , li []
+                    , li [ classList [ ( "is-active", baseUri == TensionsBaseUri ) ] ]
                         [ a [] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
-                    , li []
+                    , li [ classList [ ( "is-active", baseUri == UsersBaseUri ) ] ]
                         [ a [] [ Fa.icon "fas fa-user" "Members" ] ]
                     ]
                 ]
@@ -111,7 +111,8 @@ memberButton baseUri roles =
         |> List.map
             (\r ->
                 a
-                    [ class "button is-hovered is-small has-text-weight-semibold is-primary tooltip has-tooltip-bottom"
+                    [ class "button is-hovered is-small has-text-weight-semibold is-primary"
+                    , attribute "style" "margin-right: 5px;"
                     , href <| uriFromNameid baseUri r.nameid
                     ]
                     [ text r.name ]

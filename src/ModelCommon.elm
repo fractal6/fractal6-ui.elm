@@ -1,8 +1,9 @@
 module ModelCommon exposing (..)
 
 import Array exposing (Array)
-import Components.Loading as Loading exposing (WebData)
+import Components.Loading as Loading exposing (ErrorData, WebData)
 import Dict exposing (Dict)
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
@@ -79,14 +80,13 @@ type ActionState
 type TensionStep form
     = TensionInit form
     | TensionSource form (List UserRole)
-    | TensionFinal form
-    | TensionValidation (GqlData (Maybe AddTensionPayload))
+    | TensionFinal form (GqlData (Maybe AddTensionPayload))
     | TensionNotAuthorized ErrorData
 
 
 type alias TensionForm =
     { user : UserCtx
-    , source : Maybe Node
+    , source : Maybe UserRole
     , target : Node
     , post : Post
     }
@@ -99,14 +99,13 @@ type alias TensionForm =
 type CircleStep form
     = CircleInit form
     | CircleSource form (List UserRole)
-    | CircleFinal form
-    | CircleValidation (GqlData (Maybe AddNodePayload))
+    | CircleFinal form (GqlData (Maybe AddNodePayload))
     | CircleNotAuthorized ErrorData
 
 
 type alias CircleForm =
     { user : UserCtx
-    , source : Maybe Node
+    , source : Maybe UserRole
     , target : Node
     , post : Post
     }
@@ -135,13 +134,24 @@ type alias JoinOrgaForm =
 --
 
 
-getNodeName : OrgaData -> String -> String
-getNodeName oData nameid =
+getNodeMode : String -> OrgaData -> Maybe NodeMode.NodeMode
+getNodeMode nameid orga =
+    case orga of
+        Success nodes ->
+            Dict.get nameid nodes
+                |> Maybe.map (\n -> n.charac.mode)
+
+        _ ->
+            Nothing
+
+
+getNodeName : String -> OrgaData -> String
+getNodeName nameid orga =
     let
         errMsg =
             "Error: Node unknown"
     in
-    case oData of
+    case orga of
         Success nodes ->
             Dict.get nameid nodes
                 |> Maybe.map (\n -> n.name)
@@ -149,6 +159,17 @@ getNodeName oData nameid =
 
         _ ->
             errMsg
+
+
+getParentidFromRole : UserRole -> String
+getParentidFromRole role =
+    let
+        l =
+            String.split "#" role.nameid
+                |> List.filter (\x -> x /= "")
+    in
+    List.take (List.length l - 1) l
+        |> String.join "#"
 
 
 
@@ -238,6 +259,12 @@ nodeEncoder node =
     , ( "type_", JE.string <| NodeType.toString node.type_ )
     , ( "role_type", JEE.maybe JE.string <| Maybe.map (\t -> RoleType.toString t) node.role_type )
     , ( "first_link", JEE.maybe JE.string <| Maybe.map (\x -> x.username) node.first_link )
+    , ( "charac"
+      , JE.object
+            [ ( "userCanJoin", JE.bool node.charac.userCanJoin )
+            , ( "mode", JE.string <| NodeMode.toString node.charac.mode )
+            ]
+      )
     ]
 
 
@@ -258,20 +285,12 @@ nodeDecoder =
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
         |> JDE.andMap (JD.maybe (JD.map FirstLink <| JD.field "first_link" JD.string))
-
-
-nodeSourceFromRole : UserRole -> Node
-nodeSourceFromRole ur =
-    { id = ""
-    , createdAt = ""
-    , nameid = ur.nameid
-    , name = ur.name
-    , parent = Nothing
-    , rootnameid = ur.rootnameid
-    , type_ = NodeType.Role
-    , role_type = Just ur.role_type
-    , first_link = Nothing -- @FIX
-    }
+        |> JDE.andMap
+            (JD.field "charac" <|
+                JD.map2 NodeCharac
+                    (JD.field "userCanJoin" JD.bool)
+                    (JD.field "mode" NodeMode.decoder)
+            )
 
 
 

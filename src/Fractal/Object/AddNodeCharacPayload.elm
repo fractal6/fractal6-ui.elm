@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddNodeCharachPayload exposing (..)
+module Fractal.Object.AddNodeCharacPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,14 +19,14 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias NodecharachOptionalArguments =
+type alias NodecharacOptionalArguments =
     { first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-nodecharach : (NodecharachOptionalArguments -> NodecharachOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharach -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeCharachPayload
-nodecharach fillInOptionals object_ =
+nodecharac : (NodecharacOptionalArguments -> NodecharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeCharacPayload
+nodecharac fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { first = Absent, offset = Absent }
@@ -35,9 +35,9 @@ nodecharach fillInOptionals object_ =
             [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "nodecharach" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "nodecharac" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeCharachPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeCharacPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

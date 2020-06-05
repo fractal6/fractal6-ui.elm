@@ -61,10 +61,10 @@ init flags url key =
                             LoggedIn uctx
 
                         Err err ->
-                            let
-                                d =
-                                    Debug.log "error" err
-                            in
+                            --let
+                            --    d =
+                            --        Debug.log "error" err
+                            --in
                             LoggedOut
 
                 Nothing ->

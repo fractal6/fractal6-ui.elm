@@ -17,8 +17,8 @@ type AddMandatePayload
     = AddMandatePayload
 
 
-type AddNodeCharachPayload
-    = AddNodeCharachPayload
+type AddNodeCharacPayload
+    = AddNodeCharacPayload
 
 
 type AddNodePayload
@@ -81,8 +81,8 @@ type Node
     = Node
 
 
-type NodeCharach
-    = NodeCharach
+type NodeCharac
+    = NodeCharac
 
 
 type Post
