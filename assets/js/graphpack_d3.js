@@ -198,9 +198,6 @@ const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
         this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
-        // if position is relative (@DEBUG imcompressible space on canvas)
-        //this.$canvasButtons.style.left = r.width/2 - 8 - scrollLeft+"px";
-        //this.$canvasButtons.style.top = this.$canvasButtons.offsetHeight+"px" -scrollTop;
     },
 
     // Size the canvas
@@ -234,7 +231,7 @@ const GraphPack = {
         this.$hiddenCanvas.height = this.height;
 
         // Size Element next to the canvas
-        this.$nextToChart.style.minHeight = 2*this.height+"px";
+        this.$nextToChart.style.minHeight = 2.25*this.height+"px";
 
         // replace Buttons
         this.replaceButtons();
@@ -396,8 +393,7 @@ const GraphPack = {
                 return
             }
             focus = maybeFocus;
-        } else {
-            // assume node
+        } else { // assume node
             // pass
         }
 
@@ -488,18 +484,21 @@ const GraphPack = {
         return size
     },
 
+    // Mapping function from a node depth to color.
+    colorCircle(k) {
+        //d3.scaleOrdinal()
+        //.domain(Array.from({length:this.colorCircleRange.length},(v,k)=>k%this.colorCircleRange.length))
+        //.range(this.colorCircleRange)
+        //.unknown(this.backgroundColor);
+        return this.colorCircleRange[k%this.colorCircleRange.length]
+    },
+
     // Init and create the GraphPack data structure
     resetGraphPack(graph) {
-        // Mapping function from a node depth to color.
-        this.colorCircle = d3.scaleOrdinal()
-            .domain(Array.from({length:this.colorCircleRange.length},(v,k)=>k))
-            .range(this.colorCircleRange)
-            .unknown(this.backgroundColor); // window.getComputedStyle(document.getElementById("body"), null).getPropertyValue("background-color");
 
         // Determine the node order in the circle packing
         const nodeOrder = (n1, n2) => {
             return n1.data.createdAt > n2.data.createdAt // node order
-            //return 0
         }
 
         this.gStats = computeDepth(graph);
@@ -646,7 +645,6 @@ const GraphPack = {
 
         var hoverWidth;
         if (node == this.focusedNode) {
-            //hoverWidth = this.focusCircleWidth * 1.25;
             hoverWidth = this.focusCircleWidth;
         } else {
             hoverWidth = this.hoverCircleWidth;
@@ -688,7 +686,7 @@ const GraphPack = {
         var l = (node.ctx.centerX + r.left - scrollLeft  - (tw/2 + 1));
         var t = (node.ctx.centerY + r.top - scrollTop  - (hw/2 + 23));
         if (l+tw-r.left < 0 || t+hw-r.top < 0 || r.left+r.width-tw-l < 0 ) {
-            // the tooltip overflow "too moch" outside the canvas.
+            // the tooltip overflow "too much" outside the canvas.
             this.clearNodeTooltip();
         } else {
             $tooltip.style.left = l + "px";
@@ -752,11 +750,6 @@ const GraphPack = {
     //
 
     nodeClickedFromJs(node) {
-        //var nodeFocus = {
-        //    rootnameid: this.rootNode.data.nameid,
-        //    nameid: node.data.nameid,
-        //    isRoot: node === this.rootNode,
-        //};
         var nameid = node.data.nameid;
         this.app.ports.nodeClickedFromJs.send(nameid);
     },
@@ -856,10 +849,6 @@ const GraphPack = {
         this.clearNodeTooltip()
 
         this.sizeDom();
-        // If buttons not outside the canvas, cause error !
-        //setTimeout(() => {
-        //    this.sizeDom();
-        //}, 200);
 
         //
         // Create Circle Packing - GraphPack
