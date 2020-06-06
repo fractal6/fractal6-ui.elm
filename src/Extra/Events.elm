@@ -3,6 +3,7 @@ module Extra.Events exposing
     , onClickPD2
     , onEnter
     , onKeydown
+    , onLoad
     , onTab
     )
 
@@ -31,6 +32,15 @@ onClickPD2 msg =
                 }
             )
             (JD.succeed msg)
+
+
+
+-- onLoad
+
+
+onLoad : msg -> Html.Attribute msg
+onLoad msg =
+    on "onrender" <| JD.succeed msg
 
 
 

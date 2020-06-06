@@ -221,7 +221,7 @@ html.has-modal-active {
     //box-shadow: 0 1px 0 0 #66737378;
 
     & > .column {
-        padding-top: 0 !important;
+        padding-top: 1.22rem !important;
         padding-bottom: 0 !important;
     }
 
@@ -601,7 +601,7 @@ html.has-modal-active {
 
 }
 
-#autoNodeidBox {
+.subForm {
     padding: 0.666rem 1rem 0.666rem 0 !important;
 
     .input {

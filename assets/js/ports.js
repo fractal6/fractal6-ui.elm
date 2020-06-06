@@ -64,6 +64,9 @@ const actions = {
         document.documentElement.classList.add('has-modal-active');
         document.getElementById("navbarTop").classList.add('has-modal-active');
     },
+    //
+    // Quick Search
+    //
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qs;
         var nodes = session.gp.nodesDict;
@@ -77,9 +80,6 @@ const actions = {
         });
         app.ports.lookupFromJs.send(res);
     },
-    //
-    // Quick Search
-    //
     //
     // GraphPack
     //
@@ -108,6 +108,10 @@ const actions = {
     'CLEAR_TOOLTIP': (app, session, message) => {
         var gp = session.gp;
         gp.clearNodeTooltip();
+    },
+    'DEBUG_CANVAS' : (app, session, user_ctx_key) => {
+        var gp = session.gp;
+        gp.replaceButtons();
     },
     //
     // User Ctx -- Localstorage

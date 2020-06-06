@@ -506,17 +506,20 @@ addCircleInputEncoder uctx post source target =
             -- @DEBUG: Ignored from now, we inherit the root mode
             Dict.get "node_mode" post |> withDefault "" |> NodeMode.fromString |> withDefault NodeMode.Coordinated
 
+        first_links =
+            Dict.get "first_links" post |> withDefault ""
+
         -- @TODO mandate !
         nodeRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
                     (\u -> { u | username = OptionalArgument.Present uctx.username })
-            , type_ = NodeType.Circle
-            , nameid = nameid
-            , name = name
-            , rootnameid = target.rootnameid
             , isRoot = False
+            , type_ = NodeType.Circle
+            , name = name
+            , nameid = nameid
+            , rootnameid = target.rootnameid
             , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
             }
 
@@ -526,6 +529,39 @@ addCircleInputEncoder uctx post source target =
                     | parent =
                         Input.buildNodeRef
                             (\p -> { p | nameid = OptionalArgument.Present target.nameid })
+                            |> OptionalArgument.Present
+                    , children =
+                        first_links
+                            |> String.split "@"
+                            |> List.filter (\x -> x /= "")
+                            |> List.indexedMap
+                                (\i uname ->
+                                    Input.buildNodeRef
+                                        (\c ->
+                                            { c
+                                                | createdAt = createdAt |> Fractal.Scalar.DateTime |> OptionalArgument.Present
+                                                , createdBy =
+                                                    Input.buildUserRef
+                                                        (\u -> { u | username = OptionalArgument.Present uctx.username })
+                                                        |> OptionalArgument.Present
+                                                , isRoot = False |> OptionalArgument.Present
+                                                , type_ = NodeType.Role |> OptionalArgument.Present
+                                                , role_type = RoleType.Coordinator |> OptionalArgument.Present
+                                                , name = "Coordinator" |> OptionalArgument.Present
+                                                , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> OptionalArgument.Present
+                                                , rootnameid = target.rootnameid |> OptionalArgument.Present
+                                                , charac =
+                                                    { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
+                                                        |> OptionalArgument.Present
+                                                , first_link =
+                                                    Input.buildUserRef
+                                                        (\u -> { u | username = uname |> OptionalArgument.Present })
+                                                        |> OptionalArgument.Present
+
+                                                --, mandate
+                                            }
+                                        )
+                                )
                             |> OptionalArgument.Present
                 }
     in

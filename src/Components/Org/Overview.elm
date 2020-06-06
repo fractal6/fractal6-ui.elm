@@ -9,7 +9,10 @@ import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewW
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
+import Extra.Events exposing (onEnter, onKeydown, onTab)
+import Forms
+import Forms.NewCircle
+import Forms.NewTension
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -455,7 +458,12 @@ update global msg model =
                         AddCircle (CircleInit form) ->
                             let
                                 newForm =
-                                    { form | user = uctx, post = Dict.insert "node_mode" (NodeMode.toString nodeMode) form.post }
+                                    { form
+                                        | user = uctx
+                                        , post =
+                                            form.post
+                                                |> Dict.union (Dict.fromList [ ( "node_mode", NodeMode.toString nodeMode ), ( "first_links", "@" ++ uctx.username ) ])
+                                    }
 
                                 orgaRoles =
                                     uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
@@ -652,7 +660,7 @@ update global msg model =
             )
 
         NodeFocused path ->
-            ( { model | node_path = Just path }, Cmd.none, Global.send (UpdateSessionPath path) )
+            ( { model | node_path = Just path }, Ports.debug_canvas, Global.send (UpdateSessionPath path) )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -775,15 +783,6 @@ view_ global model =
             global.session.user
             model.node_path
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
-
-        --, div [ class "columns is-variable is-4 is-paddingless" ]
-        --    [ div [ class "column is-5 is-offset-1 " ]
-        --        [ div [ class "control has-icons-left" ]
-        --            [ input [ class "input is-small" ] []
-        --            , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
-        --            ]
-        --        ]
-        --    ]
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5" ]
                 [ viewSearchBar model.orga_data model.node_path model.node_quickSearch
@@ -1228,98 +1227,11 @@ viewTensionStep step =
                 [ div [ class "modal-card-head" ]
                     [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this tension:" ] ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "level buttonRadio" ] <|
-                        List.map
-                            (\role ->
-                                div [ class "level-item" ]
-                                    [ div [ class "button", onClick (DoTensionFinal role) ] [ text role.name ] ]
-                            )
-                            roles
-                    ]
+                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoTensionFinal role) ] [ text role.name ]) roles ]
                 ]
 
         TensionFinal form result ->
-            let
-                source =
-                    form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
-
-                isSendable =
-                    isPostSendable [ "title" ] form.post
-
-                isLoading =
-                    result == LoadingSlowly
-            in
-            case result of
-                Success _ ->
-                    div [ class "box has-background-success" ] [ text "Tension added." ]
-
-                other ->
-                    div [ class "modal-card finalModal" ]
-                        [ div [ class "modal-card-head" ]
-                            [ div [ class "level modal-card-title" ]
-                                [ div [ class "level-left" ] <|
-                                    List.intersperse (text "\u{00A0}")
-                                        [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ] ]
-                                , div [ class "level-right" ] <| edgeArrow "button" (text source.name) (text form.target.name)
-                                ]
-                            ]
-                        , div [ class "modal-card-body" ]
-                            [ div [ class "field" ]
-                                [ div [ class "control" ]
-                                    [ input
-                                        [ class "input autofocus ollowFocus"
-                                        , attribute "data-nextfocus" "textAreaModal"
-                                        , type_ "text"
-                                        , placeholder "Title"
-                                        , onInput (ChangeTensionPost "title")
-                                        ]
-                                        []
-                                    ]
-                                , p [ class "help-label" ] [ text "Title that sumarize your tension." ]
-                                , br [] []
-                                ]
-                            , div [ class "field" ]
-                                [ div [ class "control" ]
-                                    [ textarea
-                                        [ id "textAreaModal"
-                                        , class "textarea"
-                                        , rows 10
-                                        , placeholder "Leave a comment"
-                                        , onInput (ChangeTensionPost "message")
-                                        ]
-                                        []
-                                    ]
-                                , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
-                                ]
-                            ]
-                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                            [ case other of
-                                Failure err ->
-                                    viewErrors err
-
-                                _ ->
-                                    div [] []
-                            , div [ class "field is-grouped is-grouped-right" ]
-                                [ div [ class "control" ]
-                                    [ if isSendable then
-                                        div []
-                                            [ button
-                                                [ class "button is-success has-text-weight-semibold"
-                                                , classList [ ( "is-loading", isLoading ) ]
-                                                , onClick (Submit <| SubmitTension form)
-                                                ]
-                                                [ text "Submit new tension" ]
-                                            ]
-
-                                      else
-                                        div []
-                                            [ button [ class "button has-text-weight-semibold", disabled True ]
-                                                [ text "Submit new tension" ]
-                                            ]
-                                    ]
-                                ]
-                            ]
-                        ]
+            Forms.NewTension.view form result ChangeTensionPost Submit SubmitTension
 
 
 viewCircleStep : CircleStep CircleForm -> Html Msg
@@ -1337,177 +1249,11 @@ viewCircleStep step =
                 [ div [ class "modal-card-head" ]
                     [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this Circle:" ] ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "level buttonRadio" ] <|
-                        List.map
-                            (\role ->
-                                div [ class "level-item" ]
-                                    [ div [ class "button", onClick (DoCircleFinal role) ] [ text role.name ] ]
-                            )
-                            roles
-                    ]
+                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ text role.name ]) roles ]
                 ]
 
         CircleFinal form result ->
-            let
-                source =
-                    form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
-
-                isSendable =
-                    isPostSendable [ "name", "purpose" ] form.post
-
-                isLoading =
-                    result == LoadingSlowly
-            in
-            case result of
-                Success _ ->
-                    div [ class "box has-background-success" ] [ text "Tension added (new Circle)." ]
-
-                other ->
-                    let
-                        title =
-                            Dict.get "title" form.post |> withDefault ""
-
-                        nameid =
-                            Dict.get "nameid" form.post |> withDefault ""
-                    in
-                    div [ class "modal-card finalModal" ]
-                        [ div [ class "modal-card-head" ]
-                            [ div [ class "level modal-card-title" ]
-                                [ div [ class "level-left" ] <|
-                                    List.intersperse (text "\u{00A0}")
-                                        [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New circle" ] ]
-                                , div [ class "level-right" ] <| edgeArrow "button" (text source.name) (text form.target.name)
-                                ]
-                            ]
-                        , div [ class "modal-card-body" ]
-                            [ div [ class "field" ]
-                                [ div [ class "control" ]
-                                    [ input
-                                        [ class "input autofocus followFocus"
-                                        , attribute "data-nextfocus" "textAreaModal"
-                                        , type_ "text"
-                                        , placeholder "Name"
-                                        , onInput (ChangeCirclePost "name")
-                                        ]
-                                        []
-                                    ]
-                                , p [ class "help-label" ] [ text "Name of the circle." ]
-                                ]
-                            , div [ id "autoNodeidBox", class "box has-background-grey-lighter" ]
-                                [ div [ class "field is-horizontal" ]
-                                    [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Title" ]
-                                    , div [ class "field-body control" ]
-                                        [ input
-                                            [ class "input is-small"
-                                            , type_ "text"
-                                            , value title
-                                            , onInput (ChangeCirclePost "title")
-                                            ]
-                                            []
-                                        ]
-                                    ]
-                                , div [ class "field is-horizontal" ]
-                                    [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Identifier" ]
-                                    , div [ class "field-body control" ]
-                                        [ input
-                                            [ class "input is-small"
-                                            , type_ "text"
-                                            , value nameid
-                                            , onInput (ChangeCirclePost "nameid")
-                                            ]
-                                            []
-                                        ]
-                                    ]
-                                ]
-                            , br [] []
-                            , div [ class "field" ]
-                                [ div [ class "control" ]
-                                    [ textarea
-                                        [ id "textAreaModal"
-                                        , class "textarea"
-                                        , rows 5
-                                        , placeholder "Leave a comment"
-                                        , onInput (ChangeCirclePost "message")
-                                        ]
-                                        []
-                                    ]
-                                , p [ class "help-label" ] [ text "Add a description to help others understand why a new circle should be created." ]
-                                ]
-                            , br [] []
-                            , div [ class "card" ]
-                                [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text "Mandate" ] ]
-                                , div [ class "card-content" ]
-                                    [ div [ class "field" ]
-                                        [ div [ class "label" ] [ text "Purpose" ]
-                                        , div [ class "control" ]
-                                            [ textarea
-                                                [ id "textAreaModal"
-                                                , class "textarea"
-                                                , rows 5
-                                                , placeholder "Define the purpose of the circle."
-                                                , onInput (ChangeCirclePost "purpose")
-                                                ]
-                                                []
-                                            ]
-                                        ]
-                                    , div [ class "field" ]
-                                        [ div [ class "label" ] [ text "Responsabilities" ]
-                                        , div [ class "control" ]
-                                            [ textarea
-                                                [ id "textAreaModal"
-                                                , class "textarea"
-                                                , rows 5
-                                                , placeholder "Define the circle responsabilities."
-                                                , onInput (ChangeCirclePost "responsabilities")
-                                                ]
-                                                []
-                                            ]
-                                        ]
-                                    , div [ class "field" ]
-                                        [ div [ class "label" ] [ text "Domains" ]
-                                        , div [ class "control" ]
-                                            [ textarea
-                                                [ id "textAreaModal"
-                                                , class "textarea"
-                                                , rows 5
-                                                , placeholder "Define the circle domains."
-                                                , onInput (ChangeCirclePost "responsabilities")
-                                                ]
-                                                []
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            , br [] []
-                            ]
-                        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                            [ case other of
-                                Failure err ->
-                                    viewErrors err
-
-                                _ ->
-                                    div [] []
-                            , div [ class "field is-grouped is-grouped-right" ]
-                                [ div [ class "control" ]
-                                    [ if isSendable then
-                                        div []
-                                            [ button
-                                                [ class "button is-success has-text-weight-semibold"
-                                                , classList [ ( "is-loading", isLoading ) ]
-                                                , onClickPD2 (Submit <| SubmitCircle form)
-                                                ]
-                                                [ text "Submit new Circle" ]
-                                            ]
-
-                                      else
-                                        div []
-                                            [ button [ class "button has-text-weight-semibold", disabled True ]
-                                                [ text "Submit new Circle" ]
-                                            ]
-                                    ]
-                                ]
-                            ]
-                        ]
+            Forms.NewCircle.view form result ChangeCirclePost Submit SubmitCircle
 
 
 viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
@@ -1541,16 +1287,3 @@ viewJoinOrgaStep orga step =
 -- Model Getters and Setters
 -------------------------------------------------
 -- Setters
-
-
-{-| Test require fields
--}
-isPostSendable : List String -> Post -> Bool
-isPostSendable keys post =
-    keys
-        |> List.map
-            (\k ->
-                Dict.get k post
-                    |> withDefault ""
-            )
-        |> List.all (\x -> String.length x > 0)

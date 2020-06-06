@@ -1,6 +1,7 @@
 port module Ports exposing
     ( bulma_driver
     , clearTooltip
+    , debug_canvas
     , focusGraphPack
     , initGraphPack
     , loadUserCtx
@@ -154,4 +155,16 @@ searchNode pattern =
     outgoing
         { action = "SEARCH_NODES"
         , data = JE.string pattern
+        }
+
+
+
+--- Debug Canvas
+
+
+debug_canvas : Cmd msg
+debug_canvas =
+    outgoing
+        { action = "DEBUG_CANVAS"
+        , data = JE.string ""
         }

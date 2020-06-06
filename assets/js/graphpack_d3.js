@@ -191,6 +191,18 @@ const GraphPack = {
         ctx2d.fill();
     },
 
+    replaceButtons() {
+        var b = document.querySelector("body").getBoundingClientRect();
+        var scrollLeft = b.left;
+        var scrollTop = b.top;
+        var r = this.$canvas.getBoundingClientRect();
+        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
+        this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
+        // if position is relative (@DEBUG imcompressible space on canvas)
+        //this.$canvasButtons.style.left = r.width/2 - 8 - scrollLeft+"px";
+        //this.$canvasButtons.style.top = this.$canvasButtons.offsetHeight+"px" -scrollTop;
+    },
+
     // Size the canvas
     computeGeometry() {
 
@@ -215,23 +227,17 @@ const GraphPack = {
 
     // Resize Html Elements created here
     sizeDom() {
-        // Canvas
+        // Size Canvas
         this.$canvas.width = this.width;
         this.$canvas.height = this.height;
         this.$hiddenCanvas.width = this.width;
         this.$hiddenCanvas.height = this.height;
 
-        // Element next to the canvas
+        // Size Element next to the canvas
         this.$nextToChart.style.minHeight = 2*this.height+"px";
 
-        // Buttons
-        var b = document.querySelector("body").getBoundingClientRect();
-        var scrollLeft = b.left;
-        var scrollTop = b.top;
-        var r = this.$canvas.getBoundingClientRect();
-        //$canvasButtons.style.top = "-"+ height+"px"; // if position: relative
-        this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
-        this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
+        // replace Buttons
+        this.replaceButtons();
 
         this.$canvasButtons.classList.remove("is-invisible");
         this.$tooltip.classList.remove("is-invisible");

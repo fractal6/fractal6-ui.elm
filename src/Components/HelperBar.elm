@@ -10,6 +10,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodePath, uriFromNameid)
 import ModelSchema exposing (UserRole)
+import Ports
 
 
 view : FractalBaseRoute -> UserState -> Maybe NodePath -> msg -> Html msg
@@ -23,33 +24,30 @@ view baseUri user maybePath joinMsg =
     in
     div [ id "helperBar", class "columns is-centered" ]
         [ nav [ class "column is-10" ]
-            [ div [ class "level" ]
-                [ div [ class "level-left" ]
-                    [ div [ class "level-item" ] [ viewPath baseUri path ]
-                    ]
-                , div [ class "level-right" ]
-                    [ div [ class "level-item" ]
-                        [ case user of
-                            LoggedIn uctx ->
-                                case maybePath of
-                                    Just _ ->
-                                        let
-                                            roles =
-                                                List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
-                                        in
-                                        if List.length roles > 0 then
-                                            memberButton baseUri roles
+            [ div [ class "columns" ]
+                [ div [ class "column is-5" ]
+                    [ viewPath baseUri path ]
+                , div [ class "column is-6 is-offset-1" ]
+                    [ case user of
+                        LoggedIn uctx ->
+                            case maybePath of
+                                Just _ ->
+                                    let
+                                        roles =
+                                            List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
+                                    in
+                                    if List.length roles > 0 then
+                                        memberButton baseUri roles
 
-                                        else
-                                            joinButton joinMsg
+                                    else
+                                        joinButton joinMsg
 
-                                    Nothing ->
-                                        -- Loading
-                                        text ""
+                                Nothing ->
+                                    -- Loading
+                                    text ""
 
-                            LoggedOut ->
-                                joinButton joinMsg
-                        ]
+                        LoggedOut ->
+                            joinButton joinMsg
                     ]
                 ]
             , div [ class "tabs is-boxed" ]
@@ -97,12 +95,13 @@ viewPath baseUri path =
 joinButton : msg -> Html msg
 joinButton msg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  tooltip has-tooltip-bottom"
+        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  tooltip has-tooltip-bottom is-pulled-right"
         , attribute "data-modal" "actionModal" -- JS/Elm confcli, msg is not sent !
-        , attribute "data-tooltip" "Join this organisation."
+
+        --, attribute "data-tooltip" "Join this organisation."
         , onClick msg
         ]
-        [ text "Join" ]
+        [ text "Join this organisation" ]
 
 
 memberButton : FractalBaseRoute -> List UserRole -> Html msg
@@ -111,10 +110,9 @@ memberButton baseUri roles =
         |> List.map
             (\r ->
                 a
-                    [ class "button is-hovered is-small has-text-weight-semibold is-primary"
-                    , attribute "style" "margin-right: 5px;"
+                    [ class "button is-hovered is-small has-text-weight-semibold is-primary "
                     , href <| uriFromNameid baseUri r.nameid
                     ]
                     [ text r.name ]
             )
-        |> div []
+        |> div [ class "buttons is-pulled-right" ]
