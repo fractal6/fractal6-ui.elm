@@ -273,9 +273,12 @@ html.has-modal-active {
     align-self: flex-end;
 }
 
-.Box {
+.mediaTension {
     //border-bottom: 1px solid #e1e4e8;
     //padding: 10px 10px;
+    .fa-circle {
+        margin-right: 33px !important;
+    }
 }
 
 .Circle:before {

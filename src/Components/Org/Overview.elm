@@ -8,14 +8,17 @@ import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewWarnings)
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
+import Debug
 import Dict exposing (Dict)
 import Extra.Events exposing (onEnter, onKeydown, onTab)
-import Forms
-import Forms.NewCircle
-import Forms.NewTension
+import Form
+import Form.NewCircle
+import Form.NewTension
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
@@ -28,10 +31,15 @@ import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid, uriFromUsername)
+import ModelCommon.View exposing (edgeArrow, tensionTypeColor, viewNodeRef)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Process
+import Query.AddNode exposing (addNewMember, addOneCircle)
+import Query.AddTension exposing (addCircleTension, addOneTension)
+import Query.QueryNodesOrga exposing (queryGraphPack)
+import Query.QueryTension exposing (queryCircleTension)
 import Task
 import Time
 
@@ -101,7 +109,7 @@ init global flags =
         --d1 = Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
         --d2 = Debug.log "newfocus" [ newFocus ]
         refresh =
-            basePathChanged OverviewBaseUri global.referer
+            basePathChanged OverviewBaseUri global.session.referer
 
         qs =
             session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0 }
@@ -124,14 +132,14 @@ init global flags =
 
         cmds =
             if orgChange || refresh then
-                [ fetchNodesOrga newFocus.rootnameid GotOrga
-                , fetchCircleTension newFocus.nameid GotTensions
+                [ queryGraphPack newFocus.rootnameid GotOrga
+                , queryCircleTension newFocus.nameid GotTensions
                 , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
 
             else if focusChange then
                 [ Ports.focusGraphPack newFocus.nameid
-                , fetchCircleTension newFocus.nameid GotTensions
+                , queryCircleTension newFocus.nameid GotTensions
                 , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
 
@@ -164,17 +172,17 @@ type Msg
     | DoTensionFinal UserRole --  {source}
     | ChangeTensionPost String String -- {field value}
     | SubmitTension TensionForm Time.Posix -- Send form
-    | TensionAck (GqlData (Maybe AddTensionPayload)) -- decode better to get IdPayload
+    | TensionAck (GqlData (Maybe Tension)) -- decode better to get IdPayload
       -- AddCircle Action
     | DoCircleInit Node -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeCirclePost String String -- {field value}
-    | SubmitCircle CircleForm Time.Posix -- Send form
-    | CircleAck (GqlData (Maybe AddNodePayload)) -- decode better to get IdPayload
+    | SubmitCircle CircleForm Bool Time.Posix -- Send form
+    | CircleAck (GqlData (Maybe Node)) -- decode better to get IdPayload
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData (Maybe AddNodePayload))
+    | JoinAck (GqlData (Maybe Node))
       -- Quick search
     | ChangePattern String
     | ChangeLookup Nodes_
@@ -426,9 +434,48 @@ update global msg model =
                     ( model, Cmd.none, Cmd.none )
 
         TensionAck result ->
+            let
+                newDataTensions =
+                    case model.circle_tensions of
+                        Success tensions_ ->
+                            case result of
+                                Success maybeTension ->
+                                    tensions_
+                                        |> List.append (maybeTension |> Maybe.map (\x -> [ x ]) |> withDefault [])
+                                        |> Success
+
+                                _ ->
+                                    Success tensions_
+
+                        other ->
+                            other
+
+                tensions =
+                    case newDataTensions of
+                        Success ts ->
+                            ts
+
+                        _ ->
+                            []
+            in
             case model.node_action of
                 AddTension (TensionFinal form _) ->
-                    ( { model | node_action = AddTension <| TensionFinal form result }, Cmd.none, Ports.bulma_driver "actionModal" )
+                    ( { model
+                        | node_action = AddTension <| TensionFinal form result
+                        , circle_tensions = newDataTensions
+                      }
+                    , Ports.bulma_driver "actionModal"
+                    , Global.send (UpdateSessionTensions tensions)
+                    )
+
+                AddCircle (CircleFinal form _) ->
+                    ( { model
+                        | node_action = AddTension <| TensionFinal form result
+                        , circle_tensions = newDataTensions
+                      }
+                    , Ports.bulma_driver "actionModal"
+                    , Global.send (UpdateSessionTensions tensions)
+                    )
 
                 other ->
                     ( { model | node_action = AskErr "Query method implemented" }, Cmd.none, Cmd.none )
@@ -577,26 +624,66 @@ update global msg model =
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-        SubmitCircle form time ->
+        SubmitCircle form doClose time ->
             let
+                status =
+                    if doClose == True then
+                        TensionStatus.Closed |> TensionStatus.toString
+
+                    else
+                        TensionStatus.Open |> TensionStatus.toString
+
                 post =
-                    Dict.insert "createdAt" (fromTime time) form.post
+                    Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", status ) ]) form.post
             in
             case form.source of
                 Just source ->
-                    ( model, addOneCircle form.user post source form.target CircleAck, Cmd.none )
+                    let
+                        cmds =
+                            if doClose == True then
+                                [ addOneCircle form.user post source form.target CircleAck, addCircleTension form.user post source form.target TensionAck ]
+
+                            else
+                                [ addCircleTension form.user post source form.target TensionAck ]
+                    in
+                    ( model, Cmd.batch cmds, Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
 
         CircleAck result ->
+            let
+                newDataOrga =
+                    case model.orga_data of
+                        Success data_ ->
+                            case result of
+                                Success maybeNode ->
+                                    maybeNode
+                                        |> Maybe.map (\x -> Dict.insert x.nameid x data_)
+                                        |> withDefault data_
+                                        |> Success
+
+                                _ ->
+                                    Success data_
+
+                        other ->
+                            other
+
+                odata =
+                    case newDataOrga of
+                        Success d ->
+                            d
+
+                        _ ->
+                            Dict.empty
+            in
             case model.node_action of
                 AddCircle (CircleFinal form _) ->
                     case result of
                         Success _ ->
                             ( { model | node_action = AddCircle <| CircleFinal form result }
                             , Cmd.none
-                            , Global.send UpdateUserToken
+                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga odata), Ports.drawGraphPack ]
                             )
 
                         other ->
@@ -660,7 +747,7 @@ update global msg model =
             )
 
         NodeFocused path ->
-            ( { model | node_path = Just path }, Ports.debug_canvas, Global.send (UpdateSessionPath path) )
+            ( { model | node_path = Just path }, Ports.drawButtonsGraphPack, Global.send (UpdateSessionPath path) )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -801,6 +888,45 @@ view_ global model =
         ]
 
 
+viewLeftPane : Model -> Html Msg
+viewLeftPane model =
+    nav [ class "menu" ]
+        [ p [ class "menu-label" ]
+            [ div [ class "hero is-small is-primary is-bold" ]
+                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.rootnameid ] ]
+            ]
+        , ul [ class "menu-list" ]
+            [ li [ class "menu-label" ]
+                [ div [ class "hero is-small is-info is-bold" ]
+                    [ div [ class "hero-body" ]
+                        [ Fa.icon "far fa-circle fa-lg" model.node_focus.nameid ]
+                    ]
+                ]
+            , li []
+                [ ul [ class "menu-list" ]
+                    [ li []
+                        [ a []
+                            [ Fa.icon "fas fa-scroll fa-xs" "Mandates" ]
+                        ]
+                    , li []
+                        [ a []
+                            --  fa-exclamation-circle
+                            [ Fa.icon "fas fa-exchange-alt fa-xs" "Tensions" ]
+                        ]
+                    , li []
+                        [ a []
+                            [ Fa.icon "fas fa-history fa-xs" "Journal" ]
+                        ]
+                    , li []
+                        [ a []
+                            [ Fa.icon "fas fa-user fa-xs" "Members" ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+
 viewSearchBar : OrgaData -> Maybe NodePath -> NodesQuickSearch -> Html Msg
 viewSearchBar nodes maybePath qs =
     let
@@ -898,45 +1024,6 @@ viewSearchBar nodes maybePath qs =
 
         Nothing ->
             div [ id "searchBar", class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder "Find a Role or Circle", disabled True ] [] ] ]
-
-
-viewLeftPane : Model -> Html Msg
-viewLeftPane model =
-    nav [ class "menu" ]
-        [ p [ class "menu-label" ]
-            [ div [ class "hero is-small is-primary is-bold" ]
-                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.rootnameid ] ]
-            ]
-        , ul [ class "menu-list" ]
-            [ li [ class "menu-label" ]
-                [ div [ class "hero is-small is-info is-bold" ]
-                    [ div [ class "hero-body" ]
-                        [ Fa.icon "far fa-circle fa-lg" model.node_focus.nameid ]
-                    ]
-                ]
-            , li []
-                [ ul [ class "menu-list" ]
-                    [ li []
-                        [ a []
-                            [ Fa.icon "fas fa-scroll fa-xs" "Mandates" ]
-                        ]
-                    , li []
-                        [ a []
-                            --  fa-exclamation-circle
-                            [ Fa.icon "fas fa-exchange-alt fa-xs" "Tensions" ]
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon "fas fa-history fa-xs" "Journal" ]
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon "fas fa-user fa-xs" "Members" ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
 
 
 viewCanvas : OrgaData -> Html Msg
@@ -1061,7 +1148,7 @@ viewActivies global model =
 
 mediaTension : Tension -> Html Msg
 mediaTension tension =
-    div [ class "media Box" ]
+    div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top"
@@ -1084,11 +1171,21 @@ mediaTension tension =
                 )
             , br [ class "is-block" ] []
             , span [] <| edgeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
+            , span [] []
             , span [ class "is-pulled-right has-text-weight-light" ]
-                [ "opened the " ++ formatTime tension.createdAt ++ " by " |> text
-                , tension.emitter.first_link
-                    |> Maybe.map (\u -> a [ href (uriFromUsername UsersBaseUri u.username) ] [ "@" ++ u.username |> text ])
-                    |> withDefault (a [ href (uriFromNameid OverviewBaseUri tension.emitter.nameid) ] [ tension.emitter.nameid |> text ])
+                [ case tension.action of
+                    Just TensionAction.NewCircle ->
+                        Fa.icon0 "far fa-circle" ""
+
+                    Just TensionAction.NewRole ->
+                        Fa.icon0 "far fa-user" ""
+
+                    Nothing ->
+                        span [] []
+                , span []
+                    [ "opened the " ++ formatTime tension.createdAt ++ " by " |> text
+                    , a [ href (uriFromUsername UsersBaseUri tension.createdBy.username) ] [ "@" ++ tension.createdBy.username |> text ]
+                    ]
                 ]
             ]
         , div
@@ -1143,6 +1240,32 @@ setupActionModal global model =
             ]
             []
         ]
+
+
+viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep orga step =
+    case step of
+        JoinInit _ ->
+            -- @TODO: slowRemoteLoading
+            div [ class "box spinner" ] [ text "loading..." ]
+
+        JoinAuthNeeded ->
+            viewAuthNeeded
+
+        JoinNotAuthorized errMsg ->
+            viewErrors errMsg
+
+        JoinValidation form result ->
+            case result of
+                Success _ ->
+                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
+
+                Failure err ->
+                    viewErrors err
+
+                default ->
+                    -- @TODO: slowRemoteLoading
+                    div [ class "box spinner" ] [ text "loading..." ]
 
 
 viewActionStep : Model -> ActionState -> Html Msg
@@ -1227,11 +1350,11 @@ viewTensionStep step =
                 [ div [ class "modal-card-head" ]
                     [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this tension:" ] ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoTensionFinal role) ] [ text role.name ]) roles ]
+                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoTensionFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles ]
                 ]
 
         TensionFinal form result ->
-            Forms.NewTension.view form result ChangeTensionPost Submit SubmitTension
+            Form.NewTension.view form result ChangeTensionPost Submit SubmitTension
 
 
 viewCircleStep : CircleStep CircleForm -> Html Msg
@@ -1249,41 +1372,14 @@ viewCircleStep step =
                 [ div [ class "modal-card-head" ]
                     [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this Circle:" ] ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ text role.name ]) roles ]
+                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles ]
                 ]
 
         CircleFinal form result ->
-            Forms.NewCircle.view form result ChangeCirclePost Submit SubmitCircle
-
-
-viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
-viewJoinOrgaStep orga step =
-    case step of
-        JoinInit _ ->
-            -- @TODO: slowRemoteLoading
-            div [ class "box spinner" ] [ text "loading..." ]
-
-        JoinAuthNeeded ->
-            viewAuthNeeded
-
-        JoinNotAuthorized errMsg ->
-            viewErrors errMsg
-
-        JoinValidation form result ->
-            case result of
-                Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
-
-                Failure err ->
-                    viewErrors err
-
-                default ->
-                    -- @TODO: slowRemoteLoading
-                    div [ class "box spinner" ] [ text "loading..." ]
+            Form.NewCircle.view form result ChangeCirclePost Submit SubmitCircle
 
 
 
 -------------------------------------------------
 -- Model Getters and Setters
 -------------------------------------------------
--- Setters

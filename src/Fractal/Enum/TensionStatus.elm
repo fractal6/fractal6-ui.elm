@@ -2,55 +2,48 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.MandateOrderable exposing (..)
+module Fractal.Enum.TensionStatus exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type MandateOrderable
-    = Purpose
-    | Responsabilities
-    | Domains
+type TensionStatus
+    = Open
+    | Closed
 
 
-list : List MandateOrderable
+list : List TensionStatus
 list =
-    [ Purpose, Responsabilities, Domains ]
+    [ Open, Closed ]
 
 
-decoder : Decoder MandateOrderable
+decoder : Decoder TensionStatus
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "purpose" ->
-                        Decode.succeed Purpose
+                    "Open" ->
+                        Decode.succeed Open
 
-                    "responsabilities" ->
-                        Decode.succeed Responsabilities
-
-                    "domains" ->
-                        Decode.succeed Domains
+                    "Closed" ->
+                        Decode.succeed Closed
 
                     _ ->
-                        Decode.fail ("Invalid MandateOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid TensionStatus type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representating the Enum to a string that the GraphQL server will recognize.
 -}
-toString : MandateOrderable -> String
+toString : TensionStatus -> String
 toString enum =
     case enum of
-        Purpose ->
-            "purpose"
+        Open ->
+            "Open"
 
-        Responsabilities ->
-            "responsabilities"
-
-        Domains ->
-            "domains"
+        Closed ->
+            "Closed"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +57,14 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe MandateOrderable
+fromString : String -> Maybe TensionStatus
 fromString enumString =
     case enumString of
-        "purpose" ->
-            Just Purpose
+        "Open" ->
+            Just Open
 
-        "responsabilities" ->
-            Just Responsabilities
-
-        "domains" ->
-            Just Domains
+        "Closed" ->
+            Just Closed
 
         _ ->
             Nothing

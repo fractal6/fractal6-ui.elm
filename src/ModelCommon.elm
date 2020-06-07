@@ -26,6 +26,7 @@ import Url exposing (Url)
 
 type alias Session =
     { user : UserState
+    , referer : Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
     , node_path : Maybe NodePath
@@ -80,7 +81,7 @@ type ActionState
 type TensionStep form
     = TensionInit form
     | TensionSource form (List UserRole)
-    | TensionFinal form (GqlData (Maybe AddTensionPayload))
+    | TensionFinal form (GqlData (Maybe Tension))
     | TensionNotAuthorized ErrorData
 
 
@@ -99,7 +100,7 @@ type alias TensionForm =
 type CircleStep form
     = CircleInit form
     | CircleSource form (List UserRole)
-    | CircleFinal form (GqlData (Maybe AddNodePayload))
+    | CircleFinal form (GqlData (Maybe Node))
     | CircleNotAuthorized ErrorData
 
 
@@ -117,7 +118,7 @@ type alias CircleForm =
 
 type JoinStep form
     = JoinInit form
-    | JoinValidation form (GqlData (Maybe AddNodePayload))
+    | JoinValidation form (GqlData (Maybe Node))
     | JoinNotAuthorized ErrorData
     | JoinAuthNeeded
 
@@ -170,6 +171,17 @@ getParentidFromRole role =
     in
     List.take (List.length l - 1) l
         |> String.join "#"
+
+
+getParentFragmentFromRole : UserRole -> String
+getParentFragmentFromRole role =
+    let
+        l =
+            String.split "#" role.nameid
+                |> List.filter (\x -> x /= "")
+                |> Array.fromList
+    in
+    Array.get (Array.length l - 2) l |> withDefault ""
 
 
 
@@ -284,7 +296,7 @@ nodeDecoder =
         |> JDE.andMap (JD.maybe (JD.map ParentNode <| JD.field "parentid" JD.string))
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
-        |> JDE.andMap (JD.maybe (JD.map FirstLink <| JD.field "first_link" JD.string))
+        |> JDE.andMap (JD.maybe (JD.map Username <| JD.field "first_link" JD.string))
         |> JDE.andMap
             (JD.field "charac" <|
                 JD.map2 NodeCharac

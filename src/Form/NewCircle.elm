@@ -1,19 +1,20 @@
-module Forms.NewCircle exposing (view)
+module Form.NewCircle exposing (view)
 
 import Components.Loading as Loading exposing (viewErrors)
 import Dict
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
-import Forms
+import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelSchema exposing (AddNodePayload, GqlData, RequestResult(..), UserRole, edgeArrow)
+import ModelCommon.View exposing (edgeArrow, tensionTypeSpan)
+import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole)
 
 
-{-| --view : CircleForm -> GqlData (Maybe AddNodePayload) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
+{-| --view : CircleForm -> GqlData (Maybe Node) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
 hat should be the signature ?!
 -}
 view form result changePostMsg submitMsg submitNextMsg =
@@ -22,7 +23,7 @@ view form result changePostMsg submitMsg submitNextMsg =
             form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
 
         isSendable =
-            Forms.isPostSendable [ "name", "purpose" ] form.post
+            isPostSendable [ "name", "purpose" ] form.post
 
         isLoading =
             result == LoadingSlowly
@@ -47,7 +48,7 @@ view form result changePostMsg submitMsg submitNextMsg =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New circle" ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New circle |\u{00A0}", tensionTypeSpan "has-text-weight-medium" "text" form.post ] ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text source.name) (text form.target.name)
                         ]
                     ]
@@ -187,18 +188,26 @@ view form result changePostMsg submitMsg submitNextMsg =
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
                             [ if isSendable then
-                                div []
+                                div [ class "buttons" ]
                                     [ button
+                                        [ class "button is-warning is-small has-text-weight-semibold"
+                                        , classList [ ( "is-loading", isLoading ) ]
+                                        , onClickPD2 (submitMsg <| submitNextMsg form True)
+                                        ]
+                                        [ text "Create Circle and close tension" ]
+                                    , button
                                         [ class "button is-success has-text-weight-semibold"
                                         , classList [ ( "is-loading", isLoading ) ]
-                                        , onClickPD2 (submitMsg <| submitNextMsg form)
+                                        , onClickPD2 (submitMsg <| submitNextMsg form False)
                                         ]
                                         [ text "Submit new Circle" ]
                                     ]
 
                               else
-                                div []
-                                    [ button [ class "button has-text-weight-semibold", disabled True ]
+                                div [ class "buttons" ]
+                                    [ button [ class "button is-small has-text-weight-semibold", disabled True ]
+                                        [ text "Create Circle and close tension" ]
+                                    , button [ class "button has-text-weight-semibold", disabled True ]
                                         [ text "Submit new Circle" ]
                                     ]
                             ]

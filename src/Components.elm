@@ -13,7 +13,9 @@ layout { page, session } =
     , body =
         [ div [ id "app" ]
             [ Navbar.viewNavbar session.user -- page.route / current route ?
-            , div [ id "body", class "section is-paddingless" ] page.body
+            , div [ id "body", class "section is-paddingless" ] <|
+                --[ div [ class "notification is-info" ] [ div [ class "delete" ] [] , text session.referer.path ] ] ++
+                page.body
             ]
         ]
     }

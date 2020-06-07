@@ -1,4 +1,4 @@
-module Forms exposing (isPostSendable)
+module Form exposing (isPostSendable)
 
 import Dict
 import ModelSchema exposing (Post)

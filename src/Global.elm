@@ -44,7 +44,6 @@ type alias Flags =
 type alias Model =
     { flags : Flags
     , url : Url
-    , referer : Url
     , key : Nav.Key
     , session : Session
     }
@@ -72,6 +71,7 @@ init flags url key =
 
         session =
             { user = userState
+            , referer = url
             , token_data = RemoteData.NotAsked
             , node_focus = Nothing
             , node_path = Nothing
@@ -81,7 +81,7 @@ init flags url key =
             , node_quickSearch = Nothing
             }
     in
-    ( Model flags url url key session
+    ( Model flags url key session
     , Cmd.batch
         [ Ports.log "Hello!"
         , Ports.toggle_theme
@@ -118,16 +118,22 @@ update msg model =
             )
 
         UpdateReferer url ->
-            ( { model | referer = url }, Cmd.none )
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | referer = url } }, Cmd.none )
 
         RedirectOnLoggedIn ->
             let
                 cmd =
                     case model.session.user of
                         LoggedIn uctx ->
-                            navigate <| Route.User_Dynamic { param1 = uctx.username }
+                            model.session.referer
+                                |> Route.fromUrl
+                                |> Maybe.withDefault (Route.User_Dynamic { param1 = uctx.username })
+                                |> navigate
 
-                        --Nav.replaceUrl global.key (String.join "/" [ "/user", uctx.username ])
                         LoggedOut ->
                             Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
             in

@@ -191,13 +191,16 @@ const GraphPack = {
         ctx2d.fill();
     },
 
-    replaceButtons() {
+    drawButtons() {
         var b = document.querySelector("body").getBoundingClientRect();
         var scrollLeft = b.left;
         var scrollTop = b.top;
         var r = this.$canvas.getBoundingClientRect();
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
         this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
+
+        this.$canvasButtons.classList.remove("is-invisible");
+        this.$tooltip.classList.remove("is-invisible");
     },
 
     // Size the canvas
@@ -232,12 +235,6 @@ const GraphPack = {
 
         // Size Element next to the canvas
         this.$nextToChart.style.minHeight = 2.25*this.height+"px";
-
-        // replace Buttons
-        this.replaceButtons();
-
-        this.$canvasButtons.classList.remove("is-invisible");
-        this.$tooltip.classList.remove("is-invisible");
     },
 
     //The draw function of the canvas that gets called on each frame
@@ -783,6 +780,7 @@ const GraphPack = {
 
             this.computeGeometry();
             this.sizeDom();
+            this.drawButtons();
             this.zoomToNode(this.focusedNode, 0.9);
         }
     },

@@ -19,48 +19,42 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-purpose : SelectionSet String Fractal.Object.Mandate
-purpose =
-    Object.selectionForField "String" "purpose" [] Decode.string
-
-
-responsabilities : SelectionSet (Maybe String) Fractal.Object.Mandate
-responsabilities =
-    Object.selectionForField "(Maybe String)" "responsabilities" [] (Decode.string |> Decode.nullable)
-
-
-domains : SelectionSet (Maybe String) Fractal.Object.Mandate
-domains =
-    Object.selectionForField "(Maybe String)" "domains" [] (Decode.string |> Decode.nullable)
-
-
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Mandate
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Mandate
-createdAt =
-    Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
+type alias TensionsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
 
 
-type alias CreatedByOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.UserFilter }
-
-
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Mandate
-createdBy fillInOptionals object_ =
+tensions : (TensionsOptionalArguments -> TensionsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (List decodesTo) Fractal.Object.Mandate
+tensions fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+    Object.selectionForCompositeField "tensions" optionalArgs object_ (identity >> Decode.list)
 
 
-message : SelectionSet (Maybe String) Fractal.Object.Mandate
-message =
-    Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)
+purpose : SelectionSet String Fractal.Object.Mandate
+purpose =
+    Object.selectionForField "String" "purpose" [] Decode.string
+
+
+responsabilities : SelectionSet String Fractal.Object.Mandate
+responsabilities =
+    Object.selectionForField "String" "responsabilities" [] Decode.string
+
+
+domains : SelectionSet String Fractal.Object.Mandate
+domains =
+    Object.selectionForField "String" "domains" [] Decode.string

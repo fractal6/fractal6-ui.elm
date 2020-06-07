@@ -5,6 +5,7 @@
 module Fractal.Object.Tension exposing (..)
 
 import Fractal.Enum.TensionAction
+import Fractal.Enum.TensionStatus
 import Fractal.Enum.TensionType
 import Fractal.InputObject
 import Fractal.Interface
@@ -112,9 +113,31 @@ labels fillInOptionals object_ =
     Object.selectionForCompositeField "labels" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+status : SelectionSet Fractal.Enum.TensionStatus.TensionStatus Fractal.Object.Tension
+status =
+    Object.selectionForField "Enum.TensionStatus.TensionStatus" "status" [] Fractal.Enum.TensionStatus.decoder
+
+
 action : SelectionSet (Maybe Fractal.Enum.TensionAction.TensionAction) Fractal.Object.Tension
 action =
     Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
+
+
+type alias MandateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.MandateFilter }
+
+
+mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
+mandate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
 
 
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension

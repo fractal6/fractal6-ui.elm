@@ -5,48 +5,13 @@ import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionOrderable as TensionOrderable
+import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionType as TensionType
-import Fractal.InputObject as Input
-import Fractal.Mutation as Mutation
-import Fractal.Object
-import Fractal.Object.AddNodePayload
-import Fractal.Object.AddTensionPayload
-import Fractal.Object.Label
-import Fractal.Object.Node
-import Fractal.Object.NodeCharac
-import Fractal.Object.Tension
-import Fractal.Object.User
-import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
-import GqlClient exposing (..)
 import Graphql.Http
-import Graphql.OptionalArgument as OptionalArgument
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
-import Html exposing (Html, a, div, span, text)
-import Html.Attributes exposing (class, href)
-import Iso8601 exposing (fromTime)
-import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (FractalBaseRoute, circleIdCodec, guestIdCodec, uriFromNameid)
 import RemoteData exposing (RemoteData)
-
-
-
---
--- Queries Parameters
---
-
-
-nLabelPerTension : Int
-nLabelPerTension =
-    3
-
-
-nTensionPpg : Int
-nTensionPpg =
-    15
 
 
 
@@ -67,8 +32,14 @@ type alias CircleTensionsData =
     GqlData TensionsData
 
 
+type alias TensionsData =
+    List Tension
 
+
+
+--
 -- Remote Data and Sinks
+--
 
 
 type alias GqlData a =
@@ -88,37 +59,6 @@ type alias Post =
 
 
 
-{-
-   Schema Data Structure (fetch/Query)
--}
---
--- User
---
-
-
-type alias UserCtx =
-    { username : String
-    , name : Maybe String
-    , rights : UserRights
-    , roles : List UserRole
-    }
-
-
-type alias UserRights =
-    { canLogin : Bool
-    , canCreateRoot : Bool
-    }
-
-
-type alias UserRole =
-    { rootnameid : String
-    , nameid : String
-    , name : String
-    , role_type : RoleType.RoleType
-    }
-
-
-
 --
 -- Node
 --
@@ -133,7 +73,7 @@ type alias Node =
     , parent : Maybe ParentNode -- see issue with recursive structure
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
-    , first_link : Maybe FirstLink
+    , first_link : Maybe Username
     , charac : NodeCharac
     }
 
@@ -170,12 +110,14 @@ type alias SubNodeTensions =
 type alias Tension =
     { id : String
     , createdAt : String
+    , createdBy : Username
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , n_comments : Maybe Int
+    , action : Maybe TensionAction.TensionAction
     }
 
 
@@ -183,11 +125,10 @@ type alias EmitterOrReceiver =
     { name : String
     , nameid : String
     , type_ : NodeType.NodeType
-    , first_link : Maybe FirstLink
     }
 
 
-type alias FirstLink =
+type alias Username =
     { username : String }
 
 
@@ -196,435 +137,41 @@ type alias Label =
 
 
 
--- Response Data
+--
+-- User
+--
 
 
-type alias TensionsData =
-    List Tension
-
-
-type alias TensionsResponse =
-    Maybe (List (Maybe Tension))
-
-
-
----------------------------------------
-{-
-   Query Organisation Nodes
--}
----------------------------------------
-
-
-nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nodeOrgaFilter rootid a =
-    { a
-        | filter =
-            OptionalArgument.Present
-                (Input.buildNodeFilter
-                    (\b ->
-                        { b | rootnameid = OptionalArgument.Present { eq = OptionalArgument.Present rootid } }
-                    )
-                )
+type alias UserCtx =
+    { username : String
+    , name : Maybe String
+    , rights : UserRights
+    , roles : List UserRole
     }
 
 
-nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
-nodeOrgaPayload =
-    SelectionSet.succeed Node
-        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.rootnameid
-        |> with
-            --(Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
-            (Fractal.Object.Node.parent identity <| SelectionSet.map ParentNode Fractal.Object.Node.nameid)
-        |> with Fractal.Object.Node.type_
-        |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map FirstLink Fractal.Object.User.username)
-        |> with
-            (Fractal.Object.Node.charac <|
-                SelectionSet.map2 NodeCharac
-                    Fractal.Object.NodeCharac.userCanJoin
-                    Fractal.Object.NodeCharac.mode
-            )
-
-
-fetchNodesOrga rootid msg =
-    makeGQLQuery
-        (Query.queryNode
-            (nodeOrgaFilter rootid)
-            nodeOrgaPayload
-        )
-        (RemoteData.fromResult >> decodeResponse nodeOrgaDecoder >> msg)
-
-
-
----------------------------------------
-{-
-   Query Circle Tension
--}
----------------------------------------
-
-
-circleTensionFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-circleTensionFilter nid a =
-    { a | nameid = OptionalArgument.Present nid }
-
-
-tensionPgFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
-tensionPgFilter a =
-    { a
-        | first = OptionalArgument.Present nTensionPpg
-
-        -- we reorder it anyway !
-        --, order = OptionalArgument.Present (Input.buildTensionOrder (\b -> { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }))
+type alias UserRights =
+    { canLogin : Bool
+    , canCreateRoot : Bool
     }
 
 
-tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
-tensionPgPayload =
-    SelectionSet.succeed Tension
-        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
-        |> with Fractal.Object.Tension.title
-        |> with Fractal.Object.Tension.type_
-        |> with
-            (Fractal.Object.Tension.labels
-                (\args -> { args | first = OptionalArgument.Present nLabelPerTension })
-                (SelectionSet.succeed Label
-                    |> with Fractal.Object.Label.name
-                )
-            )
-        |> with
-            (Fractal.Object.Tension.emitter identity
-                (SelectionSet.succeed EmitterOrReceiver
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.type_
-                    |> with
-                        (Fractal.Object.Node.first_link identity <| SelectionSet.map FirstLink Fractal.Object.User.username)
-                )
-            )
-        |> with
-            (Fractal.Object.Tension.receiver identity
-                (SelectionSet.succeed EmitterOrReceiver
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.type_
-                    |> with
-                        (Fractal.Object.Node.first_link identity <| SelectionSet.map FirstLink Fractal.Object.User.username)
-                )
-            )
-        |> with Fractal.Object.Tension.n_comments
-
-
-circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
-circleTensionPayload =
-    SelectionSet.succeed NodeTensions
-        |> with (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
-        |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
-        |> with
-            (Fractal.Object.Node.children identity
-                (SelectionSet.succeed SubNodeTensions
-                    |> with (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
-                    |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
-                )
-            )
-
-
-fetchCircleTension targetid msg =
-    --@DEBUG: Infered type...
-    makeGQLQuery
-        (Query.getNode
-            (circleTensionFilter targetid)
-            circleTensionPayload
-        )
-        (RemoteData.fromResult >> decodeResponse circleTensionDecoder >> msg)
+type alias UserRole =
+    { rootnameid : String
+    , nameid : String
+    , name : String
+    , role_type : RoleType.RoleType
+    }
 
 
 
----------------------------------------
-{-
-   Query Tension Page
--}
----------------------------------------
---tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
---tensionPgFilter a =
---    { a
---        | first = OptionalArgument.Present nTensionPpg
---        , order =
---            OptionalArgument.Present
---                (Input.buildTensionOrder
---                    (\b ->
---                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
---                    )
---                )
---    }
 --
+-- Response Data for Mutations
 --
---tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
---tensionPgPayload =
---    SelectionSet.succeed Tension
---        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
---        |> with Fractal.Object.Tension.title
---        |> with Fractal.Object.Tension.type_
---        |> with
---            (Fractal.Object.Tension.labels
---                (\args -> { args | first = OptionalArgument.Present nLabelPerTension })
---                (SelectionSet.succeed Label
---                    |> with Fractal.Object.Label.name
---                )
---            )
---        |> with Fractal.Object.Tension.n_comments
---
---
---fetchTensionsPg msg =
---    makeGQLQuery
---        (Query.queryTension
---            tensionPgFilter
---            tensionPgPayload
---        )
---        (RemoteData.fromResult >> decodeResponse queryDecoder >> msg)
---
----------------------------------------
-{-
-   Mutation: Add One Tension
--}
----------------------------------------
 
 
 type alias IdPayload =
     { id : String }
-
-
-type alias AddTensionPayload =
-    { tension : Maybe (List (Maybe IdPayload)) }
-
-
-addOneTension uctx tension source target msg =
-    --@DEBUG: Infered type...
-    makeGQLMutation
-        (Mutation.addTension
-            (addTensionInputEncoder uctx tension source target)
-            (SelectionSet.map AddTensionPayload <|
-                Fractal.Object.AddTensionPayload.tension identity <|
-                    (SelectionSet.succeed IdPayload
-                        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                    )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
-
-
-addTensionInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddTensionRequiredArguments
-addTensionInputEncoder uctx post source target =
-    let
-        title =
-            Dict.get "title" post |> withDefault ""
-
-        type_ =
-            Dict.get "type_" post |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational
-
-        createdAt =
-            Dict.get "createdAt" post |> withDefault ""
-
-        tensionRequired =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
-            , createdBy =
-                Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present uctx.username })
-            , title = title
-            , type_ = type_
-            , emitter =
-                Input.buildNodeRef
-                    (\x ->
-                        { x
-                            | nameid = OptionalArgument.Present source.nameid
-                            , rootnameid = OptionalArgument.Present source.rootnameid
-                        }
-                    )
-            , receiver =
-                Input.buildNodeRef
-                    (\x ->
-                        { x
-                            | nameid = OptionalArgument.Present target.nameid
-                            , rootnameid = OptionalArgument.Present target.rootnameid
-                        }
-                    )
-            }
-    in
-    { input =
-        [ Input.buildAddTensionInput tensionRequired identity ]
-    }
-
-
-
----------------------------------------
-{-
-   Mutation: Add a new Role or Cirlce
--}
----------------------------------------
-
-
-type alias AddNodePayload =
-    { node : Maybe (List (Maybe IdPayload)) }
-
-
-
--- New circle
-
-
-addOneCircle uctx post source target msg =
-    --@DEBUG: Infered type...
-    makeGQLMutation
-        (Mutation.addNode
-            (addCircleInputEncoder uctx post source target)
-            (SelectionSet.map AddNodePayload <|
-                Fractal.Object.AddNodePayload.node identity <|
-                    (SelectionSet.succeed IdPayload
-                        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
-                    )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
-
-
-addCircleInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddNodeRequiredArguments
-addCircleInputEncoder uctx post source target =
-    let
-        createdAt =
-            Dict.get "createdAt" post |> withDefault ""
-
-        nameid =
-            Dict.get "nameid" post |> Maybe.map (\nid -> circleIdCodec target.nameid nid) |> withDefault ""
-
-        name =
-            Dict.get "name" post |> withDefault ""
-
-        nodeMode =
-            -- @DEBUG: Ignored from now, we inherit the root mode
-            Dict.get "node_mode" post |> withDefault "" |> NodeMode.fromString |> withDefault NodeMode.Coordinated
-
-        first_links =
-            Dict.get "first_links" post |> withDefault ""
-
-        -- @TODO mandate !
-        nodeRequired =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
-            , createdBy =
-                Input.buildUserRef
-                    (\u -> { u | username = OptionalArgument.Present uctx.username })
-            , isRoot = False
-            , type_ = NodeType.Circle
-            , name = name
-            , nameid = nameid
-            , rootnameid = target.rootnameid
-            , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
-            }
-
-        nodeOptional =
-            \n ->
-                { n
-                    | parent =
-                        Input.buildNodeRef
-                            (\p -> { p | nameid = OptionalArgument.Present target.nameid })
-                            |> OptionalArgument.Present
-                    , children =
-                        first_links
-                            |> String.split "@"
-                            |> List.filter (\x -> x /= "")
-                            |> List.indexedMap
-                                (\i uname ->
-                                    Input.buildNodeRef
-                                        (\c ->
-                                            { c
-                                                | createdAt = createdAt |> Fractal.Scalar.DateTime |> OptionalArgument.Present
-                                                , createdBy =
-                                                    Input.buildUserRef
-                                                        (\u -> { u | username = OptionalArgument.Present uctx.username })
-                                                        |> OptionalArgument.Present
-                                                , isRoot = False |> OptionalArgument.Present
-                                                , type_ = NodeType.Role |> OptionalArgument.Present
-                                                , role_type = RoleType.Coordinator |> OptionalArgument.Present
-                                                , name = "Coordinator" |> OptionalArgument.Present
-                                                , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> OptionalArgument.Present
-                                                , rootnameid = target.rootnameid |> OptionalArgument.Present
-                                                , charac =
-                                                    { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
-                                                        |> OptionalArgument.Present
-                                                , first_link =
-                                                    Input.buildUserRef
-                                                        (\u -> { u | username = uname |> OptionalArgument.Present })
-                                                        |> OptionalArgument.Present
-
-                                                --, mandate
-                                            }
-                                        )
-                                )
-                            |> OptionalArgument.Present
-                }
-    in
-    { input =
-        [ Input.buildAddNodeInput nodeRequired nodeOptional ]
-    }
-
-
-
--- New member
-
-
-addNewMember uctx post targetid msg =
-    --@DEBUG: Infered type...
-    makeGQLMutation
-        (Mutation.addNode
-            (newMemberInputEncoder uctx post targetid)
-            (SelectionSet.map AddNodePayload <|
-                Fractal.Object.AddNodePayload.node identity <|
-                    (SelectionSet.succeed IdPayload
-                        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
-                    )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse mutationDecoder >> msg)
-
-
-newMemberInputEncoder : UserCtx -> Post -> String -> Mutation.AddNodeRequiredArguments
-newMemberInputEncoder uctx post targetid =
-    let
-        createdAt =
-            Dict.get "createdAt" post |> withDefault ""
-
-        nodeRequired =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
-            , createdBy =
-                Input.buildUserRef
-                    (\u -> { u | username = OptionalArgument.Present uctx.username })
-            , type_ = NodeType.Role
-            , nameid = guestIdCodec targetid uctx.username
-            , name = "Guest"
-            , rootnameid = targetid
-            , isRoot = False
-            , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
-            }
-
-        nodeOptional =
-            \n ->
-                { n
-                    | role_type = OptionalArgument.Present RoleType.Guest
-                    , parent =
-                        Input.buildNodeRef
-                            (\p -> { p | nameid = OptionalArgument.Present targetid })
-                            |> OptionalArgument.Present
-                    , first_link =
-                        Input.buildUserRef
-                            (\u -> { u | username = OptionalArgument.Present uctx.username })
-                            |> OptionalArgument.Present
-                }
-    in
-    { input =
-        [ Input.buildAddNodeInput nodeRequired nodeOptional ]
-    }
 
 
 
@@ -664,75 +211,6 @@ decodeResponse decoder response =
             decoder data |> Success
 
 
-circleTensionDecoder : Maybe NodeTensions -> List Tension
-circleTensionDecoder data =
-    case data of
-        Just node ->
-            let
-                tin =
-                    node.tensions_in |> withDefault []
-
-                tout =
-                    -- Empty for now (automatic tensions ?)
-                    node.tensions_out |> withDefault []
-
-                tchild =
-                    node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
-            in
-            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
-                |> List.reverse
-                |> uniqueBy (\t -> t.id)
-                |> List.take nTensionPpg
-
-        Nothing ->
-            []
-
-
-subCircleTensionDecoder : SubNodeTensions -> List Tension
-subCircleTensionDecoder child =
-    let
-        tin =
-            child.tensions_in |> withDefault []
-
-        tout =
-            child.tensions_out |> withDefault []
-    in
-    tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout
-
-
-nodeOrgaDecoder : Maybe (List (Maybe Node)) -> Dict String Node
-nodeOrgaDecoder data =
-    case data of
-        Just d ->
-            if List.length d == 0 then
-                Dict.empty
-
-            else
-                d
-                    |> List.filterMap identity
-                    |> List.map (\n -> ( n.nameid, n ))
-                    |> Dict.fromList
-
-        Nothing ->
-            Dict.empty
-
-
-queryDecoder : Maybe (List (Maybe a)) -> List a
-queryDecoder data =
-    -- Convert empty data to empty list
-    -- Standard decoder to get list of result from a gql query
-    case data of
-        Just d ->
-            if List.length d == 0 then
-                []
-
-            else
-                List.filterMap identity d
-
-        Nothing ->
-            []
-
-
 mutationDecoder : Maybe a -> Maybe a
 mutationDecoder =
     identity
@@ -752,79 +230,3 @@ decodedId (Fractal.Scalar.Id id) =
 decodedTime : Fractal.ScalarCodecs.DateTime -> String
 decodedTime (Fractal.Scalar.DateTime time) =
     time
-
-
-tensionTypeColor : String -> TensionType.TensionType -> String
-tensionTypeColor elt tt =
-    case tt of
-        TensionType.Governance ->
-            "has-" ++ elt ++ "-info"
-
-        TensionType.Operational ->
-            "has-" ++ elt ++ "-success"
-
-        TensionType.Personal ->
-            "has-" ++ elt ++ "-warning"
-
-        TensionType.Help ->
-            "has-" ++ elt ++ "-link"
-
-
-
---
--- View
---
-{-
-   Tension
--}
-
-
-tensionTypeSpan : String -> String -> Post -> Html msg
-tensionTypeSpan cls elt post =
-    let
-        maybeTTypeString =
-            Dict.get "type_" post
-
-        ttDecoded =
-            case maybeTTypeString of
-                Just ts ->
-                    case TensionType.fromString ts of
-                        Just td ->
-                            Just ( ts, td )
-
-                        Nothing ->
-                            Nothing
-
-                Nothing ->
-                    Nothing
-    in
-    case ttDecoded of
-        Just tt ->
-            span [ class <| cls ++ " " ++ tensionTypeColor elt (Tuple.second tt) ] [ text (Tuple.first tt) ]
-
-        Nothing ->
-            span [ class "" ] [ text "Unknown" ]
-
-
-edgeArrow : String -> Html msg -> Html msg -> List (Html msg)
-edgeArrow cls source target =
-    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
-    , span [ class <| "right-arrow" ] []
-    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]
-    ]
-
-
-
-{-
-   Node
--}
-
-
-viewNodeRef : FractalBaseRoute -> EmitterOrReceiver -> Html msg
-viewNodeRef baseUri n =
-    case n.type_ of
-        NodeType.Circle ->
-            a [ href (uriFromNameid baseUri n.nameid) ] [ n.name |> text ]
-
-        NodeType.Role ->
-            a [ href (uriFromNameid baseUri n.nameid) ] [ n.name |> text ]

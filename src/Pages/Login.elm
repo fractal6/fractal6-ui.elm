@@ -161,7 +161,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered section" ]
-        [ div [ class "column is-two-fifths" ]
+        [ div [ class "column is-3" ]
             [ viewLogin global model ]
         ]
 

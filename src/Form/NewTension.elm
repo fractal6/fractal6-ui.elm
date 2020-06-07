@@ -1,19 +1,20 @@
-module Forms.NewTension exposing (view)
+module Form.NewTension exposing (view)
 
 import Components.Loading as Loading exposing (viewErrors)
 import Dict
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
-import Forms
+import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelSchema exposing (AddNodePayload, GqlData, RequestResult(..), UserRole, edgeArrow, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, tensionTypeSpan)
+import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
 
 
-{-| --view : CircleForm -> GqlData (Maybe AddTensionPayload) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
+{-| --view : CircleForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
 hat should be the signature ?!
 -}
 view form result changePostMsg submitMsg submitNextMsg =
@@ -22,7 +23,7 @@ view form result changePostMsg submitMsg submitNextMsg =
             form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
 
         isSendable =
-            Forms.isPostSendable [ "title" ] form.post
+            isPostSendable [ "title" ] form.post
 
         isLoading =
             result == LoadingSlowly
@@ -45,7 +46,7 @@ view form result changePostMsg submitMsg submitNextMsg =
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
-                                [ class "input autofocus ollowFocus"
+                                [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder "Title"
@@ -80,7 +81,7 @@ view form result changePostMsg submitMsg submitNextMsg =
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
                             [ if isSendable then
-                                div []
+                                div [ class "buttons" ]
                                     [ button
                                         [ class "button is-success has-text-weight-semibold"
                                         , classList [ ( "is-loading", isLoading ) ]
@@ -90,7 +91,7 @@ view form result changePostMsg submitMsg submitNextMsg =
                                     ]
 
                               else
-                                div []
+                                div [ class "buttons" ]
                                     [ button [ class "button has-text-weight-semibold", disabled True ]
                                         [ text "Submit new tension" ]
                                     ]

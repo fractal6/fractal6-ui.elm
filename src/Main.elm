@@ -59,6 +59,7 @@ init flags url key =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url
+    | UrlChanged_ Url
     | Global Global.Msg
     | Page Pages.Msg
 
@@ -73,6 +74,14 @@ update msg model =
             ( model, Nav.load href )
 
         UrlChanged url ->
+            ( model
+            , Cmd.batch
+                [ Global.send (UrlChanged_ url)
+                , Cmd.map Global (Global.send <| UpdateReferer model.url)
+                ]
+            )
+
+        UrlChanged_ url ->
             let
                 ( page, pageCmd, globalCmd ) =
                     Pages.init (fromUrl url) model.global
@@ -82,7 +91,6 @@ update msg model =
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
                 , Ports.bulma_driver ""
-                , Cmd.map Global (Global.send <| UpdateReferer url)
                 ]
             )
 

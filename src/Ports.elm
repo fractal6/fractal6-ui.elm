@@ -1,7 +1,8 @@
 port module Ports exposing
     ( bulma_driver
     , clearTooltip
-    , debug_canvas
+    , drawButtonsGraphPack
+    , drawGraphPack
     , focusGraphPack
     , initGraphPack
     , loadUserCtx
@@ -89,6 +90,22 @@ clearTooltip =
         }
 
 
+drawGraphPack : Cmd msg
+drawGraphPack =
+    outgoing
+        { action = "DRAW_GRAPHPACK"
+        , data = JE.string ""
+        }
+
+
+drawButtonsGraphPack : Cmd msg
+drawButtonsGraphPack =
+    outgoing
+        { action = "DRAW_BUTTONS_GRAPHPACK"
+        , data = JE.string ""
+        }
+
+
 
 --
 -- Session functions
@@ -155,16 +172,4 @@ searchNode pattern =
     outgoing
         { action = "SEARCH_NODES"
         , data = JE.string pattern
-        }
-
-
-
---- Debug Canvas
-
-
-debug_canvas : Cmd msg
-debug_canvas =
-    outgoing
-        { action = "DEBUG_CANVAS"
-        , data = JE.string ""
         }

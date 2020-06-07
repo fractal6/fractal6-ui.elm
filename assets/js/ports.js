@@ -109,9 +109,14 @@ const actions = {
         var gp = session.gp;
         gp.clearNodeTooltip();
     },
-    'DEBUG_CANVAS' : (app, session, user_ctx_key) => {
+    'DRAW_GRAPHPACK' : (app, session, user_ctx_key) => {
         var gp = session.gp;
-        gp.replaceButtons();
+        gp.drawCanvas();
+        gp.drawCanvas(true);
+    },
+    'DRAW_BUTTONS_GRAPHPACK' : (app, session, user_ctx_key) => {
+        var gp = session.gp;
+        gp.drawButtons();
     },
     //
     // User Ctx -- Localstorage

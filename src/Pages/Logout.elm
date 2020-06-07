@@ -58,5 +58,5 @@ subscriptions global model =
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Logout"
-    , body = [ Html.text "Logout" ]
+    , body = [ Html.text "" ]
     }
