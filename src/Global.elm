@@ -77,6 +77,7 @@ init flags url key =
             , node_path = Nothing
             , orga_data = Nothing
             , circle_tensions = Nothing
+            , mandate = Nothing
             , node_action = Nothing
             , node_quickSearch = Nothing
             }
@@ -101,6 +102,7 @@ type Msg
     | UpdateSessionPath NodePath
     | UpdateSessionOrga NodesData
     | UpdateSessionTensions TensionsData
+    | UpdateSessionMandate Mandate
     | UpdateUserSession UserCtx -- user is logged In !
     | UpdateUserToken
     | UpdateUserTokenAck (WebData UserCtx)
@@ -113,9 +115,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Navigate route ->
-            ( model
-            , Nav.pushUrl model.key (Route.toHref route)
-            )
+            ( model, Nav.pushUrl model.key (Route.toHref route) )
 
         UpdateReferer url ->
             let
@@ -185,6 +185,15 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | circle_tensions = Just data } }
+            , Cmd.none
+            )
+
+        UpdateSessionMandate data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | mandate = Just data } }
             , Cmd.none
             )
 

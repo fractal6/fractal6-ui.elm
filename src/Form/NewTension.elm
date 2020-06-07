@@ -17,7 +17,7 @@ import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
 {-| --view : CircleForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
 hat should be the signature ?!
 -}
-view form result changePostMsg submitMsg submitNextMsg =
+view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
         source =
             form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
@@ -30,7 +30,7 @@ view form result changePostMsg submitMsg submitNextMsg =
     in
     case result of
         Success _ ->
-            div [ class "box has-background-success" ] [ text "Tension added." ]
+            div [ class "box has-background-success modalClose", onClick (closeModalMsg "") ] [ text "Tension added." ]
 
         other ->
             div [ class "modal-card finalModal" ]

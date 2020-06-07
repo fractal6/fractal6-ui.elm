@@ -39,6 +39,19 @@ nTensionPpg =
     15
 
 
+type alias NodeTensions =
+    { tensions_in : Maybe (List Tension)
+    , tensions_out : Maybe (List Tension)
+    , children : Maybe (List SubNodeTensions)
+    }
+
+
+type alias SubNodeTensions =
+    { tensions_in : Maybe (List Tension)
+    , tensions_out : Maybe (List Tension)
+    }
+
+
 queryCircleTension targetid msg =
     --@DEBUG: Infered type...
     makeGQLQuery
@@ -114,31 +127,32 @@ circleTensionPayload =
 
 
 
-{- Response Decoder -}
+-- Response Decoder
 
 
-circleTensionDecoder : Maybe NodeTensions -> List Tension
+circleTensionDecoder : Maybe NodeTensions -> Maybe (List Tension)
 circleTensionDecoder data =
-    case data of
-        Just node ->
-            let
-                tin =
-                    node.tensions_in |> withDefault []
+    data
+        |> Maybe.map
+            (\node ->
+                let
+                    tin =
+                        node.tensions_in |> withDefault []
 
-                tout =
-                    -- Empty for now (automatic tensions ?)
-                    node.tensions_out |> withDefault []
+                    tout =
+                        -- Empty for now (automatic tensions ?)
+                        node.tensions_out |> withDefault []
 
-                tchild =
-                    node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
-            in
-            List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
-                |> List.reverse
-                |> uniqueBy (\t -> t.id)
-                |> List.take nTensionPpg
-
-        Nothing ->
-            []
+                    tchild =
+                        node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
+                in
+                List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
+                    |> List.reverse
+                    |> uniqueBy (\t -> t.id)
+                    |> List.take nTensionPpg
+                    |> Just
+            )
+        |> Maybe.withDefault Nothing
 
 
 subCircleTensionDecoder : SubNodeTensions -> List Tension

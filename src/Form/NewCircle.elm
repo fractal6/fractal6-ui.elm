@@ -17,7 +17,7 @@ import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole)
 {-| --view : CircleForm -> GqlData (Maybe Node) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
 hat should be the signature ?!
 -}
-view form result changePostMsg submitMsg submitNextMsg =
+view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
         source =
             form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
@@ -30,7 +30,7 @@ view form result changePostMsg submitMsg submitNextMsg =
     in
     case result of
         Success _ ->
-            div [ class "box has-background-success" ] [ text "Tension added (new Circle)." ]
+            div [ class "box has-background-success", onClick (closeModalMsg "") ] [ text "Tension added (new Circle)." ]
 
         other ->
             let
@@ -190,25 +190,25 @@ view form result changePostMsg submitMsg submitNextMsg =
                             [ if isSendable then
                                 div [ class "buttons" ]
                                     [ button
-                                        [ class "button is-warning is-small has-text-weight-semibold"
-                                        , classList [ ( "is-loading", isLoading ) ]
-                                        , onClickPD2 (submitMsg <| submitNextMsg form True)
-                                        ]
-                                        [ text "Create Circle and close tension" ]
-                                    , button
                                         [ class "button is-success has-text-weight-semibold"
                                         , classList [ ( "is-loading", isLoading ) ]
                                         , onClickPD2 (submitMsg <| submitNextMsg form False)
                                         ]
                                         [ text "Submit new Circle" ]
+                                    , button
+                                        [ class "button is-warning is-small has-text-weight-semibold"
+                                        , classList [ ( "is-loading", isLoading ) ]
+                                        , onClickPD2 (submitMsg <| submitNextMsg form True)
+                                        ]
+                                        [ text "Create Circle and close tension" ]
                                     ]
 
                               else
                                 div [ class "buttons" ]
-                                    [ button [ class "button is-small has-text-weight-semibold", disabled True ]
-                                        [ text "Create Circle and close tension" ]
-                                    , button [ class "button has-text-weight-semibold", disabled True ]
+                                    [ button [ class "button has-text-weight-semibold", disabled True ]
                                         [ text "Submit new Circle" ]
+                                    , button [ class "button is-small has-text-weight-semibold", disabled True ]
+                                        [ text "Create Circle and close tension" ]
                                     ]
                             ]
                         ]

@@ -38,6 +38,7 @@ import Ports
 import Process
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
+import Query.QueryMandate exposing (queryMandate)
 import Query.QueryNodesOrga exposing (queryGraphPack)
 import Query.QueryTension exposing (queryCircleTension)
 import Task
@@ -65,6 +66,7 @@ type alias Model =
     , node_path : Maybe NodePath
     , orga_data : OrgaData
     , circle_tensions : CircleTensionsData
+    , mandate : GqlData Mandate
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , node_quickSearch : NodesQuickSearch
@@ -123,6 +125,10 @@ init global flags =
                 session.circle_tensions
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
+            , mandate =
+                session.mandate
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
             , node_action = session.node_action |> withDefault NotAsk
             , node_focus = newFocus
             , node_path = session.node_path
@@ -134,12 +140,14 @@ init global flags =
             if orgChange || refresh then
                 [ queryGraphPack newFocus.rootnameid GotOrga
                 , queryCircleTension newFocus.nameid GotTensions
+                , queryMandate newFocus.nameid GotMandate
                 , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
 
             else if focusChange then
                 [ Ports.focusGraphPack newFocus.nameid
                 , queryCircleTension newFocus.nameid GotTensions
+                , queryMandate newFocus.nameid GotMandate
                 , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
                 ]
 
@@ -163,6 +171,7 @@ type Msg
       -- Gql Data Queries
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
+    | GotMandate (GqlData Mandate) -- graphql
       -- Node Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
     | Submit (Time.Posix -> Msg) -- Get Current Time
@@ -172,17 +181,17 @@ type Msg
     | DoTensionFinal UserRole --  {source}
     | ChangeTensionPost String String -- {field value}
     | SubmitTension TensionForm Time.Posix -- Send form
-    | TensionAck (GqlData (Maybe Tension)) -- decode better to get IdPayload
+    | TensionAck (GqlData Tension) -- decode better to get IdPayload
       -- AddCircle Action
     | DoCircleInit Node -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeCirclePost String String -- {field value}
     | SubmitCircle CircleForm Bool Time.Posix -- Send form
-    | CircleAck (GqlData (Maybe Node)) -- decode better to get IdPayload
+    | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData (Maybe Node))
+    | JoinAck (GqlData Node)
       -- Quick search
     | ChangePattern String
     | ChangeLookup Nodes_
@@ -242,6 +251,14 @@ update global msg model =
 
                 other ->
                     ( { model | circle_tensions = result }, Cmd.none, Cmd.none )
+
+        GotMandate result ->
+            case result of
+                Success data ->
+                    ( { model | mandate = result }, Cmd.none, Global.send (UpdateSessionMandate data) )
+
+                other ->
+                    ( { model | mandate = result }, Cmd.none, Cmd.none )
 
         -- Search
         ChangePattern pattern ->
@@ -435,34 +452,19 @@ update global msg model =
 
         TensionAck result ->
             let
-                newDataTensions =
-                    case model.circle_tensions of
-                        Success tensions_ ->
-                            case result of
-                                Success maybeTension ->
-                                    tensions_
-                                        |> List.append (maybeTension |> Maybe.map (\x -> [ x ]) |> withDefault [])
-                                        |> Success
-
-                                _ ->
-                                    Success tensions_
+                tensions =
+                    case result of
+                        Success t ->
+                            hotTensionPush t model.circle_tensions
 
                         other ->
-                            other
-
-                tensions =
-                    case newDataTensions of
-                        Success ts ->
-                            ts
-
-                        _ ->
                             []
             in
             case model.node_action of
                 AddTension (TensionFinal form _) ->
                     ( { model
                         | node_action = AddTension <| TensionFinal form result
-                        , circle_tensions = newDataTensions
+                        , circle_tensions = Success tensions
                       }
                     , Ports.bulma_driver "actionModal"
                     , Global.send (UpdateSessionTensions tensions)
@@ -471,7 +473,7 @@ update global msg model =
                 AddCircle (CircleFinal form _) ->
                     ( { model
                         | node_action = AddTension <| TensionFinal form result
-                        , circle_tensions = newDataTensions
+                        , circle_tensions = Success tensions
                       }
                     , Ports.bulma_driver "actionModal"
                     , Global.send (UpdateSessionTensions tensions)
@@ -648,38 +650,17 @@ update global msg model =
                     ( model, Cmd.none, Cmd.none )
 
         CircleAck result ->
-            let
-                newDataOrga =
-                    case model.orga_data of
-                        Success data_ ->
-                            case result of
-                                Success maybeNode ->
-                                    maybeNode
-                                        |> Maybe.map (\x -> Dict.insert x.nameid x data_)
-                                        |> withDefault data_
-                                        |> Success
-
-                                _ ->
-                                    Success data_
-
-                        other ->
-                            other
-
-                odata =
-                    case newDataOrga of
-                        Success d ->
-                            d
-
-                        _ ->
-                            Dict.empty
-            in
             case model.node_action of
                 AddCircle (CircleFinal form _) ->
                     case result of
-                        Success _ ->
-                            ( { model | node_action = AddCircle <| CircleFinal form result }
-                            , Cmd.none
-                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga odata), Ports.drawGraphPack ]
+                        Success nodes ->
+                            let
+                                ndata =
+                                    hotNodePush nodes model.orga_data
+                            in
+                            ( { model | node_action = AddCircle <| CircleFinal form result, orga_data = Success ndata }
+                            , Ports.redrawGraphPack ndata
+                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga ndata) ]
                             )
 
                         other ->
@@ -713,10 +694,14 @@ update global msg model =
             case model.node_action of
                 JoinOrga (JoinInit form) ->
                     case result of
-                        Success _ ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , Cmd.none
-                            , Global.send UpdateUserToken
+                        Success n ->
+                            let
+                                ndata =
+                                    hotNodePush [ n ] model.orga_data
+                            in
+                            ( { model | node_action = JoinOrga (JoinValidation form result), orga_data = Success ndata }
+                            , Ports.redrawGraphPack ndata
+                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga ndata) ]
                             )
 
                         other ->
@@ -871,13 +856,13 @@ view_ global model =
                 [ viewSearchBar model.orga_data model.node_path model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
-                , viewMandate global model
-                , setupActionModal global model
+                , viewMandate model.mandate
+                , setupActionModal model
                 ]
             , div [ class "column is-5" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
-                        [ viewActivies global model ]
+                        [ viewActivies model ]
                     ]
                 ]
             ]
@@ -1067,41 +1052,41 @@ viewCanvas orgaData =
         ]
 
 
-viewMandate : Global.Model -> Model -> Html Msg
-viewMandate global model =
+viewMandate : GqlData Mandate -> Html Msg
+viewMandate mandateData =
     div [ id "mandateContainer", class "hero is-small is-light heroViewer" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
                 [ Fa.icon "fas fa-scroll fa-xs" "Mandate" ]
             , hr [ class "has-background-grey-light" ] []
-            , div [ class "content" ]
-                [ h2 [ class "title is-5" ] [ text "Purpose" ]
-                , p [] [ text "Helping people and human organisations to find resillient, efficient and anti alienating models and praxis for self organisation." ]
-                , h2 [ class "title is-5" ] [ text "Responsabilities" ]
-                , p []
-                    [ ul []
-                        [ li [] [ text "Develop, and push forward Fractal6." ]
-                        , li [] [ text "Maintain the security of the platform." ]
+            , div [ class "content" ] <|
+                case mandateData of
+                    Failure err ->
+                        [ viewErrors err ]
 
-                        --, li [] [ text "Find a business model for fractal6." ]
-                        ]
-                    ]
-                , h2 [ class "title is-5" ] [ text "Domains" ]
-                , p []
-                    [ ul []
-                        [ li [] [ text "Pubic repo of fractal6." ]
-                        , li [] [ text "Public machine database of fractal6." ]
+                    Loading ->
+                        [ div [] [] ]
 
-                        --, li [] [ text "Find a business model for fractal6." ]
+                    NotAsked ->
+                        [ div [] [] ]
+
+                    LoadingSlowly ->
+                        [ div [ class "spinner" ] [] ]
+
+                    Success mandate ->
+                        [ h2 [ class "title is-5" ] [ text "Purpose" ]
+                        , p [] [ mandate.purpose |> text ]
+                        , h2 [ class "title is-5" ] [ text "Responsabilities" ]
+                        , p [] [ mandate.responsabilities |> text ]
+                        , h2 [ class "title is-5" ] [ text "Domains" ]
+                        , p [] [ mandate.domains |> text ]
                         ]
-                    ]
-                ]
             ]
         ]
 
 
-viewActivies : Global.Model -> Model -> Html Msg
-viewActivies global model =
+viewActivies : Model -> Html Msg
+viewActivies model =
     div
         [ class "box"
         , attribute "style" "flex-grow: 1; padding-top: 0px;"
@@ -1204,8 +1189,8 @@ mediaTension tension =
         ]
 
 
-setupActionModal : Global.Model -> Model -> Html Msg
-setupActionModal global model =
+setupActionModal : Model -> Html Msg
+setupActionModal model =
     div
         [ id "actionModal"
         , classList
@@ -1242,7 +1227,6 @@ viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
-            -- @TODO: slowRemoteLoading
             div [ class "box spinner" ] [ text "loading..." ]
 
         JoinAuthNeeded ->
@@ -1260,7 +1244,6 @@ viewJoinOrgaStep orga step =
                     viewErrors err
 
                 default ->
-                    -- @TODO: slowRemoteLoading
                     div [ class "box spinner" ] [ text "loading..." ]
 
 
@@ -1350,7 +1333,7 @@ viewTensionStep step =
                 ]
 
         TensionFinal form result ->
-            Form.NewTension.view form result ChangeTensionPost Submit SubmitTension
+            Form.NewTension.view form result ChangeTensionPost DoCloseModal Submit SubmitTension
 
 
 viewCircleStep : CircleStep CircleForm -> Html Msg
@@ -1372,10 +1355,40 @@ viewCircleStep step =
                 ]
 
         CircleFinal form result ->
-            Form.NewCircle.view form result ChangeCirclePost Submit SubmitCircle
+            Form.NewCircle.view form result ChangeCirclePost DoCloseModal Submit SubmitCircle
 
 
 
 -------------------------------------------------
 -- Model Getters and Setters
 -------------------------------------------------
+
+
+{-|
+
+    Push a new tension in the model if data is success
+
+-}
+hotTensionPush : Tension -> CircleTensionsData -> TensionsData
+hotTensionPush tension circle_tensions =
+    case circle_tensions of
+        Success tensions ->
+            [ tension ] ++ tensions
+
+        other ->
+            []
+
+
+{-|
+
+    Push a new node in the model if data is success
+
+-}
+hotNodePush : List Node -> OrgaData -> NodesData
+hotNodePush nodes odata =
+    case odata of
+        Success data ->
+            Dict.union (List.map (\n -> ( n.nameid, n )) nodes |> Dict.fromList) data
+
+        other ->
+            Dict.empty

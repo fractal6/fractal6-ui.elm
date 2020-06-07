@@ -23,7 +23,9 @@ import RemoteData exposing (RemoteData)
 
 
 
--- Response Decoder
+{-
+   Add a single tension
+-}
 
 
 type alias AddTensionPayload =
@@ -32,6 +34,10 @@ type alias AddTensionPayload =
 
 type alias AddLabelPayload =
     { label : Maybe (List (Maybe IdPayload)) }
+
+
+
+-- Response Decoder
 
 
 tensionDecoder : Maybe AddTensionPayload -> Maybe Tension
@@ -47,12 +53,6 @@ tensionDecoder a =
             Nothing
 
 
-
-{-
-   Add a single tension
--}
-
-
 addOneTension uctx tension source target msg =
     --@DEBUG: Infered type...
     makeGQLMutation
@@ -63,6 +63,10 @@ addOneTension uctx tension source target msg =
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
+
+
+
+-- input Encoder
 
 
 addTensionInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddTensionRequiredArguments
@@ -110,7 +114,7 @@ addTensionInputEncoder uctx post source target =
 
 
 {-
-   Tension mutation (AddTension) with NewCircle action
+   Add a tension with with "New Circle" Action
 -}
 
 

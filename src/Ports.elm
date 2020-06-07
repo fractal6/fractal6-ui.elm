@@ -2,12 +2,12 @@ port module Ports exposing
     ( bulma_driver
     , clearTooltip
     , drawButtonsGraphPack
-    , drawGraphPack
     , focusGraphPack
     , initGraphPack
     , loadUserCtx
     , log
     , open_modal
+    , redrawGraphPack
     , removeUserCtx
     , saveUserCtx
     , searchNode
@@ -90,11 +90,11 @@ clearTooltip =
         }
 
 
-drawGraphPack : Cmd msg
-drawGraphPack =
+redrawGraphPack : NodesData -> Cmd msg
+redrawGraphPack data =
     outgoing
         { action = "DRAW_GRAPHPACK"
-        , data = JE.string ""
+        , data = graphPackEncoder data ""
         }
 
 

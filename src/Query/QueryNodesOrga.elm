@@ -66,21 +66,22 @@ nodeOrgaPayload =
 
 
 
-{- Response decoder -}
+--- Response decoder
 
 
-nodeOrgaDecoder : Maybe (List (Maybe Node)) -> Dict String Node
+nodeOrgaDecoder : Maybe (List (Maybe Node)) -> Maybe (Dict String Node)
 nodeOrgaDecoder data =
-    case data of
-        Just d ->
-            if List.length d == 0 then
-                Dict.empty
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
 
-            else
-                d
-                    |> List.filterMap identity
-                    |> List.map (\n -> ( n.nameid, n ))
-                    |> Dict.fromList
-
-        Nothing ->
-            Dict.empty
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.map (\n -> ( n.nameid, n ))
+                        |> Dict.fromList
+                        |> Just
+            )
+        |> Maybe.withDefault Nothing

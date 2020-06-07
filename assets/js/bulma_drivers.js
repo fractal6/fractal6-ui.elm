@@ -239,7 +239,7 @@ const BulmaDriver = (app, target, handlers) => {
      */
 
     // Close all modals if ESC pressed
-    const closeModals = objs => {
+    const closeModals = (e, objs) => {
         objs.forEach(function(el) {
             // deactivate all buttons that are below that modal
             el.querySelectorAll('.button').forEach(btn => {
@@ -251,8 +251,9 @@ const BulmaDriver = (app, target, handlers) => {
             // Fix block scrolling
             document.documentElement.classList.remove('has-modal-active');
             document.getElementById("navbarTop").classList.remove('has-modal-active');
-            // deactivate modal
-            if (el.classList.contains("protected_")) {
+
+            // Elm compatibility
+            if (el.classList.contains("protected_" )) {
                 // Close modal with elm
                 app.ports.closeModalFromJs.send("")
             } else {
@@ -263,7 +264,7 @@ const BulmaDriver = (app, target, handlers) => {
     }
 
     const $modals = $target.querySelectorAll('.modal');
-    const $modal_closes = $target.querySelectorAll('.modal-close');
+    const $modal_closes = $target.querySelectorAll('.modal-close, .modalClose');
     const $modal_background = $target.querySelectorAll('.modal-background');
     const $modal_triggers = $target.querySelectorAll('.modalTrigger'); // app specific
     //
@@ -289,7 +290,7 @@ const BulmaDriver = (app, target, handlers) => {
     if ($modal_background.length > 0) {
         $modal_background.forEach( el => {
             el.addEventListener('mousedown', function(e) {
-                closeModals($modals);
+                closeModals(e, $modals);
             });
         });
 
@@ -298,9 +299,9 @@ const BulmaDriver = (app, target, handlers) => {
     }
     if ($modal_closes.length > 0) {
         $modal_closes.forEach( el => {
-            el.addEventListener('mousedown', function(e) {
-                closeModals($modals);
-            });
+            var evt = "mousedown";
+            var h = e => closeModals(e, $modals);
+            setupHandler("mousedown", h, el);
         });
     }
 

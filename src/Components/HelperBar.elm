@@ -7,7 +7,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodePath, uriFromNameid)
 import ModelSchema exposing (UserRole)
 import Ports
@@ -110,7 +110,8 @@ memberButton baseUri roles =
         |> List.map
             (\r ->
                 a
-                    [ class "button is-hovered is-small has-text-weight-semibold is-primary "
+                    [ class "button is-hovered is-small has-text-weight-semibold is-primary tooltip has-tooltip-bottom"
+                    , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                     , href <| uriFromNameid baseUri r.nameid
                     ]
                     [ text r.name ]

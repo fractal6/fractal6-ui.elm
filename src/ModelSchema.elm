@@ -94,19 +94,6 @@ type alias NodeCharac =
 --
 
 
-type alias NodeTensions =
-    { tensions_in : Maybe (List Tension)
-    , tensions_out : Maybe (List Tension)
-    , children : Maybe (List SubNodeTensions)
-    }
-
-
-type alias SubNodeTensions =
-    { tensions_in : Maybe (List Tension)
-    , tensions_out : Maybe (List Tension)
-    }
-
-
 type alias Tension =
     { id : String
     , createdAt : String
@@ -134,6 +121,21 @@ type alias Username =
 
 type alias Label =
     { name : String }
+
+
+
+--
+-- Mandate
+--
+
+
+type alias Mandate =
+    { purpose : String
+    , responsabilities : String
+    , domains : String
+
+    --, tensions : List { id : String, title : String }
+    }
 
 
 
@@ -208,7 +210,12 @@ decodeResponse decoder response =
             NotAsked
 
         RemoteData.Success data ->
-            decoder data |> Success
+            case decoder data of
+                Just d ->
+                    Success d
+
+                Nothing ->
+                    Failure [ "No data returned." ]
 
 
 mutationDecoder : Maybe a -> Maybe a

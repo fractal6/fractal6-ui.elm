@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser exposing (Document)
 import Browser.Navigation as Nav exposing (Key)
 import Generated.Pages as Pages
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route(..))
 import Global exposing (Msg(..))
 import Html
 import Ports
@@ -68,7 +68,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LinkClicked (Browser.Internal url) ->
-            ( model, Nav.pushUrl model.key (Url.toString url) )
+            if Route.fromUrl url == Just Route.Logout then
+                ( model, Nav.replaceUrl model.key (Url.toString url) )
+
+            else
+                ( model, Nav.pushUrl model.key (Url.toString url) )
 
         LinkClicked (Browser.External href) ->
             ( model, Nav.load href )

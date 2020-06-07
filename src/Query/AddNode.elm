@@ -12,6 +12,8 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddNodePayload
 import Fractal.Object.Node
+import Fractal.Object.NodeCharac
+import Fractal.Object.User
 import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument
@@ -24,7 +26,9 @@ import RemoteData exposing (RemoteData)
 
 
 
--- Response Decoder
+{-
+   Add a New member
+-}
 
 
 type alias AddNodeIDPayload =
@@ -35,12 +39,19 @@ type alias AddNodePayload =
     { node : Maybe (List (Maybe Node)) }
 
 
+
+--- Response Decoder
+
+
 nodeDecoder : Maybe AddNodePayload -> Maybe Node
 nodeDecoder a =
     case a of
         Just b ->
             b.node
-                |> Maybe.map (\x -> List.head x)
+                |> Maybe.map
+                    (\x ->
+                        List.head x
+                    )
                 |> Maybe.withDefault Nothing
                 |> Maybe.withDefault Nothing
 
@@ -49,9 +60,7 @@ nodeDecoder a =
 
 
 
-{-
-   New member
--}
+--- Query
 
 
 addNewMember uctx post targetid msg =
@@ -73,9 +82,7 @@ addNewMember uctx post targetid msg =
 
 
 
---
---
---
+-- Input Encoder
 
 
 newMemberInputEncoder : UserCtx -> Post -> String -> Mutation.AddNodeRequiredArguments
@@ -118,8 +125,74 @@ newMemberInputEncoder uctx post targetid =
 
 
 {-
-   Mutation: Add a Circle
+   Add a Circle
 -}
+
+
+type alias Circle =
+    { id : String
+    , createdAt : String
+    , name : String
+    , nameid : String
+    , rootnameid : String
+    , parent : Maybe ParentNode -- see issue with recursive structure
+    , children : Maybe (List Node)
+    , type_ : NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
+    , first_link : Maybe Username
+    , charac : NodeCharac
+    }
+
+
+type alias AddCirclePayload =
+    { node : Maybe (List (Maybe Circle)) }
+
+
+
+--- Response Decoder
+
+
+circleDecoder : Maybe AddCirclePayload -> Maybe (List Node)
+circleDecoder a =
+    case a of
+        Just b ->
+            b.node
+                |> Maybe.map
+                    (\x ->
+                        case List.head x of
+                            Just (Just n) ->
+                                let
+                                    children =
+                                        n.children |> withDefault []
+
+                                    node =
+                                        { id = .id n
+                                        , createdAt = .createdAt n
+                                        , name = .name n
+                                        , nameid = .nameid n
+                                        , rootnameid = .rootnameid n
+                                        , parent = .parent n
+                                        , type_ = .type_ n
+                                        , role_type = .role_type n
+                                        , first_link = .first_link n
+                                        , charac = .charac n
+                                        }
+                                in
+                                [ node ]
+                                    ++ children
+                                    |> Just
+
+                            _ ->
+                                Nothing
+                    )
+                |> Maybe.withDefault Nothing
+
+        Nothing ->
+            Nothing
+
+
+
+--- Query
 
 
 addOneCircle uctx post source target msg =
@@ -127,11 +200,38 @@ addOneCircle uctx post source target msg =
     makeGQLMutation
         (Mutation.addNode
             (addCircleInputEncoder uctx post source target)
-            (SelectionSet.map AddNodePayload <|
-                Fractal.Object.AddNodePayload.node identity nodeOrgaPayload
+            (SelectionSet.map AddCirclePayload <|
+                Fractal.Object.AddNodePayload.node identity addOneCirclePayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse nodeDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse circleDecoder >> msg)
+
+
+addOneCirclePayload : SelectionSet Circle Fractal.Object.Node
+addOneCirclePayload =
+    SelectionSet.succeed Circle
+        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.rootnameid
+        |> with
+            --(Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
+            (Fractal.Object.Node.parent identity <| SelectionSet.map ParentNode Fractal.Object.Node.nameid)
+        |> with (Fractal.Object.Node.children identity nodeOrgaPayload)
+        |> with Fractal.Object.Node.type_
+        |> with Fractal.Object.Node.role_type
+        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with
+            (Fractal.Object.Node.charac <|
+                SelectionSet.map2 NodeCharac
+                    Fractal.Object.NodeCharac.userCanJoin
+                    Fractal.Object.NodeCharac.mode
+            )
+
+
+
+-- Input Encoder
 
 
 addCircleInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddNodeRequiredArguments

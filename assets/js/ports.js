@@ -109,12 +109,14 @@ const actions = {
         var gp = session.gp;
         gp.clearNodeTooltip();
     },
-    'DRAW_GRAPHPACK' : (app, session, user_ctx_key) => {
+    'DRAW_GRAPHPACK' : (app, session, data) => {
         var gp = session.gp;
+        var graph = formatGraph(data.data);
+        gp.resetGraphPack(graph[0]);
         gp.drawCanvas();
         gp.drawCanvas(true);
     },
-    'DRAW_BUTTONS_GRAPHPACK' : (app, session, user_ctx_key) => {
+    'DRAW_BUTTONS_GRAPHPACK' : (app, session, _) => {
         var gp = session.gp;
         gp.drawButtons();
     },

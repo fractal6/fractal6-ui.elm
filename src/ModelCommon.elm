@@ -32,6 +32,7 @@ type alias Session =
     , node_path : Maybe NodePath
     , orga_data : Maybe NodesData
     , circle_tensions : Maybe TensionsData
+    , mandate : Maybe Mandate
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
     }
@@ -81,7 +82,7 @@ type ActionState
 type TensionStep form
     = TensionInit form
     | TensionSource form (List UserRole)
-    | TensionFinal form (GqlData (Maybe Tension))
+    | TensionFinal form (GqlData Tension)
     | TensionNotAuthorized ErrorData
 
 
@@ -100,7 +101,7 @@ type alias TensionForm =
 type CircleStep form
     = CircleInit form
     | CircleSource form (List UserRole)
-    | CircleFinal form (GqlData (Maybe Node))
+    | CircleFinal form (GqlData (List Node))
     | CircleNotAuthorized ErrorData
 
 
@@ -118,7 +119,7 @@ type alias CircleForm =
 
 type JoinStep form
     = JoinInit form
-    | JoinValidation form (GqlData (Maybe Node))
+    | JoinValidation form (GqlData Node)
     | JoinNotAuthorized ErrorData
     | JoinAuthNeeded
 
