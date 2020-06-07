@@ -4,6 +4,9 @@ import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionStatus as TensionStatus
+import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
@@ -177,6 +180,10 @@ addCircleInputEncoder uctx post source target =
                                     | purpose = Dict.get "purpose" post |> withDefault "" |> OptionalArgument.Present
                                     , responsabilities = Dict.get "responsabilities" post |> withDefault "" |> OptionalArgument.Present
                                     , domains = Dict.get "domains" post |> withDefault "" |> OptionalArgument.Present
+                                    , tensions =
+                                        [ Input.buildTensionRef (tensionFromForm uctx post source target)
+                                        ]
+                                            |> OptionalArgument.Present
                                 }
                             )
                             |> OptionalArgument.Present
@@ -216,3 +223,57 @@ addCircleInputEncoder uctx post source target =
     { input =
         [ Input.buildAddNodeInput nodeRequired nodeOptional ]
     }
+
+
+tensionFromForm : UserCtx -> Post -> UserRole -> Node -> (Input.TensionRefOptionalFields -> Input.TensionRefOptionalFields)
+tensionFromForm uctx post source target =
+    let
+        title =
+            Dict.get "title" post |> withDefault ""
+
+        createdAt =
+            Dict.get "createdAt" post |> withDefault ""
+
+        status =
+            Dict.get "status" post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
+    in
+    \t ->
+        { t
+            | createdAt = createdAt |> Fractal.Scalar.DateTime |> OptionalArgument.Present
+            , createdBy =
+                Input.buildUserRef
+                    (\x -> { x | username = OptionalArgument.Present uctx.username })
+                    |> OptionalArgument.Present
+            , title = title |> OptionalArgument.Present
+            , type_ = TensionType.Governance |> OptionalArgument.Present
+            , status = status |> OptionalArgument.Present
+            , emitter =
+                Input.buildNodeRef
+                    (\x ->
+                        { x
+                            | nameid = OptionalArgument.Present source.nameid
+                            , rootnameid = OptionalArgument.Present source.rootnameid
+                        }
+                    )
+                    |> OptionalArgument.Present
+            , receiver =
+                Input.buildNodeRef
+                    (\x ->
+                        { x
+                            | nameid = OptionalArgument.Present target.nameid
+                            , rootnameid = OptionalArgument.Present target.rootnameid
+                        }
+                    )
+                    |> OptionalArgument.Present
+            , action = TensionAction.NewCircle |> OptionalArgument.Present
+            , mandate =
+                Input.buildMandateRef
+                    (\m ->
+                        { m
+                            | purpose = Dict.get "purpose" post |> withDefault "" |> OptionalArgument.Present
+                            , responsabilities = Dict.get "responsabilities" post |> withDefault "" |> OptionalArgument.Present
+                            , domains = Dict.get "domains" post |> withDefault "" |> OptionalArgument.Present
+                        }
+                    )
+                    |> OptionalArgument.Present
+        }

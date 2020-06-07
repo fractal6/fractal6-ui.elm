@@ -638,15 +638,11 @@ update global msg model =
             in
             case form.source of
                 Just source ->
-                    let
-                        cmds =
-                            if doClose == True then
-                                [ addOneCircle form.user post source form.target CircleAck, addCircleTension form.user post source form.target TensionAck ]
+                    if doClose == True then
+                        ( model, addOneCircle form.user post source form.target CircleAck, Cmd.none )
 
-                            else
-                                [ addCircleTension form.user post source form.target TensionAck ]
-                    in
-                    ( model, Cmd.batch cmds, Cmd.none )
+                    else
+                        ( model, addCircleTension form.user post source form.target TensionAck, Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.none, Cmd.none )
