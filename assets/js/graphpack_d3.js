@@ -81,7 +81,10 @@ const GraphPack = {
     // Graph Colors
     //var colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
-    coordinatorRoleColor: "#FFFFFC", // blue
+    usernameColor: "#8282cc",
+    //coordinatorRoleColor: "#FFFFFC", // blue
+    //coordinatorRoleColor: "#fdc56f",
+    coordinatorRoleColor: "#ffdaa1",
     regularRoleColor: "#FFFFF9", // green
     guestColor: "#F4FDF5", // yellow
     hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
@@ -354,7 +357,7 @@ const GraphPack = {
                 if (text1) {
                     ctx2d.font = fontSize-5 + "px " + this.fontstyleCircle;
                     ctx2d.beginPath();
-                    ctx2d.fillStyle = "#8282ccee";
+                    ctx2d.fillStyle = this.usernameColor;
                     ctx2d.fillText(text1, node.ctx.centerX, node.ctx.centerY + 4*textHeight);
                     ctx2d.fill();
                 }

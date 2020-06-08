@@ -19,9 +19,6 @@ hat should be the signature ?!
 -}
 view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
-        source =
-            form.source |> withDefault (UserRole "" "" "" RoleType.Guest)
-
         isSendable =
             isPostSendable [ "title" ] form.post
 
@@ -38,8 +35,8 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.post ] ]
-                        , div [ class "level-right" ] <| edgeArrow "button" (text source.name) (text form.target.name)
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.type_ ] ]
+                        , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
                 , div [ class "modal-card-body" ]

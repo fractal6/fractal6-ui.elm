@@ -239,7 +239,7 @@ const BulmaDriver = (app, target, handlers) => {
      */
 
     // Close all modals if ESC pressed
-    const closeModals = (e, objs) => {
+    const closeModals = (objs) => {
         objs.forEach(function(el) {
             // deactivate all buttons that are below that modal
             el.querySelectorAll('.button').forEach(btn => {
@@ -290,7 +290,7 @@ const BulmaDriver = (app, target, handlers) => {
     if ($modal_background.length > 0) {
         $modal_background.forEach( el => {
             el.addEventListener('mousedown', function(e) {
-                closeModals(e, $modals);
+                closeModals($modals);
             });
         });
 
@@ -299,16 +299,14 @@ const BulmaDriver = (app, target, handlers) => {
     }
     if ($modal_closes.length > 0) {
         $modal_closes.forEach( el => {
-            var evt = "mousedown";
-            var h = e => closeModals(e, $modals);
-            setupHandler("mousedown", h, el);
+            el.addEventListener('mousedown', function(e) {
+                closeModals($modals);
+            });
         });
     }
 
     //
-    //
     // Close on Esc Logics
-    //
     //
 
     document.addEventListener('keydown', function (event) {

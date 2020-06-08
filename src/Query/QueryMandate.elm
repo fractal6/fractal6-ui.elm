@@ -33,8 +33,7 @@ import RemoteData exposing (RemoteData)
 
 
 type alias TopMandate =
-    { mandate : Maybe Mandate
-    }
+    { mandate : Maybe Mandate }
 
 
 mandateDecoder : Maybe TopMandate -> Maybe Mandate

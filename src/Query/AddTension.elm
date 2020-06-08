@@ -17,6 +17,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
+import ModelCommon exposing (CircleForm, TensionForm)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPgPayload)
 import RemoteData exposing (RemoteData)
@@ -53,11 +54,11 @@ tensionDecoder a =
             Nothing
 
 
-addOneTension uctx tension source target msg =
+addOneTension form msg =
     --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addTension
-            (addTensionInputEncoder uctx tension source target)
+            (addTensionInputEncoder form)
             (SelectionSet.map AddTensionPayload <|
                 Fractal.Object.AddTensionPayload.tension identity tensionPgPayload
             )
@@ -69,14 +70,11 @@ addOneTension uctx tension source target msg =
 -- input Encoder
 
 
-addTensionInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddTensionRequiredArguments
-addTensionInputEncoder uctx post source target =
+addTensionInputEncoder : TensionForm -> Mutation.AddTensionRequiredArguments
+addTensionInputEncoder { uctx, source, target, type_, post } =
     let
         title =
             Dict.get "title" post |> withDefault ""
-
-        type_ =
-            Dict.get "type_" post |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational
 
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
@@ -118,11 +116,11 @@ addTensionInputEncoder uctx post source target =
 -}
 
 
-addCircleTension uctx tension source target msg =
+addCircleTension form msg =
     --@DEBUG: Infered type...
     makeGQLMutation
         (Mutation.addTension
-            (addCircleInputEncoder uctx tension source target)
+            (addCircleInputEncoder form)
             (SelectionSet.map AddTensionPayload <|
                 Fractal.Object.AddTensionPayload.tension identity tensionPgPayload
             )
@@ -130,8 +128,8 @@ addCircleTension uctx tension source target msg =
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
 
 
-addCircleInputEncoder : UserCtx -> Post -> UserRole -> Node -> Mutation.AddTensionRequiredArguments
-addCircleInputEncoder uctx post source target =
+addCircleInputEncoder : CircleForm -> Mutation.AddTensionRequiredArguments
+addCircleInputEncoder { uctx, source, target, type_, tensionType, post } =
     let
         title =
             Dict.get "title" post |> withDefault ""

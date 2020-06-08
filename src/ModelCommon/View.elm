@@ -1,12 +1,32 @@
-module ModelCommon.View exposing (edgeArrow, tensionTypeColor, tensionTypeSpan, viewNodeRef)
+module ModelCommon.View exposing (..)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionType as TensionType
 import Html exposing (Html, a, div, span, text)
 import Html.Attributes exposing (class, href)
 import ModelCommon.Uri exposing (FractalBaseRoute, uriFromNameid)
 import ModelSchema exposing (EmitterOrReceiver, Post)
+
+
+
+{-
+   User
+-}
+
+
+roleColor : RoleType.RoleType -> String
+roleColor rt =
+    case rt of
+        RoleType.Guest ->
+            "primary"
+
+        RoleType.Member ->
+            "primary"
+
+        RoleType.Coordinator ->
+            "orange"
 
 
 
@@ -31,18 +51,9 @@ tensionTypeColor elt tt =
             "has-" ++ elt ++ "-link"
 
 
-tensionTypeSpan : String -> String -> Post -> Html msg
-tensionTypeSpan cls elt post =
-    let
-        tensionType_m =
-            Dict.get "type_" post |> Maybe.withDefault "Governance" |> TensionType.fromString
-    in
-    case tensionType_m of
-        Just tt ->
-            span [ class <| cls ++ " " ++ tensionTypeColor elt tt ] [ text (TensionType.toString tt) ]
-
-        Nothing ->
-            span [ class "" ] [ text "Unknown" ]
+tensionTypeSpan : String -> String -> TensionType.TensionType -> Html msg
+tensionTypeSpan cls elt type_ =
+    span [ class <| cls ++ " " ++ tensionTypeColor elt type_ ] [ text (TensionType.toString type_) ]
 
 
 edgeArrow : String -> Html msg -> Html msg -> List (Html msg)

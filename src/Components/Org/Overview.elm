@@ -177,13 +177,13 @@ type Msg
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- AddTension Action
     | DoTensionInit Node -- {target}
-    | DoTensionSource String -- {tensionType}
+    | DoTensionSource TensionType.TensionType -- {type}
     | DoTensionFinal UserRole --  {source}
     | ChangeTensionPost String String -- {field value}
     | SubmitTension TensionForm Time.Posix -- Send form
     | TensionAck (GqlData Tension) -- decode better to get IdPayload
       -- AddCircle Action
-    | DoCircleInit Node -- {target}
+    | DoCircleInit Node NodeType.NodeType -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeCirclePost String String -- {field value}
@@ -368,9 +368,10 @@ update global msg model =
         DoTensionInit node ->
             let
                 form =
-                    { user = UserCtx "" Nothing (UserRights False False) []
-                    , source = Nothing
+                    { uctx = UserCtx "" Nothing (UserRights False False) []
+                    , source = UserRole "" "" "" RoleType.Guest
                     , target = node
+                    , type_ = TensionType.Governance
                     , post = Dict.empty
                     }
 
@@ -389,7 +390,7 @@ update global msg model =
                         AddTension (TensionInit form) ->
                             let
                                 newForm =
-                                    { form | user = uctx, post = Dict.insert "type_" tensionType form.post }
+                                    { form | uctx = uctx, type_ = tensionType }
 
                                 orgaRoles =
                                     uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
@@ -402,7 +403,7 @@ update global msg model =
                                         [ r ] ->
                                             let
                                                 newForm2 =
-                                                    { newForm | source = Just r }
+                                                    { newForm | source = r }
                                             in
                                             TensionFinal newForm2 NotAsked
 
@@ -419,7 +420,7 @@ update global msg model =
                 AddTension (TensionSource form roles) ->
                     let
                         newForm =
-                            { form | source = Just source }
+                            { form | source = source }
                     in
                     ( { model | node_action = AddTension <| TensionFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -440,15 +441,10 @@ update global msg model =
 
         SubmitTension form time ->
             let
-                post =
-                    Dict.insert "createdAt" (fromTime time) form.post
+                newForm =
+                    { form | post = Dict.insert "createdAt" (fromTime time) form.post }
             in
-            case form.source of
-                Just source ->
-                    ( model, addOneTension form.user post source form.target TensionAck, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none, Cmd.none )
+            ( model, addOneTension newForm TensionAck, Cmd.none )
 
         TensionAck result ->
             let
@@ -472,7 +468,7 @@ update global msg model =
 
                 AddCircle (CircleFinal form _) ->
                     ( { model
-                        | node_action = AddTension <| TensionFinal form result
+                        | node_action = AddTension <| TensionFinal (circle2tensionForm form) result
                         , circle_tensions = Success tensions
                       }
                     , Ports.bulma_driver "actionModal"
@@ -483,12 +479,15 @@ update global msg model =
                     ( { model | node_action = AskErr "Query method implemented" }, Cmd.none, Cmd.none )
 
         -- Circle
-        DoCircleInit node ->
+        DoCircleInit node nodeType ->
             let
                 form =
-                    { user = UserCtx "" Nothing (UserRights False False) []
-                    , source = Nothing
+                    { uctx = UserCtx "" Nothing (UserRights False False) []
+                    , source = UserRole "" "" "" RoleType.Guest
                     , target = node
+                    , type_ = nodeType
+                    , tensionType = TensionType.Governance
+                    , roleType = RoleType.Member
                     , post = Dict.empty
                     }
 
@@ -508,7 +507,7 @@ update global msg model =
                             let
                                 newForm =
                                     { form
-                                        | user = uctx
+                                        | uctx = uctx
                                         , post =
                                             form.post
                                                 |> Dict.union (Dict.fromList [ ( "node_mode", NodeMode.toString nodeMode ), ( "first_links", "@" ++ uctx.username ) ])
@@ -541,7 +540,7 @@ update global msg model =
                                                                 [ r ] ->
                                                                     let
                                                                         newForm2 =
-                                                                            { newForm | source = Just r }
+                                                                            { newForm | source = r }
                                                                     in
                                                                     CircleFinal newForm2 NotAsked
 
@@ -560,7 +559,7 @@ update global msg model =
                                                                 [ r ] ->
                                                                     let
                                                                         newForm2 =
-                                                                            { newForm | source = Just r }
+                                                                            { newForm | source = r }
                                                                     in
                                                                     CircleFinal newForm2 NotAsked
 
@@ -577,7 +576,7 @@ update global msg model =
                 AddCircle (CircleSource form roles) ->
                     let
                         newForm =
-                            { form | source = Just source }
+                            { form | source = source }
                     in
                     ( { model | node_action = AddCircle <| CircleFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -635,19 +634,14 @@ update global msg model =
                     else
                         TensionStatus.Open |> TensionStatus.toString
 
-                post =
-                    Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", status ) ]) form.post
+                newForm =
+                    { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", status ) ]) form.post }
             in
-            case form.source of
-                Just source ->
-                    if doClose == True then
-                        ( model, addOneCircle form.user post source form.target CircleAck, Cmd.none )
+            if doClose == True then
+                ( model, addOneCircle newForm CircleAck, Cmd.none )
 
-                    else
-                        ( model, addCircleTension form.user post source form.target TensionAck, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none, Cmd.none )
+            else
+                ( model, addCircleTension newForm TensionAck, Cmd.none )
 
         CircleAck result ->
             case model.node_action of
@@ -678,17 +672,15 @@ update global msg model =
                 LoggedIn uctx ->
                     let
                         form =
-                            { user = uctx
+                            { uctx = uctx
                             , rootnameid = rootnameid
+                            , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
-
-                        post =
-                            Dict.fromList [ ( "createdAt", fromTime time ) ]
 
                         newModel =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
-                    ( newModel, Cmd.batch [ addNewMember uctx post rootnameid JoinAck, Global.send DoOpenModal ], Cmd.none )
+                    ( newModel, Cmd.batch [ addNewMember form JoinAck, Global.send DoOpenModal ], Cmd.none )
 
         JoinAck result ->
             case model.node_action of
@@ -1265,8 +1257,8 @@ viewActionStep model action =
                     [ div [ class "level" ] <|
                         if node.type_ == NodeType.Circle then
                             [ div [ class "level-item" ] [ div [ class "button has-background-primary", onClick (DoTensionInit node) ] [ text "New Tension" ] ]
-                            , div [ class "level-item" ] [ div [ class "button has-background-info", onClick (DoCircleInit node) ] [ text "New Role" ] ]
-                            , div [ class "level-item" ] [ div [ class "button has-background-link", onClick (DoCircleInit node) ] [ text "New Sub-Circle" ] ]
+                            , div [ class "level-item" ] [ div [ class "button has-background-info", onClick (DoCircleInit node NodeType.Role) ] [ text "New Role" ] ]
+                            , div [ class "level-item" ] [ div [ class "button has-background-link", onClick (DoCircleInit node NodeType.Circle) ] [ text "New Sub-Circle" ] ]
                             ]
 
                         else
@@ -1307,16 +1299,12 @@ viewTensionStep step =
                     [ div [ class "level buttonRadio" ] <|
                         List.map
                             (\tensionType ->
-                                let
-                                    tensionTypeStr =
-                                        TensionType.toString tensionType
-                                in
                                 div [ class "level-item" ]
                                     [ div
                                         [ class <| "button " ++ tensionTypeColor "background" tensionType
-                                        , onClick (DoTensionSource tensionTypeStr)
+                                        , onClick (DoTensionSource tensionType)
                                         ]
-                                        [ text tensionTypeStr ]
+                                        [ TensionType.toString tensionType |> text ]
                                     ]
                             )
                         <|
@@ -1327,9 +1315,11 @@ viewTensionStep step =
         TensionSource form roles ->
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this tension:" ] ]
+                    [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this Tension:" ] ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoTensionFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles ]
+                    [ div [ class "buttons buttonRadio" ] <|
+                        List.map (\role -> div [ class "button", onClick (DoTensionFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles
+                    ]
                 ]
 
         TensionFinal form result ->
@@ -1347,11 +1337,17 @@ viewCircleStep step =
             div [] [ text "" ]
 
         CircleSource form roles ->
+            let
+                t =
+                    NodeType.toString form.type_
+            in
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this Circle:" ] ]
+                    [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to create this" ++ t ++ ":" |> text ] ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "buttons buttonRadio" ] <| List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles ]
+                    [ div [ class "buttons buttonRadio" ] <|
+                        List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles
+                    ]
                 ]
 
         CircleFinal form result ->

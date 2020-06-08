@@ -87,15 +87,16 @@ type TensionStep form
 
 
 type alias TensionForm =
-    { user : UserCtx
-    , source : Maybe UserRole
+    { uctx : UserCtx
+    , source : UserRole
     , target : Node
+    , type_ : TensionType.TensionType
     , post : Post
     }
 
 
 
--- Circle Form
+-- Circle Form  (Node Or Circle)
 
 
 type CircleStep form
@@ -106,9 +107,12 @@ type CircleStep form
 
 
 type alias CircleForm =
-    { user : UserCtx
-    , source : Maybe UserRole
+    { uctx : UserCtx
+    , source : UserRole
     , target : Node
+    , type_ : NodeType.NodeType
+    , tensionType : TensionType.TensionType
+    , roleType : RoleType.RoleType -- For Role
     , post : Post
     }
 
@@ -125,9 +129,21 @@ type JoinStep form
 
 
 type alias JoinOrgaForm =
-    { user : UserCtx
+    { uctx : UserCtx
     , rootnameid : String
+    , post : Post
     }
+
+
+
+--
+-- Method
+--
+
+
+circle2tensionForm : CircleForm -> TensionForm
+circle2tensionForm f =
+    TensionForm f.uctx f.source f.target f.tensionType f.post
 
 
 

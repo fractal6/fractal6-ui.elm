@@ -9,6 +9,7 @@ import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodePath, uriFromNameid)
+import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (UserRole)
 import Ports
 
@@ -109,8 +110,12 @@ memberButton baseUri roles =
     roles
         |> List.map
             (\r ->
+                let
+                    color =
+                        roleColor r.role_type
+                in
                 a
-                    [ class "button is-hovered is-small has-text-weight-semibold is-primary tooltip has-tooltip-bottom"
+                    [ class ("button buttonRole is-hovered is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ color)
                     , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                     , href <| uriFromNameid baseUri r.nameid
                     ]

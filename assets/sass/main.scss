@@ -670,6 +670,18 @@ button::-moz-focus-inner { // remove outline inside button !
     border: 0 !important;
 }
 
+/*
+ * Colors
+ */
 
+
+.buttonRole {
+    border-width: 0 !important;
+    font-weight: 500 !important;
+    &.is-orange {
+        background-color: #d38e23 !important;
+        color: white !important;
+    }
+}
 
 
