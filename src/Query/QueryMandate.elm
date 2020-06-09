@@ -20,7 +20,6 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (circleIdCodec, guestIdCodec)
 import ModelSchema exposing (..)
 import Query.QueryNodesOrga exposing (nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
@@ -66,5 +65,6 @@ mandatePayload =
                     |> with Fractal.Object.Mandate.purpose
                     |> with Fractal.Object.Mandate.responsabilities
                     |> with Fractal.Object.Mandate.domains
+                    |> with Fractal.Object.Mandate.policies
                 )
             )

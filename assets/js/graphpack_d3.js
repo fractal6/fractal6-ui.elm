@@ -108,7 +108,7 @@ const GraphPack = {
     centerY: null,
     diameter: null,
     zoomCtx: null,
-    circlesPadding: 1.8,
+    circlesPadding: 3, // 1.8
     fontsizeCircle_start: 19,
     fontstyleCircle: "Arial",
 
@@ -153,7 +153,7 @@ const GraphPack = {
     ctx2d: null,
     hiddenCtx2d: null,
 
-    // Data
+    // Dat3
     gPack: null, // Receive D3 data structure
     gStats: null, // Receive graph global statistics
     nodes: null,  // List of D3 nodes
@@ -321,29 +321,39 @@ const GraphPack = {
 
             if (type_ === "Role") {
                 var text = null;
-                var text1 = null;
-                var fontSize = this.fontsizeCircle_start;
-                ctx2d.font = fontSize + "px " + this.fontstyleCircle;
+                var user = null;
 
                 var textLong = _name;
                 var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase()) + ".";
-                var user = null;
                 if (node.data.first_link) {
                     user = "@"+node.data.first_link;
                 }
 
+                // Name
+                var fontSize = this.fontsizeCircle_start;
+                ctx2d.font = fontSize + "px " + this.fontstyleCircle;
                 var textMeas = ctx2d.measureText(textLong);
                 var textWidth = textMeas.width;
                 var textHeight = fontSize/3;
+                var paddingBelow = 0;
                 if (textWidth+textHeight < node.ctx.rayon*2) {
                     text = textLong;
-                    if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
-                        text1 = user;
-                    }
+                    paddingBelow = 4*textHeight;
                 } else if (ctx2d.measureText(textShort).width+1 < node.ctx.rayon*2) {
                     text = textShort;
+                    paddingBelow = 3*textHeight;
                 } else {
                     fontSize--;
+                    paddingBelow = 3*textHeight;
+                }
+
+                // Username
+                var text_username = null;
+                var text_username_short = "@..";
+                if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
+                    text_username = user;
+                } else if (user && ctx2d.measureText(text_username_short).width+1 < node.ctx.rayon*2 - 2*textHeight) {
+                    text_username = text_username_short;
                 }
 
                 if (text) {
@@ -353,13 +363,14 @@ const GraphPack = {
                     ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY+textHeight);
                     //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
                     ctx2d.fill();
-                }
-                if (text1) {
-                    ctx2d.font = fontSize-5 + "px " + this.fontstyleCircle;
-                    ctx2d.beginPath();
-                    ctx2d.fillStyle = this.usernameColor;
-                    ctx2d.fillText(text1, node.ctx.centerX, node.ctx.centerY + 4*textHeight);
-                    ctx2d.fill();
+
+                    if (text_username) {
+                        ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
+                        ctx2d.beginPath();
+                        ctx2d.fillStyle = this.usernameColor;
+                        ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + paddingBelow);
+                        ctx2d.fill();
+                    }
                 }
             } else {
                 //if (focusedNode.depth == node.depth || focusedNode.depth == node.depth-1 ) {

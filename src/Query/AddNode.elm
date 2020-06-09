@@ -20,7 +20,7 @@ import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CircleForm, JoinOrgaForm)
-import ModelCommon.Uri exposing (circleIdCodec, guestIdCodec)
+import ModelCommon.Uri exposing (guestIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
 import Query.QueryNodesOrga exposing (nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
@@ -236,13 +236,13 @@ addOneCirclePayload =
 
 
 addCircleInputEncoder : CircleForm -> Mutation.AddNodeRequiredArguments
-addCircleInputEncoder { uctx, source, target, type_, tensionType, roleType, post } =
+addCircleInputEncoder { uctx, source, target, type_, tension_type, role_type, post } =
     let
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
 
         nameid =
-            Dict.get "nameid" post |> Maybe.map (\nid -> circleIdCodec target.nameid nid) |> withDefault ""
+            Dict.get "nameid" post |> Maybe.map (\nid -> nodeIdCodec target.nameid nid type_) |> withDefault ""
 
         name =
             Dict.get "name" post |> withDefault ""
@@ -265,7 +265,7 @@ addCircleInputEncoder { uctx, source, target, type_, tensionType, roleType, post
             }
 
         nodeOptional =
-            getAddCircleOptionals <| CircleForm uctx source target type_ tensionType roleType post
+            getAddCircleOptionals <| CircleForm uctx source target type_ tension_type role_type post
     in
     { input =
         [ Input.buildAddNodeInput nodeRequired nodeOptional ]
@@ -273,13 +273,13 @@ addCircleInputEncoder { uctx, source, target, type_, tensionType, roleType, post
 
 
 getAddCircleOptionals : CircleForm -> (Input.AddNodeInputOptionalFields -> Input.AddNodeInputOptionalFields)
-getAddCircleOptionals { uctx, source, target, type_, tensionType, roleType, post } =
+getAddCircleOptionals { uctx, source, target, type_, tension_type, role_type, post } =
     let
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
 
         nameid =
-            Dict.get "nameid" post |> Maybe.map (\nid -> circleIdCodec target.nameid nid) |> withDefault ""
+            Dict.get "nameid" post |> Maybe.map (\nid -> nodeIdCodec target.nameid nid type_) |> withDefault ""
 
         nodeMode =
             -- @DEBUG: Ignored from now, we inherit from the root mode
@@ -303,11 +303,12 @@ getAddCircleOptionals { uctx, source, target, type_, tensionType, roleType, post
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" post |> withDefault "" |> OptionalArgument.Present
-                                    , responsabilities = Dict.get "responsabilities" post |> withDefault "" |> OptionalArgument.Present
-                                    , domains = Dict.get "domains" post |> withDefault "" |> OptionalArgument.Present
+                                    | purpose = Dict.get "purpose" post |> OptionalArgument.fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" post |> OptionalArgument.fromMaybe
+                                    , domains = Dict.get "domains" post |> OptionalArgument.fromMaybe
+                                    , policies = Dict.get "policies" post |> OptionalArgument.fromMaybe
                                     , tensions =
-                                        [ Input.buildTensionRef (tensionFromForm <| CircleForm uctx source target type_ tensionType roleType post) ]
+                                        [ Input.buildTensionRef (tensionFromForm <| CircleForm uctx source target type_ tension_type role_type post) ]
                                             |> OptionalArgument.Present
                                 }
                             )
@@ -344,6 +345,10 @@ getAddCircleOptionals { uctx, source, target, type_, tensionType, roleType, post
                 }
 
         NodeType.Role ->
+            let
+                first_link =
+                    first_links |> List.head
+            in
             \n ->
                 { n
                     | parent =
@@ -354,24 +359,30 @@ getAddCircleOptionals { uctx, source, target, type_, tensionType, roleType, post
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" post |> withDefault "" |> OptionalArgument.Present
-                                    , responsabilities = Dict.get "responsabilities" post |> withDefault "" |> OptionalArgument.Present
-                                    , domains = Dict.get "domains" post |> withDefault "" |> OptionalArgument.Present
+                                    | purpose = Dict.get "purpose" post |> OptionalArgument.fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" post |> OptionalArgument.fromMaybe
+                                    , domains = Dict.get "domains" post |> OptionalArgument.fromMaybe
+                                    , policies = Dict.get "policies" post |> OptionalArgument.fromMaybe
                                     , tensions =
-                                        [ Input.buildTensionRef (tensionFromForm <| CircleForm uctx source target type_ tensionType roleType post) ]
+                                        [ Input.buildTensionRef (tensionFromForm <| CircleForm uctx source target type_ tension_type role_type post) ]
                                             |> OptionalArgument.Present
                                 }
                             )
                             |> OptionalArgument.Present
+                    , role_type = role_type |> OptionalArgument.Present
                     , first_link =
-                        Input.buildUserRef
-                            (\u -> { u | username = first_links |> List.head |> withDefault "" |> OptionalArgument.Present })
-                            |> OptionalArgument.Present
+                        first_link
+                            |> Maybe.map
+                                (\uname ->
+                                    Input.buildUserRef
+                                        (\u -> { u | username = uname |> OptionalArgument.Present })
+                                )
+                            |> OptionalArgument.fromMaybe
                 }
 
 
 tensionFromForm : CircleForm -> (Input.TensionRefOptionalFields -> Input.TensionRefOptionalFields)
-tensionFromForm { uctx, source, target, type_, tensionType, post } =
+tensionFromForm { uctx, source, target, type_, tension_type, post } =
     let
         title =
             Dict.get "title" post |> withDefault ""
@@ -381,6 +392,9 @@ tensionFromForm { uctx, source, target, type_, tensionType, post } =
 
         status =
             Dict.get "status" post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
+
+        message =
+            Dict.get "message" post
     in
     \t ->
         { t
@@ -390,7 +404,7 @@ tensionFromForm { uctx, source, target, type_, tensionType, post } =
                     (\x -> { x | username = OptionalArgument.Present uctx.username })
                     |> OptionalArgument.Present
             , title = title |> OptionalArgument.Present
-            , type_ = TensionType.Governance |> OptionalArgument.Present
+            , type_ = tension_type |> OptionalArgument.Present
             , status = status |> OptionalArgument.Present
             , emitter =
                 Input.buildNodeRef
@@ -421,4 +435,5 @@ tensionFromForm { uctx, source, target, type_, tensionType, post } =
                         }
                     )
                     |> OptionalArgument.Present
+            , message = OptionalArgument.fromMaybe message
         }

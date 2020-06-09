@@ -15,7 +15,7 @@ import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
 
 
 {-| --view : CircleForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
-hat should be the signature ?!
+What should be the signature ?!
 -}
 view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     let

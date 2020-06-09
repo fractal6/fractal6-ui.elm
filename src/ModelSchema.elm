@@ -131,8 +131,9 @@ type alias Label =
 
 type alias Mandate =
     { purpose : String
-    , responsabilities : String
-    , domains : String
+    , responsabilities : Maybe String
+    , domains : Maybe String
+    , policies : Maybe String
 
     --, tensions : List { id : String, title : String }
     }

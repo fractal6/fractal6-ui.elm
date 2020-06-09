@@ -197,13 +197,13 @@ update msg model =
             , Cmd.none
             )
 
-        UpdateUserSession userCtx ->
+        UpdateUserSession uctx ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | user = LoggedIn userCtx } }
-            , Ports.saveUserCtx userCtx
+            ( { model | session = { session | user = LoggedIn uctx } }
+            , Ports.saveUserCtx uctx
             )
 
         UpdateUserToken ->

@@ -79,6 +79,9 @@ addTensionInputEncoder { uctx, source, target, type_, post } =
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
 
+        message =
+            Dict.get "message" post
+
         tensionRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
@@ -89,24 +92,27 @@ addTensionInputEncoder { uctx, source, target, type_, post } =
             , status = TensionStatus.Open
             , emitter =
                 Input.buildNodeRef
-                    (\x ->
-                        { x
+                    (\n ->
+                        { n
                             | nameid = OptionalArgument.Present source.nameid
                             , rootnameid = OptionalArgument.Present source.rootnameid
                         }
                     )
             , receiver =
                 Input.buildNodeRef
-                    (\x ->
-                        { x
+                    (\n ->
+                        { n
                             | nameid = OptionalArgument.Present target.nameid
                             , rootnameid = OptionalArgument.Present target.rootnameid
                         }
                     )
             }
+
+        tensionOpts =
+            \t -> { t | message = message |> OptionalArgument.fromMaybe }
     in
     { input =
-        [ Input.buildAddTensionInput tensionRequired identity ]
+        [ Input.buildAddTensionInput tensionRequired tensionOpts ]
     }
 
 
@@ -129,7 +135,7 @@ addCircleTension form msg =
 
 
 addCircleInputEncoder : CircleForm -> Mutation.AddTensionRequiredArguments
-addCircleInputEncoder { uctx, source, target, type_, tensionType, post } =
+addCircleInputEncoder { uctx, source, target, type_, tension_type, post } =
     let
         title =
             Dict.get "title" post |> withDefault ""
@@ -146,7 +152,7 @@ addCircleInputEncoder { uctx, source, target, type_, tensionType, post } =
                 Input.buildUserRef
                     (\x -> { x | username = OptionalArgument.Present uctx.username })
             , title = title
-            , type_ = TensionType.Governance
+            , type_ = tension_type
             , status = status
             , emitter =
                 Input.buildNodeRef
@@ -174,9 +180,10 @@ addCircleInputEncoder { uctx, source, target, type_, tensionType, post } =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" post |> withDefault "" |> OptionalArgument.Present
-                                    , responsabilities = Dict.get "responsabilities" post |> withDefault "" |> OptionalArgument.Present
-                                    , domains = Dict.get "domains" post |> withDefault "" |> OptionalArgument.Present
+                                    | purpose = Dict.get "purpose" post |> OptionalArgument.fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" post |> OptionalArgument.fromMaybe
+                                    , domains = Dict.get "domains" post |> OptionalArgument.fromMaybe
+                                    , policies = Dict.get "policies" post |> OptionalArgument.fromMaybe
                                 }
                             )
                             |> OptionalArgument.Present

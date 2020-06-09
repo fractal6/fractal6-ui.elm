@@ -11,11 +11,12 @@ type MandateOrderable
     = Purpose
     | Responsabilities
     | Domains
+    | Policies
 
 
 list : List MandateOrderable
 list =
-    [ Purpose, Responsabilities, Domains ]
+    [ Purpose, Responsabilities, Domains, Policies ]
 
 
 decoder : Decoder MandateOrderable
@@ -32,6 +33,9 @@ decoder =
 
                     "domains" ->
                         Decode.succeed Domains
+
+                    "policies" ->
+                        Decode.succeed Policies
 
                     _ ->
                         Decode.fail ("Invalid MandateOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -51,6 +55,9 @@ toString enum =
 
         Domains ->
             "domains"
+
+        Policies ->
+            "policies"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -75,6 +82,9 @@ fromString enumString =
 
         "domains" ->
             Just Domains
+
+        "policies" ->
+            Just Policies
 
         _ ->
             Nothing

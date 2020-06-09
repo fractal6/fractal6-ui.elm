@@ -4,10 +4,10 @@ module ModelCommon.Uri exposing
     , NodeFocus
     , NodePath
     , basePathChanged
-    , circleIdCodec
     , focusFromNameid
     , guestIdCodec
     , nameidFromFlags
+    , nodeIdCodec
     , toString
     , uriFromNameid
     , uriFromUsername
@@ -177,13 +177,18 @@ guestIdCodec rootnameid username =
 
 {-|
 
-    Returns the namid of a new Circle given the parenid and the nameid fragment.
+    Returns the namid of a new Circle/Role given the parenid and the nameid fragment.
 
 -}
-circleIdCodec : String -> String -> String
-circleIdCodec parentid targetid =
+nodeIdCodec : String -> String -> NodeType.NodeType -> String
+nodeIdCodec parentid targetid nodeType =
     let
         rootnameid =
             parentid |> String.split "#" |> List.head |> withDefault ""
     in
-    String.join "#" [ rootnameid, targetid ]
+    case nodeType of
+        NodeType.Circle ->
+            String.join "#" [ rootnameid, targetid ]
+
+        NodeType.Role ->
+            String.join "#" [ rootnameid, "", targetid ]

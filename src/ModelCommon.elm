@@ -111,8 +111,8 @@ type alias CircleForm =
     , source : UserRole
     , target : Node
     , type_ : NodeType.NodeType
-    , tensionType : TensionType.TensionType
-    , roleType : RoleType.RoleType -- For Role
+    , tension_type : TensionType.TensionType
+    , role_type : RoleType.RoleType -- For Role
     , post : Post
     }
 
@@ -143,7 +143,7 @@ type alias JoinOrgaForm =
 
 circle2tensionForm : CircleForm -> TensionForm
 circle2tensionForm f =
-    TensionForm f.uctx f.source f.target f.tensionType f.post
+    TensionForm f.uctx f.source f.target f.tension_type f.post
 
 
 
@@ -226,6 +226,7 @@ userDecoder =
                     (JD.field "nameid" JD.string)
                     (JD.field "name" JD.string)
                     (JD.field "role_type" <| RoleType.decoder)
+             --@DEBUG/BUG: fail siletnly if role_type is not present in Role !
             )
             |> JDE.withDefault []
         )

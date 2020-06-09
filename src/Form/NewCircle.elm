@@ -1,9 +1,11 @@
 module Form.NewCircle exposing (view)
 
 import Components.Loading as Loading exposing (viewErrors)
+import Components.Text as T
 import Dict
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
@@ -14,11 +16,33 @@ import ModelCommon.View exposing (edgeArrow, tensionTypeSpan)
 import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole)
 
 
+type alias NewNodeText =
+    { title : String
+    , added : String
+    , name_help : String
+    , message_help : String
+    , ph_purpose : String
+    , ph_responsabilities : String
+    , ph_domains : String
+    , ph_policies : String
+    , submit : String
+    , close_submit : String
+    }
+
+
 {-| --view : CircleForm -> GqlData (Maybe Node) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
-hat should be the signature ?!
+What should be the signature ?!
 -}
 view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
+        txt =
+            case form.type_ of
+                NodeType.Circle ->
+                    NewNodeText T.newCircle T.tensionCircleAdded T.circleNameHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit
+
+                NodeType.Role ->
+                    NewNodeText T.newRole T.tensionRoleAdded T.roleNameHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit
+
         isSendable =
             isPostSendable [ "name", "purpose" ] form.post
 
@@ -27,7 +51,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     in
     case result of
         Success _ ->
-            div [ class "box has-background-success", onClick (closeModalMsg "") ] [ text "Tension added (new Circle)." ]
+            div [ class "box has-background-success", onClick (closeModalMsg "") ] [ text txt.added ]
 
         other ->
             let
@@ -45,7 +69,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New circle |\u{00A0}", tensionTypeSpan "has-text-weight-medium" "text" form.tensionType ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text (txt.title ++ " |\u{00A0}"), tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
@@ -61,11 +85,11 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ text "Name of the circle." ]
+                        , p [ class "help-label" ] [ text txt.name_help ]
                         ]
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
-                            [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Title" ]
+                            [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
                             , div [ class "field-body control" ]
                                 [ input
                                     [ class "input is-small"
@@ -121,52 +145,65 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                 [ id "textAreaModal"
                                 , class "textarea"
                                 , rows 5
-                                , placeholder "Leave a comment"
+                                , placeholder T.leaveComment
                                 , onInput <| changePostMsg "message"
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ text "Add a description to help others understand why a new circle should be created." ]
+                        , p [ class "help-label" ] [ text txt.message_help ]
                         ]
                     , br [] []
                     , div [ class "card" ]
-                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text "Mandate" ] ]
+                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         , div [ class "card-content" ]
                             [ div [ class "field" ]
-                                [ div [ class "label" ] [ text "Purpose" ]
+                                [ div [ class "label" ] [ text T.purposeH ]
                                 , div [ class "control" ]
                                     [ textarea
                                         [ id "textAreaModal"
                                         , class "textarea"
                                         , rows 5
-                                        , placeholder "Define the purpose of the circle."
+                                        , placeholder txt.ph_purpose
                                         , onInput <| changePostMsg "purpose"
                                         ]
                                         []
                                     ]
                                 ]
                             , div [ class "field" ]
-                                [ div [ class "label" ] [ text "Responsabilities" ]
+                                [ div [ class "label" ] [ text T.responsabilitiesH ]
                                 , div [ class "control" ]
                                     [ textarea
                                         [ id "textAreaModal"
                                         , class "textarea"
                                         , rows 5
-                                        , placeholder "Define the circle responsabilities."
+                                        , placeholder txt.ph_responsabilities
                                         , onInput <| changePostMsg "responsabilities"
                                         ]
                                         []
                                     ]
                                 ]
                             , div [ class "field" ]
-                                [ div [ class "label" ] [ text "Domains" ]
+                                [ div [ class "label" ] [ text T.domainsH ]
                                 , div [ class "control" ]
                                     [ textarea
                                         [ id "textAreaModal"
                                         , class "textarea"
                                         , rows 5
-                                        , placeholder "Define the circle domains."
-                                        , onInput <| changePostMsg "responsabilities"
+                                        , placeholder txt.ph_domains
+                                        , onInput <| changePostMsg "domains"
+                                        ]
+                                        []
+                                    ]
+                                ]
+                            , div [ class "field" ]
+                                [ div [ class "label" ] [ text T.policiesH ]
+                                , div [ class "control" ]
+                                    [ textarea
+                                        [ id "textAreaModal"
+                                        , class "textarea"
+                                        , rows 5
+                                        , placeholder txt.ph_policies
+                                        , onInput <| changePostMsg "policies"
                                         ]
                                         []
                                     ]
@@ -191,21 +228,21 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                         , classList [ ( "is-loading", isLoading ) ]
                                         , onClickPD2 (submitMsg <| submitNextMsg form False)
                                         ]
-                                        [ text "Submit new Circle" ]
+                                        [ text txt.submit ]
                                     , button
                                         [ class "button is-warning is-small has-text-weight-semibold"
                                         , classList [ ( "is-loading", isLoading ) ]
                                         , onClickPD2 (submitMsg <| submitNextMsg form True)
                                         ]
-                                        [ text "Create Circle and close tension" ]
+                                        [ text txt.close_submit ]
                                     ]
 
                               else
                                 div [ class "buttons" ]
                                     [ button [ class "button has-text-weight-semibold", disabled True ]
-                                        [ text "Submit new Circle" ]
+                                        [ text txt.submit ]
                                     , button [ class "button is-small has-text-weight-semibold", disabled True ]
-                                        [ text "Create Circle and close tension" ]
+                                        [ text txt.close_submit ]
                                     ]
                             ]
                         ]

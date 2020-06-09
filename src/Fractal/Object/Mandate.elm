@@ -50,11 +50,16 @@ purpose =
     Object.selectionForField "String" "purpose" [] Decode.string
 
 
-responsabilities : SelectionSet String Fractal.Object.Mandate
+responsabilities : SelectionSet (Maybe String) Fractal.Object.Mandate
 responsabilities =
-    Object.selectionForField "String" "responsabilities" [] Decode.string
+    Object.selectionForField "(Maybe String)" "responsabilities" [] (Decode.string |> Decode.nullable)
 
 
-domains : SelectionSet String Fractal.Object.Mandate
+domains : SelectionSet (Maybe String) Fractal.Object.Mandate
 domains =
-    Object.selectionForField "String" "domains" [] Decode.string
+    Object.selectionForField "(Maybe String)" "domains" [] (Decode.string |> Decode.nullable)
+
+
+policies : SelectionSet (Maybe String) Fractal.Object.Mandate
+policies =
+    Object.selectionForField "(Maybe String)" "policies" [] (Decode.string |> Decode.nullable)

@@ -113,16 +113,26 @@ encodeAddLabelInput input =
         [ ( "name", Encode.string input.name |> Just ), ( "color", Encode.string |> Encode.optional input.color ) ]
 
 
-buildAddMandateInput : AddMandateInputRequiredFields -> AddMandateInput
-buildAddMandateInput required =
-    AddMandateInput { tensions = required.tensions, purpose = required.purpose, responsabilities = required.responsabilities, domains = required.domains }
+buildAddMandateInput : AddMandateInputRequiredFields -> (AddMandateInputOptionalFields -> AddMandateInputOptionalFields) -> AddMandateInput
+buildAddMandateInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { responsabilities = Absent, domains = Absent, policies = Absent }
+    in
+    AddMandateInput { tensions = required.tensions, purpose = required.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
 
 
 type alias AddMandateInputRequiredFields =
     { tensions : List TensionRef
     , purpose : String
-    , responsabilities : String
-    , domains : String
+    }
+
+
+type alias AddMandateInputOptionalFields =
+    { responsabilities : OptionalArgument String
+    , domains : OptionalArgument String
+    , policies : OptionalArgument String
     }
 
 
@@ -134,8 +144,9 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias AddMandateInputRaw =
     { tensions : List TensionRef
     , purpose : String
-    , responsabilities : String
-    , domains : String
+    , responsabilities : OptionalArgument String
+    , domains : OptionalArgument String
+    , policies : OptionalArgument String
     }
 
 
@@ -150,7 +161,7 @@ type AddMandateInput
 encodeAddMandateInput : AddMandateInput -> Value
 encodeAddMandateInput (AddMandateInput input) =
     Encode.maybeObject
-        [ ( "tensions", (encodeTensionRef |> Encode.list) input.tensions |> Just ), ( "purpose", Encode.string input.purpose |> Just ), ( "responsabilities", Encode.string input.responsabilities |> Just ), ( "domains", Encode.string input.domains |> Just ) ]
+        [ ( "tensions", (encodeTensionRef |> Encode.list) input.tensions |> Just ), ( "purpose", Encode.string input.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
 buildAddNodeCharacInput : AddNodeCharacInputRequiredFields -> AddNodeCharacInput
@@ -967,9 +978,9 @@ buildMandatePatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { tensions = Absent, purpose = Absent, responsabilities = Absent, domains = Absent }
+                { tensions = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
     in
-    MandatePatch { tensions = optionals.tensions, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains }
+    MandatePatch { tensions = optionals.tensions, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
 
 
 type alias MandatePatchOptionalFields =
@@ -977,6 +988,7 @@ type alias MandatePatchOptionalFields =
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
+    , policies : OptionalArgument String
     }
 
 
@@ -990,6 +1002,7 @@ type alias MandatePatchRaw =
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
+    , policies : OptionalArgument String
     }
 
 
@@ -1004,7 +1017,7 @@ type MandatePatch
 encodeMandatePatch : MandatePatch -> Value
 encodeMandatePatch (MandatePatch input) =
     Encode.maybeObject
-        [ ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ) ]
+        [ ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
 buildMandateRef : (MandateRefOptionalFields -> MandateRefOptionalFields) -> MandateRef
@@ -1012,9 +1025,9 @@ buildMandateRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, tensions = Absent, purpose = Absent, responsabilities = Absent, domains = Absent }
+                { id = Absent, tensions = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
     in
-    MandateRef { id = optionals.id, tensions = optionals.tensions, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains }
+    MandateRef { id = optionals.id, tensions = optionals.tensions, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
 
 
 type alias MandateRefOptionalFields =
@@ -1023,6 +1036,7 @@ type alias MandateRefOptionalFields =
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
+    , policies : OptionalArgument String
     }
 
 
@@ -1037,6 +1051,7 @@ type alias MandateRefRaw =
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
+    , policies : OptionalArgument String
     }
 
 
@@ -1051,7 +1066,7 @@ type MandateRef
 encodeMandateRef : MandateRef -> Value
 encodeMandateRef (MandateRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
 buildNodeCharacRef : (NodeCharacRefOptionalFields -> NodeCharacRefOptionalFields) -> NodeCharacRef

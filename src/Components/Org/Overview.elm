@@ -187,6 +187,7 @@ type Msg
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeCirclePost String String -- {field value}
+    | ChangeCircleRole RoleType.RoleType
     | SubmitCircle CircleForm Bool Time.Posix -- Send form
     | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
       -- JoinOrga Action
@@ -462,7 +463,7 @@ update global msg model =
                         | node_action = AddTension <| TensionFinal form result
                         , circle_tensions = Success tensions
                       }
-                    , Ports.bulma_driver "actionModal"
+                    , Cmd.none
                     , Global.send (UpdateSessionTensions tensions)
                     )
 
@@ -471,7 +472,7 @@ update global msg model =
                         | node_action = AddTension <| TensionFinal (circle2tensionForm form) result
                         , circle_tensions = Success tensions
                       }
-                    , Ports.bulma_driver "actionModal"
+                    , Cmd.none
                     , Global.send (UpdateSessionTensions tensions)
                     )
 
@@ -486,8 +487,8 @@ update global msg model =
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
                     , type_ = nodeType
-                    , tensionType = TensionType.Governance
-                    , roleType = RoleType.Member
+                    , tension_type = TensionType.Governance
+                    , role_type = RoleType.Member
                     , post = Dict.empty
                     }
 
@@ -594,9 +595,17 @@ update global msg model =
                             case field of
                                 "name" ->
                                     let
-                                        autoField =
+                                        newNodeLabel =
+                                            case form.type_ of
+                                                NodeType.Circle ->
+                                                    Text.newCircle
+
+                                                NodeType.Role ->
+                                                    Text.newRole
+
+                                        autoFields =
                                             Dict.fromList
-                                                [ ( "title", "[New Circle] " ++ value )
+                                                [ ( "title", "[" ++ newNodeLabel ++ "] " ++ value )
                                                 , ( "nameid"
                                                   , value
                                                         |> String.toLower
@@ -615,10 +624,22 @@ update global msg model =
                                                   )
                                                 ]
                                     in
-                                    { form | post = Dict.union autoField newPost }
+                                    { form | post = Dict.union autoFields newPost }
 
                                 other ->
                                     { form | post = newPost }
+                    in
+                    ( { model | node_action = AddCircle <| CircleFinal newForm result }, Cmd.none, Cmd.none )
+
+                other ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        ChangeCircleRole roleType ->
+            case model.node_action of
+                AddCircle (CircleFinal form result) ->
+                    let
+                        newForm =
+                            { form | role_type = roleType }
                     in
                     ( { model | node_action = AddCircle <| CircleFinal newForm result }, Cmd.none, Cmd.none )
 
@@ -820,22 +841,32 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
-        maybeOrg =
+        maybeOrgFocus =
             case model.orga_data of
                 Success d ->
+                    let
+                        focus =
+                            Dict.get model.node_focus.nameid d
+                    in
                     case model.node_path of
                         Just path ->
                             if Array.length path > 0 then
-                                Success d
+                                ( Success d, focus )
 
                             else
-                                Failure [ "Sorry, this node doesn't exist yet." ]
+                                ( Failure [ Text.nodeNotExist ], Nothing )
 
                         Nothing ->
-                            Success d
+                            ( Success d, focus )
 
                 other ->
-                    other
+                    ( other, Nothing )
+
+        maybeOrg =
+            Tuple.first maybeOrgFocus
+
+        nodeFocus =
+            Tuple.second maybeOrgFocus
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
@@ -848,7 +879,7 @@ view_ global model =
                 [ viewSearchBar model.orga_data model.node_path model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
-                , viewMandate model.mandate
+                , viewMandate model.mandate nodeFocus
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
@@ -978,7 +1009,7 @@ viewSearchBar nodes maybePath qs =
                             |> Array.toList
                             |> tbody []
                             |> List.singleton
-                            |> List.append [ thead [] [ tr [] [ th [] [ text "Name" ], th [] [ text "Circle" ], th [] [ text "First Link" ] ] ] ]
+                            |> List.append [ thead [] [ tr [] [ th [] [ text Text.nameQS ], th [] [ text Text.circleQS ], th [] [ text Text.firstLinkQS ] ] ] ]
                             |> div [ class "dropdown-content table is-fullwidth" ]
                         ]
                     , div [ class "control" ]
@@ -996,7 +1027,7 @@ viewSearchBar nodes maybePath qs =
                 ]
 
         Nothing ->
-            div [ id "searchBar", class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder "Find a Role or Circle", disabled True ] [] ] ]
+            div [ id "searchBar", class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder Text.phQS, disabled True ] [] ] ]
 
 
 viewCanvas : OrgaData -> Html Msg
@@ -1013,7 +1044,7 @@ viewCanvas orgaData =
                         [ div
                             [ id "invGraph_cvbtn"
                             , class "button buttonToggle tooltip has-tooltip-right"
-                            , attribute "data-tooltip" "Reverse the organisation graph."
+                            , attribute "data-tooltip" Text.reverseTooltip
                             , onClick ToggleGraphReverse
                             ]
                             [ Fa.icon0 "fas fa-sort-amount-up" "" ]
@@ -1044,8 +1075,8 @@ viewCanvas orgaData =
         ]
 
 
-viewMandate : GqlData Mandate -> Html Msg
-viewMandate mandateData =
+viewMandate : GqlData Mandate -> Maybe Node -> Html Msg
+viewMandate mandateData maybeFocus =
     div [ id "mandateContainer", class "hero is-small is-light heroViewer" ]
         [ div [ class "hero-body" ]
             [ h1 [ class "title is-3" ]
@@ -1054,7 +1085,27 @@ viewMandate mandateData =
             , div [ class "content" ] <|
                 case mandateData of
                     Failure err ->
-                        [ viewErrors err ]
+                        -- Exception for Guest Node
+                        case maybeFocus of
+                            Just focus ->
+                                case focus.role_type of
+                                    Just r ->
+                                        let
+                                            fs =
+                                                focus.first_link |> Maybe.map (\u -> u.username) |> withDefault "[Unknown]"
+                                        in
+                                        case r of
+                                            RoleType.Guest ->
+                                                [ List.intersperse " " [ "No mandate for Guest", fs, "." ] |> String.join " " |> text ]
+
+                                            other ->
+                                                [ viewErrors err ]
+
+                                    Nothing ->
+                                        [ viewErrors err ]
+
+                            Nothing ->
+                                [ viewErrors err ]
 
                     Loading ->
                         [ div [] [] ]
@@ -1066,14 +1117,35 @@ viewMandate mandateData =
                         [ div [ class "spinner" ] [] ]
 
                     Success mandate ->
-                        [ h2 [ class "title is-5" ] [ text "Purpose" ]
-                        , p [] [ mandate.purpose |> text ]
-                        , h2 [ class "title is-5" ] [ text "Responsabilities" ]
-                        , p [] [ mandate.responsabilities |> text ]
-                        , h2 [ class "title is-5" ] [ text "Domains" ]
-                        , p [] [ mandate.domains |> text ]
-                        ]
+                        [ viewMandateDoc mandate ]
             ]
+        ]
+
+
+viewMandateDoc : Mandate -> Html Msg
+viewMandateDoc mandate =
+    let
+        purpose =
+            mandate.purpose
+
+        responsabilities =
+            mandate.responsabilities |> withDefault Text.noResponsabilities
+
+        domains =
+            mandate.domains |> withDefault Text.noDomains
+
+        policies =
+            mandate.policies |> withDefault Text.noPolicies
+    in
+    div []
+        [ h2 [ class "title is-5" ] [ text Text.purposeH ]
+        , p [] [ purpose |> text ]
+        , h2 [ class "title is-5" ] [ text Text.responsabilitiesH ]
+        , p [] [ responsabilities |> text ]
+        , h2 [ class "title is-5" ] [ text Text.domainsH ]
+        , p [] [ domains |> text ]
+        , h2 [ class "title is-5" ] [ text Text.policiesH ]
+        , p [] [ policies |> text ]
         ]
 
 
@@ -1092,10 +1164,10 @@ viewActivies model =
             , div [ class "tabs is-right is-small" ]
                 [ ul []
                     [ li [ class "is-active" ]
-                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" "Tensions" ]
+                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" Text.tensionH ]
                         ]
                     , li []
-                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" "Journal" ]
+                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" Text.journalH ]
                         ]
                     ]
                 ]
@@ -1108,7 +1180,12 @@ viewActivies model =
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else
-                        div [] [ text <| "No tensions for this " ++ NodeType.toString model.node_focus.type_ ++ " yet." ]
+                        case model.node_focus.type_ of
+                            NodeType.Role ->
+                                div [] [ text Text.noTensionRole ]
+
+                            NodeType.Circle ->
+                                div [] [ text Text.noTensionCircle ]
 
                 Failure err ->
                     viewErrors err
@@ -1219,7 +1296,7 @@ viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text "loading..." ]
+            div [ class "box spinner" ] [ text Text.loading ]
 
         JoinAuthNeeded ->
             viewAuthNeeded
@@ -1236,7 +1313,7 @@ viewJoinOrgaStep orga step =
                     viewErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text "loading..." ]
+                    div [ class "box spinner" ] [ text Text.loading ]
 
 
 viewActionStep : Model -> ActionState -> Html Msg
@@ -1338,12 +1415,12 @@ viewCircleStep step =
 
         CircleSource form roles ->
             let
-                t =
+                nT =
                     NodeType.toString form.type_
             in
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to create this" ++ t ++ ":" |> text ] ]
+                    [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to create this" ++ nT ++ ":" |> text ] ]
                 , div [ class "modal-card-body" ]
                     [ div [ class "buttons buttonRadio" ] <|
                         List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles

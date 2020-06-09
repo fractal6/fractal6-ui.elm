@@ -1,5 +1,229 @@
 module Components.Text exposing (..)
 
+-- Operational
+
+
+loading : String
+loading =
+    "loading..."
+
+
+
+-- Genral
+
+
+leaveComment : String
+leaveComment =
+    "Leave a comment"
+
+
+
+--Quick Search
+--(header)
+
+
+nameQS : String
+nameQS =
+    "Name"
+
+
+circleQS : String
+circleQS =
+    "Circle"
+
+
+firstLinkQS : String
+firstLinkQS =
+    "First Link"
+
+
+phQS : String
+phQS =
+    "Find a Role or Circle"
+
+
+
+--Canvas
+
+
+reverseTooltip : String
+reverseTooltip =
+    "Reverse the organisation graph."
+
+
+
+-- Mandate
+
+
+mandateH : String
+mandateH =
+    "Mandate"
+
+
+purposeH : String
+purposeH =
+    "Purpose"
+
+
+responsabilitiesH : String
+responsabilitiesH =
+    "Responsabilities"
+
+
+domainsH : String
+domainsH =
+    "Domains"
+
+
+policiesH : String
+policiesH =
+    "Policies"
+
+
+noResponsabilities : String
+noResponsabilities =
+    "Responsabilities"
+
+
+noDomains : String
+noDomains =
+    "Domains"
+
+
+noPolicies : String
+noPolicies =
+    "Policies"
+
+
+phCirclePurpose : String
+phCirclePurpose =
+    "Define the purpose of the circle."
+
+
+phCircleResponsabilities : String
+phCircleResponsabilities =
+    "Define the circle responsabilities."
+
+
+phCircleDomains : String
+phCircleDomains =
+    "Define the circle domains."
+
+
+phCirclePolicies : String
+phCirclePolicies =
+    "Define the circle policies."
+
+
+phRolePurpose : String
+phRolePurpose =
+    "Define the purpose of the role."
+
+
+phRoleResponsabilities : String
+phRoleResponsabilities =
+    "Define the role responsabilities."
+
+
+phRoleDomains : String
+phRoleDomains =
+    "Define the role domains."
+
+
+phRolePolicies : String
+phRolePolicies =
+    "Define the role policies."
+
+
+
+-- Tension
+
+
+tensionH : String
+tensionH =
+    "Tensions"
+
+
+journalH : String
+journalH =
+    "Journal"
+
+
+noTensionRole : String
+noTensionRole =
+    "No tensions for this Role yet."
+
+
+noTensionCircle : String
+noTensionCircle =
+    "No tensions for this Circle yet."
+
+
+newCircle : String
+newCircle =
+    "New Circle"
+
+
+newRole : String
+newRole =
+    "New Role"
+
+
+circleNameHelp : String
+circleNameHelp =
+    "Name of the circle."
+
+
+roleNameHelp : String
+roleNameHelp =
+    "Name of the role."
+
+
+circleMessageHelp : String
+circleMessageHelp =
+    "Add a description to help others understand why a new circle should be created."
+
+
+roleMessageHelp : String
+roleMessageHelp =
+    "Add a description to help others understand why a new role should be created."
+
+
+tensionCircleAdded : String
+tensionCircleAdded =
+    "Tension added (new Circle)."
+
+
+tensionRoleAdded : String
+tensionRoleAdded =
+    "Tension added (new Role)."
+
+
+tensionCircleSubmit : String
+tensionCircleSubmit =
+    "Submit new Circle"
+
+
+tensionRoleSubmit : String
+tensionRoleSubmit =
+    "Submit new Role"
+
+
+tensionCircleCloseSubmit : String
+tensionCircleCloseSubmit =
+    "Create Circle and close tension"
+
+
+tensionRoleCloseSubmit : String
+tensionRoleCloseSubmit =
+    "Create Role and close tension"
+
+
+
+-- Action
+--@Todo
+-- Organisation
+
 
 notOrgMember : String
 notOrgMember =
