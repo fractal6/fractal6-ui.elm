@@ -30,11 +30,11 @@ html, body {
 
 
 .help-label {
+  //font-family: bold !important;
   color: $grey !important;
   display: block !important;
   font-size: $help-size !important;
   margin-top: 0.25rem !important;
-  //font-family: bold !important;
 }
 .help {
   color: $grey-light !important;
@@ -168,6 +168,8 @@ html.has-modal-active {
     //    -webkit-transform: rotate(225deg);
     //    transform: rotate(225deg);
     //}
+    //
+
 }
 
 #leftPane {
@@ -234,6 +236,15 @@ html.has-modal-active {
         font-size: 0.85rem;
     }
 
+    .buttonRole {
+        border-width: 0 !important;
+        font-weight: 500 !important;
+        &.is-orange {
+            background-color: $orange-frac6 !important;
+            color: white !important;
+        }
+    }
+
 }
 
 #mainPane {
@@ -276,7 +287,7 @@ html.has-modal-active {
 .mediaTension {
     //border-bottom: 1px solid #e1e4e8;
     //padding: 10px 10px;
-    .fa-circle {
+    .far, .fas  {
         margin-right: 33px !important;
     }
 }
@@ -605,11 +616,23 @@ html.has-modal-active {
 }
 
 .subForm {
-    padding: 0.666rem 1rem 0.666rem 0 !important;
+    padding: 0.666rem 1rem 0.1rem 0 !important;
 
     .input {
         background-color: #eee !important;
     }
+
+    .field-label.control {
+        padding-top: 0 !important;
+        padding-left: 10px !important;
+    }
+    .select.is-orange, .select.is-orange::after,
+    .select.is-orange select,
+    .select.is-orange select:focus,
+    .select.is-orange select:active {
+        border-color: $orange-frac6 !important;
+    }
+
 }
 
 /*
@@ -668,20 +691,6 @@ html.has-modal-active {
 }
 button::-moz-focus-inner { // remove outline inside button !
     border: 0 !important;
-}
-
-/*
- * Colors
- */
-
-
-.buttonRole {
-    border-width: 0 !important;
-    font-weight: 500 !important;
-    &.is-orange {
-        background-color: #d38e23 !important;
-        color: white !important;
-    }
 }
 
 

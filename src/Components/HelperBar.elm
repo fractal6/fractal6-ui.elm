@@ -110,12 +110,8 @@ memberButton baseUri roles =
     roles
         |> List.map
             (\r ->
-                let
-                    color =
-                        roleColor r.role_type
-                in
                 a
-                    [ class ("button buttonRole is-hovered is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ color)
+                    [ class ("button buttonRole is-hovered is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
                     , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                     , href <| uriFromNameid baseUri r.nameid
                     ]

@@ -7,12 +7,13 @@ import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
+import Fractal.Enum.TensionAction as TensionAction
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, selected, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.View exposing (edgeArrow, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, roleColor, tensionTypeSpan)
 import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole)
 
 
@@ -27,10 +28,11 @@ type alias NewNodeText =
     , ph_policies : String
     , submit : String
     , close_submit : String
+    , firstLink_help : String
     }
 
 
-{-| --view : CircleForm -> GqlData (Maybe Node) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
+{-| --view : TensionForm -> GqlData (Maybe Node) -> (String -> String -> msg) -> ((msg -> TensionFOrm) -> Time.Posix -> msg) -> (TensionForm -> Time.Posix -> msg) -> Html msg
 What should be the signature ?!
 -}
 view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
@@ -38,10 +40,10 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
         txt =
             case form.type_ of
                 NodeType.Circle ->
-                    NewNodeText T.newCircle T.tensionCircleAdded T.circleNameHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit
+                    NewNodeText T.newCircle T.tensionCircleAdded T.circleNameHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit T.firstLinkCircleMessageHelp
 
                 NodeType.Role ->
-                    NewNodeText T.newRole T.tensionRoleAdded T.roleNameHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit
+                    NewNodeText T.newRole T.tensionRoleAdded T.roleNameHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp
 
         isSendable =
             isPostSendable [ "name", "purpose" ] form.post
@@ -61,7 +63,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                 nameid =
                     Dict.get "nameid" form.post |> withDefault ""
 
-                coordos =
+                firstLinks =
                     Dict.get "first_links" form.post |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
             in
             div [ class "modal-card finalModal" ]
@@ -112,33 +114,71 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                     []
                                 ]
                             ]
+                        , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
                         ]
-                    , coordos
-                        |> List.indexedMap
-                            (\i uname ->
-                                div [ class "field is-horizontal" ]
-                                    [ div [ class "field-label is-small has-text-grey-darker" ]
-                                        [ "Coordinator"
-                                            ++ (if i > 0 then
-                                                    " " ++ String.fromInt i
+                    , br [] []
+                    , case form.type_ of
+                        NodeType.Circle ->
+                            div [ class "box has-background-grey-lighter subForm" ] <|
+                                (List.indexedMap
+                                    (\i uname ->
+                                        div [ class "field is-horizontal" ]
+                                            [ div [ class "field-label is-small has-text-grey-darker" ]
+                                                [ "Coordinator"
+                                                    ++ (if i > 0 then
+                                                            " " ++ String.fromInt i
 
-                                                else
-                                                    ""
-                                               )
-                                            |> text
-                                        ]
-                                    , div [ class "field-body control" ]
-                                        [ input
-                                            [ class "input is-small"
-                                            , type_ "text"
-                                            , value ("@" ++ uname)
-                                            , onInput <| changePostMsg "first_links"
+                                                        else
+                                                            ""
+                                                       )
+                                                    |> text
+                                                ]
+                                            , div [ class "field-body control" ]
+                                                [ input
+                                                    [ class "input is-small"
+                                                    , type_ "text"
+                                                    , value ("@" ++ uname)
+                                                    , onInput <| changePostMsg "first_links"
+                                                    ]
+                                                    []
+                                                ]
                                             ]
-                                            []
-                                        ]
-                                    ]
-                            )
-                        |> div [ class "box has-background-grey-lighter subForm" ]
+                                    )
+                                    firstLinks
+                                    ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
+                                )
+
+                        NodeType.Role ->
+                            div [ class "box has-background-grey-lighter subForm" ] <|
+                                (List.indexedMap
+                                    (\i uname ->
+                                        div [ class "field is-horizontal" ]
+                                            [ div [ class "field-label is-small has-text-grey-darker control" ]
+                                                [ div [ class ("select is-" ++ roleColor form.role_type) ]
+                                                    [ RoleType.list
+                                                        |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
+                                                        |> List.map
+                                                            (\r ->
+                                                                option [ selected (form.role_type == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                            )
+                                                        |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                                    ]
+                                                ]
+                                            , div [ class "field-body control" ]
+                                                [ input
+                                                    [ class "input is-small"
+                                                    , type_ "text"
+                                                    , value ("@" ++ uname)
+                                                    , onInput <| changePostMsg "first_links"
+                                                    ]
+                                                    []
+                                                ]
+                                            ]
+                                    )
+                                    firstLinks
+                                    ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
+                                )
+                    , br [] []
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ textarea
@@ -154,7 +194,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                         ]
                     , br [] []
                     , div [ class "card" ]
-                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
+                        [ div [ class "cnard-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         , div [ class "card-content" ]
                             [ div [ class "field" ]
                                 [ div [ class "label" ] [ text T.purposeH ]

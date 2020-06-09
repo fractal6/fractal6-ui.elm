@@ -187,8 +187,7 @@ type Msg
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeCirclePost String String -- {field value}
-    | ChangeCircleRole RoleType.RoleType
-    | SubmitCircle CircleForm Bool Time.Posix -- Send form
+    | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
@@ -372,8 +371,11 @@ update global msg model =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
-                    , type_ = TensionType.Governance
+                    , tension_type = TensionType.Governance
+                    , type_ = NodeType.Role
+                    , role_type = RoleType.Peer
                     , post = Dict.empty
+                    , action = Nothing
                     }
 
                 newStep =
@@ -391,7 +393,7 @@ update global msg model =
                         AddTension (TensionInit form) ->
                             let
                                 newForm =
-                                    { form | uctx = uctx, type_ = tensionType }
+                                    { form | uctx = uctx, tension_type = tensionType }
 
                                 orgaRoles =
                                     uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
@@ -449,6 +451,17 @@ update global msg model =
 
         TensionAck result ->
             let
+                maybeForm =
+                    case model.node_action of
+                        AddCircle (CircleFinal form _) ->
+                            Just form
+
+                        AddTension (TensionFinal form _) ->
+                            Just form
+
+                        other ->
+                            Nothing
+
                 tensions =
                     case result of
                         Success t ->
@@ -457,8 +470,8 @@ update global msg model =
                         other ->
                             []
             in
-            case model.node_action of
-                AddTension (TensionFinal form _) ->
+            case maybeForm of
+                Just form ->
                     ( { model
                         | node_action = AddTension <| TensionFinal form result
                         , circle_tensions = Success tensions
@@ -467,17 +480,8 @@ update global msg model =
                     , Global.send (UpdateSessionTensions tensions)
                     )
 
-                AddCircle (CircleFinal form _) ->
-                    ( { model
-                        | node_action = AddTension <| TensionFinal (circle2tensionForm form) result
-                        , circle_tensions = Success tensions
-                      }
-                    , Cmd.none
-                    , Global.send (UpdateSessionTensions tensions)
-                    )
-
-                other ->
-                    ( { model | node_action = AskErr "Query method implemented" }, Cmd.none, Cmd.none )
+                Nothing ->
+                    ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
 
         -- Circle
         DoCircleInit node nodeType ->
@@ -486,10 +490,17 @@ update global msg model =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
-                    , type_ = nodeType
                     , tension_type = TensionType.Governance
-                    , role_type = RoleType.Member
+                    , type_ = nodeType
+                    , role_type = RoleType.Peer
                     , post = Dict.empty
+                    , action =
+                        case nodeType of
+                            NodeType.Circle ->
+                                Just TensionAction.NewCircle
+
+                            NodeType.Role ->
+                                Just TensionAction.NewRole
                     }
 
                 newStep =
@@ -593,6 +604,9 @@ update global msg model =
 
                         newForm =
                             case field of
+                                "role_type" ->
+                                    { form | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer }
+
                                 "name" ->
                                     let
                                         newNodeLabel =
@@ -634,18 +648,6 @@ update global msg model =
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-        ChangeCircleRole roleType ->
-            case model.node_action of
-                AddCircle (CircleFinal form result) ->
-                    let
-                        newForm =
-                            { form | role_type = roleType }
-                    in
-                    ( { model | node_action = AddCircle <| CircleFinal newForm result }, Cmd.none, Cmd.none )
-
-                other ->
-                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
-
         SubmitCircle form doClose time ->
             let
                 status =
@@ -665,8 +667,20 @@ update global msg model =
                 ( model, addCircleTension newForm TensionAck, Cmd.none )
 
         CircleAck result ->
-            case model.node_action of
-                AddCircle (CircleFinal form _) ->
+            let
+                maybeForm =
+                    case model.node_action of
+                        AddCircle (CircleFinal form _) ->
+                            Just form
+
+                        AddTension (TensionFinal form _) ->
+                            Just form
+
+                        other ->
+                            Nothing
+            in
+            case maybeForm of
+                Just form ->
                     case result of
                         Success nodes ->
                             let
@@ -681,8 +695,8 @@ update global msg model =
                         other ->
                             ( { model | node_action = AddCircle <| CircleFinal form result }, Cmd.none, Cmd.none )
 
-                other ->
-                    ( { model | node_action = AskErr "Query method not implemented" }, Cmd.none, Cmd.none )
+                Nothing ->
+                    ( { model | node_action = AskErr "Query method not implemented from CircleAck" }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1400,10 +1414,28 @@ viewTensionStep step =
                 ]
 
         TensionFinal form result ->
-            Form.NewTension.view form result ChangeTensionPost DoCloseModal Submit SubmitTension
+            let
+                viewCircleForm =
+                    case result of
+                        Failure _ ->
+                            case form.action of
+                                Just _ ->
+                                    True
+
+                                _ ->
+                                    False
+
+                        _ ->
+                            False
+            in
+            if viewCircleForm then
+                Form.NewCircle.view form result ChangeCirclePost DoCloseModal Submit SubmitCircle
+
+            else
+                Form.NewTension.view form result ChangeTensionPost DoCloseModal Submit SubmitTension
 
 
-viewCircleStep : CircleStep CircleForm -> Html Msg
+viewCircleStep : CircleStep TensionForm -> Html Msg
 viewCircleStep step =
     case step of
         CircleNotAuthorized errMsg ->

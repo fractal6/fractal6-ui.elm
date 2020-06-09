@@ -14,7 +14,7 @@ import ModelCommon.View exposing (edgeArrow, tensionTypeSpan)
 import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
 
 
-{-| --view : CircleForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> CircleForm) -> Time.Posix -> msg) -> (CircleForm -> Time.Posix -> msg) -> Html msg
+{-| --view : TensionForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> TensionForm) -> Time.Posix -> msg) -> (TensionForm -> Time.Posix -> msg) -> Html msg
 What should be the signature ?!
 -}
 view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
@@ -35,7 +35,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.type_ ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]

@@ -77,18 +77,17 @@ const GraphPack = {
 
     // Background Colors
     backgroundColor: "#edfcff",
+    //backgroundColor: "#f0fff0",
 
     // Graph Colors
     //var colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
     usernameColor: "#8282cc",
-    //coordinatorRoleColor: "#FFFFFC", // blue
-    //coordinatorRoleColor: "#fdc56f",
-    coordinatorRoleColor: "#ffdaa1",
-    regularRoleColor: "#FFFFF9", // green
-    guestColor: "#F4FDF5", // yellow
-    hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
+    coordinatorRoleColor: "#ffdaa1", // ~orange
+    peerRoleColor: "#edf5ff",// "#f0fff0", // "#FFFFF9"
+    guestColor: "#f4fdf5", // ~yellow
     focusCircleColor: "#375a7fcc", // blue>"#368ed3"
+    hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 1.66,
     focusCircleWidth: 1.66*1.5, // warning, can break stroke with canvas drawing.
 
@@ -292,7 +291,7 @@ const GraphPack = {
                 } else if (role_type == "Coordinator") {
                     circleColor = this.coordinatorRoleColor;
                 } else {
-                    circleColor = this.regularRoleColor;
+                    circleColor = this.peerRoleColor;
                 }
             } else {
                 console.warn("Node type unknonw", type_);

@@ -9,13 +9,14 @@ import Json.Decode as Decode exposing (Decoder)
 
 type RoleType
     = Coordinator
+    | Peer
     | Member
     | Guest
 
 
 list : List RoleType
 list =
-    [ Coordinator, Member, Guest ]
+    [ Coordinator, Peer, Member, Guest ]
 
 
 decoder : Decoder RoleType
@@ -26,6 +27,9 @@ decoder =
                 case string of
                     "Coordinator" ->
                         Decode.succeed Coordinator
+
+                    "Peer" ->
+                        Decode.succeed Peer
 
                     "Member" ->
                         Decode.succeed Member
@@ -45,6 +49,9 @@ toString enum =
     case enum of
         Coordinator ->
             "Coordinator"
+
+        Peer ->
+            "Peer"
 
         Member ->
             "Member"
@@ -69,6 +76,9 @@ fromString enumString =
     case enumString of
         "Coordinator" ->
             Just Coordinator
+
+        "Peer" ->
+            Just Peer
 
         "Member" ->
             Just Member

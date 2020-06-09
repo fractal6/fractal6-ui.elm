@@ -189,6 +189,21 @@ roleMessageHelp =
     "Add a description to help others understand why a new role should be created."
 
 
+autoFieldMessageHelp : String
+autoFieldMessageHelp =
+    "These fields are use for ressource identification."
+
+
+firstLinkRoleMessageHelp : String
+firstLinkRoleMessageHelp =
+    "Select a role type and assign user (first link)."
+
+
+firstLinkCircleMessageHelp : String
+firstLinkCircleMessageHelp =
+    "Assign an user to a coordinator Role (first link)."
+
+
 tensionCircleAdded : String
 tensionCircleAdded =
     "Tension added (new Circle)."

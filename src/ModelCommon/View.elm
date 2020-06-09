@@ -25,6 +25,9 @@ roleColor rt =
         RoleType.Member ->
             "primary"
 
+        RoleType.Peer ->
+            "primary"
+
         RoleType.Coordinator ->
             "orange"
 

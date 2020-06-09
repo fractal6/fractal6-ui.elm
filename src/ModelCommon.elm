@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionType as TensionType
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
@@ -68,7 +69,7 @@ type UserState
 type ActionState
     = ActionChoice Node
     | AddTension (TensionStep TensionForm)
-    | AddCircle (CircleStep CircleForm)
+    | AddCircle (CircleStep TensionForm)
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
@@ -79,6 +80,22 @@ type ActionState
 -- Tension Form
 
 
+type alias TensionForm =
+    { uctx : UserCtx
+    , source : UserRole
+    , target : Node
+    , tension_type : TensionType.TensionType
+    , type_ : NodeType.NodeType -- for Circle or Role form
+    , role_type : RoleType.RoleType -- for Role
+    , post : Post
+    , action : Maybe TensionAction.TensionAction
+    }
+
+
+
+-- Tension Step
+
+
 type TensionStep form
     = TensionInit form
     | TensionSource form (List UserRole)
@@ -86,17 +103,8 @@ type TensionStep form
     | TensionNotAuthorized ErrorData
 
 
-type alias TensionForm =
-    { uctx : UserCtx
-    , source : UserRole
-    , target : Node
-    , type_ : TensionType.TensionType
-    , post : Post
-    }
 
-
-
--- Circle Form  (Node Or Circle)
+-- Circle Step  (Node Or Circle)
 
 
 type CircleStep form
@@ -106,26 +114,8 @@ type CircleStep form
     | CircleNotAuthorized ErrorData
 
 
-type alias CircleForm =
-    { uctx : UserCtx
-    , source : UserRole
-    , target : Node
-    , type_ : NodeType.NodeType
-    , tension_type : TensionType.TensionType
-    , role_type : RoleType.RoleType -- For Role
-    , post : Post
-    }
 
-
-
--- Join Form
-
-
-type JoinStep form
-    = JoinInit form
-    | JoinValidation form (GqlData Node)
-    | JoinNotAuthorized ErrorData
-    | JoinAuthNeeded
+-- Join Form & Step
 
 
 type alias JoinOrgaForm =
@@ -135,15 +125,11 @@ type alias JoinOrgaForm =
     }
 
 
-
---
--- Method
---
-
-
-circle2tensionForm : CircleForm -> TensionForm
-circle2tensionForm f =
-    TensionForm f.uctx f.source f.target f.tension_type f.post
+type JoinStep form
+    = JoinInit form
+    | JoinValidation form (GqlData Node)
+    | JoinNotAuthorized ErrorData
+    | JoinAuthNeeded
 
 
 

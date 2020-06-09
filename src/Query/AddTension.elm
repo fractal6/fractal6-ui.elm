@@ -17,7 +17,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (CircleForm, TensionForm)
+import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPgPayload)
 import RemoteData exposing (RemoteData)
@@ -71,39 +71,39 @@ addOneTension form msg =
 
 
 addTensionInputEncoder : TensionForm -> Mutation.AddTensionRequiredArguments
-addTensionInputEncoder { uctx, source, target, type_, post } =
+addTensionInputEncoder f =
     let
         title =
-            Dict.get "title" post |> withDefault ""
+            Dict.get "title" f.post |> withDefault ""
 
         createdAt =
-            Dict.get "createdAt" post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault ""
 
         message =
-            Dict.get "message" post
+            Dict.get "message" f.post
 
         tensionRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present uctx.username })
+                    (\x -> { x | username = OptionalArgument.Present f.uctx.username })
             , title = title
-            , type_ = type_
+            , type_ = f.tension_type
             , status = TensionStatus.Open
             , emitter =
                 Input.buildNodeRef
                     (\n ->
                         { n
-                            | nameid = OptionalArgument.Present source.nameid
-                            , rootnameid = OptionalArgument.Present source.rootnameid
+                            | nameid = OptionalArgument.Present f.source.nameid
+                            , rootnameid = OptionalArgument.Present f.source.rootnameid
                         }
                     )
             , receiver =
                 Input.buildNodeRef
                     (\n ->
                         { n
-                            | nameid = OptionalArgument.Present target.nameid
-                            , rootnameid = OptionalArgument.Present target.rootnameid
+                            | nameid = OptionalArgument.Present f.target.nameid
+                            , rootnameid = OptionalArgument.Present f.target.rootnameid
                         }
                     )
             }
@@ -134,40 +134,43 @@ addCircleTension form msg =
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
 
 
-addCircleInputEncoder : CircleForm -> Mutation.AddTensionRequiredArguments
-addCircleInputEncoder { uctx, source, target, type_, tension_type, post } =
+addCircleInputEncoder : TensionForm -> Mutation.AddTensionRequiredArguments
+addCircleInputEncoder f =
     let
         title =
-            Dict.get "title" post |> withDefault ""
+            Dict.get "title" f.post |> withDefault ""
 
         createdAt =
-            Dict.get "createdAt" post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault ""
 
         status =
-            Dict.get "status" post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
+            Dict.get "status" f.post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
+
+        message =
+            Dict.get "message" f.post
 
         tensionRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present uctx.username })
+                    (\x -> { x | username = OptionalArgument.Present f.uctx.username })
             , title = title
-            , type_ = tension_type
+            , type_ = f.tension_type
             , status = status
             , emitter =
                 Input.buildNodeRef
                     (\x ->
                         { x
-                            | nameid = OptionalArgument.Present source.nameid
-                            , rootnameid = OptionalArgument.Present source.rootnameid
+                            | nameid = OptionalArgument.Present f.source.nameid
+                            , rootnameid = OptionalArgument.Present f.source.rootnameid
                         }
                     )
             , receiver =
                 Input.buildNodeRef
                     (\x ->
                         { x
-                            | nameid = OptionalArgument.Present target.nameid
-                            , rootnameid = OptionalArgument.Present target.rootnameid
+                            | nameid = OptionalArgument.Present f.target.nameid
+                            , rootnameid = OptionalArgument.Present f.target.rootnameid
                         }
                     )
             }
@@ -175,15 +178,16 @@ addCircleInputEncoder { uctx, source, target, type_, tension_type, post } =
         tensionOpts =
             \t ->
                 { t
-                    | action = TensionAction.NewCircle |> OptionalArgument.Present
+                    | action = f.action |> OptionalArgument.fromMaybe
+                    , message = message |> OptionalArgument.fromMaybe
                     , mandate =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" post |> OptionalArgument.fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" post |> OptionalArgument.fromMaybe
-                                    , domains = Dict.get "domains" post |> OptionalArgument.fromMaybe
-                                    , policies = Dict.get "policies" post |> OptionalArgument.fromMaybe
+                                    | purpose = Dict.get "purpose" f.post |> OptionalArgument.fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" f.post |> OptionalArgument.fromMaybe
+                                    , domains = Dict.get "domains" f.post |> OptionalArgument.fromMaybe
+                                    , policies = Dict.get "policies" f.post |> OptionalArgument.fromMaybe
                                 }
                             )
                             |> OptionalArgument.Present
