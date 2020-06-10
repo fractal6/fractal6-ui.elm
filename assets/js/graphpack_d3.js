@@ -473,11 +473,9 @@ const GraphPack = {
 
     },
 
-
     //
     // D3/GraphPack
     //
-
 
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
@@ -736,7 +734,7 @@ const GraphPack = {
             case 'InTooltip':
                 var n = nodeOrElt;
                 var h = this.$tooltip.clientHeight +12;
-                var w = this.$tooltip.clientWidth/2 +8;
+                var w = this.$tooltip.clientWidth/2 +6;
                 var x1 = n.ctx.centerX - w;
                 var x2 = n.ctx.centerX + w;
                 var y1 = n.ctx.centerY - n.ctx.rayon - h;
@@ -744,7 +742,7 @@ const GraphPack = {
                 if ( n === this.focusedNode) {
                     y2 = n.ctx.centerY - n.ctx.rayon*0.85;
                 } else {
-                    y2 = n.ctx.centerY - n.ctx.rayon*0.6;
+                    y2 = n.ctx.centerY - n.ctx.rayon*0.75;
                 }
                 test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 break
@@ -920,14 +918,26 @@ const GraphPack = {
                     this.drawNodeHover(node, true);
                 }
             } else if (this.hoveredNode) {
-                //var isInCanvas = this.checkIf(p, "InCanvas", null); // possibliy link to issue #9232dcd
-                //if (!isInTooltip && isInCanvas) this.clearNodeHover(hoveredNode);
-                this.drawNodeHover(this.focusedNode, true);
+                if (!isInTooltip) this.drawNodeHover(this.focusedNode, true);
             } else {
                 this.drawNodeHover(this.focusedNode, true);
             }
             return false
         };
+
+        // Listen for mouse entering canvas
+        var canvasMouseEnterEvent = e => {
+            if (this.isZooming) {
+                return false
+            }
+            var p = this.getPointerCtx(e);
+            var node = this.getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
+            var isInTooltip = false;
+
+            this.drawNodeHover(this.focusedNode, true);
+
+            return false
+        }
 
         // Listen for mouse moves/hooverout on the main canvas
         var canvasMouseLeaveEvent = e => {
@@ -939,6 +949,7 @@ const GraphPack = {
 
             return false
         };
+
 
         // On Resize handle
         window.onresize = () => {
@@ -964,6 +975,7 @@ const GraphPack = {
 
         // Canvas mouse event
         this.$canvas.addEventListener("mousemove", canvasMouseMoveEvent);
+        this.$canvas.addEventListener("mouseenter", canvasMouseEnterEvent);
         this.$canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
         this.$canvas.addEventListener("mousedown", nodeClickEvent);
         // Canvas button events redirection
