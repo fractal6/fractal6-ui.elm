@@ -117,44 +117,25 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                         , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
                         ]
                     , br [] []
-                    , case form.type_ of
-                        NodeType.Circle ->
-                            div [ class "box has-background-grey-lighter subForm" ] <|
-                                (List.indexedMap
-                                    (\i uname ->
-                                        div [ class "field is-horizontal" ]
-                                            [ div [ class "field-label is-small has-text-grey-darker" ]
-                                                [ "Coordinator"
-                                                    ++ (if i > 0 then
-                                                            " " ++ String.fromInt i
-
-                                                        else
-                                                            ""
-                                                       )
-                                                    |> text
-                                                ]
-                                            , div [ class "field-body control" ]
-                                                [ input
-                                                    [ class "input is-small"
-                                                    , type_ "text"
-                                                    , value ("@" ++ uname)
-                                                    , onInput <| changePostMsg "first_links"
+                    , div [ class "box has-background-grey-lighter subForm" ] <|
+                        (List.indexedMap
+                            (\i uname ->
+                                div [ class "field is-horizontal" ]
+                                    [ div [ class "field-label is-small has-text-grey-darker control" ]
+                                        [ case form.type_ of
+                                            NodeType.Circle ->
+                                                let
+                                                    r =
+                                                        RoleType.Coordinator
+                                                in
+                                                div [ class ("select is-" ++ roleColor r) ]
+                                                    [ select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                                        [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                        ]
                                                     ]
-                                                    []
-                                                ]
-                                            ]
-                                    )
-                                    firstLinks
-                                    ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
-                                )
 
-                        NodeType.Role ->
-                            div [ class "box has-background-grey-lighter subForm" ] <|
-                                (List.indexedMap
-                                    (\i uname ->
-                                        div [ class "field is-horizontal" ]
-                                            [ div [ class "field-label is-small has-text-grey-darker control" ]
-                                                [ div [ class ("select is-" ++ roleColor form.role_type) ]
+                                            NodeType.Role ->
+                                                div [ class ("select is-" ++ roleColor form.role_type) ]
                                                     [ RoleType.list
                                                         |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
                                                         |> List.map
@@ -163,21 +144,21 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                                             )
                                                         |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
                                                     ]
-                                                ]
-                                            , div [ class "field-body control" ]
-                                                [ input
-                                                    [ class "input is-small"
-                                                    , type_ "text"
-                                                    , value ("@" ++ uname)
-                                                    , onInput <| changePostMsg "first_links"
-                                                    ]
-                                                    []
-                                                ]
+                                        ]
+                                    , div [ class "field-body control" ]
+                                        [ input
+                                            [ class "input is-small"
+                                            , type_ "text"
+                                            , value ("@" ++ uname)
+                                            , onInput <| changePostMsg "first_links"
                                             ]
-                                    )
-                                    firstLinks
-                                    ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
-                                )
+                                            []
+                                        ]
+                                    ]
+                            )
+                            firstLinks
+                            ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
+                        )
                     , br [] []
                     , div [ class "field" ]
                         [ div [ class "control" ]
