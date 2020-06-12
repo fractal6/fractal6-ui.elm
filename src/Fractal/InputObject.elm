@@ -1106,9 +1106,9 @@ buildNodeFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, type_ = Absent, name = Absent, nameid = Absent, rootnameid = Absent, isRoot = Absent, skills = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, type_ = Absent, name = Absent, nameid = Absent, rootnameid = Absent, isRoot = Absent, skills = Absent, role_type = Absent, and = Absent, or = Absent, not = Absent }
     in
-    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, type_ = optionals.type_, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, isRoot = optionals.isRoot, skills = optionals.skills, and = optionals.and, or = optionals.or, not = optionals.not }
+    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, type_ = optionals.type_, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, isRoot = optionals.isRoot, skills = optionals.skills, role_type = optionals.role_type, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias NodeFilterOptionalFields =
@@ -1120,6 +1120,7 @@ type alias NodeFilterOptionalFields =
     , rootnameid : OptionalArgument StringHashFilter
     , isRoot : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
+    , role_type : OptionalArgument RoleType_hash
     , and : OptionalArgument NodeFilter
     , or : OptionalArgument NodeFilter
     , not : OptionalArgument NodeFilter
@@ -1140,6 +1141,7 @@ type alias NodeFilterRaw =
     , rootnameid : OptionalArgument StringHashFilter
     , isRoot : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
+    , role_type : OptionalArgument RoleType_hash
     , and : OptionalArgument NodeFilter
     , or : OptionalArgument NodeFilter
     , not : OptionalArgument NodeFilter
@@ -1157,7 +1159,7 @@ type NodeFilter
 encodeNodeFilter : NodeFilter -> Value
 encodeNodeFilter (NodeFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter |> Encode.optional input.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter |> Encode.optional input.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
 
 
 buildNodeOrder : (NodeOrderOptionalFields -> NodeOrderOptionalFields) -> NodeOrder
@@ -1536,6 +1538,34 @@ encodePostRef : PostRef -> Value
 encodePostRef input =
     Encode.maybeObject
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) input.id |> Just ) ]
+
+
+buildRoleType_hash : (RoleType_hashOptionalFields -> RoleType_hashOptionalFields) -> RoleType_hash
+buildRoleType_hash fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq = Absent }
+    in
+    { eq = optionals.eq }
+
+
+type alias RoleType_hashOptionalFields =
+    { eq : OptionalArgument Fractal.Enum.RoleType.RoleType }
+
+
+{-| Type for the RoleType\_hash input object.
+-}
+type alias RoleType_hash =
+    { eq : OptionalArgument Fractal.Enum.RoleType.RoleType }
+
+
+{-| Encode a RoleType\_hash into a value that can be used as an argument.
+-}
+encodeRoleType_hash : RoleType_hash -> Value
+encodeRoleType_hash input =
+    Encode.maybeObject
+        [ ( "eq", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.eq ) ]
 
 
 buildStringExactFilter : (StringExactFilterOptionalFields -> StringExactFilterOptionalFields) -> StringExactFilter

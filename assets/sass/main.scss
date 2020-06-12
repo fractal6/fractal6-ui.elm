@@ -135,6 +135,14 @@ html.has-modal-active {
     padding-left: 5px;
 }
 
+.is-vbar {
+	display: inline-block;
+	border-left: 1px solid #ccc;
+	height: 26px;
+    margin-bottom: 5px;
+    padding-left: 7px;
+}
+
 /////
 
 .menu .menu-label {

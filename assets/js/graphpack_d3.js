@@ -8,19 +8,37 @@ const setpixelated = (ctx2d, v) => {
     //ctx2d['mozImageSmoothingEnabled'] = v;    /* Firefox (deprecated) */
 }
 
+const NodeType = {
+    Circle: "Circle",
+    Role: "Role",
+}
+
+const RoleType = {
+    Guest: "Guest",
+    Member: "Member",
+    Peer: "Peer",
+    Coordinator: "Coordinator",
+}
+
+
+
+
 // Flat list of nodes (unordered) to nested tree structure
 // from: https://stackoverflow.com/questions/18017869/build-tree-array-from-flat-array-in-javascript/40732240#40732240
 const formatGraph = dataset =>  {
     var dataTree = [];
     var dataDict = Object.create(null);
 
-    dataset.forEach( aData => dataDict[aData.nameid] = {
-        ...aData,
-        children : [],
-        depth : 0
+    dataset.forEach( (aData, i) => {
+        dataDict[aData.nameid] = {
+            ...aData,
+            children : [],
+            depth : 0
+        }
     });
 
     dataset.forEach( aData => {
+
         if(aData.parentid) {
             dataDict[aData.parentid].children.push(dataDict[aData.nameid])
         } else {
@@ -57,14 +75,15 @@ const computeDepth = (obj, depth, neigbor) => {
                 type_: "Hidden",
             })
         }
-        obj.children.forEach(d =>  {
+        obj.children.forEach((d, i) =>  {
             var d = computeDepth(d, currentdepth+1, obj.children.length-1);
             var tmpDepth = d.maxdepth;
             cumchild += d.cumchild;
             if (tmpDepth > maxdepth) {
                 maxdepth = tmpDepth;
             }
-        })
+        });
+
     }
     maxdepth = maxdepth + 1;
     cumchild = cumchild + 1;
@@ -76,6 +95,7 @@ const computeDepth = (obj, depth, neigbor) => {
 const GraphPack = {
 
     // Background Colors
+    //backgroundColor: "#f1fdff",
     backgroundColor: "#edfcff",
     //backgroundColor: "#f0fff0",
 
@@ -282,13 +302,13 @@ const GraphPack = {
             // On the hidden canvas each rectangle gets a unique color.
             circleColor = node.color;
         } else {
-            if (type_ === "Circle") {
+            if (type_ === NodeType.Circle) {
                 circleColor = this.colorCircle(node.depth)
-            } else if (type_ === "Role") {
+            } else if (type_ === NodeType.Role) {
                 // Check role type code color
-                if (role_type === "Guest") {
+                if (role_type === RoleType.Guest) {
                     circleColor = this.guestColor;
-                } else if (role_type == "Coordinator") {
+                } else if (role_type == RoleType.Coordinator) {
                     circleColor = this.coordinatorRoleColor;
                 } else {
                     circleColor = this.peerRoleColor;
@@ -318,7 +338,7 @@ const GraphPack = {
                 ctx2d.stroke();
             }
 
-            if (type_ === "Role") {
+            if (type_ === NodeType.Role) {
                 var text = null;
                 var user = null;
 
@@ -417,8 +437,8 @@ const GraphPack = {
         this.drawNodeHover(this.focusedNode, false);
 
         var zoomFactor = this.zoomFactorCircle;
-        if (this.focusedNode.data.type_ === 'Role') {
-            if (this.focusedNode.data.node_type == "Guest") {
+        if (this.focusedNode.data.type_ === NodeType.Role) {
+            if (this.focusedNode.data.role_type == "Guest") {
                 zoomFactor = this.zoomFactorGuest;
             } else {
                 zoomFactor = this.zoomFactorRole;
@@ -480,13 +500,13 @@ const GraphPack = {
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
     nodeSizeTopDown(n, stats) {
-        dvd = (n.role_type == "Guest") ? this.guestSizeDivider : 1;
+        dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var size = 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
         return size
     },
 
     nodeSizeBottomUp(n, stats) {
-        dvd = (n.role_type == "Guest") ? this.guestSizeDivider : 1;
+        dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var sizeDefault = 4;
         var size = 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
         return size
@@ -502,7 +522,19 @@ const GraphPack = {
     },
 
     // Init and create the GraphPack data structure
-    resetGraphPack(graph) {
+    resetGraphPack(dataNodes, doFormat) {
+        var graph;
+        if (doFormat) {
+            if (dataNodes.length == 0) {
+                console.warn("Graph is empty, aborting");
+                return
+            }
+            graph = formatGraph(dataNodes);
+            if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.");
+            else graph = graph[0];
+        }
+        else
+            graph = dataNodes;
 
         // Determine the node order in the circle packing
         const nodeOrder = (n1, n2) => {
@@ -575,8 +607,8 @@ const GraphPack = {
 
         centerX = ((node.x - zoomCtx.centerX) * zoomCtx.scale) + this.centerX;
         centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
-        if (node.data.type_ === "Role") {
-            if (node.data.role_type === "Guest") {
+        if (node.data.type_ === NodeType.Role) {
+            if (node.data.role_type === RoleType.Guest) {
                 rayon = node.r * this.rayonFactorGuest ;
             } else {
                 // Regular member
@@ -799,10 +831,6 @@ const GraphPack = {
     // Init the canvas and draw the graph
     init(app, data, reason) {
         var dataNodes = data.data;
-        if (dataNodes.length == 0) {
-            console.warn("Graph is empty, aborting")
-            return
-        }
 
         this.app = app;
         this.reason = reason;
@@ -863,11 +891,8 @@ const GraphPack = {
         // Create Circle Packing - GraphPack
         //
 
-        var graph = formatGraph(dataNodes);
-        if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.")
-
         this.nodeSize = this.nodeSizeTopDown;
-        this.resetGraphPack(graph[0]);
+        this.resetGraphPack(dataNodes, true);
 
         /*////////////////////////////////////////////////////////////
         ////////////////// Events Handler callback ///////////////////
@@ -1022,7 +1047,7 @@ const GraphPack = {
 
             if (this.hoveredNode) this.clearNodeHover(this.hoveredNode);
 
-            this.resetGraphPack(this.graph);
+            this.resetGraphPack(this.graph, false);
 
             this.clearCanvas(this.ctx2d);
             this.clearCanvas(this.hiddenCtx2d);

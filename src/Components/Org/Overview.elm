@@ -688,7 +688,7 @@ update global msg model =
                                     hotNodePush nodes model.orga_data
                             in
                             ( { model | node_action = AddCircle <| CircleFinal form result, orga_data = Success ndata }
-                            , Ports.redrawGraphPack ndata
+                            , Cmd.none
                             , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga ndata) ]
                             )
 
@@ -727,7 +727,7 @@ update global msg model =
                                     hotNodePush [ n ] model.orga_data
                             in
                             ( { model | node_action = JoinOrga (JoinValidation form result), orga_data = Success ndata }
-                            , Ports.redrawGraphPack ndata
+                            , Cmd.none
                             , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga ndata) ]
                             )
 

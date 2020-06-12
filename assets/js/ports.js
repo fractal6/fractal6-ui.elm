@@ -102,23 +102,51 @@ const actions = {
         qs.addAll(data.data);
     },
     'FOCUS_GRAPHPACK': (app, session, focusid) => {
-        var gp = session.gp;
-        gp.zoomToNode(focusid);
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.zoomToNode(focusid);
+        }
     },
     'CLEAR_TOOLTIP': (app, session, message) => {
-        var gp = session.gp;
-        gp.clearNodeTooltip();
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.clearNodeTooltip();
+        }
     },
     'DRAW_GRAPHPACK' : (app, session, data) => {
-        var gp = session.gp;
-        var graph = formatGraph(data.data);
-        gp.resetGraphPack(graph[0]);
-        gp.drawCanvas();
-        gp.drawCanvas(true);
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.resetGraphPack(data.data, true);
+            gp.drawCanvas();
+            gp.drawCanvas(true);
+        }
+    },
+    'REMOVEDRAW_GRAPHPACK' : (app, session, data) => {
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            // Remove a node
+            for (var i=0; i<data.data.length; i++) {
+                if (data.data[i].nameid == data.focusid) {
+                    data.data.splice(i, 1);
+                    break
+                }
+            }
+
+            var gp = session.gp;
+            gp.resetGraphPack(data.data, true);
+            gp.drawCanvas();
+            gp.drawCanvas(true);
+        }
     },
     'DRAW_BUTTONS_GRAPHPACK' : (app, session, _) => {
-        var gp = session.gp;
-        gp.drawButtons();
+        var $canvas = document.getElementById("canvasOrga");
+        if ($canvas) {
+            var gp = session.gp;
+            gp.drawButtons();
+        }
     },
     //
     // User Ctx -- Localstorage

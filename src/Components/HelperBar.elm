@@ -2,6 +2,7 @@ module Components.HelperBar exposing (view)
 
 import Array
 import Components.Fa as Fa
+import Fractal.Enum.RoleType as RoleType
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick)
@@ -108,13 +109,42 @@ joinButton msg =
 memberButton : FractalBaseRoute -> List UserRole -> Html msg
 memberButton baseUri roles =
     roles
-        |> List.map
-            (\r ->
-                a
-                    [ class ("button buttonRole is-hovered is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
-                    , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                    , href <| uriFromNameid baseUri r.nameid
+        |> List.indexedMap
+            (\i r ->
+                if i == 0 then
+                    let
+                        href_ =
+                            if r.role_type == RoleType.Member then
+                                "#"
+
+                            else
+                                uriFromNameid baseUri r.nameid
+
+                        vBar =
+                            if List.length roles == 1 then
+                                ""
+
+                            else
+                                "is-vbar"
+                    in
+                    [ a
+                        [ class ("button buttonRole is-hovered is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
+                        , href href_
+                        ]
+                        [ text r.name ]
                     ]
-                    [ text r.name ]
+                        ++ [ span [ class vBar ] []
+                           ]
+
+                else
+                    [ a
+                        [ class ("button buttonRole is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
+                        , href <| uriFromNameid baseUri r.nameid
+                        ]
+                        [ text r.name ]
+                    ]
             )
+        |> List.concat
         |> div [ class "buttons is-pulled-right" ]

@@ -1,6 +1,7 @@
 module Query.QueryNodesOrga exposing (nodeOrgaPayload, queryGraphPack)
 
 import Dict exposing (Dict)
+import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Node
@@ -34,12 +35,26 @@ nodeOrgaFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOp
 nodeOrgaFilter rootid a =
     { a
         | filter =
-            OptionalArgument.Present
-                (Input.buildNodeFilter
-                    (\b ->
-                        { b | rootnameid = OptionalArgument.Present { eq = OptionalArgument.Present rootid } }
-                    )
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | rootnameid = OptionalArgument.Present { eq = OptionalArgument.Present rootid }
+                        , and =
+                            Input.buildNodeFilter
+                                (\c ->
+                                    { c
+                                        | not =
+                                            Input.buildNodeFilter
+                                                (\d ->
+                                                    { d | role_type = OptionalArgument.Present { eq = OptionalArgument.Present RoleType.Member } }
+                                                )
+                                                |> OptionalArgument.Present
+                                    }
+                                )
+                                |> OptionalArgument.Present
+                    }
                 )
+                |> OptionalArgument.Present
     }
 
 

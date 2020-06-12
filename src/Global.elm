@@ -199,11 +199,40 @@ update msg model =
 
         UpdateUserSession uctx ->
             let
+                maybeNewMemberid =
+                    case model.session.user of
+                        LoggedIn uctxOld ->
+                            if List.length uctxOld.roles == 1 && List.length uctx.roles > 1 then
+                                List.head uctxOld.roles |> Maybe.map (\r -> r.nameid)
+
+                            else
+                                Nothing
+
+                        LoggedOut ->
+                            Nothing
+
+                cmds =
+                    case model.session.orga_data of
+                        Just ndata ->
+                            case maybeNewMemberid of
+                                Just nid ->
+                                    [ Ports.saveUserCtx uctx
+                                    , Ports.removeRedrawGraphPack ndata nid
+                                    ]
+
+                                Nothing ->
+                                    [ Ports.saveUserCtx uctx
+                                    , Ports.redrawGraphPack ndata
+                                    ]
+
+                        Nothing ->
+                            [ Ports.saveUserCtx uctx ]
+
                 session =
                     model.session
             in
             ( { model | session = { session | user = LoggedIn uctx } }
-            , Ports.saveUserCtx uctx
+            , Cmd.batch cmds
             )
 
         UpdateUserToken ->

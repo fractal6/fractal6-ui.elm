@@ -8,6 +8,7 @@ port module Ports exposing
     , log
     , open_modal
     , redrawGraphPack
+    , removeRedrawGraphPack
     , removeUserCtx
     , saveUserCtx
     , searchNode
@@ -95,6 +96,14 @@ redrawGraphPack data =
     outgoing
         { action = "DRAW_GRAPHPACK"
         , data = graphPackEncoder data ""
+        }
+
+
+removeRedrawGraphPack : NodesData -> String -> Cmd msg
+removeRedrawGraphPack data nid =
+    outgoing
+        { action = "REMOVEDRAW_GRAPHPACK"
+        , data = graphPackEncoder data nid
         }
 
 
