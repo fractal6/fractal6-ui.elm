@@ -841,6 +841,7 @@ const GraphPack = {
             console.warn("Canvas object not found, aborting")
             return
         }
+
         this.computeGeometry();
 
         //
@@ -848,11 +849,13 @@ const GraphPack = {
         //
 
         // Create the visible canvas and context
-        var canvas = d3.select("#"+this.canvasParentId).append("canvas")
-            .attr("id", this.canvasId)
-            .attr("width", this.width)
-            .attr("height", this.height);
-        this.$canvas = canvas.node();
+        //var canvas = d3.select("#"+this.canvasParentId).append("canvas")
+        //    .attr("id", this.canvasId)
+        //    .attr("width", this.width)
+        //    .attr("height", this.height);
+        //this.$canvas = canvas.node();
+        this.$canvas = document.getElementById(this.canvasId);
+        this.$canvas.classList.remove("is-invisible");
         this.ctx2d = this.$canvas.getContext("2d");
         //this.ctx2d.clearRect(0, 0, this.width, this.height);
         setpixelated(this.ctx2d, true); // @debug: do we need this ?

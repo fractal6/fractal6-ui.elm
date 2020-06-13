@@ -85,15 +85,12 @@ const actions = {
     //
     'INIT_GRAPHPACK': (app, session, data) => {
         //window.addEventListener('DOMContentReady',function(){
-        var $canvas = document.getElementById("canvasOrga");
-        if (!$canvas) {
-            var gp = session.gp;
-            //var data = JSON.parse(data);
+        var gp = session.gp;
+        //var data = JSON.parse(data);
 
-            var err = gp.init(app, data);
-            if (err) {
-                gp.zoomToNode(data.focusid, 0.5);
-            }
+        var err = gp.init(app, data);
+        if (err) {
+            gp.zoomToNode(data.focusid, 0.5);
         }
         //});
 

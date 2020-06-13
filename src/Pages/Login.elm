@@ -15,7 +15,6 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
-import Process
 import RemoteData exposing (RemoteData)
 import Task
 
@@ -127,8 +126,8 @@ update global msg model =
                 cmds =
                     case result of
                         RemoteData.Success uctx ->
-                            [ Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
-                            , Global.send (UpdateUserSession uctx)
+                            [ Global.send (UpdateUserSession uctx)
+                            , Global.sendSleep RedirectOnLoggedIn 300
                             ]
 
                         default ->

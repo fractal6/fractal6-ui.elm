@@ -20,16 +20,8 @@ import RemoteData exposing (RemoteData)
 --
 
 
-type alias OrgaData =
-    GqlData NodesData
-
-
 type alias NodesData =
     Dict String Node
-
-
-type alias CircleTensionsData =
-    GqlData TensionsData
 
 
 type alias TensionsData =

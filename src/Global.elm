@@ -5,6 +5,7 @@ port module Global exposing
     , init
     , navigate
     , send
+    , sendSleep
     , subscriptions
     , update
     , view
@@ -135,7 +136,7 @@ update msg model =
                                 |> navigate
 
                         LoggedOut ->
-                            Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
+                            sendSleep RedirectOnLoggedIn 300
             in
             ( model, cmd )
 
@@ -309,6 +310,11 @@ view { page, global, toMsg } =
 send : msg -> Cmd msg
 send =
     Task.succeed >> Task.perform identity
+
+
+sendSleep : msg -> Float -> Cmd msg
+sendSleep msg time =
+    Task.perform (\_ -> msg) (Process.sleep time)
 
 
 navigate : Route -> Cmd Msg

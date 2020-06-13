@@ -21,7 +21,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -35,7 +35,6 @@ import ModelCommon.View exposing (edgeArrow, tensionTypeColor, viewNodeRef)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Process
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
 import Query.QueryMandate exposing (queryMandate)
@@ -64,8 +63,8 @@ page =
 type alias Model =
     { node_focus : NodeFocus
     , node_path : Maybe NodePath
-    , orga_data : OrgaData
-    , circle_tensions : CircleTensionsData
+    , orga_data : GqlData NodesData
+    , circle_tensions : GqlData TensionsData
     , mandate : GqlData Mandate
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
@@ -129,7 +128,7 @@ init global flags =
                 session.mandate
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , node_action = session.node_action |> withDefault NotAsk
+            , node_action = session.node_action |> withDefault NoOp
             , node_focus = newFocus
             , node_path = session.node_path
             , isModalActive = False
@@ -141,14 +140,14 @@ init global flags =
                 [ queryGraphPack newFocus.rootnameid GotOrga
                 , queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
-                , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
+                , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
             else if focusChange then
                 [ Ports.focusGraphPack newFocus.nameid
                 , queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
-                , Task.perform (\_ -> PassedSlowLoadTreshold) (Process.sleep 500)
+                , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
             else
@@ -229,6 +228,10 @@ update global msg model =
             in
             ( { model | orga_data = orga_data, circle_tensions = circle_tensions }, Cmd.none, Cmd.none )
 
+        Submit nextMsg ->
+            ( model, Task.perform nextMsg Time.now, Cmd.none )
+
+        -- Gql queries
         GotOrga result ->
             case result of
                 Success data ->
@@ -360,9 +363,6 @@ update global msg model =
                             AskErr err
             in
             ( { model | node_action = newAction }, Global.send DoOpenModal, Cmd.none )
-
-        Submit nextMsg ->
-            ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         -- Tension
         DoTensionInit node ->
@@ -738,11 +738,11 @@ update global msg model =
                     ( model, Cmd.none, Cmd.none )
 
         -- Modal
-        DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
-
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
+
+        DoCloseModal _ ->
+            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
 
         DoClearTooltip ->
             ( model, Cmd.none, Ports.clearTooltip )
@@ -847,7 +847,7 @@ port sendToggleTooltips : () -> Cmd msg
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = String.join " · " [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ]
+    { title = String.join "/" [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ]
     , body = [ view_ global model ]
     }
 
@@ -889,7 +889,7 @@ view_ global model =
             model.node_path
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered is-variable is-4" ]
-            [ div [ class "column is-5" ]
+            [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar model.orga_data model.node_path model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
@@ -945,133 +945,137 @@ viewLeftPane model =
         ]
 
 
-viewSearchBar : OrgaData -> Maybe NodePath -> NodesQuickSearch -> Html Msg
-viewSearchBar nodes maybePath qs =
+viewSearchBar : GqlData NodesData -> Maybe NodePath -> NodesQuickSearch -> Html Msg
+viewSearchBar odata maybePath qs =
     let
         maybeLast =
             maybePath
                 |> withDefault Array.empty
                 |> (\a -> Array.get (Array.length a - 1) a)
+
+        node_ =
+            maybeLast
+                |> Maybe.map
+                    (\last ->
+                        case odata of
+                            Success d ->
+                                Dict.get last.nameid d
+                                    |> Maybe.map (\n -> Ok n)
+                                    |> withDefault (Err "Node not found")
+
+                            other ->
+                                Err "No nodes data"
+                    )
+                |> withDefault (Err "No path returned")
+
+        isActive =
+            if Array.length qs.lookup > 0 then
+                " is-active "
+
+            else
+                ""
     in
-    case maybeLast of
-        Just last ->
-            let
-                node_ =
-                    case nodes of
-                        Success d ->
-                            Dict.get last.nameid d
-                                |> Maybe.map (\n -> Ok n)
-                                |> withDefault (Err "Node not found")
+    div
+        [ id "searchBar"
+        , class "field has-addons"
+        , onMouseEnter DoClearTooltip
+        ]
+        [ div [ class ("control has-icons-left is-expanded dropdown" ++ isActive) ]
+            [ input
+                [ class "input is-small autofocus"
+                , type_ "text"
+                , placeholder "Find a Role or Circle"
+                , value qs.pattern
+                , onInput ChangePattern
+                , onKeydown SearchKeyDown
 
-                        other ->
-                            Err "No nodes data"
-
-                isActive =
-                    if Array.length qs.lookup > 0 then
-                        " is-active "
-
-                    else
-                        ""
-            in
-            div
-                [ id "searchBar"
-                , class "field has-addons"
-                , onMouseEnter DoClearTooltip
+                --, list "searchList" -- impossible interaction !
                 ]
-                [ div [ class ("control has-icons-left is-expanded dropdown" ++ isActive) ]
-                    [ input
-                        [ class "input is-small autofocus"
-                        , type_ "text"
-                        , placeholder "Find a Role or Circle"
-                        , value qs.pattern
-                        , onInput ChangePattern
-                        , onKeydown SearchKeyDown
+                []
+            , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+            , div [ id "searchList", class "dropdown-menu" ]
+                [ qs.lookup
+                    |> Array.indexedMap
+                        (\i n ->
+                            let
+                                isSelected =
+                                    if i == qs.idx then
+                                        " is-active "
 
-                        --, list "searchList" -- impossible interaction !
-                        ]
-                        []
-                    , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
-                    , div [ id "searchList", class "dropdown-menu" ]
-                        [ qs.lookup
-                            |> Array.indexedMap
-                                (\i n ->
-                                    let
-                                        isSelected =
-                                            if i == qs.idx then
-                                                " is-active "
+                                    else
+                                        ""
+                            in
+                            --a [ href (uriFromNameid OverviewBaseUri n.nameid) ]
+                            tr
+                                [ class ("drpdwn-item" ++ isSelected), onClick (NodeClicked n.nameid) ]
+                            <|
+                                [ th [] [ text n.name ] ]
+                                    ++ (case n.type_ of
+                                            NodeType.Circle ->
+                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "" |> text ]
+                                                ]
 
-                                            else
-                                                ""
-                                    in
-                                    --a [ href (uriFromNameid OverviewBaseUri n.nameid) ]
-                                    tr
-                                        [ class ("drpdwn-item" ++ isSelected), onClick (NodeClicked n.nameid) ]
-                                    <|
-                                        [ th [] [ text n.name ] ]
-                                            ++ (case n.type_ of
-                                                    NodeType.Circle ->
-                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
-                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "" |> text ]
-                                                        ]
-
-                                                    NodeType.Role ->
-                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
-                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
-                                                        ]
-                                               )
-                                )
-                            |> Array.toList
-                            |> tbody []
-                            |> List.singleton
-                            |> List.append [ thead [] [ tr [] [ th [] [ text Text.nameQS ], th [] [ text Text.circleQS ], th [] [ text Text.firstLinkQS ] ] ] ]
-                            |> div [ class "dropdown-content table is-fullwidth" ]
-                        ]
-                    , div [ class "control" ]
+                                            NodeType.Role ->
+                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
+                                                ]
+                                       )
+                        )
+                    |> Array.toList
+                    |> tbody []
+                    |> List.singleton
+                    |> List.append [ thead [] [ tr [] [ th [] [ text Text.nameQS ], th [] [ text Text.circleQS ], th [] [ text Text.firstLinkQS ] ] ] ]
+                    |> div [ class "dropdown-content table is-fullwidth" ]
+                ]
+            , case node_ of
+                Ok node ->
+                    div [ class "control" ]
                         [ div
                             [ class "button is-small is-info _modalTrigger_"
                             , attribute "data-modal" "actionModal"
                             , onClick (DoNodeAction node_)
                             ]
-                            [ span [ class "has-text-weight-semibold" ] [ last.name |> text ] -- Node name
+                            [ span [ class "has-text-weight-semibold" ] [ node.name |> text ] -- Node name
                             , span [ class "fa-stack  ellipsisArt" ]
                                 [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
                             ]
                         ]
-                    ]
+
+                Err err ->
+                    div [] []
+            ]
+        ]
+
+
+viewCanvas : GqlData NodesData -> Html Msg
+viewCanvas odata =
+    div [ id "canvasParent", classList [ ( "spinner", odata == LoadingSlowly ) ] ]
+        [ case odata of
+            Failure err ->
+                viewErrors err
+
+            default ->
+                div [] []
+        , canvas [ id "canvasOrga", class "is-invisible" ] []
+        , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
+            -- Hidden class use in graphpack_d3.js
+            [ div
+                [ id "invGraph_cvbtn"
+                , class "button buttonToggle tooltip has-tooltip-right"
+                , attribute "data-tooltip" Text.reverseTooltip
+                , onClick ToggleGraphReverse
                 ]
+                [ Fa.icon0 "fas fa-sort-amount-up" "" ]
 
-        Nothing ->
-            div [ id "searchBar", class "field has-addons is-invisible" ] [ div [ class "control has-icons-left is-expanded is-loading" ] [ input [ class "input is-small ", type_ "text", placeholder Text.phQS, disabled True ] [] ] ]
-
-
-viewCanvas : OrgaData -> Html Msg
-viewCanvas orgaData =
-    div []
-        [ div [ id "canvasParent", classList [ ( "spinner", orgaData == LoadingSlowly ) ] ] <|
-            case orgaData of
-                Failure err ->
-                    [ viewErrors err ]
-
-                default ->
-                    [ div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-                        -- Hidden class use in graphpack_d3.js
-                        [ div
-                            [ id "invGraph_cvbtn"
-                            , class "button buttonToggle tooltip has-tooltip-right"
-                            , attribute "data-tooltip" Text.reverseTooltip
-                            , onClick ToggleGraphReverse
-                            ]
-                            [ Fa.icon0 "fas fa-sort-amount-up" "" ]
-
-                        --, div
-                        --    [ id "showLabel_cvbtn"
-                        --    , class "button buttonToggle tooltip has-tooltip-right"
-                        --    , attribute "data-tooltip" "Show/Hide circle tooltips."
-                        --    , onClick ToggleTooltips
-                        --    ]
-                        --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
-                        ]
-                    ]
+            --, div
+            --    [ id "showLabel_cvbtn"
+            --    , class "button buttonToggle tooltip has-tooltip-right"
+            --    , attribute "data-tooltip" "Show/Hide circle tooltips."
+            --    , onClick ToggleTooltips
+            --    ]
+            --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
+            ]
         , div
             [ id "nodeTooltip"
             , class "_modalTrigger_ is-invisible"
@@ -1235,7 +1239,6 @@ mediaTension tension =
                 )
             , br [ class "is-block" ] []
             , span [] <| edgeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
-            , span [] []
             , span [ class "is-pulled-right has-text-weight-light" ]
                 [ case tension.action of
                     Just TensionAction.NewCircle ->
@@ -1259,7 +1262,7 @@ mediaTension tension =
                     tension.n_comments |> withDefault 0
               in
               if n_comments > 0 then
-                div
+                span
                     [ class "tooltip has-tooltip-top"
                     , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
                     ]
@@ -1267,9 +1270,13 @@ mediaTension tension =
                     ]
 
               else
-                text ""
+                span [] []
             ]
         ]
+
+
+
+-- Actions
 
 
 setupActionModal : Model -> Html Msg
@@ -1306,7 +1313,7 @@ setupActionModal model =
         ]
 
 
-viewJoinOrgaStep : OrgaData -> JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
@@ -1366,7 +1373,7 @@ viewActionStep model action =
         JoinOrga step ->
             viewJoinOrgaStep model.orga_data step
 
-        NotAsk ->
+        NoOp ->
             text ""
 
         AskErr err ->
@@ -1467,33 +1474,3 @@ viewCircleStep step =
 -------------------------------------------------
 -- Model Getters and Setters
 -------------------------------------------------
-
-
-{-|
-
-    Push a new tension in the model if data is success
-
--}
-hotTensionPush : Tension -> CircleTensionsData -> TensionsData
-hotTensionPush tension circle_tensions =
-    case circle_tensions of
-        Success tensions ->
-            [ tension ] ++ tensions
-
-        other ->
-            []
-
-
-{-|
-
-    Push a new node in the model if data is success
-
--}
-hotNodePush : List Node -> OrgaData -> NodesData
-hotNodePush nodes odata =
-    case odata of
-        Success data ->
-            Dict.union (List.map (\n -> ( n.nameid, n )) nodes |> Dict.fromList) data
-
-        other ->
-            Dict.empty

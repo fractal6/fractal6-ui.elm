@@ -23,9 +23,12 @@ view baseUri user maybePath joinMsg =
 
         rootnameid =
             Array.get 0 path |> Maybe.map (\p -> p.nameid) |> withDefault ""
+
+        focusid =
+            Array.get (Array.length path - 1) path |> Maybe.map (\p -> p.nameid) |> withDefault ""
     in
     div [ id "helperBar", class "columns is-centered" ]
-        [ nav [ class "column is-10" ]
+        [ nav [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
             [ div [ class "columns" ]
                 [ div [ class "column is-5" ]
                     [ viewPath baseUri path ]
@@ -55,11 +58,11 @@ view baseUri user maybePath joinMsg =
             , div [ class "tabs is-boxed" ]
                 [ ul []
                     [ li [ classList [ ( "is-active", baseUri == OverviewBaseUri ) ] ]
-                        [ a [] [ Fa.icon "fas fa-circle" "Overview" ] ]
+                        [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ Fa.icon "fas fa-circle" "Overview" ] ]
                     , li [ classList [ ( "is-active", baseUri == TensionsBaseUri ) ] ]
-                        [ a [] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
+                        [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
                     , li [ classList [ ( "is-active", baseUri == UsersBaseUri ) ] ]
-                        [ a [] [ Fa.icon "fas fa-user" "Members" ] ]
+                        [ a [ href (uriFromNameid UsersBaseUri focusid) ] [ Fa.icon "fas fa-user" "Members" ] ]
                     ]
                 ]
             ]

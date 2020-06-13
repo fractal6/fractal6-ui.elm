@@ -1,6 +1,6 @@
 module Pages.O.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
 
-import Components.Org.Overview as Org exposing (Model, Msg, init, subscriptions, update, view)
+import Components.Org.Overview as O exposing (Model, Msg, init, subscriptions, update, view)
 import Global
 import Html
 import Page exposing (Document, Page)
@@ -11,26 +11,26 @@ type alias Flags =
 
 
 type alias Model =
-    Org.Model
+    O.Model
 
 
 type alias Msg =
-    Org.Msg
+    O.Msg
 
 
 page : Page Flags Model Msg
 page =
     Page.component
         { init = init
-        , update = Org.update
-        , subscriptions = Org.subscriptions
-        , view = Org.view
+        , update = O.update
+        , subscriptions = O.subscriptions
+        , view = O.view
         }
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global { param1, param2 } =
-    Org.init global
+    O.init global
         { param1 = param1
         , param2 = Just param2
         , param3 = Nothing

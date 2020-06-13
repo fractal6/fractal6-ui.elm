@@ -122,8 +122,8 @@ update global msg model =
                 cmds =
                     case result of
                         RemoteData.Success uctx ->
-                            [ Task.perform (\_ -> RedirectOnLoggedIn) (Process.sleep 300)
-                            , Global.send (UpdateUserSession uctx)
+                            [ Global.send (UpdateUserSession uctx)
+                            , Global.sendSleep RedirectOnLoggedIn 300
                             ]
 
                         default ->

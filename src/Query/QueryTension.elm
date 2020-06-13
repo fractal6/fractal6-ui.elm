@@ -1,4 +1,4 @@
-module Query.QueryTension exposing (queryCircleTension, tensionPgPayload)
+module Query.QueryTension exposing (queryCircleTension, queryPageTension, tensionPgPayload)
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction
@@ -34,8 +34,8 @@ nLabelPerTension =
     3
 
 
-nTensionPpg : Int
-nTensionPpg =
+nCircleTensionPpg : Int
+nCircleTensionPpg =
     15
 
 
@@ -50,6 +50,35 @@ type alias SubNodeTensions =
     { tensions_in : Maybe (List Tension)
     , tensions_out : Maybe (List Tension)
     }
+
+
+
+-- Response Decoder
+
+
+circleTensionDecoder : Maybe NodeTensions -> Maybe (List Tension)
+circleTensionDecoder data =
+    data
+        |> Maybe.map
+            (\node ->
+                let
+                    tin =
+                        node.tensions_in |> withDefault []
+
+                    tout =
+                        -- Empty for now (automatic tensions ?)
+                        node.tensions_out |> withDefault []
+
+                    tchild =
+                        node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
+                in
+                List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
+                    |> List.reverse
+                    |> uniqueBy (\t -> t.id)
+                    |> List.take nCircleTensionPpg
+                    |> Just
+            )
+        |> Maybe.withDefault Nothing
 
 
 queryCircleTension targetid msg =
@@ -67,10 +96,10 @@ circleTensionFilter nid a =
     { a | nameid = OptionalArgument.Present nid }
 
 
-tensionPgFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
-tensionPgFilter a =
+circleTensionPgFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
+circleTensionPgFilter a =
     { a
-        | first = OptionalArgument.Present nTensionPpg
+        | first = OptionalArgument.Present nCircleTensionPpg
 
         -- we reorder it anyway !
         --, order = OptionalArgument.Present (Input.buildTensionOrder (\b -> { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }))
@@ -115,44 +144,15 @@ tensionPgPayload =
 circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
 circleTensionPayload =
     SelectionSet.succeed NodeTensions
-        |> with (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
-        |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
+        |> with (Fractal.Object.Node.tensions_in circleTensionPgFilter tensionPgPayload)
+        |> with (Fractal.Object.Node.tensions_out circleTensionPgFilter tensionPgPayload)
         |> with
             (Fractal.Object.Node.children identity
                 (SelectionSet.succeed SubNodeTensions
-                    |> with (Fractal.Object.Node.tensions_in tensionPgFilter tensionPgPayload)
-                    |> with (Fractal.Object.Node.tensions_out tensionPgFilter tensionPgPayload)
+                    |> with (Fractal.Object.Node.tensions_in circleTensionPgFilter tensionPgPayload)
+                    |> with (Fractal.Object.Node.tensions_out circleTensionPgFilter tensionPgPayload)
                 )
             )
-
-
-
--- Response Decoder
-
-
-circleTensionDecoder : Maybe NodeTensions -> Maybe (List Tension)
-circleTensionDecoder data =
-    data
-        |> Maybe.map
-            (\node ->
-                let
-                    tin =
-                        node.tensions_in |> withDefault []
-
-                    tout =
-                        -- Empty for now (automatic tensions ?)
-                        node.tensions_out |> withDefault []
-
-                    tchild =
-                        node.children |> withDefault [] |> List.map subCircleTensionDecoder |> List.concat
-                in
-                List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
-                    |> List.reverse
-                    |> uniqueBy (\t -> t.id)
-                    |> List.take nTensionPpg
-                    |> Just
-            )
-        |> Maybe.withDefault Nothing
 
 
 subCircleTensionDecoder : SubNodeTensions -> List Tension
@@ -171,55 +171,44 @@ subCircleTensionDecoder child =
 {-
    Query Tension Page
 -}
---tensionPgFilter : Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
---tensionPgFilter a =
---    { a
---        | first = OptionalArgument.Present nTensionPpg
---        , order =
---            OptionalArgument.Present
---                (Input.buildTensionOrder
---                    (\b ->
---                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
---                    )
---                )
---    }
---
---
---tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
---tensionPgPayload =
---    SelectionSet.succeed Tension
---        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
---        |> with Fractal.Object.Tension.title
---        |> with Fractal.Object.Tension.type_
---        |> with
---            (Fractal.Object.Tension.labels
---                (\args -> { args | first = OptionalArgument.Present nLabelPerTension })
---                (SelectionSet.succeed Label
---                    |> with Fractal.Object.Label.name
---                )
---            )
---        |> with Fractal.Object.Tension.n_comments
---
---
---fetchTensionsPg msg =
---    makeGQLQuery
---        (Query.queryTension
---            tensionPgFilter
---            tensionPgPayload
---        )
---        (RemoteData.fromResult >> decodeResponse queryDecoder >> msg)
---
---queryDecoder : Maybe (List (Maybe a)) -> List a
---queryDecoder data =
---    -- Convert empty data to empty list
---    -- Standard decoder to get list of result from a gql query
---    case data of
---        Just d ->
---            if List.length d == 0 then
---                []
---
---            else
---                List.filterMap identity d
---
---        Nothing ->
---            []
+
+
+nTensionPpg : Int
+nTensionPpg =
+    25
+
+
+
+-- Response decoder
+
+
+tensionDecoder : Maybe (List (Maybe Tension)) -> Maybe (List Tension)
+tensionDecoder data =
+    data
+        |> Maybe.map
+            (\ts ->
+                List.filterMap identity ts
+            )
+
+
+queryPageTension targetid msg =
+    makeGQLQuery
+        (Query.queryTension
+            (tensionPgFilter targetid)
+            tensionPgPayload
+        )
+        (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
+
+
+tensionPgFilter : String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+tensionPgFilter nid a =
+    { a
+        | first = OptionalArgument.Present nTensionPpg
+        , order =
+            OptionalArgument.Present
+                (Input.buildTensionOrder
+                    (\b ->
+                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
+                    )
+                )
+    }

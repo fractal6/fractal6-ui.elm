@@ -73,7 +73,7 @@ type ActionState
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
-    | NotAsk
+    | NoOp
 
 
 
@@ -138,7 +138,7 @@ type JoinStep form
 --
 
 
-getNodeMode : String -> OrgaData -> Maybe NodeMode.NodeMode
+getNodeMode : String -> GqlData NodesData -> Maybe NodeMode.NodeMode
 getNodeMode nameid orga =
     case orga of
         Success nodes ->
@@ -149,7 +149,7 @@ getNodeMode nameid orga =
             Nothing
 
 
-getNodeName : String -> OrgaData -> String
+getNodeName : String -> GqlData NodesData -> String
 getNodeName nameid orga =
     let
         errMsg =
@@ -185,6 +185,36 @@ getParentFragmentFromRole role =
                 |> Array.fromList
     in
     Array.get (Array.length l - 2) l |> withDefault ""
+
+
+{-|
+
+    Push a new tension in the model if data is success
+
+-}
+hotTensionPush : Tension -> GqlData TensionsData -> TensionsData
+hotTensionPush tension circle_tensions =
+    case circle_tensions of
+        Success tensions ->
+            [ tension ] ++ tensions
+
+        other ->
+            []
+
+
+{-|
+
+    Push a new node in the model if data is success
+
+-}
+hotNodePush : List Node -> GqlData NodesData -> NodesData
+hotNodePush nodes odata =
+    case odata of
+        Success data ->
+            Dict.union (List.map (\n -> ( n.nameid, n )) nodes |> Dict.fromList) data
+
+        other ->
+            Dict.empty
 
 
 
