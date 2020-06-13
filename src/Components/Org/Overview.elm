@@ -7,7 +7,6 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewWarnings)
 import Components.Text as Text exposing (..)
-import Date exposing (formatTime)
 import Debug
 import Dict exposing (Dict)
 import Extra.Events exposing (onEnter, onKeydown, onTab)
@@ -30,8 +29,8 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (edgeArrow, tensionTypeColor, viewNodeRef)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid)
+import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -1214,67 +1213,6 @@ viewActivies model =
         ]
 
 
-mediaTension : Tension -> Html Msg
-mediaTension tension =
-    div [ class "media mediaTension" ]
-        [ div [ class "media-left" ]
-            [ div
-                [ class "tooltip has-tooltip-top"
-                , attribute "data-tooltip" ("type: " ++ TensionType.toString tension.type_)
-                ]
-                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
-            ]
-        , div [ class "media-content" ]
-            [ div [ class "content" ]
-                [ div [ class "has-text-weight-semibold" ]
-                    [ text tension.title ]
-                ]
-            , div [ class "labelsList" ] <|
-                (tension.labels
-                    |> withDefault []
-                    |> List.map
-                        (\label ->
-                            span [ class "tag" ] [ text label.name ]
-                        )
-                )
-            , br [ class "is-block" ] []
-            , span [] <| edgeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
-            , span [ class "is-pulled-right has-text-weight-light" ]
-                [ case tension.action of
-                    Just TensionAction.NewCircle ->
-                        Fa.icon0 "far fa-circle" ""
-
-                    Just TensionAction.NewRole ->
-                        Fa.icon0 "far fa-user" ""
-
-                    Nothing ->
-                        span [] []
-                , span []
-                    [ "opened the " ++ formatTime tension.createdAt ++ " by " |> text
-                    , a [ href (uriFromUsername UsersBaseUri tension.createdBy.username) ] [ "@" ++ tension.createdBy.username |> text ]
-                    ]
-                ]
-            ]
-        , div
-            [ class "media-right" ]
-            [ let
-                n_comments =
-                    tension.n_comments |> withDefault 0
-              in
-              if n_comments > 0 then
-                span
-                    [ class "tooltip has-tooltip-top"
-                    , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
-                    ]
-                    [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments)
-                    ]
-
-              else
-                span [] []
-            ]
-        ]
-
-
 
 -- Actions
 
@@ -1356,7 +1294,7 @@ viewActionStep model action =
                         if node.type_ == NodeType.Circle then
                             [ div [ class "level-item" ] [ div [ class "button has-background-primary", onClick (DoTensionInit node) ] [ text "New Tension" ] ]
                             , div [ class "level-item" ] [ div [ class "button has-background-info", onClick (DoCircleInit node NodeType.Role) ] [ text "New Role" ] ]
-                            , div [ class "level-item" ] [ div [ class "button has-background-link", onClick (DoCircleInit node NodeType.Circle) ] [ text "New Sub-Circle" ] ]
+                            , div [ class "level-item" ] [ div [ class "button has-background-turquoise", onClick (DoCircleInit node NodeType.Circle) ] [ text "New Sub-Circle" ] ]
                             ]
 
                         else

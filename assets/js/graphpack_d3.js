@@ -737,9 +737,11 @@ const GraphPack = {
 
     // Clear node tooltip.
     clearNodeTooltip() {
-        this.$tooltip.classList.remove("fadeIn");
-        this.$tooltip.classList.add("fadeOut");
-        //this.$tooltip.style.display = "none";
+        if (this.$tooltip) {
+            this.$tooltip.classList.remove("fadeIn");
+            this.$tooltip.classList.add("fadeOut");
+            //this.$tooltip.style.display = "none";
+        }
         return
     },
 

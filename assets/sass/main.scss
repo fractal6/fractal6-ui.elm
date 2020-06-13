@@ -80,7 +80,7 @@ html.has-modal-active {
 // Breadcrumb
 .breadcrumb {
     a {
-        color: $green2;
+        color: $green-frac6-lighter;
         padding-right:0.4em;
         padding-left:0.4em;
     }
@@ -102,7 +102,7 @@ html.has-modal-active {
         }
 
         li.is-active a {
-            color: $green2;
+            color: $green-frac6-lighter;
             background-color: $body-background-color;
             border-color: #dbdee085;
             border-bottom-color: $tabs-boxed-link-active-border-bottom-color !important;
@@ -141,6 +141,15 @@ html.has-modal-active {
 	height: 26px;
     margin-bottom: 5px;
     padding-left: 7px;
+}
+
+.has-background-turquoise {
+    background-color: $turquoise !important;
+}
+
+.input:active, .input:focus,
+.textarea:active, .textarea:focus {
+    border-color: $turquoise !important;
 }
 
 /////
@@ -294,10 +303,8 @@ html.has-modal-active {
 
 .mediaTension {
     //border-bottom: 1px solid #e1e4e8;
-    //padding: 10px 10px;
-    .far, .fas  {
-        margin-right: 33px !important;
-    }
+    //margin-bottom: -1.11rem !important;
+
 }
 
 .Circle:before {
@@ -389,6 +396,12 @@ html.has-modal-active {
              font-size: $size-6 !important;
         }
      }
+}
+
+.box #tensionsTab {
+    .media {
+        margin-top: 0 !important;
+    }
 }
 
 #mandateContainer {
@@ -688,10 +701,6 @@ html.has-modal-active {
  *
  */
 
-.text-input:focus {
-  /* a subtle focus style for keyboard-input elements */
-  outline: 1px solid #aaa; /* Adjust to suit your tastes */
-}
 
 *:focus {
   /* no outline for non-keyboard-inputs elements (other see *:focus:not(:focus-visible) */
