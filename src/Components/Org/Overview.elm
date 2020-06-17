@@ -144,8 +144,7 @@ init global flags =
                 ]
 
             else if focusChange then
-                [ Ports.focusGraphPack newFocus.nameid
-                , queryCircleTension newFocus.nameid GotTensions
+                [ queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
@@ -158,7 +157,7 @@ init global flags =
                                     []
 
                         else
-                            []
+                            [ Ports.focusGraphPack newFocus.nameid ]
                        )
 
             else if refresh then

@@ -32,6 +32,7 @@ type alias Flags_ =
 type FractalBaseRoute
     = OverviewBaseUri
     | TensionsBaseUri
+    | MembersBaseUri
     | UsersBaseUri
 
 
@@ -55,30 +56,34 @@ toString : FractalBaseRoute -> String
 toString route =
     case route of
         OverviewBaseUri ->
-            -- /org
-            "o"
+            -- /overview
+            "/o"
 
         TensionsBaseUri ->
             -- /tensions
-            "t"
+            "/t"
+
+        MembersBaseUri ->
+            -- /tensions
+            "/m"
 
         UsersBaseUri ->
-            -- /users
-            "user"
+            -- /@username
+            ""
 
 
 basePathChanged : FractalBaseRoute -> Url -> Bool
 basePathChanged loc url =
     let
+        baseRef =
+            toString loc |> String.dropLeft 1
+
         base =
             url.path
                 |> String.dropLeft 1
                 |> String.split "/"
                 |> List.head
                 |> withDefault ""
-
-        baseRef =
-            toString loc
     in
     base /= baseRef
 
@@ -88,14 +93,12 @@ uriFromNameid loc nameid =
     [ toString loc ]
         ++ String.split "#" nameid
         |> String.join "/"
-        |> String.append "/"
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
 uriFromUsername loc username =
-    [ toString loc, username ]
+    [ toString loc, "@" ++ username ]
         |> String.join "/"
-        |> String.append "/"
 
 
 focusFromNameid : String -> NodeFocus
