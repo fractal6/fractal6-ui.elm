@@ -8,7 +8,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionType as TensionType
 import Html exposing (Html, a, br, div, span, text)
-import Html.Attributes exposing (attribute, class, href)
+import Html.Attributes exposing (attribute, class, classList, href)
 import Maybe exposing (withDefault)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Post, Tension)
@@ -71,8 +71,8 @@ edgeArrow cls source target =
     ]
 
 
-mediaTension : Tension -> Html msg
-mediaTension tension =
+mediaTension : FractalBaseRoute -> Tension -> Html msg
+mediaTension baseUri tension =
     div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
             [ div
@@ -83,7 +83,7 @@ mediaTension tension =
             ]
         , div [ class "media-content" ]
             [ div [ class "content" ]
-                [ div [ class "has-text-weight-semibold" ]
+                [ div [ classList [ ( "has-text-weight-semibold", True ), ( "is-size-6", baseUri == TensionsBaseUri ) ] ]
                     [ text tension.title ]
                 ]
             , div [ class "labelsList" ] <|
@@ -102,10 +102,10 @@ mediaTension tension =
                         [ span [ class "column is-1", attribute "style" "padding-left: 0 !important;" ] <|
                             case tension.action of
                                 Just TensionAction.NewCircle ->
-                                    [ Fa.icon0 "far fa-circle" "" ]
+                                    [ Fa.fa "far fa-circle" ]
 
                                 Just TensionAction.NewRole ->
-                                    [ Fa.icon0 "far fa-user" "" ]
+                                    [ Fa.fa "far fa-user" ]
 
                                 Nothing ->
                                     []
@@ -147,9 +147,12 @@ mediaTension tension =
 
 viewNodeRef : FractalBaseRoute -> EmitterOrReceiver -> Html msg
 viewNodeRef baseUri n =
-    case n.type_ of
-        NodeType.Circle ->
-            a [ href (uriFromNameid baseUri n.nameid) ] [ n.name |> text ]
+    let
+        ref =
+            if n.role_type == Just RoleType.Member then
+                "#"
 
-        NodeType.Role ->
-            a [ href (uriFromNameid baseUri n.nameid) ] [ n.name |> text ]
+            else
+                uriFromNameid baseUri n.nameid
+    in
+    a [ href ref ] [ n.name |> text ]

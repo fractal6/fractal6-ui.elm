@@ -135,12 +135,35 @@ html.has-modal-active {
     padding-left: 5px;
 }
 
-.is-vbar {
+.is-vbar-1 {
 	display: inline-block;
 	border-left: 1px solid #ccc;
 	height: 26px;
     margin-bottom: 5px;
-    padding-left: 7px;
+    padding-left: 0.5rem;
+}
+
+.vline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0 10px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+
+    &::after, &::before {
+        height: auto;
+        width: 1px;
+
+        content: '';
+        display: block;
+        flex: 1;
+        background-color: $grey-light2;
+    }
+}
+
+.is-aligned-center {
+    text-align: center !important;
 }
 
 .has-background-turquoise {
@@ -319,9 +342,28 @@ html.has-modal-active {
  *
  */
 
-#searchBar {
+#searchBarOverview {
     padding-top: 5px;
     margin-bottom: 22px;
+
+    .input {
+        font-weight: 700 !important;
+    }
+
+}
+#searchBarTensions {
+    padding-top: 5px;
+
+    .input {
+        font-weight: 700 !important;
+    }
+    & > .field {
+        margin-bottom: 0.25rem !important;
+    }
+
+    .tabs {
+        margin-bottom: 0.75rem !important;
+    }
 }
 
 #searchList {
@@ -400,7 +442,7 @@ html.has-modal-active {
 
 .box #tensionsTab {
     .media {
-        margin-top: 0 !important;
+        margin-top: 10px !important;
     }
 }
 

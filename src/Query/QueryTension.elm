@@ -1,8 +1,9 @@
-module Query.QueryTension exposing (queryCircleTension, queryPageTension, tensionPgPayload)
+module Query.QueryTension exposing (queryCircleTension, queryExtTension, queryIntTension, tensionPayload)
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionOrderable as TensionOrderable
+import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
@@ -15,7 +16,7 @@ import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
@@ -25,7 +26,7 @@ import RemoteData exposing (RemoteData)
 
 
 {-
-   Query Circle Tension
+   Query Circle Tension (all tension at depth 0 or 1 of a given node)
 -}
 
 
@@ -85,29 +86,29 @@ queryCircleTension targetid msg =
     --@DEBUG: Infered type...
     makeGQLQuery
         (Query.getNode
-            (circleTensionFilter targetid)
+            (circleFilter targetid)
             circleTensionPayload
         )
         (RemoteData.fromResult >> decodeResponse circleTensionDecoder >> msg)
 
 
-circleTensionFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-circleTensionFilter nid a =
-    { a | nameid = OptionalArgument.Present nid }
+circleFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
+circleFilter nid a =
+    { a | nameid = Present nid }
 
 
-circleTensionPgFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
-circleTensionPgFilter a =
+circleTensionFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
+circleTensionFilter a =
     { a
-        | first = OptionalArgument.Present nCircleTensionPpg
+        | first = Present nCircleTensionPpg
+        , filter = Input.buildTensionFilter (\x -> { x | status = Present { eq = TensionStatus.Open } }) |> Present
 
         -- we reorder it anyway !
-        --, order = OptionalArgument.Present (Input.buildTensionOrder (\b -> { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }))
     }
 
 
-tensionPgPayload : SelectionSet Tension Fractal.Object.Tension
-tensionPgPayload =
+tensionPayload : SelectionSet Tension Fractal.Object.Tension
+tensionPayload =
     SelectionSet.succeed Tension
         |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
@@ -116,17 +117,15 @@ tensionPgPayload =
         |> with Fractal.Object.Tension.type_
         |> with
             (Fractal.Object.Tension.labels
-                (\args -> { args | first = OptionalArgument.Present nLabelPerTension })
-                (SelectionSet.succeed Label
-                    |> with Fractal.Object.Label.name
-                )
+                (\args -> { args | first = Present nLabelPerTension })
+                (SelectionSet.map Label Fractal.Object.Label.name)
             )
         |> with
             (Fractal.Object.Tension.emitter identity
                 (SelectionSet.succeed EmitterOrReceiver
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.type_
+                    |> with Fractal.Object.Node.role_type
                 )
             )
         |> with
@@ -134,7 +133,7 @@ tensionPgPayload =
                 (SelectionSet.succeed EmitterOrReceiver
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.type_
+                    |> with Fractal.Object.Node.role_type
                 )
             )
         |> with Fractal.Object.Tension.n_comments
@@ -144,13 +143,13 @@ tensionPgPayload =
 circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
 circleTensionPayload =
     SelectionSet.succeed NodeTensions
-        |> with (Fractal.Object.Node.tensions_in circleTensionPgFilter tensionPgPayload)
-        |> with (Fractal.Object.Node.tensions_out circleTensionPgFilter tensionPgPayload)
+        |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
+        |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
         |> with
             (Fractal.Object.Node.children identity
                 (SelectionSet.succeed SubNodeTensions
-                    |> with (Fractal.Object.Node.tensions_in circleTensionPgFilter tensionPgPayload)
-                    |> with (Fractal.Object.Node.tensions_out circleTensionPgFilter tensionPgPayload)
+                    |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
+                    |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
                 )
             )
 
@@ -169,21 +168,23 @@ subCircleTensionDecoder child =
 
 
 {-
-   Query Tension Page
+   Query Sub Tension (all tension below a Node)
 -}
 
 
-nTensionPpg : Int
-nTensionPpg =
-    25
+type alias SubNodeTensions2 =
+    { tensions_in : Maybe (List Tension)
+    , tensions_out : Maybe (List Tension)
+    , children : Maybe (List NodeTensions)
+    }
 
 
 
 -- Response decoder
 
 
-tensionDecoder : Maybe (List (Maybe Tension)) -> Maybe (List Tension)
-tensionDecoder data =
+subTensionDecoder : Maybe (List (Maybe Tension)) -> Maybe (List Tension)
+subTensionDecoder data =
     data
         |> Maybe.map
             (\ts ->
@@ -191,24 +192,137 @@ tensionDecoder data =
             )
 
 
-queryPageTension targetid msg =
+queryIntTension targetids first offset query_ msg =
     makeGQLQuery
         (Query.queryTension
-            (tensionPgFilter targetid)
-            tensionPgPayload
+            (subTensionIntFilterByDate targetids first offset query_)
+            tensionPayload
         )
-        (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-tensionPgFilter : String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-tensionPgFilter nid a =
+queryExtTension targetids first offset query_ msg =
+    makeGQLQuery
+        (Query.queryTension
+            (subTensionExtFilterByDate targetids first offset query_)
+            tensionPayload
+        )
+        (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
+
+
+subTensionIntFilterByDate : String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionIntFilterByDate nid first offset query_ a =
     { a
-        | first = OptionalArgument.Present nTensionPpg
+        | first = Present first
+        , offset = Present offset
         , order =
-            OptionalArgument.Present
-                (Input.buildTensionOrder
-                    (\b ->
-                        { b | desc = OptionalArgument.Present TensionOrderable.CreatedAt }
-                    )
+            Input.buildTensionOrder
+                (\b ->
+                    { b | desc = Present TensionOrderable.CreatedAt }
                 )
+                |> Present
+        , filter =
+            Input.buildTensionFilter
+                (\c ->
+                    { c
+                        | status = Present { eq = TensionStatus.Open }
+                        , emitterid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                        , receiverid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                        , and =
+                            query_
+                                |> Maybe.map
+                                    (\q ->
+                                        Input.buildTensionFilter
+                                            (\d2 ->
+                                                { d2
+                                                    | title = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                    , or =
+                                                        Input.buildTensionFilter
+                                                            (\d3 ->
+                                                                { d3
+                                                                    | message = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                                }
+                                                            )
+                                                            |> Present
+                                                }
+                                            )
+                                    )
+                                |> fromMaybe
+                    }
+                )
+                |> Present
+    }
+
+
+subTensionExtFilterByDate : String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionExtFilterByDate nid first offset query_ a =
+    { a
+        | first = Present first
+        , offset = Present offset
+        , order =
+            Input.buildTensionOrder
+                (\b ->
+                    { b | desc = Present TensionOrderable.CreatedAt }
+                )
+                |> Present
+        , filter =
+            Input.buildTensionFilter
+                (\c ->
+                    { c
+                        | status = Present { eq = TensionStatus.Open }
+                        , and =
+                            Input.buildTensionFilter
+                                (\d ->
+                                    { d
+                                        | receiverid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                        , not =
+                                            Input.buildTensionFilter
+                                                (\e ->
+                                                    { e
+                                                        | emitterid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                                    }
+                                                )
+                                                |> Present
+                                        , or =
+                                            Input.buildTensionFilter
+                                                (\d1 ->
+                                                    { d1
+                                                        | emitterid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                                        , not =
+                                                            Input.buildTensionFilter
+                                                                (\e1 ->
+                                                                    { e1
+                                                                        | receiverid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                                                    }
+                                                                )
+                                                                |> Present
+                                                    }
+                                                )
+                                                |> Present
+                                        , and =
+                                            query_
+                                                |> Maybe.map
+                                                    (\q ->
+                                                        Input.buildTensionFilter
+                                                            (\d2 ->
+                                                                { d2
+                                                                    | title = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                                    , or =
+                                                                        Input.buildTensionFilter
+                                                                            (\d3 ->
+                                                                                { d3
+                                                                                    | message = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                                                }
+                                                                            )
+                                                                            |> Present
+                                                                }
+                                                            )
+                                                    )
+                                                |> fromMaybe
+                                    }
+                                )
+                                |> Present
+                    }
+                )
+                |> Present
     }

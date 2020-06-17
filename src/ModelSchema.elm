@@ -57,12 +57,11 @@ type alias Post =
 
 
 type alias Node =
-    { id : String
-    , createdAt : String
+    { createdAt : String
     , name : String
     , nameid : String
     , rootnameid : String
-    , parent : Maybe ParentNode -- see issue with recursive structure
+    , parent : Maybe NodeId -- see issue with recursive structure
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe Username
@@ -70,13 +69,39 @@ type alias Node =
     }
 
 
-type alias ParentNode =
-    { nameid : String }
-
-
 type alias NodeCharac =
     { userCanJoin : Bool
     , mode : NodeMode.NodeMode
+    }
+
+
+type alias NodeId =
+    { nameid : String }
+
+
+type alias RootNode =
+    { name : String
+    , nameid : String
+    , charac : NodeCharac
+    }
+
+
+type alias FocusNode =
+    { name : String
+    , nameid : String
+    , type_ : NodeType.NodeType
+    , children : List NodeId
+    }
+
+
+type alias PNode =
+    { name : String, nameid : String }
+
+
+type alias LocalGraph =
+    { root : Maybe RootNode
+    , path : List PNode
+    , focus : FocusNode
     }
 
 
@@ -103,7 +128,7 @@ type alias Tension =
 type alias EmitterOrReceiver =
     { name : String
     , nameid : String
-    , type_ : NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
     }
 
 

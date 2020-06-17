@@ -20,7 +20,7 @@ import Generated.Route as Route exposing (Route)
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (NodeFocus, NodePath)
+import ModelCommon.Uri exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
 import Process
@@ -71,13 +71,13 @@ init flags url key =
                     LoggedOut
 
         session =
-            { user = userState
-            , referer = url
+            { referer = url
+            , user = userState
             , token_data = RemoteData.NotAsked
-            , node_focus = Nothing
-            , node_path = Nothing
             , orga_data = Nothing
-            , circle_tensions = Nothing
+            , path_data = Nothing
+            , node_focus = Nothing
+            , tensions_circle = Nothing
             , mandate = Nothing
             , node_action = Nothing
             , node_quickSearch = Nothing
@@ -100,7 +100,7 @@ type Msg
     = Navigate Route
     | UpdateReferer Url
     | UpdateSessionFocus NodeFocus
-    | UpdateSessionPath NodePath
+    | UpdateSessionPath LocalGraph
     | UpdateSessionOrga NodesData
     | UpdateSessionTensions TensionsData
     | UpdateSessionMandate Mandate
@@ -169,7 +169,7 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | node_path = Just data } }
+            ( { model | session = { session | path_data = Just data } }
             , Cmd.none
             )
 
@@ -185,7 +185,7 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | circle_tensions = Just data } }
+            ( { model | session = { session | tensions_circle = Just data } }
             , Cmd.none
             )
 
@@ -290,12 +290,7 @@ port loggedOutOkFromJs : (() -> msg) -> Sub msg
 -- VIEW
 
 
-view :
-    { page : Document msg
-    , global : Model
-    , toMsg : Msg -> msg
-    }
-    -> Document msg
+view : { page : Document msg, global : Model, toMsg : Msg -> msg } -> Document msg
 view { page, global, toMsg } =
     Components.layout
         { page = page

@@ -13,7 +13,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodeFocus, NodePath)
+import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodeFocus)
 import ModelSchema exposing (..)
 import QuickSearch as Qsearch
 import Url exposing (Url)
@@ -30,9 +30,9 @@ type alias Session =
     , referer : Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
-    , node_path : Maybe NodePath
+    , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
-    , circle_tensions : Maybe TensionsData
+    , tensions_circle : Maybe TensionsData
     , mandate : Maybe Mandate
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
@@ -193,8 +193,8 @@ getParentFragmentFromRole role =
 
 -}
 hotTensionPush : Tension -> GqlData TensionsData -> TensionsData
-hotTensionPush tension circle_tensions =
-    case circle_tensions of
+hotTensionPush tension tsData =
+    case tsData of
         Success tensions ->
             [ tension ] ++ tensions
 
@@ -296,8 +296,7 @@ nodesEncoder nodes =
 
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
-    [ ( "id", JE.string node.id )
-    , ( "createdAt", JE.string node.createdAt )
+    [ ( "createdAt", JE.string node.createdAt )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
     , ( "rootnameid", JE.string node.rootnameid )
@@ -322,25 +321,58 @@ nodeDecoder : JD.Decoder Node
 nodeDecoder =
     --JD.map9 Node
     JD.succeed Node
-        |> JDE.andMap (JD.field "id" JD.string)
         |> JDE.andMap (JD.field "createdAt" JD.string)
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "nameid" JD.string)
         |> JDE.andMap (JD.field "rootnameid" JD.string)
-        |> JDE.andMap (JD.maybe (JD.map ParentNode <| JD.field "parentid" JD.string))
+        |> JDE.andMap (JD.maybe (JD.map NodeId <| JD.field "parentid" JD.string))
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
         |> JDE.andMap (JD.maybe (JD.map Username <| JD.field "first_link" JD.string))
-        |> JDE.andMap
-            (JD.field "charac" <|
-                JD.map2 NodeCharac
-                    (JD.field "userCanJoin" JD.bool)
-                    (JD.field "mode" NodeMode.decoder)
+        |> JDE.andMap (JD.field "charac" characDecoder)
+
+
+characDecoder : JD.Decoder NodeCharac
+characDecoder =
+    JD.map2 NodeCharac
+        (JD.field "userCanJoin" JD.bool)
+        (JD.field "mode" NodeMode.decoder)
+
+
+localGraphDecoder : JD.Decoder LocalGraph
+localGraphDecoder =
+    JD.map3 LocalGraph
+        (JD.maybe <|
+            JD.field "root" <|
+                JD.map3 RootNode
+                    (JD.field "name" JD.string)
+                    (JD.field "nameid" JD.string)
+                    (JD.field "charac" characDecoder)
+        )
+        (JD.field "path"
+            (JD.list <|
+                JD.map2 PNode
+                    (JD.field "name" JD.string)
+                    (JD.field "nameid" JD.string)
             )
+        )
+        (JD.field "focus" <|
+            JD.map4 FocusNode
+                (JD.field "name" JD.string)
+                (JD.field "nameid" JD.string)
+                (JD.field "type_" NodeType.decoder)
+                (JD.field "children" (JD.list <| JD.map NodeId (JD.field "nameid" JD.string)))
+        )
 
 
 
 -- Utils
+
+
+type alias LocalGraph_ =
+    -- Helper for encoding ActionState / Receiving Node from JS.
+    --Result JD.Error Node
+    Result String LocalGraph
 
 
 type alias Node_ =

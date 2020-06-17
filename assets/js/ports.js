@@ -12,8 +12,9 @@ window.addEventListener('load', _ => {
                 gp: Object.create(GraphPack),
                 // QuickSearch
                 qs: new MiniSearch({
-                    fields: ['name', 'first_link'],
+                    idField: 'nameid',
                     storeFields: ['nameid'],
+                    fields: ['name', 'first_link'],
                     searchOptions: {
                         fuzzy: 0.2,
                         boost: { name: 2 },
@@ -84,19 +85,19 @@ const actions = {
     // GraphPack
     //
     'INIT_GRAPHPACK': (app, session, data) => {
-        //window.addEventListener('DOMContentReady',function(){
-        var gp = session.gp;
-        //var data = JSON.parse(data);
+        setTimeout(() => {
+            var gp = session.gp;
+            //var data = JSON.parse(data);
 
-        var err = gp.init(app, data);
-        if (err) {
-            gp.zoomToNode(data.focusid, 0.5);
-        }
-        //});
+            var err = gp.init(app, data);
+            if (err) {
+                gp.zoomToNode(data.focusid, 1.5);
+            }
 
-        var qs = session.qs;
-        qs.removeAll();
-        qs.addAll(data.data);
+            var qs = session.qs;
+            qs.removeAll();
+            qs.addAll(data.data);
+        }, 150);
     },
     'FOCUS_GRAPHPACK': (app, session, focusid) => {
         var $canvas = document.getElementById("canvasOrga");

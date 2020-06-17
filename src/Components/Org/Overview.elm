@@ -27,9 +27,10 @@ import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
+import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, NodePath, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid)
 import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -37,7 +38,7 @@ import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
 import Query.QueryMandate exposing (queryMandate)
-import Query.QueryNodesOrga exposing (queryGraphPack)
+import Query.QueryNodes exposing (queryGraphPack)
 import Query.QueryTension exposing (queryCircleTension)
 import Task
 import Time
@@ -61,9 +62,9 @@ page =
 
 type alias Model =
     { node_focus : NodeFocus
-    , node_path : Maybe NodePath
+    , path_data : Maybe LocalGraph
     , orga_data : GqlData NodesData
-    , circle_tensions : GqlData TensionsData
+    , tensions_circle : GqlData TensionsData
     , mandate : GqlData Mandate
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
@@ -98,7 +99,7 @@ init global flags =
             session.node_focus |> withDefault newFocus
 
         isInit =
-            session.node_focus == Nothing
+            session.node_focus == Nothing || session.orga_data == Nothing
 
         orgChange =
             (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
@@ -106,11 +107,11 @@ init global flags =
         focusChange =
             (newFocus.nameid /= oldFocus.nameid) || isInit
 
-        --d1 = Debug.log "isInit, orgChange, focuChange" [ isInit, orgChange, focusChange ]
-        --d2 = Debug.log "newfocus" [ newFocus ]
         refresh =
             basePathChanged OverviewBaseUri global.session.referer
 
+        --d1 = Debug.log "isInit, orgChange, focuChange, refresh" [ isInit, orgChange, focusChange, refresh ]
+        --d2 = Debug.log "newfocus" [ newFocus ]
         qs =
             session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0 }
 
@@ -119,8 +120,8 @@ init global flags =
                 session.orga_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , circle_tensions =
-                session.circle_tensions
+            , tensions_circle =
+                session.tensions_circle
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , mandate =
@@ -129,13 +130,13 @@ init global flags =
                     |> withDefault Loading
             , node_action = session.node_action |> withDefault NoOp
             , node_focus = newFocus
-            , node_path = session.node_path
+            , path_data = session.path_data
             , isModalActive = False
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             }
 
         cmds =
-            if orgChange || refresh then
+            if orgChange then
                 [ queryGraphPack newFocus.rootnameid GotOrga
                 , queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
@@ -148,6 +149,29 @@ init global flags =
                 , queryMandate newFocus.nameid GotMandate
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
+                    ++ (if refresh then
+                            case session.orga_data of
+                                Just ndata ->
+                                    [ Ports.initGraphPack ndata model.node_focus.nameid ]
+
+                                Nothing ->
+                                    []
+
+                        else
+                            []
+                       )
+
+            else if refresh then
+                case session.orga_data of
+                    Just ndata ->
+                        [ Ports.initGraphPack ndata model.node_focus.nameid ]
+
+                    Nothing ->
+                        [ queryGraphPack newFocus.rootnameid GotOrga
+                        , queryCircleTension newFocus.nameid GotTensions
+                        , queryMandate newFocus.nameid GotMandate
+                        , Global.sendSleep PassedSlowLoadTreshold 500
+                        ]
 
             else
                 []
@@ -196,7 +220,7 @@ type Msg
     | SearchKeyDown Int
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
-    | NodeFocused NodePath -- ports receive / Node focused
+    | NodeFocused LocalGraph_ -- ports receive / Node focused
     | DoCloseModal String -- ports receive / Close modal
     | DoOpenModal -- ports receive / Open  modal
     | DoClearTooltip -- ports send
@@ -217,15 +241,15 @@ update global msg model =
                         other ->
                             other
 
-                circle_tensions =
-                    case model.circle_tensions of
+                tensions_circle =
+                    case model.tensions_circle of
                         Loading ->
                             LoadingSlowly
 
                         other ->
                             other
             in
-            ( { model | orga_data = orga_data, circle_tensions = circle_tensions }, Cmd.none, Cmd.none )
+            ( { model | orga_data = orga_data, tensions_circle = tensions_circle }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -249,10 +273,10 @@ update global msg model =
         GotTensions result ->
             case result of
                 Success data ->
-                    ( { model | circle_tensions = result }, Cmd.none, Global.send (UpdateSessionTensions data) )
+                    ( { model | tensions_circle = result }, Cmd.none, Global.send (UpdateSessionTensions data) )
 
                 other ->
-                    ( { model | circle_tensions = result }, Cmd.none, Cmd.none )
+                    ( { model | tensions_circle = result }, Cmd.none, Cmd.none )
 
         GotMandate result ->
             case result of
@@ -464,7 +488,7 @@ update global msg model =
                 tensions =
                     case result of
                         Success t ->
-                            hotTensionPush t model.circle_tensions
+                            hotTensionPush t model.tensions_circle
 
                         other ->
                             []
@@ -473,7 +497,7 @@ update global msg model =
                 Just form ->
                     ( { model
                         | node_action = AddTension <| TensionFinal form result
-                        , circle_tensions = Success tensions
+                        , tensions_circle = Success tensions
                       }
                     , Cmd.none
                     , Global.send (UpdateSessionTensions tensions)
@@ -753,8 +777,13 @@ update global msg model =
             , Nav.replaceUrl global.key (uriFromNameid OverviewBaseUri nameid)
             )
 
-        NodeFocused path ->
-            ( { model | node_path = Just path }, Ports.drawButtonsGraphPack, Global.send (UpdateSessionPath path) )
+        NodeFocused path_ ->
+            case path_ of
+                Ok path ->
+                    ( { model | path_data = Just path }, Ports.drawButtonsGraphPack, Global.send (UpdateSessionPath path) )
+
+                Err err ->
+                    ( model, Cmd.none, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -770,11 +799,11 @@ update global msg model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
-        [ nodeClickedFromJs NodeClicked
-        , nodeFocusedFromJs NodeFocused
+        [ closeModalFromJs DoCloseModal
+        , nodeClickedFromJs NodeClicked
+        , nodeFocusedFromJs_ NodeFocused
         , nodeDataFromJs_ DoNodeAction
         , lookupFromJs_ ChangeLookup
-        , closeModalFromJs DoCloseModal
         ]
 
 
@@ -788,16 +817,19 @@ port closeModalFromJs : (String -> msg) -> Sub msg
 port nodeClickedFromJs : (String -> msg) -> Sub msg
 
 
-port nodeFocusedFromJs : (NodePath -> msg) -> Sub msg
+port nodeFocusedFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port nodeDataFromJs : (JD.Value -> a) -> Sub a
 
 
+port lookupFromJs : (JD.Value -> a) -> Sub a
+
+
 nodeDataFromJs_ : (Node_ -> msg) -> Sub msg
-nodeDataFromJs_ rawNode =
+nodeDataFromJs_ object =
     nodeDataFromJs
-        (rawNode
+        (object
             << (\x ->
                     case x of
                         Ok n ->
@@ -810,13 +842,26 @@ nodeDataFromJs_ rawNode =
         )
 
 
-port lookupFromJs : (JD.Value -> a) -> Sub a
+nodeFocusedFromJs_ : (LocalGraph_ -> msg) -> Sub msg
+nodeFocusedFromJs_ object =
+    nodeFocusedFromJs
+        (object
+            << (\x ->
+                    case x of
+                        Ok n ->
+                            Ok n
+
+                        Err err ->
+                            Err (JD.errorToString err)
+               )
+            << JD.decodeValue localGraphDecoder
+        )
 
 
 lookupFromJs_ : (Nodes_ -> msg) -> Sub msg
-lookupFromJs_ rawNode =
+lookupFromJs_ object =
     lookupFromJs
-        (rawNode
+        (object
             << (\x ->
                     case x of
                         Ok n ->
@@ -846,7 +891,7 @@ port sendToggleTooltips : () -> Cmd msg
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = String.join "/" [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ]
+    { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body = [ view_ global model ]
     }
 
@@ -861,9 +906,9 @@ view_ global model =
                         focus =
                             Dict.get model.node_focus.nameid d
                     in
-                    case model.node_path of
+                    case model.path_data of
                         Just path ->
-                            if Array.length path > 0 then
+                            if List.length path.path > 0 then
                                 ( Success d, focus )
 
                             else
@@ -885,11 +930,11 @@ view_ global model =
     div [ id "mainPane" ]
         [ HelperBar.view OverviewBaseUri
             global.session.user
-            model.node_path
+            model.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
-                [ viewSearchBar model.orga_data model.node_path model.node_quickSearch
+                [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
                 , viewMandate model.mandate nodeFocus
@@ -944,21 +989,16 @@ viewLeftPane model =
         ]
 
 
-viewSearchBar : GqlData NodesData -> Maybe NodePath -> NodesQuickSearch -> Html Msg
+viewSearchBar : GqlData NodesData -> Maybe LocalGraph -> NodesQuickSearch -> Html Msg
 viewSearchBar odata maybePath qs =
     let
-        maybeLast =
-            maybePath
-                |> withDefault Array.empty
-                |> (\a -> Array.get (Array.length a - 1) a)
-
         node_ =
-            maybeLast
+            maybePath
                 |> Maybe.map
-                    (\last ->
+                    (\p ->
                         case odata of
                             Success d ->
-                                Dict.get last.nameid d
+                                Dict.get p.focus.nameid d
                                     |> Maybe.map (\n -> Ok n)
                                     |> withDefault (Err "Node not found")
 
@@ -975,7 +1015,7 @@ viewSearchBar odata maybePath qs =
                 ""
     in
     div
-        [ id "searchBar"
+        [ id "searchBarOverview"
         , class "field has-addons"
         , onMouseEnter DoClearTooltip
         ]
@@ -1189,11 +1229,17 @@ viewActivies model =
                     ]
                 ]
             ]
-        , div [ classList [ ( "content", True ), ( "spinner", model.circle_tensions == LoadingSlowly ) ] ]
-            [ case model.circle_tensions of
+        , div [ classList [ ( "content", True ), ( "spinner", model.tensions_circle == LoadingSlowly ) ] ]
+            [ case model.tensions_circle of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> mediaTension t) tensions
+                        List.map (\t -> mediaTension OverviewBaseUri t) tensions
+                            ++ (if List.length tensions == 15 then
+                                    [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text "See more" ] ] ]
+
+                                else
+                                    []
+                               )
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else

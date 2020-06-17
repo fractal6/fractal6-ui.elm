@@ -145,6 +145,16 @@ n_comments =
     Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
 
 
+emitterid : SelectionSet String Fractal.Object.Tension
+emitterid =
+    Object.selectionForField "String" "emitterid" [] Decode.string
+
+
+receiverid : SelectionSet String Fractal.Object.Tension
+receiverid =
+    Object.selectionForField "String" "receiverid" [] Decode.string
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Tension
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)

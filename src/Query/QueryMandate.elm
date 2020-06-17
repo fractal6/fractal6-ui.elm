@@ -17,11 +17,11 @@ import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNodesOrga exposing (nodeOrgaPayload)
+import Query.QueryNodes exposing (nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -53,7 +53,7 @@ queryMandate nameid msg =
 
 mandateFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
 mandateFilter nid a =
-    { a | nameid = OptionalArgument.Present nid }
+    { a | nameid = Present nid }
 
 
 mandatePayload : SelectionSet TopMandate Fractal.Object.Node

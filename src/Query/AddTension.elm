@@ -14,12 +14,12 @@ import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
-import Query.QueryTension exposing (tensionPgPayload)
+import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -60,7 +60,7 @@ addOneTension form msg =
         (Mutation.addTension
             (addTensionInputEncoder form)
             (SelectionSet.map AddTensionPayload <|
-                Fractal.Object.AddTensionPayload.tension identity tensionPgPayload
+                Fractal.Object.AddTensionPayload.tension identity tensionPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
@@ -86,7 +86,7 @@ addTensionInputEncoder f =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present f.uctx.username })
+                    (\x -> { x | username = Present f.uctx.username })
             , title = title
             , type_ = f.tension_type
             , status = TensionStatus.Open
@@ -94,22 +94,24 @@ addTensionInputEncoder f =
                 Input.buildNodeRef
                     (\n ->
                         { n
-                            | nameid = OptionalArgument.Present f.source.nameid
-                            , rootnameid = OptionalArgument.Present f.source.rootnameid
+                            | nameid = Present f.source.nameid
+                            , rootnameid = Present f.source.rootnameid
                         }
                     )
             , receiver =
                 Input.buildNodeRef
                     (\n ->
                         { n
-                            | nameid = OptionalArgument.Present f.target.nameid
-                            , rootnameid = OptionalArgument.Present f.target.rootnameid
+                            | nameid = Present f.target.nameid
+                            , rootnameid = Present f.target.rootnameid
                         }
                     )
+            , emitterid = f.source.nameid
+            , receiverid = f.target.nameid
             }
 
         tensionOpts =
-            \t -> { t | message = message |> OptionalArgument.fromMaybe }
+            \t -> { t | message = message |> fromMaybe }
     in
     { input =
         [ Input.buildAddTensionInput tensionRequired tensionOpts ]
@@ -128,7 +130,7 @@ addCircleTension form msg =
         (Mutation.addTension
             (addCircleInputEncoder form)
             (SelectionSet.map AddTensionPayload <|
-                Fractal.Object.AddTensionPayload.tension identity tensionPgPayload
+                Fractal.Object.AddTensionPayload.tension identity tensionPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
@@ -153,7 +155,7 @@ addCircleInputEncoder f =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present f.uctx.username })
+                    (\x -> { x | username = Present f.uctx.username })
             , title = title
             , type_ = f.tension_type
             , status = status
@@ -161,36 +163,38 @@ addCircleInputEncoder f =
                 Input.buildNodeRef
                     (\x ->
                         { x
-                            | nameid = OptionalArgument.Present f.source.nameid
-                            , rootnameid = OptionalArgument.Present f.source.rootnameid
+                            | nameid = Present f.source.nameid
+                            , rootnameid = Present f.source.rootnameid
                         }
                     )
             , receiver =
                 Input.buildNodeRef
                     (\x ->
                         { x
-                            | nameid = OptionalArgument.Present f.target.nameid
-                            , rootnameid = OptionalArgument.Present f.target.rootnameid
+                            | nameid = Present f.target.nameid
+                            , rootnameid = Present f.target.rootnameid
                         }
                     )
+            , emitterid = f.source.nameid
+            , receiverid = f.target.nameid
             }
 
         tensionOpts =
             \t ->
                 { t
-                    | action = f.action |> OptionalArgument.fromMaybe
-                    , message = message |> OptionalArgument.fromMaybe
+                    | action = f.action |> fromMaybe
+                    , message = message |> fromMaybe
                     , mandate =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" f.post |> OptionalArgument.fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" f.post |> OptionalArgument.fromMaybe
-                                    , domains = Dict.get "domains" f.post |> OptionalArgument.fromMaybe
-                                    , policies = Dict.get "policies" f.post |> OptionalArgument.fromMaybe
+                                    | purpose = Dict.get "purpose" f.post |> fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
+                                    , domains = Dict.get "domains" f.post |> fromMaybe
+                                    , policies = Dict.get "policies" f.post |> fromMaybe
                                 }
                             )
-                            |> OptionalArgument.Present
+                            |> Present
                 }
     in
     { input =

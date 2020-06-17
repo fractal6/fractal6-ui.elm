@@ -13,11 +13,13 @@ type TensionOrderable
     | Nth
     | Title
     | N_comments
+    | Emitterid
+    | Receiverid
 
 
 list : List TensionOrderable
 list =
-    [ CreatedAt, Message, Nth, Title, N_comments ]
+    [ CreatedAt, Message, Nth, Title, N_comments, Emitterid, Receiverid ]
 
 
 decoder : Decoder TensionOrderable
@@ -40,6 +42,12 @@ decoder =
 
                     "n_comments" ->
                         Decode.succeed N_comments
+
+                    "emitterid" ->
+                        Decode.succeed Emitterid
+
+                    "receiverid" ->
+                        Decode.succeed Receiverid
 
                     _ ->
                         Decode.fail ("Invalid TensionOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -65,6 +73,12 @@ toString enum =
 
         N_comments ->
             "n_comments"
+
+        Emitterid ->
+            "emitterid"
+
+        Receiverid ->
+            "receiverid"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -95,6 +109,12 @@ fromString enumString =
 
         "n_comments" ->
             Just N_comments
+
+        "emitterid" ->
+            Just Emitterid
+
+        "receiverid" ->
+            Just Receiverid
 
         _ ->
             Nothing

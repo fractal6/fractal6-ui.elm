@@ -2,7 +2,6 @@ module ModelCommon.Uri exposing
     ( Flags_
     , FractalBaseRoute(..)
     , NodeFocus
-    , NodePath
     , basePathChanged
     , focusFromNameid
     , guestIdCodec
@@ -50,10 +49,6 @@ type alias NodeFocus =
 
     --, name : Maybe String // get the name when JS/D3 finished the rendering Job
     }
-
-
-type alias NodePath =
-    Array { nidjs : String, nameid : String, name : String }
 
 
 toString : FractalBaseRoute -> String

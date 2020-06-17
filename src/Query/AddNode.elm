@@ -16,13 +16,13 @@ import Fractal.Object.NodeCharac
 import Fractal.Object.User
 import Fractal.Scalar
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (JoinOrgaForm, TensionForm)
 import ModelCommon.Uri exposing (guestIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
-import Query.QueryNodesOrga exposing (nodeOrgaPayload)
+import Query.QueryNodes exposing (nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -96,27 +96,27 @@ newMemberInputEncoder { uctx, rootnameid, post } =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\u -> { u | username = OptionalArgument.Present uctx.username })
+                    (\u -> { u | username = Present uctx.username })
             , type_ = NodeType.Role
             , nameid = guestIdCodec rootnameid uctx.username
             , name = "Guest"
             , rootnameid = rootnameid
             , isRoot = False
-            , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present NodeMode.Coordinated }
+            , charac = { userCanJoin = Present False, mode = Present NodeMode.Coordinated }
             }
 
         nodeOptional =
             \n ->
                 { n
-                    | role_type = OptionalArgument.Present RoleType.Guest
+                    | role_type = Present RoleType.Guest
                     , parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = OptionalArgument.Present rootnameid })
-                            |> OptionalArgument.Present
+                            (\p -> { p | nameid = Present rootnameid })
+                            |> Present
                     , first_link =
                         Input.buildUserRef
-                            (\u -> { u | username = OptionalArgument.Present uctx.username })
-                            |> OptionalArgument.Present
+                            (\u -> { u | username = Present uctx.username })
+                            |> Present
                 }
     in
     { input =
@@ -136,7 +136,7 @@ type alias Circle =
     , name : String
     , nameid : String
     , rootnameid : String
-    , parent : Maybe ParentNode -- see issue with recursive structure
+    , parent : Maybe NodeId -- see issue with recursive structure
     , children : Maybe (List Node)
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
@@ -167,8 +167,7 @@ circleDecoder a =
                                         n.children |> withDefault []
 
                                     node =
-                                        { id = .id n
-                                        , createdAt = .createdAt n
+                                        { createdAt = .createdAt n
                                         , name = .name n
                                         , nameid = .nameid n
                                         , rootnameid = .rootnameid n
@@ -217,8 +216,7 @@ addOneCirclePayload =
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.rootnameid
         |> with
-            --(Fractal.Object.Node.parent identity (SelectionSet.map (ParentNode << decodedId) Fractal.Object.Node.id))
-            (Fractal.Object.Node.parent identity <| SelectionSet.map ParentNode Fractal.Object.Node.nameid)
+            (Fractal.Object.Node.parent identity <| SelectionSet.map NodeId Fractal.Object.Node.nameid)
         |> with (Fractal.Object.Node.children identity nodeOrgaPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
@@ -255,13 +253,13 @@ addCircleInputEncoder f =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
-                    (\u -> { u | username = OptionalArgument.Present f.uctx.username })
+                    (\u -> { u | username = Present f.uctx.username })
             , isRoot = False
             , type_ = f.type_
             , name = name
             , nameid = nameid
             , rootnameid = f.target.rootnameid
-            , charac = { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
+            , charac = { userCanJoin = Present False, mode = Present nodeMode }
             }
 
         nodeOptional =
@@ -297,22 +295,22 @@ getAddCircleOptionals f =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = OptionalArgument.Present f.target.nameid })
-                            |> OptionalArgument.Present
+                            (\p -> { p | nameid = Present f.target.nameid })
+                            |> Present
                     , mandate =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" f.post |> OptionalArgument.fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" f.post |> OptionalArgument.fromMaybe
-                                    , domains = Dict.get "domains" f.post |> OptionalArgument.fromMaybe
-                                    , policies = Dict.get "policies" f.post |> OptionalArgument.fromMaybe
+                                    | purpose = Dict.get "purpose" f.post |> fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
+                                    , domains = Dict.get "domains" f.post |> fromMaybe
+                                    , policies = Dict.get "policies" f.post |> fromMaybe
                                     , tensions =
                                         [ Input.buildTensionRef (tensionFromForm f) ]
-                                            |> OptionalArgument.Present
+                                            |> Present
                                 }
                             )
-                            |> OptionalArgument.Present
+                            |> Present
                     , children =
                         first_links
                             |> List.indexedMap
@@ -320,28 +318,28 @@ getAddCircleOptionals f =
                                     Input.buildNodeRef
                                         (\c ->
                                             { c
-                                                | createdAt = createdAt |> Fractal.Scalar.DateTime |> OptionalArgument.Present
+                                                | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
                                                 , createdBy =
                                                     Input.buildUserRef
-                                                        (\u -> { u | username = OptionalArgument.Present f.uctx.username })
-                                                        |> OptionalArgument.Present
-                                                , isRoot = False |> OptionalArgument.Present
-                                                , type_ = NodeType.Role |> OptionalArgument.Present
-                                                , role_type = RoleType.Coordinator |> OptionalArgument.Present
-                                                , name = "Coordinator" |> OptionalArgument.Present
-                                                , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> OptionalArgument.Present
-                                                , rootnameid = f.target.rootnameid |> OptionalArgument.Present
+                                                        (\u -> { u | username = Present f.uctx.username })
+                                                        |> Present
+                                                , isRoot = False |> Present
+                                                , type_ = NodeType.Role |> Present
+                                                , role_type = RoleType.Coordinator |> Present
+                                                , name = "Coordinator" |> Present
+                                                , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> Present
+                                                , rootnameid = f.target.rootnameid |> Present
                                                 , charac =
-                                                    { userCanJoin = OptionalArgument.Present False, mode = OptionalArgument.Present nodeMode }
-                                                        |> OptionalArgument.Present
+                                                    { userCanJoin = Present False, mode = Present nodeMode }
+                                                        |> Present
                                                 , first_link =
                                                     Input.buildUserRef
-                                                        (\u -> { u | username = uname |> OptionalArgument.Present })
-                                                        |> OptionalArgument.Present
+                                                        (\u -> { u | username = uname |> Present })
+                                                        |> Present
                                             }
                                         )
                                 )
-                            |> OptionalArgument.Present
+                            |> Present
                 }
 
         NodeType.Role ->
@@ -353,31 +351,31 @@ getAddCircleOptionals f =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = OptionalArgument.Present f.target.nameid })
-                            |> OptionalArgument.Present
+                            (\p -> { p | nameid = Present f.target.nameid })
+                            |> Present
                     , mandate =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" f.post |> OptionalArgument.fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" f.post |> OptionalArgument.fromMaybe
-                                    , domains = Dict.get "domains" f.post |> OptionalArgument.fromMaybe
-                                    , policies = Dict.get "policies" f.post |> OptionalArgument.fromMaybe
+                                    | purpose = Dict.get "purpose" f.post |> fromMaybe
+                                    , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
+                                    , domains = Dict.get "domains" f.post |> fromMaybe
+                                    , policies = Dict.get "policies" f.post |> fromMaybe
                                     , tensions =
                                         [ Input.buildTensionRef (tensionFromForm f) ]
-                                            |> OptionalArgument.Present
+                                            |> Present
                                 }
                             )
-                            |> OptionalArgument.Present
-                    , role_type = f.role_type |> OptionalArgument.Present
+                            |> Present
+                    , role_type = f.role_type |> Present
                     , first_link =
                         first_link
                             |> Maybe.map
                                 (\uname ->
                                     Input.buildUserRef
-                                        (\u -> { u | username = uname |> OptionalArgument.Present })
+                                        (\u -> { u | username = uname |> Present })
                                 )
-                            |> OptionalArgument.fromMaybe
+                            |> fromMaybe
                 }
 
 
@@ -398,42 +396,44 @@ tensionFromForm f =
     in
     \t ->
         { t
-            | createdAt = createdAt |> Fractal.Scalar.DateTime |> OptionalArgument.Present
+            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
             , createdBy =
                 Input.buildUserRef
-                    (\x -> { x | username = OptionalArgument.Present f.uctx.username })
-                    |> OptionalArgument.Present
-            , title = title |> OptionalArgument.Present
-            , type_ = f.tension_type |> OptionalArgument.Present
-            , status = status |> OptionalArgument.Present
-            , action = f.action |> OptionalArgument.fromMaybe
-            , message = OptionalArgument.fromMaybe message
+                    (\x -> { x | username = Present f.uctx.username })
+                    |> Present
+            , title = title |> Present
+            , type_ = f.tension_type |> Present
+            , status = status |> Present
+            , action = f.action |> fromMaybe
+            , message = fromMaybe message
+            , emitterid = Present f.source.nameid
+            , receiverid = Present f.target.nameid
             , emitter =
                 Input.buildNodeRef
                     (\x ->
                         { x
-                            | nameid = OptionalArgument.Present f.source.nameid
-                            , rootnameid = OptionalArgument.Present f.source.rootnameid
+                            | nameid = Present f.source.nameid
+                            , rootnameid = Present f.source.rootnameid
                         }
                     )
-                    |> OptionalArgument.Present
+                    |> Present
             , receiver =
                 Input.buildNodeRef
                     (\x ->
                         { x
-                            | nameid = OptionalArgument.Present f.target.nameid
-                            , rootnameid = OptionalArgument.Present f.target.rootnameid
+                            | nameid = Present f.target.nameid
+                            , rootnameid = Present f.target.rootnameid
                         }
                     )
-                    |> OptionalArgument.Present
+                    |> Present
             , mandate =
                 Input.buildMandateRef
                     (\m ->
                         { m
-                            | purpose = Dict.get "purpose" f.post |> withDefault "" |> OptionalArgument.Present
-                            , responsabilities = Dict.get "responsabilities" f.post |> withDefault "" |> OptionalArgument.Present
-                            , domains = Dict.get "domains" f.post |> withDefault "" |> OptionalArgument.Present
+                            | purpose = Dict.get "purpose" f.post |> withDefault "" |> Present
+                            , responsabilities = Dict.get "responsabilities" f.post |> withDefault "" |> Present
+                            , domains = Dict.get "domains" f.post |> withDefault "" |> Present
                         }
                     )
-                    |> OptionalArgument.Present
+                    |> Present
         }

@@ -159,6 +159,34 @@ noTensionCircle =
     "No tensions for this Circle yet."
 
 
+internalTensions =
+    "Internal Tensions"
+
+
+externalTensions =
+    "External Tensions"
+
+
+noIntTensionRole : String
+noIntTensionRole =
+    "No internal tensions for this Role yet."
+
+
+noIntTensionCircle : String
+noIntTensionCircle =
+    "No internal tensions for this Circle yet."
+
+
+noExtTensionRole : String
+noExtTensionRole =
+    "No external tensions for this Role yet."
+
+
+noExtTensionCircle : String
+noExtTensionCircle =
+    "No external tensions for this Circle yet."
+
+
 newCircle : String
 newCircle =
     "New Circle"

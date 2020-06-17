@@ -592,7 +592,6 @@ const GraphPack = {
     getNodePath(node) {
         var path = this.gPack.path(node).map(n => {
             return {
-                nidjs: n.color,
                 nameid: n.data.nameid,
                 name: n.data.name,
             };
@@ -714,7 +713,7 @@ const GraphPack = {
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
         //$tooltip.textContent = node.data.name;
         $tooltip.childNodes[0].textContent = node.data.name;
-        $tooltip.dataset.nid = node.data.id;
+        //$tooltip.dataset.nid = node.data.nameid;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
         // --
@@ -802,8 +801,23 @@ const GraphPack = {
             this.reason = "";
             return
         }
-        var nodePath = this.getNodePath(node);
-        this.app.ports.nodeFocusedFromJs.send(nodePath);
+        var rootNode = {
+            name: this.rootNode.data.name,
+            nameid: this.rootNode.data.nameid,
+            charac: this.rootNode.data.charac
+        };
+        var focusNode = {
+            name: node.data.name,
+            nameid: node.data.nameid,
+            type_: node.data.type_,
+            children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => { return {nameid: n.data.nameid}}) : []
+        };
+        var lg = {
+            root: rootNode,
+            path: this.getNodePath(node),
+            focus: focusNode
+        };
+        this.app.ports.nodeFocusedFromJs.send(lg);
     },
 
     sendNodeDataFromJs(node) {

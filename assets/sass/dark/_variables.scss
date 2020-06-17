@@ -9,14 +9,13 @@ $border-width: 2px;
 $body-background-color: #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
 $header-background-color: #44444d;
 $background: $grey-darker;
-$subtitle-color: $grey-dark;
 $footer-background-color: $background;
 $button-background-color: $background;
 $button-border-color: lighten($button-background-color, 15);
 
 $title-color: #fff;
-$subtitle-color: $grey-light;
-$subtitle-strong-color: $grey-light;
+$subtitle-color: $grey-light2;
+$subtitle-strong-color: $grey-light2;
 
 $text: #fff;
 $text-light: lighten($text, 10);
