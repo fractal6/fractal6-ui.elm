@@ -53,9 +53,8 @@ queryBuilder parameters =
     let
         toUri : ( String, String ) -> List String
         toUri ( k, v ) =
-            String.join "=" [ k, v ]
+            String.join "=" [ k, Url.percentEncode v ]
                 |> List.singleton
     in
     List.concatMap toUri parameters
         |> String.join "&"
-        |> Url.percentEncode
