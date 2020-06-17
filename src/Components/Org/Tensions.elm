@@ -9,8 +9,8 @@ import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewW
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (queryBuilder, queryParser)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
+import Extra.Url exposing (queryBuilder, queryParser)
 import Form
 import Form.NewCircle
 import Form.NewTension
