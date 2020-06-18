@@ -1,6 +1,6 @@
 module Form.NewTension exposing (view)
 
-import Components.Loading as Loading exposing (viewErrors)
+import Components.Loading as Loading exposing (viewGqlErrors)
 import Dict
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
@@ -46,7 +46,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                 [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
-                                , placeholder "Title"
+                                , placeholder "Title*"
                                 , onInput (changePostMsg "title")
                                 ]
                                 []
@@ -71,7 +71,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                     [ case other of
                         Failure err ->
-                            viewErrors err
+                            viewGqlErrors err
 
                         _ ->
                             div [] []

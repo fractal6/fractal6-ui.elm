@@ -5,7 +5,7 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewWarnings)
+import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewWarnings)
 import Components.Text as Text exposing (..)
 import Debug
 import Dict exposing (Dict)
@@ -1091,7 +1091,7 @@ viewCanvas odata =
     div [ id "canvasParent", classList [ ( "spinner", odata == LoadingSlowly ) ] ]
         [ case odata of
             Failure err ->
-                viewErrors err
+                viewGqlErrors err
 
             default ->
                 div [] []
@@ -1155,13 +1155,13 @@ viewMandate mandateData maybeFocus =
                                                 [ List.intersperse " " [ "No mandate for Guest", fs, "." ] |> String.join " " |> text ]
 
                                             other ->
-                                                [ viewErrors err ]
+                                                [ viewGqlErrors err ]
 
                                     Nothing ->
-                                        [ viewErrors err ]
+                                        [ viewGqlErrors err ]
 
                             Nothing ->
-                                [ viewErrors err ]
+                                [ viewGqlErrors err ]
 
                     Loading ->
                         [ div [] [] ]
@@ -1233,8 +1233,8 @@ viewActivies model =
                 Success tensions ->
                     if List.length tensions > 0 then
                         List.map (\t -> mediaTension OverviewBaseUri t) tensions
-                            ++ (if List.length tensions == 15 then
-                                    [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text "See more" ] ] ]
+                            ++ (if List.length tensions > 5 then
+                                    [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text Text.seeMore ] ] ]
 
                                 else
                                     []
@@ -1250,7 +1250,7 @@ viewActivies model =
                                 div [] [ text Text.noTensionCircle ]
 
                 Failure err ->
-                    viewErrors err
+                    viewGqlErrors err
 
                 default ->
                     div [] []
@@ -1306,7 +1306,7 @@ viewJoinOrgaStep orga step =
             viewAuthNeeded
 
         JoinNotAuthorized errMsg ->
-            viewErrors errMsg
+            viewGqlErrors errMsg
 
         JoinValidation form result ->
             case result of
@@ -1314,7 +1314,7 @@ viewJoinOrgaStep orga step =
                     div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
 
                 Failure err ->
-                    viewErrors err
+                    viewGqlErrors err
 
                 default ->
                     div [ class "box spinner" ] [ text Text.loading ]
@@ -1360,7 +1360,7 @@ viewActionStep model action =
             text ""
 
         AskErr err ->
-            viewErrors [ err ]
+            viewGqlErrors [ err ]
 
         ActionAuthNeeded ->
             viewAuthNeeded

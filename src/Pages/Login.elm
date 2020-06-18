@@ -13,6 +13,7 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Requests exposing (login)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
@@ -103,21 +104,7 @@ update global msg model =
 
         SubmitUser form ->
             ( model
-              --, Http.post
-              --    { url = "http://localhost:8888/login"
-              --    , body = Http.jsonBody <| JE.dict identity JE.string form.post
-              --    , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
-              --    }
-            , Http.riskyRequest
-                -- This method is needed to set cookies on the client through CORS.
-                { method = "POST"
-                , headers = []
-                , url = "http://localhost:8888/login"
-                , body = Http.jsonBody <| JE.dict identity JE.string form.post
-                , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
-                , timeout = Nothing
-                , tracker = Nothing
-                }
+            , login form.post GotSignin
             , Cmd.none
             )
 

@@ -8,6 +8,11 @@ loading =
     "loading..."
 
 
+seeMore : String
+seeMore =
+    "See more"
+
+
 
 -- Genral
 

@@ -8,7 +8,7 @@ module Components.Loading exposing
     , spinner
     , toErrorData
     , viewAuthNeeded
-    , viewErrors
+    , viewGqlErrors
     , viewHttpErrors
     , viewWarnings
     )
@@ -194,8 +194,8 @@ viewAuthNeeded =
         ]
 
 
-viewErrors : ErrorData -> Html msg
-viewErrors errMsg =
+viewGqlErrors : ErrorData -> Html msg
+viewGqlErrors errMsg =
     List.map (\e -> p [] [ text e ]) errMsg
         |> div [ class "box has-background-danger" ]
 
@@ -210,4 +210,4 @@ viewHttpErrors : HttpError String -> Html msg
 viewHttpErrors httpErr =
     httpErr
         |> toErrorData
-        |> viewErrors
+        |> viewGqlErrors

@@ -1,6 +1,6 @@
 module Form.NewCircle exposing (view)
 
-import Components.Loading as Loading exposing (viewErrors)
+import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T
 import Dict
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
@@ -82,7 +82,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                 [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
-                                , placeholder "Name"
+                                , placeholder "Name*"
                                 , onInput <| changePostMsg "name"
                                 ]
                                 []
@@ -184,7 +184,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                         [ id "textAreaModal"
                                         , class "textarea"
                                         , rows 5
-                                        , placeholder txt.ph_purpose
+                                        , placeholder (txt.ph_purpose ++ "*")
                                         , onInput <| changePostMsg "purpose"
                                         ]
                                         []
@@ -236,7 +236,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                     [ case other of
                         Failure err ->
-                            viewErrors err
+                            viewGqlErrors err
 
                         _ ->
                             div [] []

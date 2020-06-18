@@ -5,7 +5,7 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewAuthNeeded, viewErrors, viewWarnings)
+import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -21,7 +21,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -31,6 +31,7 @@ import Json.Encode.Extra as JEE
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Requests exposing (fetchChildren)
 import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid)
 import ModelCommon.View exposing (mediaTension)
 import ModelSchema exposing (..)
@@ -40,6 +41,7 @@ import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
 import Query.QueryNodes exposing (queryLocalGraph)
 import Query.QueryTension exposing (queryCircleTension, queryExtTension, queryIntTension)
+import RemoteData exposing (RemoteData)
 import Task
 import Time
 
@@ -63,6 +65,7 @@ page =
 type alias Model =
     { node_focus : NodeFocus
     , path_data : GqlData LocalGraph
+    , children : WebData (List NodeId)
     , tensions_int : GqlData TensionsData
     , tensions_ext : GqlData TensionsData
     , offset : Int
@@ -110,6 +113,36 @@ viewModeEncoder x =
 nfirst : Int
 nfirst =
     15
+
+
+
+--
+-- Msg
+--
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+      --WebData
+    | GotChildren (WebData (List NodeId))
+      -- Gql Data Queries
+    | GotPath (GqlData LocalGraph) -- graphql
+    | GotPath2 (GqlData LocalGraph) -- graphql
+    | GotTensionsInt (GqlData TensionsData) -- graphql
+    | GotTensionsExt (GqlData TensionsData) -- graphql
+      -- Page Action
+    | DoLoad
+    | ChangePattern String
+    | SearchKeyDown Int
+    | SubmitSearch
+    | GoView ViewModeTensions
+      -- JoinOrga Action
+    | DoJoinOrga String Time.Posix
+    | JoinAck (GqlData Node)
+      -- JS Interop
+    | DoCloseModal String -- ports receive / Close modal
+    | DoOpenModal -- ports receive / Open  modal
 
 
 
@@ -174,6 +207,7 @@ init global flags =
                 session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
+            , children = RemoteData.Loading
             , tensions_int = Loading
             , tensions_ext = Loading
             , offset = 0
@@ -189,11 +223,13 @@ init global flags =
         cmds =
             if orgChange || refresh || focusChange then
                 [ queryLocalGraph newFocus.nameid GotPath
+                , fetchChildren newFocus.nameid GotChildren
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
             else
                 [ queryLocalGraph newFocus.nameid GotPath
+                , fetchChildren newFocus.nameid GotChildren
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
     in
@@ -201,28 +237,6 @@ init global flags =
     , Cmd.batch cmds
     , Global.send (UpdateSessionFocus newFocus)
     )
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Gql Data Queries
-    | GotPath (GqlData LocalGraph) -- graphql
-    | GotPath2 (GqlData LocalGraph) -- graphql
-    | GotTensionsInt (GqlData TensionsData) -- graphql
-    | GotTensionsExt (GqlData TensionsData) -- graphql
-      -- Page Action
-    | DoLoad
-    | ChangePattern String
-    | SearchKeyDown Int
-    | SubmitSearch
-    | GoView ViewModeTensions
-      -- JoinOrga Action
-    | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData Node)
-      -- JS Interop
-    | DoCloseModal String -- ports receive / Close modal
-    | DoOpenModal -- ports receive / Open  modal
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -261,14 +275,14 @@ update global msg model =
                 Success path ->
                     case path.root of
                         Just root ->
-                            ( newModel, Global.send DoLoad, Global.send (UpdateSessionPath path) )
+                            ( newModel, Cmd.none, Global.send (UpdateSessionPath path) )
 
                         Nothing ->
                             let
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( newModel, Cmd.batch [ Global.send DoLoad, queryLocalGraph nameid GotPath2 ], Cmd.none )
+                            ( newModel, queryLocalGraph nameid GotPath2, Cmd.none )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
@@ -301,6 +315,18 @@ update global msg model =
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        GotChildren result ->
+            let
+                newModel =
+                    { model | children = result }
+            in
+            case result of
+                RemoteData.Success _ ->
+                    ( newModel, Global.send DoLoad, Cmd.none )
+
+                _ ->
+                    ( newModel, Cmd.none, Cmd.none )
 
         GotTensionsInt result ->
             let
@@ -353,11 +379,14 @@ update global msg model =
             ( { model | tensions_ext = newResult, load_more_ext = load_more }, Cmd.none, Cmd.none )
 
         DoLoad ->
-            case model.path_data of
-                Success path ->
+            case model.children of
+                RemoteData.Success children ->
                     let
                         nameids =
-                            path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ] |> String.join "|"
+                            -- Direct node and sub-nodes tensions
+                            --path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ] |> String.join "|"
+                            -- all nodes and sub-nodes tensions
+                            children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ] |> String.join "|"
 
                         cmds =
                             [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsInt
@@ -465,6 +494,13 @@ view_ global model =
             global.session.user
             global.session.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
+        , div [] <|
+            case model.children of
+                RemoteData.Failure err ->
+                    [ viewHttpErrors err ]
+
+                other ->
+                    []
         , div [ class "columns is-centered" ]
             [ div [ class "column is-9" ]
                 [ div [ class "columns" ]
@@ -504,6 +540,14 @@ viewSearchBar pattern viewMode =
                     ]
                     []
                 , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+                ]
+            , div [ class "control" ]
+                [ div [ class "is-small select" ]
+                    [ select []
+                        [ option [ class "dropdown-item" ] [ text "All sub-circles" ]
+                        , option [ class "dropdown-item" ] [ text "Selected circle" ]
+                        ]
+                    ]
                 ]
             ]
         , div [ class "tabs is-small" ]
@@ -601,7 +645,7 @@ viewTensions focus pattern tensionsData tensionDir =
                                     div [] [ text Text.noTensionCircle ]
 
             Failure err ->
-                viewErrors err
+                viewGqlErrors err
 
             default ->
                 div [] []
@@ -659,7 +703,7 @@ viewJoinOrgaStep step =
             viewAuthNeeded
 
         JoinNotAuthorized errMsg ->
-            viewErrors errMsg
+            viewGqlErrors errMsg
 
         JoinValidation form result ->
             case result of
@@ -667,7 +711,7 @@ viewJoinOrgaStep step =
                     div [ class "box has-background-success" ] [ "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
 
                 Failure err ->
-                    viewErrors err
+                    viewGqlErrors err
 
                 default ->
                     div [ class "box spinner" ] [ text Text.loading ]

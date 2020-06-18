@@ -336,11 +336,14 @@ html.has-modal-active {
 }
 
 
-/*
- *
- * Organisation Page
- *
- */
+.searchBar {
+    .select {
+        bacground-color: #000;
+        & select {
+            color: #fff;
+        }
+    }
+}
 
 #searchBarOverview {
     padding-top: 5px;
