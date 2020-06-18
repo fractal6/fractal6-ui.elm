@@ -9,6 +9,7 @@ import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlE
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form
@@ -69,11 +70,12 @@ type alias Model =
     , tensions_int : GqlData TensionsData
     , tensions_ext : GqlData TensionsData
     , offset : Int
-    , pattern : Maybe String
-    , initPattern : Maybe String
     , load_more_int : Bool
     , load_more_ext : Bool
+    , pattern : Maybe String
+    , initPattern : Maybe String
     , viewMode : ViewModeTensions
+    , depthFilter : DepthFilter
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     }
@@ -83,6 +85,10 @@ type TensionDirection
     = InternalTension
     | ExternalTension
     | ListTension
+
+
+
+-- Query parameters
 
 
 type ViewModeTensions
@@ -104,10 +110,35 @@ viewModeEncoder : ViewModeTensions -> String
 viewModeEncoder x =
     case x of
         ListView ->
-            "list"
+            ""
 
         IntExtView ->
             "intext"
+
+
+type DepthFilter
+    = SelectedNode
+    | AllSubChildren
+
+
+depthFilterDecoder : String -> DepthFilter
+depthFilterDecoder x =
+    case x of
+        "selected" ->
+            SelectedNode
+
+        default ->
+            AllSubChildren
+
+
+depthFilterEncoder : DepthFilter -> String
+depthFilterEncoder x =
+    case x of
+        AllSubChildren ->
+            ""
+
+        SelectedNode ->
+            "selected"
 
 
 nfirst : Int
@@ -134,6 +165,7 @@ type Msg
       -- Page Action
     | DoLoad
     | ChangePattern String
+    | ChangeDepthFilter String
     | SearchKeyDown Int
     | SubmitSearch
     | GoView ViewModeTensions
@@ -158,16 +190,16 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        -- init Flags and Session
+        -- Init Flags and Session
         session =
             global.session
 
         -- Query parameters
-        qs =
+        query =
             queryParser global.url
 
         maybeQ =
-            Dict.get "q" qs
+            Dict.get "q" query
                 |> Maybe.map
                     (\x ->
                         case x of
@@ -179,7 +211,7 @@ init global flags =
                     )
                 |> withDefault Nothing
 
-        ---
+        -- Focus
         newFocus =
             flags
                 |> nameidFromFlags
@@ -201,6 +233,7 @@ init global flags =
         refresh =
             basePathChanged TensionsBaseUri global.session.referer
 
+        -- Model init
         model =
             { node_focus = newFocus
             , path_data =
@@ -213,25 +246,20 @@ init global flags =
             , offset = 0
             , load_more_int = False
             , load_more_ext = False
-            , viewMode = Dict.get "v" qs |> withDefault "" |> viewModeDecoder
             , pattern = maybeQ
             , initPattern = maybeQ
+            , viewMode = Dict.get "v" query |> withDefault "" |> viewModeDecoder
+            , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
             , node_action = NoOp
             , isModalActive = False
             }
 
         cmds =
-            if orgChange || refresh || focusChange then
-                [ queryLocalGraph newFocus.nameid GotPath
-                , fetchChildren newFocus.nameid GotChildren
-                , Global.sendSleep PassedSlowLoadTreshold 500
-                ]
-
-            else
-                [ queryLocalGraph newFocus.nameid GotPath
-                , fetchChildren newFocus.nameid GotChildren
-                , Global.sendSleep PassedSlowLoadTreshold 500
-                ]
+            --if orgChange || refresh || focusChange then
+            [ queryLocalGraph newFocus.nameid GotPath
+            , ternary (model.depthFilter == AllSubChildren) (fetchChildren newFocus.nameid GotChildren) Cmd.none
+            , Global.sendSleep PassedSlowLoadTreshold 500
+            ]
     in
     ( model
     , Cmd.batch cmds
@@ -245,20 +273,10 @@ update global msg model =
         PassedSlowLoadTreshold ->
             let
                 tensions_int =
-                    case model.tensions_int of
-                        Loading ->
-                            LoadingSlowly
-
-                        other ->
-                            other
+                    ternary (model.tensions_int == Loading) LoadingSlowly model.tensions_int
 
                 tensions_ext =
-                    case model.tensions_ext of
-                        Loading ->
-                            LoadingSlowly
-
-                        other ->
-                            other
+                    ternary (model.tensions_ext == Loading) LoadingSlowly model.tensions_ext
             in
             ( { model | tensions_int = tensions_int, tensions_ext = tensions_ext }, Cmd.none, Cmd.none )
 
@@ -275,7 +293,11 @@ update global msg model =
                 Success path ->
                     case path.root of
                         Just root ->
-                            ( newModel, Cmd.none, Global.send (UpdateSessionPath path) )
+                            let
+                                cmd =
+                                    ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none
+                            in
+                            ( newModel, cmd, Global.send (UpdateSessionPath path) )
 
                         Nothing ->
                             let
@@ -322,7 +344,7 @@ update global msg model =
                     { model | children = result }
             in
             case result of
-                RemoteData.Success _ ->
+                RemoteData.Success children ->
                     ( newModel, Global.send DoLoad, Cmd.none )
 
                 _ ->
@@ -379,27 +401,50 @@ update global msg model =
             ( { model | tensions_ext = newResult, load_more_ext = load_more }, Cmd.none, Cmd.none )
 
         DoLoad ->
-            case model.children of
-                RemoteData.Success children ->
-                    let
-                        nameids =
-                            -- Direct node and sub-nodes tensions
-                            --path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ] |> String.join "|"
-                            -- all nodes and sub-nodes tensions
-                            children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ] |> String.join "|"
+            case model.depthFilter of
+                AllSubChildren ->
+                    case model.children of
+                        RemoteData.Success children ->
+                            let
+                                nameids =
+                                    children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
 
-                        cmds =
-                            [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsInt
-                            , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsExt
-                            ]
-                    in
-                    ( model, Cmd.batch cmds, Cmd.none )
+                                cmds =
+                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsInt
+                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsExt
+                                    ]
+                            in
+                            ( model, Cmd.batch cmds, Cmd.none )
 
-                other ->
-                    ( model, Cmd.none, Cmd.none )
+                        other ->
+                            ( model, Cmd.none, Cmd.none )
+
+                SelectedNode ->
+                    case model.path_data of
+                        Success path ->
+                            let
+                                nameids =
+                                    path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+
+                                cmds =
+                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsInt
+                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsExt
+                                    ]
+                            in
+                            ( model, Cmd.batch cmds, Cmd.none )
+
+                        other ->
+                            ( model, Cmd.none, Cmd.none )
 
         ChangePattern value ->
             ( { model | pattern = Just value }, Cmd.none, Cmd.none )
+
+        ChangeDepthFilter value ->
+            let
+                newModel =
+                    { model | depthFilter = depthFilterDecoder value }
+            in
+            ( newModel, Global.send SubmitSearch, Cmd.none )
 
         SearchKeyDown key ->
             case key of
@@ -418,13 +463,14 @@ update global msg model =
             case model.path_data of
                 Success path ->
                     let
-                        qs =
+                        query =
                             queryBuilder
                                 [ ( "q", model.pattern |> withDefault "" |> String.trim )
                                 , ( "v", model.viewMode |> viewModeEncoder )
+                                , ( "d", model.depthFilter |> depthFilterEncoder )
                                 ]
                     in
-                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri path.focus.nameid ++ "?" ++ qs) )
+                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri path.focus.nameid ++ "?" ++ query) )
 
                 other ->
                     ( model, Cmd.none, Cmd.none )
@@ -527,7 +573,7 @@ view_ global model =
 
 viewSearchBar : Maybe String -> ViewModeTensions -> Html Msg
 viewSearchBar pattern viewMode =
-    div [ id "searchBarTensions" ]
+    div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "field has-addons" ]
             [ div [ class "control has-icons-left is-expanded dropdown" ]
                 [ input
@@ -543,9 +589,9 @@ viewSearchBar pattern viewMode =
                 ]
             , div [ class "control" ]
                 [ div [ class "is-small select" ]
-                    [ select []
-                        [ option [ class "dropdown-item" ] [ text "All sub-circles" ]
-                        , option [ class "dropdown-item" ] [ text "Selected circle" ]
+                    [ select [ onInput ChangeDepthFilter ]
+                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren) ] [ text "All sub-circles" ]
+                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode) ] [ text "Selected circle" ]
                         ]
                     ]
                 ]

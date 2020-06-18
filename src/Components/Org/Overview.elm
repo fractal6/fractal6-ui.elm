@@ -74,6 +74,52 @@ type alias Model =
 
 
 --
+-- Msg
+--
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+      -- Gql Data Queries
+    | GotOrga (GqlData NodesData) -- graphql
+    | GotTensions (GqlData TensionsData) -- graphql
+    | GotMandate (GqlData Mandate) -- graphql
+      -- Node Actions
+    | DoNodeAction Node_ -- ports receive / tooltip click
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+      -- AddTension Action
+    | DoTensionInit Node -- {target}
+    | DoTensionSource TensionType.TensionType -- {type}
+    | DoTensionFinal UserRole --  {source}
+    | ChangeTensionPost String String -- {field value}
+    | SubmitTension TensionForm Time.Posix -- Send form
+    | TensionAck (GqlData Tension) -- decode better to get IdPayload
+      -- AddCircle Action
+    | DoCircleInit Node NodeType.NodeType -- {target}
+    | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
+    | DoCircleFinal UserRole -- {source}
+    | ChangeCirclePost String String -- {field value}
+    | SubmitCircle TensionForm Bool Time.Posix -- Send form
+    | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
+      -- JoinOrga Action
+    | DoJoinOrga String Time.Posix
+    | JoinAck (GqlData Node)
+      -- Quick search
+    | ChangePattern String
+    | ChangeLookup Nodes_
+    | SearchKeyDown Int
+      -- JS Interop
+    | NodeClicked String -- ports receive / Node clicked
+    | NodeFocused LocalGraph_ -- ports receive / Node focused
+    | DoCloseModal String -- ports receive / Close modal
+    | DoOpenModal -- ports receive / Open  modal
+    | DoClearTooltip -- ports send
+    | ToggleGraphReverse -- ports send
+    | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
+
+
+
+--
 -- INIT
 --
 
@@ -85,10 +131,11 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        -- init Flags and Session
+        -- Init Flags and Session
         session =
             global.session
 
+        -- Focus
         newFocus =
             flags
                 |> nameidFromFlags
@@ -112,9 +159,11 @@ init global flags =
 
         --d1 = Debug.log "isInit, orgChange, focuChange, refresh" [ isInit, orgChange, focusChange, refresh ]
         --d2 = Debug.log "newfocus" [ newFocus ]
+        -- QuickSearch
         qs =
             session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0 }
 
+        -- Model init
         model =
             { orga_data =
                 session.orga_data
@@ -185,46 +234,6 @@ init global flags =
 --
 -- UPDATE
 --
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-      -- Gql Data Queries
-    | GotOrga (GqlData NodesData) -- graphql
-    | GotTensions (GqlData TensionsData) -- graphql
-    | GotMandate (GqlData Mandate) -- graphql
-      -- Node Actions
-    | DoNodeAction Node_ -- ports receive / tooltip click
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- AddTension Action
-    | DoTensionInit Node -- {target}
-    | DoTensionSource TensionType.TensionType -- {type}
-    | DoTensionFinal UserRole --  {source}
-    | ChangeTensionPost String String -- {field value}
-    | SubmitTension TensionForm Time.Posix -- Send form
-    | TensionAck (GqlData Tension) -- decode better to get IdPayload
-      -- AddCircle Action
-    | DoCircleInit Node NodeType.NodeType -- {target}
-    | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
-    | DoCircleFinal UserRole -- {source}
-    | ChangeCirclePost String String -- {field value}
-    | SubmitCircle TensionForm Bool Time.Posix -- Send form
-    | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
-      -- JoinOrga Action
-    | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData Node)
-      -- Quick search
-    | ChangePattern String
-    | ChangeLookup Nodes_
-    | SearchKeyDown Int
-      -- JS Interop
-    | NodeClicked String -- ports receive / Node clicked
-    | NodeFocused LocalGraph_ -- ports receive / Node focused
-    | DoCloseModal String -- ports receive / Close modal
-    | DoOpenModal -- ports receive / Open  modal
-    | DoClearTooltip -- ports send
-    | ToggleGraphReverse -- ports send
-    | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )

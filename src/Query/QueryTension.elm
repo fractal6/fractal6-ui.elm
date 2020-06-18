@@ -210,8 +210,17 @@ queryExtTension targetids first offset query_ msg =
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-subTensionIntFilterByDate : String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionIntFilterByDate nid first offset query_ a =
+subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionIntFilterByDate nameids first offset query_ a =
+    let
+        nameidsRegxp_ =
+            nameids
+                |> List.map (\n -> "^" ++ n ++ "$")
+                |> String.join "|"
+
+        nameidsRegxp =
+            "/" ++ nameidsRegxp_ ++ "/"
+    in
     { a
         | first = Present first
         , offset = Present offset
@@ -226,8 +235,8 @@ subTensionIntFilterByDate nid first offset query_ a =
                 (\c ->
                     { c
                         | status = Present { eq = TensionStatus.Open }
-                        , emitterid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
-                        , receiverid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                        , emitterid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
+                        , receiverid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
                         , and =
                             query_
                                 |> Maybe.map
@@ -254,8 +263,17 @@ subTensionIntFilterByDate nid first offset query_ a =
     }
 
 
-subTensionExtFilterByDate : String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionExtFilterByDate nid first offset query_ a =
+subTensionExtFilterByDate : List String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionExtFilterByDate nameids first offset query_ a =
+    let
+        nameidsRegxp_ =
+            nameids
+                |> List.map (\n -> "^" ++ n ++ "$")
+                |> String.join "|"
+
+        nameidsRegxp =
+            "/" ++ nameidsRegxp_ ++ "/"
+    in
     { a
         | first = Present first
         , offset = Present offset
@@ -274,12 +292,12 @@ subTensionExtFilterByDate nid first offset query_ a =
                             Input.buildTensionFilter
                                 (\d ->
                                     { d
-                                        | receiverid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                        | receiverid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
                                         , not =
                                             Input.buildTensionFilter
                                                 (\e ->
                                                     { e
-                                                        | emitterid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                                        | emitterid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
                                                     }
                                                 )
                                                 |> Present
@@ -287,12 +305,12 @@ subTensionExtFilterByDate nid first offset query_ a =
                                             Input.buildTensionFilter
                                                 (\d1 ->
                                                     { d1
-                                                        | emitterid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                                        | emitterid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
                                                         , not =
                                                             Input.buildTensionFilter
                                                                 (\e1 ->
                                                                     { e1
-                                                                        | receiverid = { eq = Absent, regexp = "/" ++ nid ++ "/" |> Present } |> Present
+                                                                        | receiverid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
                                                                     }
                                                                 )
                                                                 |> Present

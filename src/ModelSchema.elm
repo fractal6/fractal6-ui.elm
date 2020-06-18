@@ -158,7 +158,17 @@ type alias Mandate =
 
 
 --
--- User
+-- User/Members
+--
+
+
+type alias User =
+    UserCtx
+
+
+
+--
+-- User auth
 --
 
 

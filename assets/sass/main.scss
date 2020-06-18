@@ -337,10 +337,19 @@ html.has-modal-active {
 
 
 .searchBar {
-    .select {
-        bacground-color: #000;
-        & select {
-            color: #fff;
+    .select,{
+
+        &::after {
+            border-color: $primary !important;
+        }
+
+        & select, a select::after {
+            color: rgba(0, 0, 0, 0.7) !important;
+            background-color: $grey-lighter !important;
+            border: none;
+        }
+        & select:hover {
+            background-color: $white-light !important;
         }
     }
 }

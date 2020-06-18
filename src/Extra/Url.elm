@@ -56,5 +56,7 @@ queryBuilder parameters =
             String.join "=" [ k, Url.percentEncode v ]
                 |> List.singleton
     in
-    List.concatMap toUri parameters
+    parameters
+        |> List.filter (\( k, v ) -> v /= "")
+        |> List.concatMap toUri
         |> String.join "&"
