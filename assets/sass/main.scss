@@ -276,14 +276,6 @@ html.has-modal-active {
         font-size: 0.85rem;
     }
 
-    .buttonRole {
-        border-width: 0 !important;
-        font-weight: 500 !important;
-        &.is-orange {
-            background-color: $orange-frac6 !important;
-            color: white !important;
-        }
-    }
 
 }
 
@@ -343,13 +335,23 @@ html.has-modal-active {
             border-color: $primary !important;
         }
 
-        & select, a select::after {
-            color: rgba(0, 0, 0, 0.7) !important;
-            background-color: $grey-lighter !important;
-            border: none;
+        & select, & select::after {
+            //color: rgba(0, 0, 0, 0.7) !important;
+            color: $white-light !important;
+            //background-color: $grey-lighter !important;
+            background-color: #558db3 !important;
+            font-weight: 600 !important;
+            border: 0 !important;
         }
         & select:hover {
-            background-color: $white-light !important;
+            //background-color: $white-light !important;
+            background-color: #4281ac !important;
+        }
+        // Don't work, we still have the dotted square
+        & select:focus, & select:-moz-focusring {
+            color: transparent;
+            text-shadow: 0 0 0 #000;
+            outline: none !important;
         }
     }
 }
@@ -465,9 +467,23 @@ html.has-modal-active {
     }
 }
 
+.buttonRole {
+    border-width: 0 !important;
+    font-weight: 500 !important;
+    &.is-orange {
+        background-color: $orange-frac6 !important;
+        color: white !important;
+    }
+}
+
+
+#membersTable {
+    width: 100% !important;
+}
+
 /*
  *
- * Orga Packging graph
+ * Graph Pack Canvas
  *
  */
 

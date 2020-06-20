@@ -176,7 +176,6 @@ getParentidFromRole role =
         |> String.join "#"
 
 
-getParentFragmentFromRole : UserRole -> String
 getParentFragmentFromRole role =
     let
         l =

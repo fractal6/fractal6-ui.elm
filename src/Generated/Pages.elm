@@ -11,10 +11,11 @@ import Generated.Route as Route exposing (Route)
 import Global
 import Page exposing (Bundle, Document)
 import Pages.Top
-import Pages.Login
+import Pages.Logout
 import Pages.NotFound
 import Pages.Signup
-import Pages.Logout
+import Pages.Login
+import Pages.Dynamic
 import Pages.User.Dynamic
 import Pages.T.Dynamic
 import Pages.M.Dynamic
@@ -33,10 +34,11 @@ import Pages.M.Dynamic.Dynamic.Dynamic
 
 type Model
     = Top_Model Pages.Top.Model
-    | Login_Model Pages.Login.Model
+    | Logout_Model Pages.Logout.Model
     | NotFound_Model Pages.NotFound.Model
     | Signup_Model Pages.Signup.Model
-    | Logout_Model Pages.Logout.Model
+    | Login_Model Pages.Login.Model
+    | Dynamic_Model Pages.Dynamic.Model
     | User_Dynamic_Model Pages.User.Dynamic.Model
     | T_Dynamic_Model Pages.T.Dynamic.Model
     | M_Dynamic_Model Pages.M.Dynamic.Model
@@ -51,10 +53,11 @@ type Model
 
 type Msg
     = Top_Msg Pages.Top.Msg
-    | Login_Msg Pages.Login.Msg
+    | Logout_Msg Pages.Logout.Msg
     | NotFound_Msg Pages.NotFound.Msg
     | Signup_Msg Pages.Signup.Msg
-    | Logout_Msg Pages.Logout.Msg
+    | Login_Msg Pages.Login.Msg
+    | Dynamic_Msg Pages.Dynamic.Msg
     | User_Dynamic_Msg Pages.User.Dynamic.Msg
     | T_Dynamic_Msg Pages.T.Dynamic.Msg
     | M_Dynamic_Msg Pages.M.Dynamic.Msg
@@ -80,10 +83,11 @@ type alias UpgradedPage flags model msg =
 
 type alias UpgradedPages =
     { top : UpgradedPage Pages.Top.Flags Pages.Top.Model Pages.Top.Msg
-    , login : UpgradedPage Pages.Login.Flags Pages.Login.Model Pages.Login.Msg
+    , logout : UpgradedPage Pages.Logout.Flags Pages.Logout.Model Pages.Logout.Msg
     , notFound : UpgradedPage Pages.NotFound.Flags Pages.NotFound.Model Pages.NotFound.Msg
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
-    , logout : UpgradedPage Pages.Logout.Flags Pages.Logout.Model Pages.Logout.Msg
+    , login : UpgradedPage Pages.Login.Flags Pages.Login.Model Pages.Login.Msg
+    , dynamic : UpgradedPage Pages.Dynamic.Flags Pages.Dynamic.Model Pages.Dynamic.Msg
     , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
     , t_dynamic : UpgradedPage Pages.T.Dynamic.Flags Pages.T.Dynamic.Model Pages.T.Dynamic.Msg
     , m_dynamic : UpgradedPage Pages.M.Dynamic.Flags Pages.M.Dynamic.Model Pages.M.Dynamic.Msg
@@ -100,10 +104,11 @@ type alias UpgradedPages =
 pages : UpgradedPages
 pages =
     { top = Pages.Top.page |> Page.upgrade Top_Model Top_Msg
-    , login = Pages.Login.page |> Page.upgrade Login_Model Login_Msg
+    , logout = Pages.Logout.page |> Page.upgrade Logout_Model Logout_Msg
     , notFound = Pages.NotFound.page |> Page.upgrade NotFound_Model NotFound_Msg
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
-    , logout = Pages.Logout.page |> Page.upgrade Logout_Model Logout_Msg
+    , login = Pages.Login.page |> Page.upgrade Login_Model Login_Msg
+    , dynamic = Pages.Dynamic.page |> Page.upgrade Dynamic_Model Dynamic_Msg
     , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
     , t_dynamic = Pages.T.Dynamic.page |> Page.upgrade T_Dynamic_Model T_Dynamic_Msg
     , m_dynamic = Pages.M.Dynamic.page |> Page.upgrade M_Dynamic_Model M_Dynamic_Msg
@@ -127,8 +132,8 @@ init route =
         Route.Top ->
             pages.top.init ()
         
-        Route.Login ->
-            pages.login.init ()
+        Route.Logout ->
+            pages.logout.init ()
         
         Route.NotFound ->
             pages.notFound.init ()
@@ -136,8 +141,11 @@ init route =
         Route.Signup ->
             pages.signup.init ()
         
-        Route.Logout ->
-            pages.logout.init ()
+        Route.Login ->
+            pages.login.init ()
+        
+        Route.Dynamic params ->
+            pages.dynamic.init params
         
         Route.User_Dynamic params ->
             pages.user_dynamic.init params
@@ -180,8 +188,8 @@ update bigMsg bigModel =
         ( Top_Msg msg, Top_Model model ) ->
             pages.top.update msg model
         
-        ( Login_Msg msg, Login_Model model ) ->
-            pages.login.update msg model
+        ( Logout_Msg msg, Logout_Model model ) ->
+            pages.logout.update msg model
         
         ( NotFound_Msg msg, NotFound_Model model ) ->
             pages.notFound.update msg model
@@ -189,8 +197,11 @@ update bigMsg bigModel =
         ( Signup_Msg msg, Signup_Model model ) ->
             pages.signup.update msg model
         
-        ( Logout_Msg msg, Logout_Model model ) ->
-            pages.logout.update msg model
+        ( Login_Msg msg, Login_Model model ) ->
+            pages.login.update msg model
+        
+        ( Dynamic_Msg msg, Dynamic_Model model ) ->
+            pages.dynamic.update msg model
         
         ( User_Dynamic_Msg msg, User_Dynamic_Model model ) ->
             pages.user_dynamic.update msg model
@@ -236,8 +247,8 @@ bundle bigModel =
         Top_Model model ->
             pages.top.bundle model
         
-        Login_Model model ->
-            pages.login.bundle model
+        Logout_Model model ->
+            pages.logout.bundle model
         
         NotFound_Model model ->
             pages.notFound.bundle model
@@ -245,8 +256,11 @@ bundle bigModel =
         Signup_Model model ->
             pages.signup.bundle model
         
-        Logout_Model model ->
-            pages.logout.bundle model
+        Login_Model model ->
+            pages.login.bundle model
+        
+        Dynamic_Model model ->
+            pages.dynamic.bundle model
         
         User_Dynamic_Model model ->
             pages.user_dynamic.bundle model

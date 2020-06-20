@@ -162,8 +162,11 @@ type alias Mandate =
 --
 
 
-type alias User =
-    UserCtx
+type alias Member =
+    { username : String
+    , name : Maybe String
+    , roles : List UserRoleExtended
+    }
 
 
 
@@ -187,10 +190,20 @@ type alias UserRights =
 
 
 type alias UserRole =
-    { rootnameid : String
+    { name : String
     , nameid : String
-    , name : String
+    , rootnameid : String
     , role_type : RoleType.RoleType
+    }
+
+
+type alias UserRoleExtended =
+    { name : String
+    , nameid : String
+    , rootnameid : String
+    , role_type : RoleType.RoleType
+    , createdAt : String
+    , parent : Maybe NodeId
     }
 
 

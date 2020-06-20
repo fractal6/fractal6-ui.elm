@@ -97,7 +97,7 @@ uriFromNameid loc nameid =
 
 uriFromUsername : FractalBaseRoute -> String -> String
 uriFromUsername loc username =
-    [ toString loc, "@" ++ username ]
+    [ toString loc, username ]
         |> String.join "/"
 
 

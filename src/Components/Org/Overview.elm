@@ -1161,7 +1161,7 @@ viewMandate mandateData maybeFocus =
                                         in
                                         case r of
                                             RoleType.Guest ->
-                                                [ List.intersperse " " [ "No mandate for Guest", fs, "." ] |> String.join " " |> text ]
+                                                [ [ "No mandate for Guest ", fs, "." ] |> String.join "" |> text ]
 
                                             other ->
                                                 [ viewGqlErrors err ]

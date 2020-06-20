@@ -1,4 +1,4 @@
-module Query.QueryNodes exposing (nodeOrgaPayload, queryGraphPack, queryLocalGraph)
+module Query.QueryNodes exposing (MemberNode, User, nodeOrgaPayload, queryGraphPack, queryLocalGraph, queryMembers)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -12,7 +12,7 @@ import Fractal.Query as Query
 import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
@@ -195,3 +195,140 @@ lg2Payload =
         |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.charac <| nodeCharacPayload)
         |> with Fractal.Object.Node.isRoot
+
+
+
+{-
+   Query Members
+-}
+--- Response decoder
+
+
+type alias TopMemberNode =
+    { createdAt : String
+    , name : String
+    , nameid : String
+    , rootnameid : String
+    , role_type : Maybe RoleType.RoleType
+    , first_link : Maybe User
+    , parent : Maybe NodeId
+    , children : Maybe (List MemberNode)
+    }
+
+
+type alias MemberNode =
+    { createdAt : String
+    , name : String
+    , nameid : String
+    , rootnameid : String
+    , role_type : Maybe RoleType.RoleType
+    , first_link : Maybe User
+    , parent : Maybe NodeId
+    }
+
+
+type alias User =
+    { username : String
+    , name : Maybe String
+    }
+
+
+membersDecoder : Maybe TopMemberNode -> Maybe (List Member)
+membersDecoder data =
+    let
+        n2r n =
+            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent
+    in
+    data
+        |> Maybe.map
+            (\n ->
+                case n.first_link of
+                    Just first_link ->
+                        Just [ Member first_link.username first_link.name [ n2r n ] ]
+
+                    Nothing ->
+                        case n.children of
+                            Just children ->
+                                let
+                                    toTuples : MemberNode -> List ( String, Member )
+                                    toTuples m =
+                                        case m.first_link of
+                                            Just fs ->
+                                                [ ( fs.username, Member fs.username fs.name [ n2r m ] ) ]
+
+                                            Nothing ->
+                                                []
+
+                                    toDict : List ( String, Member ) -> Dict String Member
+                                    toDict inputs =
+                                        List.foldl
+                                            (\( k, v ) dict -> Dict.update k (addParam v) dict)
+                                            Dict.empty
+                                            inputs
+
+                                    addParam : Member -> Maybe Member -> Maybe Member
+                                    addParam m maybeMember =
+                                        case maybeMember of
+                                            Just member ->
+                                                Just { member | roles = member.roles ++ m.roles }
+
+                                            Nothing ->
+                                                Just m
+                                in
+                                List.concatMap toTuples children
+                                    |> toDict
+                                    |> Dict.values
+                                    |> Just
+
+                            Nothing ->
+                                Nothing
+            )
+        |> withDefault Nothing
+
+
+queryMembers nid msg =
+    makeGQLQuery
+        (Query.getNode
+            (membersFilter nid)
+            membersPayload
+        )
+        (RemoteData.fromResult >> decodeResponse membersDecoder >> msg)
+
+
+membersFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
+membersFilter nid a =
+    { a | nameid = Present nid }
+
+
+membersPayload : SelectionSet TopMemberNode Fractal.Object.Node
+membersPayload =
+    SelectionSet.succeed TopMemberNode
+        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.rootnameid
+        |> with Fractal.Object.Node.role_type
+        |> with
+            (Fractal.Object.Node.first_link identity <|
+                SelectionSet.map2 User
+                    Fractal.Object.User.username
+                    Fractal.Object.User.name
+            )
+        |> hardcoded Nothing
+        |> with
+            (Fractal.Object.Node.children identity
+                (SelectionSet.succeed MemberNode
+                    |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
+                    |> with Fractal.Object.Node.name
+                    |> with Fractal.Object.Node.nameid
+                    |> with Fractal.Object.Node.rootnameid
+                    |> with Fractal.Object.Node.role_type
+                    |> with
+                        (Fractal.Object.Node.first_link identity <|
+                            SelectionSet.map2 User
+                                Fractal.Object.User.username
+                                Fractal.Object.User.name
+                        )
+                    |> hardcoded Nothing
+                )
+            )

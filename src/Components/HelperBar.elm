@@ -49,7 +49,7 @@ view baseUri user maybePath joinMsg =
                                             List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
                                     in
                                     if List.length roles > 0 then
-                                        memberButton OverviewBaseUri roles
+                                        memberButtons OverviewBaseUri roles
 
                                     else
                                         joinButton joinMsg
@@ -123,8 +123,8 @@ joinButton msg =
         [ text "Join this organisation" ]
 
 
-memberButton : FractalBaseRoute -> List UserRole -> Html msg
-memberButton baseUri roles =
+memberButtons : FractalBaseRoute -> List UserRole -> Html msg
+memberButtons baseUri roles =
     roles
         |> List.indexedMap
             (\i r ->

@@ -643,12 +643,12 @@ viewIntExtTensions : Model -> Html Msg
 viewIntExtTensions model =
     div [ class "columns" ]
         [ div [ class "column is-6" ]
-            [ div [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text Text.internalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text Text.internalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6" ]
-            [ div [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text Text.externalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text Text.externalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
@@ -656,7 +656,7 @@ viewIntExtTensions model =
 
 viewTensions : NodeFocus -> Maybe String -> GqlData TensionsData -> TensionDirection -> Html Msg
 viewTensions focus pattern tensionsData tensionDir =
-    div [ classList [ ( "spinner", tensionsData == LoadingSlowly ) ] ]
+    div [ classList [ ( "box", True ), ( "spinner", tensionsData == LoadingSlowly ) ] ]
         [ case tensionsData of
             Success tensions ->
                 if List.length tensions > 0 then
