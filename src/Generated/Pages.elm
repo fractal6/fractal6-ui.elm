@@ -22,6 +22,7 @@ import Pages.M.Dynamic
 import Pages.O.Dynamic
 import Pages.T.Dynamic.Dynamic
 import Pages.M.Dynamic.Dynamic
+import Pages.Tension.Dynamic.Dynamic
 import Pages.O.Dynamic.Dynamic
 import Pages.O.Dynamic.Dynamic.Dynamic
 import Pages.T.Dynamic.Dynamic.Dynamic
@@ -45,6 +46,7 @@ type Model
     | O_Dynamic_Model Pages.O.Dynamic.Model
     | T_Dynamic_Dynamic_Model Pages.T.Dynamic.Dynamic.Model
     | M_Dynamic_Dynamic_Model Pages.M.Dynamic.Dynamic.Model
+    | Tension_Dynamic_Dynamic_Model Pages.Tension.Dynamic.Dynamic.Model
     | O_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Model
     | O_Dynamic_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Dynamic.Model
     | T_Dynamic_Dynamic_Dynamic_Model Pages.T.Dynamic.Dynamic.Dynamic.Model
@@ -64,6 +66,7 @@ type Msg
     | O_Dynamic_Msg Pages.O.Dynamic.Msg
     | T_Dynamic_Dynamic_Msg Pages.T.Dynamic.Dynamic.Msg
     | M_Dynamic_Dynamic_Msg Pages.M.Dynamic.Dynamic.Msg
+    | Tension_Dynamic_Dynamic_Msg Pages.Tension.Dynamic.Dynamic.Msg
     | O_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Msg
     | O_Dynamic_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Dynamic.Msg
     | T_Dynamic_Dynamic_Dynamic_Msg Pages.T.Dynamic.Dynamic.Dynamic.Msg
@@ -94,6 +97,7 @@ type alias UpgradedPages =
     , o_dynamic : UpgradedPage Pages.O.Dynamic.Flags Pages.O.Dynamic.Model Pages.O.Dynamic.Msg
     , t_dynamic_dynamic : UpgradedPage Pages.T.Dynamic.Dynamic.Flags Pages.T.Dynamic.Dynamic.Model Pages.T.Dynamic.Dynamic.Msg
     , m_dynamic_dynamic : UpgradedPage Pages.M.Dynamic.Dynamic.Flags Pages.M.Dynamic.Dynamic.Model Pages.M.Dynamic.Dynamic.Msg
+    , tension_dynamic_dynamic : UpgradedPage Pages.Tension.Dynamic.Dynamic.Flags Pages.Tension.Dynamic.Dynamic.Model Pages.Tension.Dynamic.Dynamic.Msg
     , o_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Msg
     , o_dynamic_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Dynamic.Msg
     , t_dynamic_dynamic_dynamic : UpgradedPage Pages.T.Dynamic.Dynamic.Dynamic.Flags Pages.T.Dynamic.Dynamic.Dynamic.Model Pages.T.Dynamic.Dynamic.Dynamic.Msg
@@ -115,6 +119,7 @@ pages =
     , o_dynamic = Pages.O.Dynamic.page |> Page.upgrade O_Dynamic_Model O_Dynamic_Msg
     , t_dynamic_dynamic = Pages.T.Dynamic.Dynamic.page |> Page.upgrade T_Dynamic_Dynamic_Model T_Dynamic_Dynamic_Msg
     , m_dynamic_dynamic = Pages.M.Dynamic.Dynamic.page |> Page.upgrade M_Dynamic_Dynamic_Model M_Dynamic_Dynamic_Msg
+    , tension_dynamic_dynamic = Pages.Tension.Dynamic.Dynamic.page |> Page.upgrade Tension_Dynamic_Dynamic_Model Tension_Dynamic_Dynamic_Msg
     , o_dynamic_dynamic = Pages.O.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Msg
     , o_dynamic_dynamic_dynamic = Pages.O.Dynamic.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Dynamic_Msg
     , t_dynamic_dynamic_dynamic = Pages.T.Dynamic.Dynamic.Dynamic.page |> Page.upgrade T_Dynamic_Dynamic_Dynamic_Model T_Dynamic_Dynamic_Dynamic_Msg
@@ -164,6 +169,9 @@ init route =
         
         Route.M_Dynamic_Dynamic params ->
             pages.m_dynamic_dynamic.init params
+        
+        Route.Tension_Dynamic_Dynamic params ->
+            pages.tension_dynamic_dynamic.init params
         
         Route.O_Dynamic_Dynamic params ->
             pages.o_dynamic_dynamic.init params
@@ -220,6 +228,9 @@ update bigMsg bigModel =
         
         ( M_Dynamic_Dynamic_Msg msg, M_Dynamic_Dynamic_Model model ) ->
             pages.m_dynamic_dynamic.update msg model
+        
+        ( Tension_Dynamic_Dynamic_Msg msg, Tension_Dynamic_Dynamic_Model model ) ->
+            pages.tension_dynamic_dynamic.update msg model
         
         ( O_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Model model ) ->
             pages.o_dynamic_dynamic.update msg model
@@ -279,6 +290,9 @@ bundle bigModel =
         
         M_Dynamic_Dynamic_Model model ->
             pages.m_dynamic_dynamic.bundle model
+        
+        Tension_Dynamic_Dynamic_Model model ->
+            pages.tension_dynamic_dynamic.bundle model
         
         O_Dynamic_Dynamic_Model model ->
             pages.o_dynamic_dynamic.bundle model

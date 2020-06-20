@@ -1,6 +1,6 @@
 module Pages.O.Dynamic.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
 
-import Components.Org.Overview as O exposing (Model, Msg, init, subscriptions, update, view)
+import Components.Org.Overview as O
 import Global
 import Html
 import Page exposing (Document, Page)

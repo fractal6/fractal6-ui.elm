@@ -120,8 +120,8 @@ type alias Tension =
     , labels : Maybe (List Label)
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
-    , n_comments : Maybe Int
     , action : Maybe TensionAction.TensionAction
+    , n_comments : Maybe Int
     }
 
 
@@ -138,6 +138,29 @@ type alias Username =
 
 type alias Label =
     { name : String }
+
+
+type alias TensionExtended =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , title : String
+    , type_ : TensionType.TensionType
+    , labels : Maybe (List Label)
+    , emitter : EmitterOrReceiver
+    , receiver : EmitterOrReceiver
+    , action : Maybe TensionAction.TensionAction
+    , message : Maybe String
+    , comments : Maybe (List Comment)
+    , n_comments : Maybe Int
+    }
+
+
+type alias Comment =
+    { createdAt : String
+    , createdBy : Username
+    , message : String
+    }
 
 
 
@@ -273,6 +296,11 @@ mutationDecoder =
 decodedId : Fractal.ScalarCodecs.Id -> String
 decodedId (Fractal.Scalar.Id id) =
     id
+
+
+encodeId : String -> Fractal.ScalarCodecs.Id
+encodeId id =
+    Fractal.Scalar.Id id
 
 
 decodedTime : Fractal.ScalarCodecs.DateTime -> String

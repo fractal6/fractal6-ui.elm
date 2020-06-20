@@ -1,13 +1,13 @@
 module Pages.User.Dynamic exposing (Flags, Model, Msg, page)
 
-import Components.User.Profile as Profile exposing (Model, Msg, init, subscriptions, update, view)
+import Components.User.Profile as Profile
 import Global
 import Html
 import Page exposing (Document, Page)
 
 
 type alias Flags =
-    { param1 : String }
+    Profile.Flags
 
 
 type alias Model =

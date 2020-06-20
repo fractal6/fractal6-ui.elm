@@ -7,10 +7,13 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (toHref)
+import Global
 import Html exposing (Html, a, br, div, span, text)
 import Html.Attributes exposing (attribute, class, classList, href)
+import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), uriFromNameid, uriFromUsername)
+import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Post, Tension)
 
 
@@ -71,8 +74,8 @@ edgeArrow cls source target =
     ]
 
 
-mediaTension : FractalBaseRoute -> Tension -> Html msg
-mediaTension baseUri tension =
+mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> (String -> msg) -> Html msg
+mediaTension baseUri focus tension navigate =
     div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
             [ div
@@ -82,8 +85,14 @@ mediaTension baseUri tension =
                 [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
             ]
         , div [ class "media-content" ]
-            [ div [ class "content" ]
-                [ div [ classList [ ( "has-text-weight-semibold", True ), ( "is-size-6", baseUri == TensionsBaseUri ) ] ]
+            [ div
+                [ class "content"
+                , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
+                ]
+                [ a
+                    [ classList [ ( "has-text-light", True ), ( "has-text-weight-semibold", True ), ( "is-size-6", baseUri == TensionsBaseUri ) ]
+                    , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                    ]
                     [ text tension.title ]
                 ]
             , div [ class "labelsList" ] <|

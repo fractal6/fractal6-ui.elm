@@ -99,17 +99,17 @@ init flags url key =
 type Msg
     = Navigate Route
     | UpdateReferer Url
-    | UpdateSessionFocus NodeFocus
-    | UpdateSessionPath LocalGraph
-    | UpdateSessionOrga NodesData
-    | UpdateSessionTensions TensionsData
-    | UpdateSessionMandate Mandate
     | UpdateUserSession UserCtx -- user is logged In !
-    | UpdateUserToken
     | UpdateUserTokenAck (WebData UserCtx)
+    | UpdateUserToken
     | LoggedOutUser
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
+    | UpdateSessionFocus (Maybe NodeFocus)
+    | UpdateSessionPath (Maybe LocalGraph)
+    | UpdateSessionOrga (Maybe NodesData)
+    | UpdateSessionTensions (Maybe TensionsData)
+    | UpdateSessionMandate (Maybe Mandate)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -160,43 +160,35 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | node_focus = Just data } }
-            , Cmd.none
-            )
+            ( { model | session = { session | node_focus = data } }, Cmd.none )
 
         UpdateSessionPath data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | path_data = Just data } }
-            , Cmd.none
-            )
+            ( { model | session = { session | path_data = data } }, Cmd.none )
 
         UpdateSessionOrga data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | orga_data = Just data } }, Cmd.none )
+            ( { model | session = { session | orga_data = data } }, Cmd.none )
 
         UpdateSessionTensions data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | tensions_circle = Just data } }
-            , Cmd.none
-            )
+            ( { model | session = { session | tensions_circle = data } }, Cmd.none )
 
         UpdateSessionMandate data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | mandate = Just data } }
-            , Cmd.none
-            )
+            ( { model | session = { session | mandate = data } }, Cmd.none )
 
         UpdateUserSession uctx ->
             let

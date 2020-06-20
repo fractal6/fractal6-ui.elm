@@ -1,7 +1,7 @@
 module Components.Navbar exposing (viewNavbar)
 
 import Components.Logo as Logo
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import ModelCommon exposing (UserState(..))
@@ -79,6 +79,6 @@ viewLink : String -> Route.Route -> String -> Html msg
 viewLink classes route txt =
     a
         [ class classes
-        , href (Route.toHref route)
+        , href (toHref route)
         ]
         [ text txt ]

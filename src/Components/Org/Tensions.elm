@@ -9,7 +9,7 @@ import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlE
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, withDefaultData)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form
@@ -23,17 +23,14 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
-import Json.Decode as JD exposing (Value, decodeValue)
-import Json.Encode as JE
-import Json.Encode.Extra as JEE
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (fetchChildren)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.View exposing (mediaTension)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -155,13 +152,12 @@ nfirst =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-      --WebData
-    | GotChildren (WebData (List NodeId))
-      -- Gql Data Queries
-    | GotPath (GqlData LocalGraph) -- graphql
-    | GotPath2 (GqlData LocalGraph) -- graphql
-    | GotTensionsInt (GqlData TensionsData) -- graphql
-    | GotTensionsExt (GqlData TensionsData) -- graphql
+      -- Data Queries
+    | GotPath (GqlData LocalGraph) -- GraphQL
+    | GotPath2 (GqlData LocalGraph) -- GraphQL
+    | GotChildren (WebData (List NodeId)) -- HTTP/Json
+    | GotTensionsInt (GqlData TensionsData) -- GraphQL
+    | GotTensionsExt (GqlData TensionsData) -- GraphQL
       -- Page Action
     | DoLoad
     | ChangePattern String
@@ -175,6 +171,8 @@ type Msg
       -- JS Interop
     | DoCloseModal String -- ports receive / Close modal
     | DoOpenModal -- ports receive / Open  modal
+      -- Util
+    | Navigate String
 
 
 
@@ -190,26 +188,9 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        -- Init Flags and Session
-        session =
-            global.session
-
         -- Query parameters
         query =
             queryParser global.url
-
-        maybeQ =
-            Dict.get "q" query
-                |> Maybe.map
-                    (\x ->
-                        case x of
-                            "" ->
-                                Nothing
-
-                            other ->
-                                Just other
-                    )
-                |> withDefault Nothing
 
         -- Focus
         newFocus =
@@ -218,26 +199,14 @@ init global flags =
                 |> focusFromNameid
 
         -- What has changed
-        oldFocus =
-            session.node_focus |> withDefault newFocus
-
-        isInit =
-            session.node_focus == Nothing
-
-        orgChange =
-            (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
-
-        focusChange =
-            (newFocus.nameid /= oldFocus.nameid) || isInit
-
-        refresh =
-            basePathChanged TensionsBaseUri global.session.referer
+        fs =
+            focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
 
         -- Model init
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , children = RemoteData.Loading
@@ -246,8 +215,8 @@ init global flags =
             , offset = 0
             , load_more_int = False
             , load_more_ext = False
-            , pattern = maybeQ
-            , initPattern = maybeQ
+            , pattern = Dict.get "q" query
+            , initPattern = Dict.get "q" query
             , viewMode = Dict.get "v" query |> withDefault "" |> viewModeDecoder
             , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
             , node_action = NoOp
@@ -255,15 +224,16 @@ init global flags =
             }
 
         cmds =
-            --if orgChange || refresh || focusChange then
-            [ queryLocalGraph newFocus.nameid GotPath
+            [ ternary fs.focusChange
+                (queryLocalGraph newFocus.nameid GotPath)
+                (ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none)
             , ternary (model.depthFilter == AllSubChildren) (fetchChildren newFocus.nameid GotChildren) Cmd.none
             , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
     , Cmd.batch cmds
-    , Global.send (UpdateSessionFocus newFocus)
+    , Global.send (UpdateSessionFocus (Just newFocus))
     )
 
 
@@ -283,7 +253,7 @@ update global msg model =
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
-        -- Gql queries
+        -- Data queries
         GotPath result ->
             let
                 newModel =
@@ -297,7 +267,7 @@ update global msg model =
                                 cmd =
                                     ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none
                             in
-                            ( newModel, cmd, Global.send (UpdateSessionPath path) )
+                            ( newModel, cmd, Global.send (UpdateSessionPath (Just path)) )
 
                         Nothing ->
                             let
@@ -320,7 +290,7 @@ update global msg model =
                                         newPath =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
                                     in
-                                    ( { model | path_data = Success newPath }, Cmd.none, Global.send (UpdateSessionPath newPath) )
+                                    ( { model | path_data = Success newPath }, Cmd.none, Global.send (UpdateSessionPath (Just newPath)) )
 
                                 Nothing ->
                                     let
@@ -513,12 +483,15 @@ update global msg model =
                 default ->
                     ( model, Cmd.none, Cmd.none )
 
-        -- Modal
+        -- Common
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
         DoCloseModal _ ->
             ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -550,7 +523,7 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-9" ]
                 [ div [ class "columns" ]
-                    [ div [ class "column is-6 is-offset-3" ] [ viewSearchBar model.pattern model.viewMode ] ]
+                    [ div [ class "column is-6 is-offset-3" ] [ viewSearchBar model.pattern model.depthFilter model.viewMode ] ]
                 , case model.viewMode of
                     ListView ->
                         viewListTensions model
@@ -571,8 +544,8 @@ view_ global model =
         ]
 
 
-viewSearchBar : Maybe String -> ViewModeTensions -> Html Msg
-viewSearchBar pattern viewMode =
+viewSearchBar : Maybe String -> DepthFilter -> ViewModeTensions -> Html Msg
+viewSearchBar pattern depthMode viewMode =
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "field has-addons" ]
             [ div [ class "control has-icons-left is-expanded dropdown" ]
@@ -590,8 +563,8 @@ viewSearchBar pattern viewMode =
             , div [ class "control" ]
                 [ div [ class "is-small select" ]
                     [ select [ onInput ChangeDepthFilter ]
-                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren) ] [ text "All sub-circles" ]
-                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode) ] [ text "Selected circle" ]
+                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren), selected (depthMode == AllSubChildren) ] [ text "All sub-circles" ]
+                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode), selected (depthMode == SelectedNode) ] [ text "Selected circle" ]
                         ]
                     ]
                 ]
@@ -609,20 +582,10 @@ viewListTensions : Model -> Html Msg
 viewListTensions model =
     let
         t1 =
-            case model.tensions_int of
-                Success d ->
-                    d
-
-                other ->
-                    []
+            model.tensions_int |> withDefaultData []
 
         t2 =
-            case model.tensions_ext of
-                Success d ->
-                    d
-
-                other ->
-                    []
+            model.tensions_ext |> withDefaultData []
 
         tensions_d =
             case t1 ++ t2 of
@@ -660,7 +623,7 @@ viewTensions focus pattern tensionsData tensionDir =
         [ case tensionsData of
             Success tensions ->
                 if List.length tensions > 0 then
-                    List.map (\t -> mediaTension TensionsBaseUri t) tensions
+                    List.map (\t -> mediaTension TensionsBaseUri focus t Navigate) tensions
                         |> div [ class "is-size-7", id "tensionsTab" ]
 
                 else if pattern /= Nothing then
@@ -682,10 +645,10 @@ viewTensions focus pattern tensionsData tensionDir =
                         NodeType.Circle ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ text Text.noIntTensionRole ]
+                                    div [] [ text Text.noIntTensionCircle ]
 
                                 ExternalTension ->
-                                    div [] [ text Text.noExtTensionRole ]
+                                    div [] [ text Text.noExtTensionCircle ]
 
                                 ListTension ->
                                     div [] [ text Text.noTensionCircle ]

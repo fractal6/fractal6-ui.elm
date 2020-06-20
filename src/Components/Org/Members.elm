@@ -25,20 +25,16 @@ import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, 
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
-import Json.Decode as JD exposing (Value, decodeValue)
-import Json.Encode as JE
-import Json.Encode.Extra as JEE
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (fetchMembers)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid, uriFromUsername)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (mediaTension, roleColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddNode exposing (addNewMember, addOneCircle)
-import Query.AddTension exposing (addCircleTension, addOneTension)
+import Query.AddNode exposing (addNewMember)
 import Query.QueryNodes exposing (queryLocalGraph, queryMembers)
 import RemoteData exposing (RemoteData)
 import Task
@@ -74,6 +70,30 @@ type alias Model =
 
 
 --
+-- Msg
+--
+
+
+type Msg
+    = PassedSlowLoadTreshold -- timer
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+      -- Data Queries
+    | GotPath (GqlData LocalGraph) -- GraphQL
+    | GotPath2 (GqlData LocalGraph) -- GraphQL
+    | GotChildren (WebData (List NodeId)) -- HTTP/Json
+    | GotMembersTop (GqlData (List Member)) -- GraphQL
+    | GotMembersSub (GqlData (List Member)) -- GraphQl
+      -- Page Action
+      -- JoinOrga Action
+    | DoJoinOrga String Time.Posix
+    | JoinAck (GqlData Node)
+      -- JS Interop
+    | DoCloseModal String -- ports receive / Close modal
+    | DoOpenModal -- ports receive / Open  modal
+
+
+
+--
 -- INIT
 --
 
@@ -85,37 +105,20 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        -- init Flags and Session
-        session =
-            global.session
-
-        -- Query parameters
-        ---
+        -- Focus
         newFocus =
             flags
                 |> nameidFromFlags
                 |> focusFromNameid
 
         -- What has changed
-        oldFocus =
-            session.node_focus |> withDefault newFocus
-
-        isInit =
-            session.node_focus == Nothing
-
-        orgChange =
-            (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
-
-        focusChange =
-            (newFocus.nameid /= oldFocus.nameid) || isInit
-
-        refresh =
-            basePathChanged MembersBaseUri global.session.referer
+        fs =
+            focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
             , path_data =
-                session.path_data
+                global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , children = RemoteData.Loading
@@ -126,8 +129,7 @@ init global flags =
             }
 
         cmds =
-            --if orgChange || refresh || focusChange then
-            [ queryLocalGraph newFocus.nameid GotPath
+            [ ternary fs.focusChange (queryLocalGraph newFocus.nameid GotPath) Cmd.none
             , queryMembers newFocus.nameid GotMembersTop
             , fetchMembers newFocus.nameid GotMembersSub
             , Global.sendSleep PassedSlowLoadTreshold 500
@@ -135,26 +137,8 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Global.send (UpdateSessionFocus newFocus)
+    , Global.send (UpdateSessionFocus (Just newFocus))
     )
-
-
-type Msg
-    = PassedSlowLoadTreshold -- timer
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
-    | GotPath (GqlData LocalGraph) -- GraphQL
-    | GotPath2 (GqlData LocalGraph) -- GraphQL
-    | GotMembersTop (GqlData (List Member)) -- GraphQL
-    | GotMembersSub (GqlData (List Member)) -- GraphQl
-    | GotChildren (WebData (List NodeId)) -- HTTP/Json
-      -- Page Action
-      -- JoinOrga Action
-    | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData Node)
-      -- JS Interop
-    | DoCloseModal String -- ports receive / Close modal
-    | DoOpenModal -- ports receive / Open  modal
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -173,7 +157,7 @@ update global msg model =
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
-        -- Gql queries
+        -- Data queries
         GotPath result ->
             let
                 newModel =
@@ -183,7 +167,7 @@ update global msg model =
                 Success path ->
                     case path.root of
                         Just root ->
-                            ( newModel, Cmd.none, Global.send (UpdateSessionPath path) )
+                            ( newModel, Cmd.none, Global.send (UpdateSessionPath (Just path)) )
 
                         Nothing ->
                             let
@@ -206,7 +190,7 @@ update global msg model =
                                         newPath =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
                                     in
-                                    ( { model | path_data = Success newPath }, Cmd.none, Global.send (UpdateSessionPath newPath) )
+                                    ( { model | path_data = Success newPath }, Cmd.none, Global.send (UpdateSessionPath (Just newPath)) )
 
                                 Nothing ->
                                     let
@@ -305,7 +289,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = "Members · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body = [ view_ global model ]
     }
 

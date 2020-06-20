@@ -1,9 +1,27 @@
 module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Global
+import Components.Fa as Fa
+import Components.HelperBar as HelperBar
+import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Text as Text exposing (..)
+import Date exposing (formatTime)
+import Dict exposing (Dict)
+import Extra exposing (ternary)
+import Fractal.Enum.NodeType as NodeType
+import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Iso8601 exposing (fromTime)
+import Maybe exposing (withDefault)
+import ModelCommon exposing (..)
+import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus)
+import ModelSchema exposing (..)
 import Page exposing (Document, Page)
+import Ports
+import Query.AddNode exposing (addNewMember)
+import Task
+import Time
 
 
 type alias Flags =

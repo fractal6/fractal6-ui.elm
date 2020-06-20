@@ -319,6 +319,23 @@ html.has-modal-active {
 .mediaTension {
     //border-bottom: 1px solid #e1e4e8;
     //margin-bottom: -1.11rem !important;
+    & .media-content {
+        // Improve UX when hovering content
+        & .content  {
+            &:hover {
+                a {
+                    color: $link !important;
+                }
+                cursor: pointer !important;
+            }
+        }
+        & .content > a  {
+            color: $white-light !important;
+            &:hover {
+                color: $link !important;
+            }
+        }
+    }
 
 }
 

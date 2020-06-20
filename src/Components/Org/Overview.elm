@@ -25,12 +25,10 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
-import Json.Encode as JE
-import Json.Encode.Extra as JEE
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, nameidFromFlags, uriFromNameid)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -116,6 +114,8 @@ type Msg
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
+      -- Util
+    | Navigate String
 
 
 
@@ -131,7 +131,6 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        -- Init Flags and Session
         session =
             global.session
 
@@ -142,22 +141,13 @@ init global flags =
                 |> focusFromNameid
 
         -- What has changed
-        oldFocus =
-            session.node_focus |> withDefault newFocus
+        fs_ =
+            focusState OverviewBaseUri session.referer session.node_focus newFocus
 
-        isInit =
-            session.node_focus == Nothing || session.orga_data == Nothing
+        fs =
+            { fs_ | isInit = fs_.isInit || session.orga_data == Nothing }
 
-        orgChange =
-            (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
-
-        focusChange =
-            (newFocus.nameid /= oldFocus.nameid) || isInit
-
-        refresh =
-            basePathChanged OverviewBaseUri global.session.referer
-
-        --d1 = Debug.log "isInit, orgChange, focuChange, refresh" [ isInit, orgChange, focusChange, refresh ]
+        --d1 = Debug.log "isInit, orgChange, focuChange, refresh" [ fs.isInit, fs.orgChange, fs.focusChange, fs.refresh ]
         --d2 = Debug.log "newfocus" [ newFocus ]
         -- QuickSearch
         qs =
@@ -165,7 +155,9 @@ init global flags =
 
         -- Model init
         model =
-            { orga_data =
+            { node_focus = newFocus
+            , path_data = global.session.path_data -- Loaded from GraphPack
+            , orga_data =
                 session.orga_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
@@ -178,26 +170,24 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , node_action = session.node_action |> withDefault NoOp
-            , node_focus = newFocus
-            , path_data = session.path_data
             , isModalActive = False
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             }
 
         cmds =
-            if orgChange then
+            if fs.orgChange then
                 [ queryGraphPack newFocus.rootnameid GotOrga
                 , queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
-            else if focusChange then
+            else if fs.focusChange then
                 [ queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
-                    ++ (if refresh then
+                    ++ (if fs.refresh then
                             case session.orga_data of
                                 Just ndata ->
                                     [ Ports.initGraphPack ndata model.node_focus.nameid ]
@@ -209,7 +199,7 @@ init global flags =
                             [ Ports.focusGraphPack newFocus.nameid ]
                        )
 
-            else if refresh then
+            else if fs.refresh then
                 case session.orga_data of
                     Just ndata ->
                         [ Ports.initGraphPack ndata model.node_focus.nameid ]
@@ -226,7 +216,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Global.send (UpdateSessionFocus newFocus)
+    , Global.send (UpdateSessionFocus (Just newFocus))
     )
 
 
@@ -269,30 +259,30 @@ update global msg model =
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
                         , Ports.initGraphPack data model.node_focus.nameid
-                        , Global.send (UpdateSessionOrga data)
+                        , Global.send (UpdateSessionOrga (Just data))
                         )
 
                     else
                         ( { model | orga_data = Failure [ Text.nodeNotExist ] }, Cmd.none, Cmd.none )
 
                 other ->
-                    ( { model | orga_data = result }, Cmd.none, Cmd.none )
+                    ( { model | orga_data = result }, Cmd.none, Global.send (UpdateSessionOrga Nothing) )
 
         GotTensions result ->
             case result of
                 Success data ->
-                    ( { model | tensions_circle = result }, Cmd.none, Global.send (UpdateSessionTensions data) )
+                    ( { model | tensions_circle = result }, Cmd.none, Global.send (UpdateSessionTensions (Just data)) )
 
                 other ->
-                    ( { model | tensions_circle = result }, Cmd.none, Cmd.none )
+                    ( { model | tensions_circle = result }, Cmd.none, Global.send (UpdateSessionTensions Nothing) )
 
         GotMandate result ->
             case result of
                 Success data ->
-                    ( { model | mandate = result }, Cmd.none, Global.send (UpdateSessionMandate data) )
+                    ( { model | mandate = result }, Cmd.none, Global.send (UpdateSessionMandate (Just data)) )
 
                 other ->
-                    ( { model | mandate = result }, Cmd.none, Cmd.none )
+                    ( { model | mandate = result }, Cmd.none, Global.send (UpdateSessionMandate Nothing) )
 
         -- Search
         ChangePattern pattern ->
@@ -508,7 +498,7 @@ update global msg model =
                         , tensions_circle = Success tensions
                       }
                     , Cmd.none
-                    , Global.send (UpdateSessionTensions tensions)
+                    , Global.send (UpdateSessionTensions (Just tensions))
                     )
 
                 Nothing ->
@@ -720,7 +710,7 @@ update global msg model =
                             in
                             ( { model | node_action = AddCircle <| CircleFinal form result, orga_data = Success ndata }
                             , Cmd.none
-                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga ndata) ]
+                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga (Just ndata)) ]
                             )
 
                         other ->
@@ -759,7 +749,7 @@ update global msg model =
                             in
                             ( { model | node_action = JoinOrga (JoinValidation form result), orga_data = Success ndata }
                             , Cmd.none
-                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga ndata) ]
+                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga (Just ndata)) ]
                             )
 
                         other ->
@@ -767,16 +757,6 @@ update global msg model =
 
                 default ->
                     ( model, Cmd.none, Cmd.none )
-
-        -- Modal
-        DoOpenModal ->
-            ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
-
-        DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
-
-        DoClearTooltip ->
-            ( model, Cmd.none, Ports.clearTooltip )
 
         -- JS interop
         NodeClicked nameid ->
@@ -788,7 +768,7 @@ update global msg model =
         NodeFocused path_ ->
             case path_ of
                 Ok path ->
-                    ( { model | path_data = Just path }, Ports.drawButtonsGraphPack, Global.send (UpdateSessionPath path) )
+                    ( { model | path_data = Just path }, Ports.drawButtonsGraphPack, Global.send (UpdateSessionPath (Just path)) )
 
                 Err err ->
                     ( model, Cmd.none, Cmd.none )
@@ -798,6 +778,19 @@ update global msg model =
 
         ToggleTooltips ->
             ( model, () |> sendToggleTooltips, Cmd.none )
+
+        -- Common
+        DoOpenModal ->
+            ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
+
+        DoCloseModal _ ->
+            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+
+        DoClearTooltip ->
+            ( model, Cmd.none, Ports.clearTooltip )
+
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
 
 
 
@@ -1241,7 +1234,7 @@ viewActivies model =
             [ case model.tensions_circle of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> mediaTension OverviewBaseUri t) tensions
+                        List.map (\t -> mediaTension OverviewBaseUri model.node_focus t Navigate) tensions
                             ++ (if List.length tensions > 5 then
                                     [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text Text.seeMore ] ] ]
 

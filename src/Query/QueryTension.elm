@@ -1,4 +1,4 @@
-module Query.QueryTension exposing (queryCircleTension, queryExtTension, queryIntTension, tensionPayload)
+module Query.QueryTension exposing (getTension, queryCircleTension, queryExtTension, queryIntTension, tensionPayload)
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction
@@ -8,6 +8,7 @@ import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.Comment
 import Fractal.Object.Label
 import Fractal.Object.Node
 import Fractal.Object.Tension
@@ -22,6 +23,68 @@ import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
+
+
+
+{-
+   Get one tension
+-}
+
+
+nCommentPerTension : Int
+nCommentPerTension =
+    100
+
+
+getTension tensionid msg =
+    makeGQLQuery
+        (Query.getTension { id = encodeId tensionid }
+            tensionExtendedPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+tensionExtendedPayload : SelectionSet TensionExtended Fractal.Object.Tension
+tensionExtendedPayload =
+    SelectionSet.succeed TensionExtended
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Tension.title
+        |> with Fractal.Object.Tension.type_
+        |> with
+            (Fractal.Object.Tension.labels
+                (\args -> { args | first = Present nLabelPerTension })
+                (SelectionSet.map Label Fractal.Object.Label.name)
+            )
+        |> with
+            (Fractal.Object.Tension.emitter identity
+                (SelectionSet.succeed EmitterOrReceiver
+                    |> with Fractal.Object.Node.name
+                    |> with Fractal.Object.Node.nameid
+                    |> with Fractal.Object.Node.role_type
+                )
+            )
+        |> with
+            (Fractal.Object.Tension.receiver identity
+                (SelectionSet.succeed EmitterOrReceiver
+                    |> with Fractal.Object.Node.name
+                    |> with Fractal.Object.Node.nameid
+                    |> with Fractal.Object.Node.role_type
+                )
+            )
+        |> with Fractal.Object.Tension.action
+        |> with Fractal.Object.Tension.message
+        |> with
+            (Fractal.Object.Tension.comments
+                (\args -> { args | first = Present nCommentPerTension })
+                (SelectionSet.succeed Comment
+                    |> with (Fractal.Object.Comment.createdAt |> SelectionSet.map decodedTime)
+                    |> with (Fractal.Object.Comment.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+                    |> with Fractal.Object.Comment.message
+                )
+            )
+        |> with Fractal.Object.Tension.n_comments
 
 
 
@@ -136,8 +199,8 @@ tensionPayload =
                     |> with Fractal.Object.Node.role_type
                 )
             )
-        |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.action
+        |> with Fractal.Object.Tension.n_comments
 
 
 circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
@@ -220,6 +283,9 @@ subTensionIntFilterByDate nameids first offset query_ a =
 
         nameidsRegxp =
             "/" ++ nameidsRegxp_ ++ "/"
+
+        f =
+            Debug.log "regep" nameidsRegxp
     in
     { a
         | first = Present first
@@ -235,8 +301,8 @@ subTensionIntFilterByDate nameids first offset query_ a =
                 (\c ->
                     { c
                         | status = Present { eq = TensionStatus.Open }
-                        , emitterid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
-                        , receiverid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
+                        , emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                        , receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                         , and =
                             query_
                                 |> Maybe.map
@@ -273,6 +339,9 @@ subTensionExtFilterByDate nameids first offset query_ a =
 
         nameidsRegxp =
             "/" ++ nameidsRegxp_ ++ "/"
+
+        f =
+            Debug.log "regep" nameidsRegxp
     in
     { a
         | first = Present first
@@ -292,12 +361,12 @@ subTensionExtFilterByDate nameids first offset query_ a =
                             Input.buildTensionFilter
                                 (\d ->
                                     { d
-                                        | receiverid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
+                                        | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                                         , not =
                                             Input.buildTensionFilter
                                                 (\e ->
                                                     { e
-                                                        | emitterid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
+                                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                                                     }
                                                 )
                                                 |> Present
@@ -305,12 +374,12 @@ subTensionExtFilterByDate nameids first offset query_ a =
                                             Input.buildTensionFilter
                                                 (\d1 ->
                                                     { d1
-                                                        | emitterid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
+                                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                                                         , not =
                                                             Input.buildTensionFilter
                                                                 (\e1 ->
                                                                     { e1
-                                                                        | receiverid = { eq = Absent, regexp = nameidsRegxp |> Present } |> Present
+                                                                        | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                                                                     }
                                                                 )
                                                                 |> Present

@@ -1,16 +1,4 @@
-module ModelCommon.Uri exposing
-    ( Flags_
-    , FractalBaseRoute(..)
-    , NodeFocus
-    , basePathChanged
-    , focusFromNameid
-    , guestIdCodec
-    , nameidFromFlags
-    , nodeIdCodec
-    , toString
-    , uriFromNameid
-    , uriFromUsername
-    )
+module ModelCommon.Uri exposing (..)
 
 import Array exposing (Array)
 import Fractal.Enum.NodeType as NodeType
@@ -52,6 +40,14 @@ type alias NodeFocus =
     }
 
 
+type alias FocusState =
+    { isInit : Bool
+    , orgChange : Bool
+    , focusChange : Bool
+    , refresh : Bool
+    }
+
+
 toString : FractalBaseRoute -> String
 toString route =
     case route of
@@ -72,6 +68,22 @@ toString route =
             ""
 
 
+focusState : FractalBaseRoute -> Url -> Maybe NodeFocus -> NodeFocus -> FocusState
+focusState baseUri referer maybeFocus newFocus =
+    let
+        oldFocus =
+            maybeFocus |> withDefault newFocus
+
+        isInit =
+            maybeFocus == Nothing
+    in
+    { isInit = isInit
+    , orgChange = (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
+    , focusChange = (newFocus.nameid /= oldFocus.nameid) || isInit
+    , refresh = basePathChanged baseUri referer || isInit
+    }
+
+
 basePathChanged : FractalBaseRoute -> Url -> Bool
 basePathChanged loc url =
     let
@@ -86,6 +98,12 @@ basePathChanged loc url =
                 |> withDefault ""
     in
     base /= baseRef
+
+
+
+{-
+   Uri Codec
+-}
 
 
 uriFromNameid : FractalBaseRoute -> String -> String
