@@ -1,4 +1,4 @@
-module Pages.User.Dynamic exposing (Flags, Model, Msg, page)
+module Pages.Dynamic exposing (Flags, Model, Msg, page)
 
 import Components.User.Profile as Profile exposing (Model, Msg, init, subscriptions, update, view)
 import Global
