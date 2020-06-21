@@ -283,9 +283,6 @@ subTensionIntFilterByDate nameids first offset query_ a =
 
         nameidsRegxp =
             "/" ++ nameidsRegxp_ ++ "/"
-
-        f =
-            Debug.log "regep" nameidsRegxp
     in
     { a
         | first = Present first
@@ -339,9 +336,6 @@ subTensionExtFilterByDate nameids first offset query_ a =
 
         nameidsRegxp =
             "/" ++ nameidsRegxp_ ++ "/"
-
-        f =
-            Debug.log "regep" nameidsRegxp
     in
     { a
         | first = Present first
@@ -357,6 +351,15 @@ subTensionExtFilterByDate nameids first offset query_ a =
                 (\c ->
                     { c
                         | status = Present { eq = TensionStatus.Open }
+                        , title = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
+                        , or =
+                            Input.buildTensionFilter
+                                (\d3 ->
+                                    { d3
+                                        | message = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
+                                    }
+                                )
+                                |> Present
                         , and =
                             Input.buildTensionFilter
                                 (\d ->
@@ -386,26 +389,6 @@ subTensionExtFilterByDate nameids first offset query_ a =
                                                     }
                                                 )
                                                 |> Present
-                                        , and =
-                                            query_
-                                                |> Maybe.map
-                                                    (\q ->
-                                                        Input.buildTensionFilter
-                                                            (\d2 ->
-                                                                { d2
-                                                                    | title = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                                    , or =
-                                                                        Input.buildTensionFilter
-                                                                            (\d3 ->
-                                                                                { d3
-                                                                                    | message = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                                                }
-                                                                            )
-                                                                            |> Present
-                                                                }
-                                                            )
-                                                    )
-                                                |> fromMaybe
                                     }
                                 )
                                 |> Present

@@ -224,9 +224,10 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange
-                (queryLocalGraph newFocus.nameid GotPath)
-                (ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none)
+            [ --ternary fs.focusChange
+              --  (queryLocalGraph newFocus.nameid GotPath)
+              --  (ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none)
+              queryLocalGraph newFocus.nameid GotPath
             , ternary (model.depthFilter == AllSubChildren) (fetchChildren newFocus.nameid GotChildren) Cmd.none
             , Global.sendSleep PassedSlowLoadTreshold 500
             ]
@@ -289,8 +290,11 @@ update global msg model =
                                     let
                                         newPath =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
+                                        cmd =
+                                            ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none
                                     in
-                                    ( { model | path_data = Success newPath }, Cmd.none, Global.send (UpdateSessionPath (Just newPath)) )
+                                    ( { model | path_data = Success newPath }, cmd, Global.send (UpdateSessionPath (Just newPath)) )
 
                                 Nothing ->
                                     let

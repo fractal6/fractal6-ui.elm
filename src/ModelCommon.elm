@@ -237,9 +237,9 @@ userDecoder =
         (JD.field "roles"
             (JD.list <|
                 JD.map4 UserRole
-                    (JD.field "rootnameid" JD.string)
-                    (JD.field "nameid" JD.string)
                     (JD.field "name" JD.string)
+                    (JD.field "nameid" JD.string)
+                    (JD.field "rootnameid" JD.string)
                     (JD.field "role_type" <| RoleType.decoder)
              --@DEBUG/BUG: fail siletnly if role_type is not present in Role !
             )

@@ -150,6 +150,8 @@ type alias TensionExtended =
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
+
+    --
     , message : Maybe String
     , comments : Maybe (List Comment)
     , n_comments : Maybe Int
@@ -196,6 +198,11 @@ type alias Member =
 --
 -- User auth
 --
+{-
+   @WARNING: changing field order will break user decoder.
+   The decoder's field have to be ordered following the
+   alias type definition.
+-}
 
 
 type alias UserCtx =
@@ -225,6 +232,8 @@ type alias UserRoleExtended =
     , nameid : String
     , rootnameid : String
     , role_type : RoleType.RoleType
+
+    --
     , createdAt : String
     , parent : Maybe NodeId
     }

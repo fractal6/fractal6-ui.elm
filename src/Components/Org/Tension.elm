@@ -1,54 +1,35 @@
-module Components.Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Components.Org.Tension exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Array
-import Browser.Events exposing (onKeyDown)
-import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewWarnings)
+import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData)
-import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
-import Form
-import Form.NewCircle
-import Form.NewTension
-import Fractal.Enum.NodeMode as NodeMode
+import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
-import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Requests exposing (fetchMembers)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (mediaTension, roleColor)
+import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.QueryNodes exposing (queryLocalGraph, queryMembers)
-import RemoteData exposing (RemoteData)
+import Query.QueryNodes exposing (queryLocalGraph)
+import Query.QueryTension exposing (getTension)
 import Task
 import Time
 
 
-page : Page Flags Model Msg
-page =
-    Page.component
-        { init = init
-        , update = update
-        , subscriptions = subscriptions
-        , view = view
-        }
+type alias Flags =
+    { param1 : String
+    , param2 : String
+    }
 
 
 
@@ -58,13 +39,17 @@ page =
 
 
 type alias Model =
-    { node_focus : NodeFocus
+    { -- Focus
+      node_focus : NodeFocus
     , path_data : GqlData LocalGraph
-    , children : WebData (List NodeId)
-    , members_top : GqlData (List Member)
-    , members_sub : GqlData (List Member)
+
+    -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+
+    -- Page
+    , tensionid : String
+    , tension : GqlData TensionExtended
     }
 
 
@@ -77,12 +62,10 @@ type alias Model =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Data Queries
+      -- Gql Data Queries
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
-    | GotMembersTop (GqlData (List Member)) -- GraphQL
-    | GotMembersSub (GqlData (List Member)) -- GraphQl
-      -- Page Action
+    | GotTension (GqlData TensionExtended)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -91,14 +74,14 @@ type Msg
     | DoOpenModal -- ports receive / Open  modal
 
 
-
---
--- INIT
---
-
-
-type alias Flags =
-    Flags_
+page : Page Flags Model Msg
+page =
+    Page.component
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -106,9 +89,7 @@ init global flags =
     let
         -- Focus
         newFocus =
-            flags
-                |> nameidFromFlags
-                |> focusFromNameid
+            NodeFocus flags.param1 True flags.param1 NodeType.Circle
 
         -- What has changed
         fs =
@@ -120,18 +101,15 @@ init global flags =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , children = RemoteData.Loading
-            , members_top = Loading
-            , members_sub = Loading
+            , tensionid = flags.param2
+            , tension = Loading
             , node_action = NoOp
             , isModalActive = False
             }
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph newFocus.nameid GotPath) Cmd.none
-            , queryMembers newFocus.nameid GotMembersTop
-            , fetchMembers newFocus.nameid GotMembersSub
-            , Global.sendSleep PassedSlowLoadTreshold 500
+            , getTension model.tensionid GotTension
             ]
     in
     ( model
@@ -145,13 +123,10 @@ update global msg model =
     case msg of
         PassedSlowLoadTreshold ->
             let
-                members_top =
-                    ternary (model.members_top == Loading) LoadingSlowly model.members_top
-
-                members_sub =
-                    ternary (model.members_sub == Loading) LoadingSlowly model.members_sub
+                tension =
+                    ternary (model.tension == Loading) LoadingSlowly model.tension
             in
-            ( { model | members_top = members_top, members_sub = members_sub }, Cmd.none, Cmd.none )
+            ( { model | tension = tension }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -207,17 +182,10 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        GotMembersTop result ->
+        GotTension result ->
             let
                 newModel =
-                    { model | members_top = result }
-            in
-            ( newModel, Cmd.none, Cmd.none )
-
-        GotMembersSub result ->
-            let
-                newModel =
-                    { model | members_sub = result }
+                    { model | tension = result }
             in
             ( newModel, Cmd.none, Cmd.none )
 
@@ -271,7 +239,13 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Members · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title =
+        case model.tension of
+            Success t ->
+                t.title
+
+            _ ->
+                "Loading tension"
     , body = [ view_ global model ]
     }
 
@@ -279,140 +253,49 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "mainPane" ]
-        [ HelperBar.view MembersBaseUri
+        [ HelperBar.view TensionsBaseUri
             global.session.user
             global.session.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered" ]
             [ div [ class "column is-9" ]
-                [ div [ class "columns" ]
-                    [ viewMembers model.members_top "Direct members" model.node_focus ]
-                , div [ class "columns" ]
-                    [ viewMembers model.members_sub "Sub-Circle members" model.node_focus ]
-                , div [ class "columns" ]
-                    [ viewGuest model.members_top "Guest" model.node_focus ]
+                [ div [ class "columns" ] <|
+                    case model.tension of
+                        Success t ->
+                            [ div [ class "column is tree-quarter" ] [ viewTension t ]
+                            , div [ class "column " ] [ viewSidePane t ]
+                            ]
+
+                        Failure err ->
+                            [ viewGqlErrors err ]
+
+                        LoadingSlowly ->
+                            [ div [ class "spinner" ] [] ]
+
+                        other ->
+                            []
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
         ]
 
 
-viewMembers : GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewMembers members_d title focus =
-    div [ id "membersTable", class "section" ]
-        [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
-        , div [ class "table is-fullwidth" ]
-            [ thead []
-                [ tr []
-                    [ th [] [ text "Username" ]
-                    , th [] [ text "Name" ]
-                    , th [ class "" ] [ text "Roles" ]
-                    ]
-                ]
-            , tbody [] <|
-                case members_d of
-                    Success members ->
-                        List.indexedMap
-                            (\i m ->
-                                let
-                                    roles =
-                                        memberRolesFilter focus m.roles
-                                in
-                                if List.length roles == 0 then
-                                    tr [] []
+viewTension : TensionExtended -> Html Msg
+viewTension t =
+    div []
+        [ h1 [] [ text t.title ]
+        , case t.message of
+            Just m ->
+                div [ class "" ] [ text m ]
 
-                                else
-                                    tr []
-                                        [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                        , td [] [ m.name |> withDefault "--" |> text ]
-                                        , td [] [ viewMemberRoles OverviewBaseUri roles ]
-                                        ]
-                            )
-                            members
-
-                    Failure err ->
-                        [ viewGqlErrors err ]
-
-                    LoadingSlowly ->
-                        [ div [ class "spinner" ] [] ]
-
-                    other ->
-                        []
-            ]
+            Nothing ->
+                div [ class "" ] [ text "No message here." ]
         ]
 
 
-viewGuest : GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewGuest members_d title focus =
-    let
-        guests =
-            members_d
-                |> withDefaultData []
-                |> List.filter
-                    (\u ->
-                        u.roles
-                            |> List.map (\r -> r.role_type)
-                            |> List.member RoleType.Guest
-                    )
-    in
-    if List.length guests > 0 then
-        div [ id "membersTable", class "section" ]
-            [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
-            , div [ class "table is-fullwidth" ]
-                [ thead []
-                    [ tr []
-                        [ th [] [ text "Username" ]
-                        , th [] [ text "Name" ]
-                        ]
-                    ]
-                , tbody [] <|
-                    List.indexedMap
-                        (\i m ->
-                            tr []
-                                [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                , td [] [ m.name |> withDefault "--" |> text ]
-                                ]
-                        )
-                        guests
-                ]
-            ]
-
-    else
-        div [] []
-
-
-memberRolesFilter : NodeFocus -> List UserRoleExtended -> List UserRoleExtended
-memberRolesFilter focus roles =
-    roles
-        |> List.map
-            (\r ->
-                if r.role_type == RoleType.Guest || r.role_type == RoleType.Member then
-                    []
-
-                else if focus.nameid == (r.parent |> Maybe.map (\p -> p.nameid) |> withDefault "") then
-                    -- Dont include top level member for sub circle member (which contains all member)
-                    -- Note: .parentis not defined in the top member query
-                    []
-
-                else
-                    [ r ]
-            )
-        |> List.concat
-
-
-viewMemberRoles : FractalBaseRoute -> List UserRoleExtended -> Html msg
-viewMemberRoles baseUri roles =
-    div [ class "buttons is-pulled-right" ] <|
-        List.map
-            (\r ->
-                a
-                    [ class ("button buttonRole is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
-                    , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatTime r.createdAt ] |> String.join " ")
-                    , href <| uriFromNameid baseUri r.nameid
-                    ]
-                    [ text r.name ]
-            )
-            roles
+viewSidePane : TensionExtended -> Html Msg
+viewSidePane t =
+    div [] []
 
 
 
