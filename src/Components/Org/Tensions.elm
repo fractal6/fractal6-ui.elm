@@ -500,7 +500,8 @@ update global msg model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    Sub.none
+    Sub.batch
+        [ Ports.closeModalFromJs DoCloseModal ]
 
 
 view : Global.Model -> Model -> Document Msg
@@ -517,17 +518,17 @@ view_ global model =
             global.session.user
             global.session.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
-        , div [] <|
-            case model.children of
-                RemoteData.Failure err ->
-                    [ viewHttpErrors err ]
-
-                other ->
-                    []
         , div [ class "columns is-centered" ]
-            [ div [ class "column is-9" ]
+            [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]
                     [ div [ class "column is-6 is-offset-3" ] [ viewSearchBar model.pattern model.depthFilter model.viewMode ] ]
+                , div [] <|
+                    case model.children of
+                        RemoteData.Failure err ->
+                            [ viewHttpErrors err ]
+
+                        other ->
+                            []
                 , case model.viewMode of
                     ListView ->
                         viewListTensions model

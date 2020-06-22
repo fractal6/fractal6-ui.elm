@@ -1,4 +1,4 @@
-module Extra exposing (ternary, withDefaultData)
+module Extra exposing (ternary, withDefaultData, withMaybeData)
 
 import Dict exposing (Dict)
 import ModelSchema exposing (RequestResult(..))
@@ -21,3 +21,13 @@ withDefaultData default result =
 
         _ ->
             default
+
+
+withMaybeData : RequestResult e a -> Maybe a
+withMaybeData result =
+    case result of
+        Success d ->
+            Just d
+
+        _ ->
+            Nothing

@@ -1,11 +1,13 @@
 module ModelCommon.View exposing (..)
 
 import Components.Fa as Fa
+import Components.Text as Text
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global
@@ -14,7 +16,7 @@ import Html.Attributes exposing (attribute, class, classList, href)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
-import ModelSchema exposing (EmitterOrReceiver, Post, Tension)
+import ModelSchema exposing (EmitterOrReceiver, Post, Tension, TensionExtended, UserCtx, Username)
 
 
 
@@ -37,6 +39,16 @@ roleColor rt =
 
         RoleType.Coordinator ->
             "orange"
+
+
+statusColor : TensionStatus.TensionStatus -> String
+statusColor s =
+    case s of
+        TensionStatus.Open ->
+            "success"
+
+        TensionStatus.Closed ->
+            "danger"
 
 
 
@@ -64,14 +76,6 @@ tensionTypeColor elt tt =
 tensionTypeSpan : String -> String -> TensionType.TensionType -> Html msg
 tensionTypeSpan cls elt type_ =
     span [ class <| cls ++ " " ++ tensionTypeColor elt type_ ] [ text (TensionType.toString type_) ]
-
-
-edgeArrow : String -> Html msg -> Html msg -> List (Html msg)
-edgeArrow cls source target =
-    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
-    , span [ class <| "right-arrow" ] []
-    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]
-    ]
 
 
 mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> (String -> msg) -> Html msg
@@ -105,7 +109,7 @@ mediaTension baseUri focus tension navigate =
                 )
             , br [ class "is-block" ] []
             , span [ class "columns" ]
-                [ span [ class "column is-two-thirds" ] <| edgeArrow "has-text-weight-light" (viewNodeRef OverviewBaseUri tension.emitter) (viewNodeRef OverviewBaseUri tension.receiver)
+                [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
                 , span [ class "has-text-weight-light column" ]
                     [ span [ class "columns" ]
                         [ span [ class "column is-1", attribute "style" "padding-left: 0 !important;" ] <|
@@ -120,9 +124,7 @@ mediaTension baseUri focus tension navigate =
                                     []
                         , span [ class "column", attribute "style" "padding-right: 0 !important;" ]
                             [ span [ class "is-pulled-right" ]
-                                [ "opened the " ++ formatTime tension.createdAt ++ " by " |> text
-                                , a [ href (uriFromUsername UsersBaseUri tension.createdBy.username) ] [ "@" ++ tension.createdBy.username |> text ]
-                                ]
+                                [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
                             ]
                         ]
                     ]
@@ -139,12 +141,72 @@ mediaTension baseUri focus tension navigate =
                     [ class "tooltip has-tooltip-top"
                     , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
                     ]
-                    [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments)
-                    ]
+                    [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments) ]
 
               else
                 span [] []
             ]
+        ]
+
+
+edgeArrow : String -> Html msg -> Html msg -> List (Html msg)
+edgeArrow cls source target =
+    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
+    , span [ class <| "right-arrow" ] []
+    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]
+    ]
+
+
+viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
+viewTensionArrow cls emitter receiver =
+    span [ class cls ]
+        [ span [ class "is-small is-light is-inverted is-static" ] [ viewNodeRef OverviewBaseUri emitter ]
+        , span [ class "right-arrow" ] []
+        , span [ class "is-small is-light is-inverted is-static" ] [ viewNodeRef OverviewBaseUri receiver ]
+        ]
+
+
+viewTensionArrowB : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
+viewTensionArrowB cls emitter receiver =
+    span [ class cls ]
+        [ span [ class "is-small  is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ] [ viewNodeRef OverviewBaseUri emitter ]
+        , span [ class "right-arrow" ] []
+        , span [ class "is-small  is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ] [ viewNodeRef OverviewBaseUri receiver ]
+        ]
+
+
+viewUsernameLink : String -> Html msg
+viewUsernameLink username =
+    a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
+
+
+viewOpenedDate : String -> Html msg
+viewOpenedDate date =
+    span []
+        [ [ Text.openedThe, formatTime date ] |> String.join " " |> text ]
+
+
+viewCommentedDate : String -> Html msg
+viewCommentedDate date =
+    span []
+        [ [ Text.commentedThe, formatTime date ] |> String.join " " |> text ]
+
+
+viewTensionDateAndUser : String -> Username -> Html msg
+viewTensionDateAndUser createdAt createdBy =
+    span []
+        [ viewOpenedDate createdAt
+        , text (" " ++ Text.by ++ " ")
+        , viewUsernameLink createdBy.username
+        ]
+
+
+viewTensionDateAndUserC : String -> Username -> Html msg
+viewTensionDateAndUserC createdAt createdBy =
+    span []
+        [ viewUsernameLink createdBy.username
+        , text " "
+        , viewCommentedDate createdAt
         ]
 
 
@@ -165,3 +227,24 @@ viewNodeRef baseUri n =
                 uriFromNameid baseUri n.nameid
     in
     a [ href ref ] [ n.name |> text ]
+
+
+
+{-
+   User
+-}
+
+
+getAvatar : String -> Html msg
+getAvatar username =
+    let
+        initial =
+            username
+                |> String.slice 0 1
+                |> String.toUpper
+    in
+    username
+        |> String.slice 1 3
+        |> String.toLower
+        |> String.append initial
+        |> text

@@ -6,6 +6,7 @@ window.addEventListener('load', _ => {
 
             // Ephemere Objects
             var session = {
+                isInit: true,
                 user_ctx: null, // from localstorage
                 bulmaHandlers: [],
                 // Graphpack
@@ -89,9 +90,10 @@ const actions = {
             var gp = session.gp;
             //var data = JSON.parse(data);
 
-            var err = gp.init(app, data);
-            if (err) {
+            var ok = gp.init(app, data, session.isInit);
+            if (ok) {
                 gp.zoomToNode(data.focusid, 1.5);
+                session.isInit = false;
             }
 
             var qs = session.qs;

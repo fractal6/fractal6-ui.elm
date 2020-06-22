@@ -144,8 +144,11 @@ init global flags =
         fs_ =
             focusState OverviewBaseUri session.referer session.node_focus newFocus
 
+        isInit =
+            session.orga_data == Nothing
+
         fs =
-            { fs_ | isInit = fs_.isInit || session.orga_data == Nothing }
+            { fs_ | isInit = fs_.isInit || isInit }
 
         --d1 = Debug.log "isInit, orgChange, focuChange, refresh" [ fs.isInit, fs.orgChange, fs.focusChange, fs.refresh ]
         --d2 = Debug.log "newfocus" [ newFocus ]
@@ -175,7 +178,7 @@ init global flags =
             }
 
         cmds =
-            if fs.orgChange then
+            if fs.orgChange || isInit then
                 [ queryGraphPack newFocus.rootnameid GotOrga
                 , queryCircleTension newFocus.nameid GotTensions
                 , queryMandate newFocus.nameid GotMandate
@@ -800,7 +803,7 @@ update global msg model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
-        [ closeModalFromJs DoCloseModal
+        [ Ports.closeModalFromJs DoCloseModal
         , nodeClickedFromJs NodeClicked
         , nodeFocusedFromJs_ NodeFocused
         , nodeDataFromJs_ DoNodeAction
@@ -810,9 +813,6 @@ subscriptions _ _ =
 
 
 -- Receive to Javascript
-
-
-port closeModalFromJs : (String -> msg) -> Sub msg
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg
@@ -1298,30 +1298,6 @@ setupActionModal model =
         ]
 
 
-viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
-viewJoinOrgaStep orga step =
-    case step of
-        JoinInit _ ->
-            div [ class "box spinner" ] [ text Text.loading ]
-
-        JoinAuthNeeded ->
-            viewAuthNeeded
-
-        JoinNotAuthorized errMsg ->
-            viewGqlErrors errMsg
-
-        JoinValidation form result ->
-            case result of
-                Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
-
-                Failure err ->
-                    viewGqlErrors err
-
-                default ->
-                    div [ class "box spinner" ] [ text Text.loading ]
-
-
 viewActionStep : Model -> ActionState -> Html Msg
 viewActionStep model action =
     case action of
@@ -1453,6 +1429,30 @@ viewCircleStep step =
 
         CircleFinal form result ->
             Form.NewCircle.view form result ChangeCirclePost DoCloseModal Submit SubmitCircle
+
+
+viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep orga step =
+    case step of
+        JoinInit _ ->
+            div [ class "box spinner" ] [ text Text.loading ]
+
+        JoinAuthNeeded ->
+            viewAuthNeeded
+
+        JoinNotAuthorized errMsg ->
+            viewGqlErrors errMsg
+
+        JoinValidation form result ->
+            case result of
+                Success _ ->
+                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
+
+                Failure err ->
+                    viewGqlErrors err
+
+                default ->
+                    div [ class "box spinner" ] [ text Text.loading ]
 
 
 

@@ -7,6 +7,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
@@ -89,6 +90,16 @@ type alias TensionForm =
     , role_type : RoleType.RoleType -- for Role
     , post : Post
     , action : Maybe TensionAction.TensionAction
+    }
+
+
+type alias TensionPatchForm =
+    { id : String
+    , uctx : UserCtx
+    , status : Maybe TensionStatus.TensionStatus
+    , emitter : Maybe EmitterOrReceiver
+    , receiver : Maybe EmitterOrReceiver
+    , post : Post
     }
 
 

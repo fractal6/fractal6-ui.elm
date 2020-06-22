@@ -1,4 +1,4 @@
-module Extra.Url exposing (queryBuilder, queryParser)
+module Extra.Url exposing (queryBuilder, queryParser, toAnchor)
 
 import Dict exposing (Dict)
 import Url exposing (Url)
@@ -60,3 +60,11 @@ queryBuilder parameters =
         |> List.filter (\( k, v ) -> v /= "")
         |> List.concatMap toUri
         |> String.join "&"
+
+
+toAnchor : String -> String
+toAnchor x =
+    x
+        |> String.replace " " "-"
+        |> String.toLower
+        |> String.append "#"

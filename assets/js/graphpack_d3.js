@@ -109,7 +109,7 @@ const GraphPack = {
     focusCircleColor: "#375a7fcc", // blue>"#368ed3"
     hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 1.66,
-    focusCircleWidth: 1.66*1.5, // warning, can break stroke with canvas drawing.
+    focusCircleWidth: 1.66*2, // warning, can break stroke with canvas drawing.
 
     // Html element ID
     canvasParentId: "canvasParent",
@@ -177,7 +177,6 @@ const GraphPack = {
     gStats: null, // Receive graph global statistics
     nodes: null,  // List of D3 nodes
     nodesDict: null, // Nodes mapping
-    reason: null, // reason of init
     app: null, // elm app
 
     /****************************************************/
@@ -644,29 +643,40 @@ const GraphPack = {
     drawNodeHover(node, doDrawTooltip) {
         var ctx2d = this.ctx2d;
         if (!node.ctx) {
-            console.warn("node.ctx us undefined here; Add a timeout on init event listeners...");
+            // Wait for the canvas to render before drawing border.
+            // If not, focus border won be draw if another circle in hover before rendering.
             return false
         }
-        clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
-        if (clearBorder) this.clearNodeHover(this.hoveredNode);
 
-        var hoverColor,
-            hoverWidth;
-        if (node == this.focusedNode) {
-            hoverColor = this.focusCircleColor;
-            hoverWidth = this.focusCircleWidth;
-        } else {
-            hoverColor = this.hoverCircleColor;
-            hoverWidth = this.hoverCircleWidth;
+        // CLear Border
+        clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
+        if (clearBorder) {
+            this.clearNodeHover(this.hoveredNode);
         }
 
-        // Draw Circle border
-        ctx2d.beginPath();
-        ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-            node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
-        ctx2d.lineWidth = hoverWidth;
-        ctx2d.strokeStyle = hoverColor;
-        ctx2d.stroke();
+        // Draw Border (on hoover)
+        if (node != this.hoveredNode && node != this.focusedNode) {
+            var hoverColor,
+                hoverWidth,
+                offset_r = 0;
+            if (node == this.focusedNode) {
+                hoverColor = this.focusCircleColor;
+                hoverWidth = this.focusCircleWidth;
+            } else {
+                hoverColor = this.hoverCircleColor;
+                hoverWidth = this.hoverCircleWidth;
+                if (node.data.type_ == NodeType.Circle) offset_r = -0.5;
+                else if (node.data.type_ == NodeType.Role) offset_r = 0.1;
+            }
+
+            // Draw Circle border
+            ctx2d.beginPath();
+            ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
+                node.ctx.rayon+offset_r+hoverWidth*0.5, 0, 2 * Math.PI, true);
+            ctx2d.lineWidth = hoverWidth;
+            ctx2d.strokeStyle = hoverColor;
+            ctx2d.stroke();
+        }
 
         // Draw tooltip
         if (doDrawTooltip) {
@@ -681,6 +691,9 @@ const GraphPack = {
     // Clean node hovering
     clearNodeHover(node) {
         var ctx2d = this.ctx2d;
+        //if (!node.ctx) {
+        //    this.addNodeCtx(node)
+        //}
 
         var hoverWidth;
         if (node == this.focusedNode) {
@@ -694,7 +707,7 @@ const GraphPack = {
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
             node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
         ctx2d.lineWidth = hoverWidth*1.75;
-        ctx2d.strokeStyle = this.colorCircle(node.depth-1);
+        ctx2d.strokeStyle = (node.depth == 0)? this.backgroundColor : this.colorCircle(node.depth-1);
         ctx2d.stroke();
 
         // Clear node tooltip
@@ -721,10 +734,18 @@ const GraphPack = {
         var scrollLeft = bodyRect.left;
         var scrollTop = bodyRect.top;
         var tw = ($tooltip.clientWidth);
-        var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
-        var l = (node.ctx.centerX + r.left - scrollLeft  - (tw/2 + 1));
-        var t = (node.ctx.centerY + r.top - scrollTop  - (hw/2 + 23));
-        if (l+tw-r.left < 0 || t+hw-r.top < 0 || r.left+r.width-tw-l < 0 ) {
+        if (node == this.focusedNode) {
+            // below the circle
+            var hw = (-$tooltip.clientHeight + 2*node.ctx.rayon);
+            var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
+            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+        } else {
+            // above the circle
+            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
+            var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
+            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+        }
+        if (l+tw/2-r.left < 0 || t+$tooltip.clientHeight/3-r.top < 0 || r.left+r.width-tw/2-l < 0 ) {
             // the tooltip overflow "too much" outside the canvas.
             this.clearNodeTooltip();
         } else {
@@ -797,10 +818,8 @@ const GraphPack = {
 
     nodeFocusedFromJs(node) {
         // @DEBUG: why / where would node be undefined ?
-        if (!node || this.reason == "resize") {
-            this.reason = "";
-            return
-        }
+        if (!node ) return
+
         var rootNode = {
             name: this.rootNode.data.name,
             nameid: this.rootNode.data.nameid,
@@ -845,11 +864,9 @@ const GraphPack = {
     },
 
     // Init the canvas and draw the graph
-    init(app, data, reason) {
+    init(app, data, isInit) {
         var dataNodes = data.data;
-
         this.app = app;
-        this.reason = reason;
 
         // Set the parent element
         this.$canvasParent = document.getElementById(this.canvasParentId);
@@ -962,6 +979,8 @@ const GraphPack = {
                     this.drawNodeHover(node, true);
                 }
             } else if (this.hoveredNode) {
+                // @DEBUG: there is a little dead zone between circle.
+                // When it happens, it goes there and focused node receive the hover...
                 if (!isInTooltip) this.drawNodeHover(this.focusedNode, true);
             } else {
                 this.drawNodeHover(this.focusedNode, true);
@@ -1057,26 +1076,28 @@ const GraphPack = {
         // ELM Subscriptions
         //
 
-        app.ports.sendToggleGraphReverse.subscribe(e => {
-            if (this.nodeSize.name == "nodeSizeTopDown") {
-                this.nodeSize = this.nodeSizeBottomUp;
-            } else {
-                this.nodeSize = this.nodeSizeTopDown;
-            }
+        if (isInit) {
+            app.ports.sendToggleGraphReverse.subscribe(e => {
+                if (this.nodeSize.name == "nodeSizeTopDown") {
+                    this.nodeSize = this.nodeSizeBottomUp;
+                } else {
+                    this.nodeSize = this.nodeSizeTopDown;
+                }
 
-            if (this.hoveredNode) this.clearNodeHover(this.hoveredNode);
+                if (this.hoveredNode) this.clearNodeHover(this.hoveredNode);
 
-            this.resetGraphPack(this.graph, false);
+                this.resetGraphPack(this.graph, false);
 
-            this.clearCanvas(this.ctx2d);
-            this.clearCanvas(this.hiddenCtx2d);
-            this.zoomToNode(this.rootNode, 0.9);
+                this.clearCanvas(this.ctx2d);
+                this.clearCanvas(this.hiddenCtx2d);
+                this.zoomToNode(this.rootNode, 0.9);
 
-        });
+            });
 
-        app.ports.sendToggleTooltips.subscribe(e => {
-            //DEBUG: TODO
-        });
+            app.ports.sendToggleTooltips.subscribe(e => {
+                //DEBUG: TODO
+            });
+        }
 
         //
         // FPS Stats box

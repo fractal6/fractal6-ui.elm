@@ -266,7 +266,8 @@ update global msg model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    Sub.none
+    Sub.batch
+        [ Ports.closeModalFromJs DoCloseModal ]
 
 
 view : Global.Model -> Model -> Document Msg
@@ -284,7 +285,7 @@ view_ global model =
             global.session.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered" ]
-            [ div [ class "column is-9" ]
+            [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]
                     [ viewMembers model.members_top "Direct members" model.node_focus ]
                 , div [ class "columns" ]
@@ -402,7 +403,7 @@ memberRolesFilter focus roles =
 
 viewMemberRoles : FractalBaseRoute -> List UserRoleExtended -> Html msg
 viewMemberRoles baseUri roles =
-    div [ class "buttons is-pulled-right" ] <|
+    div [ class "buttons" ] <|
         List.map
             (\r ->
                 a

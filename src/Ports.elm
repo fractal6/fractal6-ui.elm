@@ -1,19 +1,4 @@
-port module Ports exposing
-    ( bulma_driver
-    , clearTooltip
-    , drawButtonsGraphPack
-    , focusGraphPack
-    , initGraphPack
-    , loadUserCtx
-    , log
-    , open_modal
-    , redrawGraphPack
-    , removeRedrawGraphPack
-    , removeUserCtx
-    , saveUserCtx
-    , searchNode
-    , toggle_theme
-    )
+port module Ports exposing (..)
 
 import Dict exposing (Dict)
 import Json.Encode as JE
@@ -26,9 +11,17 @@ import ModelSchema exposing (NodesData, UserCtx)
 --port getBackTimeFrom : (String -> msg) -> Sub msg
 -- How to use that ? (dayjs tipically or other use of a general library (updated nested data?)
 -- Outgoing
+-- Interface
 
 
 port outgoing : { action : String, data : JE.Value } -> Cmd msg
+
+
+
+-- Js Util
+
+
+port closeModalFromJs : (String -> msg) -> Sub msg
 
 
 

@@ -17,6 +17,11 @@ seeMore =
 -- Genral
 
 
+by : String
+by =
+    "by"
+
+
 leaveComment : String
 leaveComment =
     "Leave a comment"
@@ -265,6 +270,16 @@ tensionCircleCloseSubmit =
 tensionRoleCloseSubmit : String
 tensionRoleCloseSubmit =
     "Create Role and close tension"
+
+
+openedThe : String
+openedThe =
+    "opened the"
+
+
+commentedThe : String
+commentedThe =
+    "commented the"
 
 
 

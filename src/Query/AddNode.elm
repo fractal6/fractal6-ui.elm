@@ -32,10 +32,6 @@ import RemoteData exposing (RemoteData)
 -}
 
 
-type alias AddNodeIDPayload =
-    { node : Maybe (List (Maybe IdPayload)) }
-
-
 type alias AddNodePayload =
     { node : Maybe (List (Maybe Node)) }
 
@@ -72,12 +68,6 @@ addNewMember form msg =
             (SelectionSet.map AddNodePayload <|
                 Fractal.Object.AddNodePayload.node identity nodeOrgaPayload
             )
-         --(SelectionSet.map AddNodeIDPayload <|
-         --    Fractal.Object.AddNodePayload.node identity <|
-         --        (SelectionSet.succeed IdPayload
-         --            |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
-         --        )
-         --)
         )
         (RemoteData.fromResult >> decodeResponse nodeDecoder >> msg)
 

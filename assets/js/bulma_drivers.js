@@ -186,7 +186,7 @@ const BulmaDriver = (app, target, handlers) => {
 
     function buttonToggleHandler(e, btn) {
         btn.classList.toggle('is-active');
-        e.preventDefault() // important: don't let html handle the button element state
+        e.preventDefault(); // important: don't let html handle the button element state
     }
 
     var $btns = $target.querySelectorAll('.buttonToggle');

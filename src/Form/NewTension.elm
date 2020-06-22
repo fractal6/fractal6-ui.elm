@@ -66,6 +66,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                 []
                             ]
                         , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
+                        , br [] []
                         ]
                     ]
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]

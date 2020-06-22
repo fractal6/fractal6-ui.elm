@@ -3,6 +3,7 @@ module Components.HelperBar exposing (view)
 import Array
 import Components.Fa as Fa
 import Fractal.Enum.RoleType as RoleType
+import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick)
@@ -114,7 +115,7 @@ viewPath baseUri maybePath =
 joinButton : msg -> Html msg
 joinButton msg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  tooltip has-tooltip-bottom is-pulled-right"
+        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  toolti has-tooltip-bottom is-pulled-right"
         , attribute "data-modal" "actionModal" -- JS/Elm confcli, msg is not sent !
 
         --, attribute "data-tooltip" "Join this organisation."
@@ -132,7 +133,7 @@ memberButtons baseUri roles =
                     let
                         href_ =
                             if r.role_type == RoleType.Member then
-                                "#"
+                                uriFromNameid MembersBaseUri r.rootnameid
 
                             else
                                 uriFromNameid baseUri r.nameid
@@ -144,19 +145,19 @@ memberButtons baseUri roles =
                             else
                                 "is-vbar-1"
                     in
-                    [ a
-                        [ class ("button buttonRole is-hovered is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                    [ div
+                        -- @DEBUG: tooltip get stucked on click !
+                        [ class ("button buttonRole is-hovered is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                         , href href_
                         ]
                         [ text r.name ]
                     ]
-                        ++ [ span [ class vBar ] []
-                           ]
+                        ++ [ span [ class vBar ] [] ]
 
                 else
                     [ a
-                        [ class ("button buttonRole is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                        [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                         , href <| uriFromNameid baseUri r.nameid
                         ]

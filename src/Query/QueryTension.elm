@@ -1,4 +1,4 @@
-module Query.QueryTension exposing (getTension, queryCircleTension, queryExtTension, queryIntTension, tensionPayload)
+module Query.QueryTension exposing (getTension, queryCircleTension, queryExtTension, queryIntTension, tensionExtendedPayload, tensionPayload)
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction
@@ -74,6 +74,7 @@ tensionExtendedPayload =
                 )
             )
         |> with Fractal.Object.Tension.action
+        |> with Fractal.Object.Tension.status
         |> with Fractal.Object.Tension.message
         |> with
             (Fractal.Object.Tension.comments

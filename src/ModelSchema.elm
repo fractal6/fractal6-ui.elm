@@ -6,6 +6,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.Scalar
 import Fractal.ScalarCodecs
@@ -152,6 +153,7 @@ type alias TensionExtended =
     , action : Maybe TensionAction.TensionAction
 
     --
+    , status : TensionStatus.TensionStatus
     , message : Maybe String
     , comments : Maybe (List Comment)
     , n_comments : Maybe Int

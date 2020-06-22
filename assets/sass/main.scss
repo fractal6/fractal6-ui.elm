@@ -14,6 +14,16 @@ html, body {
     padding-top: calc(#{$navbar-height}  ) !important;
 }
 
+hr {
+    height: 1px !important;
+    &.is-2 {
+        height: 2px !important
+    }
+    &.is-3 {
+        height: 4px !important
+    }
+}
+
 .column {
   /*  Fix/scrollable column */
   &.is-fullheight {
@@ -129,10 +139,12 @@ html.has-modal-active {
     border-bottom: 1px dotted;
 }
 
-.right-arrow::after {
-    content: " \27F6 ";
-    padding-right: 5px;
-    padding-left: 5px;
+.right-arrow {
+    &::after {
+        content: " \27F6 ";
+        padding-right: 5px;
+        padding-left: 5px;
+    }
 }
 
 .is-vbar-1 {
@@ -339,14 +351,78 @@ html.has-modal-active {
 
 }
 
-.Circle:before {
-    content: ' \25CF'; // draw a circle (use as tag/bullet)
-    font-size: 9px;
+#tensionPage {
+
+    .tensionTitle {
+        font-size: 2rem !important;
+        font-weight: 600;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .tensionSubtitle {
+        font-size: 14px !important;
+        & > span {
+            margin-right: 12px !important;
+        }
+
+        .tag {
+            height: 2.25em !important;
+        }
+    }
+
+    .media + .media {
+        margin-top: 1.5rem !important;
+        border: 0 !important;
+    }
+
+    .media:last-child {
+        .message-header {
+            padding-bottom: 0 !important;
+        }
+         .message-body {
+            padding: 0.75em 0.75em !important;
+        }
+    }
+
+    .message-header {
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        background-color: $grey-dark;
+        border-radius: 0 !important;
+        a {
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+        a:hover {
+            text-decoration: underline !important;
+        }
+    }
+
+    .message {
+        background-color: $body-background-color !important;
+        border: solid 2px  $grey-dark  !important;
+
+        .tabs a {
+            text-decoration: none !important;
+        }
+    }
+
+
+}
+
+
+.Circle {
+    padding-bottom: 2px;
+    &::before {
+        content: ' \25CF'; // draw a circle (use as tag/bullet)
+        font-size: 9px;
+    }
 }
 
 
 .searchBar {
-    .select,{
+    .select {
 
         &::after {
             border-color: $primary !important;
@@ -374,8 +450,10 @@ html.has-modal-active {
 }
 
 #searchBarOverview {
-    padding-top: 5px;
-    margin-bottom: 22px;
+    width: 100.25% !important;
+    padding-top: 5px !important;
+    margin-bottom: 1px !important;
+    //margin-bottom: 22px !important;
 
     .input {
         font-weight: 700 !important;
@@ -509,7 +587,7 @@ html.has-modal-active {
 }
 
 #canvasOrga {
-    border-radius: 7px;
+    border-radius: 0 0 7px 7px !important;
     box-shadow: 0 0px 2px 1px #22101087;
     //background-image: linear-gradient(white, black) ;
 }

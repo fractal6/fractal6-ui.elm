@@ -1,7 +1,7 @@
 module Components.Navbar exposing (viewNavbar)
 
 import Components.Logo as Logo
-import Generated.Route as Route exposing (toHref)
+import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import ModelCommon exposing (UserState(..))
