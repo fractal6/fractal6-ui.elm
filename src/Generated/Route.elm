@@ -10,10 +10,11 @@ import Url.Parser as Parser exposing ((</>), Parser)
 
 type Route
     = Top
+    | Login
     | Logout
     | NotFound
     | Signup
-    | Login
+    | Explore
     | Dynamic { param1 : String }
     | User_Dynamic { param1 : String }
     | T_Dynamic { param1 : String }
@@ -37,10 +38,11 @@ routes : Parser (Route -> a) a
 routes =
     Parser.oneOf
         [ Parser.map Top Parser.top
+        , Parser.map Login (Parser.s "login")
         , Parser.map Logout (Parser.s "logout")
         , Parser.map NotFound (Parser.s "not-found")
         , Parser.map Signup (Parser.s "signup")
-        , Parser.map Login (Parser.s "login")
+        , Parser.map Explore (Parser.s "explore")
         , (Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map Dynamic
@@ -89,6 +91,9 @@ toHref route =
                 Top ->
                     []
                 
+                Login ->
+                    [ "login" ]
+                
                 Logout ->
                     [ "logout" ]
                 
@@ -98,8 +103,8 @@ toHref route =
                 Signup ->
                     [ "signup" ]
                 
-                Login ->
-                    [ "login" ]
+                Explore ->
+                    [ "explore" ]
                 
                 Dynamic { param1 } ->
                     [ param1 ]

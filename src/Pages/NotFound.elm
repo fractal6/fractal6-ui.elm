@@ -1,6 +1,7 @@
 module Pages.NotFound exposing (Flags, Model, Msg, page)
 
-import Html
+import Html exposing (a, div, text)
+import Html.Attributes exposing (class, href)
 import Page exposing (Document, Page)
 
 
@@ -26,5 +27,11 @@ page =
 view : Document Msg
 view =
     { title = "NotFound"
-    , body = [ Html.text "NotFound" ]
+    , body = [ view_ ]
     }
+
+
+view_ : Html.Html Msg
+view_ =
+    div [ class "section" ]
+        [ text "Page not found." ]

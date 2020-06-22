@@ -80,6 +80,10 @@ tensionTypeSpan cls elt type_ =
 
 mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> (String -> msg) -> Html msg
 mediaTension baseUri focus tension navigate =
+    let
+        n_comments =
+            tension.n_comments |> withDefault 0
+    in
     div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
             [ div
@@ -122,29 +126,24 @@ mediaTension baseUri focus tension navigate =
 
                                 Nothing ->
                                     []
-                        , span [ class "column", attribute "style" "padding-right: 0 !important;" ]
+                        , span
+                            [ class "column is-2 tooltip has-tooltip-top"
+                            , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
+                            , attribute "style" "padding-left: 0 !important; padding-right:0 !important;"
+                            ]
+                          <|
+                            if n_comments > 0 then
+                                [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments) ]
+
+                            else
+                                []
+                        , span [ class "column" ]
                             [ span [ class "is-pulled-right" ]
                                 [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
                             ]
                         ]
                     ]
                 ]
-            ]
-        , div
-            [ class "media-right" ]
-            [ let
-                n_comments =
-                    tension.n_comments |> withDefault 0
-              in
-              if n_comments > 0 then
-                span
-                    [ class "tooltip has-tooltip-top"
-                    , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
-                    ]
-                    [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments) ]
-
-              else
-                span [] []
             ]
         ]
 

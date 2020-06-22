@@ -1,4 +1,4 @@
-module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Pages.Explore exposing (Flags, Model, Msg, page)
 
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
@@ -25,11 +25,12 @@ import Time
 
 
 type alias Flags =
-    { param1 : String }
+    ()
 
 
 type alias Model =
-    { username : String }
+    { orgas : List String
+    }
 
 
 type Msg
@@ -50,7 +51,8 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         model =
-            { username = flags.param1 }
+            { orgas = [ "open-chaos" ]
+            }
     in
     ( model, Cmd.none, Cmd.none )
 
@@ -69,7 +71,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = model.username
+    { title = "Explore"
     , body = [ view_ global model ]
     }
 
@@ -79,8 +81,19 @@ view_ global model =
     div [ class "columns" ]
         [ div [ class "column is-offset-2 is-5 " ]
             [ div [ class "section" ]
-                [ "Welcome @" ++ model.username |> text
-                , div [ class "box" ] [ text "page under construction" ]
+                [ viewOrgaMedia "open-chaos"
                 ]
+            ]
+        ]
+
+
+viewOrgaMedia : String -> Html Msg
+viewOrgaMedia nameid =
+    div [ class "media" ]
+        [ div [ class "media-left" ]
+            [ div [] []
+            ]
+        , div [ class "media-content" ]
+            [ div [] []
             ]
         ]
