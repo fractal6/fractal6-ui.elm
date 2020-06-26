@@ -182,13 +182,19 @@ viewUsernameLink username =
 viewOpenedDate : String -> Html msg
 viewOpenedDate date =
     span []
-        [ [ Text.openedThe, formatTime date ] |> String.join " " |> text ]
+        [ span [ class "is-itali" ] [ text Text.openedThe ]
+        , text " "
+        , text (formatTime date)
+        ]
 
 
 viewCommentedDate : String -> Html msg
 viewCommentedDate date =
     span []
-        [ [ Text.commentedThe, formatTime date ] |> String.join " " |> text ]
+        [ span [ class "is-itali" ] [ text Text.commentedThe ]
+        , text " "
+        , text (formatTime date)
+        ]
 
 
 viewTensionDateAndUser : String -> Username -> Html msg

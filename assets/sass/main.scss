@@ -473,6 +473,13 @@ html.has-modal-active {
     .tabs {
         margin-bottom: 0.75rem !important;
     }
+
+    .control {
+        select {
+            padding-right: 0 !important;
+            border: 1px solid !important;
+        }
+    }
 }
 
 #searchList {

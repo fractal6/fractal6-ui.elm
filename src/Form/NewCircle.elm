@@ -3,6 +3,7 @@ module Form.NewCircle exposing (view)
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T
 import Dict
+import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
@@ -45,11 +46,17 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                 NodeType.Role ->
                     NewNodeText T.newRole T.tensionRoleAdded T.roleNameHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp
 
+        isLoading =
+            result == LoadingSlowly
+
         isSendable =
             isPostSendable [ "name", "purpose" ] form.post
 
-        isLoading =
-            result == LoadingSlowly
+        submitTension =
+            ternary isSendable [ onClickPD2 (submitMsg <| submitNextMsg form False) ] []
+
+        submitCloseTension =
+            ternary isSendable [ onClickPD2 (submitMsg <| submitNextMsg form True) ] []
     in
     case result of
         Success _ ->
@@ -242,29 +249,23 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                             div [] []
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
-                            [ if isSendable then
-                                div [ class "buttons" ]
-                                    [ button
-                                        [ class "button is-success has-text-weight-semibold"
-                                        , classList [ ( "is-loading", isLoading ) ]
-                                        , onClickPD2 (submitMsg <| submitNextMsg form False)
-                                        ]
-                                        [ text txt.submit ]
-                                    , button
-                                        [ class "button is-warning is-small has-text-weight-semibold"
-                                        , classList [ ( "is-loading", isLoading ) ]
-                                        , onClickPD2 (submitMsg <| submitNextMsg form True)
-                                        ]
-                                        [ text txt.close_submit ]
-                                    ]
-
-                              else
-                                div [ class "buttons" ]
-                                    [ button [ class "button has-text-weight-semibold", disabled True ]
-                                        [ text txt.submit ]
-                                    , button [ class "button is-small has-text-weight-semibold", disabled True ]
-                                        [ text txt.close_submit ]
-                                    ]
+                            [ div [ class "buttons" ]
+                                [ button
+                                    ([ class "button is-small has-text-weight-semibold"
+                                     , classList [ ( "is-warning", isSendable ), ( "is-loading", isLoading ) ]
+                                     ]
+                                        ++ submitCloseTension
+                                    )
+                                    [ text txt.close_submit ]
+                                , button
+                                    ([ class "button  has-text-weight-semibold"
+                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ submitTension
+                                    )
+                                    [ text txt.submit ]
+                                ]
                             ]
                         ]
                     ]

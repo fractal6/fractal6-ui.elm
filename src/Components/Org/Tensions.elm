@@ -73,6 +73,7 @@ type alias Model =
     , initPattern : Maybe String
     , viewMode : ViewModeTensions
     , depthFilter : DepthFilter
+    , statusFilter : StatusFilter
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     }
@@ -138,6 +139,38 @@ depthFilterEncoder x =
             "selected"
 
 
+type StatusFilter
+    = OpenStatus
+    | ClosedStatus
+    | AllStatus
+
+
+statusFilterDecoder : String -> StatusFilter
+statusFilterDecoder x =
+    case x of
+        "all" ->
+            AllStatus
+
+        "closed" ->
+            ClosedStatus
+
+        default ->
+            OpenStatus
+
+
+statusFilterEncoder : StatusFilter -> String
+statusFilterEncoder x =
+    case x of
+        AllStatus ->
+            "all"
+
+        ClosedStatus ->
+            "closed"
+
+        OpenStatus ->
+            ""
+
+
 nfirst : Int
 nfirst =
     15
@@ -162,6 +195,7 @@ type Msg
     | DoLoad
     | ChangePattern String
     | ChangeDepthFilter String
+    | ChangeStatusFilter String
     | SearchKeyDown Int
     | SubmitSearch
     | GoView ViewModeTensions
@@ -219,6 +253,7 @@ init global flags =
             , initPattern = Dict.get "q" query
             , viewMode = Dict.get "v" query |> withDefault "" |> viewModeDecoder
             , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
+            , statusFilter = Dict.get "s" query |> withDefault "" |> statusFilterDecoder
             , node_action = NoOp
             , isModalActive = False
             }
@@ -380,12 +415,23 @@ update global msg model =
                     case model.children of
                         RemoteData.Success children ->
                             let
+                                status =
+                                    case model.statusFilter of
+                                        AllStatus ->
+                                            Nothing
+
+                                        OpenStatus ->
+                                            Just TensionStatus.Open
+
+                                        ClosedStatus ->
+                                            Just TensionStatus.Closed
+
                                 nameids =
                                     children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
 
                                 cmds =
-                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsInt
-                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsExt
+                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
+                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
                                     ]
                             in
                             ( model, Cmd.batch cmds, Cmd.none )
@@ -397,12 +443,23 @@ update global msg model =
                     case model.path_data of
                         Success path ->
                             let
+                                status =
+                                    case model.statusFilter of
+                                        AllStatus ->
+                                            Nothing
+
+                                        OpenStatus ->
+                                            Just TensionStatus.Open
+
+                                        ClosedStatus ->
+                                            Just TensionStatus.Closed
+
                                 nameids =
                                     path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
                                 cmds =
-                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsInt
-                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern GotTensionsExt
+                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
+                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
                                     ]
                             in
                             ( model, Cmd.batch cmds, Cmd.none )
@@ -417,6 +474,13 @@ update global msg model =
             let
                 newModel =
                     { model | depthFilter = depthFilterDecoder value }
+            in
+            ( newModel, Global.send SubmitSearch, Cmd.none )
+
+        ChangeStatusFilter value ->
+            let
+                newModel =
+                    { model | statusFilter = statusFilterDecoder value }
             in
             ( newModel, Global.send SubmitSearch, Cmd.none )
 
@@ -442,6 +506,7 @@ update global msg model =
                                 [ ( "q", model.pattern |> withDefault "" |> String.trim )
                                 , ( "v", model.viewMode |> viewModeEncoder )
                                 , ( "d", model.depthFilter |> depthFilterEncoder )
+                                , ( "s", model.statusFilter |> statusFilterEncoder )
                                 ]
                     in
                     ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri path.focus.nameid ++ "?" ++ query) )
@@ -521,7 +586,7 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]
-                    [ div [ class "column is-6 is-offset-3" ] [ viewSearchBar model.pattern model.depthFilter model.viewMode ] ]
+                    [ div [ class "column is-6 is-offset-3" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.viewMode ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -549,8 +614,8 @@ view_ global model =
         ]
 
 
-viewSearchBar : Maybe String -> DepthFilter -> ViewModeTensions -> Html Msg
-viewSearchBar pattern depthMode viewMode =
+viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> ViewModeTensions -> Html Msg
+viewSearchBar pattern depthFilter statusFilter viewMode =
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "field has-addons" ]
             [ div [ class "control has-icons-left is-expanded dropdown" ]
@@ -568,8 +633,17 @@ viewSearchBar pattern depthMode viewMode =
             , div [ class "control" ]
                 [ div [ class "is-small select" ]
                     [ select [ onInput ChangeDepthFilter ]
-                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren), selected (depthMode == AllSubChildren) ] [ text "All sub-circles" ]
-                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode), selected (depthMode == SelectedNode) ] [ text "Selected circle" ]
+                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren), selected (depthFilter == AllSubChildren) ] [ text "All sub-circles" ]
+                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode), selected (depthFilter == SelectedNode) ] [ text "Selected circle" ]
+                        ]
+                    ]
+                ]
+            , div [ class "control" ]
+                [ div [ class "is-small select" ]
+                    [ select [ onInput ChangeStatusFilter ]
+                        [ option [ class "dropdown-item", value (statusFilterEncoder OpenStatus), selected (statusFilter == OpenStatus) ] [ text "Open" ]
+                        , option [ class "dropdown-item", value (statusFilterEncoder ClosedStatus), selected (statusFilter == ClosedStatus) ] [ text "Closed" ]
+                        , option [ class "dropdown-item", value (statusFilterEncoder AllStatus), selected (statusFilter == AllStatus) ] [ text "All" ]
                         ]
                     ]
                 ]

@@ -81,8 +81,7 @@ view_ global model =
     div [ class "columns" ]
         [ div [ class "column is-offset-2 is-5 " ]
             [ div [ class "section" ]
-                [ viewOrgaMedia "open-chaos"
-                ]
+                [ viewOrgaMedia "open-chaos" ]
             ]
         ]
 

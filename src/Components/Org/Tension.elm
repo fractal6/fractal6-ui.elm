@@ -75,8 +75,9 @@ type Msg
     | GotTension (GqlData TensionExtended)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
-    | SubmitComment TensionPatchForm Time.Posix -- Send form
-    | CommentAck (GqlData IdPayload)
+    | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
+    | SubmitChangeStatus TensionPatchForm TensionStatus.TensionStatus Time.Posix -- Send form
+    | TensionPatchAck (GqlData IdPayload)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -108,19 +109,7 @@ init global flags =
 
         -- Init form
         tensionForm =
-            { uctx =
-                case global.session.user of
-                    LoggedIn uctx ->
-                        uctx
-
-                    LoggedOut ->
-                        UserCtx "" Nothing (UserRights False False) []
-            , id = flags.param2
-            , status = Nothing
-            , emitter = Nothing
-            , receiver = Nothing
-            , post = Dict.empty
-            }
+            initTensionForm flags.param2 global.session.user
 
         model =
             { node_focus = newFocus
@@ -229,7 +218,7 @@ update global msg model =
             in
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
 
-        SubmitComment form time ->
+        SubmitTensionPatch form time ->
             let
                 newForm =
                     { form
@@ -238,28 +227,44 @@ update global msg model =
                         , receiver = model.tension_data |> withMaybeData |> Maybe.map (\t -> t.receiver)
                     }
             in
-            ( model, pushTensionComment newForm CommentAck, Cmd.none )
+            ( model, pushTensionComment newForm TensionPatchAck, Cmd.none )
 
-        CommentAck result ->
+        SubmitChangeStatus form status time ->
+            let
+                newForm =
+                    { form
+                        | post = Dict.insert "message_action" ("_frac6_ UpdateStatus " ++ TensionStatus.toString status) form.post
+                        , status = Just status
+                    }
+            in
+            ( { model | tension_form = newForm }, Global.send (SubmitTensionPatch newForm time), Cmd.none )
+
+        TensionPatchAck result ->
             case result of
                 Success _ ->
                     let
-                        newComment =
-                            commentFromForm model.tension_form
+                        newComments =
+                            commentsFromForm model.tension_form
 
                         tension_d =
                             case model.tension_data of
                                 Success t ->
                                     let
                                         newTension =
-                                            { t | comments = Just ((t.comments |> withDefault []) ++ [ newComment ]) }
+                                            { t
+                                                | comments = Just ((t.comments |> withDefault []) ++ newComments)
+                                                , status = model.tension_form.status |> withDefault t.status
+                                            }
                                     in
                                     Success newTension
 
                                 other ->
                                     other
+
+                        resetForm =
+                            initTensionForm model.tensionid global.session.user
                     in
-                    ( { model | tension_result = result, tension_data = tension_d }, Cmd.none, Cmd.none )
+                    ( { model | tension_data = tension_d, tension_form = resetForm, tension_result = result }, Cmd.none, Cmd.none )
 
                 other ->
                     ( { model | tension_result = result }, Cmd.none, Cmd.none )
@@ -338,7 +343,7 @@ view_ global model =
                 [ div [ class "columns" ] <|
                     case model.tension_data of
                         Success t ->
-                            [ div [ class "column is-two-thirds" ] [ viewTension global.session.user t model ]
+                            [ div [ class "column is-three-quarters" ] [ viewTension global.session.user t model ]
                             , div [ class "column" ] [ viewSidePane t ]
                             ]
 
@@ -367,7 +372,7 @@ viewTension u t model =
         userInput =
             case u of
                 LoggedIn uctx ->
-                    [ viewCommentInput uctx model.tension_form model.tension_result ]
+                    [ viewCommentInput uctx t model.tension_form model.tension_result ]
 
                 LoggedOut ->
                     [ viewJoinNeeded model.node_focus ]
@@ -375,9 +380,9 @@ viewTension u t model =
     div [ id "tensionPage" ] <|
         ([ h1 [ class "title tensionTitle" ] [ text t.title ]
          , div [ class "tensionSubtitle" ]
-            [ span [ class "tag is-light" ] [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
-            , span [ class ("tag  is-" ++ statusColor t.status) ]
+            [ span [ class ("tag is-rounded  is-" ++ statusColor t.status) ]
                 [ t.status |> TensionStatus.toString |> text ]
+            , span [ class "tag is-rounded is-light" ] [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
             , viewTensionDateAndUser t.createdAt t.createdBy
             , viewTensionArrowB "has-text-weight-light is-pulled-right" t.emitter t.receiver
             ]
@@ -411,14 +416,41 @@ viewComment c =
         ]
 
 
-viewCommentInput : UserCtx -> TensionPatchForm -> GqlData IdPayload -> Html Msg
-viewCommentInput uctx form result =
+viewCommentInput : UserCtx -> TensionExtended -> TensionPatchForm -> GqlData IdPayload -> Html Msg
+viewCommentInput uctx tension form result =
     let
+        isLoading =
+            result == LoadingSlowly
+
         isSendable =
             isPostSendable [ "message" ] form.post
 
-        isLoading =
-            result == LoadingSlowly
+        submitComment =
+            ternary isSendable [ onClick (Submit <| SubmitTensionPatch form) ] []
+
+        submitCloseOpenTension =
+            case tension.status of
+                TensionStatus.Open ->
+                    [ onClick (Submit <| SubmitChangeStatus form TensionStatus.Closed) ]
+
+                TensionStatus.Closed ->
+                    [ onClick (Submit <| SubmitChangeStatus form TensionStatus.Open) ]
+
+        closeOpenText =
+            case tension.status of
+                TensionStatus.Open ->
+                    if (Dict.get "message" form.post |> withDefault "") /= "" then
+                        "Close and comment"
+
+                    else
+                        "Close tension"
+
+                TensionStatus.Closed ->
+                    if (Dict.get "message" form.post |> withDefault "") /= "" then
+                        "Reopen and comment"
+
+                    else
+                        "Reopen tension"
     in
     div [ class "tensionComment media section is-paddingless" ]
         [ div [ class "media-left" ] [ div [ class "image is-48x48" ] [ getAvatar uctx.username ] ]
@@ -446,21 +478,26 @@ viewCommentInput uctx form result =
                             div [] []
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
-                            [ if isSendable then
-                                div [ class "buttons" ]
-                                    [ button
-                                        [ class "button is-success has-text-weight-semibold"
-                                        , classList [ ( "is-loading", isLoading ) ]
-                                        , onClick (Submit <| SubmitComment form)
+                            [ div [ class "buttons" ]
+                                [ button
+                                    ([ class "button has-text-weight-semibold"
+                                     , classList
+                                        [ ( "is-danger", tension.status == TensionStatus.Open )
+                                        , ( "is-loading", isLoading )
                                         ]
-                                        [ text "Submit new tension" ]
-                                    ]
-
-                              else
-                                div [ class "buttons" ]
-                                    [ button [ class "button has-text-weight-semibold", disabled True ]
-                                        [ text "Submit new tension" ]
-                                    ]
+                                     ]
+                                        ++ submitCloseOpenTension
+                                    )
+                                    [ text closeOpenText ]
+                                , button
+                                    ([ class "button has-text-weight-semibold"
+                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ submitComment
+                                    )
+                                    [ text "Comment" ]
+                                ]
                             ]
                         ]
                     ]
@@ -559,9 +596,47 @@ viewJoinOrgaStep step =
 --
 
 
-commentFromForm : TensionPatchForm -> Comment
-commentFromForm form =
-    { createdAt = Dict.get "createdAt" form.post |> withDefault ""
-    , createdBy = Username form.uctx.username
-    , message = Dict.get "message" form.post |> withDefault ""
+commentsFromForm : TensionPatchForm -> List Comment
+commentsFromForm form =
+    let
+        createdAt =
+            Dict.get "createdAt" form.post |> withDefault ""
+
+        createdBy =
+            Username form.uctx.username
+    in
+    [ Dict.get "message" form.post
+        |> Maybe.map
+            (\comment ->
+                { createdAt = createdAt
+                , createdBy = createdBy
+                , message = comment
+                }
+            )
+    , Dict.get "message_action" form.post
+        |> Maybe.map
+            (\message_action ->
+                { createdAt = createdAt
+                , createdBy = createdBy
+                , message = message_action
+                }
+            )
+    ]
+        |> List.filterMap identity
+
+
+initTensionForm : String -> UserState -> TensionPatchForm
+initTensionForm tensionid user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , id = tensionid
+    , status = Nothing
+    , emitter = Nothing
+    , receiver = Nothing
+    , post = Dict.empty
     }

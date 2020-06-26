@@ -2,6 +2,7 @@ module Form.NewTension exposing (view)
 
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Dict
+import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
@@ -19,11 +20,14 @@ What should be the signature ?!
 -}
 view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
+        isLoading =
+            result == LoadingSlowly
+
         isSendable =
             isPostSendable [ "title" ] form.post
 
-        isLoading =
-            result == LoadingSlowly
+        submitTension =
+            ternary isSendable [ onClick (submitMsg <| submitNextMsg form) ] []
     in
     case result of
         Success _ ->
@@ -78,21 +82,16 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                             div [] []
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
-                            [ if isSendable then
-                                div [ class "buttons" ]
-                                    [ button
-                                        [ class "button is-success has-text-weight-semibold"
-                                        , classList [ ( "is-loading", isLoading ) ]
-                                        , onClick (submitMsg <| submitNextMsg form)
-                                        ]
-                                        [ text "Submit new tension" ]
-                                    ]
-
-                              else
-                                div [ class "buttons" ]
-                                    [ button [ class "button has-text-weight-semibold", disabled True ]
-                                        [ text "Submit new tension" ]
-                                    ]
+                            [ div [ class "buttons" ]
+                                [ button
+                                    ([ class "button has-text-weight-semibold"
+                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ submitTension
+                                    )
+                                    [ text "Submit new tension" ]
+                                ]
                             ]
                         ]
                     ]

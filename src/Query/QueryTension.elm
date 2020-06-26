@@ -256,26 +256,26 @@ subTensionDecoder data =
             )
 
 
-queryIntTension targetids first offset query_ msg =
+queryIntTension targetids first offset query_ status_ msg =
     makeGQLQuery
         (Query.queryTension
-            (subTensionIntFilterByDate targetids first offset query_)
+            (subTensionIntFilterByDate targetids first offset query_ status_)
             tensionPayload
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-queryExtTension targetids first offset query_ msg =
+queryExtTension targetids first offset query_ status_ msg =
     makeGQLQuery
         (Query.queryTension
-            (subTensionExtFilterByDate targetids first offset query_)
+            (subTensionExtFilterByDate targetids first offset query_ status_)
             tensionPayload
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionIntFilterByDate nameids first offset query_ a =
+subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionIntFilterByDate nameids first offset query_ status_ a =
     let
         nameidsRegxp_ =
             nameids
@@ -298,7 +298,7 @@ subTensionIntFilterByDate nameids first offset query_ a =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = Present { eq = TensionStatus.Open }
+                        | status = status_ |> Maybe.map (\status -> { eq = status }) |> fromMaybe
                         , emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                         , receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                         , and =
@@ -327,8 +327,8 @@ subTensionIntFilterByDate nameids first offset query_ a =
     }
 
 
-subTensionExtFilterByDate : List String -> Int -> Int -> Maybe String -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionExtFilterByDate nameids first offset query_ a =
+subTensionExtFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionExtFilterByDate nameids first offset query_ status_ a =
     let
         nameidsRegxp_ =
             nameids
@@ -351,7 +351,7 @@ subTensionExtFilterByDate nameids first offset query_ a =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = Present { eq = TensionStatus.Open }
+                        | status = status_ |> Maybe.map (\status -> { eq = status }) |> fromMaybe
                         , title = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
                         , or =
                             Input.buildTensionFilter

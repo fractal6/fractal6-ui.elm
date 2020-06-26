@@ -69,8 +69,18 @@ pushTensionCommentInputEncoder form =
         createdAt =
             Dict.get "createdAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
 
-        message =
+        msg1 =
             Dict.get "message" form.post
+
+        msg2 =
+            Dict.get "message_action" form.post
+
+        messages =
+            if msg1 /= Nothing || msg2 /= Nothing then
+                Just ( msg1, msg2 )
+
+            else
+                Nothing
 
         patchRequired =
             { filter =
@@ -88,21 +98,41 @@ pushTensionCommentInputEncoder form =
                             { s
                                 | status = fromMaybe form.status
                                 , comments =
-                                    message
+                                    messages
                                         |> Maybe.map
-                                            (\msg ->
-                                                [ Input.buildCommentRef
-                                                    (\c ->
-                                                        { c
-                                                            | createdAt = fromMaybe createdAt
-                                                            , createdBy =
-                                                                Input.buildUserRef
-                                                                    (\u -> { u | username = Present form.uctx.username })
-                                                                    |> Present
-                                                            , message = fromMaybe message
-                                                        }
+                                            (\( maybeMsg1, maybeMsg2 ) ->
+                                                [ Maybe.map
+                                                    (\message ->
+                                                        Input.buildCommentRef
+                                                            (\c ->
+                                                                { c
+                                                                    | createdAt = fromMaybe createdAt
+                                                                    , createdBy =
+                                                                        Input.buildUserRef
+                                                                            (\u -> { u | username = Present form.uctx.username })
+                                                                            |> Present
+                                                                    , message = Present message
+                                                                }
+                                                            )
                                                     )
+                                                    maybeMsg1
+                                                , Maybe.map
+                                                    (\message_action ->
+                                                        Input.buildCommentRef
+                                                            (\c ->
+                                                                { c
+                                                                    | createdAt = fromMaybe createdAt
+                                                                    , createdBy =
+                                                                        Input.buildUserRef
+                                                                            (\u -> { u | username = Present form.uctx.username })
+                                                                            |> Present
+                                                                    , message = Present message_action
+                                                                }
+                                                            )
+                                                    )
+                                                    maybeMsg2
                                                 ]
+                                                    |> List.filterMap identity
                                             )
                                         |> fromMaybe
                             }
