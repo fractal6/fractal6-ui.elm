@@ -151,6 +151,7 @@ type alias TensionExtended =
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
+    , mandate : Maybe Mandate
 
     --
     , status : TensionStatus.TensionStatus

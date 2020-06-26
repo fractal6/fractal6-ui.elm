@@ -1,4 +1,4 @@
-module Form.NewCircle exposing (view)
+module Form.NewCircle exposing (NewNodeText, view)
 
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T

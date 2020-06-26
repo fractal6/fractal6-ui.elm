@@ -10,6 +10,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Comment
 import Fractal.Object.Label
+import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.Tension
 import Fractal.Object.User
@@ -74,6 +75,15 @@ tensionExtendedPayload =
                 )
             )
         |> with Fractal.Object.Tension.action
+        |> with
+            (Fractal.Object.Tension.mandate identity
+                (SelectionSet.succeed Mandate
+                    |> with Fractal.Object.Mandate.purpose
+                    |> with Fractal.Object.Mandate.responsabilities
+                    |> with Fractal.Object.Mandate.domains
+                    |> with Fractal.Object.Mandate.policies
+                )
+            )
         |> with Fractal.Object.Tension.status
         |> with Fractal.Object.Tension.message
         |> with

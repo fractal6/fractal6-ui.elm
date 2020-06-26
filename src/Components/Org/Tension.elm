@@ -8,12 +8,14 @@ import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMaybeData)
 import Form exposing (isPostSendable)
+import Form.NewCircle exposing (NewNodeText)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
@@ -266,7 +268,20 @@ update global msg model =
                     in
                     ( { model | tension_data = tension_d, tension_form = resetForm, tension_result = result }, Cmd.none, Cmd.none )
 
-                other ->
+                Failure _ ->
+                    let
+                        f =
+                            model.tension_form
+
+                        resetForm =
+                            { f
+                                | post = Dict.remove "message_action" f.post
+                                , status = Nothing
+                            }
+                    in
+                    ( { model | tension_result = result, tension_form = resetForm }, Cmd.none, Cmd.none )
+
+                _ ->
                     ( { model | tension_result = result }, Cmd.none, Cmd.none )
 
         -- Join
@@ -343,7 +358,7 @@ view_ global model =
                 [ div [ class "columns" ] <|
                     case model.tension_data of
                         Success t ->
-                            [ div [ class "column is-three-quarters" ] [ viewTension global.session.user t model ]
+                            [ div [ class "column is-8" ] [ viewTension global.session.user t model ]
                             , div [ class "column" ] [ viewSidePane t ]
                             ]
 
@@ -508,7 +523,104 @@ viewCommentInput uctx tension form result =
 
 viewSidePane : TensionExtended -> Html Msg
 viewSidePane t =
-    div [] []
+    div []
+        [ case t.mandate of
+            Just m ->
+                case t.action of
+                    Just a ->
+                        viewMandate a m
+
+                    Nothing ->
+                        div [] []
+
+            Nothing ->
+                div [] []
+        ]
+
+
+viewMandate : TensionAction.TensionAction -> Mandate -> Html Msg
+viewMandate action mandate =
+    let
+        txt =
+            case action of
+                TensionAction.NewCircle ->
+                    NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
+
+                TensionAction.NewRole ->
+                    NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
+
+        --_ ->
+        --    NewNodeText "" "" "" "" "" "" "" "" "" "" ""
+    in
+    div [ class "card" ]
+        [ div [ class "cnard-header" ] [ div [ class "card-header-title" ] [ text Text.mandateH ] ]
+        , div [ class "card-content" ]
+            [ div [ class "field" ]
+                [ div [ class "label" ] [ text Text.purposeH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ id "textAreaModal"
+                        , class "textarea"
+                        , rows 5
+                        , readonly True
+                        , value mandate.purpose
+
+                        --, placeholder (txt.ph_purpose ++ "*")
+                        --, onInput <| changePostMsg "purpose"
+                        ]
+                        []
+                    ]
+                ]
+            , div [ class "field" ]
+                [ div [ class "label" ] [ text Text.responsabilitiesH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ id "textAreaModal"
+                        , class "textarea"
+                        , rows 5
+                        , readonly True
+                        , value (mandate.responsabilities |> withDefault "<no responsabilities provided>")
+
+                        --, placeholder txt.ph_responsabilities
+                        --, onInput <| changePostMsg "responsabilities"
+                        ]
+                        []
+                    ]
+                ]
+            , div [ class "field" ]
+                [ div [ class "label" ] [ text Text.domainsH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ id "textAreaModal"
+                        , class "textarea"
+                        , rows 5
+                        , readonly True
+                        , value (mandate.domains |> withDefault "<no domains provided>")
+
+                        --, placeholder txt.ph_domains
+                        --, onInput <| changePostMsg "domains"
+                        ]
+                        []
+                    ]
+                ]
+            , div [ class "field" ]
+                [ div [ class "label" ] [ text Text.policiesH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ id "textAreaModal"
+                        , class "textarea"
+                        , rows 5
+                        , readonly True
+                        , value (mandate.policies |> withDefault "<no responsabilities provided>")
+
+                        --, placeholder txt.ph_policies
+                        --, onInput <| changePostMsg "policies"
+                        ]
+                        []
+                    ]
+                ]
+            ]
+        ]
 
 
 viewJoinNeeded : NodeFocus -> Html Msg
