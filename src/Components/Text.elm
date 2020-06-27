@@ -107,42 +107,42 @@ noPolicies =
 
 phCirclePurpose : String
 phCirclePurpose =
-    "Define the purpose of the circle."
+    "Define the purpose of the circle"
 
 
 phCircleResponsabilities : String
 phCircleResponsabilities =
-    "Define the circle responsabilities."
+    "Define the circle responsabilities"
 
 
 phCircleDomains : String
 phCircleDomains =
-    "Define the circle domains."
+    "Define the circle domains"
 
 
 phCirclePolicies : String
 phCirclePolicies =
-    "Define the circle policies."
+    "Define the circle policies"
 
 
 phRolePurpose : String
 phRolePurpose =
-    "Define the purpose of the role."
+    "Define the purpose of the role"
 
 
 phRoleResponsabilities : String
 phRoleResponsabilities =
-    "Define the role responsabilities."
+    "Define the role responsabilities"
 
 
 phRoleDomains : String
 phRoleDomains =
-    "Define the role domains."
+    "Define the role domains"
 
 
 phRolePolicies : String
 phRolePolicies =
-    "Define the role policies."
+    "Define the role policies"
 
 
 

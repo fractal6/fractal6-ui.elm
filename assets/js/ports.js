@@ -45,6 +45,12 @@ const actions = {
     },
     'BULMA': (app, session, eltId) => {
         console.log(`Activate Bulma driver...`);
+        // Set a timetou to avoid noisy footbar apearing before ajax request finished
+        document.getElementById("footBar").style.display= "none";
+        setTimeout( function () {
+            document.getElementById("footBar").style.display= "block";
+        }, 0.5);
+
         // This timeout is needed when bulma driver is called by elm Cmd,
         // to wait foe the Html Msg to be updated by elm in order
         // to have new node accessible by Javascript.

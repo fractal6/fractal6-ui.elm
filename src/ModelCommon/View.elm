@@ -115,7 +115,7 @@ mediaTension baseUri focus tension navigate =
             , span [ class "columns" ]
                 [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
                 , span [ class "has-text-weight-light column" ]
-                    [ span [ class "columns" ]
+                    [ span [ class "columns is-mobile" ]
                         [ span [ class "column is-1", attribute "style" "padding-left: 0 !important;" ] <|
                             case tension.action of
                                 Just TensionAction.NewCircle ->

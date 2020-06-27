@@ -585,8 +585,8 @@ view_ global model =
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
-                [ div [ class "columns" ]
-                    [ div [ class "column is-6 is-offset-3" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.viewMode ] ]
+                [ div [ class "columns is-centered" ]
+                    [ div [ class "column is-8-desktop is-6-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.viewMode ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -675,7 +675,7 @@ viewListTensions model =
                     other |> List.sortBy .createdAt |> List.reverse |> Success
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-8" ]
+        [ div [ class "column is-10-desktop is-8-fullhd" ]
             [ viewTensions model.node_focus model.initPattern tensions_d ListTension
             ]
         ]

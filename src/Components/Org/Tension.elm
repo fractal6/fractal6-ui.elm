@@ -7,6 +7,7 @@ import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMaybeData)
+import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostSendable)
 import Form.NewCircle exposing (NewNodeText)
 import Fractal.Enum.NodeType as NodeType
@@ -15,9 +16,11 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
+import Markdown.Parser as Markdown
+import Markdown.Renderer
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
@@ -53,6 +56,7 @@ type alias Model =
     -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+    , inputViewMode : InputViewMode
 
     -- Page
     , tensionid : String
@@ -60,6 +64,11 @@ type alias Model =
     , tension_form : TensionPatchForm
     , tension_result : GqlData IdPayload
     }
+
+
+type InputViewMode
+    = Write
+    | Preview
 
 
 
@@ -80,6 +89,7 @@ type Msg
     | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
     | SubmitChangeStatus TensionPatchForm TensionStatus.TensionStatus Time.Posix -- Send form
     | TensionPatchAck (GqlData IdPayload)
+    | ChangeInputViewMode InputViewMode
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -123,6 +133,7 @@ init global flags =
             , tension_data = Loading
             , tension_form = tensionForm
             , tension_result = NotAsked
+            , inputViewMode = Write
             , node_action = NoOp
             , isModalActive = False
             }
@@ -284,6 +295,9 @@ update global msg model =
                 _ ->
                     ( { model | tension_result = result }, Cmd.none, Cmd.none )
 
+        ChangeInputViewMode viewMode ->
+            ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
+
         -- Join
         DoJoinOrga rootnameid time ->
             case global.session.user of
@@ -387,7 +401,7 @@ viewTension u t model =
         userInput =
             case u of
                 LoggedIn uctx ->
-                    [ viewCommentInput uctx t model.tension_form model.tension_result ]
+                    [ viewCommentInput uctx t model.tension_form model.tension_result model.inputViewMode ]
 
                 LoggedOut ->
                     [ viewJoinNeeded model.node_focus ]
@@ -424,15 +438,15 @@ viewComment c =
                             div [ class "is-italic" ] [ text "No description provided." ]
 
                         message ->
-                            div [ class "" ] [ text message ]
+                            renderMarkdown message
                     ]
                 ]
             ]
         ]
 
 
-viewCommentInput : UserCtx -> TensionExtended -> TensionPatchForm -> GqlData IdPayload -> Html Msg
-viewCommentInput uctx tension form result =
+viewCommentInput : UserCtx -> TensionExtended -> TensionPatchForm -> GqlData IdPayload -> InputViewMode -> Html Msg
+viewCommentInput uctx tension form result viewMode =
     let
         isLoading =
             result == LoadingSlowly
@@ -466,23 +480,39 @@ viewCommentInput uctx tension form result =
 
                     else
                         "Reopen tension"
+
+        message =
+            Dict.get "message" form.post |> withDefault ""
     in
     div [ class "tensionComment media section is-paddingless" ]
         [ div [ class "media-left" ] [ div [ class "image is-48x48" ] [ getAvatar uctx.username ] ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header" ] [ div [ class "tabs is-boxed is-small" ] [ ul [] [ li [ class "is-active" ] [ a [] [ text "Write" ] ], li [] [ a [] [ text "Preview" ] ] ] ] ]
+                [ div [ class "message-header" ]
+                    [ div [ class "tabs is-boxed is-small" ]
+                        [ ul []
+                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                            ]
+                        ]
+                    ]
                 , div [ class "message-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
-                            [ textarea
-                                [ id "textAreaModal"
-                                , class "textarea"
-                                , rows 5
-                                , placeholder "Leave a comment"
-                                , onInput (ChangeTensionPost "message")
-                                ]
-                                []
+                            [ case viewMode of
+                                Write ->
+                                    textarea
+                                        [ id "textAreaModal"
+                                        , class "textarea"
+                                        , rows 5
+                                        , placeholder "Leave a comment"
+                                        , value message
+                                        , onInput (ChangeTensionPost "message")
+                                        ]
+                                        []
+
+                                Preview ->
+                                    renderMarkdown message
                             ]
                         ]
                     , case result of
@@ -752,3 +782,24 @@ initTensionForm tensionid user =
     , receiver = Nothing
     , post = Dict.empty
     }
+
+
+renderMarkdown : String -> Html Msg
+renderMarkdown message =
+    case
+        message
+            |> Markdown.parse
+            |> Result.mapError deadEndsToString
+            |> Result.andThen (\ast -> Markdown.Renderer.render Markdown.Renderer.defaultHtmlRenderer ast)
+    of
+        Ok rendered ->
+            div [ class "content" ] rendered
+
+        Err errors ->
+            text errors
+
+
+deadEndsToString deadEnds =
+    deadEnds
+        |> List.map Markdown.deadEndToString
+        |> String.join "\n"

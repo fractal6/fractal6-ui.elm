@@ -1,4 +1,4 @@
-module Components.Navbar exposing (viewNavbar)
+module Components.Navbar exposing (view)
 
 import Components.Logo as Logo
 import Generated.Route as Route exposing (Route, toHref)
@@ -7,8 +7,8 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import ModelCommon exposing (UserState(..))
 
 
-viewNavbar : UserState -> Html msg
-viewNavbar user =
+view : UserState -> Html msg
+view user =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar has-shadow is-fixed-top"
@@ -40,14 +40,7 @@ viewNavbar user =
                     , viewLink "navbar-item" Route.Explore "Explore"
                     ]
                 , div [ class "navbar-end" ]
-                    [ a [ class "navbar-item" ]
-                        [ div [ class "button is-warning is-small" ]
-                            [ div [ class "content" ]
-                                [ text "Contact" ]
-                            ]
-                        ]
-                    , userButton user
-                    ]
+                    [ userButton user ]
                 ]
             ]
         ]

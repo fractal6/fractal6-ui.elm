@@ -11,7 +11,10 @@ html, body {
 
 #body {
     // FIX the fix-top-navbar padding (for the #mainPane}
-    padding-top: calc(#{$navbar-height}  ) !important;
+    padding-top: calc(#{$navbar-height} - 0.5rem ) !important; // why - 0.5 ? mystery
+
+    // For discrete footer.
+    min-height: calc(100vh - #{$navbar-height}) !important;
 }
 
 hr {
@@ -21,6 +24,12 @@ hr {
     }
     &.is-3 {
         height: 4px !important
+    }
+}
+
+.content {
+    pre, code {
+        background-color: $code-color !important;
     }
 }
 
@@ -195,10 +204,10 @@ html.has-modal-active {
 
 #navbarTop {
 
-    #logo {
-        height: $navbar-height;
-        width: $navbar-height;
-    }
+    //#logo {
+    //    height: $navbar-height !important;
+    //    width: $navbar-height !important;
+    //}
 
     .navbar-brand a {
         padding-top: 0 !important;
@@ -216,12 +225,38 @@ html.has-modal-active {
         transition: transform .666s ease-in-out;
     }
 
-    //.navbar-brand svg:hover {
-    //    -webkit-transform: rotate(225deg);
-    //    transform: rotate(225deg);
-    //}
-    //
+}
 
+#helperBar {
+    background-color: $header-background-color;
+
+    & > .column {
+        padding-top: 1.5rem !important;
+        padding-bottom: 0 !important;
+    }
+
+    & nav > .level {
+        margin-top: 1rem;
+        //margin-bottom: 1.75rem;
+    }
+
+    .tabs {
+        font-size: 0.85rem;
+    }
+
+
+}
+
+#footBar {
+    //background-color: $header-background-color;
+    box-shadow: 0 0 1px 0 $white-ter;
+    margin-top: 3rem;
+    padding: 3rem 1.5rem 3rem;
+
+    opacity: 0;
+    animation: fadeIn 0.5s;
+    animation-delay: 0.5s;
+    animation-fill-mode: forwards;
 }
 
 #leftPane {
@@ -270,25 +305,10 @@ html.has-modal-active {
 
 }
 
-#helperBar {
-    background-color: $header-background-color;
-    //box-shadow: 0 1px 0 0 #66737378;
 
-    & > .column {
-        padding-top: 1.22rem !important;
-        padding-bottom: 0 !important;
-    }
-
-    & nav > .level {
-        margin-top: 1rem;
-        //margin-bottom: 1.75rem;
-    }
-
-    .tabs {
-        font-size: 0.85rem;
-    }
-
-
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 #mainPane {

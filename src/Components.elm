@@ -1,6 +1,7 @@
 module Components exposing (layout)
 
 import Browser exposing (Document)
+import Components.Footbar as Footbar
 import Components.Navbar as Navbar
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
@@ -12,10 +13,11 @@ layout { page, session } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Navbar.viewNavbar session.user -- page.route / current route ?
+            [ Navbar.view session.user -- page.route / current route ?
             , div [ id "body", class "section is-paddingless" ] <|
                 --[ div [ class "notification is-info" ] [ div [ class "delete" ] [] , text session.referer.path ] ] ++
                 page.body
+            , Footbar.view
             ]
         ]
     }
