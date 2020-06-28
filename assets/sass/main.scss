@@ -369,6 +369,17 @@ html.has-modal-active {
         }
     }
 
+    .mediaFragments {
+        //.column:not(:last-child), .column.is-mobile:not(:last-child) {
+        .column, .column.is-mobile {
+            padding-left:0 !important;
+            padding-right:0 !important;
+            margin-left:4px !important;
+            margin-right:4px !important;
+        }
+
+    }
+
 }
 
 #tensionPage {

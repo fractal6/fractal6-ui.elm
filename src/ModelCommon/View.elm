@@ -102,8 +102,14 @@ mediaTension baseUri focus tension navigate =
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
+                , span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments) ] <|
+                    if n_comments > 0 then
+                        [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments) ]
+
+                    else
+                        []
                 ]
-            , div [ class "labelsList" ] <|
+            , span [ class "labelsList" ] <|
                 (tension.labels
                     |> withDefault []
                     |> List.map
@@ -115,8 +121,8 @@ mediaTension baseUri focus tension navigate =
             , span [ class "columns" ]
                 [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
                 , span [ class "has-text-weight-light column" ]
-                    [ span [ class "columns is-mobile" ]
-                        [ span [ class "column is-1", attribute "style" "padding-left: 0 !important;" ] <|
+                    [ span [ class "columns is-mobile mediaFragments" ]
+                        [ span [ class "column is-1" ] <|
                             case tension.action of
                                 Just TensionAction.NewCircle ->
                                     [ Fa.fa "far fa-circle" ]
@@ -126,17 +132,6 @@ mediaTension baseUri focus tension navigate =
 
                                 Nothing ->
                                     []
-                        , span
-                            [ class "column is-2 tooltip has-tooltip-top"
-                            , attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments)
-                            , attribute "style" "padding-left: 0 !important; padding-right:0 !important;"
-                            ]
-                          <|
-                            if n_comments > 0 then
-                                [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments) ]
-
-                            else
-                                []
                         , span [ class "column" ]
                             [ span [ class "is-pulled-right" ]
                                 [ viewTensionDateAndUser tension.createdAt tension.createdBy ]

@@ -37,7 +37,7 @@ view baseUri user maybePath joinMsg =
     in
     div [ id "helperBar", class "columns is-centered" ]
         [ nav [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
-            [ div [ class "columns" ]
+            [ div [ class "columns is-mobile" ]
                 [ div [ class "column is-5" ]
                     [ viewPath OverviewBaseUri maybePath ]
                 , div [ class "column is-6 is-offset-1" ]

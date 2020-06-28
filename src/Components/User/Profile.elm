@@ -80,7 +80,7 @@ view_ global model =
         [ div [ class "column is-offset-2 is-5 " ]
             [ div [ class "section" ]
                 [ "Welcome @" ++ model.username |> text
-                , div [ class "box" ] [ text "page under construction" ]
+                , div [ class "box has-text-warning" ] [ text "page under construction" ]
                 ]
             ]
         ]
