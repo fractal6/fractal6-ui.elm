@@ -9,7 +9,7 @@ import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlE
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData)
+import Extra exposing (ternary, withDefaultData, withMaybeData)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Form
 import Form.NewCircle
@@ -232,6 +232,7 @@ update global msg model =
                         form =
                             { uctx = uctx
                             , rootnameid = rootnameid
+                            , id = model.path_data |> withMaybeData |> Maybe.map (\pd -> pd.root |> Maybe.map (\r -> r.id) |> withDefault "")
                             , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
 

@@ -82,6 +82,7 @@ nodeOrgaFilter rootid a =
 nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
 nodeOrgaPayload =
     SelectionSet.succeed Node
+        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
@@ -92,6 +93,7 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Node.charac <| nodeCharacPayload)
+        |> with Fractal.Object.Node.isPrivate
 
 
 nodeCharacPayload : SelectionSet NodeCharac Fractal.Object.NodeCharac
@@ -115,6 +117,7 @@ type alias LocalNode =
     , type_ : NodeType.NodeType
     , children : Maybe (List NodeId)
     , parent : Maybe LocalRootNode
+    , id : String
     }
 
 
@@ -123,6 +126,7 @@ type alias LocalRootNode =
     , nameid : String
     , charac : NodeCharac
     , isRoot : Bool
+    , id : String
     }
 
 
@@ -141,7 +145,7 @@ lgDecoder data =
                                 [ PNode p.name p.nameid, PNode n.name n.nameid ]
                         in
                         if p.isRoot then
-                            { root = RootNode p.name p.nameid p.charac |> Just
+                            { root = RootNode p.name p.nameid p.charac p.id |> Just
                             , path = path
                             , focus = focus
                             }
@@ -152,7 +156,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RootNode n.name n.nameid n.charac |> Just
+                        { root = RootNode n.name n.nameid n.charac n.id |> Just
                         , path = [ PNode n.name n.nameid ]
                         , focus = FocusNode n.name n.nameid n.type_ (n.children |> withDefault [])
                         }
@@ -186,6 +190,7 @@ lgPayload =
             )
         |> with
             (Fractal.Object.Node.parent identity lg2Payload)
+        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
 
 
 lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node
@@ -195,6 +200,7 @@ lg2Payload =
         |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.charac <| nodeCharacPayload)
         |> with Fractal.Object.Node.isRoot
+        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
 
 
 

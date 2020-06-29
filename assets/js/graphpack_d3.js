@@ -741,17 +741,21 @@ const GraphPack = {
             var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
         } else {
             // above the circle
-            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
+            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon );
             var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
             var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
         }
-        if (l+tw/2-r.left < 0 || t+$tooltip.clientHeight/3-r.top < 0 || r.left+r.width-tw/2-l < 0 ) {
-            // the tooltip overflow "too much" outside the canvas.
+        if (l+tw/2-r.left < 0 || r.left+r.width-tw/2-l < 0 ) {
+            // the tooltip overflow "too much" outside the canvas. (left/right
             this.clearNodeTooltip();
-        } else {
-            $tooltip.style.left = l + "px";
-            $tooltip.style.top = t + "px";
+            return
+        } else if ( t+$tooltip.clientHeight/3-r.top < 0) {
+            // Overflow on top
+            var hw = (-$tooltip.clientHeight/2 + 2*node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
         }
+        $tooltip.style.left = l + "px";
+        $tooltip.style.top = t + "px";
         return
     },
 
@@ -823,7 +827,8 @@ const GraphPack = {
         var rootNode = {
             name: this.rootNode.data.name,
             nameid: this.rootNode.data.nameid,
-            charac: this.rootNode.data.charac
+            charac: this.rootNode.data.charac,
+            id: this.rootNode.data.id,
         };
         var focusNode = {
             name: node.data.name,

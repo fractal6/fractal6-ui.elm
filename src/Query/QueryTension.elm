@@ -115,7 +115,8 @@ nCircleTensionPpg =
 
 
 type alias NodeTensions =
-    { tensions_in : Maybe (List Tension)
+    { nameid : String
+    , tensions_in : Maybe (List Tension)
     , tensions_out : Maybe (List Tension)
     , children : Maybe (List SubNodeTensions)
     }
@@ -217,6 +218,7 @@ tensionPayload =
 circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
 circleTensionPayload =
     SelectionSet.succeed NodeTensions
+        |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
         |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
         |> with

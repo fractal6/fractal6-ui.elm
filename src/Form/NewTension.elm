@@ -1,13 +1,14 @@
 module Form.NewTension exposing (view)
 
 import Components.Loading as Loading exposing (viewGqlErrors)
+import Components.Markdown exposing (renderMarkdown)
 import Dict
 import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -18,7 +19,7 @@ import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
 {-| --view : TensionForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> TensionForm) -> Time.Posix -> msg) -> (TensionForm -> Time.Posix -> msg) -> Html msg
 What should be the signature ?!
 -}
-view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
+view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
         isLoading =
             result == LoadingSlowly
@@ -28,6 +29,9 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
 
         submitTension =
             ternary isSendable [ onClick (submitMsg <| submitNextMsg form) ] []
+
+        message =
+            Dict.get "message" form.post |> withDefault ""
     in
     case result of
         Success _ ->
@@ -58,19 +62,37 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                         , p [ class "help-label" ] [ text "Title that sumarize your tension." ]
                         , br [] []
                         ]
-                    , div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ textarea
-                                [ id "textAreaModal"
-                                , class "textarea"
-                                , rows 10
-                                , placeholder "Leave a comment"
-                                , onInput (changePostMsg "message")
+                    , div [ class "message" ]
+                        [ div [ class "message-header" ]
+                            [ div [ class "tabs is-boxed is-small" ]
+                                [ ul []
+                                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (changeInputView Write), target "_blank" ] [ text "Write" ] ]
+                                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (changeInputView Preview), target "_blank" ] [ text "Preview" ] ]
+                                    ]
                                 ]
-                                []
                             ]
-                        , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
-                        , br [] []
+                        , div [ class "message-body" ]
+                            [ div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ case viewMode of
+                                        Write ->
+                                            textarea
+                                                [ id "textAreaModal"
+                                                , class "textarea"
+                                                , rows 10
+                                                , placeholder "Leave a comment"
+                                                , value message
+                                                , onInput (changePostMsg "message")
+                                                ]
+                                                []
+
+                                        Preview ->
+                                            div [] [ renderMarkdown message, hr [] [] ]
+                                    ]
+                                , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
+                                , br [] []
+                                ]
+                            ]
                         ]
                     ]
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]

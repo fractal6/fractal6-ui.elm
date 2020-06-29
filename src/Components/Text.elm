@@ -92,17 +92,17 @@ policiesH =
 
 noResponsabilities : String
 noResponsabilities =
-    "Responsabilities"
+    "no responsabilities provided"
 
 
 noDomains : String
 noDomains =
-    "Domains"
+    "no domains provided"
 
 
 noPolicies : String
 noPolicies =
-    "Policies"
+    "no policies provided"
 
 
 phCirclePurpose : String

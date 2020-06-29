@@ -58,7 +58,8 @@ type alias Post =
 
 
 type alias Node =
-    { createdAt : String
+    { id : String
+    , createdAt : String
     , name : String
     , nameid : String
     , rootnameid : String
@@ -67,6 +68,7 @@ type alias Node =
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe Username
     , charac : NodeCharac
+    , isPrivate : Bool
     }
 
 
@@ -84,6 +86,7 @@ type alias RootNode =
     { name : String
     , nameid : String
     , charac : NodeCharac
+    , id : String
     }
 
 

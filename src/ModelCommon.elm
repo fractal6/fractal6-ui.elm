@@ -132,6 +132,7 @@ type CircleStep form
 type alias JoinOrgaForm =
     { uctx : UserCtx
     , rootnameid : String
+    , id : Maybe String
     , post : Post
     }
 
@@ -141,6 +142,15 @@ type JoinStep form
     | JoinValidation form (GqlData Node)
     | JoinNotAuthorized ErrorData
     | JoinAuthNeeded
+
+
+
+-- View
+
+
+type InputViewMode
+    = Write
+    | Preview
 
 
 
@@ -306,7 +316,8 @@ nodesEncoder nodes =
 
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
-    [ ( "createdAt", JE.string node.createdAt )
+    [ ( "id", JE.string node.id )
+    , ( "createdAt", JE.string node.createdAt )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
     , ( "rootnameid", JE.string node.rootnameid )
@@ -320,6 +331,7 @@ nodeEncoder node =
             , ( "mode", JE.string <| NodeMode.toString node.charac.mode )
             ]
       )
+    , ( "isPrivate", JE.bool node.isPrivate )
     ]
 
 
@@ -331,6 +343,7 @@ nodeDecoder : JD.Decoder Node
 nodeDecoder =
     --JD.map9 Node
     JD.succeed Node
+        |> JDE.andMap (JD.field "id" JD.string)
         |> JDE.andMap (JD.field "createdAt" JD.string)
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "nameid" JD.string)
@@ -340,6 +353,7 @@ nodeDecoder =
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
         |> JDE.andMap (JD.maybe (JD.map Username <| JD.field "first_link" JD.string))
         |> JDE.andMap (JD.field "charac" characDecoder)
+        |> JDE.andMap (JD.field "isPrivate" JD.bool)
 
 
 characDecoder : JD.Decoder NodeCharac
@@ -354,10 +368,11 @@ localGraphDecoder =
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
-                JD.map3 RootNode
+                JD.map4 RootNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "charac" characDecoder)
+                    (JD.field "id" JD.string)
         )
         (JD.field "path"
             (JD.list <|

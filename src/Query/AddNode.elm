@@ -77,7 +77,7 @@ addNewMember form msg =
 
 
 newMemberInputEncoder : JoinOrgaForm -> Mutation.AddNodeRequiredArguments
-newMemberInputEncoder { uctx, rootnameid, post } =
+newMemberInputEncoder { uctx, rootnameid, id, post } =
     let
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
@@ -93,6 +93,7 @@ newMemberInputEncoder { uctx, rootnameid, post } =
             , rootnameid = rootnameid
             , isRoot = False
             , charac = { userCanJoin = Present False, mode = Present NodeMode.Coordinated }
+            , isPrivate = False
             }
 
         nodeOptional =
@@ -101,7 +102,7 @@ newMemberInputEncoder { uctx, rootnameid, post } =
                     | role_type = Present RoleType.Guest
                     , parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = Present rootnameid })
+                            (\p -> { p | nameid = Present rootnameid, id = id |> Maybe.map (\i -> encodeId i) |> fromMaybe })
                             |> Present
                     , first_link =
                         Input.buildUserRef
@@ -132,6 +133,7 @@ type alias Circle =
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe Username
     , charac : NodeCharac
+    , isPrivate : Bool
     }
 
 
@@ -157,7 +159,8 @@ circleDecoder a =
                                         n.children |> withDefault []
 
                                     node =
-                                        { createdAt = .createdAt n
+                                        { id = .id n
+                                        , createdAt = .createdAt n
                                         , name = .name n
                                         , nameid = .nameid n
                                         , rootnameid = .rootnameid n
@@ -166,6 +169,7 @@ circleDecoder a =
                                         , role_type = .role_type n
                                         , first_link = .first_link n
                                         , charac = .charac n
+                                        , isPrivate = .isPrivate n
                                         }
                                 in
                                 [ node ]
@@ -217,6 +221,7 @@ addOneCirclePayload =
                     Fractal.Object.NodeCharac.userCanJoin
                     Fractal.Object.NodeCharac.mode
             )
+        |> with Fractal.Object.Node.isPrivate
 
 
 
@@ -250,6 +255,7 @@ addCircleInputEncoder f =
             , nameid = nameid
             , rootnameid = f.target.rootnameid
             , charac = { userCanJoin = Present False, mode = Present nodeMode }
+            , isPrivate = f.target.isPrivate
             }
 
         nodeOptional =
@@ -285,7 +291,7 @@ getAddCircleOptionals f =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = Present f.target.nameid })
+                            (\p -> { p | nameid = Present f.target.nameid, id = encodeId f.target.id |> Present })
                             |> Present
                     , mandate =
                         Input.buildMandateRef
@@ -314,6 +320,7 @@ getAddCircleOptionals f =
                                                         (\u -> { u | username = Present f.uctx.username })
                                                         |> Present
                                                 , isRoot = False |> Present
+                                                , isPrivate = f.target.isPrivate |> Present
                                                 , type_ = NodeType.Role |> Present
                                                 , role_type = RoleType.Coordinator |> Present
                                                 , name = "Coordinator" |> Present
@@ -341,7 +348,7 @@ getAddCircleOptionals f =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = Present f.target.nameid })
+                            (\p -> { p | nameid = Present f.target.nameid, id = encodeId f.target.id |> Present })
                             |> Present
                     , mandate =
                         Input.buildMandateRef

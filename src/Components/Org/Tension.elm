@@ -3,6 +3,7 @@ module Components.Org.Tension exposing (Flags, Model, Msg, init, page, subscript
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Markdown exposing (renderMarkdown)
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -19,8 +20,6 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
-import Markdown.Parser as Markdown
-import Markdown.Renderer
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
@@ -64,11 +63,6 @@ type alias Model =
     , tension_form : TensionPatchForm
     , tension_result : GqlData IdPayload
     }
-
-
-type InputViewMode
-    = Write
-    | Preview
 
 
 
@@ -309,6 +303,7 @@ update global msg model =
                         form =
                             { uctx = uctx
                             , rootnameid = rootnameid
+                            , id = model.path_data |> withMaybeData |> Maybe.map (\pd -> pd.root |> Maybe.map (\r -> r.id) |> withDefault "")
                             , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
 
@@ -512,7 +507,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    renderMarkdown message
+                                    div [] [ renderMarkdown message, hr [] [] ]
                             ]
                         ]
                     , case result of
@@ -609,7 +604,7 @@ viewMandate action mandate =
                         , class "textarea"
                         , rows 5
                         , readonly True
-                        , value (mandate.responsabilities |> withDefault "<no responsabilities provided>")
+                        , value (mandate.responsabilities |> withDefault ("<" ++ Text.noResponsabilities ++ ">"))
 
                         --, placeholder txt.ph_responsabilities
                         --, onInput <| changePostMsg "responsabilities"
@@ -625,7 +620,7 @@ viewMandate action mandate =
                         , class "textarea"
                         , rows 5
                         , readonly True
-                        , value (mandate.domains |> withDefault "<no domains provided>")
+                        , value (mandate.domains |> withDefault ("<" ++ Text.noDomains ++ ">"))
 
                         --, placeholder txt.ph_domains
                         --, onInput <| changePostMsg "domains"
@@ -641,7 +636,7 @@ viewMandate action mandate =
                         , class "textarea"
                         , rows 5
                         , readonly True
-                        , value (mandate.policies |> withDefault "<no responsabilities provided>")
+                        , value (mandate.policies |> withDefault ("<" ++ Text.noPolicies ++ ">"))
 
                         --, placeholder txt.ph_policies
                         --, onInput <| changePostMsg "policies"
@@ -782,24 +777,3 @@ initTensionForm tensionid user =
     , receiver = Nothing
     , post = Dict.empty
     }
-
-
-renderMarkdown : String -> Html Msg
-renderMarkdown message =
-    case
-        message
-            |> Markdown.parse
-            |> Result.mapError deadEndsToString
-            |> Result.andThen (\ast -> Markdown.Renderer.render Markdown.Renderer.defaultHtmlRenderer ast)
-    of
-        Ok rendered ->
-            div [ class "content" ] rendered
-
-        Err errors ->
-            text errors
-
-
-deadEndsToString deadEnds =
-    deadEnds
-        |> List.map Markdown.deadEndToString
-        |> String.join "\n"

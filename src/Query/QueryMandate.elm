@@ -32,7 +32,9 @@ import RemoteData exposing (RemoteData)
 
 
 type alias TopMandate =
-    { mandate : Maybe Mandate }
+    { nameid : String
+    , mandate : Maybe Mandate
+    }
 
 
 mandateDecoder : Maybe TopMandate -> Maybe Mandate
@@ -59,6 +61,7 @@ mandateFilter nid a =
 mandatePayload : SelectionSet TopMandate Fractal.Object.Node
 mandatePayload =
     SelectionSet.succeed TopMandate
+        |> with Fractal.Object.Node.nameid
         |> with
             (Fractal.Object.Node.mandate identity
                 (SelectionSet.succeed Mandate

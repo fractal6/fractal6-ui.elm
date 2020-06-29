@@ -185,6 +185,11 @@ isRoot =
     Object.selectionForField "Bool" "isRoot" [] Decode.bool
 
 
+isPrivate : SelectionSet Bool Fractal.Object.Node
+isPrivate =
+    Object.selectionForField "Bool" "isPrivate" [] Decode.bool
+
+
 type alias FirstLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 

@@ -6,6 +6,7 @@ import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewWarnings)
+import Components.Markdown exposing (renderMarkdown)
 import Components.Text as Text exposing (..)
 import Debug
 import Dict exposing (Dict)
@@ -64,6 +65,9 @@ type alias Model =
     , orga_data : GqlData NodesData
     , tensions_circle : GqlData TensionsData
     , mandate : GqlData Mandate
+
+    -- common
+    , inputViewMode : InputViewMode
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , node_quickSearch : NodesQuickSearch
@@ -99,6 +103,7 @@ type Msg
     | ChangeCirclePost String String -- {field value}
     | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
+    | ChangeInputViewMode InputViewMode
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -172,6 +177,7 @@ init global flags =
                 session.mandate
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
+            , inputViewMode = Write
             , node_action = session.node_action |> withDefault NoOp
             , isModalActive = False
             , node_quickSearch = { qs | pattern = "", idx = 0 }
@@ -541,6 +547,12 @@ update global msg model =
                     case model.node_action of
                         AddCircle (CircleInit form) ->
                             let
+                                orgaRoles =
+                                    uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
+
+                                nodeMode =
+                                    getNodeMode form.target.rootnameid model.orga_data |> withDefault NodeMode.Coordinated
+
                                 newForm =
                                     { form
                                         | uctx = uctx
@@ -548,12 +560,6 @@ update global msg model =
                                             form.post
                                                 |> Dict.union (Dict.fromList [ ( "node_mode", NodeMode.toString nodeMode ), ( "first_links", "@" ++ uctx.username ) ])
                                     }
-
-                                orgaRoles =
-                                    uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
-
-                                nodeMode =
-                                    getNodeMode form.target.rootnameid model.orga_data |> withDefault NodeMode.Coordinated
 
                                 newStep =
                                     case orgaRoles of
@@ -722,6 +728,9 @@ update global msg model =
                 Nothing ->
                     ( { model | node_action = AskErr "Query method not implemented from CircleAck" }, Cmd.none, Cmd.none )
 
+        ChangeInputViewMode viewMode ->
+            ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
+
         -- Join
         DoJoinOrga rootnameid time ->
             case global.session.user of
@@ -733,6 +742,7 @@ update global msg model =
                         form =
                             { uctx = uctx
                             , rootnameid = rootnameid
+                            , id = model.path_data |> Maybe.map (\pd -> pd.root |> Maybe.map (\r -> r.id) |> withDefault "")
                             , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
 
@@ -1187,23 +1197,23 @@ viewMandateDoc mandate =
             mandate.purpose
 
         responsabilities =
-            mandate.responsabilities |> withDefault Text.noResponsabilities
+            mandate.responsabilities |> withDefault ("*" ++ Text.noResponsabilities ++ "*")
 
         domains =
-            mandate.domains |> withDefault Text.noDomains
+            mandate.domains |> withDefault ("*" ++ Text.noDomains ++ "*")
 
         policies =
-            mandate.policies |> withDefault Text.noPolicies
+            mandate.policies |> withDefault ("*" ++ Text.noPolicies ++ "*")
     in
     div []
         [ h2 [ class "title is-5" ] [ text Text.purposeH ]
-        , p [] [ purpose |> text ]
+        , p [] [ renderMarkdown purpose ]
         , h2 [ class "title is-5" ] [ text Text.responsabilitiesH ]
-        , p [] [ responsabilities |> text ]
+        , p [] [ renderMarkdown responsabilities ]
         , h2 [ class "title is-5" ] [ text Text.domainsH ]
-        , p [] [ domains |> text ]
+        , p [] [ renderMarkdown domains ]
         , h2 [ class "title is-5" ] [ text Text.policiesH ]
-        , p [] [ policies |> text ]
+        , p [] [ renderMarkdown policies ]
         ]
 
 
@@ -1326,10 +1336,10 @@ viewActionStep model action =
                 ]
 
         AddTension step ->
-            viewTensionStep step
+            viewTensionStep model.inputViewMode step
 
         AddCircle step ->
-            viewCircleStep step
+            viewCircleStep model.inputViewMode step
 
         JoinOrga step ->
             viewJoinOrgaStep model.orga_data step
@@ -1344,8 +1354,8 @@ viewActionStep model action =
             viewAuthNeeded
 
 
-viewTensionStep : TensionStep TensionForm -> Html Msg
-viewTensionStep step =
+viewTensionStep : InputViewMode -> TensionStep TensionForm -> Html Msg
+viewTensionStep viewMode step =
     case step of
         TensionNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1397,14 +1407,14 @@ viewTensionStep step =
                             False
             in
             if viewCircleForm then
-                Form.NewCircle.view form result ChangeCirclePost DoCloseModal Submit SubmitCircle
+                Form.NewCircle.view viewMode form result ChangeInputViewMode ChangeCirclePost DoCloseModal Submit SubmitCircle
 
             else
-                Form.NewTension.view form result ChangeTensionPost DoCloseModal Submit SubmitTension
+                Form.NewTension.view viewMode form result ChangeInputViewMode ChangeTensionPost DoCloseModal Submit SubmitTension
 
 
-viewCircleStep : CircleStep TensionForm -> Html Msg
-viewCircleStep step =
+viewCircleStep : InputViewMode -> CircleStep TensionForm -> Html Msg
+viewCircleStep viewMode step =
     case step of
         CircleNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1428,7 +1438,7 @@ viewCircleStep step =
                 ]
 
         CircleFinal form result ->
-            Form.NewCircle.view form result ChangeCirclePost DoCloseModal Submit SubmitCircle
+            Form.NewCircle.view viewMode form result ChangeInputViewMode ChangeCirclePost DoCloseModal Submit SubmitCircle
 
 
 viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg

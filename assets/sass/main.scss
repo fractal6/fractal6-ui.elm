@@ -190,6 +190,9 @@ html.has-modal-active {
 .has-background-turquoise {
     background-color: $turquoise !important;
 }
+.has-text-turquoise {
+    color: $turquoise !important;
+}
 
 .input:active, .input:focus,
 .textarea:active, .textarea:focus {
@@ -416,6 +419,15 @@ html.has-modal-active {
         }
     }
 
+    .message {
+        background-color: $body-background-color !important;
+        border: solid 2px  $grey-dark  !important;
+
+        .tabs a {
+            text-decoration: none !important;
+        }
+    }
+
     .message-header {
         font-size: 14px !important;
         font-weight: 500 !important;
@@ -430,15 +442,59 @@ html.has-modal-active {
         }
     }
 
-    .message {
-        background-color: $body-background-color !important;
-        border: solid 2px  $grey-dark  !important;
+}
 
-        .tabs a {
-            text-decoration: none !important;
+.finalModal {
+    .message {
+        background-color: $white-light !important;
+        border: solid 2px  $white-ter  !important;
+
+        .tabs, .tabs.is-boxed  {
+            li a  {
+                color: #111 !important;
+            }
+            li a:hover{
+                background-color: $white-ter !important;
+            }
+            li.is-active a {
+                text-decoration: none !important;
+                background-color: $white-light !important;
+            }
         }
     }
 
+    .message-header {
+        background-color: $white-ter;
+        padding-bottom: 0 !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        border-radius: 0 !important;
+        //padding-bottom: 0 !important;
+        a {
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+        a:hover {
+            text-decoration: underline !important;
+        }
+    }
+
+    .message-body {
+        padding: 0.75em 0.75em !important;
+
+        .content {
+            color: #111 !important;
+            h1, h2, h3, h4, h5, h6 {
+                color: #111 !important;
+            }
+            pre, code {
+                background-color: $code-color !important;
+            }
+            pre, code, blockquote {
+                color: #fff !important;
+            }
+        }
+    }
 
 }
 

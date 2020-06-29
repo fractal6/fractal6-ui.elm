@@ -54,6 +54,11 @@ emitter fillInOptionals object_ =
     Object.selectionForCompositeField "emitter" optionalArgs object_ identity
 
 
+emitterid : SelectionSet String Fractal.Object.Tension
+emitterid =
+    Object.selectionForField "String" "emitterid" [] Decode.string
+
+
 type alias ReceiverOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -69,6 +74,11 @@ receiver fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "receiver" optionalArgs object_ identity
+
+
+receiverid : SelectionSet String Fractal.Object.Tension
+receiverid =
+    Object.selectionForField "String" "receiverid" [] Decode.string
 
 
 type alias CommentsOptionalArguments =
@@ -143,16 +153,6 @@ mandate fillInOptionals object_ =
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension
 n_comments =
     Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
-
-
-emitterid : SelectionSet String Fractal.Object.Tension
-emitterid =
-    Object.selectionForField "String" "emitterid" [] Decode.string
-
-
-receiverid : SelectionSet String Fractal.Object.Tension
-receiverid =
-    Object.selectionForField "String" "receiverid" [] Decode.string
 
 
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Tension

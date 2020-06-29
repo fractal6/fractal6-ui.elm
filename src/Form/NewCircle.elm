@@ -36,7 +36,7 @@ type alias NewNodeText =
 {-| --view : TensionForm -> GqlData (Maybe Node) -> (String -> String -> msg) -> ((msg -> TensionFOrm) -> Time.Posix -> msg) -> (TensionForm -> Time.Posix -> msg) -> Html msg
 What should be the signature ?!
 -}
-view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
+view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
         txt =
             case form.type_ of
@@ -253,6 +253,7 @@ view form result changePostMsg closeModalMsg submitMsg submitNextMsg =
                                 [ button
                                     ([ class "button is-small has-text-weight-semibold"
                                      , classList [ ( "is-warning", isSendable ), ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
                                      ]
                                         ++ submitCloseTension
                                     )
