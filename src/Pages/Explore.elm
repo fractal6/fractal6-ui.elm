@@ -15,11 +15,12 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus)
+import ModelCommon.Uri exposing (FractalBaseRoute(..), uriFromNameid)
+import ModelCommon.View exposing (getAvatar)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddNode exposing (addNewMember)
+import Query.QueryNodes exposing (queryPublicOrga)
 import Task
 import Time
 
@@ -29,12 +30,12 @@ type alias Flags =
 
 
 type alias Model =
-    { orgas : List String
+    { orgas : GqlData (List Node)
     }
 
 
 type Msg
-    = NoOp
+    = GotOrga (GqlData (List Node))
 
 
 page : Page Flags Model Msg
@@ -51,17 +52,25 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
         model =
-            { orgas = [ "open-chaos" ]
+            { orgas = Loading
             }
+
+        cmds =
+            [ queryPublicOrga GotOrga
+            ]
     in
-    ( model, Cmd.none, Cmd.none )
+    ( model
+    , Cmd.batch cmds
+    , Cmd.none
+    )
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none, Cmd.none )
+        -- Gql queries
+        GotOrga result ->
+            ( { model | orgas = result }, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -81,18 +90,42 @@ view_ global model =
     div [ class "columns" ]
         [ div [ class "column is-offset-2 is-5 " ]
             [ div [ class "section" ]
-                [ viewOrgaMedia "open-chaos" ]
+                [ viewOrgas model ]
             ]
         ]
 
 
-viewOrgaMedia : String -> Html Msg
-viewOrgaMedia nameid =
+viewOrgas : Model -> Html Msg
+viewOrgas model =
+    div [ class "section" ] <|
+        case model.orgas of
+            Loading ->
+                [ div [] [] ]
+
+            NotAsked ->
+                [ div [] [] ]
+
+            LoadingSlowly ->
+                [ div [ class "spinner" ] [] ]
+
+            Failure err ->
+                [ viewGqlErrors err ]
+
+            Success nodes ->
+                nodes
+                    |> List.map (\n -> viewOrgaMedia n)
+                    |> List.append [ div [ class "subtitle" ] [ text "Public Organisation" ], br [] [] ]
+
+
+viewOrgaMedia : Node -> Html Msg
+viewOrgaMedia node =
     div [ class "media" ]
-        [ div [ class "media-left" ]
-            [ div [] []
-            ]
+        [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar node.name ] ]
         , div [ class "media-content" ]
-            [ div [] []
+            [ div [ class "leve" ]
+                [ div [ class "level-ite" ] [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ] ]
+                , div [ class "is-italic" ] [ text "about this organisation" ]
+                ]
             ]
+        , div [ class "media-left" ] [ text "box at left ?" ]
         ]

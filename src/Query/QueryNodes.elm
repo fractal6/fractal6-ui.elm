@@ -1,4 +1,4 @@
-module Query.QueryNodes exposing (MemberNode, User, nodeOrgaPayload, queryGraphPack, queryLocalGraph, queryMembers)
+module Query.QueryNodes exposing (MemberNode, User, nodeOrgaPayload, queryGraphPack, queryLocalGraph, queryMembers, queryPublicOrga)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -16,6 +16,53 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
+
+
+
+{-
+   Query Public Orga
+-}
+--- Response decoder
+
+
+publicOrgaDecoder : Maybe (List (Maybe Node)) -> Maybe (List Node)
+publicOrgaDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> Just
+            )
+        |> Maybe.withDefault Nothing
+
+
+queryPublicOrga msg =
+    makeGQLQuery
+        (Query.queryNode
+            publicOrgaFilter
+            nodeOrgaPayload
+        )
+        (RemoteData.fromResult >> decodeResponse publicOrgaDecoder >> msg)
+
+
+publicOrgaFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+publicOrgaFilter a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | isPrivate = Present False
+                        , isRoot = Present True
+                    }
+                )
+                |> Present
+    }
 
 
 
@@ -60,17 +107,10 @@ nodeOrgaFilter rootid a =
                 (\b ->
                     { b
                         | rootnameid = Present { eq = Present rootid }
-                        , and =
+                        , not =
                             Input.buildNodeFilter
-                                (\c ->
-                                    { c
-                                        | not =
-                                            Input.buildNodeFilter
-                                                (\d ->
-                                                    { d | role_type = Present { eq = Present RoleType.Member } }
-                                                )
-                                                |> Present
-                                    }
+                                (\d ->
+                                    { d | role_type = Present { eq = Present RoleType.Member } }
                                 )
                                 |> Present
                     }
