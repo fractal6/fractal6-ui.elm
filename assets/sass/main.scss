@@ -284,6 +284,16 @@ html.has-modal-active {
     animation-fill-mode: forwards;
 }
 
+#welcome {
+    //background-color: #24292e;
+    .title {
+        margin-bottom: 2.9rem !important;
+        line-height: 1.1 !important;
+        font-weight: 600 !important;
+        font-size: 3rem !important;
+    }
+}
+
 #leftPane {
 
   min-width: 155px !important;

@@ -2,10 +2,11 @@ module Pages.Signup exposing (Flags, Model, Msg, page)
 
 import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
+import Form exposing (isPostSendable)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
@@ -157,7 +158,7 @@ viewLogin : Global.Model -> Model -> Html Msg
 viewLogin global model =
     let
         isSendable =
-            isUserSendable model.form
+            isPostSendable [ "username", "email", "password" ] model.form.post
     in
     div [ class "form" ]
         [ div [ class "card" ]
@@ -176,6 +177,9 @@ viewLogin global model =
                                     , attribute "data-nextfocus" "emailInput"
                                     , type_ "text"
                                     , placeholder "username"
+                                    , name "username"
+                                    , attribute "autocomplete" "username"
+                                    , required True
                                     , onInput (ChangeUserPost "username")
                                     ]
                                     []
@@ -194,6 +198,9 @@ viewLogin global model =
                                     , attribute "data-nextfocus" "passwordInput"
                                     , type_ "text"
                                     , placeholder "email"
+                                    , name "email"
+                                    , attribute "autocomplete" "email"
+                                    , required True
                                     , onInput (ChangeUserPost "email")
                                     ]
                                     []
@@ -212,6 +219,9 @@ viewLogin global model =
                                     , attribute "data-nextfocus" "submitButton"
                                     , type_ "password"
                                     , placeholder "password"
+                                    , name "password"
+                                    , attribute "autocomplete" "password"
+                                    , required True
                                     , onInput (ChangeUserPost "password")
                                     ]
                                     []
@@ -246,22 +256,3 @@ viewLogin global model =
                     text ""
             ]
         ]
-
-
-
---- Getters
-
-
-isUserSendable : UserForm -> Bool
-isUserSendable form =
-    let
-        requiredFields =
-            [ Dict.get "username" form.post |> withDefault ""
-            , Dict.get "email" form.post |> withDefault ""
-            , Dict.get "password" form.post |> withDefault ""
-            ]
-
-        isSendable =
-            List.all (\x -> String.length x > 1) requiredFields
-    in
-    isSendable

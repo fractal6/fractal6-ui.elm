@@ -3,6 +3,7 @@ module Pages.Login exposing (Flags, Model, Msg, page)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
+import Form exposing (isPostSendable)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..))
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -156,7 +157,7 @@ viewLogin : Global.Model -> Model -> Html Msg
 viewLogin global model =
     let
         isSendable =
-            isUserSendable model.form
+            isPostSendable [ "username", "password" ] model.form.post
     in
     div [ class "form" ]
         [ div [ class "card" ]
@@ -233,24 +234,3 @@ viewLogin global model =
                     text ""
             ]
         ]
-
-
-
--------------------------------------------------
--- Model Getters and Setters
--------------------------------------------------
---- Getters
-
-
-isUserSendable : UserForm -> Bool
-isUserSendable form =
-    let
-        requiredFields =
-            [ Dict.get "username" form.post |> withDefault ""
-            , Dict.get "password" form.post |> withDefault ""
-            ]
-
-        isSendable =
-            List.all (\x -> String.length x > 1) requiredFields
-    in
-    isSendable
