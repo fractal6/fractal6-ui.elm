@@ -958,6 +958,9 @@ view_ global model =
                     ]
                 ]
             ]
+
+        --, div [ class "columns is-variable is-4" ]
+        --    [ div [ class "column is-8 is-offset-1" ] [ viewMandate model.mandate nodeFocus ] ]
         ]
 
 
@@ -1205,23 +1208,31 @@ viewMandateDoc mandate =
         policies =
             mandate.policies |> withDefault ("*" ++ Text.noPolicies ++ "*")
     in
-    div []
-        [ h2 [ class "title is-5" ] [ text Text.purposeH ]
-        , p [] [ renderMarkdown purpose ]
-        , h2 [ class "title is-5" ] [ text Text.responsabilitiesH ]
-        , p [] [ renderMarkdown responsabilities ]
-        , h2 [ class "title is-5" ] [ text Text.domainsH ]
-        , p [] [ renderMarkdown domains ]
-        , h2 [ class "title is-5" ] [ text Text.policiesH ]
-        , p [] [ renderMarkdown policies ]
+    div [ class "mandateDoc" ]
+        [ div [ class "message" ]
+            [ div [ class "message-header" ] [ text Text.purposeH ]
+            , p [ class "message-body" ] [ renderMarkdown purpose "is-dark" ]
+            ]
+        , div [ class "message" ]
+            [ div [ class "message-header" ] [ text Text.responsabilitiesH ]
+            , p [ class "message-body" ] [ renderMarkdown responsabilities "is-dark" ]
+            ]
+        , div [ class "message" ]
+            [ div [ class "message-header" ] [ text Text.domainsH ]
+            , p [ class "message-body" ] [ renderMarkdown domains "is-dark" ]
+            ]
+        , div [ class "message" ]
+            [ div [ class "message-header" ] [ text Text.policiesH ]
+            , p [ class "message-body" ] [ renderMarkdown policies "is-dark" ]
+            ]
         ]
 
 
 viewActivies : Model -> Html Msg
 viewActivies model =
     div
-        [ class "box"
-        , attribute "style" "flex-grow: 1; padding-top: 0px;"
+        [ class "box is-flex-grow"
+        , attribute "style" "padding-top: 0px;"
         ]
         [ div [ class "title" ]
             [ span

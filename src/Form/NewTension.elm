@@ -87,7 +87,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                                 []
 
                                         Preview ->
-                                            div [] [ renderMarkdown message, hr [] [] ]
+                                            div [] [ renderMarkdown message "is-dark", hr [] [] ]
                                     ]
                                 , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
                                 , br [] []

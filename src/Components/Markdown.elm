@@ -6,8 +6,8 @@ import Markdown.Parser as Markdown
 import Markdown.Renderer
 
 
-renderMarkdown : String -> Html msg
-renderMarkdown message =
+renderMarkdown : String -> String -> Html msg
+renderMarkdown message style =
     case
         message
             |> Markdown.parse
@@ -15,7 +15,7 @@ renderMarkdown message =
             |> Result.andThen (\ast -> Markdown.Renderer.render Markdown.Renderer.defaultHtmlRenderer ast)
     of
         Ok rendered ->
-            div [ class "content" ] rendered
+            div [ class ("content markdown " ++ style) ] rendered
 
         Err errors ->
             text errors

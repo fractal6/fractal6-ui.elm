@@ -422,7 +422,7 @@ viewTension u t model =
 viewComment : Comment -> Html Msg
 viewComment c =
     div [ class "tensionComment media section is-paddingless" ]
-        [ div [ class "media-left" ] [ div [ class "image is-48x48" ] [ getAvatar c.createdBy.username ] ]
+        [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar c.createdBy.username ] ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header" ]
@@ -433,7 +433,7 @@ viewComment c =
                             div [ class "is-italic" ] [ text "No description provided." ]
 
                         message ->
-                            renderMarkdown message
+                            renderMarkdown message "is-light"
                     ]
                 ]
             ]
@@ -480,7 +480,7 @@ viewCommentInput uctx tension form result viewMode =
             Dict.get "message" form.post |> withDefault ""
     in
     div [ class "tensionComment media section is-paddingless" ]
-        [ div [ class "media-left" ] [ div [ class "image is-48x48" ] [ getAvatar uctx.username ] ]
+        [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar uctx.username ] ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header" ]
@@ -507,7 +507,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown message, hr [] [] ]
+                                    div [] [ renderMarkdown message "is-light", hr [] [] ]
                             ]
                         ]
                     , case result of

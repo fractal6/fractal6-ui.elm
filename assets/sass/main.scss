@@ -27,11 +27,25 @@ hr {
     }
 }
 
-.content {
+.content.markdown.is-light {
     pre, code {
         background-color: $code-color !important;
     }
 }
+
+.content.markdown.is-dark {
+    color: #111 !important;
+    h1, h2, h3, h4, h5, h6, strong {
+        color: #111 !important;
+    }
+    pre, code {
+        background-color: $code-color !important;
+    }
+    pre, code, blockquote {
+        color: #fff !important;
+    }
+}
+
 
 .column {
   /*  Fix/scrollable column */
@@ -114,6 +128,11 @@ html.has-modal-active {
     }
 
     &.is-boxed {
+
+        a {
+            padding-right: 1rem !important;
+            padding-left: 1rem !important;
+        }
 
         li a:hover {
             background-color: $grey-dark;
@@ -199,6 +218,9 @@ html.has-modal-active {
     border-color: $turquoise !important;
 }
 
+.is-flex-grow {
+    flex-grow: 1;
+}
 /////
 
 .menu .menu-label {
@@ -481,19 +503,6 @@ html.has-modal-active {
 
     .message-body {
         padding: 0.75em 0.75em !important;
-
-        .content {
-            color: #111 !important;
-            h1, h2, h3, h4, h5, h6 {
-                color: #111 !important;
-            }
-            pre, code {
-                background-color: $code-color !important;
-            }
-            pre, code, blockquote {
-                color: #fff !important;
-            }
-        }
     }
 
 }
@@ -505,6 +514,21 @@ html.has-modal-active {
         content: ' \25CF'; // draw a circle (use as tag/bullet)
         font-size: 9px;
     }
+}
+
+.circleBase {
+    border-radius: 50%;
+}
+
+.circle1 {
+    width: 50px;
+    height: 50px;
+    //background: #939393;
+    background: #285a86;
+    border: 1px solid #000;
+    // Text centering
+    text-align: center;
+    padding-top: 10px;
 }
 
 
@@ -653,6 +677,15 @@ html.has-modal-active {
     border-radius: 5px;
     & .content p {
         font-size: 15px !important;
+    }
+}
+
+.mandateDoc {
+    .message-header {
+        background-color: $grey !important;
+    }
+    .message-body {
+        background-color: $white-light !important;
     }
 }
 
