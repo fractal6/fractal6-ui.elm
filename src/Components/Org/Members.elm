@@ -271,6 +271,10 @@ subscriptions global model =
         [ Ports.closeModalFromJs DoCloseModal ]
 
 
+
+---- VIEW ----
+
+
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Members · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])

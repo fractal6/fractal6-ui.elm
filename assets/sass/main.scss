@@ -282,6 +282,12 @@ html.has-modal-active {
     animation: fadeIn 0.5s;
     animation-delay: 0.5s;
     animation-fill-mode: forwards;
+
+    .contacts {
+        span + span {
+            padding-left: 15px !important;
+        }
+    }
 }
 
 #welcome {
@@ -377,11 +383,6 @@ html.has-modal-active {
 
 }
 
-.Footer {
-    position: absolute;
-    bottom: 0;
-    align-self: flex-end;
-}
 
 #explore {
     .media + .media {
@@ -440,7 +441,7 @@ html.has-modal-active {
 #tensionPage {
 
     .tensionTitle {
-        font-size: 2rem !important;
+        font-size: 1.9rem !important;
         font-weight: 600;
         margin-top: 1rem;
         margin-bottom: 1rem;

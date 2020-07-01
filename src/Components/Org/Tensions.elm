@@ -44,6 +44,10 @@ import Task
 import Time
 
 
+
+---- PROGRAM ----
+
+
 page : Page Flags Model Msg
 page =
     Page.component
@@ -55,9 +59,7 @@ page =
 
 
 
---
--- Model
---
+---- MODEL --
 
 
 type alias Model =
@@ -177,9 +179,7 @@ nfirst =
 
 
 
---
--- Msg
---
+---- MSG ----
 
 
 type Msg
@@ -210,9 +210,7 @@ type Msg
 
 
 
---
--- INIT
---
+---- INIT ----
 
 
 type alias Flags =
@@ -271,6 +269,10 @@ init global flags =
     , Cmd.batch cmds
     , Global.send (UpdateSessionFocus (Just newFocus))
     )
+
+
+
+---- UPDATE ----
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -568,6 +570,10 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal ]
+
+
+
+---- VIEW ----
 
 
 view : Global.Model -> Model -> Document Msg

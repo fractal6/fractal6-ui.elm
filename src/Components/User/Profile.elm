@@ -29,8 +29,26 @@ import Task
 import Time
 
 
+
+---- PROGRAM ----
+
+
+page : Page Flags Model Msg
+page =
+    Page.component
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+
+
 type alias Flags =
     { param1 : String }
+
+
+
+---- MODEL----
 
 
 type alias Model =
@@ -80,18 +98,16 @@ buildUserDict uctx =
         |> toDict
 
 
+
+---- MSG ----
+
+
 type Msg
     = GotNodes (GqlData (List NodeExt))
 
 
-page : Page Flags Model Msg
-page =
-    Page.component
-        { init = init
-        , update = update
-        , subscriptions = subscriptions
-        , view = view
-        }
+
+-- INIT --
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -119,6 +135,10 @@ init global flags =
     , Cmd.batch cmds
     , Cmd.none
     )
+
+
+
+---- UPDATE ----
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -157,6 +177,10 @@ update global msg model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.none
+
+
+
+---- VIEW ----
 
 
 view : Global.Model -> Model -> Document Msg

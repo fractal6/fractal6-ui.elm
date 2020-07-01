@@ -23,6 +23,10 @@ import RemoteData exposing (RemoteData)
 import Task
 
 
+
+---- PROGRAM ----
+
+
 page : Page Flags Model Msg
 page =
     Page.component
@@ -33,10 +37,12 @@ page =
         }
 
 
+type alias Flags =
+    ()
 
---
--- Model
---
+
+
+---- MODEL ----
 
 
 type alias Model =
@@ -57,13 +63,18 @@ type alias UserForm =
 
 
 
---
--- Init
---
+---- MSG ----
 
 
-type alias Flags =
-    ()
+type Msg
+    = SubmitUser UserForm
+    | ChangeUserPost String String
+    | GotSignin (WebData UserCtx) -- use remotedata.
+    | ChangeViewMode ViewMode
+
+
+
+---- INIT ----
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -89,16 +100,7 @@ init global flags =
 
 
 
---
--- Update
---
-
-
-type Msg
-    = SubmitUser UserForm
-    | ChangeUserPost String String
-    | GotSignin (WebData UserCtx) -- use remotedata.
-    | ChangeViewMode ViewMode
+---- UPDATE ----
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )

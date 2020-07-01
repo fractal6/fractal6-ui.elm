@@ -25,21 +25,8 @@ import Task
 import Time
 
 
-type alias Flags =
-    ()
 
-
-type alias Node =
-    NodeExt
-
-
-type alias Model =
-    { orgas : GqlData (List Node)
-    }
-
-
-type Msg
-    = GotOrga (GqlData (List Node))
+---- PROGRAM ----
 
 
 page : Page Flags Model Msg
@@ -50,6 +37,35 @@ page =
         , subscriptions = subscriptions
         , view = view
         }
+
+
+type alias Flags =
+    ()
+
+
+
+---- MODEL----
+
+
+type alias Model =
+    { orgas : GqlData (List Node)
+    }
+
+
+type alias Node =
+    NodeExt
+
+
+
+---- MSG ----
+
+
+type Msg
+    = GotOrga (GqlData (List Node))
+
+
+
+-- INIT --
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -69,6 +85,10 @@ init global flags =
     )
 
 
+
+---- UPDATE ----
+
+
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
     case msg of
@@ -80,6 +100,10 @@ update global msg model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.none
+
+
+
+---- VIEW ----
 
 
 view : Global.Model -> Model -> Document Msg

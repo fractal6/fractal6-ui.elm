@@ -43,6 +43,10 @@ import Task
 import Time
 
 
+
+---- PROGRAM ----
+
+
 page : Page Flags Model Msg
 page =
     Page.component
@@ -53,10 +57,12 @@ page =
         }
 
 
+type alias Flags =
+    Flags_
 
---
--- Model
---
+
+
+---- MODEL----
 
 
 type alias Model =
@@ -75,9 +81,7 @@ type alias Model =
 
 
 
---
--- Msg
---
+---- MSG ----
 
 
 type Msg
@@ -124,13 +128,7 @@ type Msg
 
 
 
---
--- INIT
---
-
-
-type alias Flags =
-    Flags_
+-- INIT --
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -232,9 +230,7 @@ init global flags =
 
 
 
---
--- UPDATE
---
+---- UPDATE ----
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -808,10 +804,6 @@ update global msg model =
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
 
-
--- SUBSCRIPTIONS
-
-
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
@@ -824,7 +816,7 @@ subscriptions _ _ =
 
 
 
--- Receive to Javascript
+-- Receive from Javascript
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg
@@ -888,7 +880,7 @@ lookupFromJs_ object =
 
 
 
--- Send to JS
+-- Send to Javascript
 
 
 port sendToggleGraphReverse : () -> Cmd msg
@@ -898,8 +890,7 @@ port sendToggleTooltips : () -> Cmd msg
 
 
 
--- VIEW
---
+---- VIEW ----
 
 
 view : Global.Model -> Model -> Document Msg
@@ -1476,9 +1467,3 @@ viewJoinOrgaStep orga step =
 
                 default ->
                     div [ class "box spinner" ] [ text Text.loading ]
-
-
-
--------------------------------------------------
--- Model Getters and Setters
--------------------------------------------------
