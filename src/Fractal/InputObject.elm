@@ -1339,8 +1339,8 @@ type alias NodeFilterOptionalFields =
     , createdAt : OptionalArgument DateTimeFilter
     , type_ : OptionalArgument NodeType_hash
     , name : OptionalArgument StringTermFilter
-    , nameid : OptionalArgument StringHashFilter
-    , rootnameid : OptionalArgument StringHashFilter
+    , nameid : OptionalArgument StringHashFilter_StringRegExpFilter
+    , rootnameid : OptionalArgument StringHashFilter_StringRegExpFilter
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
@@ -1361,8 +1361,8 @@ type alias NodeFilterRaw =
     , createdAt : OptionalArgument DateTimeFilter
     , type_ : OptionalArgument NodeType_hash
     , name : OptionalArgument StringTermFilter
-    , nameid : OptionalArgument StringHashFilter
-    , rootnameid : OptionalArgument StringHashFilter
+    , nameid : OptionalArgument StringHashFilter_StringRegExpFilter
+    , rootnameid : OptionalArgument StringHashFilter_StringRegExpFilter
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
@@ -1384,7 +1384,7 @@ type NodeFilter
 encodeNodeFilter : NodeFilter -> Value
 encodeNodeFilter (NodeFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter |> Encode.optional input.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
 
 
 buildNodeMode_hash : NodeMode_hashRequiredFields -> NodeMode_hash

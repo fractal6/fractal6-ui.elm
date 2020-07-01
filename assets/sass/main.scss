@@ -391,6 +391,12 @@ html.has-modal-active {
 
 }
 
+#profile {
+    .media + .media {
+        border-top: none !important;
+    }
+}
+
 .levelExplore {
     .level-item {
         margin-right: 15px !important;
@@ -553,6 +559,17 @@ html.has-modal-active {
     // Text centering
     text-align: center;
     padding-top: 10px;
+}
+
+.circle2 {
+    width: 200px;
+    height: 200px;
+    background: #575c64;
+    border: 1px solid #000;
+    // Text centering
+    text-align: center;
+    padding-top: 40px;
+    font-size: 4em;
 }
 
 

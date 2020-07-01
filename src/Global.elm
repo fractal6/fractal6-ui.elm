@@ -122,8 +122,16 @@ update msg model =
             let
                 session =
                     model.session
+
+                referer =
+                    case url.path of
+                        "/logout" ->
+                            session.referer
+
+                        _ ->
+                            url
             in
-            ( { model | session = { session | referer = url } }, Cmd.none )
+            ( { model | session = { session | referer = referer } }, Cmd.none )
 
         RedirectOnLoggedIn ->
             let

@@ -36,8 +36,8 @@ view user =
                 ]
             , div [ id "navMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ viewLink "navbar-item" Route.Top "Help"
-                    , viewLink "navbar-item" Route.Explore "Explore"
+                    [ --viewLink "navbar-item" Route.Top "Help"
+                      viewLink "navbar-item" Route.Explore "Explore"
                     ]
                 , div [ class "navbar-end" ]
                     [ userButton user ]

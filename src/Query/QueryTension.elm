@@ -1,4 +1,11 @@
-module Query.QueryTension exposing (getTension, queryCircleTension, queryExtTension, queryIntTension, tensionExtendedPayload, tensionPayload)
+module Query.QueryTension exposing
+    ( getTension
+    , queryCircleTension
+    , queryExtTension
+    , queryIntTension
+    , tensionExtendedPayload
+    , tensionPayload
+    )
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction

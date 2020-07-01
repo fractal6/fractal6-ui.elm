@@ -1,4 +1,14 @@
-module Query.QueryNodes exposing (MemberNode, NodeExt, User, nodeOrgaPayload, queryGraphPack, queryLocalGraph, queryMembers, queryPublicOrga)
+module Query.QueryNodes exposing
+    ( MemberNode
+    , NodeExt
+    , User
+    , nodeOrgaPayload
+    , queryGraphPack
+    , queryLocalGraph
+    , queryMembers
+    , queryNodeExt
+    , queryPublicOrga
+    )
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -21,7 +31,7 @@ import RemoteData exposing (RemoteData)
 
 
 {-
-   Query Public Orga
+   Query Public Orga / Explore
 -}
 --- Response decoder
 --
@@ -114,7 +124,47 @@ nodeOrgaExtPayload =
 
 
 {-
-   Query Organisation Nodes
+   Query Node Ext / Profile
+-}
+--- Response decoder
+--
+
+
+queryNodeExt nameids msg =
+    makeGQLQuery
+        (Query.queryNode
+            (nodeExtFilter nameids)
+            nodeOrgaExtPayload
+        )
+        (RemoteData.fromResult >> decodeResponse publicOrgaDecoder >> msg)
+
+
+nodeExtFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodeExtFilter nameids a =
+    let
+        nameidsRegxp_ =
+            nameids
+                |> List.map (\n -> "^" ++ n ++ "$")
+                |> String.join "|"
+
+        nameidsRegxp =
+            "/" ++ nameidsRegxp_ ++ "/"
+    in
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | nameid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                    }
+                )
+                |> Present
+    }
+
+
+
+{-
+   Query Organisation Nodes / GraphPack
 -}
 --- Response decoder
 
@@ -153,7 +203,7 @@ nodeOrgaFilter rootid a =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | rootnameid = Present { eq = Present rootid }
+                        | rootnameid = Present { eq = Present rootid, regexp = Absent }
                         , not =
                             Input.buildNodeFilter
                                 (\d ->
@@ -192,7 +242,7 @@ nodeCharacPayload =
 
 
 {-
-   Query Local Graph
+   Query Local Graph / Path Data
 -}
 --- Response decoder
 
