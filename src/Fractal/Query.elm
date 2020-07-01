@@ -59,8 +59,18 @@ queryNode fillInOptionals object_ =
     Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias GetNodeCharacRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getNodeCharac : GetNodeCharacRequiredArguments -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe decodesTo) RootQuery
+getNodeCharac requiredArgs object_ =
+    Object.selectionForCompositeField "getNodeCharac" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+
+
 type alias QueryNodeCharacOptionalArguments =
-    { first : OptionalArgument Int
+    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter
+    , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
@@ -69,13 +79,33 @@ queryNodeCharac : (QueryNodeCharacOptionalArguments -> QueryNodeCharacOptionalAr
 queryNodeCharac fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryNodeCharac" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias QueryNodeStatsOptionalArguments =
+    { order : OptionalArgument Fractal.InputObject.NodeStatsOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryNodeStats : (QueryNodeStatsOptionalArguments -> QueryNodeStatsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeStats -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNodeStats fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeStatsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryNodeStats" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 type alias GetPostRequiredArguments =

@@ -19,14 +19,14 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias UserrightsOptionalArguments =
+type alias UserRightsOptionalArguments =
     { first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-userrights : (UserrightsOptionalArguments -> UserrightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserRightsPayload
-userrights fillInOptionals object_ =
+userRights : (UserRightsOptionalArguments -> UserRightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserRightsPayload
+userRights fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { first = Absent, offset = Absent }
@@ -35,7 +35,7 @@ userrights fillInOptionals object_ =
             [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "userrights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "userRights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 numUids : SelectionSet (Maybe Int) Fractal.Object.AddUserRightsPayload

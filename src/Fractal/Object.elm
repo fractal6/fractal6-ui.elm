@@ -25,6 +25,10 @@ type AddNodePayload
     = AddNodePayload
 
 
+type AddNodeStatsPayload
+    = AddNodeStatsPayload
+
+
 type AddTensionPayload
     = AddTensionPayload
 
@@ -51,6 +55,10 @@ type DeleteLabelPayload
 
 type DeleteMandatePayload
     = DeleteMandatePayload
+
+
+type DeleteNodeCharacPayload
+    = DeleteNodeCharacPayload
 
 
 type DeleteNodePayload
@@ -85,6 +93,10 @@ type NodeCharac
     = NodeCharac
 
 
+type NodeStats
+    = NodeStats
+
+
 type Post
     = Post
 
@@ -103,6 +115,10 @@ type UpdateLabelPayload
 
 type UpdateMandatePayload
     = UpdateMandatePayload
+
+
+type UpdateNodeCharacPayload
+    = UpdateNodeCharacPayload
 
 
 type UpdateNodePayload

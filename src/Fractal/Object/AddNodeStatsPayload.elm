@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddNodeCharacPayload exposing (..)
+module Fractal.Object.AddNodeStatsPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,26 +19,26 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias NodeCharacOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter
+type alias NodeStatsOptionalArguments =
+    { order : OptionalArgument Fractal.InputObject.NodeStatsOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-nodeCharac : (NodeCharacOptionalArguments -> NodeCharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeCharacPayload
-nodeCharac fillInOptionals object_ =
+nodeStats : (NodeStatsOptionalArguments -> NodeStatsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeStats -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeStatsPayload
+nodeStats fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+            fillInOptionals { order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeStatsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "nodeCharac" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "nodeStats" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeCharacPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeStatsPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

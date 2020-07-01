@@ -2,9 +2,8 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.NodeCharac exposing (..)
+module Fractal.Object.NodeStats exposing (..)
 
-import Fractal.Enum.NodeMode
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -20,16 +19,21 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.NodeCharac
-id =
-    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+n_member : SelectionSet (Maybe Int) Fractal.Object.NodeStats
+n_member =
+    Object.selectionForField "(Maybe Int)" "n_member" [] (Decode.int |> Decode.nullable)
 
 
-userCanJoin : SelectionSet Bool Fractal.Object.NodeCharac
-userCanJoin =
-    Object.selectionForField "Bool" "userCanJoin" [] Decode.bool
+n_guest : SelectionSet (Maybe Int) Fractal.Object.NodeStats
+n_guest =
+    Object.selectionForField "(Maybe Int)" "n_guest" [] (Decode.int |> Decode.nullable)
 
 
-mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.NodeCharac
-mode =
-    Object.selectionForField "Enum.NodeMode.NodeMode" "mode" [] Fractal.Enum.NodeMode.decoder
+n_circle : SelectionSet (Maybe Int) Fractal.Object.NodeStats
+n_circle =
+    Object.selectionForField "(Maybe Int)" "n_circle" [] (Decode.int |> Decode.nullable)
+
+
+n_role : SelectionSet (Maybe Int) Fractal.Object.NodeStats
+n_role =
+    Object.selectionForField "(Maybe Int)" "n_role" [] (Decode.int |> Decode.nullable)

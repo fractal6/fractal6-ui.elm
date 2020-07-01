@@ -92,7 +92,7 @@ newMemberInputEncoder { uctx, rootnameid, id, post } =
             , name = "Guest"
             , rootnameid = rootnameid
             , isRoot = False
-            , charac = { userCanJoin = Present False, mode = Present NodeMode.Coordinated }
+            , charac = { userCanJoin = Present False, mode = Present NodeMode.Coordinated, id = Absent }
             , isPrivate = False
             }
 
@@ -216,7 +216,7 @@ addOneCirclePayload =
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with
-            (Fractal.Object.Node.charac <|
+            (Fractal.Object.Node.charac identity <|
                 SelectionSet.map2 NodeCharac
                     Fractal.Object.NodeCharac.userCanJoin
                     Fractal.Object.NodeCharac.mode
@@ -254,7 +254,7 @@ addCircleInputEncoder f =
             , name = name
             , nameid = nameid
             , rootnameid = f.target.rootnameid
-            , charac = { userCanJoin = Present False, mode = Present nodeMode }
+            , charac = { userCanJoin = Present False, mode = Present nodeMode, id = Absent }
             , isPrivate = f.target.isPrivate
             }
 
@@ -327,7 +327,7 @@ getAddCircleOptionals f =
                                                 , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> Present
                                                 , rootnameid = f.target.rootnameid |> Present
                                                 , charac =
-                                                    { userCanJoin = Present False, mode = Present nodeMode }
+                                                    { userCanJoin = Present False, mode = Present nodeMode, id = Absent }
                                                         |> Present
                                                 , first_link =
                                                     Input.buildUserRef

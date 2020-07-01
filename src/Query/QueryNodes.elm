@@ -1,4 +1,4 @@
-module Query.QueryNodes exposing (MemberNode, User, nodeOrgaPayload, queryGraphPack, queryLocalGraph, queryMembers, queryPublicOrga)
+module Query.QueryNodes exposing (MemberNode, NodeExt, User, nodeOrgaPayload, queryGraphPack, queryLocalGraph, queryMembers, queryPublicOrga)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -7,6 +7,7 @@ import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
+import Fractal.Object.NodeStats
 import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
@@ -23,9 +24,32 @@ import RemoteData exposing (RemoteData)
    Query Public Orga
 -}
 --- Response decoder
+--
 
 
-publicOrgaDecoder : Maybe (List (Maybe Node)) -> Maybe (List Node)
+type alias NodeExt =
+    { id : String
+    , createdAt : String
+    , name : String
+    , nameid : String
+    , rootnameid : String
+    , parent : Maybe NodeId -- see issue with recursive structure
+    , type_ : NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
+    , first_link : Maybe Username
+    , charac : NodeCharac
+    , isPrivate : Bool
+    , stats : Maybe NodeStats
+    }
+
+
+type alias NodeStats =
+    { n_member : Maybe Int
+    , n_guest : Maybe Int
+    }
+
+
+publicOrgaDecoder : Maybe (List (Maybe NodeExt)) -> Maybe (List NodeExt)
 publicOrgaDecoder data =
     data
         |> Maybe.map
@@ -45,7 +69,7 @@ queryPublicOrga msg =
     makeGQLQuery
         (Query.queryNode
             publicOrgaFilter
-            nodeOrgaPayload
+            nodeOrgaExtPayload
         )
         (RemoteData.fromResult >> decodeResponse publicOrgaDecoder >> msg)
 
@@ -63,6 +87,29 @@ publicOrgaFilter a =
                 )
                 |> Present
     }
+
+
+nodeOrgaExtPayload : SelectionSet NodeExt Fractal.Object.Node
+nodeOrgaExtPayload =
+    SelectionSet.succeed NodeExt
+        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.rootnameid
+        |> with
+            (Fractal.Object.Node.parent identity <| SelectionSet.map NodeId Fractal.Object.Node.nameid)
+        |> with Fractal.Object.Node.type_
+        |> with Fractal.Object.Node.role_type
+        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
+        |> with Fractal.Object.Node.isPrivate
+        |> with
+            (Fractal.Object.Node.stats <|
+                SelectionSet.map2 NodeStats
+                    Fractal.Object.NodeStats.n_member
+                    Fractal.Object.NodeStats.n_guest
+            )
 
 
 
@@ -132,7 +179,7 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Node.charac <| nodeCharacPayload)
+        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
 
 
@@ -222,7 +269,7 @@ lgPayload =
     SelectionSet.succeed LocalNode
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.charac <| nodeCharacPayload)
+        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.type_
         |> with
             (Fractal.Object.Node.children identity
@@ -238,7 +285,7 @@ lg2Payload =
     SelectionSet.succeed LocalRootNode
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.charac <| nodeCharacPayload)
+        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isRoot
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
 

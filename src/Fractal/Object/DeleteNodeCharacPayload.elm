@@ -2,9 +2,8 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.NodeCharac exposing (..)
+module Fractal.Object.DeleteNodeCharacPayload exposing (..)
 
-import Fractal.Enum.NodeMode
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -20,16 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.NodeCharac
-id =
-    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+msg : SelectionSet (Maybe String) Fractal.Object.DeleteNodeCharacPayload
+msg =
+    Object.selectionForField "(Maybe String)" "msg" [] (Decode.string |> Decode.nullable)
 
 
-userCanJoin : SelectionSet Bool Fractal.Object.NodeCharac
-userCanJoin =
-    Object.selectionForField "Bool" "userCanJoin" [] Decode.bool
-
-
-mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.NodeCharac
-mode =
-    Object.selectionForField "Enum.NodeMode.NodeMode" "mode" [] Fractal.Enum.NodeMode.decoder
+numUids : SelectionSet (Maybe Int) Fractal.Object.DeleteNodeCharacPayload
+numUids =
+    Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

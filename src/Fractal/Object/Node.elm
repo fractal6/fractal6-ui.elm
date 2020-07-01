@@ -106,23 +106,6 @@ rootnameid =
     Object.selectionForField "String" "rootnameid" [] Decode.string
 
 
-type alias MandateOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.MandateFilter }
-
-
-mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-mandate fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
-
-
 type alias TensionsOutOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter
     , order : OptionalArgument Fractal.InputObject.TensionOrder
@@ -165,6 +148,23 @@ tensions_in fillInOptionals object_ =
     Object.selectionForCompositeField "tensions_in" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+type alias MandateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.MandateFilter }
+
+
+mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+mandate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
+
+
 n_tensions_out : SelectionSet (Maybe Int) Fractal.Object.Node
 n_tensions_out =
     Object.selectionForField "(Maybe Int)" "n_tensions_out" [] (Decode.int |> Decode.nullable)
@@ -178,6 +178,11 @@ n_tensions_in =
 n_children : SelectionSet (Maybe Int) Fractal.Object.Node
 n_children =
     Object.selectionForField "(Maybe Int)" "n_children" [] (Decode.int |> Decode.nullable)
+
+
+stats : SelectionSet decodesTo Fractal.Object.NodeStats -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+stats object_ =
+    Object.selectionForCompositeField "stats" [] object_ (identity >> Decode.nullable)
 
 
 isRoot : SelectionSet Bool Fractal.Object.Node
@@ -234,6 +239,18 @@ role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
 
 
-charac : SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet decodesTo Fractal.Object.Node
-charac object_ =
-    Object.selectionForCompositeField "charac" [] object_ identity
+type alias CharacOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
+
+
+charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet decodesTo Fractal.Object.Node
+charac fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "charac" optionalArgs object_ identity

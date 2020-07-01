@@ -199,7 +199,8 @@ init global flags =
                     ++ (if fs.refresh then
                             case session.orga_data of
                                 Just ndata ->
-                                    [ Ports.initGraphPack ndata model.node_focus.nameid ]
+                                    --[ Ports.initGraphPack ndata model.node_focus.nameid ]
+                                    [ queryGraphPack newFocus.rootnameid GotOrga ]
 
                                 Nothing ->
                                     []
@@ -211,7 +212,8 @@ init global flags =
             else if fs.refresh then
                 case session.orga_data of
                     Just ndata ->
-                        [ Ports.initGraphPack ndata model.node_focus.nameid ]
+                        --[ Ports.initGraphPack ndata model.node_focus.nameid ]
+                        [ queryGraphPack newFocus.rootnameid GotOrga ]
 
                     Nothing ->
                         [ queryGraphPack newFocus.rootnameid GotOrga

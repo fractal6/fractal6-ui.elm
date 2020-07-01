@@ -383,6 +383,20 @@ html.has-modal-active {
     align-self: flex-end;
 }
 
+#explore {
+    .media + .media {
+        margin-top: 1.5rem !important;
+        padding-top: 1.5rem !important;
+    }
+
+}
+
+.levelExplore {
+    .level-item {
+        margin-right: 15px !important;
+    }
+}
+
 .mediaTension {
     //border-bottom: 1px solid #e1e4e8;
     //margin-bottom: -1.11rem !important;

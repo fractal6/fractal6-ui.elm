@@ -182,7 +182,7 @@ viewHero model =
                       <|
                         List.intersperse (text " ")
                             [ span [ class "has-text-weight-semibold" ] [ text "Grolab" ]
-                            , text "is a collaborative platform for humans inspired by"
+                            , text "is a collaborative platform inspired by"
                             , text "self-organized"
                             , text "systems and"
                             , text "open source culture. Join a network that enact collective intelligence and build transparent and resilient organisation."
