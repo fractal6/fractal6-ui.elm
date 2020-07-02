@@ -45,6 +45,11 @@ tensions fillInOptionals object_ =
     Object.selectionForCompositeField "tensions" optionalArgs object_ (identity >> Decode.list)
 
 
+about : SelectionSet (Maybe String) Fractal.Object.Mandate
+about =
+    Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)
+
+
 purpose : SelectionSet String Fractal.Object.Mandate
 purpose =
     Object.selectionForField "String" "purpose" [] Decode.string

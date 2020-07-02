@@ -65,6 +65,11 @@ reverseTooltip =
 -- Mandate
 
 
+aboutH : String
+aboutH =
+    "About"
+
+
 mandateH : String
 mandateH =
     "Mandate"
@@ -240,6 +245,11 @@ firstLinkRoleMessageHelp =
 firstLinkCircleMessageHelp : String
 firstLinkCircleMessageHelp =
     "Assign an user to a coordinator Role (first link)."
+
+
+tensionAdded : String
+tensionAdded =
+    "Tension added."
 
 
 tensionCircleAdded : String

@@ -65,6 +65,7 @@ mandatePayload =
         |> with
             (Fractal.Object.Node.mandate identity
                 (SelectionSet.succeed Mandate
+                    |> with Fractal.Object.Mandate.about
                     |> with Fractal.Object.Mandate.purpose
                     |> with Fractal.Object.Mandate.responsabilities
                     |> with Fractal.Object.Mandate.domains

@@ -117,7 +117,7 @@ newMemberInputEncoder { uctx, rootnameid, id, post } =
 
 
 {-
-   Add a Circle
+   Add a new Circle/Role
 -}
 
 
@@ -297,7 +297,8 @@ getAddCircleOptionals f =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" f.post |> fromMaybe
+                                    | about = Dict.get "about" f.post |> fromMaybe
+                                    , purpose = Dict.get "purpose" f.post |> fromMaybe
                                     , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
                                     , domains = Dict.get "domains" f.post |> fromMaybe
                                     , policies = Dict.get "policies" f.post |> fromMaybe
@@ -354,7 +355,8 @@ getAddCircleOptionals f =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" f.post |> fromMaybe
+                                    | about = Dict.get "about" f.post |> fromMaybe
+                                    , purpose = Dict.get "purpose" f.post |> fromMaybe
                                     , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
                                     , domains = Dict.get "domains" f.post |> fromMaybe
                                     , policies = Dict.get "policies" f.post |> fromMaybe
@@ -427,7 +429,8 @@ tensionFromForm f =
                 Input.buildMandateRef
                     (\m ->
                         { m
-                            | purpose = Dict.get "purpose" f.post |> withDefault "" |> Present
+                            | about = Dict.get "about" f.post |> fromMaybe
+                            , purpose = Dict.get "purpose" f.post |> fromMaybe
                             , responsabilities = Dict.get "responsabilities" f.post |> withDefault "" |> Present
                             , domains = Dict.get "domains" f.post |> withDefault "" |> Present
                         }

@@ -121,9 +121,9 @@ buildAddMandateInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { responsabilities = Absent, domains = Absent, policies = Absent }
+                { about = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
     in
-    AddMandateInput { tensions = required.tensions, purpose = required.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
+    AddMandateInput { tensions = required.tensions, about = optionals.about, purpose = required.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
 
 
 type alias AddMandateInputRequiredFields =
@@ -133,7 +133,8 @@ type alias AddMandateInputRequiredFields =
 
 
 type alias AddMandateInputOptionalFields =
-    { responsabilities : OptionalArgument String
+    { about : OptionalArgument String
+    , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
     , policies : OptionalArgument String
     }
@@ -146,6 +147,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias AddMandateInputRaw =
     { tensions : List TensionRef
+    , about : OptionalArgument String
     , purpose : String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
@@ -164,7 +166,7 @@ type AddMandateInput
 encodeAddMandateInput : AddMandateInput -> Value
 encodeAddMandateInput (AddMandateInput input) =
     Encode.maybeObject
-        [ ( "tensions", (encodeTensionRef |> Encode.list) input.tensions |> Just ), ( "purpose", Encode.string input.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
+        [ ( "tensions", (encodeTensionRef |> Encode.list) input.tensions |> Just ), ( "about", Encode.string |> Encode.optional input.about ), ( "purpose", Encode.string input.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
 buildAddNodeCharacInput : AddNodeCharacInputRequiredFields -> AddNodeCharacInput
@@ -1028,13 +1030,14 @@ buildMandateFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, purpose = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, about = Absent, purpose = Absent, and = Absent, or = Absent, not = Absent }
     in
-    MandateFilter { id = optionals.id, purpose = optionals.purpose, and = optionals.and, or = optionals.or, not = optionals.not }
+    MandateFilter { id = optionals.id, about = optionals.about, purpose = optionals.purpose, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias MandateFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , about : OptionalArgument StringFullTextFilter
     , purpose : OptionalArgument StringFullTextFilter
     , and : OptionalArgument MandateFilter
     , or : OptionalArgument MandateFilter
@@ -1049,6 +1052,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias MandateFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , about : OptionalArgument StringFullTextFilter
     , purpose : OptionalArgument StringFullTextFilter
     , and : OptionalArgument MandateFilter
     , or : OptionalArgument MandateFilter
@@ -1067,7 +1071,7 @@ type MandateFilter
 encodeMandateFilter : MandateFilter -> Value
 encodeMandateFilter (MandateFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "purpose", encodeStringFullTextFilter |> Encode.optional input.purpose ), ( "and", encodeMandateFilter |> Encode.optional input.and ), ( "or", encodeMandateFilter |> Encode.optional input.or ), ( "not", encodeMandateFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "about", encodeStringFullTextFilter |> Encode.optional input.about ), ( "purpose", encodeStringFullTextFilter |> Encode.optional input.purpose ), ( "and", encodeMandateFilter |> Encode.optional input.and ), ( "or", encodeMandateFilter |> Encode.optional input.or ), ( "not", encodeMandateFilter |> Encode.optional input.not ) ]
 
 
 buildMandateOrder : (MandateOrderOptionalFields -> MandateOrderOptionalFields) -> MandateOrder
@@ -1118,13 +1122,14 @@ buildMandatePatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { tensions = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
+                { tensions = Absent, about = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
     in
-    MandatePatch { tensions = optionals.tensions, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
+    MandatePatch { tensions = optionals.tensions, about = optionals.about, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
 
 
 type alias MandatePatchOptionalFields =
     { tensions : OptionalArgument (List TensionRef)
+    , about : OptionalArgument String
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
@@ -1139,6 +1144,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias MandatePatchRaw =
     { tensions : OptionalArgument (List TensionRef)
+    , about : OptionalArgument String
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
@@ -1157,7 +1163,7 @@ type MandatePatch
 encodeMandatePatch : MandatePatch -> Value
 encodeMandatePatch (MandatePatch input) =
     Encode.maybeObject
-        [ ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
+        [ ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "about", Encode.string |> Encode.optional input.about ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
 buildMandateRef : (MandateRefOptionalFields -> MandateRefOptionalFields) -> MandateRef
@@ -1165,14 +1171,15 @@ buildMandateRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, tensions = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
+                { id = Absent, tensions = Absent, about = Absent, purpose = Absent, responsabilities = Absent, domains = Absent, policies = Absent }
     in
-    MandateRef { id = optionals.id, tensions = optionals.tensions, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
+    MandateRef { id = optionals.id, tensions = optionals.tensions, about = optionals.about, purpose = optionals.purpose, responsabilities = optionals.responsabilities, domains = optionals.domains, policies = optionals.policies }
 
 
 type alias MandateRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , tensions : OptionalArgument (List TensionRef)
+    , about : OptionalArgument String
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
@@ -1188,6 +1195,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias MandateRefRaw =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , tensions : OptionalArgument (List TensionRef)
+    , about : OptionalArgument String
     , purpose : OptionalArgument String
     , responsabilities : OptionalArgument String
     , domains : OptionalArgument String
@@ -1206,7 +1214,7 @@ type MandateRef
 encodeMandateRef : MandateRef -> Value
 encodeMandateRef (MandateRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "about", Encode.string |> Encode.optional input.about ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
 buildNodeCharacFilter : (NodeCharacFilterOptionalFields -> NodeCharacFilterOptionalFields) -> NodeCharacFilter

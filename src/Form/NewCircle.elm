@@ -1,5 +1,6 @@
 module Form.NewCircle exposing (NewNodeText, view)
 
+import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T
 import Dict
@@ -60,7 +61,8 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
     in
     case result of
         Success _ ->
-            div [ class "box has-background-success", onClick (closeModalMsg "") ] [ text txt.added ]
+            div [ class "box is-light modalClose", onClick (closeModalMsg "") ]
+                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text txt.added ]
 
         other ->
             let
@@ -95,6 +97,19 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 []
                             ]
                         , p [ class "help-label" ] [ text txt.name_help ]
+                        ]
+                    , div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ input
+                                [ class "input autofocus followFocus"
+                                , attribute "data-nextfocus" "textAreaModal"
+                                , type_ "text"
+                                , placeholder "About"
+                                , onInput <| changePostMsg "about"
+                                ]
+                                []
+                            ]
+                        , p [ class "help-label" ] [ text "Short description of this role." ]
                         ]
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
@@ -167,20 +182,6 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                             ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
                         )
                     , br [] []
-                    , div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ textarea
-                                [ id "textAreaModal"
-                                , class "textarea"
-                                , rows 5
-                                , placeholder T.leaveComment
-                                , onInput <| changePostMsg "message"
-                                ]
-                                []
-                            ]
-                        , p [ class "help-label" ] [ text txt.message_help ]
-                        ]
-                    , br [] []
                     , div [ class "card" ]
                         [ div [ class "cnard-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         , div [ class "card-content" ]
@@ -237,6 +238,20 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                     ]
                                 ]
                             ]
+                        ]
+                    , br [] []
+                    , div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ textarea
+                                [ id "textAreaModal"
+                                , class "textarea"
+                                , rows 5
+                                , placeholder T.leaveComment
+                                , onInput <| changePostMsg "message"
+                                ]
+                                []
+                            ]
+                        , p [ class "help-label" ] [ text txt.message_help ]
                         ]
                     , br [] []
                     ]

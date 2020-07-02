@@ -1,7 +1,9 @@
 module Form.NewTension exposing (view)
 
+import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
+import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
@@ -35,7 +37,8 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
     in
     case result of
         Success _ ->
-            div [ class "box has-background-success modalClose", onClick (closeModalMsg "") ] [ text "Tension added." ]
+            div [ class "box is-light modalClose", onClick (closeModalMsg "") ]
+                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text T.tensionAdded ]
 
         other ->
             div [ class "modal-card finalModal" ]

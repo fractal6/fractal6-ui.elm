@@ -1023,7 +1023,7 @@ viewSearchBar odata maybePath qs =
     in
     div
         [ id "searchBarOverview"
-        , class "field has-addons"
+        , class "field has-addons searchBar"
         , onMouseEnter DoClearTooltip
         ]
         [ div [ class ("control has-icons-left is-expanded dropdown" ++ isActive) ]
@@ -1076,13 +1076,14 @@ viewSearchBar odata maybePath qs =
                 ]
             , case node_ of
                 Ok node ->
-                    div [ class "control" ]
+                    div
+                        [ class "control controlButton" ]
                         [ div
                             [ class "button is-small is-info _modalTrigger_"
                             , attribute "data-modal" "actionModal"
                             , onClick (DoNodeAction node_)
                             ]
-                            [ span [ class "has-text-weight-semibold" ] [ node.name |> text ] -- Node name
+                            [ span [ class "has-text-weight-semibold text" ] [ node.name |> text ] -- Node name
                             , span [ class "fa-stack  ellipsisArt" ]
                                 [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
                             ]
@@ -1141,82 +1142,93 @@ viewCanvas odata =
 
 viewMandate : GqlData Mandate -> Maybe Node -> Html Msg
 viewMandate mandateData maybeFocus =
-    div [ id "mandateContainer", class "hero is-small is-light heroViewer" ]
+    div [ id "mandateContainer", class "hero is-small is-light" ]
         [ div [ class "hero-body" ]
-            [ h1 [ class "title is-3" ]
-                [ Fa.icon "fas fa-scroll fa-xs" "Mandate" ]
-            , hr [ class "has-background-grey-light" ] []
-            , div [ class "content" ] <|
-                case mandateData of
-                    Failure err ->
-                        -- Exception for Guest Node
-                        case maybeFocus of
-                            Just focus ->
-                                case focus.role_type of
-                                    Just r ->
-                                        let
-                                            fs =
-                                                focus.first_link |> Maybe.map (\u -> u.username) |> withDefault "[Unknown]"
-                                        in
-                                        case r of
-                                            RoleType.Guest ->
-                                                [ [ "No mandate for Guest ", fs, "." ] |> String.join "" |> text ]
+            [ case maybeFocus of
+                Just focus ->
+                    case focus.role_type of
+                        Just r ->
+                            let
+                                fs =
+                                    focus.first_link |> Maybe.map (\u -> u.username) |> withDefault "[Unknown]"
+                            in
+                            case mandateData of
+                                Failure err ->
+                                    case r of
+                                        RoleType.Guest ->
+                                            div [] [ [ "No mandate for Guest ", fs, "." ] |> String.join "" |> text ]
 
-                                            other ->
-                                                [ viewGqlErrors err ]
+                                        other ->
+                                            viewGqlErrors err
 
-                                    Nothing ->
-                                        [ viewGqlErrors err ]
+                                LoadingSlowly ->
+                                    div [ class "spinner" ] []
 
-                            Nothing ->
-                                [ viewGqlErrors err ]
+                                Success mandate ->
+                                    viewMandateDoc mandate focus
 
-                    Loading ->
-                        [ div [] [] ]
+                                other ->
+                                    div [] []
 
-                    NotAsked ->
-                        [ div [] [] ]
+                        Nothing ->
+                            case mandateData of
+                                Failure err ->
+                                    viewGqlErrors err
 
-                    LoadingSlowly ->
-                        [ div [ class "spinner" ] [] ]
+                                LoadingSlowly ->
+                                    div [ class "spinner" ] []
 
-                    Success mandate ->
-                        [ viewMandateDoc mandate ]
+                                Success mandate ->
+                                    viewMandateDoc mandate focus
+
+                                other ->
+                                    div [] []
+
+                Nothing ->
+                    div [] []
             ]
         ]
 
 
-viewMandateDoc : Mandate -> Html Msg
-viewMandateDoc mandate =
+viewMandateDoc : Mandate -> Node -> Html Msg
+viewMandateDoc mandate focus =
     let
-        purpose =
-            mandate.purpose
+        viewMandateSection : String -> Maybe String -> Html Msg
+        viewMandateSection name maybePara =
+            case maybePara of
+                Just para ->
+                    div [ class "message" ]
+                        [ div [ class "message-header" ] [ text name ]
+                        , p [ class "message-body" ] [ renderMarkdown para "is-dark" ]
+                        ]
 
-        responsabilities =
-            mandate.responsabilities |> withDefault ("*" ++ Text.noResponsabilities ++ "*")
-
-        domains =
-            mandate.domains |> withDefault ("*" ++ Text.noDomains ++ "*")
-
-        policies =
-            mandate.policies |> withDefault ("*" ++ Text.noPolicies ++ "*")
+                Nothing ->
+                    div [] []
     in
-    div [ class "mandateDoc" ]
-        [ div [ class "message" ]
-            [ div [ class "message-header" ] [ text Text.purposeH ]
-            , p [ class "message-body" ] [ renderMarkdown purpose "is-dark" ]
+    div []
+        [ div [ class "aboutDoc" ]
+            [ h1 [ class "subtitle is-5" ]
+                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                    [ i [ class "fas fa-info fa-stack-1x" ] []
+                    , i [ class "far fa-circle fa-stack-2x" ] []
+                    ]
+                , span [] [ text "\u{00A0}", text " ", text focus.name ]
+                ]
+            , case mandate.about of
+                Just ab ->
+                    p [] [ text ab ]
+
+                Nothing ->
+                    div [] []
+            , hr [ class "has-background-grey-light" ] []
             ]
-        , div [ class "message" ]
-            [ div [ class "message-header" ] [ text Text.responsabilitiesH ]
-            , p [ class "message-body" ] [ renderMarkdown responsabilities "is-dark" ]
-            ]
-        , div [ class "message" ]
-            [ div [ class "message-header" ] [ text Text.domainsH ]
-            , p [ class "message-body" ] [ renderMarkdown domains "is-dark" ]
-            ]
-        , div [ class "message" ]
-            [ div [ class "message-header" ] [ text Text.policiesH ]
-            , p [ class "message-body" ] [ renderMarkdown policies "is-dark" ]
+        , div [ class "mandateDoc" ]
+            [ h1 [ class "subtitle is-5" ]
+                [ Fa.icon "fas fa-scroll fa-sm" Text.mandateH ]
+            , viewMandateSection Text.purposeH (Just mandate.purpose)
+            , viewMandateSection responsabilitiesH mandate.responsabilities
+            , viewMandateSection domainsH mandate.domains
+            , viewMandateSection policiesH mandate.policies
             ]
         ]
 
@@ -1460,7 +1472,8 @@ viewJoinOrgaStep orga step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
+                    div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
+                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
 
                 Failure err ->
                     viewGqlErrors err

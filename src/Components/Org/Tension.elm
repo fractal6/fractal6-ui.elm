@@ -23,7 +23,18 @@ import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
-import ModelCommon.View exposing (getAvatar, statusColor, tensionTypeColor, tensionTypeSpan, viewTensionArrowB, viewTensionDateAndUser, viewTensionDateAndUserC)
+import ModelCommon.View
+    exposing
+        ( getAvatar
+        , statusColor
+        , tensionTypeColor
+        , tensionTypeSpan
+        , viewLabels
+        , viewTensionArrowB
+        , viewTensionDateAndUser
+        , viewTensionDateAndUserC
+        , viewUsernameLink
+        )
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -248,7 +259,7 @@ update global msg model =
             let
                 newForm =
                     { form
-                        | post = Dict.insert "message_action" ("_frac6_ UpdateStatus " ++ TensionStatus.toString status) form.post
+                        | post = Dict.insert "message_action" ("$action$ status " ++ TensionStatus.toString status) form.post
                         , status = Just status
                     }
             in
@@ -375,22 +386,19 @@ view_ global model =
             global.session.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered" ]
-            [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
-                [ div [ class "columns" ] <|
-                    case model.tension_data of
-                        Success t ->
-                            [ div [ class "column is-8" ] [ viewTension global.session.user t model ]
-                            , div [ class "column" ] [ viewSidePane t ]
-                            ]
+            [ div [ class "column is-11-desktop is-11-widescreen is-10-fullhd is-offset-1" ]
+                [ case model.tension_data of
+                    Success t ->
+                        viewTension global.session.user t model
 
-                        Failure err ->
-                            [ viewGqlErrors err ]
+                    Failure err ->
+                        viewGqlErrors err
 
-                        LoadingSlowly ->
-                            [ div [ class "spinner" ] [] ]
+                    LoadingSlowly ->
+                        div [ class "spinner" ] []
 
-                        other ->
-                            []
+                    other ->
+                        div [] []
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
@@ -408,48 +416,99 @@ viewTension u t model =
         userInput =
             case u of
                 LoggedIn uctx ->
-                    [ viewCommentInput uctx t model.tension_form model.tension_result model.inputViewMode ]
+                    viewCommentInput uctx t model.tension_form model.tension_result model.inputViewMode
 
                 LoggedOut ->
-                    [ viewJoinNeeded model.node_focus ]
+                    viewJoinNeeded model.node_focus
     in
-    div [ id "tensionPage" ] <|
-        ([ h1 [ class "title tensionTitle" ] [ text t.title ]
-         , div [ class "tensionSubtitle" ]
-            [ span [ class ("tag is-rounded  is-" ++ statusColor t.status) ]
-                [ t.status |> TensionStatus.toString |> text ]
-            , span [ class "tag is-rounded is-light" ] [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
-            , viewTensionDateAndUser t.createdAt t.createdBy
-            , viewTensionArrowB "has-text-weight-light is-pulled-right" t.emitter t.receiver
+    div [ id "tensionPage" ]
+        [ div [ class "columns" ]
+            [ div [ class "column is-8" ]
+                [ h1 [ class "title tensionTitle" ] [ text t.title ]
+                , div [ class "tensionSubtitle" ]
+                    [ span [ class ("tag is-rounded  is-" ++ statusColor t.status) ]
+                        [ t.status |> TensionStatus.toString |> text ]
+                    , span [ class "tag is-rounded is-light" ] [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
+                    , viewTensionDateAndUser t.createdAt t.createdBy
+                    , viewTensionArrowB "has-text-weight-light is-pulled-right" t.emitter t.receiver
+                    ]
+                , hr [ class "has-background-grey-dark" ] []
+                ]
             ]
-         , hr [ class "has-background-grey-dark" ] []
-         , viewComment (Comment t.createdAt t.createdBy (t.message |> withDefault ""))
-         ]
-            ++ subComments
-            ++ [ hr [ class "has-background-grey is-3" ] [] ]
-            ++ userInput
-        )
+        , div [ class "columns" ]
+            [ div [ class "column is-8 tensionComments" ]
+                [ subComments
+                    |> List.append [ viewComment (Comment t.createdAt t.createdBy (t.message |> withDefault "")) ]
+                    |> div []
+                , hr [ class "has-background-grey is-3" ] []
+                , userInput
+                ]
+            , div [ class "column tensionSidePane" ]
+                [ viewSidePane t ]
+            ]
+        ]
 
 
 viewComment : Comment -> Html Msg
 viewComment c =
-    div [ class "tensionComment media section is-paddingless" ]
-        [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar c.createdBy.username ] ]
-        , div [ class "media-content" ]
-            [ div [ class "message" ]
-                [ div [ class "message-header" ]
-                    [ viewTensionDateAndUserC c.createdAt c.createdBy ]
-                , div [ class "message-body" ]
-                    [ case c.message of
-                        "" ->
-                            div [ class "is-italic" ] [ text "No description provided." ]
+    let
+        msg =
+            if String.left (String.length "$action$") c.message == "$action$" then
+                let
+                    values =
+                        String.split " " c.message
+                in
+                if List.length values == 3 then
+                    if List.member "status" values then
+                        values |> List.reverse |> List.head |> Maybe.map (\s -> TensionStatus.fromString s) |> withDefault Nothing
 
-                        message ->
-                            renderMarkdown message "is-light"
+                    else
+                        Nothing
+
+                else
+                    Nothing
+
+            else
+                Nothing
+    in
+    case msg of
+        Just status ->
+            -- TensionAction
+            --  Assume status for nom
+            let
+                action =
+                    case status of
+                        TensionStatus.Open ->
+                            "reopened"
+
+                        TensionStatus.Closed ->
+                            "closed"
+            in
+            div [ class "media section is-paddingless actionComment" ]
+                [ div [ class "media-left" ] [ Fa.icon0 ("fas fa-ban fa-2x" ++ " has-text-" ++ statusColor status) "" ]
+                , div [ class "media-content" ]
+                    [ div [ class "is-italic" ] [ viewUsernameLink c.createdBy.username, text " ", text action, text " the ", text (formatTime c.createdAt) ]
                     ]
                 ]
-            ]
-        ]
+
+        Nothing ->
+            div [ class "media section is-paddingless" ]
+                [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar c.createdBy.username ] ]
+                , div [ class "media-content" ]
+                    [ div [ class "message" ]
+                        [ div [ class "message-header" ]
+                            [ viewTensionDateAndUserC c.createdAt c.createdBy ]
+                        , div [ class "message-body" ]
+                            [ case c.message of
+                                "" ->
+                                    div [ class "is-italic" ] [ text "No description provided." ]
+
+                                message ->
+                                    renderMarkdown message "is-light"
+                            ]
+                        ]
+                    ]
+                ]
 
 
 viewCommentInput : UserCtx -> TensionExtended -> TensionPatchForm -> GqlData IdPayload -> InputViewMode -> Html Msg
@@ -491,7 +550,7 @@ viewCommentInput uctx tension form result viewMode =
         message =
             Dict.get "message" form.post |> withDefault ""
     in
-    div [ class "tensionComment media section is-paddingless" ]
+    div [ class "media section is-paddingless tensionCommentInput" ]
         [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar uctx.username ] ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
@@ -560,18 +619,38 @@ viewCommentInput uctx tension form result viewMode =
 
 viewSidePane : TensionExtended -> Html Msg
 viewSidePane t =
+    let
+        labels_m =
+            t.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
+    in
     div []
-        [ case t.mandate of
-            Just m ->
-                case t.action of
-                    Just a ->
-                        viewMandate a m
+        [ div [ class "media" ]
+            [ div [ class "media-content" ]
+                [ h2 [ class "subtitle" ] [ text "Labels" ]
+                , case labels_m of
+                    Just labels ->
+                        viewLabels labels
 
                     Nothing ->
-                        div [] []
+                        div [ class "is-italic" ] [ text "no labels yet" ]
+                ]
+            ]
+        , div [ class "media" ]
+            [ div [ class "media-content" ]
+                [ h2 [ class "subtitle" ] [ text "Mandate" ]
+                , case t.mandate of
+                    Just m ->
+                        case t.action of
+                            Just a ->
+                                viewMandate a m
 
-            Nothing ->
-                div [] []
+                            Nothing ->
+                                div [ class "is-italic" ] [ text "no mandate attached" ]
+
+                    Nothing ->
+                        div [ class "is-italic" ] [ text "no mandate attached" ]
+                ]
+            ]
         ]
 
 
@@ -730,7 +809,8 @@ viewJoinOrgaStep step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                    div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
+                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
 
                 Failure err ->
                     viewGqlErrors err

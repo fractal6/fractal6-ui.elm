@@ -4,6 +4,7 @@ import Components.Fa as Fa
 import Components.Text as Text
 import Date exposing (formatTime)
 import Dict exposing (Dict)
+import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -16,7 +17,7 @@ import Html.Attributes exposing (attribute, class, classList, href)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
-import ModelSchema exposing (EmitterOrReceiver, Post, Tension, TensionExtended, UserCtx, Username)
+import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, TensionExtended, UserCtx, Username)
 
 
 
@@ -83,6 +84,9 @@ mediaTension baseUri focus tension navigate =
     let
         n_comments =
             tension.n_comments |> withDefault 0
+
+        labels_m =
+            tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
@@ -109,14 +113,12 @@ mediaTension baseUri focus tension navigate =
                     else
                         []
                 ]
-            , span [ class "labelsList" ] <|
-                (tension.labels
-                    |> withDefault []
-                    |> List.map
-                        (\label ->
-                            span [ class "tag" ] [ text label.name ]
-                        )
-                )
+            , case labels_m of
+                Just labels ->
+                    viewLabels labels
+
+                Nothing ->
+                    span [] []
             , br [ class "is-block" ] []
             , span [ class "columns" ]
                 [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
@@ -167,6 +169,17 @@ viewTensionArrowB cls emitter receiver =
         , span [ class "right-arrow" ] []
         , span [ class "is-small  is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ] [ viewNodeRef OverviewBaseUri receiver ]
         ]
+
+
+viewLabels : List Label -> Html msg
+viewLabels labels =
+    span [ class "labelsList" ] <|
+        (labels
+            |> List.map
+                (\label ->
+                    span [ class "tag" ] [ text label.name ]
+                )
+        )
 
 
 viewUsernameLink : String -> Html msg

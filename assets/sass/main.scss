@@ -372,15 +372,6 @@ html.has-modal-active {
     padding-left: $size-small !important;
   }
 
-
-  .heroViewer {
-
-    h1 {
-      margin-bottom: -6px !important;
-      margin-top: -6px !important;
-    }
-  }
-
 }
 
 
@@ -458,44 +449,60 @@ html.has-modal-active {
         }
     }
 
-    .media + .media {
-        margin-top: 1.5rem !important;
-        border: 0 !important;
-    }
+    .tensionComments {
+        .media + .media {
+            margin-top: 1.5rem !important;
+            border: 0 !important;
+        }
 
-    .media:last-child {
+        .message {
+            background-color: $body-background-color !important;
+            border: solid 2px  $grey-dark  !important;
+
+            .tabs a {
+                text-decoration: none !important;
+            }
+        }
+
+        .tensionCommentInput {
+            .message-header {
+                padding-bottom: 0 !important;
+            }
+            .message-body {
+                padding: 0.75em 0.75em !important;
+            }
+        }
+
         .message-header {
-            padding-bottom: 0 !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            background-color: $grey-dark;
+            border-radius: 0 !important;
+            a {
+                font-weight: 600 !important;
+                text-decoration: none !important;
+            }
+            a:hover {
+                text-decoration: underline !important;
+            }
         }
-         .message-body {
-            padding: 0.75em 0.75em !important;
+
+        .actionComment {
+            margin-left: 100px !important;
         }
     }
 
-    .message {
-        background-color: $body-background-color !important;
-        border: solid 2px  $grey-dark  !important;
+    .tensionSidePane {
+        border-top: 1px solid $grey-dark !important;
+        margin-top: -37px !important;
 
-        .tabs a {
-            text-decoration: none !important;
-        }
-    }
-
-    .message-header {
-        font-size: 14px !important;
-        font-weight: 500 !important;
-        background-color: $grey-dark;
-        border-radius: 0 !important;
-        a {
-            font-weight: 600 !important;
-            text-decoration: none !important;
-        }
-        a:hover {
-            text-decoration: underline !important;
+        .media + .media {
+            border-top: 1px solid $grey-dark !important;
         }
     }
 
 }
+
 
 .finalModal {
     .message {
@@ -569,12 +576,16 @@ html.has-modal-active {
     border: 1px solid #000;
     // Text centering
     text-align: center;
-    padding-top: 40px;
+    padding-top: 50px;
     font-size: 4em;
 }
 
 
 .searchBar {
+    .input, .button, select {
+        height: 2.8em !important;
+    }
+
     .select {
 
         &::after {
@@ -605,11 +616,24 @@ html.has-modal-active {
 #searchBarOverview {
     width: 100.25% !important;
     padding-top: 5px !important;
-    margin-bottom: 1px !important;
-    //margin-bottom: 22px !important;
+    margin-bottom: 12px !important;
 
     .input {
         font-weight: 700 !important;
+    }
+
+    .controlButton {
+        display: flex;
+        flex-grow: 1;
+        flex-direction: column;
+        max-width: 50% !important;
+
+        .text {
+            max-width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
     }
 
 }
@@ -717,8 +741,23 @@ html.has-modal-active {
 
 #mandateContainer {
     border-radius: 5px;
+
+    .title {
+        //margin-bottom: 1rem !important;
+    }
+
+    .hero-body > hr {
+        margin-top: 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+
     & .content p {
         font-size: 15px !important;
+    }
+
+    .message-body {
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
     }
 }
 
@@ -756,7 +795,7 @@ html.has-modal-active {
 }
 
 #canvasOrga {
-    border-radius: 0 0 7px 7px !important;
+    border-radius: 7px 7px 7px 7px !important;
     box-shadow: 0 0px 2px 1px #22101087;
     //background-image: linear-gradient(white, black) ;
 }
@@ -863,8 +902,8 @@ html.has-modal-active {
     display: flex;
     visibility: hidden;
 
-    .modal-content {
-        width: 860px;
+    .modal-content, .modal-card {
+        width: 680px;
     }
 
     .card {
@@ -966,6 +1005,11 @@ html.has-modal-active {
                 margin-bottom: 1rem;
             }
         }
+    }
+
+    .box.is-light {
+        background-color: #dce3e3;
+        color: black;
     }
 
 }

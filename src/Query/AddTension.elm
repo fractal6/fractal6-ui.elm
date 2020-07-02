@@ -120,7 +120,7 @@ addTensionInputEncoder f =
 
 
 {-
-   Add a tension with with "New Circle" Action
+   Add a tension with with New Circle/Role Action
 -}
 
 
@@ -188,7 +188,8 @@ addCircleInputEncoder f =
                         Input.buildMandateRef
                             (\m ->
                                 { m
-                                    | purpose = Dict.get "purpose" f.post |> fromMaybe
+                                    | about = Dict.get "about" f.post |> fromMaybe
+                                    , purpose = Dict.get "purpose" f.post |> fromMaybe
                                     , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
                                     , domains = Dict.get "domains" f.post |> fromMaybe
                                     , policies = Dict.get "policies" f.post |> fromMaybe

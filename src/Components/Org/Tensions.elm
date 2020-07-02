@@ -803,7 +803,8 @@ viewJoinOrgaStep step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box has-background-success" ] [ "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                    div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
+                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
 
                 Failure err ->
                     viewGqlErrors err

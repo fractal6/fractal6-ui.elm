@@ -178,7 +178,8 @@ type alias Comment =
 
 
 type alias Mandate =
-    { purpose : String
+    { about : Maybe String
+    , purpose : String
     , responsabilities : Maybe String
     , domains : Maybe String
     , policies : Maybe String

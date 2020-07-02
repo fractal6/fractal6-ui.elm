@@ -232,7 +232,9 @@ viewProfileRight model =
         , if Dict.isEmpty model.user_data then
             p [ class "section" ]
                 [ text "You have no organisation yet."
+                , text "You can"
                 , a [ href (Route.toHref Route.Explore) ] [ text "Explore" ]
+                , text " public organisations."
                 ]
 
           else

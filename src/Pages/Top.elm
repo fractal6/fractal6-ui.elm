@@ -183,7 +183,7 @@ viewHero model =
                         [ class "subtitle" ]
                       <|
                         List.intersperse (text " ")
-                            [ span [ class "has-text-weight-semibold" ] [ text "Grolab" ]
+                            [ span [ class "has-text-weight-semibold" ] [ text "Fractale" ]
                             , text "is a collaborative platform inspired by"
                             , text "self-organized"
                             , text "systems and"
