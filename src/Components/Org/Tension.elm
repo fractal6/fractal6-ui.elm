@@ -150,6 +150,7 @@ init global flags =
         cmds =
             [ ternary fs.focusChange (queryLocalGraph newFocus.nameid GotPath) Cmd.none
             , getTension model.tensionid GotTension
+            , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model

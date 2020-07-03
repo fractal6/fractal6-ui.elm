@@ -25,6 +25,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.QueryNode exposing (NodeExt, queryNodeExt)
+import Query.QueryUser exposing (queryUctx)
 import Task
 import Time
 
@@ -53,7 +54,7 @@ type alias Flags =
 
 type alias Model =
     { username : String
-    , user : Maybe UserCtx
+    , user : GqlData UserCtx
     , user_data : UserDict
     }
 
@@ -103,7 +104,9 @@ buildUserDict uctx =
 
 
 type Msg
-    = GotNodes (GqlData (List NodeExt))
+    = PassedSlowLoadTreshold -- timer
+    | GotNodes (GqlData (List NodeExt))
+    | GotUctx (GqlData UserCtx)
 
 
 
@@ -113,6 +116,9 @@ type Msg
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        username =
+            flags.param1
+
         uctx_m =
             case global.session.user of
                 LoggedIn uctx ->
@@ -121,14 +127,38 @@ init global flags =
                 LoggedOut ->
                     Nothing
 
+        uctx_data =
+            case uctx_m of
+                Just uctx ->
+                    if uctx.username == username then
+                        Success uctx
+
+                    else
+                        Loading
+
+                Nothing ->
+                    Loading
+
         model =
-            { username = flags.param1
-            , user = uctx_m
-            , user_data = uctx_m |> Maybe.map (\u -> buildUserDict u) |> withDefault Dict.empty
+            { username = username
+            , user = uctx_data
+            , user_data =
+                case uctx_data of
+                    Success uctx ->
+                        buildUserDict uctx
+
+                    _ ->
+                        Dict.empty
             }
 
         cmds =
-            [ queryNodeExt (Dict.keys model.user_data) GotNodes
+            [ case uctx_data of
+                Success uctx ->
+                    queryNodeExt (Dict.keys model.user_data) GotNodes
+
+                _ ->
+                    queryUctx username GotUctx
+            , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
@@ -144,6 +174,13 @@ init global flags =
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
     case msg of
+        PassedSlowLoadTreshold ->
+            let
+                user =
+                    ternary (model.user == Loading) LoadingSlowly model.user
+            in
+            ( { model | user = user }, Cmd.none, Cmd.none )
+
         GotNodes result ->
             case result of
                 Success data ->
@@ -173,6 +210,18 @@ update global msg model =
                 other ->
                     ( model, Cmd.none, Cmd.none )
 
+        GotUctx result ->
+            case result of
+                Success uctx ->
+                    let
+                        user_data =
+                            buildUserDict uctx
+                    in
+                    ( { model | user = result, user_data = user_data }, queryNodeExt (Dict.keys user_data) GotNodes, Cmd.none )
+
+                _ ->
+                    ( { model | user = result }, Cmd.none, Cmd.none )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -188,11 +237,21 @@ view global model =
     { title = model.username
     , body =
         [ case model.user of
-            Just user ->
+            Success user ->
                 view_ global model user
 
-            Nothing ->
-                viewNotFound
+            NotAsked ->
+                div [] []
+
+            Loading ->
+                div [] []
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            Failure err ->
+                --viewNotFound
+                viewGqlErrors err
         ]
     }
 
