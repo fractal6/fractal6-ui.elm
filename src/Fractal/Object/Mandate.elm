@@ -24,27 +24,6 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-type alias TensionsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.TensionFilter
-    , order : OptionalArgument Fractal.InputObject.TensionOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
-
-
-tensions : (TensionsOptionalArguments -> TensionsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (List decodesTo) Fractal.Object.Mandate
-tensions fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "tensions" optionalArgs object_ (identity >> Decode.list)
-
-
 about : SelectionSet (Maybe String) Fractal.Object.Mandate
 about =
     Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)

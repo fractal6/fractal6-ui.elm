@@ -86,10 +86,12 @@ type alias TensionForm =
     , source : UserRole
     , target : Node
     , tension_type : TensionType.TensionType
-    , type_ : NodeType.NodeType -- for Circle or Role form
-    , role_type : RoleType.RoleType -- for Role
-    , post : Post
     , action : Maybe TensionAction.TensionAction
+    , post : Post -- createdBy, createdAt, title, message...
+    , data : NodeFragment
+
+    --, type_ : NodeType.NodeType -- for Circle or Role form
+    --, role_type : RoleType.RoleType -- for Role
     }
 
 
@@ -99,7 +101,7 @@ type alias TensionPatchForm =
     , status : Maybe TensionStatus.TensionStatus
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
-    , post : Post
+    , post : Post -- createdBy, createdAt, title, message...
     }
 
 

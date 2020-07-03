@@ -9,7 +9,7 @@ import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (userDecoder)
 import ModelSchema exposing (GqlData, Member, NodeId, Post, RequestResult(..), UserCtx, UserRoleExtended)
-import Query.QueryNodes exposing (MemberNode, User)
+import Query.QueryNode exposing (MemberNode, User)
 import RemoteData exposing (RemoteData)
 
 

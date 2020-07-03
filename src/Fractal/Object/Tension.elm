@@ -133,21 +133,9 @@ action =
     Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
 
 
-type alias MandateOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.MandateFilter }
-
-
-mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
-mandate fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
+data : SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
+data object_ =
+    Object.selectionForCompositeField "data" [] object_ (identity >> Decode.nullable)
 
 
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension

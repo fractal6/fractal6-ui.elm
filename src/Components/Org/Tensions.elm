@@ -37,7 +37,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
-import Query.QueryNodes exposing (queryLocalGraph)
+import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (queryCircleTension, queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Task

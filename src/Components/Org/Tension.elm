@@ -40,7 +40,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (pushTensionComment)
-import Query.QueryNodes exposing (queryLocalGraph)
+import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTension)
 import Task
 import Time
@@ -479,15 +479,21 @@ viewComment c =
                 action =
                     case status of
                         TensionStatus.Open ->
-                            "reopened"
+                            ( "far fa-circle ", "reopened" )
 
                         TensionStatus.Closed ->
-                            "closed"
+                            ( "fas fa-ban ", "closed" )
+
+                actionIcon =
+                    Tuple.first action
+
+                actionText =
+                    Tuple.second action
             in
             div [ class "media section is-paddingless actionComment" ]
-                [ div [ class "media-left" ] [ Fa.icon0 ("fas fa-ban fa-2x" ++ " has-text-" ++ statusColor status) "" ]
+                [ div [ class "media-left" ] [ Fa.icon0 (actionIcon ++ "fa-2x has-text-" ++ statusColor status) "" ]
                 , div [ class "media-content" ]
-                    [ div [ class "is-italic" ] [ viewUsernameLink c.createdBy.username, text " ", text action, text " the ", text (formatTime c.createdAt) ]
+                    [ div [ class "is-italic" ] [ viewUsernameLink c.createdBy.username, text " ", text actionText, text " the ", text (formatTime c.createdAt) ]
                     ]
                 ]
 
@@ -637,25 +643,38 @@ viewSidePane t =
             ]
         , div [ class "media" ]
             [ div [ class "media-content" ]
-                [ h2 [ class "subtitle" ] [ text "Mandate" ]
-                , case t.mandate of
-                    Just m ->
-                        case t.action of
-                            Just a ->
-                                viewMandate a m
-
-                            Nothing ->
-                                div [ class "is-italic" ] [ text "no mandate attached" ]
-
+                [ case t.action of
                     Nothing ->
-                        div [ class "is-italic" ] [ text "no mandate attached" ]
+                        div [ class "is-italic" ] [ text "no action requested" ]
+
+                    Just TensionAction.NewCircle ->
+                        div []
+                            [ h2 [ class "subtitle" ] [ text "Action | New Sub-Circle" ]
+                            , case t.data of
+                                Nothing ->
+                                    div [ class "is-italic" ] [ text "no data attached" ]
+
+                                Just data ->
+                                    viewData TensionAction.NewCircle data
+                            ]
+
+                    Just TensionAction.NewRole ->
+                        div []
+                            [ h2 [ class "subtitle" ] [ text "Action | New Role" ]
+                            , case t.data of
+                                Nothing ->
+                                    div [ class "is-italic" ] [ text "no data attached" ]
+
+                                Just data ->
+                                    viewData TensionAction.NewRole data
+                            ]
                 ]
             ]
         ]
 
 
-viewMandate : TensionAction.TensionAction -> Mandate -> Html Msg
-viewMandate action mandate =
+viewData : TensionAction.TensionAction -> NodeFragment -> Html Msg
+viewData action nf =
     let
         txt =
             case action of
@@ -668,74 +687,81 @@ viewMandate action mandate =
         --_ ->
         --    NewNodeText "" "" "" "" "" "" "" "" "" "" ""
     in
-    div [ class "card" ]
-        [ div [ class "cnard-header" ] [ div [ class "card-header-title" ] [ text Text.mandateH ] ]
-        , div [ class "card-content" ]
-            [ div [ class "field" ]
-                [ div [ class "label" ] [ text Text.purposeH ]
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "textAreaModal"
-                        , class "textarea"
-                        , rows 5
-                        , readonly True
-                        , value mandate.purpose
+    div []
+        [ case nf.mandate of
+            Just mandate ->
+                div [ class "card" ]
+                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text Text.mandateH ] ]
+                    , div [ class "card-content" ]
+                        [ div [ class "field" ]
+                            [ div [ class "label" ] [ text Text.purposeH ]
+                            , div [ class "control" ]
+                                [ textarea
+                                    [ id "textAreaModal"
+                                    , class "textarea"
+                                    , rows 5
+                                    , readonly True
+                                    , value mandate.purpose
 
-                        --, placeholder (txt.ph_purpose ++ "*")
-                        --, onInput <| changePostMsg "purpose"
-                        ]
-                        []
-                    ]
-                ]
-            , div [ class "field" ]
-                [ div [ class "label" ] [ text Text.responsabilitiesH ]
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "textAreaModal"
-                        , class "textarea"
-                        , rows 5
-                        , readonly True
-                        , value (mandate.responsabilities |> withDefault ("<" ++ Text.noResponsabilities ++ ">"))
+                                    --, placeholder (txt.ph_purpose ++ "*")
+                                    --, onInput <| changePostMsg "purpose"
+                                    ]
+                                    []
+                                ]
+                            ]
+                        , div [ class "field" ]
+                            [ div [ class "label" ] [ text Text.responsabilitiesH ]
+                            , div [ class "control" ]
+                                [ textarea
+                                    [ id "textAreaModal"
+                                    , class "textarea"
+                                    , rows 5
+                                    , readonly True
+                                    , value (mandate.responsabilities |> withDefault ("<" ++ Text.noResponsabilities ++ ">"))
 
-                        --, placeholder txt.ph_responsabilities
-                        --, onInput <| changePostMsg "responsabilities"
-                        ]
-                        []
-                    ]
-                ]
-            , div [ class "field" ]
-                [ div [ class "label" ] [ text Text.domainsH ]
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "textAreaModal"
-                        , class "textarea"
-                        , rows 5
-                        , readonly True
-                        , value (mandate.domains |> withDefault ("<" ++ Text.noDomains ++ ">"))
+                                    --, placeholder txt.ph_responsabilities
+                                    --, onInput <| changePostMsg "responsabilities"
+                                    ]
+                                    []
+                                ]
+                            ]
+                        , div [ class "field" ]
+                            [ div [ class "label" ] [ text Text.domainsH ]
+                            , div [ class "control" ]
+                                [ textarea
+                                    [ id "textAreaModal"
+                                    , class "textarea"
+                                    , rows 5
+                                    , readonly True
+                                    , value (mandate.domains |> withDefault ("<" ++ Text.noDomains ++ ">"))
 
-                        --, placeholder txt.ph_domains
-                        --, onInput <| changePostMsg "domains"
-                        ]
-                        []
-                    ]
-                ]
-            , div [ class "field" ]
-                [ div [ class "label" ] [ text Text.policiesH ]
-                , div [ class "control" ]
-                    [ textarea
-                        [ id "textAreaModal"
-                        , class "textarea"
-                        , rows 5
-                        , readonly True
-                        , value (mandate.policies |> withDefault ("<" ++ Text.noPolicies ++ ">"))
+                                    --, placeholder txt.ph_domains
+                                    --, onInput <| changePostMsg "domains"
+                                    ]
+                                    []
+                                ]
+                            ]
+                        , div [ class "field" ]
+                            [ div [ class "label" ] [ text Text.policiesH ]
+                            , div [ class "control" ]
+                                [ textarea
+                                    [ id "textAreaModal"
+                                    , class "textarea"
+                                    , rows 5
+                                    , readonly True
+                                    , value (mandate.policies |> withDefault ("<" ++ Text.noPolicies ++ ">"))
 
-                        --, placeholder txt.ph_policies
-                        --, onInput <| changePostMsg "policies"
+                                    --, placeholder txt.ph_policies
+                                    --, onInput <| changePostMsg "policies"
+                                    ]
+                                    []
+                                ]
+                            ]
                         ]
-                        []
                     ]
-                ]
-            ]
+
+            Nothing ->
+                div [] []
         ]
 
 

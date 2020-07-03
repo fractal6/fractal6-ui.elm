@@ -20,7 +20,7 @@ import ModelCommon.View exposing (getAvatar)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryNodes exposing (NodeExt, queryPublicOrga)
+import Query.QueryNode exposing (NodeExt, queryPublicOrga)
 import Task
 import Time
 

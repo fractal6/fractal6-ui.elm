@@ -1,4 +1,4 @@
-module Query.AddNode exposing (addNewMember, addOneCircle)
+module Query.AddNode exposing (addNewMember, addOneCircle, buildMandate, buildNodeFragment)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
@@ -22,7 +22,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (JoinOrgaForm, TensionForm)
 import ModelCommon.Uri exposing (guestIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
-import Query.QueryNodes exposing (nodeOrgaPayload)
+import Query.QueryNode exposing (nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -234,15 +234,17 @@ addCircleInputEncoder f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
+        type_ =
+            f.data.type_ |> withDefault NodeType.Role
+
         nameid =
-            Dict.get "nameid" f.post |> Maybe.map (\nid -> nodeIdCodec f.target.nameid nid f.type_) |> withDefault ""
+            f.data.nameid |> Maybe.map (\nid -> nodeIdCodec f.target.nameid nid type_) |> withDefault ""
 
         name =
-            Dict.get "name" f.post |> withDefault ""
+            f.data.name |> withDefault ""
 
-        nodeMode =
-            -- @DEBUG: Ignored from now, we inherit from the root mode
-            Dict.get "node_mode" f.post |> withDefault "" |> NodeMode.fromString |> withDefault NodeMode.Coordinated
+        charac =
+            f.data.charac |> withDefault (NodeCharac False NodeMode.Coordinated)
 
         nodeRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
@@ -250,12 +252,12 @@ addCircleInputEncoder f =
                 Input.buildUserRef
                     (\u -> { u | username = Present f.uctx.username })
             , isRoot = False
-            , type_ = f.type_
+            , type_ = type_
             , name = name
             , nameid = nameid
             , rootnameid = f.target.rootnameid
-            , charac = { userCanJoin = Present False, mode = Present nodeMode, id = Absent }
             , isPrivate = f.target.isPrivate
+            , charac = { userCanJoin = Present charac.userCanJoin, mode = Present charac.mode, id = Absent }
             }
 
         nodeOptional =
@@ -272,20 +274,19 @@ getAddCircleOptionals f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
-        nameid =
-            Dict.get "nameid" f.post |> Maybe.map (\nid -> nodeIdCodec f.target.nameid nid f.type_) |> withDefault ""
+        type_ =
+            f.data.type_ |> withDefault NodeType.Role
 
-        nodeMode =
-            -- @DEBUG: Ignored from now, we inherit from the root mode
-            Dict.get "node_mode" f.post |> withDefault "" |> NodeMode.fromString |> withDefault NodeMode.Coordinated
+        nameid =
+            f.data.nameid |> Maybe.map (\nid -> nodeIdCodec f.target.nameid nid type_) |> withDefault ""
 
         first_links =
-            Dict.get "first_links" f.post
+            f.data.first_link
                 |> withDefault ""
                 |> String.split "@"
                 |> List.filter (\x -> x /= "")
     in
-    case f.type_ of
+    case type_ of
         NodeType.Circle ->
             \n ->
                 { n
@@ -293,20 +294,9 @@ getAddCircleOptionals f =
                         Input.buildNodeRef
                             (\p -> { p | nameid = Present f.target.nameid, id = encodeId f.target.id |> Present })
                             |> Present
-                    , mandate =
-                        Input.buildMandateRef
-                            (\m ->
-                                { m
-                                    | about = Dict.get "about" f.post |> fromMaybe
-                                    , purpose = Dict.get "purpose" f.post |> fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
-                                    , domains = Dict.get "domains" f.post |> fromMaybe
-                                    , policies = Dict.get "policies" f.post |> fromMaybe
-                                    , tensions =
-                                        [ Input.buildTensionRef (tensionFromForm f) ]
-                                            |> Present
-                                }
-                            )
+                    , mandate = buildMandate f.data.mandate
+                    , tensions_in =
+                        [ Input.buildTensionRef (tensionFromForm f) ]
                             |> Present
                     , children =
                         first_links
@@ -327,9 +317,7 @@ getAddCircleOptionals f =
                                                 , name = "Coordinator" |> Present
                                                 , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> Present
                                                 , rootnameid = f.target.rootnameid |> Present
-                                                , charac =
-                                                    { userCanJoin = Present False, mode = Present nodeMode, id = Absent }
-                                                        |> Present
+                                                , charac = f.data.charac |> Maybe.map (\ch -> { userCanJoin = Present ch.userCanJoin, mode = Present ch.mode, id = Absent }) |> fromMaybe
                                                 , first_link =
                                                     Input.buildUserRef
                                                         (\u -> { u | username = uname |> Present })
@@ -351,22 +339,11 @@ getAddCircleOptionals f =
                         Input.buildNodeRef
                             (\p -> { p | nameid = Present f.target.nameid, id = encodeId f.target.id |> Present })
                             |> Present
-                    , mandate =
-                        Input.buildMandateRef
-                            (\m ->
-                                { m
-                                    | about = Dict.get "about" f.post |> fromMaybe
-                                    , purpose = Dict.get "purpose" f.post |> fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
-                                    , domains = Dict.get "domains" f.post |> fromMaybe
-                                    , policies = Dict.get "policies" f.post |> fromMaybe
-                                    , tensions =
-                                        [ Input.buildTensionRef (tensionFromForm f) ]
-                                            |> Present
-                                }
-                            )
+                    , mandate = buildMandate f.data.mandate
+                    , tensions_in =
+                        [ Input.buildTensionRef (tensionFromForm f) ]
                             |> Present
-                    , role_type = f.role_type |> Present
+                    , role_type = f.data.role_type |> fromMaybe
                     , first_link =
                         first_link
                             |> Maybe.map
@@ -404,9 +381,9 @@ tensionFromForm f =
             , type_ = f.tension_type |> Present
             , status = status |> Present
             , action = f.action |> fromMaybe
-            , message = fromMaybe message
-            , emitterid = Present f.source.nameid
-            , receiverid = Present f.target.nameid
+            , message = message |> fromMaybe
+            , emitterid = f.source.nameid |> Present
+            , receiverid = f.target.nameid |> Present
             , emitter =
                 Input.buildNodeRef
                     (\x ->
@@ -425,15 +402,46 @@ tensionFromForm f =
                         }
                     )
                     |> Present
-            , mandate =
+            , data = buildNodeFragment f
+        }
+
+
+buildMandate : Maybe Mandate -> OptionalArgument Input.MandateRef
+buildMandate maybeMandate =
+    maybeMandate
+        |> Maybe.map
+            (\mandate ->
                 Input.buildMandateRef
                     (\m ->
                         { m
-                            | about = Dict.get "about" f.post |> fromMaybe
-                            , purpose = Dict.get "purpose" f.post |> fromMaybe
-                            , responsabilities = Dict.get "responsabilities" f.post |> withDefault "" |> Present
-                            , domains = Dict.get "domains" f.post |> withDefault "" |> Present
+                            | about = mandate.about |> fromMaybe
+                            , purpose = mandate.purpose |> Present
+                            , responsabilities = mandate.responsabilities |> fromMaybe
+                            , domains = mandate.domains |> fromMaybe
+                            , policies = mandate.policies |> fromMaybe
                         }
                     )
-                    |> Present
-        }
+            )
+        |> fromMaybe
+
+
+buildNodeFragment : TensionForm -> OptionalArgument Input.NodeFragmentRef
+buildNodeFragment f =
+    let
+        nf =
+            f.data
+    in
+    Input.buildNodeFragmentRef
+        (\n ->
+            { n
+                | name = fromMaybe nf.name
+                , nameid = fromMaybe nf.nameid
+                , type_ = fromMaybe nf.type_
+                , role_type = fromMaybe nf.role_type
+                , mandate = buildMandate nf.mandate
+                , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
+                , first_link =
+                    fromMaybe nf.first_link
+            }
+        )
+        |> Present

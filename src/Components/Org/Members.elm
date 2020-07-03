@@ -35,7 +35,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.QueryNodes exposing (queryLocalGraph, queryMembers)
+import Query.QueryNode exposing (queryLocalGraph, queryMembers)
 import RemoteData exposing (RemoteData)
 import Task
 import Time

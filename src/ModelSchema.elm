@@ -154,13 +154,13 @@ type alias TensionExtended =
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
-    , mandate : Maybe Mandate
+    , n_comments : Maybe Int
 
     --
     , status : TensionStatus.TensionStatus
     , message : Maybe String
     , comments : Maybe (List Comment)
-    , n_comments : Maybe Int
+    , data : Maybe NodeFragment
     }
 
 
@@ -169,6 +169,35 @@ type alias Comment =
     , createdBy : Username
     , message : String
     }
+
+
+type alias NodeFragment =
+    { name : Maybe String
+    , nameid : Maybe String
+    , type_ : Maybe NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
+    , mandate : Maybe Mandate
+    , isPrivate : Maybe Bool
+    , charac : Maybe NodeCharac
+    , first_link : Maybe String
+
+    --,children    : [NodeFragment]
+    }
+
+
+initMandate : Mandate
+initMandate =
+    Mandate Nothing "" Nothing Nothing Nothing
+
+
+initNodeFragment : NodeFragment
+initNodeFragment =
+    NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+
+initNodeFragmentCircle : NodeType.NodeType -> RoleType.RoleType -> NodeFragment
+initNodeFragmentCircle nt rt =
+    NodeFragment Nothing Nothing (Just nt) (Just rt) Nothing Nothing Nothing Nothing
 
 
 

@@ -1,7 +1,8 @@
-module Query.QueryNodes exposing
+module Query.QueryNode exposing
     ( MemberNode
     , NodeExt
     , User
+    , nodeCharacPayload
     , nodeOrgaPayload
     , queryGraphPack
     , queryLocalGraph

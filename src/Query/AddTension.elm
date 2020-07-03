@@ -19,6 +19,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
+import Query.AddNode exposing (buildMandate, buildNodeFragment)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
 
@@ -159,6 +160,8 @@ addCircleInputEncoder f =
             , title = title
             , type_ = f.tension_type
             , status = status
+            , emitterid = f.source.nameid
+            , receiverid = f.target.nameid
             , emitter =
                 Input.buildNodeRef
                     (\x ->
@@ -175,8 +178,6 @@ addCircleInputEncoder f =
                             , rootnameid = Present f.target.rootnameid
                         }
                     )
-            , emitterid = f.source.nameid
-            , receiverid = f.target.nameid
             }
 
         tensionOpts =
@@ -184,18 +185,7 @@ addCircleInputEncoder f =
                 { t
                     | action = f.action |> fromMaybe
                     , message = message |> fromMaybe
-                    , mandate =
-                        Input.buildMandateRef
-                            (\m ->
-                                { m
-                                    | about = Dict.get "about" f.post |> fromMaybe
-                                    , purpose = Dict.get "purpose" f.post |> fromMaybe
-                                    , responsabilities = Dict.get "responsabilities" f.post |> fromMaybe
-                                    , domains = Dict.get "domains" f.post |> fromMaybe
-                                    , policies = Dict.get "policies" f.post |> fromMaybe
-                                }
-                            )
-                            |> Present
+                    , data = buildNodeFragment f
                 }
     in
     { input =

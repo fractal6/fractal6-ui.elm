@@ -48,6 +48,21 @@ createdBy fillInOptionals object_ =
     Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
 
 
+name : SelectionSet String Fractal.Object.Node
+name =
+    Object.selectionForField "String" "name" [] Decode.string
+
+
+nameid : SelectionSet String Fractal.Object.Node
+nameid =
+    Object.selectionForField "String" "nameid" [] Decode.string
+
+
+rootnameid : SelectionSet String Fractal.Object.Node
+rootnameid =
+    Object.selectionForField "String" "rootnameid" [] Decode.string
+
+
 type alias ParentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -89,21 +104,6 @@ children fillInOptionals object_ =
 type_ : SelectionSet Fractal.Enum.NodeType.NodeType Fractal.Object.Node
 type_ =
     Object.selectionForField "Enum.NodeType.NodeType" "type_" [] Fractal.Enum.NodeType.decoder
-
-
-name : SelectionSet String Fractal.Object.Node
-name =
-    Object.selectionForField "String" "name" [] Decode.string
-
-
-nameid : SelectionSet String Fractal.Object.Node
-nameid =
-    Object.selectionForField "String" "nameid" [] Decode.string
-
-
-rootnameid : SelectionSet String Fractal.Object.Node
-rootnameid =
-    Object.selectionForField "String" "rootnameid" [] Decode.string
 
 
 type alias TensionsOutOptionalArguments =
@@ -195,6 +195,23 @@ isPrivate =
     Object.selectionForField "Bool" "isPrivate" [] Decode.bool
 
 
+type alias CharacOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
+
+
+charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet decodesTo Fractal.Object.Node
+charac fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "charac" optionalArgs object_ identity
+
+
 type alias FirstLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
@@ -237,20 +254,3 @@ skills =
 role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.Node
 role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
-
-
-type alias CharacOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
-
-
-charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet decodesTo Fractal.Object.Node
-charac fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "charac" optionalArgs object_ identity

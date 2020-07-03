@@ -19,6 +19,7 @@ import Fractal.Object.Comment
 import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
+import Fractal.Object.NodeFragment
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
@@ -30,6 +31,8 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
+import Query.QueryMandate exposing (mandatePayload)
+import Query.QueryNode exposing (nodeCharacPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -82,16 +85,7 @@ tensionExtendedPayload =
                 )
             )
         |> with Fractal.Object.Tension.action
-        |> with
-            (Fractal.Object.Tension.mandate identity
-                (SelectionSet.succeed Mandate
-                    |> with Fractal.Object.Mandate.about
-                    |> with Fractal.Object.Mandate.purpose
-                    |> with Fractal.Object.Mandate.responsabilities
-                    |> with Fractal.Object.Mandate.domains
-                    |> with Fractal.Object.Mandate.policies
-                )
-            )
+        |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.status
         |> with Fractal.Object.Tension.message
         |> with
@@ -103,7 +97,19 @@ tensionExtendedPayload =
                     |> with Fractal.Object.Comment.message
                 )
             )
-        |> with Fractal.Object.Tension.n_comments
+        |> with
+            (Fractal.Object.Tension.data
+                (SelectionSet.succeed NodeFragment
+                    |> with Fractal.Object.NodeFragment.name
+                    |> with Fractal.Object.NodeFragment.nameid
+                    |> with Fractal.Object.NodeFragment.type_
+                    |> with Fractal.Object.NodeFragment.role_type
+                    |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+                    |> with Fractal.Object.NodeFragment.isPrivate
+                    |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
+                    |> with Fractal.Object.NodeFragment.first_link
+                )
+            )
 
 
 

@@ -1,4 +1,4 @@
-module Query.QueryMandate exposing (queryMandate)
+module Query.QueryMandate exposing (mandatePayload, queryMandate)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
@@ -21,7 +21,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNodes exposing (nodeOrgaPayload)
+import Query.QueryNode exposing (nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -48,7 +48,7 @@ queryMandate nameid msg =
     makeGQLQuery
         (Query.getNode
             (mandateFilter nameid)
-            mandatePayload
+            nodeMandatePayload
         )
         (RemoteData.fromResult >> decodeResponse mandateDecoder >> msg)
 
@@ -58,17 +58,19 @@ mandateFilter nid a =
     { a | nameid = Present nid }
 
 
-mandatePayload : SelectionSet TopMandate Fractal.Object.Node
-mandatePayload =
+nodeMandatePayload : SelectionSet TopMandate Fractal.Object.Node
+nodeMandatePayload =
     SelectionSet.succeed TopMandate
         |> with Fractal.Object.Node.nameid
         |> with
-            (Fractal.Object.Node.mandate identity
-                (SelectionSet.succeed Mandate
-                    |> with Fractal.Object.Mandate.about
-                    |> with Fractal.Object.Mandate.purpose
-                    |> with Fractal.Object.Mandate.responsabilities
-                    |> with Fractal.Object.Mandate.domains
-                    |> with Fractal.Object.Mandate.policies
-                )
-            )
+            (Fractal.Object.Node.mandate identity mandatePayload)
+
+
+mandatePayload : SelectionSet Mandate Fractal.Object.Mandate
+mandatePayload =
+    SelectionSet.succeed Mandate
+        |> with Fractal.Object.Mandate.about
+        |> with Fractal.Object.Mandate.purpose
+        |> with Fractal.Object.Mandate.responsabilities
+        |> with Fractal.Object.Mandate.domains
+        |> with Fractal.Object.Mandate.policies

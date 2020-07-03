@@ -39,8 +39,14 @@ What should be the signature ?!
 -}
 view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg submitNextMsg =
     let
+        nodeType =
+            form.data.type_ |> withDefault NodeType.Role
+
+        roleType =
+            form.data.role_type |> withDefault RoleType.Peer
+
         txt =
-            case form.type_ of
+            case nodeType of
                 NodeType.Circle ->
                     NewNodeText T.newCircle T.tensionCircleAdded T.circleNameHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit T.firstLinkCircleMessageHelp
 
@@ -51,7 +57,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
             result == LoadingSlowly
 
         isSendable =
-            isPostSendable [ "name", "purpose" ] form.post
+            form.data.name /= Nothing && (form.data.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
 
         submitTension =
             ternary isSendable [ onClickPD2 (submitMsg <| submitNextMsg form False) ] []
@@ -70,10 +76,10 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                     Dict.get "title" form.post |> withDefault ""
 
                 nameid =
-                    Dict.get "nameid" form.post |> withDefault ""
+                    form.data.nameid |> withDefault ""
 
                 firstLinks =
-                    Dict.get "first_links" form.post |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+                    form.data.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
             in
             div [ class "modal-card finalModal" ]
                 [ div [ class "modal-card-head" ]
@@ -89,7 +95,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                         [ div [ class "control" ]
                             [ input
                                 [ class "input autofocus followFocus"
-                                , attribute "data-nextfocus" "textAreaModal"
+                                , attribute "data-nextfocus" "aboutField"
                                 , type_ "text"
                                 , placeholder "Name*"
                                 , onInput <| changePostMsg "name"
@@ -101,7 +107,8 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
-                                [ class "input autofocus followFocus"
+                                [ id "aboutField"
+                                , class "input followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder "About"
@@ -144,7 +151,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                             (\i uname ->
                                 div [ class "field is-horizontal" ]
                                     [ div [ class "field-label is-small has-text-grey-darker control" ]
-                                        [ case form.type_ of
+                                        [ case nodeType of
                                             NodeType.Circle ->
                                                 let
                                                     r =
@@ -157,12 +164,12 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                                     ]
 
                                             NodeType.Role ->
-                                                div [ class ("select is-" ++ roleColor form.role_type) ]
+                                                div [ class ("select is-" ++ roleColor roleType) ]
                                                     [ RoleType.list
                                                         |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
                                                         |> List.map
                                                             (\r ->
-                                                                option [ selected (form.role_type == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                                option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
                                                             )
                                                         |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
                                                     ]
@@ -172,7 +179,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                             [ class "input is-small"
                                             , type_ "text"
                                             , value ("@" ++ uname)
-                                            , onInput <| changePostMsg "first_links"
+                                            , onInput <| changePostMsg "first_link"
                                             ]
                                             []
                                         ]
@@ -202,8 +209,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 [ div [ class "label" ] [ text T.responsabilitiesH ]
                                 , div [ class "control" ]
                                     [ textarea
-                                        [ id "textAreaModal"
-                                        , class "textarea"
+                                        [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_responsabilities
                                         , onInput <| changePostMsg "responsabilities"
@@ -215,8 +221,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 [ div [ class "label" ] [ text T.domainsH ]
                                 , div [ class "control" ]
                                     [ textarea
-                                        [ id "textAreaModal"
-                                        , class "textarea"
+                                        [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_domains
                                         , onInput <| changePostMsg "domains"
@@ -228,8 +233,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 [ div [ class "label" ] [ text T.policiesH ]
                                 , div [ class "control" ]
                                     [ textarea
-                                        [ id "textAreaModal"
-                                        , class "textarea"
+                                        [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_policies
                                         , onInput <| changePostMsg "policies"
@@ -243,8 +247,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ textarea
-                                [ id "textAreaModal"
-                                , class "textarea"
+                                [ class "textarea"
                                 , rows 5
                                 , placeholder T.leaveComment
                                 , onInput <| changePostMsg "message"

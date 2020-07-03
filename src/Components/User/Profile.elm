@@ -24,7 +24,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.QueryNodes exposing (NodeExt, queryNodeExt)
+import Query.QueryNode exposing (NodeExt, queryNodeExt)
 import Task
 import Time
 

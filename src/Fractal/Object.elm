@@ -21,6 +21,10 @@ type AddNodeCharacPayload
     = AddNodeCharacPayload
 
 
+type AddNodeFragmentPayload
+    = AddNodeFragmentPayload
+
+
 type AddNodePayload
     = AddNodePayload
 
@@ -91,6 +95,10 @@ type Node
 
 type NodeCharac
     = NodeCharac
+
+
+type NodeFragment
+    = NodeFragment
 
 
 type NodeStats

@@ -37,7 +37,7 @@ import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
 import Query.QueryMandate exposing (queryMandate)
-import Query.QueryNodes exposing (queryGraphPack)
+import Query.QueryNode exposing (queryGraphPack)
 import Query.QueryTension exposing (queryCircleTension)
 import Task
 import Time
@@ -400,10 +400,9 @@ update global msg model =
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
                     , tension_type = TensionType.Governance
-                    , type_ = NodeType.Role
-                    , role_type = RoleType.Peer
-                    , post = Dict.empty
                     , action = Nothing
+                    , post = Dict.empty
+                    , data = initNodeFragment
                     }
 
                 newStep =
@@ -519,8 +518,6 @@ update global msg model =
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
                     , tension_type = TensionType.Governance
-                    , type_ = nodeType
-                    , role_type = RoleType.Peer
                     , post = Dict.empty
                     , action =
                         case nodeType of
@@ -529,6 +526,7 @@ update global msg model =
 
                             NodeType.Role ->
                                 Just TensionAction.NewRole
+                    , data = initNodeFragmentCircle nodeType RoleType.Peer
                     }
 
                 newStep =
@@ -551,12 +549,13 @@ update global msg model =
                                 nodeMode =
                                     getNodeMode form.target.rootnameid model.orga_data |> withDefault NodeMode.Coordinated
 
+                                data =
+                                    form.data
+
                                 newForm =
                                     { form
                                         | uctx = uctx
-                                        , post =
-                                            form.post
-                                                |> Dict.union (Dict.fromList [ ( "node_mode", NodeMode.toString nodeMode ), ( "first_links", "@" ++ uctx.username ) ])
+                                        , data = { data | charac = Just (NodeCharac False nodeMode), first_link = Just uctx.username }
                                     }
 
                                 newStep =
@@ -627,29 +626,36 @@ update global msg model =
             case model.node_action of
                 AddCircle (CircleFinal form result) ->
                     let
-                        newPost =
-                            Dict.insert field value form.post
+                        data =
+                            form.data
+
+                        mandate =
+                            data.mandate |> withDefault initMandate
 
                         newForm =
                             case field of
+                                -- Node data
                                 "role_type" ->
-                                    { form | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer }
+                                    { form | data = { data | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
 
                                 "name" ->
                                     let
                                         newNodeLabel =
-                                            case form.type_ of
+                                            case data.type_ |> withDefault NodeType.Role of
                                                 NodeType.Circle ->
                                                     Text.newCircle
 
                                                 NodeType.Role ->
                                                     Text.newRole
 
-                                        autoFields =
-                                            Dict.fromList
-                                                [ ( "title", "[" ++ newNodeLabel ++ "] " ++ value )
-                                                , ( "nameid"
-                                                  , value
+                                        newPost =
+                                            Dict.insert "title" ("[" ++ newNodeLabel ++ "] " ++ value) form.post
+
+                                        newData =
+                                            { data
+                                                | name = Just value
+                                                , nameid =
+                                                    value
                                                         |> String.toLower
                                                         |> String.trim
                                                         |> String.map
@@ -663,13 +669,33 @@ update global msg model =
                                                                 else
                                                                     c
                                                             )
-                                                  )
-                                                ]
+                                                        |> Just
+                                            }
                                     in
-                                    { form | post = Dict.union autoFields newPost }
+                                    { form | post = newPost, data = newData }
+
+                                "first_link" ->
+                                    { form | data = { data | first_link = Just value } }
+
+                                -- Mandate data
+                                "purpose" ->
+                                    { form | data = { data | mandate = Just { mandate | purpose = value } } }
+
+                                "about" ->
+                                    { form | data = { data | mandate = Just { mandate | about = Just value } } }
+
+                                "responsabilities" ->
+                                    { form | data = { data | mandate = Just { mandate | responsabilities = Just value } } }
+
+                                "domains" ->
+                                    { form | data = { data | mandate = Just { mandate | domains = Just value } } }
+
+                                "policies" ->
+                                    { form | data = { data | mandate = Just { mandate | policies = Just value } } }
 
                                 other ->
-                                    { form | post = newPost }
+                                    -- title, message...
+                                    { form | post = Dict.insert field value form.post }
                     in
                     ( { model | node_action = AddCircle <| CircleFinal newForm result }, Cmd.none, Cmd.none )
 
@@ -1441,12 +1467,12 @@ viewCircleStep viewMode step =
 
         CircleSource form roles ->
             let
-                nT =
-                    NodeType.toString form.type_
+                nodeType =
+                    form.data.type_ |> Maybe.map (\x -> NodeType.toString x) |> withDefault "[unknown]"
             in
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to create this" ++ nT ++ ":" |> text ] ]
+                    [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to create this" ++ nodeType ++ ":" |> text ] ]
                 , div [ class "modal-card-body" ]
                     [ div [ class "buttons buttonRadio" ] <|
                         List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles
