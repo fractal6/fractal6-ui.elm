@@ -20,7 +20,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Global exposing (Msg(..))
+import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -107,7 +107,9 @@ type Msg
     | ChangeCirclePost String String -- {field value}
     | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
-    | ChangeInputViewMode InputViewMode
+      -- Edit action
+    | DoEditAbout Node
+    | DoEditMandate Node
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -124,6 +126,7 @@ type Msg
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
       -- Util
+    | ChangeInputViewMode InputViewMode
     | Navigate String
 
 
@@ -225,7 +228,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Global.send (UpdateSessionFocus (Just newFocus))
+    , send (UpdateSessionFocus (Just newFocus))
     )
 
 
@@ -266,30 +269,30 @@ update global msg model =
                     if Dict.size data > 0 then
                         ( { model | orga_data = Success data }
                         , Ports.initGraphPack data model.node_focus.nameid
-                        , Global.send (UpdateSessionOrga (Just data))
+                        , send (UpdateSessionOrga (Just data))
                         )
 
                     else
                         ( { model | orga_data = Failure [ Text.nodeNotExist ] }, Cmd.none, Cmd.none )
 
                 other ->
-                    ( { model | orga_data = result }, Cmd.none, Global.send (UpdateSessionOrga Nothing) )
+                    ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
 
         GotTensions result ->
             case result of
                 Success data ->
-                    ( { model | tensions_circle = result }, Cmd.none, Global.send (UpdateSessionTensions (Just data)) )
+                    ( { model | tensions_circle = result }, Cmd.none, send (UpdateSessionTensions (Just data)) )
 
                 other ->
-                    ( { model | tensions_circle = result }, Cmd.none, Global.send (UpdateSessionTensions Nothing) )
+                    ( { model | tensions_circle = result }, Cmd.none, send (UpdateSessionTensions Nothing) )
 
         GotMandate result ->
             case result of
                 Success data ->
-                    ( { model | mandate = result }, Cmd.none, Global.send (UpdateSessionMandate (Just data)) )
+                    ( { model | mandate = result }, Cmd.none, send (UpdateSessionMandate (Just data)) )
 
                 other ->
-                    ( { model | mandate = result }, Cmd.none, Global.send (UpdateSessionMandate Nothing) )
+                    ( { model | mandate = result }, Cmd.none, send (UpdateSessionMandate Nothing) )
 
         -- Search
         ChangePattern pattern ->
@@ -347,7 +350,7 @@ update global msg model =
 
                 27 ->
                     --ESC
-                    ( model, Global.send (ChangePattern ""), Cmd.none )
+                    ( model, send (ChangePattern ""), Cmd.none )
 
                 40 ->
                     --DOWN
@@ -390,7 +393,7 @@ update global msg model =
                         Err err ->
                             AskErr err
             in
-            ( { model | node_action = newAction }, Global.send DoOpenModal, Cmd.none )
+            ( { model | node_action = newAction }, send DoOpenModal, Cmd.none )
 
         -- Tension
         DoTensionInit node ->
@@ -431,11 +434,7 @@ update global msg model =
                                             TensionNotAuthorized [ Text.notOrgMember, Text.joinForTension ]
 
                                         [ r ] ->
-                                            let
-                                                newForm2 =
-                                                    { newForm | source = r }
-                                            in
-                                            TensionFinal newForm2 NotAsked
+                                            TensionFinal { newForm | source = r } NotAsked
 
                                         roles ->
                                             TensionSource newForm roles
@@ -480,7 +479,7 @@ update global msg model =
             let
                 maybeForm =
                     case model.node_action of
-                        AddCircle (CircleFinal form _) ->
+                        AddCircle (NodeFinal form _) ->
                             Just form
 
                         AddTension (TensionFinal form _) ->
@@ -504,7 +503,7 @@ update global msg model =
                         , tensions_circle = Success tensions
                       }
                     , Cmd.none
-                    , Global.send (UpdateSessionTensions (Just tensions))
+                    , send (UpdateSessionTensions (Just tensions))
                     )
 
                 Nothing ->
@@ -530,9 +529,9 @@ update global msg model =
                     }
 
                 newStep =
-                    CircleInit form
+                    NodeInit form
             in
-            ( { model | node_action = AddCircle newStep }, Global.send DoCircleSource, Ports.bulma_driver "actionModal" )
+            ( { model | node_action = AddCircle newStep }, send DoCircleSource, Ports.bulma_driver "actionModal" )
 
         DoCircleSource ->
             case global.session.user of
@@ -541,69 +540,19 @@ update global msg model =
 
                 LoggedIn uctx ->
                     case model.node_action of
-                        AddCircle (CircleInit form) ->
+                        AddCircle (NodeInit form) ->
                             let
-                                orgaRoles =
-                                    uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
-
-                                nodeMode =
-                                    getNodeMode form.target.rootnameid model.orga_data |> withDefault NodeMode.Coordinated
-
                                 data =
                                     form.data
 
                                 newForm =
                                     { form
                                         | uctx = uctx
-                                        , data = { data | charac = Just (NodeCharac False nodeMode), first_link = Just uctx.username }
+                                        , data = { data | charac = Just form.target.charac, first_link = Just uctx.username }
                                     }
 
                                 newStep =
-                                    case orgaRoles of
-                                        [] ->
-                                            CircleNotAuthorized [ Text.notOrgMember, Text.joinForCircle ]
-
-                                        roles ->
-                                            let
-                                                circleRoles =
-                                                    roles |> List.filter (\r -> getParentidFromRole r == newForm.target.nameid)
-                                            in
-                                            case circleRoles of
-                                                [] ->
-                                                    CircleNotAuthorized [ Text.notCircleMember, Text.askCoordo ]
-
-                                                subRoles ->
-                                                    case nodeMode of
-                                                        NodeMode.Chaos ->
-                                                            case subRoles of
-                                                                [ r ] ->
-                                                                    let
-                                                                        newForm2 =
-                                                                            { newForm | source = r }
-                                                                    in
-                                                                    CircleFinal newForm2 NotAsked
-
-                                                                subRoles2 ->
-                                                                    CircleSource newForm subRoles2
-
-                                                        NodeMode.Coordinated ->
-                                                            let
-                                                                coordoRoles =
-                                                                    subRoles |> List.filter (\r -> r.role_type == RoleType.Coordinator)
-                                                            in
-                                                            case coordoRoles of
-                                                                [] ->
-                                                                    CircleNotAuthorized [ Text.notCircleCoordo, Text.askCoordo ]
-
-                                                                [ r ] ->
-                                                                    let
-                                                                        newForm2 =
-                                                                            { newForm | source = r }
-                                                                    in
-                                                                    CircleFinal newForm2 NotAsked
-
-                                                                subRoles2 ->
-                                                                    CircleSource newForm subRoles2
+                                    getNewNodeStepFromAuthForm newForm
                             in
                             ( { model | node_action = AddCircle newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
 
@@ -612,19 +561,19 @@ update global msg model =
 
         DoCircleFinal source ->
             case model.node_action of
-                AddCircle (CircleSource form roles) ->
+                AddCircle (NodeSource form roles) ->
                     let
                         newForm =
                             { form | source = source }
                     in
-                    ( { model | node_action = AddCircle <| CircleFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
+                    ( { model | node_action = AddCircle <| NodeFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeCirclePost field value ->
             case model.node_action of
-                AddCircle (CircleFinal form result) ->
+                AddCircle (NodeFinal form result) ->
                     let
                         data =
                             form.data
@@ -697,7 +646,7 @@ update global msg model =
                                     -- title, message...
                                     { form | post = Dict.insert field value form.post }
                     in
-                    ( { model | node_action = AddCircle <| CircleFinal newForm result }, Cmd.none, Cmd.none )
+                    ( { model | node_action = AddCircle <| NodeFinal newForm result }, Cmd.none, Cmd.none )
 
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
@@ -724,7 +673,7 @@ update global msg model =
             let
                 maybeForm =
                     case model.node_action of
-                        AddCircle (CircleFinal form _) ->
+                        AddCircle (NodeFinal form _) ->
                             Just form
 
                         AddTension (TensionFinal form _) ->
@@ -741,13 +690,13 @@ update global msg model =
                                 ndata =
                                     hotNodePush nodes model.orga_data
                             in
-                            ( { model | node_action = AddCircle <| CircleFinal form result, orga_data = Success ndata }
+                            ( { model | node_action = AddCircle <| NodeFinal form result, orga_data = Success ndata }
                             , Cmd.none
-                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga (Just ndata)) ]
+                            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
                             )
 
                         other ->
-                            ( { model | node_action = AddCircle <| CircleFinal form result }, Cmd.none, Cmd.none )
+                            ( { model | node_action = AddCircle <| NodeFinal form result }, Cmd.none, Cmd.none )
 
                 Nothing ->
                     ( { model | node_action = AskErr "Query method not implemented from CircleAck" }, Cmd.none, Cmd.none )
@@ -755,11 +704,83 @@ update global msg model =
         ChangeInputViewMode viewMode ->
             ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
 
+        -- Edit
+        DoEditAbout node ->
+            case global.session.user of
+                LoggedOut ->
+                    ( { model | node_action = ActionAuthNeeded }
+                    , send DoOpenModal
+                    , Cmd.none
+                    )
+
+                LoggedIn uctx ->
+                    let
+                        form =
+                            { uctx = uctx
+                            , source = UserRole "" "" "" RoleType.Guest
+                            , target = node
+                            , tension_type = TensionType.Governance
+                            , post = Dict.empty
+                            , action =
+                                case node.type_ of
+                                    NodeType.Role ->
+                                        Just TensionAction.UpdateRoleAbout
+
+                                    NodeType.Circle ->
+                                        Just TensionAction.UpdateCircleAbout
+                            , data = initNodeFragment
+                            }
+
+                        newStep =
+                            getNewNodeStepFromAuthForm form
+                    in
+                    ( { model | node_action = EditAbout newStep }
+                    , send DoOpenModal
+                    , Cmd.none
+                    )
+
+        DoEditMandate node ->
+            case global.session.user of
+                LoggedOut ->
+                    ( { model | node_action = ActionAuthNeeded }
+                    , send DoOpenModal
+                    , Cmd.none
+                    )
+
+                LoggedIn uctx ->
+                    let
+                        form =
+                            { uctx = uctx
+                            , source = UserRole "" "" "" RoleType.Guest
+                            , target = node
+                            , tension_type = TensionType.Governance
+                            , post = Dict.empty
+                            , action =
+                                case node.type_ of
+                                    NodeType.Role ->
+                                        Just TensionAction.UpdateRoleMandate
+
+                                    NodeType.Circle ->
+                                        Just TensionAction.UpdateCircleMandate
+                            , data = initNodeFragment
+                            }
+
+                        newStep =
+                            getNewNodeStepFromAuthForm form
+                    in
+                    ( { model | node_action = EditMandate newStep }
+                    , send DoOpenModal
+                    , Cmd.none
+                    )
+
         -- Join
         DoJoinOrga rootnameid time ->
             case global.session.user of
                 LoggedOut ->
-                    ( { model | node_action = JoinOrga JoinAuthNeeded }, Global.send DoOpenModal, Cmd.none )
+                    ( { model | node_action = ActionAuthNeeded }
+                    , send DoOpenModal
+                    , Cmd.none
+                    )
 
                 LoggedIn uctx ->
                     let
@@ -773,7 +794,10 @@ update global msg model =
                         newModel =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
-                    ( newModel, Cmd.batch [ addNewMember form JoinAck, Global.send DoOpenModal ], Cmd.none )
+                    ( newModel
+                    , Cmd.batch [ addNewMember form JoinAck, send DoOpenModal ]
+                    , Cmd.none
+                    )
 
         JoinAck result ->
             case model.node_action of
@@ -786,7 +810,7 @@ update global msg model =
                             in
                             ( { model | node_action = JoinOrga (JoinValidation form result), orga_data = Success ndata }
                             , Cmd.none
-                            , Cmd.batch [ Global.send UpdateUserToken, Global.send (UpdateSessionOrga (Just ndata)) ]
+                            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
                             )
 
                         other ->
@@ -805,7 +829,7 @@ update global msg model =
         NodeFocused path_ ->
             case path_ of
                 Ok path ->
-                    ( { model | path_data = Just path }, Ports.drawButtonsGraphPack, Global.send (UpdateSessionPath (Just path)) )
+                    ( { model | path_data = Just path }, Ports.drawButtonsGraphPack, send (UpdateSessionPath (Just path)) )
 
                 Err err ->
                     ( model, Cmd.none, Cmd.none )
@@ -1238,7 +1262,8 @@ viewMandateDoc mandate focus =
                     [ i [ class "fas fa-info fa-stack-1x" ] []
                     , i [ class "far fa-circle fa-stack-2x" ] []
                     ]
-                , span [] [ text "\u{00A0}", text " ", text focus.name ]
+                , span [ class "nodeName" ] [ text "\u{00A0}", text " ", text focus.name ]
+                , span [ class "is-pulled-right button-light", onClick (DoEditAbout focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ]
                 ]
             , case mandate.about of
                 Just ab ->
@@ -1250,7 +1275,7 @@ viewMandateDoc mandate focus =
             ]
         , div [ class "mandateDoc" ]
             [ h1 [ class "subtitle is-5" ]
-                [ Fa.icon "fas fa-scroll fa-sm" Text.mandateH ]
+                [ Fa.icon "fas fa-scroll fa-sm" Text.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ] ]
             , viewMandateSection Text.purposeH (Just mandate.purpose)
             , viewMandateSection responsabilitiesH mandate.responsabilities
             , viewMandateSection domainsH mandate.domains
@@ -1383,6 +1408,12 @@ viewActionStep model action =
         AddCircle step ->
             viewCircleStep model.inputViewMode step
 
+        EditAbout step ->
+            viewEditAboutStep model.inputViewMode step
+
+        EditMandate step ->
+            viewEditMandateStep model.inputViewMode step
+
         JoinOrga step ->
             viewJoinOrgaStep model.orga_data step
 
@@ -1455,17 +1486,17 @@ viewTensionStep viewMode step =
                 Form.NewTension.view viewMode form result ChangeInputViewMode ChangeTensionPost DoCloseModal Submit SubmitTension
 
 
-viewCircleStep : InputViewMode -> CircleStep TensionForm -> Html Msg
+viewCircleStep : InputViewMode -> NodeStep TensionForm data -> Html Msg
 viewCircleStep viewMode step =
     case step of
-        CircleNotAuthorized errMsg ->
+        NodeNotAuthorized errMsg ->
             viewWarnings errMsg
 
-        CircleInit form ->
+        NodeInit form ->
             -- Node mode selection not implemented yet.
             div [] [ text "" ]
 
-        CircleSource form roles ->
+        NodeSource form roles ->
             let
                 nodeType =
                     form.data.type_ |> Maybe.map (\x -> NodeType.toString x) |> withDefault "[unknown]"
@@ -1479,7 +1510,7 @@ viewCircleStep viewMode step =
                     ]
                 ]
 
-        CircleFinal form result ->
+        NodeFinal form result ->
             Form.NewCircle.view viewMode form result ChangeInputViewMode ChangeCirclePost DoCloseModal Submit SubmitCircle
 
 
@@ -1488,9 +1519,6 @@ viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
             div [ class "box spinner" ] [ text Text.loading ]
-
-        JoinAuthNeeded ->
-            viewAuthNeeded
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -1506,3 +1534,60 @@ viewJoinOrgaStep orga step =
 
                 default ->
                     div [ class "box spinner" ] [ text Text.loading ]
+
+
+
+-- Auth Step
+
+
+getNewNodeStepFromAuthForm : TensionForm -> NodeStep TensionForm d
+getNewNodeStepFromAuthForm form =
+    let
+        orgaRoles =
+            form.uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
+    in
+    case orgaRoles of
+        [] ->
+            NodeNotAuthorized [ Text.notOrgMember, Text.joinForCircle ]
+
+        roles ->
+            let
+                circleRoles =
+                    roles |> List.filter (\r -> getParentidFromRole r == form.target.nameid)
+            in
+            case circleRoles of
+                [] ->
+                    NodeNotAuthorized [ Text.notCircleMember, Text.askCoordo ]
+
+                subRoles ->
+                    case form.target.charac.mode of
+                        NodeMode.Chaos ->
+                            case subRoles of
+                                [ r ] ->
+                                    let
+                                        newForm =
+                                            { form | source = r }
+                                    in
+                                    NodeFinal newForm NotAsked
+
+                                subRoles2 ->
+                                    NodeSource form subRoles2
+
+                        NodeMode.Coordinated ->
+                            let
+                                coordoRoles =
+                                    subRoles |> List.filter (\r -> r.role_type == RoleType.Coordinator)
+                            in
+                            case coordoRoles of
+                                [] ->
+                                    NodeNotAuthorized [ Text.notCircleCoordo, Text.askCoordo ]
+
+                                [ r ] ->
+                                    let
+                                        newForm =
+                                            { form | source = r }
+                                    in
+                                    NodeFinal newForm NotAsked
+
+                                subRoles2 ->
+                                    NodeSource form subRoles2

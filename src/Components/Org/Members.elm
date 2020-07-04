@@ -225,7 +225,7 @@ update global msg model =
         DoJoinOrga rootnameid time ->
             case global.session.user of
                 LoggedOut ->
-                    ( { model | node_action = JoinOrga JoinAuthNeeded }, Global.send DoOpenModal, Cmd.none )
+                    ( { model | node_action = ActionAuthNeeded }, Global.send DoOpenModal, Cmd.none )
 
                 LoggedIn uctx ->
                     let
@@ -448,6 +448,15 @@ setupActionModal isModalActive action =
                 JoinOrga step ->
                     viewJoinOrgaStep step
 
+                NoOp ->
+                    text ""
+
+                AskErr err ->
+                    viewGqlErrors [ err ]
+
+                ActionAuthNeeded ->
+                    viewAuthNeeded
+
                 other ->
                     div [] [ text "Action not implemented." ]
             ]
@@ -467,9 +476,6 @@ viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
             div [ class "box spinner" ] [ text Text.loading ]
-
-        JoinAuthNeeded ->
-            viewAuthNeeded
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg

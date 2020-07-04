@@ -152,60 +152,6 @@ html.has-modal-active {
     color: #11111133 !important;
 }
 
-
-/*
- *
- * My style
- *
- */
-
-.is-underline {
-    //text-decoration: underline;
-    border-bottom: 1px ridge;
-}
-.is-underline-dotted {
-    border-bottom: 1px dotted;
-}
-
-.right-arrow {
-    &::after {
-        content: " \27F6 ";
-        padding-right: 5px;
-        padding-left: 5px;
-    }
-}
-
-.is-vbar-1 {
-	display: inline-block;
-	border-left: 1px solid #ccc;
-	height: 26px;
-    margin-bottom: 5px;
-    padding-left: 0.5rem;
-}
-
-.vline {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    margin: 0 10px;
-    padding-top: 25px;
-    padding-bottom: 25px;
-
-    &::after, &::before {
-        height: auto;
-        width: 1px;
-
-        content: '';
-        display: block;
-        flex: 1;
-        background-color: $grey-light2;
-    }
-}
-
-.is-aligned-center {
-    text-align: center !important;
-}
-
 .has-background-turquoise {
     background-color: $turquoise !important;
 }
@@ -221,6 +167,14 @@ html.has-modal-active {
 .is-flex-grow {
     flex-grow: 1;
 }
+
+/*
+ *
+ * My style
+ *
+ */
+
+
 /////
 
 .menu .menu-label {
@@ -545,42 +499,6 @@ html.has-modal-active {
 
 }
 
-
-.Circle {
-    padding-bottom: 2px;
-    &::before {
-        content: ' \25CF'; // draw a circle (use as tag/bullet)
-        font-size: 9px;
-    }
-}
-
-.circleBase {
-    border-radius: 50%;
-}
-
-.circle1 {
-    width: 50px;
-    height: 50px;
-    //background: #939393;
-    background: #285a86;
-    border: 1px solid #000;
-    // Text centering
-    text-align: center;
-    padding-top: 10px;
-}
-
-.circle2 {
-    width: 200px;
-    height: 200px;
-    background: #575c64;
-    border: 1px solid #000;
-    // Text centering
-    text-align: center;
-    padding-top: 50px;
-    font-size: 4em;
-}
-
-
 .searchBar {
     .input, .button, select {
         height: 2.8em !important;
@@ -758,6 +676,13 @@ html.has-modal-active {
     .message-body {
         padding-right: 1rem !important;
         padding-left: 1rem !important;
+    }
+}
+
+.aboutDoc {
+    .nodeName {
+        font-weight: 600 !important;
+        color: $grey !important;
     }
 }
 
@@ -1033,6 +958,105 @@ html.has-modal-active {
     }
 
 }
+
+/*
+ *
+ * Utils
+ *
+ */
+
+.button-light {
+    &:hover {
+        cursor: pointer !important;
+    }
+    &:active {
+        -webkit-filter: invert(100%);
+        filter: invert(100%);
+    }
+}
+
+.is-underline {
+    //text-decoration: underline;
+    border-bottom: 1px ridge;
+}
+
+.is-underline-dotted {
+    border-bottom: 1px dotted;
+}
+
+.right-arrow {
+    &::after {
+        content: " \27F6 ";
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+}
+
+.is-vbar-1 {
+	display: inline-block;
+	border-left: 1px solid #ccc;
+	height: 26px;
+    margin-bottom: 5px;
+    padding-left: 0.5rem;
+}
+
+.vline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0 10px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+
+    &::after, &::before {
+        height: auto;
+        width: 1px;
+
+        content: '';
+        display: block;
+        flex: 1;
+        background-color: $grey-light2;
+    }
+}
+
+.is-aligned-center {
+    text-align: center !important;
+}
+
+.Circle {
+    padding-bottom: 2px;
+    &::before {
+        content: ' \25CF'; // draw a circle (use as tag/bullet)
+        font-size: 9px;
+    }
+}
+
+.circleBase {
+    border-radius: 50%;
+}
+
+.circle1 {
+    width: 50px;
+    height: 50px;
+    //background: #939393;
+    background: #285a86;
+    border: 1px solid #000;
+    // Text centering
+    text-align: center;
+    padding-top: 10px;
+}
+
+.circle2 {
+    width: 200px;
+    height: 200px;
+    background: #575c64;
+    border: 1px solid #000;
+    // Text centering
+    text-align: center;
+    padding-top: 50px;
+    font-size: 4em;
+}
+
 
 /*
  *

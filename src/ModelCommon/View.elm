@@ -12,7 +12,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global
-import Html exposing (Html, a, br, div, span, text)
+import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (attribute, class, classList, href)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
@@ -131,6 +131,34 @@ mediaTension baseUri focus tension navigate =
 
                                 Just TensionAction.NewRole ->
                                     [ Fa.fa "far fa-user" ]
+
+                                Just TensionAction.UpdateCircleAbout ->
+                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                                        , i [ class "far fa-circle fa-stack-2x" ] []
+                                        ]
+                                    ]
+
+                                Just TensionAction.UpdateCircleMandate ->
+                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                                        , i [ class "far fa-scroll fa-stack-2x" ] []
+                                        ]
+                                    ]
+
+                                Just TensionAction.UpdateRoleAbout ->
+                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                                        , i [ class "far fa-user fa-stack-2x" ] []
+                                        ]
+                                    ]
+
+                                Just TensionAction.UpdateRoleMandate ->
+                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                                        , i [ class "far fa-user fa-stack-2x" ] []
+                                        ]
+                                    ]
 
                                 Nothing ->
                                     []

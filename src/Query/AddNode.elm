@@ -306,13 +306,9 @@ getAddCircleOptionals f =
                                             { c
                                                 | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
                                                 , createdBy =
-                                                    Input.buildUserRef
-                                                        (\u -> { u | username = Present f.uctx.username })
-                                                        |> Present
+                                                    Input.buildUserRef (\u -> { u | username = Present f.uctx.username }) |> Present
                                                 , first_link =
-                                                    Input.buildUserRef
-                                                        (\u -> { u | username = uname |> Present })
-                                                        |> Present
+                                                    Input.buildUserRef (\u -> { u | username = uname |> Present }) |> Present
                                                 , isRoot = False |> Present
                                                 , isPrivate = f.target.isPrivate |> Present
                                                 , type_ = NodeType.Role |> Present

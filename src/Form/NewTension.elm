@@ -10,7 +10,7 @@ import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -58,6 +58,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder "Title*"
+                                , required True
                                 , onInput (changePostMsg "title")
                                 ]
                                 []

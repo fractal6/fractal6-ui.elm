@@ -316,7 +316,7 @@ update global msg model =
         DoJoinOrga rootnameid time ->
             case global.session.user of
                 LoggedOut ->
-                    ( { model | node_action = JoinOrga JoinAuthNeeded }, Global.send DoOpenModal, Cmd.none )
+                    ( { model | node_action = ActionAuthNeeded }, Global.send DoOpenModal, Cmd.none )
 
                 LoggedIn uctx ->
                     let
@@ -645,30 +645,16 @@ viewSidePane t =
         , div [ class "media" ]
             [ div [ class "media-content" ]
                 [ case t.action of
+                    Just action ->
+                        case t.data of
+                            Just data ->
+                                viewData action data
+
+                            Nothing ->
+                                div [ class "is-italic" ] [ text ("no data attached for: " ++ TensionAction.toString action) ]
+
                     Nothing ->
                         div [ class "is-italic" ] [ text "no action requested" ]
-
-                    Just TensionAction.NewCircle ->
-                        div []
-                            [ h2 [ class "subtitle" ] [ text "Action | New Sub-Circle" ]
-                            , case t.data of
-                                Nothing ->
-                                    div [ class "is-italic" ] [ text "no data attached" ]
-
-                                Just data ->
-                                    viewData TensionAction.NewCircle data
-                            ]
-
-                    Just TensionAction.NewRole ->
-                        div []
-                            [ h2 [ class "subtitle" ] [ text "Action | New Role" ]
-                            , case t.data of
-                                Nothing ->
-                                    div [ class "is-italic" ] [ text "no data attached" ]
-
-                                Just data ->
-                                    viewData TensionAction.NewRole data
-                            ]
                 ]
             ]
         ]
@@ -682,14 +668,24 @@ viewData action nf =
                 TensionAction.NewCircle ->
                     NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
 
+                TensionAction.UpdateCircleAbout ->
+                    NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
+
+                TensionAction.UpdateCircleMandate ->
+                    NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
+
                 TensionAction.NewRole ->
                     NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
 
-        --_ ->
-        --    NewNodeText "" "" "" "" "" "" "" "" "" "" ""
+                TensionAction.UpdateRoleAbout ->
+                    NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
+
+                TensionAction.UpdateRoleMandate ->
+                    NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
     in
     div []
-        [ case nf.mandate of
+        [ h2 [ class "subtitle" ] [ text ("Action | " ++ TensionAction.toString action) ]
+        , case nf.mandate of
             Just mandate ->
                 div [ class "card" ]
                     [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text Text.mandateH ] ]
@@ -807,6 +803,15 @@ setupActionModal isModalActive action =
                 JoinOrga step ->
                     viewJoinOrgaStep step
 
+                NoOp ->
+                    text ""
+
+                AskErr err ->
+                    viewGqlErrors [ err ]
+
+                ActionAuthNeeded ->
+                    viewAuthNeeded
+
                 other ->
                     div [] [ text "Action not implemented." ]
             ]
@@ -826,9 +831,6 @@ viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
             div [ class "box spinner" ] [ text Text.loading ]
-
-        JoinAuthNeeded ->
-            viewAuthNeeded
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg

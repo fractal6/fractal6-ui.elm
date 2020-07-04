@@ -11,7 +11,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, selected, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -98,6 +98,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 , attribute "data-nextfocus" "aboutField"
                                 , type_ "text"
                                 , placeholder "Name*"
+                                , required True
                                 , onInput <| changePostMsg "name"
                                 ]
                                 []
@@ -203,6 +204,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                         , class "textarea"
                                         , rows 5
                                         , placeholder (txt.ph_purpose ++ "*")
+                                        , required True
                                         , onInput <| changePostMsg "purpose"
                                         ]
                                         []

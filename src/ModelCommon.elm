@@ -70,7 +70,9 @@ type UserState
 type ActionState
     = ActionChoice Node
     | AddTension (TensionStep TensionForm)
-    | AddCircle (CircleStep TensionForm)
+    | AddCircle (NodeStep TensionForm Node)
+    | EditAbout (NodeStep TensionForm Node)
+    | EditMandate (NodeStep TensionForm Mandate)
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
@@ -89,9 +91,6 @@ type alias TensionForm =
     , action : Maybe TensionAction.TensionAction
     , post : Post -- createdBy, createdAt, title, message...
     , data : NodeFragment
-
-    --, type_ : NodeType.NodeType -- for Circle or Role form
-    --, role_type : RoleType.RoleType -- for Role
     }
 
 
@@ -106,29 +105,7 @@ type alias TensionPatchForm =
 
 
 
--- Tension Step
-
-
-type TensionStep form
-    = TensionInit form
-    | TensionSource form (List UserRole)
-    | TensionFinal form (GqlData Tension)
-    | TensionNotAuthorized ErrorData
-
-
-
--- Circle Step  (Node Or Circle)
-
-
-type CircleStep form
-    = CircleInit form
-    | CircleSource form (List UserRole)
-    | CircleFinal form (GqlData (List Node))
-    | CircleNotAuthorized ErrorData
-
-
-
--- Join Form & Step
+-- Join Form
 
 
 type alias JoinOrgaForm =
@@ -139,11 +116,34 @@ type alias JoinOrgaForm =
     }
 
 
+
+-- Steps
+
+
+{-| Tension Step
+-}
+type TensionStep form
+    = TensionInit form
+    | TensionSource form (List UserRole)
+    | TensionFinal form (GqlData Tension)
+    | TensionNotAuthorized ErrorData
+
+
+{-| Node Step (Role Or Circle, add and edit)
+-}
+type NodeStep form data
+    = NodeInit form
+    | NodeSource form (List UserRole)
+    | NodeFinal form (GqlData (List data))
+    | NodeNotAuthorized ErrorData
+
+
+{-| Join Step
+-}
 type JoinStep form
     = JoinInit form
     | JoinValidation form (GqlData Node)
     | JoinNotAuthorized ErrorData
-    | JoinAuthNeeded
 
 
 
@@ -159,17 +159,6 @@ type InputViewMode
 --
 -- Getters
 --
-
-
-getNodeMode : String -> GqlData NodesData -> Maybe NodeMode.NodeMode
-getNodeMode nameid orga =
-    case orga of
-        Success nodes ->
-            Dict.get nameid nodes
-                |> Maybe.map (\n -> n.charac.mode)
-
-        _ ->
-            Nothing
 
 
 getNodeName : String -> GqlData NodesData -> String
