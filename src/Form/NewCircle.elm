@@ -146,51 +146,54 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                         , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
                         ]
                     , br [] []
-                    , div [ class "box has-background-grey-lighter subForm" ] <|
-                        (List.indexedMap
-                            (\i uname ->
-                                div [ class "field is-horizontal" ]
-                                    [ div [ class "field-label is-small has-text-grey-darker control" ]
-                                        [ case nodeType of
-                                            NodeType.Circle ->
-                                                let
-                                                    r =
-                                                        RoleType.Coordinator
-                                                in
-                                                div [ class ("select is-" ++ roleColor r) ]
-                                                    [ select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
-                                                        [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                    , div [ class "card" ]
+                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
+                        , div [ class "card-content" ]
+                            (List.indexedMap
+                                (\i uname ->
+                                    div [ class "field is-horizontal" ]
+                                        [ div [ class "field-label is-small has-text-grey-darker control" ]
+                                            [ case nodeType of
+                                                NodeType.Circle ->
+                                                    let
+                                                        r =
+                                                            RoleType.Coordinator
+                                                    in
+                                                    div [ class ("select is-" ++ roleColor r) ]
+                                                        [ select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                                            [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                            ]
                                                         ]
-                                                    ]
 
-                                            NodeType.Role ->
-                                                div [ class ("select is-" ++ roleColor roleType) ]
-                                                    [ RoleType.list
-                                                        |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
-                                                        |> List.map
-                                                            (\r ->
-                                                                option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
-                                                            )
-                                                        |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
-                                                    ]
-                                        ]
-                                    , div [ class "field-body control" ]
-                                        [ input
-                                            [ class "input is-small"
-                                            , type_ "text"
-                                            , value ("@" ++ uname)
-                                            , onInput <| changePostMsg "first_link"
+                                                NodeType.Role ->
+                                                    div [ class ("select is-" ++ roleColor roleType) ]
+                                                        [ RoleType.list
+                                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
+                                                            |> List.map
+                                                                (\r ->
+                                                                    option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                                )
+                                                            |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                                        ]
                                             ]
-                                            []
+                                        , div [ class "field-body control" ]
+                                            [ input
+                                                [ class "input is-small"
+                                                , type_ "text"
+                                                , value ("@" ++ uname)
+                                                , onInput <| changePostMsg "first_link"
+                                                ]
+                                                []
+                                            ]
                                         ]
-                                    ]
+                                )
+                                firstLinks
+                                ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
                             )
-                            firstLinks
-                            ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
-                        )
+                        ]
                     , br [] []
                     , div [ class "card" ]
-                        [ div [ class "cnard-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
+                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         , div [ class "card-content" ]
                             [ div [ class "field" ]
                                 [ div [ class "label" ] [ text T.purposeH ]

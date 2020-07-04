@@ -1097,7 +1097,7 @@ viewSearchBar odata maybePath qs =
                     |> Array.toList
                     |> tbody []
                     |> List.singleton
-                    |> List.append [ thead [] [ tr [] [ th [] [ text Text.nameQS ], th [] [ text Text.circleQS ], th [] [ text Text.firstLinkQS ] ] ] ]
+                    |> List.append [ thead [] [ tr [] [ th [] [ text Text.nameH ], th [] [ text Text.circleH ], th [] [ text Text.firstLinkH ] ] ] ]
                     |> div [ class "dropdown-content table is-fullwidth" ]
                 ]
             , case node_ of

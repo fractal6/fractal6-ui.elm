@@ -92,21 +92,9 @@ addTensionInputEncoder f =
             , type_ = f.tension_type
             , status = TensionStatus.Open
             , emitter =
-                Input.buildNodeRef
-                    (\n ->
-                        { n
-                            | nameid = Present f.source.nameid
-                            , rootnameid = Present f.source.rootnameid
-                        }
-                    )
+                Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
             , receiver =
-                Input.buildNodeRef
-                    (\n ->
-                        { n
-                            | nameid = Present f.target.nameid
-                            , rootnameid = Present f.target.rootnameid
-                        }
-                    )
+                Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
             }
@@ -130,8 +118,8 @@ addCircleTension form msg =
     makeGQLMutation
         (Mutation.addTension
             (addCircleInputEncoder form)
-            (SelectionSet.map AddTensionPayload <|
-                Fractal.Object.AddTensionPayload.tension identity tensionPayload
+            (SelectionSet.map AddTensionPayload
+                (Fractal.Object.AddTensionPayload.tension identity tensionPayload)
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
@@ -163,21 +151,9 @@ addCircleInputEncoder f =
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
             , emitter =
-                Input.buildNodeRef
-                    (\x ->
-                        { x
-                            | nameid = Present f.source.nameid
-                            , rootnameid = Present f.source.rootnameid
-                        }
-                    )
+                Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid })
             , receiver =
-                Input.buildNodeRef
-                    (\x ->
-                        { x
-                            | nameid = Present f.target.nameid
-                            , rootnameid = Present f.target.rootnameid
-                        }
-                    )
+                Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid })
             }
 
         tensionOpts =

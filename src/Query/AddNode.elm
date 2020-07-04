@@ -65,8 +65,8 @@ addNewMember form msg =
     makeGQLMutation
         (Mutation.addNode
             (newMemberInputEncoder form)
-            (SelectionSet.map AddNodePayload <|
-                Fractal.Object.AddNodePayload.node identity nodeOrgaPayload
+            (SelectionSet.map AddNodePayload
+                (Fractal.Object.AddNodePayload.node identity nodeOrgaPayload)
             )
         )
         (RemoteData.fromResult >> decodeResponse nodeDecoder >> msg)
@@ -102,7 +102,7 @@ newMemberInputEncoder { uctx, rootnameid, id, post } =
                     | role_type = Present RoleType.Guest
                     , parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = Present rootnameid, id = id |> Maybe.map (\i -> encodeId i) |> fromMaybe })
+                            (\p -> { p | nameid = Present rootnameid })
                             |> Present
                     , first_link =
                         Input.buildUserRef
@@ -210,11 +210,11 @@ addOneCirclePayload =
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.rootnameid
         |> with
-            (Fractal.Object.Node.parent identity <| SelectionSet.map NodeId Fractal.Object.Node.nameid)
+            (Fractal.Object.Node.parent identity (SelectionSet.map NodeId Fractal.Object.Node.nameid))
         |> with (Fractal.Object.Node.children identity nodeOrgaPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Node.first_link identity (SelectionSet.map Username Fractal.Object.User.username))
         |> with
             (Fractal.Object.Node.charac identity <|
                 SelectionSet.map2 NodeCharac
@@ -292,12 +292,11 @@ getAddCircleOptionals f =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = Present f.target.nameid, id = encodeId f.target.id |> Present })
+                            (\p -> { p | nameid = Present f.target.nameid })
                             |> Present
                     , mandate = buildMandate f.data.mandate
                     , tensions_in =
-                        [ Input.buildTensionRef (tensionFromForm f) ]
-                            |> Present
+                        [ Input.buildTensionRef (tensionFromForm f) ] |> Present
                     , children =
                         first_links
                             |> List.indexedMap
@@ -310,6 +309,10 @@ getAddCircleOptionals f =
                                                     Input.buildUserRef
                                                         (\u -> { u | username = Present f.uctx.username })
                                                         |> Present
+                                                , first_link =
+                                                    Input.buildUserRef
+                                                        (\u -> { u | username = uname |> Present })
+                                                        |> Present
                                                 , isRoot = False |> Present
                                                 , isPrivate = f.target.isPrivate |> Present
                                                 , type_ = NodeType.Role |> Present
@@ -318,10 +321,6 @@ getAddCircleOptionals f =
                                                 , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> Present
                                                 , rootnameid = f.target.rootnameid |> Present
                                                 , charac = f.data.charac |> Maybe.map (\ch -> { userCanJoin = Present ch.userCanJoin, mode = Present ch.mode, id = Absent }) |> fromMaybe
-                                                , first_link =
-                                                    Input.buildUserRef
-                                                        (\u -> { u | username = uname |> Present })
-                                                        |> Present
                                             }
                                         )
                                 )
@@ -337,12 +336,11 @@ getAddCircleOptionals f =
                 { n
                     | parent =
                         Input.buildNodeRef
-                            (\p -> { p | nameid = Present f.target.nameid, id = encodeId f.target.id |> Present })
+                            (\p -> { p | nameid = Present f.target.nameid })
                             |> Present
                     , mandate = buildMandate f.data.mandate
                     , tensions_in =
-                        [ Input.buildTensionRef (tensionFromForm f) ]
-                            |> Present
+                        [ Input.buildTensionRef (tensionFromForm f) ] |> Present
                     , role_type = f.data.role_type |> fromMaybe
                     , first_link =
                         first_link
@@ -385,23 +383,9 @@ tensionFromForm f =
             , emitterid = f.source.nameid |> Present
             , receiverid = f.target.nameid |> Present
             , emitter =
-                Input.buildNodeRef
-                    (\x ->
-                        { x
-                            | nameid = Present f.source.nameid
-                            , rootnameid = Present f.source.rootnameid
-                        }
-                    )
-                    |> Present
+                Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present
             , receiver =
-                Input.buildNodeRef
-                    (\x ->
-                        { x
-                            | nameid = Present f.target.nameid
-                            , rootnameid = Present f.target.rootnameid
-                        }
-                    )
-                    |> Present
+                Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid }) |> Present
             , data = buildNodeFragment f
         }
 

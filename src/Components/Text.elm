@@ -32,18 +32,18 @@ leaveComment =
 --(header)
 
 
-nameQS : String
-nameQS =
+nameH : String
+nameH =
     "Name"
 
 
-circleQS : String
-circleQS =
+circleH : String
+circleH =
     "Circle"
 
 
-firstLinkQS : String
-firstLinkQS =
+firstLinkH : String
+firstLinkH =
     "First Link"
 
 
