@@ -109,6 +109,7 @@ view form result sd =
                                 []
                             ]
                         , p [ class "help-label" ] [ text txt.about_help ]
+                        , br [] []
                         ]
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
