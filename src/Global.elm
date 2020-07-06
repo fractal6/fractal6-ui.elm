@@ -78,7 +78,7 @@ init flags url key =
             , path_data = Nothing
             , node_focus = Nothing
             , tensions_circle = Nothing
-            , mandate = Nothing
+            , data = Nothing
             , node_action = Nothing
             , node_quickSearch = Nothing
             }
@@ -109,7 +109,7 @@ type Msg
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionOrga (Maybe NodesData)
     | UpdateSessionTensions (Maybe TensionsData)
-    | UpdateSessionMandate (Maybe Mandate)
+    | UpdateSessionData (Maybe NodeData)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -191,12 +191,12 @@ update msg model =
             in
             ( { model | session = { session | tensions_circle = data } }, Cmd.none )
 
-        UpdateSessionMandate data ->
+        UpdateSessionData data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | mandate = data } }, Cmd.none )
+            ( { model | session = { session | data = data } }, Cmd.none )
 
         UpdateUserSession uctx ->
             let

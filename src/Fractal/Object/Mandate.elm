@@ -24,11 +24,6 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-about : SelectionSet (Maybe String) Fractal.Object.Mandate
-about =
-    Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)
-
-
 purpose : SelectionSet String Fractal.Object.Mandate
 purpose =
     Object.selectionForField "String" "purpose" [] Decode.string

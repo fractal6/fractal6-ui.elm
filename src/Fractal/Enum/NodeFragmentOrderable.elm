@@ -10,6 +10,7 @@ import Json.Decode as Decode exposing (Decoder)
 type NodeFragmentOrderable
     = Name
     | Nameid
+    | About
     | First_link
     | Second_link
     | Skills
@@ -17,7 +18,7 @@ type NodeFragmentOrderable
 
 list : List NodeFragmentOrderable
 list =
-    [ Name, Nameid, First_link, Second_link, Skills ]
+    [ Name, Nameid, About, First_link, Second_link, Skills ]
 
 
 decoder : Decoder NodeFragmentOrderable
@@ -31,6 +32,9 @@ decoder =
 
                     "nameid" ->
                         Decode.succeed Nameid
+
+                    "about" ->
+                        Decode.succeed About
 
                     "first_link" ->
                         Decode.succeed First_link
@@ -56,6 +60,9 @@ toString enum =
 
         Nameid ->
             "nameid"
+
+        About ->
+            "about"
 
         First_link ->
             "first_link"
@@ -86,6 +93,9 @@ fromString enumString =
 
         "nameid" ->
             Just Nameid
+
+        "about" ->
+            Just About
 
         "first_link" ->
             Just First_link

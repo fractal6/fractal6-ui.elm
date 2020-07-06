@@ -176,7 +176,7 @@ viewHero model =
     div [ id "welcome", class "hero is-dark is-bold" ]
         [ div [ class "hero-body" ]
             [ div [ class "columns is-centered section" ]
-                [ div [ class "column is-3" ]
+                [ div [ class "column is-6-desktop is-4-widescreen is-3-fullhd" ]
                     [ h1 [ class "title is-1" ]
                         [ text "Build unstoppable organisations" ]
                     , h2
@@ -187,10 +187,10 @@ viewHero model =
                             , text "is a collaborative platform inspired by"
                             , text "self-organized"
                             , text "systems and"
-                            , text "open source culture. Join a network that enact collective intelligence and build transparent and resilient organisation."
+                            , text "open source culture. Join a network that enact collective intelligence to build transparent and resilient organisation."
                             ]
                     ]
-                , div [ class "column is-3" ]
+                , div [ class "column is-6-desktop is-4-widescreen is-3-fullhd" ]
                     [ viewSignBox model ]
                 ]
             ]

@@ -379,6 +379,11 @@ html.has-modal-active {
             margin-right:4px !important;
         }
 
+        .fa-stack > i.fa-pen {
+            top: -5px;
+            left: 5px;
+        }
+
     }
 
 }
@@ -957,6 +962,19 @@ html.has-modal-active {
         border-color: $orange-frac6 !important;
     }
 
+}
+
+.cardForm {
+    .field-label.control {
+        padding-top: 0 !important;
+        padding-left: 10px !important;
+    }
+    .select.is-orange, .select.is-orange::after,
+    .select.is-orange select,
+    .select.is-orange select:focus,
+    .select.is-orange select:active {
+        border-color: $orange-frac6 !important;
+    }
 }
 
 /*

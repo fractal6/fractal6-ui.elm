@@ -13,6 +13,11 @@ seeMore =
     "See more"
 
 
+welcomIn : String
+welcomIn =
+    "Welcome In"
+
+
 
 -- Genral
 
@@ -202,6 +207,11 @@ noExtTensionCircle =
     "No external tensions for this Circle yet."
 
 
+newTension : String
+newTension =
+    "new Tension"
+
+
 newCircle : String
 newCircle =
     "New Circle"
@@ -212,6 +222,31 @@ newRole =
     "New Role"
 
 
+editCircle : String
+editCircle =
+    "Edit Circle"
+
+
+editRole : String
+editRole =
+    "Edit Role"
+
+
+updateAbout : String
+updateAbout =
+    "Edit about"
+
+
+updateMandate : String
+updateMandate =
+    "Edit mandate"
+
+
+tensionTitleHelp : String
+tensionTitleHelp =
+    "Title that sumarize your tension."
+
+
 circleNameHelp : String
 circleNameHelp =
     "Name of the circle."
@@ -220,6 +255,21 @@ circleNameHelp =
 roleNameHelp : String
 roleNameHelp =
     "Name of the role."
+
+
+roleAboutHelp : String
+roleAboutHelp =
+    "Short description of this role."
+
+
+circleAboutHelp : String
+circleAboutHelp =
+    "Short description of this circle."
+
+
+tensionMessageHelp : String
+tensionMessageHelp =
+    "Add a description to help others understand your issue."
 
 
 circleMessageHelp : String
@@ -262,14 +312,34 @@ tensionRoleAdded =
     "Tension added (new Role)."
 
 
+roleEdited : String
+roleEdited =
+    "Role edited."
+
+
+circleEdited : String
+circleEdited =
+    "Circle edited."
+
+
+tensionSubmit : String
+tensionSubmit =
+    "Submit tension"
+
+
 tensionCircleSubmit : String
 tensionCircleSubmit =
-    "Submit new Circle"
+    tensionSubmit
 
 
 tensionRoleSubmit : String
 tensionRoleSubmit =
-    "Submit new Role"
+    tensionSubmit
+
+
+editAndClose : String
+editAndClose =
+    "Edit and close tension."
 
 
 tensionCircleCloseSubmit : String

@@ -8,8 +8,7 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type MandateOrderable
-    = About
-    | Purpose
+    = Purpose
     | Responsabilities
     | Domains
     | Policies
@@ -17,7 +16,7 @@ type MandateOrderable
 
 list : List MandateOrderable
 list =
-    [ About, Purpose, Responsabilities, Domains, Policies ]
+    [ Purpose, Responsabilities, Domains, Policies ]
 
 
 decoder : Decoder MandateOrderable
@@ -26,9 +25,6 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "about" ->
-                        Decode.succeed About
-
                     "purpose" ->
                         Decode.succeed Purpose
 
@@ -51,9 +47,6 @@ decoder =
 toString : MandateOrderable -> String
 toString enum =
     case enum of
-        About ->
-            "about"
-
         Purpose ->
             "purpose"
 
@@ -81,9 +74,6 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe MandateOrderable
 fromString enumString =
     case enumString of
-        "about" ->
-            Just About
-
         "purpose" ->
             Just Purpose
 

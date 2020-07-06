@@ -1,4 +1,4 @@
-module Query.QueryMandate exposing (mandatePayload, queryMandate)
+module Query.QueryNodeData exposing (mandatePayload, queryNodeData)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
@@ -27,41 +27,29 @@ import RemoteData exposing (RemoteData)
 
 
 {-
-   Query the mandate of a node
+   Query the node data /about, mandate, etc)
 -}
 
 
-type alias TopMandate =
-    { nameid : String
-    , mandate : Maybe Mandate
-    }
-
-
-mandateDecoder : Maybe TopMandate -> Maybe Mandate
-mandateDecoder a =
-    a
-        |> Maybe.map (\n -> n.mandate)
-        |> withDefault Nothing
-
-
-queryMandate nameid msg =
+queryNodeData nameid msg =
     makeGQLQuery
         (Query.getNode
-            (mandateFilter nameid)
-            nodeMandatePayload
+            (dataFilter nameid)
+            nodeDataPayload
         )
-        (RemoteData.fromResult >> decodeResponse mandateDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-mandateFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-mandateFilter nid a =
+dataFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
+dataFilter nid a =
     { a | nameid = Present nid }
 
 
-nodeMandatePayload : SelectionSet TopMandate Fractal.Object.Node
-nodeMandatePayload =
-    SelectionSet.succeed TopMandate
+nodeDataPayload : SelectionSet NodeData Fractal.Object.Node
+nodeDataPayload =
+    SelectionSet.succeed NodeData
         |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.about
         |> with
             (Fractal.Object.Node.mandate identity mandatePayload)
 
@@ -69,7 +57,6 @@ nodeMandatePayload =
 mandatePayload : SelectionSet Mandate Fractal.Object.Mandate
 mandatePayload =
     SelectionSet.succeed Mandate
-        |> with Fractal.Object.Mandate.about
         |> with Fractal.Object.Mandate.purpose
         |> with Fractal.Object.Mandate.responsabilities
         |> with Fractal.Object.Mandate.domains

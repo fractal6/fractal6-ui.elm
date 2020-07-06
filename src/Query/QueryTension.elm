@@ -31,8 +31,8 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryMandate exposing (mandatePayload)
 import Query.QueryNode exposing (nodeCharacPayload)
+import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -104,6 +104,7 @@ tensionExtendedPayload =
                     |> with Fractal.Object.NodeFragment.nameid
                     |> with Fractal.Object.NodeFragment.type_
                     |> with Fractal.Object.NodeFragment.role_type
+                    |> with Fractal.Object.NodeFragment.about
                     |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
                     |> with Fractal.Object.NodeFragment.isPrivate
                     |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)

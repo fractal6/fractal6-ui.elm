@@ -484,7 +484,10 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
-                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                        , text "Welcome in "
+                        , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                        ]
 
                 Failure err ->
                     viewGqlErrors err

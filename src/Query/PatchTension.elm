@@ -38,8 +38,8 @@ tensionPatchDecoder data =
         Just d ->
             d.tension
                 |> Maybe.map
-                    (\ts ->
-                        List.filterMap identity ts
+                    (\items ->
+                        List.filterMap identity items
                     )
                 |> withDefault []
                 |> List.head

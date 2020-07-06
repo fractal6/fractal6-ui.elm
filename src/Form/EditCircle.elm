@@ -1,4 +1,4 @@
-module Form.NewCircle exposing (view)
+module Form.EditCircle exposing (viewAbout, viewMandate)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
@@ -15,14 +15,11 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, roleColor, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, getNodeTextFromAction, roleColor, tensionTypeSpan)
 import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole)
 
 
-{-| --view : TensionForm -> GqlData data -> subData -> Html msg
-What should be the signature ?!
--}
-view form result sd =
+viewAbout form result sd =
     let
         nodeType =
             form.data.type_ |> withDefault NodeType.Role
@@ -31,13 +28,13 @@ view form result sd =
             form.data.role_type |> withDefault RoleType.Peer
 
         txt =
-            getNodeTextFromNodeType nodeType
+            getNodeTextFromAction (form.action |> withDefault TensionAction.UpdateRoleAbout)
 
         isLoading =
             result == LoadingSlowly
 
         isSendable =
-            form.data.name /= Nothing && (form.data.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
+            (form.data.name |> withDefault "") /= form.target.name || form.data.about /= form.targetData.about
 
         submitTension =
             ternary isSendable [ onClickPD2 (sd.submitMsg <| sd.submitNextMsg form False) ] []
@@ -51,16 +48,6 @@ view form result sd =
                 [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text txt.added ]
 
         other ->
-            let
-                title =
-                    Dict.get "title" form.post |> withDefault ""
-
-                nameid =
-                    form.data.nameid |> withDefault ""
-
-                firstLinks =
-                    form.data.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
-            in
             div [ class "modal-card finalModal" ]
                 [ div [ class "modal-card-head" ]
                     [ div [ class "level modal-card-title" ]
@@ -78,7 +65,7 @@ view form result sd =
                                 , attribute "data-nextfocus" "aboutField"
                                 , type_ "text"
                                 , placeholder "Name*"
-                                , required True
+                                , value (form.data.name |> withDefault "")
                                 , onInput <| sd.changePostMsg "name"
                                 ]
                                 []
@@ -93,6 +80,7 @@ view form result sd =
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder "About"
+                                , value (form.data.about |> withDefault "")
                                 , onInput <| sd.changePostMsg "about"
                                 ]
                                 []
@@ -106,20 +94,8 @@ view form result sd =
                                 [ input
                                     [ class "input is-small"
                                     , type_ "text"
-                                    , value title
+                                    , value (Dict.get "title" form.post |> withDefault "")
                                     , onInput <| sd.changePostMsg "title"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        , div [ class "field is-horizontal" ]
-                            [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Identifier" ]
-                            , div [ class "field-body control" ]
-                                [ input
-                                    [ class "input is-small"
-                                    , type_ "text"
-                                    , value nameid
-                                    , onInput <| sd.changePostMsg "nameid"
                                     ]
                                     []
                                 ]
@@ -127,50 +103,106 @@ view form result sd =
                         , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
                         ]
                     , br [] []
-                    , div [ class "card cardForm" ]
-                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
-                        , div [ class "card-content" ]
-                            (List.indexedMap
-                                (\i uname ->
-                                    div [ class "field is-horizontal" ]
-                                        [ div [ class "field-label is-small has-text-grey-darker control" ]
-                                            [ case nodeType of
-                                                NodeType.Circle ->
-                                                    let
-                                                        r =
-                                                            RoleType.Coordinator
-                                                    in
-                                                    div [ class ("select is-" ++ roleColor r) ]
-                                                        [ select [ class "has-text-dark", onInput <| sd.changePostMsg "role_type" ]
-                                                            [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ]
-                                                            ]
-                                                        ]
+                    , div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ textarea
+                                [ class "textarea"
+                                , rows 5
+                                , placeholder T.leaveComment
+                                , onInput <| sd.changePostMsg "message"
+                                ]
+                                []
+                            ]
+                        , p [ class "help-label" ] [ text txt.message_help ]
+                        ]
+                    , br [] []
+                    ]
+                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                    [ case other of
+                        Failure err ->
+                            viewGqlErrors err
 
-                                                NodeType.Role ->
-                                                    div [ class ("select is-" ++ roleColor roleType) ]
-                                                        [ RoleType.list
-                                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
-                                                            |> List.map
-                                                                (\r ->
-                                                                    option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
-                                                                )
-                                                            |> select [ class "has-text-dark", onInput <| sd.changePostMsg "role_type" ]
-                                                        ]
-                                            ]
-                                        , div [ class "field-body control" ]
-                                            [ input
-                                                [ class "input is-small"
-                                                , type_ "text"
-                                                , value ("@" ++ uname)
-                                                , onInput <| sd.changePostMsg "first_link"
-                                                ]
-                                                []
-                                            ]
-                                        ]
-                                )
-                                firstLinks
-                                ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
-                            )
+                        _ ->
+                            div [] []
+                    , div [ class "field is-grouped is-grouped-right" ]
+                        [ div [ class "control" ]
+                            [ div [ class "buttons" ]
+                                [ button
+                                    ([ class "button is-small has-text-weight-semibold"
+                                     , classList [ ( "is-warning", isSendable ), ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ submitCloseTension
+                                    )
+                                    [ text txt.close_submit ]
+                                , button
+                                    ([ class "button  has-text-weight-semibold"
+                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ submitTension
+                                    )
+                                    [ text txt.submit ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
+
+viewMandate form result sd =
+    let
+        nodeType =
+            form.data.type_ |> withDefault NodeType.Role
+
+        roleType =
+            form.data.role_type |> withDefault RoleType.Peer
+
+        txt =
+            getNodeTextFromAction (form.action |> withDefault TensionAction.UpdateRoleAbout)
+
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            (form.data.name |> withDefault "") /= form.target.name || form.data.about /= form.targetData.about
+
+        submitTension =
+            ternary isSendable [ onClickPD2 (sd.submitMsg <| sd.submitNextMsg form False) ] []
+
+        submitCloseTension =
+            ternary isSendable [ onClickPD2 (sd.submitMsg <| sd.submitNextMsg form True) ] []
+    in
+    case result of
+        Success _ ->
+            div [ class "box is-light modalClose", onClick (sd.closeModalMsg "") ]
+                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text txt.added ]
+
+        other ->
+            div [ class "modal-card finalModal" ]
+                [ div [ class "modal-card-head" ]
+                    [ div [ class "level modal-card-title" ]
+                        [ div [ class "level-left" ] <|
+                            List.intersperse (text "\u{00A0}")
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text (txt.title ++ " |\u{00A0}"), tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
+                        , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
+                        ]
+                    ]
+                , div [ class "modal-card-body" ]
+                    [ div [ class "box has-background-grey-lighter subForm" ]
+                        [ div [ class "field is-horizontal" ]
+                            [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
+                            , div [ class "field-body control" ]
+                                [ input
+                                    [ class "input is-small"
+                                    , type_ "text"
+                                    , value (Dict.get "title" form.post |> withDefault "")
+                                    , onInput <| sd.changePostMsg "title"
+                                    ]
+                                    []
+                                ]
+                            ]
+                        , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
                         ]
                     , br [] []
                     , div [ class "card" ]
@@ -185,6 +217,7 @@ view form result sd =
                                         , rows 5
                                         , placeholder (txt.ph_purpose ++ "*")
                                         , required True
+                                        , value (form.data.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
                                         , onInput <| sd.changePostMsg "purpose"
                                         ]
                                         []
@@ -197,6 +230,7 @@ view form result sd =
                                         [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_responsabilities
+                                        , value (form.data.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
                                         , onInput <| sd.changePostMsg "responsabilities"
                                         ]
                                         []
@@ -209,6 +243,7 @@ view form result sd =
                                         [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_domains
+                                        , value (form.data.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
                                         , onInput <| sd.changePostMsg "domains"
                                         ]
                                         []
@@ -221,6 +256,7 @@ view form result sd =
                                         [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_policies
+                                        , value (form.data.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
                                         , onInput <| sd.changePostMsg "policies"
                                         ]
                                         []

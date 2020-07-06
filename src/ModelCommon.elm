@@ -34,7 +34,7 @@ type alias Session =
     , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
     , tensions_circle : Maybe TensionsData
-    , mandate : Maybe Mandate
+    , data : Maybe NodeData
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
     }
@@ -70,9 +70,9 @@ type UserState
 type ActionState
     = ActionChoice Node
     | AddTension (TensionStep TensionForm)
-    | AddCircle (NodeStep TensionForm Node)
-    | EditAbout (NodeStep TensionForm Node)
-    | EditMandate (NodeStep TensionForm Mandate)
+    | AddCircle (NodeStep TensionForm (List Node))
+    | EditAbout (NodeStep TensionForm IdPayload)
+    | EditMandate (NodeStep TensionForm IdPayload)
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
@@ -87,6 +87,7 @@ type alias TensionForm =
     { uctx : UserCtx
     , source : UserRole
     , target : Node
+    , targetData : NodeData
     , tension_type : TensionType.TensionType
     , action : Maybe TensionAction.TensionAction
     , post : Post -- createdBy, createdAt, title, message...
@@ -134,7 +135,7 @@ type TensionStep form
 type NodeStep form data
     = NodeInit form
     | NodeSource form (List UserRole)
-    | NodeFinal form (GqlData (List data))
+    | NodeFinal form (GqlData data)
     | NodeNotAuthorized ErrorData
 
 

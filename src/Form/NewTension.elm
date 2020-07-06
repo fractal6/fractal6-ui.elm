@@ -14,15 +14,18 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.View exposing (edgeArrow, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
 import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
 
 
-{-| --view : TensionForm -> GqlData (Maybe Tension) -> (String -> String -> msg) -> ((msg -> TensionForm) -> Time.Posix -> msg) -> (TensionForm -> Time.Posix -> msg) -> Html msg
+{-| --view : TensionForm -> GqlData data -> subData -> Html msg
 What should be the signature ?!
 -}
-view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg submitNextMsg =
+view form result sd =
     let
+        txt =
+            getTensionText
+
         isLoading =
             result == LoadingSlowly
 
@@ -30,15 +33,15 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
             isPostSendable [ "title" ] form.post
 
         submitTension =
-            ternary isSendable [ onClick (submitMsg <| submitNextMsg form) ] []
+            ternary isSendable [ onClick (sd.submitMsg <| sd.submitNextMsg form False) ] []
 
         message =
             Dict.get "message" form.post |> withDefault ""
     in
     case result of
         Success _ ->
-            div [ class "box is-light modalClose", onClick (closeModalMsg "") ]
-                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text T.tensionAdded ]
+            div [ class "box is-light modalClose", onClick (sd.closeModalMsg "") ]
+                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text txt.added ]
 
         other ->
             div [ class "modal-card finalModal" ]
@@ -46,7 +49,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text "New tension | ", tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text (txt.title ++ " | "), tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
@@ -59,26 +62,26 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                 , type_ "text"
                                 , placeholder "Title*"
                                 , required True
-                                , onInput (changePostMsg "title")
+                                , onInput (sd.changePostMsg "title")
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ text "Title that sumarize your tension." ]
+                        , p [ class "help-label" ] [ text txt.name_help ]
                         , br [] []
                         ]
                     , div [ class "message" ]
                         [ div [ class "message-header" ]
                             [ div [ class "tabs is-boxed is-small" ]
                                 [ ul []
-                                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (changeInputView Write), target "_blank" ] [ text "Write" ] ]
-                                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (changeInputView Preview), target "_blank" ] [ text "Preview" ] ]
+                                    [ li [ classList [ ( "is-active", sd.viewMode == Write ) ] ] [ a [ onClickPD2 (sd.changeInputMsg Write), target "_blank" ] [ text "Write" ] ]
+                                    , li [ classList [ ( "is-active", sd.viewMode == Preview ) ] ] [ a [ onClickPD2 (sd.changeInputMsg Preview), target "_blank" ] [ text "Preview" ] ]
                                     ]
                                 ]
                             ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ case viewMode of
+                                    [ case sd.viewMode of
                                         Write ->
                                             textarea
                                                 [ id "textAreaModal"
@@ -86,14 +89,14 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                                 , rows 10
                                                 , placeholder "Leave a comment"
                                                 , value message
-                                                , onInput (changePostMsg "message")
+                                                , onInput (sd.changePostMsg "message")
                                                 ]
                                                 []
 
                                         Preview ->
                                             div [] [ renderMarkdown message "is-dark", hr [] [] ]
                                     ]
-                                , p [ class "help-label" ] [ text "Add a description to help others understand your issue." ]
+                                , p [ class "help-label" ] [ text txt.message_help ]
                                 , br [] []
                                 ]
                             ]
@@ -116,7 +119,7 @@ view viewMode form result changeInputView changePostMsg closeModalMsg submitMsg 
                                      ]
                                         ++ submitTension
                                     )
-                                    [ text "Submit new tension" ]
+                                    [ text txt.submit ]
                                 ]
                             ]
                         ]

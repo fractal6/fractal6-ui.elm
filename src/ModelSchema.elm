@@ -176,6 +176,7 @@ type alias NodeFragment =
     , nameid : Maybe String
     , type_ : Maybe NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
+    , about : Maybe String
     , mandate : Maybe Mandate
     , isPrivate : Maybe Bool
     , charac : Maybe NodeCharac
@@ -185,36 +186,42 @@ type alias NodeFragment =
     }
 
 
-initMandate : Mandate
-initMandate =
-    Mandate Nothing "" Nothing Nothing Nothing
-
-
-initNodeFragment : NodeFragment
-initNodeFragment =
-    NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
-
-
-initNodeFragmentCircle : NodeType.NodeType -> RoleType.RoleType -> NodeFragment
-initNodeFragmentCircle nt rt =
-    NodeFragment Nothing Nothing (Just nt) (Just rt) Nothing Nothing Nothing Nothing
-
-
 
 --
 -- Mandate
 --
 
 
+type alias NodeData =
+    { nameid : String
+    , about : Maybe String
+    , mandate : Maybe Mandate
+    }
+
+
 type alias Mandate =
-    { about : Maybe String
-    , purpose : String
+    { purpose : String
     , responsabilities : Maybe String
     , domains : Maybe String
     , policies : Maybe String
 
     --, tensions : List { id : String, title : String }
     }
+
+
+initMandate : Mandate
+initMandate =
+    Mandate "" Nothing Nothing Nothing
+
+
+initNodeFragment : NodeFragment
+initNodeFragment =
+    NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+
+initNodeFragmentCircle : NodeType.NodeType -> RoleType.RoleType -> NodeFragment
+initNodeFragmentCircle nt rt =
+    NodeFragment Nothing Nothing (Just nt) (Just rt) Nothing Nothing Nothing Nothing Nothing
 
 
 

@@ -56,6 +56,11 @@ type_ =
     Object.selectionForField "(Maybe Enum.NodeType.NodeType)" "type_" [] (Fractal.Enum.NodeType.decoder |> Decode.nullable)
 
 
+about : SelectionSet (Maybe String) Fractal.Object.NodeFragment
+about =
+    Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)
+
+
 type alias MandateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.MandateFilter }
 

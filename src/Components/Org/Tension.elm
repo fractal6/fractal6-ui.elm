@@ -10,7 +10,6 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostSendable)
-import Form.NewCircle exposing (NewNodeText)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -26,6 +25,7 @@ import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
 import ModelCommon.View
     exposing
         ( getAvatar
+        , getNodeTextFromAction
         , statusColor
         , tensionTypeColor
         , tensionTypeSpan
@@ -474,8 +474,6 @@ viewComment c =
     in
     case msg of
         Just status ->
-            -- TensionAction
-            --  Assume status for nom
             let
                 action =
                     case status of
@@ -664,24 +662,7 @@ viewData : TensionAction.TensionAction -> NodeFragment -> Html Msg
 viewData action nf =
     let
         txt =
-            case action of
-                TensionAction.NewCircle ->
-                    NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
-
-                TensionAction.UpdateCircleAbout ->
-                    NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
-
-                TensionAction.UpdateCircleMandate ->
-                    NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
-
-                TensionAction.NewRole ->
-                    NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
-
-                TensionAction.UpdateRoleAbout ->
-                    NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
-
-                TensionAction.UpdateRoleMandate ->
-                    NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
+            getNodeTextFromAction action
     in
     div []
         [ h2 [ class "subtitle" ] [ text ("Action | " ++ TensionAction.toString action) ]
@@ -839,7 +820,10 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
-                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", "Welcome in " ++ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                        , text "Welcome in "
+                        , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                        ]
 
                 Failure err ->
                     viewGqlErrors err

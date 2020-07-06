@@ -1,12 +1,10 @@
-module Query.AddNode exposing (addNewMember, addOneCircle, buildMandate, buildNodeFragment)
+module Query.AddNode exposing (addNewMember, addOneCircle, buildMandate, buildNodeFragmentRef)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
@@ -286,18 +284,24 @@ getAddCircleOptionals f =
                 |> String.split "@"
                 |> List.filter (\x -> x /= "")
     in
-    case type_ of
-        NodeType.Circle ->
-            \n ->
+    \n ->
+        let
+            commonFields =
                 { n
                     | parent =
                         Input.buildNodeRef
                             (\p -> { p | nameid = Present f.target.nameid })
                             |> Present
+                    , about = fromMaybe f.data.about
                     , mandate = buildMandate f.data.mandate
                     , tensions_in =
                         [ Input.buildTensionRef (tensionFromForm f) ] |> Present
-                    , children =
+                }
+        in
+        case type_ of
+            NodeType.Circle ->
+                { commonFields
+                    | children =
                         first_links
                             |> List.indexedMap
                                 (\i uname ->
@@ -323,23 +327,16 @@ getAddCircleOptionals f =
                             |> Present
                 }
 
-        NodeType.Role ->
-            let
-                first_link =
-                    first_links |> List.head
-            in
-            \n ->
-                { n
-                    | parent =
-                        Input.buildNodeRef
-                            (\p -> { p | nameid = Present f.target.nameid })
-                            |> Present
-                    , mandate = buildMandate f.data.mandate
-                    , tensions_in =
-                        [ Input.buildTensionRef (tensionFromForm f) ] |> Present
-                    , role_type = f.data.role_type |> fromMaybe
+            NodeType.Role ->
+                let
+                    first_link =
+                        first_links |> List.head
+                in
+                { commonFields
+                    | role_type = f.data.role_type |> fromMaybe
                     , first_link =
-                        first_link
+                        first_links
+                            |> List.head
                             |> Maybe.map
                                 (\uname ->
                                     Input.buildUserRef
@@ -382,7 +379,7 @@ tensionFromForm f =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present
             , receiver =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid }) |> Present
-            , data = buildNodeFragment f
+            , data = buildNodeFragmentRef f
         }
 
 
@@ -394,8 +391,7 @@ buildMandate maybeMandate =
                 Input.buildMandateRef
                     (\m ->
                         { m
-                            | about = mandate.about |> fromMaybe
-                            , purpose = mandate.purpose |> Present
+                            | purpose = mandate.purpose |> Present
                             , responsabilities = mandate.responsabilities |> fromMaybe
                             , domains = mandate.domains |> fromMaybe
                             , policies = mandate.policies |> fromMaybe
@@ -405,8 +401,8 @@ buildMandate maybeMandate =
         |> fromMaybe
 
 
-buildNodeFragment : TensionForm -> OptionalArgument Input.NodeFragmentRef
-buildNodeFragment f =
+buildNodeFragmentRef : TensionForm -> OptionalArgument Input.NodeFragmentRef
+buildNodeFragmentRef f =
     let
         nf =
             f.data
@@ -418,6 +414,7 @@ buildNodeFragment f =
                 , nameid = fromMaybe nf.nameid
                 , type_ = fromMaybe nf.type_
                 , role_type = fromMaybe nf.role_type
+                , about = fromMaybe nf.about
                 , mandate = buildMandate nf.mandate
                 , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
                 , first_link =

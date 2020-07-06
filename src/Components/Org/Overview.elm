@@ -10,8 +10,10 @@ import Components.Markdown exposing (renderMarkdown)
 import Components.Text as Text exposing (..)
 import Debug
 import Dict exposing (Dict)
+import Extra exposing (ternary, withDefaultData, withMaybeData)
 import Extra.Events exposing (onEnter, onKeydown, onTab)
 import Form
+import Form.EditCircle
 import Form.NewCircle
 import Form.NewTension
 import Fractal.Enum.NodeMode as NodeMode
@@ -30,14 +32,15 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.View exposing (mediaTension, tensionTypeColor)
+import ModelCommon.View exposing (action2SourceStr, actionNameStr, mediaTension, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addCircleTension, addOneTension)
-import Query.QueryMandate exposing (queryMandate)
+import Query.PatchNode exposing (patchNode)
 import Query.QueryNode exposing (queryGraphPack)
+import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryCircleTension)
 import Task
 import Time
@@ -70,13 +73,23 @@ type alias Model =
     , path_data : Maybe LocalGraph
     , orga_data : GqlData NodesData
     , tensions_circle : GqlData TensionsData
-    , mandate : GqlData Mandate
+    , data : GqlData NodeData
+    , subData : SubmitCircleData
 
     -- common
-    , inputViewMode : InputViewMode
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , node_quickSearch : NodesQuickSearch
+    }
+
+
+type alias SubmitCircleData =
+    { changePostMsg : String -> String -> Msg
+    , submitMsg : (Time.Posix -> Msg) -> Msg
+    , submitNextMsg : TensionForm -> Bool -> Time.Posix -> Msg
+    , closeModalMsg : String -> Msg
+    , changeInputMsg : InputViewMode -> Msg
+    , viewMode : InputViewMode
     }
 
 
@@ -89,27 +102,33 @@ type Msg
       -- Gql Data Queries
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
-    | GotMandate (GqlData Mandate) -- graphql
+    | GotData (GqlData NodeData) -- graphql
       -- Node Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
     | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- AddTension Action
+      -- New Tension Action
     | DoTensionInit Node -- {target}
     | DoTensionSource TensionType.TensionType -- {type}
     | DoTensionFinal UserRole --  {source}
     | ChangeTensionPost String String -- {field value}
-    | SubmitTension TensionForm Time.Posix -- Send form
+    | SubmitTension TensionForm Bool Time.Posix -- Send form
     | TensionAck (GqlData Tension) -- decode better to get IdPayload
-      -- AddCircle Action
+      -- New Circle Action
     | DoCircleInit Node NodeType.NodeType -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
-    | ChangeCirclePost String String -- {field value}
+    | ChangeNodePost String String -- {field value}
     | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
-      -- Edit action
+      -- Edit About action
     | DoEditAbout Node
+    | DoEditAboutFinal UserRole
+    | SubmitNodePatch TensionForm Bool Time.Posix
+    | AboutAck (GqlData IdPayload)
+      -- Edit Mandate Action
     | DoEditMandate Node
+    | DoEditMandateFinal UserRole
+    | MandateAck (GqlData IdPayload)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -174,27 +193,36 @@ init global flags =
                 session.tensions_circle
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , mandate =
-                session.mandate
+            , data =
+                session.data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , inputViewMode = Write
             , node_action = session.node_action |> withDefault NoOp
             , isModalActive = False
             , node_quickSearch = { qs | pattern = "", idx = 0 }
+            , subData =
+                { submitNextMsg = SubmitCircle
+                , changePostMsg = ChangeNodePost
+
+                -- Constant
+                , closeModalMsg = DoCloseModal
+                , changeInputMsg = ChangeInputViewMode
+                , submitMsg = Submit
+                , viewMode = Write
+                }
             }
 
         cmds =
             if fs.orgChange || isInit then
                 [ queryGraphPack newFocus.rootnameid GotOrga
                 , queryCircleTension newFocus.nameid GotTensions
-                , queryMandate newFocus.nameid GotMandate
+                , queryNodeData newFocus.nameid GotData
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
             else if fs.focusChange then
                 [ queryCircleTension newFocus.nameid GotTensions
-                , queryMandate newFocus.nameid GotMandate
+                , queryNodeData newFocus.nameid GotData
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
                     ++ (if fs.refresh then
@@ -219,7 +247,7 @@ init global flags =
                     Nothing ->
                         [ queryGraphPack newFocus.rootnameid GotOrga
                         , queryCircleTension newFocus.nameid GotTensions
-                        , queryMandate newFocus.nameid GotMandate
+                        , queryNodeData newFocus.nameid GotData
                         , Global.sendSleep PassedSlowLoadTreshold 500
                         ]
 
@@ -286,13 +314,13 @@ update global msg model =
                 other ->
                     ( { model | tensions_circle = result }, Cmd.none, send (UpdateSessionTensions Nothing) )
 
-        GotMandate result ->
+        GotData result ->
             case result of
                 Success data ->
-                    ( { model | mandate = result }, Cmd.none, send (UpdateSessionMandate (Just data)) )
+                    ( { model | data = result }, Cmd.none, send (UpdateSessionData (Just data)) )
 
                 other ->
-                    ( { model | mandate = result }, Cmd.none, send (UpdateSessionMandate Nothing) )
+                    ( { model | data = result }, Cmd.none, send (UpdateSessionData Nothing) )
 
         -- Search
         ChangePattern pattern ->
@@ -395,13 +423,14 @@ update global msg model =
             in
             ( { model | node_action = newAction }, send DoOpenModal, Cmd.none )
 
-        -- Tension
+        -- New Tension
         DoTensionInit node ->
             let
                 form =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
+                    , targetData = model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
                     , tension_type = TensionType.Governance
                     , action = Nothing
                     , post = Dict.empty
@@ -441,7 +470,7 @@ update global msg model =
                             in
                             ( { model | node_action = AddTension newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                        other ->
+                        _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         DoTensionFinal source ->
@@ -453,7 +482,7 @@ update global msg model =
                     in
                     ( { model | node_action = AddTension <| TensionFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                other ->
+                _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeTensionPost field value ->
@@ -468,7 +497,7 @@ update global msg model =
                 other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-        SubmitTension form time ->
+        SubmitTension form _ time ->
             let
                 newForm =
                     { form | post = Dict.insert "createdAt" (fromTime time) form.post }
@@ -479,10 +508,16 @@ update global msg model =
             let
                 maybeForm =
                     case model.node_action of
+                        AddTension (TensionFinal form _) ->
+                            Just form
+
                         AddCircle (NodeFinal form _) ->
                             Just form
 
-                        AddTension (TensionFinal form _) ->
+                        EditAbout (NodeFinal form _) ->
+                            Just form
+
+                        EditMandate (NodeFinal form _) ->
                             Just form
 
                         other ->
@@ -509,13 +544,14 @@ update global msg model =
                 Nothing ->
                     ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
 
-        -- Circle
+        -- New Circle
         DoCircleInit node nodeType ->
             let
                 form =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
+                    , targetData = model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
                     , tension_type = TensionType.Governance
                     , post = Dict.empty
                     , action =
@@ -556,7 +592,7 @@ update global msg model =
                             in
                             ( { model | node_action = AddCircle newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                        other ->
+                        _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         DoCircleFinal source ->
@@ -568,100 +604,36 @@ update global msg model =
                     in
                     ( { model | node_action = AddCircle <| NodeFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
-                other ->
+                _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-        ChangeCirclePost field value ->
+        ChangeNodePost field value ->
             case model.node_action of
                 AddCircle (NodeFinal form result) ->
-                    let
-                        data =
-                            form.data
+                    ( { model | node_action = AddCircle <| NodeFinal (updateNodeForm field value form) result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
-                        mandate =
-                            data.mandate |> withDefault initMandate
+                EditAbout (NodeFinal form result) ->
+                    ( { model | node_action = EditAbout <| NodeFinal (updateNodeForm field value form) result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
-                        newForm =
-                            case field of
-                                -- Node data
-                                "role_type" ->
-                                    { form | data = { data | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
+                EditMandate (NodeFinal form result) ->
+                    ( { model | node_action = EditMandate <| NodeFinal (updateNodeForm field value form) result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
-                                "name" ->
-                                    let
-                                        newNodeLabel =
-                                            case data.type_ |> withDefault NodeType.Role of
-                                                NodeType.Circle ->
-                                                    Text.newCircle
-
-                                                NodeType.Role ->
-                                                    Text.newRole
-
-                                        newPost =
-                                            Dict.insert "title" ("[" ++ newNodeLabel ++ "] " ++ value) form.post
-
-                                        newData =
-                                            { data
-                                                | name = Just value
-                                                , nameid =
-                                                    value
-                                                        |> String.toLower
-                                                        |> String.trim
-                                                        |> String.map
-                                                            (\c ->
-                                                                if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
-                                                                    '-'
-
-                                                                else if List.member c [ '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
-                                                                    '_'
-
-                                                                else
-                                                                    c
-                                                            )
-                                                        |> Just
-                                            }
-                                    in
-                                    { form | post = newPost, data = newData }
-
-                                "first_link" ->
-                                    { form | data = { data | first_link = Just value } }
-
-                                -- Mandate data
-                                "purpose" ->
-                                    { form | data = { data | mandate = Just { mandate | purpose = value } } }
-
-                                "about" ->
-                                    { form | data = { data | mandate = Just { mandate | about = Just value } } }
-
-                                "responsabilities" ->
-                                    { form | data = { data | mandate = Just { mandate | responsabilities = Just value } } }
-
-                                "domains" ->
-                                    { form | data = { data | mandate = Just { mandate | domains = Just value } } }
-
-                                "policies" ->
-                                    { form | data = { data | mandate = Just { mandate | policies = Just value } } }
-
-                                other ->
-                                    -- title, message...
-                                    { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | node_action = AddCircle <| NodeFinal newForm result }, Cmd.none, Cmd.none )
-
-                other ->
+                _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         SubmitCircle form doClose time ->
             let
-                status =
-                    if doClose == True then
-                        TensionStatus.Closed |> TensionStatus.toString
-
-                    else
-                        TensionStatus.Open |> TensionStatus.toString
-
                 newForm =
-                    { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", status ) ]) form.post }
+                    { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", statusFromDoClose doClose ) ]) form.post }
             in
             if doClose == True then
                 ( model, addOneCircle newForm CircleAck, Cmd.none )
@@ -679,7 +651,7 @@ update global msg model =
                         AddTension (TensionFinal form _) ->
                             Just form
 
-                        other ->
+                        _ ->
                             Nothing
             in
             case maybeForm of
@@ -701,10 +673,7 @@ update global msg model =
                 Nothing ->
                     ( { model | node_action = AskErr "Query method not implemented from CircleAck" }, Cmd.none, Cmd.none )
 
-        ChangeInputViewMode viewMode ->
-            ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
-
-        -- Edit
+        -- Edit About
         DoEditAbout node ->
             case global.session.user of
                 LoggedOut ->
@@ -715,20 +684,26 @@ update global msg model =
 
                 LoggedIn uctx ->
                     let
+                        action =
+                            case node.type_ of
+                                NodeType.Role ->
+                                    TensionAction.UpdateRoleAbout
+
+                                NodeType.Circle ->
+                                    TensionAction.UpdateCircleAbout
+
+                        nodeData =
+                            model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
+
                         form =
                             { uctx = uctx
                             , source = UserRole "" "" "" RoleType.Guest
                             , target = node
+                            , targetData = nodeData
                             , tension_type = TensionType.Governance
-                            , post = Dict.empty
-                            , action =
-                                case node.type_ of
-                                    NodeType.Role ->
-                                        Just TensionAction.UpdateRoleAbout
-
-                                    NodeType.Circle ->
-                                        Just TensionAction.UpdateCircleAbout
-                            , data = initNodeFragment
+                            , post = Dict.fromList [ ( "title", "[" ++ actionNameStr action ++ "] " ++ node.name ) ]
+                            , action = Just action
+                            , data = { initNodeFragment | name = Just node.name, about = nodeData.about }
                             }
 
                         newStep =
@@ -739,6 +714,76 @@ update global msg model =
                     , Cmd.none
                     )
 
+        DoEditAboutFinal source ->
+            case model.node_action of
+                EditAbout (NodeSource form roles) ->
+                    let
+                        newForm =
+                            { form | source = source }
+                    in
+                    ( { model | node_action = EditAbout <| NodeFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
+
+                _ ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        SubmitNodePatch form doClose time ->
+            let
+                newForm =
+                    { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", statusFromDoClose doClose ) ]) form.post }
+
+                action =
+                    form.action |> withDefault TensionAction.UpdateRoleAbout
+            in
+            if doClose == True then
+                case action of
+                    TensionAction.UpdateRoleAbout ->
+                        ( model, patchNode newForm AboutAck, Cmd.none )
+
+                    TensionAction.UpdateCircleAbout ->
+                        ( model, patchNode newForm AboutAck, Cmd.none )
+
+                    TensionAction.UpdateRoleMandate ->
+                        ( model, patchNode newForm MandateAck, Cmd.none )
+
+                    TensionAction.UpdateCircleMandate ->
+                        ( model, patchNode newForm MandateAck, Cmd.none )
+
+                    _ ->
+                        ( model, addCircleTension newForm TensionAck, Cmd.none )
+
+            else
+                ( model, addCircleTension newForm TensionAck, Cmd.none )
+
+        AboutAck result ->
+            let
+                maybeForm =
+                    case model.node_action of
+                        EditAbout (NodeFinal form _) ->
+                            Just form
+
+                        _ ->
+                            Nothing
+            in
+            case maybeForm of
+                Just form ->
+                    case result of
+                        Success nodes ->
+                            let
+                                data =
+                                    model.data |> withDefaultData (NodeData form.target.nameid Nothing Nothing)
+                            in
+                            ( { model | node_action = EditAbout <| NodeFinal form result, data = Success { data | about = form.data.about } }
+                            , Cmd.none
+                            , Cmd.none
+                            )
+
+                        other ->
+                            ( { model | node_action = EditAbout <| NodeFinal form result }, Cmd.none, Cmd.none )
+
+                Nothing ->
+                    ( { model | node_action = AskErr "Query method not implemented from AboutAck" }, Cmd.none, Cmd.none )
+
+        -- Edit Mandate
         DoEditMandate node ->
             case global.session.user of
                 LoggedOut ->
@@ -749,12 +794,24 @@ update global msg model =
 
                 LoggedIn uctx ->
                     let
+                        action =
+                            case node.type_ of
+                                NodeType.Role ->
+                                    TensionAction.UpdateRoleMandate
+
+                                NodeType.Circle ->
+                                    TensionAction.UpdateCircleMandate
+
+                        nodeData =
+                            model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
+
                         form =
                             { uctx = uctx
                             , source = UserRole "" "" "" RoleType.Guest
                             , target = node
+                            , targetData = nodeData
                             , tension_type = TensionType.Governance
-                            , post = Dict.empty
+                            , post = Dict.fromList [ ( "title", "[" ++ actionNameStr action ++ "] " ++ node.name ) ]
                             , action =
                                 case node.type_ of
                                     NodeType.Role ->
@@ -762,7 +819,7 @@ update global msg model =
 
                                     NodeType.Circle ->
                                         Just TensionAction.UpdateCircleMandate
-                            , data = initNodeFragment
+                            , data = { initNodeFragment | mandate = nodeData.mandate }
                             }
 
                         newStep =
@@ -772,6 +829,47 @@ update global msg model =
                     , send DoOpenModal
                     , Cmd.none
                     )
+
+        DoEditMandateFinal source ->
+            case model.node_action of
+                EditMandate (NodeSource form roles) ->
+                    let
+                        newForm =
+                            { form | source = source }
+                    in
+                    ( { model | node_action = EditMandate <| NodeFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
+
+                _ ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        MandateAck result ->
+            let
+                maybeForm =
+                    case model.node_action of
+                        EditMandate (NodeFinal form _) ->
+                            Just form
+
+                        _ ->
+                            Nothing
+            in
+            case maybeForm of
+                Just form ->
+                    case result of
+                        Success nodes ->
+                            let
+                                data =
+                                    model.data |> withDefaultData (NodeData form.target.nameid Nothing Nothing)
+                            in
+                            ( { model | node_action = EditMandate <| NodeFinal form result, data = Success { data | mandate = form.data.mandate } }
+                            , Cmd.none
+                            , Cmd.none
+                            )
+
+                        other ->
+                            ( { model | node_action = EditMandate <| NodeFinal form result }, Cmd.none, Cmd.none )
+
+                Nothing ->
+                    ( { model | node_action = AskErr "Query method not implemented from MandateAck" }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -849,6 +947,13 @@ update global msg model =
 
         DoClearTooltip ->
             ( model, Cmd.none, Ports.clearTooltip )
+
+        ChangeInputViewMode viewMode ->
+            let
+                subData =
+                    model.subData
+            in
+            ( { model | subData = { subData | viewMode = viewMode } }, Cmd.none, Cmd.none )
 
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
@@ -991,7 +1096,7 @@ view_ global model =
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
-                , viewMandate model.mandate nodeFocus
+                , viewNodeInfo model.data nodeFocus
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
@@ -1001,9 +1106,6 @@ view_ global model =
                     ]
                 ]
             ]
-
-        --, div [ class "columns is-variable is-4" ]
-        --    [ div [ class "column is-8 is-offset-1" ] [ viewMandate model.mandate nodeFocus ] ]
         ]
 
 
@@ -1065,11 +1167,7 @@ viewSearchBar odata maybePath qs =
                 |> withDefault (Err "No path returned")
 
         isActive =
-            if Array.length qs.lookup > 0 then
-                " is-active "
-
-            else
-                ""
+            ternary (Array.length qs.lookup > 0) " is-active " ""
     in
     div
         [ id "searchBarOverview"
@@ -1095,11 +1193,7 @@ viewSearchBar odata maybePath qs =
                         (\i n ->
                             let
                                 isSelected =
-                                    if i == qs.idx then
-                                        " is-active "
-
-                                    else
-                                        ""
+                                    ternary (i == qs.idx) " is-active " ""
                             in
                             --a [ href (uriFromNameid OverviewBaseUri n.nameid) ]
                             tr
@@ -1133,7 +1227,7 @@ viewSearchBar odata maybePath qs =
                             , attribute "data-modal" "actionModal"
                             , onClick (DoNodeAction node_)
                             ]
-                            [ span [ class "has-text-weight-semibold text" ] [ node.name |> text ] -- Node name
+                            [ span [ class "has-text-weight-semibold text" ] [ node.name |> text ]
                             , span [ class "fa-stack  ellipsisArt" ]
                                 [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
                             ]
@@ -1180,18 +1274,13 @@ viewCanvas odata =
             ]
             [ span [] [ text "void" ] -- Node name
             , span [ class "fa-stack fa-sm ellipsisArt" ]
-                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] []
-
-                -- To be copied before fa-ellipis !
-                --, i[class "far fa-circle fa-stack-2x"][]
-                --, i[class "fas fa-circle fa-stack-2x"][]
-                ]
+                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
             ]
         ]
 
 
-viewMandate : GqlData Mandate -> Maybe Node -> Html Msg
-viewMandate mandateData maybeFocus =
+viewNodeInfo : GqlData NodeData -> Maybe Node -> Html Msg
+viewNodeInfo nodeData maybeFocus =
     div [ id "mandateContainer", class "hero is-small is-light" ]
         [ div [ class "hero-body" ]
             [ case maybeFocus of
@@ -1202,7 +1291,7 @@ viewMandate mandateData maybeFocus =
                                 fs =
                                     focus.first_link |> Maybe.map (\u -> u.username) |> withDefault "[Unknown]"
                             in
-                            case mandateData of
+                            case nodeData of
                                 Failure err ->
                                     case r of
                                         RoleType.Guest ->
@@ -1214,22 +1303,22 @@ viewMandate mandateData maybeFocus =
                                 LoadingSlowly ->
                                     div [ class "spinner" ] []
 
-                                Success mandate ->
-                                    viewMandateDoc mandate focus
+                                Success data ->
+                                    viewNodeDoc data focus
 
                                 other ->
                                     div [] []
 
                         Nothing ->
-                            case mandateData of
+                            case nodeData of
                                 Failure err ->
                                     viewGqlErrors err
 
                                 LoadingSlowly ->
                                     div [ class "spinner" ] []
 
-                                Success mandate ->
-                                    viewMandateDoc mandate focus
+                                Success data ->
+                                    viewNodeDoc data focus
 
                                 other ->
                                     div [] []
@@ -1240,8 +1329,8 @@ viewMandate mandateData maybeFocus =
         ]
 
 
-viewMandateDoc : Mandate -> Node -> Html Msg
-viewMandateDoc mandate focus =
+viewNodeDoc : NodeData -> Node -> Html Msg
+viewNodeDoc data focus =
     let
         viewMandateSection : String -> Maybe String -> Html Msg
         viewMandateSection name maybePara =
@@ -1265,7 +1354,7 @@ viewMandateDoc mandate focus =
                 , span [ class "nodeName" ] [ text "\u{00A0}", text " ", text focus.name ]
                 , span [ class "is-pulled-right button-light", onClick (DoEditAbout focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ]
                 ]
-            , case mandate.about of
+            , case data.about of
                 Just ab ->
                     p [] [ text ab ]
 
@@ -1273,14 +1362,20 @@ viewMandateDoc mandate focus =
                     div [] []
             , hr [ class "has-background-grey-light" ] []
             ]
-        , div [ class "mandateDoc" ]
-            [ h1 [ class "subtitle is-5" ]
-                [ Fa.icon "fas fa-scroll fa-sm" Text.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ] ]
-            , viewMandateSection Text.purposeH (Just mandate.purpose)
-            , viewMandateSection responsabilitiesH mandate.responsabilities
-            , viewMandateSection domainsH mandate.domains
-            , viewMandateSection policiesH mandate.policies
-            ]
+        , case data.mandate of
+            Just mandate ->
+                div [ class "mandateDoc" ]
+                    [ h1 [ class "subtitle is-5" ]
+                        [ Fa.icon "fas fa-scroll fa-sm" Text.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ] ]
+                    , viewMandateSection Text.purposeH (Just mandate.purpose)
+                    , viewMandateSection responsabilitiesH mandate.responsabilities
+                    , viewMandateSection domainsH mandate.domains
+                    , viewMandateSection policiesH mandate.policies
+                    ]
+
+            Nothing ->
+                div [ class "is-italic" ]
+                    [ text "No mandate for this circle.", span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-md fa-edit" "" ] ]
         ]
 
 
@@ -1299,11 +1394,9 @@ viewActivies model =
             , div [ class "tabs is-right is-small" ]
                 [ ul []
                     [ li [ class "is-active" ]
-                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" Text.tensionH ]
-                        ]
+                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" Text.tensionH ] ]
                     , li []
-                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" Text.journalH ]
-                        ]
+                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" Text.journalH ] ]
                     ]
                 ]
             ]
@@ -1312,12 +1405,9 @@ viewActivies model =
                 Success tensions ->
                     if List.length tensions > 0 then
                         List.map (\t -> mediaTension OverviewBaseUri model.node_focus t Navigate) tensions
-                            ++ (if List.length tensions > 5 then
-                                    [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text Text.seeMore ] ] ]
-
-                                else
-                                    []
-                               )
+                            ++ ternary (List.length tensions > 5)
+                                [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text Text.seeMore ] ] ]
+                                []
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else
@@ -1403,16 +1493,16 @@ viewActionStep model action =
                 ]
 
         AddTension step ->
-            viewTensionStep model.inputViewMode step
+            viewTensionStep step model.subData
 
         AddCircle step ->
-            viewCircleStep model.inputViewMode step
+            viewCircleStep step model.subData
 
         EditAbout step ->
-            viewEditAboutStep model.inputViewMode step
+            viewEditAboutStep step model.subData
 
         EditMandate step ->
-            viewEditMandateStep model.inputViewMode step
+            viewEditMandateStep step model.subData
 
         JoinOrga step ->
             viewJoinOrgaStep model.orga_data step
@@ -1427,12 +1517,9 @@ viewActionStep model action =
             viewAuthNeeded
 
 
-viewTensionStep : InputViewMode -> TensionStep TensionForm -> Html Msg
-viewTensionStep viewMode step =
+viewTensionStep : TensionStep TensionForm -> SubmitCircleData -> Html Msg
+viewTensionStep step subData =
     case step of
-        TensionNotAuthorized errMsg ->
-            viewWarnings errMsg
-
         TensionInit form ->
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
@@ -1455,63 +1542,73 @@ viewTensionStep viewMode step =
                 ]
 
         TensionSource form roles ->
-            div [ class "modal-card" ]
-                [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ text "You have several roles in this organisation. Please select the role from which you want to create this Tension:" ] ]
-                , div [ class "modal-card-body" ]
-                    [ div [ class "buttons buttonRadio" ] <|
-                        List.map (\role -> div [ class "button", onClick (DoTensionFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles
-                    ]
-                ]
+            viewSourceRoles form roles DoTensionFinal
 
         TensionFinal form result ->
-            let
-                viewCircleForm =
-                    case result of
-                        Failure _ ->
-                            case form.action of
-                                Just _ ->
-                                    True
+            case form.action of
+                Just action ->
+                    let
+                        newSubData =
+                            { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitCircle }
+                    in
+                    Form.NewCircle.view form result newSubData
 
-                                _ ->
-                                    False
+                Nothing ->
+                    Form.NewTension.view form result { subData | changePostMsg = ChangeTensionPost, submitNextMsg = SubmitTension }
 
-                        _ ->
-                            False
-            in
-            if viewCircleForm then
-                Form.NewCircle.view viewMode form result ChangeInputViewMode ChangeCirclePost DoCloseModal Submit SubmitCircle
-
-            else
-                Form.NewTension.view viewMode form result ChangeInputViewMode ChangeTensionPost DoCloseModal Submit SubmitTension
-
-
-viewCircleStep : InputViewMode -> NodeStep TensionForm data -> Html Msg
-viewCircleStep viewMode step =
-    case step of
-        NodeNotAuthorized errMsg ->
+        TensionNotAuthorized errMsg ->
             viewWarnings errMsg
 
+
+viewCircleStep : NodeStep TensionForm data -> SubmitCircleData -> Html Msg
+viewCircleStep step subData =
+    case step of
         NodeInit form ->
             -- Node mode selection not implemented yet.
             div [] [ text "" ]
 
         NodeSource form roles ->
-            let
-                nodeType =
-                    form.data.type_ |> Maybe.map (\x -> NodeType.toString x) |> withDefault "[unknown]"
-            in
-            div [ class "modal-card" ]
-                [ div [ class "modal-card-head" ]
-                    [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to create this" ++ nodeType ++ ":" |> text ] ]
-                , div [ class "modal-card-body" ]
-                    [ div [ class "buttons buttonRadio" ] <|
-                        List.map (\role -> div [ class "button", onClick (DoCircleFinal role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]) roles
-                    ]
-                ]
+            viewSourceRoles form roles DoCircleFinal
 
         NodeFinal form result ->
-            Form.NewCircle.view viewMode form result ChangeInputViewMode ChangeCirclePost DoCloseModal Submit SubmitCircle
+            Form.NewCircle.view form result { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitCircle }
+
+        NodeNotAuthorized errMsg ->
+            viewWarnings errMsg
+
+
+viewEditAboutStep : NodeStep TensionForm data -> SubmitCircleData -> Html Msg
+viewEditAboutStep step subData =
+    case step of
+        NodeInit form ->
+            -- Node mode selection not implemented yet.
+            div [] [ text "" ]
+
+        NodeSource form roles ->
+            viewSourceRoles form roles DoEditAboutFinal
+
+        NodeFinal form result ->
+            Form.EditCircle.viewAbout form result { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitNodePatch }
+
+        NodeNotAuthorized errMsg ->
+            viewWarnings errMsg
+
+
+viewEditMandateStep : NodeStep TensionForm data -> SubmitCircleData -> Html Msg
+viewEditMandateStep step subData =
+    case step of
+        NodeInit form ->
+            -- Node mode selection not implemented yet.
+            div [] [ text "" ]
+
+        NodeSource form roles ->
+            viewSourceRoles form roles DoEditMandateFinal
+
+        NodeFinal form result ->
+            Form.EditCircle.viewMandate form result { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitNodePatch }
+
+        NodeNotAuthorized errMsg ->
+            viewWarnings errMsg
 
 
 viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
@@ -1520,14 +1617,14 @@ viewJoinOrgaStep orga step =
         JoinInit _ ->
             div [ class "box spinner" ] [ text Text.loading ]
 
-        JoinNotAuthorized errMsg ->
-            viewGqlErrors errMsg
-
         JoinValidation form result ->
             case result of
                 Success _ ->
                     div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
-                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", "Welcome in " ++ getNodeName form.rootnameid orga |> text ]
+                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                        , text Text.welcomIn
+                        , span [ class "has-font-weight-semibold" ] [ getNodeName form.rootnameid orga |> text ]
+                        ]
 
                 Failure err ->
                     viewGqlErrors err
@@ -1535,11 +1632,42 @@ viewJoinOrgaStep orga step =
                 default ->
                     div [ class "box spinner" ] [ text Text.loading ]
 
+        JoinNotAuthorized errMsg ->
+            viewGqlErrors errMsg
 
 
--- Auth Step
+
+-- Utils View
 
 
+viewSourceRoles : TensionForm -> List UserRole -> (UserRole -> Msg) -> Html Msg
+viewSourceRoles form roles nextStep =
+    div [ class "modal-card" ]
+        [ div [ class "modal-card-head" ]
+            [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr form.action |> text ] ]
+        , div [ class "modal-card-body" ]
+            [ div [ class "buttons buttonRadio", attribute "style" "margin-bottom: 2em; margin-right: 2em; margin-left: 2em;" ] <|
+                List.map
+                    (\r ->
+                        --div [ class "button", onClick (nextStep role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]
+                        button
+                            [ class ("button buttonRole has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                            , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
+                            , onClick (nextStep r)
+                            ]
+                            [ text r.name ]
+                    )
+                    roles
+            ]
+        ]
+
+
+
+-- Methods
+
+
+{-| get Auth Step and init form based on user roles
+-}
 getNewNodeStepFromAuthForm : TensionForm -> NodeStep TensionForm d
 getNewNodeStepFromAuthForm form =
     let
@@ -1552,8 +1680,13 @@ getNewNodeStepFromAuthForm form =
 
         roles ->
             let
+                nearestNid =
+                    ternary (form.target.type_ == NodeType.Circle)
+                        form.target.nameid
+                        (form.target.parent |> Maybe.map (\n -> n.nameid) |> withDefault form.target.nameid)
+
                 circleRoles =
-                    roles |> List.filter (\r -> getParentidFromRole r == form.target.nameid)
+                    roles |> List.filter (\r -> getParentidFromRole r == nearestNid)
             in
             case circleRoles of
                 [] ->
@@ -1591,3 +1724,89 @@ getNewNodeStepFromAuthForm form =
 
                                 subRoles2 ->
                                     NodeSource form subRoles2
+
+
+updateNodeForm : String -> String -> TensionForm -> TensionForm
+updateNodeForm field value form =
+    let
+        data =
+            form.data
+
+        mandate =
+            data.mandate |> withDefault initMandate
+    in
+    case field of
+        -- Node data
+        "role_type" ->
+            { form | data = { data | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
+
+        "name" ->
+            case form.action of
+                Nothing ->
+                    { form | post = Dict.insert field value form.post }
+
+                Just action ->
+                    if List.member action [ TensionAction.NewRole, TensionAction.NewCircle ] then
+                        let
+                            newPost =
+                                Dict.insert "title" ("[" ++ actionNameStr action ++ "] " ++ value) form.post
+
+                            newData =
+                                { data
+                                    | name = Just value
+                                    , nameid = makeNewNodeTitle value
+                                }
+                        in
+                        { form | post = newPost, data = newData }
+
+                    else
+                        { form | data = { data | name = Just value } }
+
+        "first_link" ->
+            { form | data = { data | first_link = Just value } }
+
+        "about" ->
+            { form | data = { data | about = Just value } }
+
+        -- Mandate data
+        "purpose" ->
+            { form | data = { data | mandate = Just { mandate | purpose = value } } }
+
+        "responsabilities" ->
+            { form | data = { data | mandate = Just { mandate | responsabilities = Just value } } }
+
+        "domains" ->
+            { form | data = { data | mandate = Just { mandate | domains = Just value } } }
+
+        "policies" ->
+            { form | data = { data | mandate = Just { mandate | policies = Just value } } }
+
+        other ->
+            -- title, message...
+            { form | post = Dict.insert field value form.post }
+
+
+makeNewNodeTitle : String -> Maybe String
+makeNewNodeTitle name =
+    name
+        |> String.toLower
+        |> String.trim
+        |> String.map
+            (\c ->
+                if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
+                    '-'
+
+                else if List.member c [ '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
+                    '_'
+
+                else
+                    c
+            )
+        |> Just
+
+
+statusFromDoClose : Bool -> String
+statusFromDoClose doClose =
+    ternary (doClose == True)
+        (TensionStatus.toString TensionStatus.Closed)
+        (TensionStatus.toString TensionStatus.Open)

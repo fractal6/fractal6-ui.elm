@@ -148,6 +148,11 @@ tensions_in fillInOptionals object_ =
     Object.selectionForCompositeField "tensions_in" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+about : SelectionSet (Maybe String) Fractal.Object.Node
+about =
+    Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)
+
+
 type alias MandateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.MandateFilter }
 
