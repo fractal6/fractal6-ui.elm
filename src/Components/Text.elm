@@ -18,6 +18,11 @@ welcomIn =
     "Welcome In"
 
 
+checkItOut : String
+checkItOut =
+    "Check it out."
+
+
 
 -- Genral
 
@@ -302,14 +307,14 @@ tensionAdded =
     "Tension added."
 
 
-tensionCircleAdded : String
-tensionCircleAdded =
-    "Tension added (new Circle)."
+roleAdded : String
+roleAdded =
+    "Role added."
 
 
-tensionRoleAdded : String
-tensionRoleAdded =
-    "Tension added (new Role)."
+circleAdded : String
+circleAdded =
+    "Circle added."
 
 
 roleEdited : String
@@ -320,6 +325,26 @@ roleEdited =
 circleEdited : String
 circleEdited =
     "Circle edited."
+
+
+tensionCircleAdded : String
+tensionCircleAdded =
+    "Tension added (new Circle)."
+
+
+tensionRoleAdded : String
+tensionRoleAdded =
+    "Tension added (new Role)."
+
+
+tensionRoleEdit : String
+tensionRoleEdit =
+    "Tension added (Role edit)."
+
+
+tensionCircleEdit : String
+tensionCircleEdit =
+    "Tension added (Circle edit)."
 
 
 tensionSubmit : String

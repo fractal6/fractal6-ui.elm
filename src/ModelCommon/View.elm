@@ -1,7 +1,7 @@
 module ModelCommon.View exposing (..)
 
 import Components.Fa as Fa
-import Components.Text as Text
+import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -196,7 +196,7 @@ viewUsernameLink username =
 viewOpenedDate : String -> Html msg
 viewOpenedDate date =
     span []
-        [ span [ class "is-itali" ] [ text Text.openedThe ]
+        [ span [ class "is-itali" ] [ text T.openedThe ]
         , text " "
         , text (formatTime date)
         ]
@@ -205,7 +205,7 @@ viewOpenedDate date =
 viewCommentedDate : String -> Html msg
 viewCommentedDate date =
     span []
-        [ span [ class "is-itali" ] [ text Text.commentedThe ]
+        [ span [ class "is-itali" ] [ text T.commentedThe ]
         , text " "
         , text (formatTime date)
         ]
@@ -215,7 +215,7 @@ viewTensionDateAndUser : String -> Username -> Html msg
 viewTensionDateAndUser createdAt createdBy =
     span []
         [ viewOpenedDate createdAt
-        , text (" " ++ Text.by ++ " ")
+        , text (" " ++ T.by ++ " ")
         , viewUsernameLink createdBy.username
         ]
 
@@ -304,6 +304,7 @@ type alias NewNodeText =
     , submit : String
     , close_submit : String
     , firstLink_help : String
+    , tension_added : String
     }
 
 
@@ -311,22 +312,22 @@ actionNameStr : TensionAction.TensionAction -> String
 actionNameStr action =
     case action of
         TensionAction.NewCircle ->
-            Text.newCircle
+            T.newCircle
 
         TensionAction.NewRole ->
-            Text.newRole
+            T.newRole
 
         TensionAction.UpdateCircleAbout ->
-            Text.updateAbout
+            T.updateAbout
 
         TensionAction.UpdateRoleAbout ->
-            Text.updateAbout
+            T.updateAbout
 
         TensionAction.UpdateCircleMandate ->
-            Text.updateMandate
+            T.updateMandate
 
         TensionAction.UpdateRoleMandate ->
-            Text.updateMandate
+            T.updateMandate
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String
@@ -358,17 +359,27 @@ action2SourceStr action_m =
 
 getTensionText : NewNodeText
 getTensionText =
-    NewNodeText Text.newTension Text.tensionAdded Text.tensionTitleHelp "" Text.tensionMessageHelp "" "" "" "" Text.tensionSubmit "" ""
+    NewNodeText T.newTension T.tensionAdded T.tensionTitleHelp "" T.tensionMessageHelp "" "" "" "" T.tensionSubmit "" "" ""
+
+
+getRoleEdit : NewNodeText
+getRoleEdit =
+    NewNodeText T.editRole T.roleEdited T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.editAndClose T.firstLinkRoleMessageHelp T.tensionRoleEdit
+
+
+getCircleEdit : NewNodeText
+getCircleEdit =
+    NewNodeText T.editCircle T.circleEdited T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.editAndClose T.firstLinkCircleMessageHelp T.tensionCircleEdit
 
 
 getNodeTextFromNodeType : NodeType.NodeType -> NewNodeText
 getNodeTextFromNodeType type_ =
     case type_ of
         NodeType.Circle ->
-            NewNodeText Text.newCircle Text.tensionCircleAdded Text.circleNameHelp Text.circleAboutHelp Text.circleMessageHelp Text.phCirclePurpose Text.phCircleResponsabilities Text.phCircleDomains Text.phCirclePolicies Text.tensionCircleSubmit Text.tensionCircleCloseSubmit Text.firstLinkCircleMessageHelp
+            NewNodeText T.newCircle T.circleAdded T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit T.firstLinkCircleMessageHelp T.tensionCircleAdded
 
         NodeType.Role ->
-            NewNodeText Text.newRole Text.tensionRoleAdded Text.roleNameHelp Text.roleAboutHelp Text.roleMessageHelp Text.phRolePurpose Text.phRoleResponsabilities Text.phRoleDomains Text.phRolePolicies Text.tensionRoleSubmit Text.tensionRoleCloseSubmit Text.firstLinkRoleMessageHelp
+            NewNodeText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp T.tensionRoleAdded
 
 
 getNodeTextFromAction : TensionAction.TensionAction -> NewNodeText
@@ -381,59 +392,13 @@ getNodeTextFromAction action =
             getNodeTextFromNodeType NodeType.Role
 
         TensionAction.UpdateCircleAbout ->
-            NewNodeText Text.editCircle
-                Text.circleEdited
-                Text.circleNameHelp
-                Text.circleAboutHelp
-                Text.circleMessageHelp
-                Text.phCirclePurpose
-                Text.phCircleResponsabilities
-                Text.phCircleDomains
-                Text.phCirclePolicies
-                Text.tensionSubmit
-                Text.editAndClose
-                Text.firstLinkCircleMessageHelp
+            getCircleEdit
 
         TensionAction.UpdateCircleMandate ->
-            NewNodeText
-                Text.editCircle
-                Text.circleEdited
-                Text.circleNameHelp
-                Text.circleAboutHelp
-                Text.circleMessageHelp
-                Text.phCirclePurpose
-                Text.phCircleResponsabilities
-                Text.phCircleDomains
-                Text.phCirclePolicies
-                Text.tensionSubmit
-                Text.editAndClose
-                Text.firstLinkCircleMessageHelp
+            getCircleEdit
 
         TensionAction.UpdateRoleAbout ->
-            NewNodeText
-                Text.editRole
-                Text.roleEdited
-                Text.roleNameHelp
-                Text.roleAboutHelp
-                Text.roleMessageHelp
-                Text.phRolePurpose
-                Text.phRoleResponsabilities
-                Text.phRoleDomains
-                Text.phRolePolicies
-                Text.tensionSubmit
-                Text.editAndClose
-                Text.firstLinkRoleMessageHelp
+            getRoleEdit
 
         TensionAction.UpdateRoleMandate ->
-            NewNodeText Text.editRole
-                Text.roleEdited
-                Text.roleNameHelp
-                Text.roleAboutHelp
-                Text.roleMessageHelp
-                Text.phRolePurpose
-                Text.phRoleResponsabilities
-                Text.phRoleDomains
-                Text.phRolePolicies
-                Text.tensionSubmit
-                Text.editAndClose
-                Text.firstLinkRoleMessageHelp
+            getRoleEdit

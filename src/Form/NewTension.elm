@@ -9,6 +9,7 @@ import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
+import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -39,9 +40,12 @@ view form result sd =
             Dict.get "message" form.post |> withDefault ""
     in
     case result of
-        Success _ ->
+        Success res ->
             div [ class "box is-light modalClose", onClick (sd.closeModalMsg "") ]
-                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " ", text txt.added ]
+                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                , text (txt.added ++ " ")
+                , a [ href (Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref) ] [ text T.checkItOut ]
+                ]
 
         other ->
             div [ class "modal-card finalModal" ]

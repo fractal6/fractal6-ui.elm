@@ -7,7 +7,7 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewWarnings)
 import Components.Markdown exposing (renderMarkdown)
-import Components.Text as Text exposing (..)
+import Components.Text as T
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMaybeData)
@@ -89,7 +89,26 @@ type alias SubmitCircleData =
     , submitNextMsg : TensionForm -> Bool -> Time.Posix -> Msg
     , closeModalMsg : String -> Msg
     , changeInputMsg : InputViewMode -> Msg
+
+    -- data
     , viewMode : InputViewMode
+    , tensionId : Maybe String
+    }
+
+
+initSubData : SubmitCircleData
+initSubData =
+    { submitNextMsg = SubmitCircle
+    , tensionId = Nothing
+
+    --
+    , changePostMsg = ChangeNodePost
+
+    -- Constant
+    , closeModalMsg = DoCloseModal
+    , changeInputMsg = ChangeInputViewMode
+    , submitMsg = Submit
+    , viewMode = Write
     }
 
 
@@ -106,24 +125,23 @@ type Msg
       -- Node Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
     | Submit (Time.Posix -> Msg) -- Get Current Time
+    | SubmitTension TensionForm Bool Time.Posix -- Send form
+    | SubmitCircle TensionForm Bool Time.Posix -- Send form
+    | SubmitNodePatch TensionForm Bool Time.Posix
+    | ChangeNodePost String String -- {field value}
       -- New Tension Action
     | DoTensionInit Node -- {target}
     | DoTensionSource TensionType.TensionType -- {type}
     | DoTensionFinal UserRole --  {source}
-    | ChangeTensionPost String String -- {field value}
-    | SubmitTension TensionForm Bool Time.Posix -- Send form
     | TensionAck (GqlData Tension) -- decode better to get IdPayload
       -- New Circle Action
     | DoCircleInit Node NodeType.NodeType -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
-    | ChangeNodePost String String -- {field value}
-    | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | CircleAck (GqlData (List Node)) -- decode better to get IdPayload
       -- Edit About action
     | DoEditAbout Node
     | DoEditAboutFinal UserRole
-    | SubmitNodePatch TensionForm Bool Time.Posix
     | AboutAck (GqlData IdPayload)
       -- Edit Mandate Action
     | DoEditMandate Node
@@ -200,16 +218,7 @@ init global flags =
             , node_action = session.node_action |> withDefault NoOp
             , isModalActive = False
             , node_quickSearch = { qs | pattern = "", idx = 0 }
-            , subData =
-                { submitNextMsg = SubmitCircle
-                , changePostMsg = ChangeNodePost
-
-                -- Constant
-                , closeModalMsg = DoCloseModal
-                , changeInputMsg = ChangeInputViewMode
-                , submitMsg = Submit
-                , viewMode = Write
-                }
+            , subData = initSubData
             }
 
         cmds =
@@ -301,7 +310,7 @@ update global msg model =
                         )
 
                     else
-                        ( { model | orga_data = Failure [ Text.nodeNotExist ] }, Cmd.none, Cmd.none )
+                        ( { model | orga_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
 
                 other ->
                     ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
@@ -460,7 +469,7 @@ update global msg model =
                                 newStep =
                                     case orgaRoles of
                                         [] ->
-                                            TensionNotAuthorized [ Text.notOrgMember, Text.joinForTension ]
+                                            TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]
 
                                         [ r ] ->
                                             TensionFinal { newForm | source = r } NotAsked
@@ -483,18 +492,6 @@ update global msg model =
                     ( { model | node_action = AddTension <| TensionFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
 
                 _ ->
-                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
-
-        ChangeTensionPost field value ->
-            case model.node_action of
-                AddTension (TensionFinal form result) ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | node_action = AddTension <| TensionFinal newForm result }, Cmd.none, Cmd.none )
-
-                other ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         SubmitTension form _ time ->
@@ -523,6 +520,12 @@ update global msg model =
                         other ->
                             Nothing
 
+                subData =
+                    model.subData
+
+                tensionId =
+                    result |> withMaybeData |> Maybe.map (\t -> t.id)
+
                 tensions =
                     case result of
                         Success t ->
@@ -536,6 +539,7 @@ update global msg model =
                     ( { model
                         | node_action = AddTension <| TensionFinal form result
                         , tensions_circle = Success tensions
+                        , subData = { subData | tensionId = tensionId }
                       }
                     , Cmd.none
                     , send (UpdateSessionTensions (Just tensions))
@@ -609,6 +613,13 @@ update global msg model =
 
         ChangeNodePost field value ->
             case model.node_action of
+                AddTension (TensionFinal form result) ->
+                    let
+                        newForm =
+                            { form | post = Dict.insert field value form.post }
+                    in
+                    ( { model | node_action = AddTension <| TensionFinal newForm result }, Cmd.none, Cmd.none )
+
                 AddCircle (NodeFinal form result) ->
                     ( { model | node_action = AddCircle <| NodeFinal (updateNodeForm field value form) result }
                     , Cmd.none
@@ -943,7 +954,7 @@ update global msg model =
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
         DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+            ( { model | isModalActive = False, subData = initSubData }, Cmd.none, Cmd.none )
 
         DoClearTooltip ->
             ( model, Cmd.none, Ports.clearTooltip )
@@ -1071,7 +1082,7 @@ view_ global model =
                                 ( Success d, focus )
 
                             else
-                                ( Failure [ Text.nodeNotExist ], Nothing )
+                                ( Failure [ T.nodeNotExist ], Nothing )
 
                         Nothing ->
                             ( Success d, focus )
@@ -1215,7 +1226,7 @@ viewSearchBar odata maybePath qs =
                     |> Array.toList
                     |> tbody []
                     |> List.singleton
-                    |> List.append [ thead [] [ tr [] [ th [] [ text Text.nameH ], th [] [ text Text.circleH ], th [] [ text Text.firstLinkH ] ] ] ]
+                    |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.circleH ], th [] [ text T.firstLinkH ] ] ] ]
                     |> div [ class "dropdown-content table is-fullwidth" ]
                 ]
             , case node_ of
@@ -1254,7 +1265,7 @@ viewCanvas odata =
             [ div
                 [ id "invGraph_cvbtn"
                 , class "button buttonToggle tooltip has-tooltip-right"
-                , attribute "data-tooltip" Text.reverseTooltip
+                , attribute "data-tooltip" T.reverseTooltip
                 , onClick ToggleGraphReverse
                 ]
                 [ Fa.icon0 "fas fa-sort-amount-up" "" ]
@@ -1366,11 +1377,11 @@ viewNodeDoc data focus =
             Just mandate ->
                 div [ class "mandateDoc" ]
                     [ h1 [ class "subtitle is-5" ]
-                        [ Fa.icon "fas fa-scroll fa-sm" Text.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ] ]
-                    , viewMandateSection Text.purposeH (Just mandate.purpose)
-                    , viewMandateSection responsabilitiesH mandate.responsabilities
-                    , viewMandateSection domainsH mandate.domains
-                    , viewMandateSection policiesH mandate.policies
+                        [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ] ]
+                    , viewMandateSection T.purposeH (Just mandate.purpose)
+                    , viewMandateSection T.responsabilitiesH mandate.responsabilities
+                    , viewMandateSection T.domainsH mandate.domains
+                    , viewMandateSection T.policiesH mandate.policies
                     ]
 
             Nothing ->
@@ -1394,9 +1405,9 @@ viewActivies model =
             , div [ class "tabs is-right is-small" ]
                 [ ul []
                     [ li [ class "is-active" ]
-                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" Text.tensionH ] ]
+                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" T.tensionH ] ]
                     , li []
-                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" Text.journalH ] ]
+                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" T.journalH ] ]
                     ]
                 ]
             ]
@@ -1406,17 +1417,17 @@ viewActivies model =
                     if List.length tensions > 0 then
                         List.map (\t -> mediaTension OverviewBaseUri model.node_focus t Navigate) tensions
                             ++ ternary (List.length tensions > 5)
-                                [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text Text.seeMore ] ] ]
+                                [ div [ class "is-aligned-center" ] [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text T.seeMore ] ] ]
                                 []
                             |> div [ class "is-size-7", id "tensionsTab" ]
 
                     else
                         case model.node_focus.type_ of
                             NodeType.Role ->
-                                div [] [ text Text.noTensionRole ]
+                                div [] [ text T.noTensionRole ]
 
                             NodeType.Circle ->
-                                div [] [ text Text.noTensionCircle ]
+                                div [] [ text T.noTensionCircle ]
 
                 Failure err ->
                     viewGqlErrors err
@@ -1547,14 +1558,27 @@ viewTensionStep step subData =
         TensionFinal form result ->
             case form.action of
                 Just action ->
-                    let
-                        newSubData =
-                            { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitCircle }
-                    in
-                    Form.NewCircle.view form result newSubData
+                    case action of
+                        TensionAction.NewRole ->
+                            Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
+
+                        TensionAction.NewCircle ->
+                            Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
+
+                        TensionAction.UpdateRoleAbout ->
+                            Form.EditCircle.viewAbout form result { subData | submitNextMsg = SubmitNodePatch }
+
+                        TensionAction.UpdateCircleAbout ->
+                            Form.EditCircle.viewAbout form result { subData | submitNextMsg = SubmitNodePatch }
+
+                        TensionAction.UpdateRoleMandate ->
+                            Form.EditCircle.viewMandate form result { subData | submitNextMsg = SubmitNodePatch }
+
+                        TensionAction.UpdateCircleMandate ->
+                            Form.EditCircle.viewMandate form result { subData | submitNextMsg = SubmitNodePatch }
 
                 Nothing ->
-                    Form.NewTension.view form result { subData | changePostMsg = ChangeTensionPost, submitNextMsg = SubmitTension }
+                    Form.NewTension.view form result { subData | submitNextMsg = SubmitTension }
 
         TensionNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1571,7 +1595,7 @@ viewCircleStep step subData =
             viewSourceRoles form roles DoCircleFinal
 
         NodeFinal form result ->
-            Form.NewCircle.view form result { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitCircle }
+            Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
 
         NodeNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1588,7 +1612,7 @@ viewEditAboutStep step subData =
             viewSourceRoles form roles DoEditAboutFinal
 
         NodeFinal form result ->
-            Form.EditCircle.viewAbout form result { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitNodePatch }
+            Form.EditCircle.viewAbout form result { subData | submitNextMsg = SubmitNodePatch }
 
         NodeNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1605,7 +1629,7 @@ viewEditMandateStep step subData =
             viewSourceRoles form roles DoEditMandateFinal
 
         NodeFinal form result ->
-            Form.EditCircle.viewMandate form result { subData | changePostMsg = ChangeNodePost, submitNextMsg = SubmitNodePatch }
+            Form.EditCircle.viewMandate form result { subData | submitNextMsg = SubmitNodePatch }
 
         NodeNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1615,14 +1639,14 @@ viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text Text.loading ]
+            div [ class "box spinner" ] [ text T.loading ]
 
         JoinValidation form result ->
             case result of
                 Success _ ->
                     div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
-                        , text Text.welcomIn
+                        , text T.welcomIn
                         , span [ class "has-font-weight-semibold" ] [ getNodeName form.rootnameid orga |> text ]
                         ]
 
@@ -1630,7 +1654,7 @@ viewJoinOrgaStep orga step =
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text Text.loading ]
+                    div [ class "box spinner" ] [ text T.loading ]
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -1676,7 +1700,7 @@ getNewNodeStepFromAuthForm form =
     in
     case orgaRoles of
         [] ->
-            NodeNotAuthorized [ Text.notOrgMember, Text.joinForCircle ]
+            NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ]
 
         roles ->
             let
@@ -1690,7 +1714,7 @@ getNewNodeStepFromAuthForm form =
             in
             case circleRoles of
                 [] ->
-                    NodeNotAuthorized [ Text.notCircleMember, Text.askCoordo ]
+                    NodeNotAuthorized [ T.notCircleMember, T.askCoordo ]
 
                 subRoles ->
                     case form.target.charac.mode of
@@ -1713,7 +1737,7 @@ getNewNodeStepFromAuthForm form =
                             in
                             case coordoRoles of
                                 [] ->
-                                    NodeNotAuthorized [ Text.notCircleCoordo, Text.askCoordo ]
+                                    NodeNotAuthorized [ T.notCircleCoordo, T.askCoordo ]
 
                                 [ r ] ->
                                     let

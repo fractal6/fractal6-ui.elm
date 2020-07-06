@@ -95,6 +95,12 @@ hr {
     }
 }
 
+.box.is-light {
+    a {
+        color: $blue !important;
+    }
+}
+
 // Modal
 
 html.has-modal-active {
