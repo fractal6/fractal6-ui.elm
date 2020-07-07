@@ -54,7 +54,7 @@ elm-spa-org-alias:
 
 
 
-_setup-css:
-	npm install node-sass --save-dev
-	npm install bulma --save-dev
+clean:
+	#rm ./package-lock.json
+	npm cache clear --force
 

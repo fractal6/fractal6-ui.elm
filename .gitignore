@@ -1,5 +1,6 @@
 elm-stuff
 node_modules
 public/
+dist/
 !public/index.html
 .idea
