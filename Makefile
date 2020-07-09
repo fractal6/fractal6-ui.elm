@@ -1,3 +1,5 @@
+.ONESHELL:
+SHELL := /bin/bash
 OUTPUT := public/dist
 elm-js := elm.js
 elm-min-js := elm.min.js
@@ -13,6 +15,16 @@ build: assets
 
 prod:
 	npm run prod
+
+deploy: prod
+	rm -r ../build/static
+	cp -r dist/* ../build/
+	cd ../build
+	git add *
+	git commit -m all
+	push origin master
+	cd -
+
 
 dev:
 	npm run webdev
