@@ -6,7 +6,7 @@ import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
-import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
+import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (toHref)
@@ -41,10 +41,19 @@ view form result sd =
     in
     case result of
         Success res ->
-            div [ class "box is-light modalClose", onClick (sd.closeModalMsg "") ]
+            let
+                link =
+                    Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
+            in
+            div [ class "box is-light" ]
                 [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
                 , text (txt.added ++ " ")
-                , a [ href (Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref) ] [ text T.checkItOut ]
+                , a
+                    [ href link
+                    , onClickPD (sd.closeModalMsg link)
+                    , target "_blank"
+                    ]
+                    [ text T.checkItOut ]
                 ]
 
         other ->

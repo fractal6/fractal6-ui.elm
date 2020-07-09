@@ -1,4 +1,23 @@
-// @Debug use import with a bundler/webpack !
+import { select, selectAll } from 'd3-selection'
+import { scaleOrdinal } from 'd3-scale'
+import { timer } from 'd3-timer'
+import { interpolateZoom } from 'd3-interpolate'
+import { easePolyOut, easePolyInOut } from 'd3-ease'
+import { hierarchy, pack } from 'd3-hierarchy'
+
+
+const d3 = Object.assign(
+	{},
+	{
+		select, selectAll,
+		scaleOrdinal,
+		timer,
+		interpolateZoom,
+		easePolyOut, easePolyInOut,
+		hierarchy, pack
+	},
+)
+
 
 const setpixelated = (ctx2d, v) => {
     ctx2d['imageSmoothingEnabled'] = v;       /* standard */
@@ -92,7 +111,7 @@ const computeDepth = (obj, depth, neigbor) => {
 }
 
 
-const GraphPack = {
+export const GraphPack = {
 
     // Background Colors
     //backgroundColor: "#f1fdff",
@@ -499,13 +518,13 @@ const GraphPack = {
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
     nodeSizeTopDown(n, stats) {
-        dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
+        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var size = 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
         return size
     },
 
     nodeSizeBottomUp(n, stats) {
-        dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
+        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var sizeDefault = 4;
         var size = 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
         return size
@@ -649,7 +668,7 @@ const GraphPack = {
         }
 
         // CLear Border
-        clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
+        var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
         if (clearBorder) {
             this.clearNodeHover(this.hoveredNode);
         }

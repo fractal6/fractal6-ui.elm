@@ -165,6 +165,14 @@ open_modal =
         }
 
 
+close_modal : Cmd msg
+close_modal =
+    outgoing
+        { action = "CLOSE_MODAL"
+        , data = JE.string ""
+        }
+
+
 
 --- Quick Search
 

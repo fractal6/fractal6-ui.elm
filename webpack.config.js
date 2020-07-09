@@ -1,171 +1,286 @@
-const path = require('path');
-const webpack = require('webpack');
+'use strict';
+const path = require("path");
+const webpack = require("webpack");
 const { merge } = require('webpack-merge');
+
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+
+// Production CSS assets - separate, minimised file
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const safePostCssParser = require('postcss-safe-parser');
+
+// deprecated
 const autoprefixer = require('autoprefixer');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-
-
-const prod = 'production';
-const dev = 'development';
 
 // determine build env
-const TARGET_ENV = process.env.npm_lifecycle_event === 'build' ? prod : dev;
-const isDev = TARGET_ENV == dev;
-const isProd = TARGET_ENV == prod;
+var MODE =
+    process.env.npm_lifecycle_event === "prod" ? "production" : "development";
+const isDev = MODE == "development";
+const isProd = MODE == "production";
+//var withDebug = !process.env["npm_config_nodebug"] && MODE == "development";
+var API_URL;
+if (isProd) {
+    API_URL = {
+        graphql: "http://localhost:8888/api",
+        rest: "http://localhost:8888/q"
+    }
+} else {
+    API_URL = {
+        graphql: "http://localhost:8888/api",
+        rest: "http://localhost:8888/q"
+    }
+}
 
 // entry and output path/filename variables
 const entryPath = path.join(__dirname, 'static/index.js');
 const outputPath = path.join(__dirname, 'dist');
 const outputFilename = isProd ? '[name]-[hash].js' : '[name].js'
 
-console.log('WEBPACK GO! Building for ' + TARGET_ENV);
+console.log(
+    "\x1b[36m%s\x1b[0m",
+    `Webpack run: Building for "${MODE}"\n`
+);
 
 // common webpack config (valid for dev and prod)
-var commonConfig = {
+var common = {
+    mode: MODE,
+    entry: entryPath,
     output: {
         path: outputPath,
+        publicPath: "/",
         filename: `static/js/${outputFilename}`,
     },
     resolve: {
-        extensions: ['.js', '.elm'],
+        extensions: ['.js', '.elm', '.scss'],
         modules: ['node_modules']
     },
-    module: {
-        noParse: /\.elm$/,
-        rules: [{
-            test: /\.(eot|ttf|woff|woff2|svg)$/,
-            use: 'file-loader?publicPath=../../&name=static/css/[hash].[ext]'
-        }]
-    },
     plugins: [
+        new webpack.DefinePlugin({
+            'GRAPHQL_API': JSON.stringify(API_URL.graphql)
+        }),
         new webpack.LoaderOptionsPlugin({
             options: {
                 postcss: [autoprefixer()]
             }
-        }),
-        new HtmlWebpackPlugin({
-            template: 'static/index.html',
-            inject: 'body',
-            filename: 'index.html'
         })
-    ]
+    ],
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                loader: 'babel-loader',
+            },
+            {
+                test: /\.scss$/,
+                exclude: [/elm-stuff/, /node_modules/],
+                // see https://github.com/webpack-contrib/css-loader#url
+                loaders: ["style-loader", "css-loader", "sass-loader"]
+            },
+            {
+                test: /\.css$/,
+                exclude: [/elm-stuff/, /node_modules/],
+                loaders: ["style-loader", "css-loader"]
+            },
+            // fonts
+            {test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+                loader: 'file-loader?mimetype=image/svg+xml&name=static/fonts/[name].[ext]'
+            },
+            {test: /\.(woff(\?v=\d+\.\d+\.\d+)?|woff2(\?v=\d+\.\d+\.\d+)?)$/,
+                loader: "file-loader?mimetype=application/font-woff&name=static/fonts/[name].[ext]"
+            },
+            {test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
+                loader: "file-loader?mimetype=application/octet-stream&name=static/fonts/[name].[ext]"
+            },
+            {test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
+                loader: "file-loader?&name=static/fonts/[name].[ext]"
+            },
+        ]
+    }
 }
 
 // additional webpack settings for local env (when invoked by 'npm start')
 if (isDev === true) {
-    module.exports = merge(commonConfig, {
-        entry: entryPath,
-       //[
-       //    'webpack-dev-server/client?http://localhost:8080',
-       //    entryPath
-       //],
-        devServer: {
-            // serve index.html in place of 404 responses
-            historyApiFallback: true,
-            stats: { colors: true },
-            hot: true
-            //contentBase: './src'
-        },
+    module.exports = merge(common, {
+        plugins: [
+            // Generates an `index.html` file with the <script> injected.
+            new HtmlWebpackPlugin({
+                template: 'static/index.html',
+                inject: 'body',
+                filename: 'index.html'
+            }),
+            // Suggested for hot-loading
+            new webpack.NamedModulesPlugin(),
+            // Prevents compilation errors causing the hot loader to lose state
+            new webpack.NoEmitOnErrorsPlugin()
+        ],
         module: {
             rules: [{
                 test: /\.elm$/,
                 exclude: [/elm-stuff/, /node_modules/, /tests/],
-                use: [{
-                    loader: 'elm-webpack-loader',
-                    options: {
-                        verbose: true,
-                        debug: true
+                use: [
+                    { loader: "elm-hot-webpack-loader" },
+                    {
+                        loader: "elm-webpack-loader",
+                        options: {
+                            // add Elm's debug overlay to output
+                            debug: true,
+                            forceWatch: true
+                        }
                     }
-                }]
-            },{
-                test: /\.sc?ss$/,
-                use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
-                    //{ loader: 'postcss-loader', options: { path: "some/other/path" },
+                ]
             }]
-        }
+        },
+        devServer: {
+            // serve index.html in place of 404 responses
+            hot: true,
+            historyApiFallback: true,
+            stats: { colors: true }, // "error-only"
+            //contentBase: './static',
+            //proxy: [],
+            // feel free to delete this section if you don't need anything like this
+            //before(app) {
+            //    // on port 3000
+            //    app.get("/test", function(req, res) {
+            //        res.json({ result: "OK" });
+            //    });
+            //}
+        },
     });
 }
 
 // additional webpack settings for prod env (when invoked via 'npm run build')
 if (isProd === true) {
-    module.exports = merge(commonConfig, {
-        entry: entryPath,
-        module: {
-            rules: [{
-                test: /\.elm$/,
-                exclude: [/elm-stuff/, /node_modules/, /tests/],
-                use: 'elm-webpack-loader'
-            }, {
-                test: /\.sc?ss$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: 'style-loader',
-                    use: ['css-loader', 'postcss-loader', 'sass-loader']
-                })
-            }]
-        },
+    module.exports = merge(common, {
         plugins: [
-            new ExtractTextPlugin({
-                filename: 'static/css/[name]-[hash].css',
-                allChunks: true,
+            // Generates an `index.html` file with the <script> injected.
+            new HtmlWebpackPlugin({
+                template: 'static/index.html',
+                inject: 'body',
+                filename: 'index.html',
+                minify: { removeComments: true,
+                    collapseWhitespace: true,
+                    removeRedundantAttributes: true,
+                    useShortDoctype: true,
+                    removeEmptyAttributes: true,
+                    removeStyleLinkTypeAttributes: true,
+                    keepClosingSlash: true,
+                    minifyJS: true,
+                    minifyCSS: true,
+                    minifyURLs: true,
+                },
             }),
-            new CopyWebpackPlugin([{
-                from: 'assets/images',
-                to: 'static/img/'
-            }, {
-                from: 'src/favicon.ico'
-            }],
-                { ignore: ['*.swp'] }
-            ),
+            // Delete everything from output-path (/dist) and report to user
+            new CleanWebpackPlugin({
+                root: __dirname,
+                exclude: [],
+                verbose: true,
+                dry: false
+            }),
+            // Copy public images to the build folder
+            new CopyPlugin({
+                patterns: [{
+                    from: 'assets/images',
+                    to: 'static/images/' ,
+                    globOptions: { ignore: ['*.swp'] }
+                }],
+            }),
+            // Note: this won't work without ExtractTextPlugin.extract(..) in `loaders`.
+            new MiniCssExtractPlugin({
+                filename: 'static/css/[name].[hash].css',
+                //chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
+            }),
+        ],
+        module: {
+            rules: [
+                {
+                    test: /\.elm$/,
+                    exclude: [/elm-stuff/, /node_modules/, /tests/],
+                    use: {
+                        loader: "elm-webpack-loader",
+                        options: { optimize: true }
+                    }
+                },
+                {
+                    test: /\.scss$/,
+                    exclude: [/elm-stuff/, /node_modules/],
+                    use: [
+                        MiniCssExtractPlugin.loader,
+                        {
+                            loader: require.resolve('css-loader'),
+                            options: { importLoaders: 1, },
+                        },
+                        "sass-loader",
+                    ],
+                },
+            ]
 
-            // extract CSS into a separate file
-            // minify & mangle JS/CSS
-            new webpack.optimize.UglifyJsPlugin({
-                minimize: true,
-                //compressor: {
-                //    warnings: false
-                //},
-				output: {
-					comments: false,
-					// Turned on because emoji and regex is not minified properly using default
-					// https://github.com/facebook/create-react-app/issues/2488
-					ascii_only: true,
-				},
-				compress: {
-					passes: 2,
-					warnings: false,
-					// Disabled because of an issue with Uglify breaking seemingly valid code:
-					// https://github.com/facebook/create-react-app/issues/2376
-					// Pending further investigation:
-					// https://github.com/mishoo/UglifyJS2/issues/2011
-					comparisons: false,
-					pure_getters: true,
-					keep_fargs: false,
-					unsafe_comps: true,
-					unsafe: true,
-					pure_funcs: [
-						'A2',
-						'A3',
-						'A4',
-						'A5',
-						'A6',
-						'A7',
-						'A8',
-						'A9',
-						'F2',
-						'F3',
-						'F4',
-						'F5',
-						'F6',
-						'F7',
-						'F8',
-						'F9',
-					],
-				},
-				//mangle: true,
-				mangle: { safari10: true, },
-			})
-		]
-	});
+        },
+        optimization: {
+            minimizer: [
+                // extract CSS into a separate file
+                // minify & mangle JS/CSS
+                new UglifyJsPlugin({
+                    uglifyOptions: {
+                        //ecma: 5,
+                        minimize: true,
+                        //compressor: {
+                        //    warnings: false
+                        //},
+                        output: {
+                            comments: false,
+                            // Turned on because emoji and regex is not minified properly using default
+                            // https://github.com/facebook/create-react-app/issues/2488
+                            ascii_only: true,
+                        },
+                        compress: {
+                            passes: 2,
+                            warnings: false,
+                            // Disabled because of an issue with Uglify breaking seemingly valid code:
+                            // https://github.com/facebook/create-react-app/issues/2376
+                            // Pending further investigation:
+                            // https://github.com/mishoo/UglifyJS2/issues/2011
+                            comparisons: false,
+                            pure_getters: true,
+                            keep_fargs: false,
+                            unsafe_comps: true,
+                            unsafe: true,
+                            pure_funcs: [
+                                'A2',
+                                'A3',
+                                'A4',
+                                'A5',
+                                'A6',
+                                'A7',
+                                'A8',
+                                'A9',
+                                'F2',
+                                'F3',
+                                'F4',
+                                'F5',
+                                'F6',
+                                'F7',
+                                'F8',
+                                'F9',
+                            ],
+                        },
+                        mangle: true,
+                    },
+                    // Use multi-process parallel running to improve the build speed
+                    // Default number of concurrent runs: os.cpus().length - 1
+                    parallel: true,
+                    // Enable file caching
+                    cache: true,
+                }),
+
+                new OptimizeCSSAssetsPlugin({
+                    cssProcesorOptions: { parser: safePostCssParser, },
+                }),
+            ]
+        }
+    })
 }

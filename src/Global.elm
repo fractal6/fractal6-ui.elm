@@ -35,7 +35,9 @@ import Url exposing (Url)
 
 
 type alias Flags =
-    Maybe JD.Value
+    { uctx : Maybe JD.Value
+    , gqlapi : String
+    }
 
 
 
@@ -54,7 +56,7 @@ init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         userState =
-            case flags of
+            case flags.uctx of
                 Just userCtxRaw ->
                     case JD.decodeValue userDecoder userCtxRaw of
                         Ok uctx ->

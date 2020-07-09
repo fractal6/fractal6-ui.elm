@@ -5,14 +5,14 @@ import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
-import Extra.Events exposing (onClickPD2, onEnter, onKeydown, onTab)
+import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, selected, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -48,13 +48,22 @@ view form result sd =
     in
     case result of
         Success _ ->
-            div [ class "box is-light modalClose", onClick (sd.closeModalMsg "") ]
+            div [ class "box is-light" ]
                 [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
                 , case sd.tensionId of
                     Just id ->
+                        let
+                            link =
+                                Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = id } |> toHref
+                        in
                         span []
                             [ text (txt.tension_added ++ " ")
-                            , a [ href (Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = id } |> toHref) ] [ text T.checkItOut ]
+                            , a
+                                [ href link
+                                , onClickPD (sd.closeModalMsg link)
+                                , target "_blank"
+                                ]
+                                [ text T.checkItOut ]
                             ]
 
                     Nothing ->

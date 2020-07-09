@@ -14,7 +14,8 @@ view =
                     [ span [] [ text "Contact us" ]
                     , span [] [ text "-" ]
                     , span [] [ a [ href "https://gitlab.com/fractal6", target "_blank" ] [ Fa.icon0 "fab fa-gitlab" "" ] ]
-                    , span [] [ a [ href "https://github.com/fractal6", target "_blank" ] [ Fa.icon0 "fab fa-github" "" ] ]
+
+                    --, span [] [ a [ href "https://github.com/fractal6", target "_blank" ] [ Fa.icon0 "fab fa-github" "" ] ]
                     ]
                 ]
             ]

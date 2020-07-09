@@ -953,8 +953,16 @@ update global msg model =
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
-        DoCloseModal _ ->
-            ( { model | isModalActive = False, subData = initSubData }, Cmd.none, Cmd.none )
+        DoCloseModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | isModalActive = False, subData = initSubData }, gcmd, Ports.close_modal )
 
         DoClearTooltip ->
             ( model, Cmd.none, Ports.clearTooltip )
@@ -1456,7 +1464,6 @@ setupActionModal model =
         [ div
             [ classList
                 [ ( "modal-background", True )
-                , ( "protected_", model.isModalActive )
                 ]
             ]
             []
@@ -1469,7 +1476,6 @@ setupActionModal model =
             [ classList
                 [ ( "modal-close", True )
                 , ( "is-large", True )
-                , ( "protected_", model.isModalActive )
                 ]
             ]
             []
@@ -1644,7 +1650,7 @@ viewJoinOrgaStep orga step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
+                    div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
                         , text T.welcomIn
                         , span [ class "has-font-weight-semibold" ] [ getNodeName form.rootnameid orga |> text ]

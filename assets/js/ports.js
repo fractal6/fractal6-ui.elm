@@ -1,9 +1,12 @@
+import MiniSearch from 'minisearch'
+import { BulmaDriver } from './bulma_drivers'
+import { GraphPack } from './graphpack_d3'
+
 
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
     window.ports = {
         init: (app) => {
-
             // Ephemere Objects
             var session = {
                 isInit: true,
@@ -45,54 +48,58 @@ const actions = {
     },
     'BULMA': (app, session, eltId) => {
         console.log(`Activate Bulma driver...`);
-        // Set a timetou to avoid noisy footbar apearing before ajax request finished
         document.getElementById("footBar").style.display= "none";
-    setTimeout( function () {
-        document.getElementById("footBar").style.display= "block";
-    }, 0.5);
+        setTimeout( function () {
+            document.getElementById("footBar").style.display= "block";
+        }, 0.5);
 
-    // This timeout is needed when bulma driver is called by elm Cmd,
-    // to wait foe the Html Msg to be updated by elm in order
-    // to have new node accessible by Javascript.
-    var handlers = session.bulmaHandlers;
-    setTimeout(BulmaDriver, 300, app, eltId, handlers);
-},
-'TOGGLE_TH': (app, session, message) => {
-    $tt = document.getElementById("themeButton_port");
-    if ($tt) {
-        $tt.addEventListener("click", function(){
-            toggleTheme();
-        });
-    }
-},
-//
-// Modal
-//
-'OPEN_MODAL': (app, session, message) => {
-    document.documentElement.classList.add('has-modal-active');
-    document.getElementById("navbarTop").classList.add('has-modal-active');
-},
-//
-// Quick Search
-//
-'SEARCH_NODES': (app, session, pattern) => {
-    var qs = session.qs;
-    var nodes = session.gp.nodesDict;
-    var res = qs.search(pattern, {prefix:true}).slice(0,10).map(n => {
-        var d = nodes[n.nameid].data;
-        return d
-        //return {
-        //    ...d,
-        //    firstLink: (d.first_link)? d.first_link.username : ""
+        // This timeout is needed when bulma driver is called by elm Cmd,
+        // to wait foe the Html Msg to be updated by elm in order
+        // to have new node accessible by Javascript.
+        //document.addEventListener('DOMContentLoaded', () => {
+        var handlers = session.bulmaHandlers;
+        setTimeout(BulmaDriver, 300, app, eltId, handlers);
+    },
+    'TOGGLE_TH': (app, session, message) => {
+        var $tt = document.getElementById("themeButton_port");
+        if ($tt) {
+            $tt.addEventListener("click", function(){
+                toggleTheme();
+            });
+        }
+    },
+    //
+    // Modal
+    //
+    'OPEN_MODAL': (app, session, message) => {
+        document.documentElement.classList.add('has-modal-active');
+        document.getElementById("navbarTop").classList.add('has-modal-active');
+    },
+    'CLOSE_MODAL': (app, session, message) => {
+        document.documentElement.classList.remove('has-modal-active');
+        document.getElementById("navbarTop").classList.remove('has-modal-active');
+    },
+    //
+    // Quick Search
+    //
+    'SEARCH_NODES': (app, session, pattern) => {
+        var qs = session.qs;
+        var nodes = session.gp.nodesDict;
+        var res = qs.search(pattern, {prefix:true}).slice(0,10).map(n => {
+            var d = nodes[n.nameid].data;
+            return d
+            //return {
+            //    ...d,
+            //    firstLink: (d.first_link)? d.first_link.username : ""
         //}
-    });
-    app.ports.lookupFromJs.send(res);
-},
-//
-// GraphPack
-//
-'INIT_GRAPHPACK': (app, session, data) => {
-    setTimeout(() => {
+        });
+        app.ports.lookupFromJs.send(res);
+    },
+    //
+    // GraphPack
+    //
+    'INIT_GRAPHPACK': (app, session, data) => {
+        setTimeout(() => {
             var gp = session.gp;
             //var data = JSON.parse(data);
 

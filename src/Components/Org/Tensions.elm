@@ -21,7 +21,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Global exposing (Msg(..))
+import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -259,7 +259,7 @@ init global flags =
         cmds =
             [ --ternary fs.focusChange
               --  (queryLocalGraph newFocus.nameid GotPath)
-              --  (ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none)
+              --  (ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none)
               queryLocalGraph newFocus.nameid GotPath
             , ternary (model.depthFilter == AllSubChildren) (fetchChildren newFocus.nameid GotChildren) Cmd.none
             , Global.sendSleep PassedSlowLoadTreshold 500
@@ -267,7 +267,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Global.send (UpdateSessionFocus (Just newFocus))
+    , send (UpdateSessionFocus (Just newFocus))
     )
 
 
@@ -303,9 +303,9 @@ update global msg model =
                         Just root ->
                             let
                                 cmd =
-                                    ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none
+                                    ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none
                             in
-                            ( newModel, cmd, Global.send (UpdateSessionPath (Just path)) )
+                            ( newModel, cmd, send (UpdateSessionPath (Just path)) )
 
                         Nothing ->
                             let
@@ -329,9 +329,9 @@ update global msg model =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                         cmd =
-                                            ternary (model.depthFilter == SelectedNode) (Global.send DoLoad) Cmd.none
+                                            ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none
                                     in
-                                    ( { model | path_data = Success newPath }, cmd, Global.send (UpdateSessionPath (Just newPath)) )
+                                    ( { model | path_data = Success newPath }, cmd, send (UpdateSessionPath (Just newPath)) )
 
                                 Nothing ->
                                     let
@@ -356,7 +356,7 @@ update global msg model =
             in
             case result of
                 RemoteData.Success children ->
-                    ( newModel, Global.send DoLoad, Cmd.none )
+                    ( newModel, send DoLoad, Cmd.none )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
@@ -477,24 +477,24 @@ update global msg model =
                 newModel =
                     { model | depthFilter = depthFilterDecoder value }
             in
-            ( newModel, Global.send SubmitSearch, Cmd.none )
+            ( newModel, send SubmitSearch, Cmd.none )
 
         ChangeStatusFilter value ->
             let
                 newModel =
                     { model | statusFilter = statusFilterDecoder value }
             in
-            ( newModel, Global.send SubmitSearch, Cmd.none )
+            ( newModel, send SubmitSearch, Cmd.none )
 
         SearchKeyDown key ->
             case key of
                 13 ->
                     --ENTER
-                    ( model, Global.send SubmitSearch, Cmd.none )
+                    ( model, send SubmitSearch, Cmd.none )
 
                 27 ->
                     --ESC
-                    ( model, Global.send (ChangePattern ""), Cmd.none )
+                    ( model, send (ChangePattern ""), Cmd.none )
 
                 other ->
                     ( model, Cmd.none, Cmd.none )
@@ -523,7 +523,7 @@ update global msg model =
         DoJoinOrga rootnameid time ->
             case global.session.user of
                 LoggedOut ->
-                    ( { model | node_action = ActionAuthNeeded }, Global.send DoOpenModal, Cmd.none )
+                    ( { model | node_action = ActionAuthNeeded }, send DoOpenModal, Cmd.none )
 
                 LoggedIn uctx ->
                     let
@@ -537,7 +537,7 @@ update global msg model =
                         newModel =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
-                    ( newModel, Cmd.batch [ addNewMember form JoinAck, Global.send DoOpenModal ], Cmd.none )
+                    ( newModel, Cmd.batch [ addNewMember form JoinAck, send DoOpenModal ], Cmd.none )
 
         JoinAck result ->
             case model.node_action of
@@ -546,7 +546,7 @@ update global msg model =
                         Success n ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , Cmd.none
-                            , Cmd.batch [ Global.send UpdateUserToken ]
+                            , Cmd.batch [ send UpdateUserToken ]
                             )
 
                         other ->
@@ -809,7 +809,7 @@ viewJoinOrgaStep step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box is-light modalClose", onClick (DoCloseModal "") ]
+                    div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
                         , text "Welcome in "
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]

@@ -1,14 +1,10 @@
-
 /*
  *
  * Bulma javascript helpers
  *
  */
 
-
-//document.addEventListener('DOMContentLoaded', () => {
-const BulmaDriver = (app, target, handlers) => {
-
+export function BulmaDriver(app, target, handlers) {
     //
     // Setup
     //
@@ -43,7 +39,7 @@ const BulmaDriver = (app, target, handlers) => {
     function hasHandler(el) {
         // Check if the object is already in the list of handler return true
         for (var i=0; i < handlers.length; i++) {
-            obj = handlers[i][2];
+            var obj = handlers[i][2];
             // check if it belongs to modal
             if (obj === el) return true;
         }
@@ -53,9 +49,9 @@ const BulmaDriver = (app, target, handlers) => {
     function removeChildHandler(el) {
         // Remove added handlers below the given element
         for (var i=0; i < handlers.length; i++) {
-            evt = handlers[i][0];
-            func = handlers[i][1];
-            obj = handlers[i][2];
+            var evt = handlers[i][0];
+            var func = handlers[i][1];
+            var obj = handlers[i][2];
             // check if it belongs to modal
             if (el.contains(obj)) obj.removeEventListener(evt, func);
         }
@@ -248,23 +244,22 @@ const BulmaDriver = (app, target, handlers) => {
 
             removeChildHandler(el);
 
-            // Fix block scrolling
-            document.documentElement.classList.remove('has-modal-active');
-            document.getElementById("navbarTop").classList.remove('has-modal-active');
-
             // Elm compatibility
             if (el.classList.contains("protected_" )) {
                 // Close modal with elm
                 app.ports.closeModalFromJs.send("")
             } else {
                 el.classList.remove('is-active');
+                // Fix block scrolling
+                document.documentElement.classList.remove('has-modal-active');
+                document.getElementById("navbarTop").classList.remove('has-modal-active');
             }
 
         });
     }
 
     const $modals = $target.querySelectorAll('.modal');
-    const $modal_closes = $target.querySelectorAll('.modal-close, .modalClose');
+    const $modal_closes = $target.querySelectorAll('.modal-close');
     const $modal_background = $target.querySelectorAll('.modal-background');
     const $modal_triggers = $target.querySelectorAll('.modalTrigger'); // app specific
     //
