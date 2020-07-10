@@ -47,8 +47,8 @@ nCommentPerTension =
     100
 
 
-getTension tensionid msg =
-    makeGQLQuery
+getTension url tensionid msg =
+    makeGQLQuery url
         (Query.getTension { id = encodeId tensionid }
             tensionExtendedPayload
         )
@@ -172,9 +172,9 @@ circleTensionDecoder data =
         |> Maybe.withDefault Nothing
 
 
-queryCircleTension targetid msg =
+queryCircleTension url targetid msg =
     --@DEBUG: Infered type...
-    makeGQLQuery
+    makeGQLQuery url
         (Query.getNode
             (circleFilter targetid)
             circleTensionPayload
@@ -283,8 +283,8 @@ subTensionDecoder data =
             )
 
 
-queryIntTension targetids first offset query_ status_ msg =
-    makeGQLQuery
+queryIntTension url targetids first offset query_ status_ msg =
+    makeGQLQuery url
         (Query.queryTension
             (subTensionIntFilterByDate targetids first offset query_ status_)
             tensionPayload
@@ -292,8 +292,8 @@ queryIntTension targetids first offset query_ status_ msg =
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-queryExtTension targetids first offset query_ status_ msg =
-    makeGQLQuery
+queryExtTension url targetids first offset query_ status_ msg =
+    makeGQLQuery url
         (Query.queryTension
             (subTensionExtFilterByDate targetids first offset query_ status_)
             tensionPayload

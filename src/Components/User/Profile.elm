@@ -116,6 +116,9 @@ type Msg
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        apis =
+            global.session.apis
+
         username =
             flags.param1
 
@@ -154,10 +157,10 @@ init global flags =
         cmds =
             [ case uctx_data of
                 Success uctx ->
-                    queryNodeExt (Dict.keys model.user_data) GotNodes
+                    queryNodeExt apis.gql (Dict.keys model.user_data) GotNodes
 
                 _ ->
-                    queryUctx username GotUctx
+                    queryUctx apis.gql username GotUctx
             , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -173,6 +176,10 @@ init global flags =
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
+    let
+        apis =
+            global.session.apis
+    in
     case msg of
         PassedSlowLoadTreshold ->
             let
@@ -217,7 +224,7 @@ update global msg model =
                         user_data =
                             buildUserDict uctx
                     in
-                    ( { model | user = result, user_data = user_data }, queryNodeExt (Dict.keys user_data) GotNodes, Cmd.none )
+                    ( { model | user = result, user_data = user_data }, queryNodeExt apis.gql (Dict.keys user_data) GotNodes, Cmd.none )
 
                 _ ->
                     ( { model | user = result }, Cmd.none, Cmd.none )

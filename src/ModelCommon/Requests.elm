@@ -24,11 +24,11 @@ import RemoteData exposing (RemoteData)
     Get all children recursively
 
 -}
-fetchChildren targetid msg =
+fetchChildren url targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = "http://localhost:8888/q/sub_children"
+        , url = url ++ "/sub_children"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> msg) childrenDecoder
         , timeout = Nothing
@@ -47,11 +47,11 @@ childrenDecoder =
     Get all member node (role with first link) recursively
 
 -}
-fetchMembers targetid msg =
+fetchMembers url targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = "http://localhost:8888/q/sub_members"
+        , url = url ++ "/sub_members"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> membersDecoder2 >> msg) membersDecoder
         , timeout = Nothing
@@ -136,7 +136,7 @@ membersDecoder2 input =
 --
 
 
-login post msg =
+login url post msg =
     --, Http.post
     --    { url = "http://localhost:8888/login"
     --    , body = Http.jsonBody <| JE.dict identity JE.string form.post
@@ -145,7 +145,7 @@ login post msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = "http://localhost:8888/login"
+        , url = url ++ "/login"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
         , timeout = Nothing
@@ -153,11 +153,11 @@ login post msg =
         }
 
 
-signup post msg =
+signup url post msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = "http://localhost:8888/signup"
+        , url = url ++ "/signup"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
         , timeout = Nothing

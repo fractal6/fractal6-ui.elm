@@ -92,6 +92,10 @@ type Msg
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
+    let
+        apis =
+            global.session.apis
+    in
     case msg of
         ChangeUserPost field value ->
             let
@@ -105,7 +109,7 @@ update global msg model =
 
         SubmitUser form ->
             ( model
-            , login form.post GotSignin
+            , login apis.auth form.post GotSignin
             , Cmd.none
             )
 

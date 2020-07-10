@@ -37,6 +37,14 @@ type alias Session =
     , data : Maybe NodeData
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
+    , apis : Apis
+    }
+
+
+type alias Apis =
+    { gql : String
+    , rest : String
+    , auth : String
     }
 
 

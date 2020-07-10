@@ -8,6 +8,9 @@ uglifyjs := node_modules/uglify-js/bin/uglifyjs
 default: run
 
 run:
+	npm run webdev
+
+run_old:
 	npm run start
 
 build: assets
@@ -22,7 +25,7 @@ deploy: prod
 	cd ../build
 	git add *
 	git commit -m all
-	push origin master
+	git push origin master
 	cd -
 
 

@@ -26,8 +26,8 @@ import RemoteData exposing (RemoteData)
 -}
 
 
-queryUctx username msg =
-    makeGQLQuery
+queryUctx url username msg =
+    makeGQLQuery url
         (Query.getUser
             (uctxFilter username)
             uctxPayload

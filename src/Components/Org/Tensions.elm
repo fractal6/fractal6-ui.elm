@@ -220,6 +220,9 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        apis =
+            global.session.apis
+
         -- Query parameters
         query =
             queryParser global.url
@@ -260,8 +263,8 @@ init global flags =
             [ --ternary fs.focusChange
               --  (queryLocalGraph newFocus.nameid GotPath)
               --  (ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none)
-              queryLocalGraph newFocus.nameid GotPath
-            , ternary (model.depthFilter == AllSubChildren) (fetchChildren newFocus.nameid GotChildren) Cmd.none
+              queryLocalGraph apis.gql newFocus.nameid GotPath
+            , ternary (model.depthFilter == AllSubChildren) (fetchChildren apis.rest newFocus.nameid GotChildren) Cmd.none
             , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -277,6 +280,10 @@ init global flags =
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
+    let
+        apis =
+            global.session.apis
+    in
     case msg of
         PassedSlowLoadTreshold ->
             let
@@ -312,7 +319,7 @@ update global msg model =
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( newModel, queryLocalGraph nameid GotPath2, Cmd.none )
+                            ( newModel, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
@@ -341,7 +348,7 @@ update global msg model =
                                         newPath =
                                             { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
                                     in
-                                    ( { model | path_data = Success newPath }, queryLocalGraph nameid GotPath2, Cmd.none )
+                                    ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
 
                         _ ->
                             ( model, Cmd.none, Cmd.none )
@@ -432,8 +439,8 @@ update global msg model =
                                     children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
 
                                 cmds =
-                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
-                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
+                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
+                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
                                     ]
                             in
                             ( model, Cmd.batch cmds, Cmd.none )
@@ -460,8 +467,8 @@ update global msg model =
                                     path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
                                 cmds =
-                                    [ queryIntTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
-                                    , queryExtTension nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
+                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
+                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
                                     ]
                             in
                             ( model, Cmd.batch cmds, Cmd.none )
@@ -537,7 +544,7 @@ update global msg model =
                         newModel =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
-                    ( newModel, Cmd.batch [ addNewMember form JoinAck, send DoOpenModal ], Cmd.none )
+                    ( newModel, Cmd.batch [ addNewMember apis.gql form JoinAck, send DoOpenModal ], Cmd.none )
 
         JoinAck result ->
             case model.node_action of

@@ -55,9 +55,9 @@ tensionDecoder a =
             Nothing
 
 
-addOneTension form msg =
+addOneTension url form msg =
     --@DEBUG: Infered type...
-    makeGQLMutation
+    makeGQLMutation url
         (Mutation.addTension
             (addTensionInputEncoder form)
             (SelectionSet.map AddTensionPayload <|
@@ -113,9 +113,9 @@ addTensionInputEncoder f =
 -}
 
 
-addCircleTension form msg =
+addCircleTension url form msg =
     --@DEBUG: Infered type...
-    makeGQLMutation
+    makeGQLMutation url
         (Mutation.addTension
             (addCircleInputEncoder form)
             (SelectionSet.map AddTensionPayload

@@ -31,8 +31,8 @@ import RemoteData exposing (RemoteData)
 -}
 
 
-queryNodeData nameid msg =
-    makeGQLQuery
+queryNodeData url nameid msg =
+    makeGQLQuery url
         (Query.getNode
             (dataFilter nameid)
             nodeDataPayload

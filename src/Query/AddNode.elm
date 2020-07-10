@@ -58,9 +58,9 @@ nodeDecoder a =
 --- Query
 
 
-addNewMember form msg =
+addNewMember url form msg =
     --@DEBUG: Infered type...
-    makeGQLMutation
+    makeGQLMutation url
         (Mutation.addNode
             (newMemberInputEncoder form)
             (SelectionSet.map AddNodePayload
@@ -187,9 +187,9 @@ circleDecoder a =
 --- Query
 
 
-addOneCircle form msg =
+addOneCircle url form msg =
     --@DEBUG: Infered type...
-    makeGQLMutation
+    makeGQLMutation url
         (Mutation.addNode
             (addCircleInputEncoder form)
             (SelectionSet.map AddCirclePayload <|

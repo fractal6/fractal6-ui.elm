@@ -71,12 +71,15 @@ type Msg
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
+        apis =
+            global.session.apis
+
         model =
             { orgas = Loading
             }
 
         cmds =
-            [ queryPublicOrga GotOrga
+            [ queryPublicOrga apis.gql GotOrga
             ]
     in
     ( model

@@ -45,8 +45,8 @@ nodePatchDecoder data =
             Nothing
 
 
-patchNode form msg =
-    makeGQLMutation
+patchNode url form msg =
+    makeGQLMutation url
         (Mutation.updateNode
             (nodePatchInputEncoder form)
             (SelectionSet.map PatchNodeIdPayload <|

@@ -36,7 +36,7 @@ import Url exposing (Url)
 
 type alias Flags =
     { uctx : Maybe JD.Value
-    , gqlapi : String
+    , apis : Apis
     }
 
 
@@ -83,6 +83,7 @@ init flags url key =
             , data = Nothing
             , node_action = Nothing
             , node_quickSearch = Nothing
+            , apis = flags.apis
             }
     in
     ( Model flags url key session

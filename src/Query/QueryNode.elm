@@ -76,8 +76,8 @@ publicOrgaDecoder data =
         |> Maybe.withDefault Nothing
 
 
-queryPublicOrga msg =
-    makeGQLQuery
+queryPublicOrga url msg =
+    makeGQLQuery url
         (Query.queryNode
             publicOrgaFilter
             nodeOrgaExtPayload
@@ -131,8 +131,8 @@ nodeOrgaExtPayload =
 --
 
 
-queryNodeExt nameids msg =
-    makeGQLQuery
+queryNodeExt url nameids msg =
+    makeGQLQuery url
         (Query.queryNode
             (nodeExtFilter nameids)
             nodeOrgaExtPayload
@@ -188,8 +188,8 @@ nodeOrgaDecoder data =
         |> Maybe.withDefault Nothing
 
 
-queryGraphPack rootid msg =
-    makeGQLQuery
+queryGraphPack url rootid msg =
+    makeGQLQuery url
         (Query.queryNode
             (nodeOrgaFilter rootid)
             nodeOrgaPayload
@@ -301,8 +301,8 @@ lgDecoder data =
             )
 
 
-queryLocalGraph targetid msg =
-    makeGQLQuery
+queryLocalGraph url targetid msg =
+    makeGQLQuery url
         (Query.getNode
             (lgFilter targetid)
             lgPayload
@@ -430,8 +430,8 @@ membersDecoder data =
         |> withDefault Nothing
 
 
-queryMembers nid msg =
-    makeGQLQuery
+queryMembers url nid msg =
+    makeGQLQuery url
         (Query.getNode
             (membersFilter nid)
             membersPayload

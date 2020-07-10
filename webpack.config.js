@@ -26,12 +26,14 @@ var API_URL;
 if (isProd) {
     API_URL = {
         graphql: "https://api.fractale.co/api",
-        rest: "https://api.fractale.co/q"
+        rest: "https://api.fractale.co/q",
+        auth: "https://api.fractale.co"
     }
 } else {
     API_URL = {
         graphql: "http://localhost:8888/api",
-        rest: "http://localhost:8888/q"
+        rest: "http://localhost:8888/q",
+        auth: "http://localhost:8888"
     }
 }
 
@@ -60,7 +62,9 @@ var common = {
     },
     plugins: [
         new webpack.DefinePlugin({
-            'GRAPHQL_API': JSON.stringify(API_URL.graphql)
+            'GRAPHQL_API': JSON.stringify(API_URL.graphql),
+            'REST_API': JSON.stringify(API_URL.rest),
+            'AUTH_API': JSON.stringify(API_URL.auth)
         }),
         new webpack.LoaderOptionsPlugin({
             options: {

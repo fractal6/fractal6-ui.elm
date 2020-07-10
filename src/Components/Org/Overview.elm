@@ -177,6 +177,9 @@ init global flags =
         session =
             global.session
 
+        apis =
+            session.apis
+
         -- Focus
         newFocus =
             flags
@@ -223,22 +226,22 @@ init global flags =
 
         cmds =
             if fs.orgChange || isInit then
-                [ queryGraphPack newFocus.rootnameid GotOrga
-                , queryCircleTension newFocus.nameid GotTensions
-                , queryNodeData newFocus.nameid GotData
+                [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                , queryCircleTension apis.gql newFocus.nameid GotTensions
+                , queryNodeData apis.gql newFocus.nameid GotData
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
             else if fs.focusChange then
-                [ queryCircleTension newFocus.nameid GotTensions
-                , queryNodeData newFocus.nameid GotData
+                [ queryCircleTension apis.gql newFocus.nameid GotTensions
+                , queryNodeData apis.gql newFocus.nameid GotData
                 , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
                     ++ (if fs.refresh then
                             case session.orga_data of
                                 Just ndata ->
                                     --[ Ports.initGraphPack ndata model.node_focus.nameid ]
-                                    [ queryGraphPack newFocus.rootnameid GotOrga ]
+                                    [ queryGraphPack apis.gql newFocus.rootnameid GotOrga ]
 
                                 Nothing ->
                                     []
@@ -251,12 +254,12 @@ init global flags =
                 case session.orga_data of
                     Just ndata ->
                         --[ Ports.initGraphPack ndata model.node_focus.nameid ]
-                        [ queryGraphPack newFocus.rootnameid GotOrga ]
+                        [ queryGraphPack apis.gql newFocus.rootnameid GotOrga ]
 
                     Nothing ->
-                        [ queryGraphPack newFocus.rootnameid GotOrga
-                        , queryCircleTension newFocus.nameid GotTensions
-                        , queryNodeData newFocus.nameid GotData
+                        [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                        , queryCircleTension apis.gql newFocus.nameid GotTensions
+                        , queryNodeData apis.gql newFocus.nameid GotData
                         , Global.sendSleep PassedSlowLoadTreshold 500
                         ]
 
@@ -275,6 +278,10 @@ init global flags =
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
+    let
+        apis =
+            global.session.apis
+    in
     case msg of
         PassedSlowLoadTreshold ->
             let
@@ -499,7 +506,7 @@ update global msg model =
                 newForm =
                     { form | post = Dict.insert "createdAt" (fromTime time) form.post }
             in
-            ( model, addOneTension newForm TensionAck, Cmd.none )
+            ( model, addOneTension apis.gql newForm TensionAck, Cmd.none )
 
         TensionAck result ->
             let
@@ -647,10 +654,10 @@ update global msg model =
                     { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", statusFromDoClose doClose ) ]) form.post }
             in
             if doClose == True then
-                ( model, addOneCircle newForm CircleAck, Cmd.none )
+                ( model, addOneCircle apis.gql newForm CircleAck, Cmd.none )
 
             else
-                ( model, addCircleTension newForm TensionAck, Cmd.none )
+                ( model, addCircleTension apis.gql newForm TensionAck, Cmd.none )
 
         CircleAck result ->
             let
@@ -748,22 +755,22 @@ update global msg model =
             if doClose == True then
                 case action of
                     TensionAction.UpdateRoleAbout ->
-                        ( model, patchNode newForm AboutAck, Cmd.none )
+                        ( model, patchNode apis.gql newForm AboutAck, Cmd.none )
 
                     TensionAction.UpdateCircleAbout ->
-                        ( model, patchNode newForm AboutAck, Cmd.none )
+                        ( model, patchNode apis.gql newForm AboutAck, Cmd.none )
 
                     TensionAction.UpdateRoleMandate ->
-                        ( model, patchNode newForm MandateAck, Cmd.none )
+                        ( model, patchNode apis.gql newForm MandateAck, Cmd.none )
 
                     TensionAction.UpdateCircleMandate ->
-                        ( model, patchNode newForm MandateAck, Cmd.none )
+                        ( model, patchNode apis.gql newForm MandateAck, Cmd.none )
 
                     _ ->
-                        ( model, addCircleTension newForm TensionAck, Cmd.none )
+                        ( model, addCircleTension apis.gql newForm TensionAck, Cmd.none )
 
             else
-                ( model, addCircleTension newForm TensionAck, Cmd.none )
+                ( model, addCircleTension apis.gql newForm TensionAck, Cmd.none )
 
         AboutAck result ->
             let
@@ -904,7 +911,7 @@ update global msg model =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
                     ( newModel
-                    , Cmd.batch [ addNewMember form JoinAck, send DoOpenModal ]
+                    , Cmd.batch [ addNewMember apis.gql form JoinAck, send DoOpenModal ]
                     , Cmd.none
                     )
 

@@ -48,8 +48,8 @@ tensionPatchDecoder data =
             Nothing
 
 
-pushTensionComment form msg =
-    makeGQLMutation
+pushTensionComment url form msg =
+    makeGQLMutation url
         (Mutation.updateTension
             (pushTensionCommentInputEncoder form)
             (SelectionSet.map PatchTensionIdPayload <|

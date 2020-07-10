@@ -17,7 +17,11 @@ window.addEventListener('load', _ => {
         node: document.getElementById('main'),
         flags: {
             uctx: uctx,
-            gqlapi: GRAPHQL_API
+            apis: {
+                gql: GRAPHQL_API,
+                rest: REST_API,
+                auth: AUTH_API
+            }
         }
     }));
 });
