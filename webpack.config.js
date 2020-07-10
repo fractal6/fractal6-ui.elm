@@ -25,8 +25,8 @@ const isProd = MODE == "production";
 var API_URL;
 if (isProd) {
     API_URL = {
-        graphql: "http://localhost:8888/api",
-        rest: "http://localhost:8888/q"
+        graphql: "https://api.fractale.co/api",
+        rest: "https://api.fractale.co/q"
     }
 } else {
     API_URL = {

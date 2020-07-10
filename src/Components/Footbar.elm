@@ -11,7 +11,7 @@ view =
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-2" ]
                 [ div [ class "contacts" ]
-                    [ span [] [ text "Contact us" ]
+                    [ span [] [ a [ href "mailto:contact@fractale.co" ] [ text "Contact us" ] ]
                     , span [] [ text "-" ]
                     , span [] [ a [ href "https://gitlab.com/fractal6", target "_blank" ] [ Fa.icon0 "fab fa-gitlab" "" ] ]
 
