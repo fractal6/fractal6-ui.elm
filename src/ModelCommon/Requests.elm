@@ -1,4 +1,4 @@
-module ModelCommon.Requests exposing (fetchChildren, fetchMembers, login, signup)
+module ModelCommon.Requests exposing (fetchChildren, fetchMembers, login, signup, tokenack)
 
 import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
 import Dict exposing (Dict)
@@ -159,6 +159,18 @@ signup url post msg =
         , headers = []
         , url = url ++ "/signup"
         , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+tokenack url msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/tokenack"
+        , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
         , timeout = Nothing
         , tracker = Nothing

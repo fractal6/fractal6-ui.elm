@@ -27,13 +27,13 @@ if (isProd) {
     API_URL = {
         graphql: "https://api.fractale.co/api",
         rest: "https://api.fractale.co/q",
-        auth: "https://api.fractale.co"
+        auth: "https://api.fractale.co/auth"
     }
 } else {
     API_URL = {
         graphql: "http://localhost:8888/api",
         rest: "http://localhost:8888/q",
-        auth: "http://localhost:8888"
+        auth: "http://localhost:8888/auth"
     }
 }
 

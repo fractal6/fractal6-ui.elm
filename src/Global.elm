@@ -20,6 +20,7 @@ import Generated.Route as Route exposing (Route)
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
+import ModelCommon.Requests exposing (tokenack)
 import ModelCommon.Uri exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
@@ -117,6 +118,10 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        apis =
+            model.session.apis
+    in
     case msg of
         Navigate route ->
             ( model, Nav.pushUrl model.key (Route.toHref route) )
@@ -245,16 +250,7 @@ update msg model =
                     model.session
             in
             ( model
-            , Http.riskyRequest
-                -- This method is needed to set cookies on the client through CORS.
-                { method = "POST"
-                , headers = []
-                , url = "http://localhost:8888/tokenack"
-                , body = Http.emptyBody
-                , expect = expectJson (RemoteData.fromResult >> UpdateUserTokenAck) userDecoder
-                , timeout = Nothing
-                , tracker = Nothing
-                }
+            , tokenack apis.auth UpdateUserTokenAck
             )
 
         UpdateUserTokenAck result ->
