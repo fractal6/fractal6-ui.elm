@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewWarnings)
-import Components.Text as Text exposing (..)
+import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMaybeData)
@@ -482,7 +482,7 @@ viewJoinOrgaStep : JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text Text.loading ]
+            div [ class "box spinner" ] [ text T.loading ]
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -492,7 +492,7 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
-                        , text "Welcome in "
+                        , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
                         ]
 
@@ -500,4 +500,4 @@ viewJoinOrgaStep step =
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text Text.loading ]
+                    div [ class "box spinner" ] [ text T.loading ]

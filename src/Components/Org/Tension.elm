@@ -4,7 +4,7 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Markdown exposing (renderMarkdown)
-import Components.Text as Text exposing (..)
+import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMaybeData)
@@ -676,10 +676,10 @@ viewData action nf =
         , case nf.mandate of
             Just mandate ->
                 div [ class "card" ]
-                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text Text.mandateH ] ]
+                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                     , div [ class "card-content" ]
                         [ div [ class "field" ]
-                            [ div [ class "label" ] [ text Text.purposeH ]
+                            [ div [ class "label" ] [ text T.purposeH ]
                             , div [ class "control" ]
                                 [ textarea
                                     [ id "textAreaModal"
@@ -695,14 +695,14 @@ viewData action nf =
                                 ]
                             ]
                         , div [ class "field" ]
-                            [ div [ class "label" ] [ text Text.responsabilitiesH ]
+                            [ div [ class "label" ] [ text T.responsabilitiesH ]
                             , div [ class "control" ]
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
                                     , rows 5
                                     , readonly True
-                                    , value (mandate.responsabilities |> withDefault ("<" ++ Text.noResponsabilities ++ ">"))
+                                    , value (mandate.responsabilities |> withDefault ("<" ++ T.noResponsabilities ++ ">"))
 
                                     --, placeholder txt.ph_responsabilities
                                     --, onInput <| changePostMsg "responsabilities"
@@ -711,14 +711,14 @@ viewData action nf =
                                 ]
                             ]
                         , div [ class "field" ]
-                            [ div [ class "label" ] [ text Text.domainsH ]
+                            [ div [ class "label" ] [ text T.domainsH ]
                             , div [ class "control" ]
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
                                     , rows 5
                                     , readonly True
-                                    , value (mandate.domains |> withDefault ("<" ++ Text.noDomains ++ ">"))
+                                    , value (mandate.domains |> withDefault ("<" ++ T.noDomains ++ ">"))
 
                                     --, placeholder txt.ph_domains
                                     --, onInput <| changePostMsg "domains"
@@ -727,14 +727,14 @@ viewData action nf =
                                 ]
                             ]
                         , div [ class "field" ]
-                            [ div [ class "label" ] [ text Text.policiesH ]
+                            [ div [ class "label" ] [ text T.policiesH ]
                             , div [ class "control" ]
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
                                     , rows 5
                                     , readonly True
-                                    , value (mandate.policies |> withDefault ("<" ++ Text.noPolicies ++ ">"))
+                                    , value (mandate.policies |> withDefault ("<" ++ T.noPolicies ++ ">"))
 
                                     --, placeholder txt.ph_policies
                                     --, onInput <| changePostMsg "policies"
@@ -818,7 +818,7 @@ viewJoinOrgaStep : JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text Text.loading ]
+            div [ class "box spinner" ] [ text T.loading ]
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -828,7 +828,7 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
-                        , text "Welcome in "
+                        , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
                         ]
 
@@ -836,7 +836,7 @@ viewJoinOrgaStep step =
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text Text.loading ]
+                    div [ class "box spinner" ] [ text T.loading ]
 
 
 

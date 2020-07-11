@@ -1659,7 +1659,7 @@ viewJoinOrgaStep orga step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
-                        , text T.welcomIn
+                        , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ getNodeName form.rootnameid orga |> text ]
                         ]
 

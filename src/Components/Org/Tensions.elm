@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
-import Components.Text as Text exposing (..)
+import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMaybeData)
@@ -699,12 +699,12 @@ viewIntExtTensions : Model -> Html Msg
 viewIntExtTensions model =
     div [ class "columns" ]
         [ div [ class "column is-6" ]
-            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text Text.internalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text T.internalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6" ]
-            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text Text.externalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text T.externalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
@@ -727,24 +727,24 @@ viewTensions focus pattern tensionsData tensionDir =
                         NodeType.Role ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ text Text.noIntTensionRole ]
+                                    div [] [ text T.noIntTensionRole ]
 
                                 ExternalTension ->
-                                    div [] [ text Text.noExtTensionRole ]
+                                    div [] [ text T.noExtTensionRole ]
 
                                 ListTension ->
-                                    div [] [ text Text.noTensionRole ]
+                                    div [] [ text T.noTensionRole ]
 
                         NodeType.Circle ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ text Text.noIntTensionCircle ]
+                                    div [] [ text T.noIntTensionCircle ]
 
                                 ExternalTension ->
-                                    div [] [ text Text.noExtTensionCircle ]
+                                    div [] [ text T.noExtTensionCircle ]
 
                                 ListTension ->
-                                    div [] [ text Text.noTensionCircle ]
+                                    div [] [ text T.noTensionCircle ]
 
             Failure err ->
                 viewGqlErrors err
@@ -808,7 +808,7 @@ viewJoinOrgaStep : JoinStep JoinOrgaForm -> Html Msg
 viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text Text.loading ]
+            div [ class "box spinner" ] [ text T.loading ]
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -818,7 +818,7 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
-                        , text "Welcome in "
+                        , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
                         ]
 
@@ -826,4 +826,4 @@ viewJoinOrgaStep step =
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text Text.loading ]
+                    div [ class "box spinner" ] [ text T.loading ]
