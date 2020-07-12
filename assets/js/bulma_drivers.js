@@ -140,8 +140,13 @@ export function BulmaDriver(app, target, handlers) {
      * Dropdown open/close rationale
      */
 
-    function buttonDropdownHandler(e, btn) {
+    function buttonDropdownHandler(e, btn, all) {
         e.stopPropagation();
+        all.forEach(function(el) {
+            if (el !== btn) {
+                el.classList.remove('is-active');
+            }
+        });
         btn.classList.toggle('is-active');
     }
 
@@ -162,7 +167,7 @@ export function BulmaDriver(app, target, handlers) {
     if ($dropdowns.length > 0) {
         // For each dropdown, add event handler to open on click.
         $dropdowns.forEach(function(el) {
-            var h = e => buttonDropdownHandler(e, el);
+            var h = e => buttonDropdownHandler(e, el, $dropdowns);
             setupHandler("click", h, el);
         });
 

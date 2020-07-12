@@ -1,5 +1,6 @@
 module Query.QueryTension exposing
-    ( getTension
+    ( commentPayload
+    , getTension
     , queryCircleTension
     , queryExtTension
     , queryIntTension
@@ -44,7 +45,7 @@ import RemoteData exposing (RemoteData)
 
 nCommentPerTension : Int
 nCommentPerTension =
-    100
+    250
 
 
 getTension url tensionid msg =
@@ -91,11 +92,7 @@ tensionExtendedPayload =
         |> with
             (Fractal.Object.Tension.comments
                 (\args -> { args | first = Present nCommentPerTension })
-                (SelectionSet.succeed Comment
-                    |> with (Fractal.Object.Comment.createdAt |> SelectionSet.map decodedTime)
-                    |> with (Fractal.Object.Comment.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-                    |> with Fractal.Object.Comment.message
-                )
+                commentPayload
             )
         |> with
             (Fractal.Object.Tension.data
@@ -111,6 +108,16 @@ tensionExtendedPayload =
                     |> with Fractal.Object.NodeFragment.first_link
                 )
             )
+
+
+commentPayload : SelectionSet Comment Fractal.Object.Comment
+commentPayload =
+    SelectionSet.succeed Comment
+        |> with (Fractal.Object.Comment.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Comment.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Comment.updatedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Comment.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Comment.message
 
 
 
@@ -172,6 +179,18 @@ circleTensionDecoder data =
         |> Maybe.withDefault Nothing
 
 
+subCircleTensionDecoder : SubNodeTensions -> List Tension
+subCircleTensionDecoder child =
+    let
+        tin =
+            child.tensions_in |> withDefault []
+
+        tout =
+            child.tensions_out |> withDefault []
+    in
+    tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout
+
+
 queryCircleTension url targetid msg =
     --@DEBUG: Infered type...
     makeGQLQuery url
@@ -195,6 +214,21 @@ circleTensionFilter a =
 
         -- we reorder it anyway !
     }
+
+
+circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
+circleTensionPayload =
+    SelectionSet.succeed NodeTensions
+        |> with Fractal.Object.Node.nameid
+        |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
+        |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
+        |> with
+            (Fractal.Object.Node.children identity
+                (SelectionSet.succeed SubNodeTensions
+                    |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
+                    |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
+                )
+            )
 
 
 tensionPayload : SelectionSet Tension Fractal.Object.Tension
@@ -228,33 +262,6 @@ tensionPayload =
             )
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.n_comments
-
-
-circleTensionPayload : SelectionSet NodeTensions Fractal.Object.Node
-circleTensionPayload =
-    SelectionSet.succeed NodeTensions
-        |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
-        |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
-        |> with
-            (Fractal.Object.Node.children identity
-                (SelectionSet.succeed SubNodeTensions
-                    |> with (Fractal.Object.Node.tensions_in circleTensionFilter tensionPayload)
-                    |> with (Fractal.Object.Node.tensions_out circleTensionFilter tensionPayload)
-                )
-            )
-
-
-subCircleTensionDecoder : SubNodeTensions -> List Tension
-subCircleTensionDecoder child =
-    let
-        tin =
-            child.tensions_in |> withDefault []
-
-        tout =
-            child.tensions_out |> withDefault []
-    in
-    tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout
 
 
 

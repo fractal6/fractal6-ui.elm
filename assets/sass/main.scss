@@ -428,13 +428,14 @@ html.has-modal-active {
 
         .message {
             background-color: $body-background-color !important;
-            border: 1px solid  $grey-dark  !important;
+            border: 1px solid  $grey-darker  !important;
 
             .tabs a {
                 text-decoration: none !important;
             }
             .message-header {
                 background-color: $comment-header-background-color !important;
+                border-bottom: solid 1px $grey-darker !important;
                 .ellipsis {
                     opacity: 0.75 !important;
                 }
@@ -458,13 +459,13 @@ html.has-modal-active {
 			}
 			.message-header:before {
 				//border-color: rgba(52, 60, 61, 0);
-				border-right-color: $grey-dark;
+				border-right-color: $grey-darker;
 				border-width: 9px;
 				margin-top: -9px;
 			}
 
             .message-body {
-                padding: 1rem 0.75rem !important;
+                padding: 1rem 0.9rem !important;
             }
 
         }
@@ -472,6 +473,7 @@ html.has-modal-active {
         .tensionCommentInput {
             .message-header {
                 padding-bottom: 0 !important;
+                border-bottom: none !important;
             }
             .message-body {
                 padding: 0.75rem 0.75rem !important;
@@ -1037,8 +1039,8 @@ html.has-modal-active {
         cursor: pointer !important;
     }
     &:active {
-        -webkit-filter: invert(100%);
-        filter: invert(100%);
+        -webkit-filter: invert(50%);
+        filter: invert(50%);
     }
 }
 

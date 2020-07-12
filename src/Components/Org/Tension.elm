@@ -19,6 +19,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
+import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
@@ -39,7 +40,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (pushTensionComment)
+import Query.PatchTension exposing (patchComment, pushTensionComment)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTension)
 import Task
@@ -85,6 +86,8 @@ type alias Model =
     , tension_data : GqlData TensionExtended
     , tension_form : TensionPatchForm
     , tension_result : GqlData IdPayload
+    , comment_form : CommentPatchForm
+    , comment_result : GqlData Comment
     }
 
 
@@ -104,13 +107,20 @@ type Msg
     | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
     | SubmitChangeStatus TensionPatchForm TensionStatus.TensionStatus Time.Posix -- Send form
     | TensionPatchAck (GqlData IdPayload)
-    | ChangeInputViewMode InputViewMode
+    | DoUpdateComment String
+    | ChangeCommentPost String String
+    | CancelCommentPatch
+    | SubmitCommentPatch CommentPatchForm Time.Posix
+    | CommentPatchAck (GqlData Comment)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
       -- JS Interop
-    | DoCloseModal String -- ports receive / Close modal
     | DoOpenModal -- ports receive / Open  modal
+    | DoCloseModal String -- ports receive / Close modal
+      -- Util
+    | ChangeInputViewMode InputViewMode
+    | ChangeUpdateViewMode InputViewMode
 
 
 
@@ -131,10 +141,6 @@ init global flags =
         fs =
             focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
 
-        -- Init form
-        tensionForm =
-            initTensionForm flags.param2 global.session.user
-
         model =
             { node_focus = newFocus
             , path_data =
@@ -143,8 +149,10 @@ init global flags =
                     |> withDefault Loading
             , tensionid = flags.param2
             , tension_data = Loading
-            , tension_form = tensionForm
+            , tension_form = initTensionForm flags.param2 global.session.user
             , tension_result = NotAsked
+            , comment_form = initCommentPatchForm global.session.user
+            , comment_result = NotAsked
             , inputViewMode = Write
             , node_action = NoOp
             , isModalActive = False
@@ -275,10 +283,10 @@ update global msg model =
 
         TensionPatchAck result ->
             case result of
-                Success _ ->
+                Success tid ->
                     let
                         newComments =
-                            commentsFromForm model.tension_form
+                            commentsFromForm tid.id model.tension_form
 
                         tension_d =
                             case model.tension_data of
@@ -298,7 +306,7 @@ update global msg model =
                         resetForm =
                             initTensionForm model.tensionid global.session.user
                     in
-                    ( { model | tension_data = tension_d, tension_form = resetForm, tension_result = result }, Cmd.none, Cmd.none )
+                    ( { model | tension_data = tension_d, tension_form = resetForm, tension_result = result }, Cmd.none, Ports.bulma_driver "" )
 
                 Failure _ ->
                     let
@@ -316,8 +324,91 @@ update global msg model =
                 _ ->
                     ( { model | tension_result = result }, Cmd.none, Cmd.none )
 
+        DoUpdateComment id ->
+            let
+                form =
+                    model.comment_form
+
+                newForm =
+                    { form | id = id }
+            in
+            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+
+        ChangeCommentPost field value ->
+            let
+                form =
+                    model.comment_form
+
+                newForm =
+                    { form | post = Dict.insert field value form.post }
+            in
+            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+
+        CancelCommentPatch ->
+            let
+                form =
+                    model.comment_form
+
+                newForm =
+                    { form | id = "" }
+            in
+            ( { model | comment_form = newForm }, Cmd.none, Ports.bulma_driver "" )
+
+        SubmitCommentPatch form time ->
+            let
+                newForm =
+                    { form | post = Dict.insert "updatedAt" (fromTime time) form.post }
+            in
+            ( model, patchComment apis.gql newForm CommentPatchAck, Cmd.none )
+
+        CommentPatchAck result ->
+            case result of
+                Success comment ->
+                    let
+                        tension_d =
+                            case model.tension_data of
+                                Success t ->
+                                    let
+                                        comments =
+                                            t.comments |> withDefault []
+
+                                        n =
+                                            comments
+                                                |> LE.findIndex (\c -> c.id == comment.id)
+                                                |> withDefault 0
+
+                                        newTension =
+                                            { t
+                                                | comments = Just (LE.setAt n comment comments)
+
+                                                --| comments = Just (List.take n comments ++ comment :: List.drop (n + 1) comments)
+                                            }
+                                    in
+                                    Success newTension
+
+                                other ->
+                                    other
+
+                        resetForm =
+                            initCommentPatchForm global.session.user
+                    in
+                    ( { model | tension_data = tension_d, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
+
+                _ ->
+                    ( { model | comment_result = result }, Cmd.none, Cmd.none )
+
         ChangeInputViewMode viewMode ->
             ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
+
+        ChangeUpdateViewMode viewMode ->
+            let
+                form =
+                    model.comment_form
+
+                newForm =
+                    { form | viewMode = viewMode }
+            in
+            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -419,7 +510,7 @@ viewTension u t model =
         subComments =
             t.comments
                 |> withDefault []
-                |> List.map (\c -> viewComment c)
+                |> List.map (\c -> viewComment c model)
 
         userInput =
             case u of
@@ -445,9 +536,7 @@ viewTension u t model =
             ]
         , div [ class "columns" ]
             [ div [ class "column is-8 tensionComments" ]
-                [ subComments
-                    |> List.append [ viewComment (Comment t.createdAt t.createdBy (t.message |> withDefault "")) ]
-                    |> div []
+                [ div [] subComments
                 , hr [ class "has-background-grey is-3" ] []
                 , userInput
                 ]
@@ -457,8 +546,8 @@ viewTension u t model =
         ]
 
 
-viewComment : Comment -> Html Msg
-viewComment c =
+viewComment : Comment -> Model -> Html Msg
+viewComment c model =
     let
         msg =
             if String.left (String.length "$action$") c.message == "$action$" then
@@ -478,6 +567,9 @@ viewComment c =
 
             else
                 Nothing
+
+        username =
+            model.tension_form.uctx.username
     in
     case msg of
         Just status ->
@@ -507,34 +599,42 @@ viewComment c =
             div [ class "media section is-paddingless" ]
                 [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar c.createdBy.username ] ]
                 , div [ class "media-content" ]
-                    [ div [ class "message" ]
-                        [ div [ class "message-header" ]
-                            [ viewTensionDateAndUserC c.createdAt c.createdBy
-                            , div [ class "dropdown has-dropdown is-right button-light" ]
-                                [ div [ class "dropdown-trigger" ]
-                                    [ div
-                                        [ class "is-pulled-right ellipsis"
-                                        , attribute "aria-controls" "dropdown-menu_ellipsis"
-                                        , attribute "aria-haspopup" "true"
+                    [ if model.comment_form.id == c.id then
+                        viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
+
+                      else
+                        div [ class "message" ]
+                            [ div [ class "message-header" ]
+                                [ viewTensionDateAndUserC c.createdAt c.createdBy
+                                , div [ class "dropdown has-dropdown is-right" ]
+                                    [ div [ class "dropdown-trigger" ]
+                                        [ div
+                                            [ class "is-pulled-right ellipsis button-light"
+                                            , attribute "aria-controls" "dropdown-menu_ellipsis"
+                                            , attribute "aria-haspopup" "true"
+                                            ]
+                                            [ Fa.icon0 "fas fa-ellipsis-h" "" ]
                                         ]
-                                        [ Fa.icon0 "fas fa-ellipsis-h" "" ]
-                                    ]
-                                , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
-                                    [ div [ class "dropdown-content" ]
-                                        [ div [ class "dropdown-item" ] [ p [] [ text "Edit" ] ]
+                                    , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
+                                        [ div [ class "dropdown-content" ]
+                                            [ if c.createdBy.username == username then
+                                                div [ class "dropdown-item" ] [ p [ onClick (DoUpdateComment c.id) ] [ text "Edit" ] ]
+
+                                              else
+                                                div [] []
+                                            ]
                                         ]
                                     ]
                                 ]
-                            ]
-                        , div [ class "message-body" ]
-                            [ case c.message of
-                                "" ->
-                                    div [ class "is-italic" ] [ text "No description provided." ]
+                            , div [ class "message-body" ]
+                                [ case c.message of
+                                    "" ->
+                                        div [ class "is-italic" ] [ text "No description provided." ]
 
-                                message ->
-                                    renderMarkdown message "is-light"
+                                    message ->
+                                        renderMarkdown message "is-light"
+                                ]
                             ]
-                        ]
                     ]
                 ]
 
@@ -542,6 +642,9 @@ viewComment c =
 viewCommentInput : UserCtx -> TensionExtended -> TensionPatchForm -> GqlData IdPayload -> InputViewMode -> Html Msg
 viewCommentInput uctx tension form result viewMode =
     let
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
         isLoading =
             result == LoadingSlowly
 
@@ -562,21 +665,10 @@ viewCommentInput uctx tension form result viewMode =
         closeOpenText =
             case tension.status of
                 TensionStatus.Open ->
-                    if (Dict.get "message" form.post |> withDefault "") /= "" then
-                        "Close and comment"
-
-                    else
-                        "Close tension"
+                    ternary (message == "") "Close tension" "Close and comment"
 
                 TensionStatus.Closed ->
-                    if (Dict.get "message" form.post |> withDefault "") /= "" then
-                        "Reopen and comment"
-
-                    else
-                        "Reopen tension"
-
-        message =
-            Dict.get "message" form.post |> withDefault ""
+                    ternary (message == "") "Reopen tension" "Reopen and comment"
     in
     div [ class "media section is-paddingless tensionCommentInput" ]
         [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar uctx.username ] ]
@@ -620,10 +712,7 @@ viewCommentInput uctx tension form result viewMode =
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button has-text-weight-semibold"
-                                     , classList
-                                        [ ( "is-danger", tension.status == TensionStatus.Open )
-                                        , ( "is-loading", isLoading )
-                                        ]
+                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading ) ]
                                      ]
                                         ++ submitCloseOpenTension
                                     )
@@ -638,6 +727,78 @@ viewCommentInput uctx tension form result viewMode =
                                     [ text "Comment" ]
                                 ]
                             ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+
+viewUpdateInput : UserCtx -> Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
+viewUpdateInput uctx comment form result =
+    let
+        message =
+            Dict.get "message" form.post |> withDefault comment.message
+
+        viewMode =
+            form.viewMode
+
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            message /= comment.message
+    in
+    div [ class "message" ]
+        [ div [ class "message-header" ]
+            [ div [ class "tabs is-boxed is-small" ]
+                [ ul []
+                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Write), target "_blank" ] [ text "Write" ] ]
+                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                    ]
+                ]
+            ]
+        , div [ class "message-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ]
+                    [ case viewMode of
+                        Write ->
+                            textarea
+                                [ id "textAreaModal"
+                                , class "textarea"
+                                , rows 5
+                                , placeholder "Leave a comment"
+                                , value message
+                                , onInput (ChangeCommentPost "message")
+                                ]
+                                []
+
+                        Preview ->
+                            div [] [ renderMarkdown message "is-light", hr [] [] ]
+                    ]
+                ]
+            , case result of
+                Failure err ->
+                    viewGqlErrors err
+
+                _ ->
+                    div [] []
+            , div [ class "field is-grouped is-grouped-right" ]
+                [ div [ class "control" ]
+                    [ div [ class "buttons" ]
+                        [ button
+                            [ class "button has-text-weight-semibold"
+                            , classList [ ( "is-danger", True ), ( "is-loading", isLoading ) ]
+                            , onClick CancelCommentPatch
+                            ]
+                            [ text "Cancel" ]
+                        , button
+                            [ class "button has-text-weight-semibold"
+                            , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                            , disabled (not isSendable)
+                            , onClick (Submit <| SubmitCommentPatch form)
+                            ]
+                            [ text "Update comment" ]
                         ]
                     ]
                 ]
@@ -861,11 +1022,14 @@ viewJoinOrgaStep step =
 --
 
 
-commentsFromForm : TensionPatchForm -> List Comment
-commentsFromForm form =
+commentsFromForm : String -> TensionPatchForm -> List Comment
+commentsFromForm tid form =
     let
         createdAt =
             Dict.get "createdAt" form.post |> withDefault ""
+
+        updatedAt =
+            Dict.get "updatedAt" form.post
 
         createdBy =
             Username form.uctx.username
@@ -873,7 +1037,9 @@ commentsFromForm form =
     [ Dict.get "message" form.post
         |> Maybe.map
             (\comment ->
-                { createdAt = createdAt
+                { id = tid
+                , createdAt = createdAt
+                , updatedAt = updatedAt
                 , createdBy = createdBy
                 , message = comment
                 }
@@ -881,7 +1047,9 @@ commentsFromForm form =
     , Dict.get "message_action" form.post
         |> Maybe.map
             (\message_action ->
-                { createdAt = createdAt
+                { id = ""
+                , createdAt = createdAt
+                , updatedAt = Nothing
                 , createdBy = createdBy
                 , message = message_action
                 }
@@ -904,4 +1072,19 @@ initTensionForm tensionid user =
     , emitter = Nothing
     , receiver = Nothing
     , post = Dict.empty
+    }
+
+
+initCommentPatchForm : UserState -> CommentPatchForm
+initCommentPatchForm user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , id = ""
+    , post = Dict.empty
+    , viewMode = Write
     }

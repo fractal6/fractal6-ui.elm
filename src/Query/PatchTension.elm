@@ -1,4 +1,4 @@
-module Query.PatchTension exposing (pushTensionComment)
+module Query.PatchTension exposing (patchComment, pushTensionComment)
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction
@@ -9,6 +9,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Label
 import Fractal.Object.Tension
+import Fractal.Object.UpdateCommentPayload
 import Fractal.Object.UpdateTensionPayload
 import Fractal.Query as Query
 import Fractal.Scalar
@@ -17,9 +18,81 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionPatchForm)
+import ModelCommon exposing (CommentPatchForm, TensionPatchForm)
 import ModelSchema exposing (..)
+import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
+
+
+
+{-
+   Update a comment
+-}
+
+
+type alias PatchCommentPayload =
+    { comment : Maybe (List (Maybe Comment)) }
+
+
+commentPatchDecoder : Maybe PatchCommentPayload -> Maybe Comment
+commentPatchDecoder data =
+    case data of
+        Just d ->
+            d.comment
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+
+        Nothing ->
+            Nothing
+
+
+patchComment url form msg =
+    makeGQLMutation url
+        (Mutation.updateComment
+            (patchCommentInputEncoder form)
+            (SelectionSet.map PatchCommentPayload <|
+                Fractal.Object.UpdateCommentPayload.comment identity commentPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse commentPatchDecoder >> msg)
+
+
+patchCommentInputEncoder : CommentPatchForm -> Mutation.UpdateCommentRequiredArguments
+patchCommentInputEncoder form =
+    let
+        -- new comment
+        updatedAt =
+            Dict.get "updatedAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+
+        message =
+            Dict.get "message" form.post
+
+        patchRequired =
+            { filter =
+                Input.buildCommentFilter
+                    (\f ->
+                        { f | id = Present [ encodeId form.id ] }
+                    )
+            }
+
+        patchOpts =
+            \x ->
+                { set =
+                    Input.buildCommentPatch
+                        (\s ->
+                            { s | message = fromMaybe message }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input =
+        Input.buildUpdateCommentInput patchRequired patchOpts
+    }
 
 
 
@@ -42,6 +115,7 @@ tensionPatchDecoder data =
                         List.filterMap identity items
                     )
                 |> withDefault []
+                -- Ignore the message_action id
                 |> List.head
 
         Nothing ->

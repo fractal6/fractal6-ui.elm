@@ -10,12 +10,13 @@ $text-strong: darken($text, 5);
 $border-color: $grey;
 $border-width: 2px;
 
-$body-background-color: #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
+$body-background-color: #434e5b; // #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
+//$body-background-color: #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
 $header-background-color: #44444d; // #24292e;
 $background: $grey-darker;
 $footer-background-color: $background;
 
-$comment-header-background-color: #3e4955;
+$comment-header-background-color: #35434d;
 
 $button-background-color: $background;
 $button-border-color: lighten($button-background-color, 15);
