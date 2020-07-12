@@ -510,10 +510,10 @@ viewComment c =
                     [ div [ class "message" ]
                         [ div [ class "message-header" ]
                             [ viewTensionDateAndUserC c.createdAt c.createdBy
-                            , div [ class "dropdown has-dropdown is-right button-light" ]
+                            , div [ class "dropdown has-dropdown is-right" ]
                                 [ div [ class "dropdown-trigger" ]
                                     [ div
-                                        [ class "is-pulled-right ellipsis"
+                                        [ class "is-pulled-right ellipsis button-light"
                                         , attribute "aria-controls" "dropdown-menu_ellipsis"
                                         , attribute "aria-haspopup" "true"
                                         ]
