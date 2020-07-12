@@ -434,11 +434,11 @@ viewTension u t model =
             [ div [ class "column is-8" ]
                 [ h1 [ class "title tensionTitle" ] [ text t.title ]
                 , div [ class "tensionSubtitle" ]
-                    [ span [ class ("tag is-rounded  is-" ++ statusColor t.status) ]
+                    [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
                         [ t.status |> TensionStatus.toString |> text ]
                     , span [ class "tag is-rounded is-light" ] [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
                     , viewTensionDateAndUser t.createdAt t.createdBy
-                    , viewTensionArrowB "has-text-weight-light is-pulled-right" t.emitter t.receiver
+                    , viewTensionArrowB "is-pulled-right" t.emitter t.receiver
                     ]
                 , hr [ class "has-background-grey-dark" ] []
                 ]
@@ -509,7 +509,23 @@ viewComment c =
                 , div [ class "media-content" ]
                     [ div [ class "message" ]
                         [ div [ class "message-header" ]
-                            [ viewTensionDateAndUserC c.createdAt c.createdBy ]
+                            [ viewTensionDateAndUserC c.createdAt c.createdBy
+                            , div [ class "dropdown has-dropdown is-right button-light" ]
+                                [ div [ class "dropdown-trigger" ]
+                                    [ div
+                                        [ class "is-pulled-right ellipsis"
+                                        , attribute "aria-controls" "dropdown-menu_ellipsis"
+                                        , attribute "aria-haspopup" "true"
+                                        ]
+                                        [ Fa.icon0 "fas fa-ellipsis-h" "" ]
+                                    ]
+                                , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
+                                    [ div [ class "dropdown-content" ]
+                                        [ div [ class "dropdown-item" ] [ p [] [ text "Edit" ] ]
+                                        ]
+                                    ]
+                                ]
+                            ]
                         , div [ class "message-body" ]
                             [ case c.message of
                                 "" ->

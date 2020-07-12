@@ -61,7 +61,6 @@ hr {
     }
 }
 
-
 .help-label {
   //font-family: bold !important;
   color: $grey !important;
@@ -123,6 +122,10 @@ html.has-modal-active {
         padding-right:0.4rem;
         padding-left:0.4rem;
     }
+}
+
+.dropdown-menu {
+    min-width: 7rem !important;
 }
 
 
@@ -261,7 +264,6 @@ html.has-modal-active {
 }
 
 #leftPane {
-
   min-width: 155px !important;
   max-width: 225px !important;
   width: 13% !important;
@@ -422,14 +424,40 @@ html.has-modal-active {
 
         .message {
             background-color: $body-background-color !important;
-            border: solid 1px  $grey-dark  !important;
+            border: 1px solid  $grey-dark  !important;
 
             .tabs a {
                 text-decoration: none !important;
             }
             .message-header {
-                background-color: #343c3d99!important;
+                background-color: $comment-header-background-color !important;
+                .ellipsis {
+                    opacity: 0.75 !important;
+                }
             }
+			// CSS arrow please !
+			.message-header:after, .message-header:before {
+				right: 100%;
+				top: 50%;
+				border: solid transparent;
+				content: " ";
+				height: 0;
+				width: 0;
+				position: absolute;
+				pointer-events: none;
+			}
+			.message-header:after {
+				//border-color: rgba(52, 60, 61, 0);
+				border-right-color: $comment-header-background-color !important;
+				border-width: 8px;
+				margin-top: -8px;
+			}
+			.message-header:before {
+				//border-color: rgba(52, 60, 61, 0);
+				border-right-color: $grey-dark;
+				border-width: 9px;
+				margin-top: -9px;
+			}
 
             .message-body {
                 padding: 1rem 0.75rem !important;
