@@ -80,7 +80,7 @@ mediaTension baseUri focus tension navigate =
                 , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
                 ]
                 [ a
-                    [ classList [ ( "has-text-light", True ), ( "has-text-weight-semibold", True ), ( "is-size-6", baseUri == TensionsBaseUri ) ]
+                    [ classList [ ( "has-text-weight-semibold", True ), ( "is-size-6", baseUri == TensionsBaseUri ) ]
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]

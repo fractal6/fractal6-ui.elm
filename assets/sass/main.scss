@@ -177,6 +177,10 @@ html.has-modal-active {
     flex-grow: 1;
 }
 
+.modal-close {
+    background-color: #952222b8 !important;
+}
+
 /*
  *
  * My style
@@ -371,7 +375,7 @@ html.has-modal-active {
             }
         }
         & .content > a  {
-            color: $white-light !important;
+            color: $text !important;
             &:hover {
                 color: $link !important;
             }
