@@ -146,15 +146,15 @@ export const GraphPack = {
     centerY: null,
     diameter: null,
     zoomCtx: null,
-    circlesPadding: 3, // 1.8
+    circlesPadding: 4, // 1.8
     fontsizeCircle_start: 19,
     fontstyleCircle: "Arial",
 
     // Graph fx settings
     minZoomDuration: 500, // 1250
-    zoomFactorCircle: 2.1,
-    zoomFactorRole: 3.5,
-    zoomFactorGuest: 7,
+    zoomFactorCircle: 2.02,
+    zoomFactorRole: 3,
+    zoomFactorGuest: 5,
     // rayon size of the node in the canvas
     rayonFactorRole: 0.95,
     rayonFactorGuest: 0.75,
