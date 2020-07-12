@@ -246,7 +246,7 @@ viewMandate form result sd =
                         , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] []
                         ]
                     , br [] []
-                    , div [ class "card" ]
+                    , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         , div [ class "card-content" ]
                             [ div [ class "field" ]

@@ -197,7 +197,7 @@ view form result sd =
                             )
                         ]
                     , br [] []
-                    , div [ class "card" ]
+                    , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         , div [ class "card-content" ]
                             [ div [ class "field" ]
