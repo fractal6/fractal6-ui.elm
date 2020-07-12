@@ -157,8 +157,8 @@ type Msg
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
-    | DoCloseModal String -- ports receive / Close modal
     | DoOpenModal -- ports receive / Open  modal
+    | DoCloseModal String -- ports receive / Close modal
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle

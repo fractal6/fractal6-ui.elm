@@ -165,7 +165,9 @@ type alias TensionExtended =
 
 
 type alias Comment =
-    { createdAt : String
+    { id : String
+    , createdAt : String
+    , updatedAt : Maybe String
     , createdBy : Username
     , message : String
     }

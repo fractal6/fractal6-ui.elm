@@ -1,4 +1,10 @@
-module Query.AddNode exposing (addNewMember, addOneCircle, buildMandate, buildNodeFragmentRef)
+module Query.AddNode exposing
+    ( addNewMember
+    , addOneCircle
+    , buildComment
+    , buildMandate
+    , buildNodeFragmentRef
+    )
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeMode as NodeMode
@@ -372,13 +378,13 @@ tensionFromForm f =
             , type_ = f.tension_type |> Present
             , status = status |> Present
             , action = f.action |> fromMaybe
-            , message = message |> fromMaybe
             , emitterid = f.source.nameid |> Present
             , receiverid = f.target.nameid |> Present
             , emitter =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present
             , receiver =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid }) |> Present
+            , comments = buildComment createdAt f.uctx.username message
             , data = buildNodeFragmentRef f
         }
 
@@ -422,3 +428,24 @@ buildNodeFragmentRef f =
             }
         )
         |> Present
+
+
+buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
+buildComment createdAt username message_m =
+    message_m
+        |> Maybe.map
+            (\message ->
+                [ Input.buildCommentRef
+                    (\x ->
+                        { x
+                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            , createdBy =
+                                Input.buildUserRef
+                                    (\u -> { u | username = Present username })
+                                    |> Present
+                            , message = Present message
+                        }
+                    )
+                ]
+            )
+        |> fromMaybe

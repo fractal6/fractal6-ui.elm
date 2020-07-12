@@ -203,8 +203,8 @@ type Msg
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
       -- JS Interop
-    | DoCloseModal String -- ports receive / Close modal
     | DoOpenModal -- ports receive / Open  modal
+    | DoCloseModal String -- ports receive / Close modal
       -- Util
     | Navigate String
 

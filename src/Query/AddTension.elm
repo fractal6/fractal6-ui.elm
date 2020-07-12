@@ -19,7 +19,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
-import Query.AddNode exposing (buildMandate, buildNodeFragmentRef)
+import Query.AddNode exposing (buildComment, buildMandate, buildNodeFragmentRef)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
 
@@ -100,7 +100,7 @@ addTensionInputEncoder f =
             }
 
         tensionOpts =
-            \t -> { t | message = message |> fromMaybe }
+            \t -> { t | comments = buildComment createdAt f.uctx.username message }
     in
     { input =
         [ Input.buildAddTensionInput tensionRequired tensionOpts ]
@@ -160,7 +160,7 @@ addCircleInputEncoder f =
             \t ->
                 { t
                     | action = f.action |> fromMaybe
-                    , message = message |> fromMaybe
+                    , comments = buildComment createdAt f.uctx.username message
                     , data = buildNodeFragmentRef f
                 }
     in

@@ -113,6 +113,14 @@ type alias TensionPatchForm =
     }
 
 
+type alias CommentPatchForm =
+    { id : String
+    , uctx : UserCtx
+    , post : Post
+    , viewMode : InputViewMode
+    }
+
+
 
 -- Join Form
 
