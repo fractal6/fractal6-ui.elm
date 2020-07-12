@@ -120,8 +120,8 @@ html.has-modal-active {
 .breadcrumb {
     a {
         color: $green-frac6-lighter;
-        padding-right:0.4em;
-        padding-left:0.4em;
+        padding-right:0.4rem;
+        padding-left:0.4rem;
     }
 }
 
@@ -410,7 +410,7 @@ html.has-modal-active {
         }
 
         .tag {
-            height: 2.25em !important;
+            height: 1.8rem !important;
         }
     }
 
@@ -422,11 +422,19 @@ html.has-modal-active {
 
         .message {
             background-color: $body-background-color !important;
-            border: solid 2px  $grey-dark  !important;
+            border: solid 1px  $grey-dark  !important;
 
             .tabs a {
                 text-decoration: none !important;
             }
+            .message-header {
+                background-color: #343c3d99!important;
+            }
+
+            .message-body {
+                padding: 1rem 0.75rem !important;
+            }
+
         }
 
         .tensionCommentInput {
@@ -434,7 +442,7 @@ html.has-modal-active {
                 padding-bottom: 0 !important;
             }
             .message-body {
-                padding: 0.75em 0.75em !important;
+                padding: 0.75rem 0.75rem !important;
             }
         }
 
@@ -505,14 +513,14 @@ html.has-modal-active {
     }
 
     .message-body {
-        padding: 0.75em 0.75em !important;
+        padding: 0.75rem 0.75rem !important;
     }
 
 }
 
 .searchBar {
     .input, .button, select {
-        height: 2.8em !important;
+        height: 2.2rem !important;
     }
 
     .select {
@@ -615,8 +623,8 @@ html.has-modal-active {
     & tbody th,
     & tbody td {
         border: 0 !important;
-        padding-top: 0.5em;
-        padding-bottom: 0.5em;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem;
         color: #24292e !important;
     }
 
@@ -952,6 +960,7 @@ html.has-modal-active {
 
 .subForm {
     padding: 0.666rem 1rem 0.1rem 0 !important;
+    margin-bottom:0 !important;
 
     .input {
         background-color: #eee !important;
@@ -971,6 +980,7 @@ html.has-modal-active {
 }
 
 .cardForm {
+    margin-top: 2rem !important;
     .field-label.control {
         padding-top: 0 !important;
         padding-left: 10px !important;
@@ -1078,7 +1088,7 @@ html.has-modal-active {
     // Text centering
     text-align: center;
     padding-top: 50px;
-    font-size: 4em;
+    font-size: 4rem;
 }
 
 

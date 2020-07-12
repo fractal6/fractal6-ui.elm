@@ -162,7 +162,12 @@ viewOrgaMedia node =
         , div [ class "media-content" ]
             [ div [ class "" ]
                 [ div [ class "" ] [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ] ]
-                , div [ class "is-italic" ] [ text "about this organisation" ]
+                , case node.about of
+                    Just ab ->
+                        div [ class "is-italic" ] [ text ab ]
+
+                    Nothing ->
+                        div [ class "is-italic" ] [ text "" ]
                 ]
             ]
         , div [ class "media-right" ]

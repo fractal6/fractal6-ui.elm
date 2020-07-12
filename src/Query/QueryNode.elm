@@ -51,6 +51,7 @@ type alias NodeExt =
     , charac : NodeCharac
     , isPrivate : Bool
     , stats : Maybe NodeStats
+    , about : Maybe String
     }
 
 
@@ -121,6 +122,7 @@ nodeOrgaExtPayload =
                     Fractal.Object.NodeStats.n_member
                     Fractal.Object.NodeStats.n_guest
             )
+        |> with Fractal.Object.Node.about
 
 
 

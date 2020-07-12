@@ -78,8 +78,11 @@ view form result sd =
                 nameid =
                     form.data.nameid |> withDefault ""
 
-                firstLinks =
+                firstLinks_ =
                     form.data.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+
+                firstLinks =
+                    ternary (firstLinks_ == []) [ "" ] firstLinks_
             in
             div [ class "modal-card finalModal" ]
                 [ div [ class "modal-card-head" ]
@@ -190,7 +193,7 @@ view form result sd =
                                         ]
                                 )
                                 firstLinks
-                                ++ [ p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
+                                ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
                             )
                         ]
                     , br [] []
