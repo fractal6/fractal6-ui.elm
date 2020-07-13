@@ -286,22 +286,15 @@ update global msg model =
         PassedSlowLoadTreshold ->
             let
                 orga_data =
-                    case model.orga_data of
-                        Loading ->
-                            LoadingSlowly
-
-                        other ->
-                            other
+                    ternary (model.orga_data == Loading) LoadingSlowly model.orga_data
 
                 tensions_circle =
-                    case model.tensions_circle of
-                        Loading ->
-                            LoadingSlowly
+                    ternary (model.tensions_circle == Loading) LoadingSlowly model.tensions_circle
 
-                        other ->
-                            other
+                data =
+                    ternary (model.data == Loading) LoadingSlowly model.data
             in
-            ( { model | orga_data = orga_data, tensions_circle = tensions_circle }, Cmd.none, Cmd.none )
+            ( { model | orga_data = orga_data, tensions_circle = tensions_circle, data = data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )

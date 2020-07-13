@@ -61,7 +61,8 @@ type alias Node =
 
 
 type Msg
-    = GotOrga (GqlData (List Node))
+    = PassedSlowLoadTreshold -- timer
+    | GotOrga (GqlData (List Node))
 
 
 
@@ -80,6 +81,7 @@ init global flags =
 
         cmds =
             [ queryPublicOrga apis.gql GotOrga
+            , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
@@ -95,6 +97,13 @@ init global flags =
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
 update global msg model =
     case msg of
+        PassedSlowLoadTreshold ->
+            let
+                orgas =
+                    ternary (model.orgas == Loading) LoadingSlowly model.orgas
+            in
+            ( { model | orgas = orgas }, Cmd.none, Cmd.none )
+
         -- Gql queries
         GotOrga result ->
             ( { model | orgas = result }, Cmd.none, Cmd.none )
