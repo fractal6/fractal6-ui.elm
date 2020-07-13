@@ -685,14 +685,17 @@ html.has-modal-active {
 
 }
 
-#tensionsTab  {
-     .labelsList {
-         // all children except first
-         .tag + .tag {
-             margin-left: 7px !important;
-         }
+.labelsList {
+     // all children except first
+     .tag + .tag {
+         margin-left: 7px !important;
      }
+     .tag:last-child {
+         margin-bottom: 7px !important;
+     }
+ }
 
+#tensionsTab  {
     .tooltip {
         // Increase the area of activation (better UX)
         margin: -8px;
@@ -703,6 +706,7 @@ html.has-modal-active {
         }
      }
 }
+
 
 .box #tensionsTab {
     .media {

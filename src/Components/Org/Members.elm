@@ -269,7 +269,7 @@ update global msg model =
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
         DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+            ( { model | isModalActive = False }, Cmd.none, Ports.close_modal )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -443,12 +443,7 @@ setupActionModal isModalActive action =
             , ( "protected_", isModalActive )
             ]
         ]
-        [ div
-            [ classList
-                [ ( "modal-background", True )
-                , ( "protected_", isModalActive )
-                ]
-            ]
+        [ div [ classList [ ( "modal-background", True ) ] ]
             []
         , div [ class "modal-content" ]
             [ case action of
@@ -471,7 +466,6 @@ setupActionModal isModalActive action =
             [ classList
                 [ ( "modal-close", True )
                 , ( "is-large", True )
-                , ( "protected_", isModalActive )
                 ]
             ]
             []

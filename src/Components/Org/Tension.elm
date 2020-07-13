@@ -283,10 +283,10 @@ update global msg model =
 
         TensionPatchAck result ->
             case result of
-                Success tid ->
+                Success cid ->
                     let
                         newComments =
-                            commentsFromForm tid.id model.tension_form
+                            commentsFromForm cid.id model.tension_form
 
                         tension_d =
                             case model.tension_data of
@@ -451,7 +451,7 @@ update global msg model =
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
         DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Cmd.none )
+            ( { model | isModalActive = False }, Cmd.none, Ports.close_modal )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -606,25 +606,25 @@ viewComment c model =
                         div [ class "message" ]
                             [ div [ class "message-header" ]
                                 [ viewTensionDateAndUserC c.createdAt c.createdBy
-                                , div [ class "dropdown has-dropdown is-right" ]
-                                    [ div [ class "dropdown-trigger" ]
-                                        [ div
-                                            [ class "is-pulled-right ellipsis button-light"
-                                            , attribute "aria-controls" "dropdown-menu_ellipsis"
-                                            , attribute "aria-haspopup" "true"
+                                , if c.createdBy.username == username then
+                                    div [ class "dropdown has-dropdown is-right" ]
+                                        [ div [ class "dropdown-trigger" ]
+                                            [ div
+                                                [ class "is-pulled-right ellipsis button-light"
+                                                , attribute "aria-controls" "dropdown-menu_ellipsis"
+                                                , attribute "aria-haspopup" "true"
+                                                ]
+                                                [ Fa.icon0 "fas fa-ellipsis-h" "" ]
                                             ]
-                                            [ Fa.icon0 "fas fa-ellipsis-h" "" ]
+                                        , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
+                                            [ div [ class "dropdown-content" ]
+                                                [ div [ class "dropdown-item" ] [ p [ onClick (DoUpdateComment c.id) ] [ text "Edit" ] ]
+                                                ]
+                                            ]
                                         ]
-                                    , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
-                                        [ div [ class "dropdown-content" ]
-                                            [ if c.createdBy.username == username then
-                                                div [ class "dropdown-item" ] [ p [ onClick (DoUpdateComment c.id) ] [ text "Edit" ] ]
 
-                                              else
-                                                div [] []
-                                            ]
-                                        ]
-                                    ]
+                                  else
+                                    div [] []
                                 ]
                             , div [ class "message-body" ]
                                 [ case c.message of
@@ -956,12 +956,7 @@ setupActionModal isModalActive action =
             , ( "protected_", isModalActive )
             ]
         ]
-        [ div
-            [ classList
-                [ ( "modal-background", True )
-                , ( "protected_", isModalActive )
-                ]
-            ]
+        [ div [ classList [ ( "modal-background", True ) ] ]
             []
         , div [ class "modal-content" ]
             [ case action of
@@ -984,7 +979,6 @@ setupActionModal isModalActive action =
             [ classList
                 [ ( "modal-close", True )
                 , ( "is-large", True )
-                , ( "protected_", isModalActive )
                 ]
             ]
             []

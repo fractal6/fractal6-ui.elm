@@ -1468,11 +1468,7 @@ setupActionModal model =
             , ( "protected_", model.isModalActive )
             ]
         ]
-        [ div
-            [ classList
-                [ ( "modal-background", True )
-                ]
-            ]
+        [ div [ classList [ ( "modal-background", True ) ] ]
             []
         , div [ class "modal-content" ]
             [ case model.node_action of

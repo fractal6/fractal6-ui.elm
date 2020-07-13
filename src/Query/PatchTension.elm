@@ -1,12 +1,14 @@
 module Query.PatchTension exposing (patchComment, pushTensionComment)
 
 import Dict exposing (Dict)
+import Fractal.Enum.CommentOrderable as CommentOrderable
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.Comment
 import Fractal.Object.Label
 import Fractal.Object.Tension
 import Fractal.Object.UpdateCommentPayload
@@ -102,11 +104,16 @@ patchCommentInputEncoder form =
 
 
 type alias PatchTensionIdPayload =
-    { tension : Maybe (List (Maybe IdPayload)) }
+    { tension : Maybe (List (Maybe CommentId)) }
 
 
-tensionPatchDecoder : Maybe PatchTensionIdPayload -> Maybe IdPayload
-tensionPatchDecoder data =
+type alias CommentId =
+    { comments : Maybe (List IdPayload)
+    }
+
+
+tensionPushDecoder : Maybe PatchTensionIdPayload -> Maybe IdPayload
+tensionPushDecoder data =
     case data of
         Just d ->
             d.tension
@@ -117,6 +124,12 @@ tensionPatchDecoder data =
                 |> withDefault []
                 -- Ignore the message_action id
                 |> List.head
+                |> Maybe.map
+                    (\t ->
+                        t.comments |> Maybe.map (\cs -> List.head cs)
+                    )
+                |> withDefault Nothing
+                |> withDefault Nothing
 
         Nothing ->
             Nothing
@@ -128,12 +141,28 @@ pushTensionComment url form msg =
             (pushTensionCommentInputEncoder form)
             (SelectionSet.map PatchTensionIdPayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
-                    (SelectionSet.succeed IdPayload
-                        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    (SelectionSet.succeed CommentId
+                        |> with
+                            (Fractal.Object.Tension.comments (pushCommentFilter form) <|
+                                SelectionSet.map IdPayload (Fractal.Object.Comment.id |> SelectionSet.map decodedId)
+                            )
                     )
             )
         )
-        (RemoteData.fromResult >> decodeResponse tensionPatchDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse tensionPushDecoder >> msg)
+
+
+pushCommentFilter : TensionPatchForm -> Fractal.Object.Tension.CommentsOptionalArguments -> Fractal.Object.Tension.CommentsOptionalArguments
+pushCommentFilter f a =
+    { a
+        | first = Present 1
+        , order =
+            Input.buildCommentOrder
+                (\b -> { b | desc = Present CommentOrderable.CreatedAt })
+                |> Present
+
+        -- @debug: cant filter by createdBy for now !?
+    }
 
 
 pushTensionCommentInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
