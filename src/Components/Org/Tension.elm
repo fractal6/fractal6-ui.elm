@@ -16,7 +16,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -411,7 +411,7 @@ update global msg model =
 
         CancelTitle ->
             -- init form
-            ( { model | isTitleEdit = False }, Cmd.none, Cmd.none )
+            ( { model | isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitTitle form time ->
             let
@@ -576,6 +576,7 @@ viewTension u t model =
                                 [ p [ class "control is-expanded" ]
                                     [ input
                                         [ class "input"
+                                        , autofocus True
                                         , type_ "text"
                                         , placeholder "Title*"
                                         , value (Dict.get "title" model.tension_form.post |> withDefault t.title)
@@ -845,6 +846,7 @@ viewUpdateInput uctx comment form result =
                         Write ->
                             textarea
                                 [ id "textAreaModal"
+                                , autofocus True
                                 , class "textarea"
                                 , rows 5
                                 , placeholder "Leave a comment"

@@ -498,6 +498,14 @@ html.has-modal-active {
         }
     }
 
+    textarea, input {
+        color: #fff !important;
+        background-color: #33383ed9 !important;
+        &::placeholder {
+            color: $white-ter !important;
+        }
+    }
+
 }
 
 
