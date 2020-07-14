@@ -1,4 +1,8 @@
-module Query.PatchTension exposing (patchComment, pushTensionComment)
+module Query.PatchTension exposing
+    ( patchComment
+    , patchTitle
+    , pushTensionComment
+    )
 
 import Dict exposing (Dict)
 import Fractal.Enum.CommentOrderable as CommentOrderable
@@ -24,6 +28,49 @@ import ModelCommon exposing (CommentPatchForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
+
+
+
+{-
+   Update a tension title
+-}
+
+
+type alias PatchTitlePayload =
+    { tension : Maybe (List (Maybe TensionTitle)) }
+
+
+type alias TensionTitle =
+    { title : String }
+
+
+titlePatchDecoder : Maybe PatchTitlePayload -> Maybe String
+titlePatchDecoder data =
+    case data of
+        Just d ->
+            d.tension
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+                |> Maybe.map (\t -> t.title)
+
+        Nothing ->
+            Nothing
+
+
+patchTitle url form msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (pushTensionCommentInputEncoder form)
+            (SelectionSet.map PatchTitlePayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    SelectionSet.map TensionTitle Fractal.Object.Tension.title
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse titlePatchDecoder >> msg)
 
 
 
@@ -108,8 +155,7 @@ type alias PatchTensionIdPayload =
 
 
 type alias CommentId =
-    { comments : Maybe (List IdPayload)
-    }
+    { comments : Maybe (List IdPayload) }
 
 
 tensionPushDecoder : Maybe PatchTensionIdPayload -> Maybe IdPayload
@@ -172,6 +218,12 @@ pushTensionCommentInputEncoder form =
         createdAt =
             Dict.get "createdAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
 
+        updatedAt =
+            Dict.get "updatedAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+
+        title =
+            Dict.get "title" form.post
+
         msg1 =
             Dict.get "message" form.post
 
@@ -199,7 +251,9 @@ pushTensionCommentInputEncoder form =
                     Input.buildTensionPatch
                         (\s ->
                             { s
-                                | status = fromMaybe form.status
+                                | updatedAt = fromMaybe updatedAt
+                                , title = fromMaybe title
+                                , status = fromMaybe form.status
                                 , comments =
                                     messages
                                         |> Maybe.map

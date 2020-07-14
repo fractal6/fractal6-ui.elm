@@ -229,13 +229,11 @@ init global flags =
                 [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
                 , queryCircleTension apis.gql newFocus.nameid GotTensions
                 , queryNodeData apis.gql newFocus.nameid GotData
-                , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
 
             else if fs.focusChange then
                 [ queryCircleTension apis.gql newFocus.nameid GotTensions
                 , queryNodeData apis.gql newFocus.nameid GotData
-                , Global.sendSleep PassedSlowLoadTreshold 500
                 ]
                     ++ (if fs.refresh then
                             case session.orga_data of
@@ -254,20 +252,21 @@ init global flags =
                 case session.orga_data of
                     Just ndata ->
                         --[ Ports.initGraphPack ndata model.node_focus.nameid ]
-                        [ queryGraphPack apis.gql newFocus.rootnameid GotOrga ]
+                        [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                        , queryCircleTension apis.gql newFocus.nameid GotTensions
+                        ]
 
                     Nothing ->
                         [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
                         , queryCircleTension apis.gql newFocus.nameid GotTensions
                         , queryNodeData apis.gql newFocus.nameid GotData
-                        , Global.sendSleep PassedSlowLoadTreshold 500
                         ]
 
             else
                 []
     in
     ( model
-    , Cmd.batch cmds
+    , Cmd.batch (cmds ++ [ Global.sendSleep PassedSlowLoadTreshold 500 ])
     , send (UpdateSessionFocus (Just newFocus))
     )
 

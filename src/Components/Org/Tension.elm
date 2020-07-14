@@ -40,7 +40,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (patchComment, pushTensionComment)
+import Query.PatchTension exposing (patchComment, patchTitle, pushTensionComment)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTension)
 import Task
@@ -86,8 +86,10 @@ type alias Model =
     , tension_data : GqlData TensionExtended
     , tension_form : TensionPatchForm
     , tension_result : GqlData IdPayload
+    , title_result : GqlData String
     , comment_form : CommentPatchForm
     , comment_result : GqlData Comment
+    , isTitleEdit : Bool
     }
 
 
@@ -112,6 +114,10 @@ type Msg
     | CancelCommentPatch
     | SubmitCommentPatch CommentPatchForm Time.Posix
     | CommentPatchAck (GqlData Comment)
+    | DoChangeTitle
+    | CancelTitle
+    | SubmitTitle TensionPatchForm Time.Posix
+    | TitleAck (GqlData String)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -151,11 +157,13 @@ init global flags =
             , tension_data = Loading
             , tension_form = initTensionForm flags.param2 global.session.user
             , tension_result = NotAsked
+            , title_result = NotAsked
             , comment_form = initCommentPatchForm global.session.user
             , comment_result = NotAsked
             , inputViewMode = Write
             , node_action = NoOp
             , isModalActive = False
+            , isTitleEdit = False
             }
 
         cmds =
@@ -247,7 +255,7 @@ update global msg model =
                 newModel =
                     { model | tension_data = result }
             in
-            ( newModel, Cmd.none, Cmd.none )
+            ( newModel, Cmd.none, Ports.bulma_driver "" )
 
         -- Page Action
         ChangeTensionPost field value ->
@@ -397,6 +405,41 @@ update global msg model =
                 _ ->
                     ( { model | comment_result = result }, Cmd.none, Cmd.none )
 
+        DoChangeTitle ->
+            -- init form
+            ( { model | isTitleEdit = True }, Cmd.none, Cmd.none )
+
+        CancelTitle ->
+            -- init form
+            ( { model | isTitleEdit = False }, Cmd.none, Cmd.none )
+
+        SubmitTitle form time ->
+            let
+                newForm =
+                    { form | post = Dict.insert "createdAt" (fromTime time) form.post }
+            in
+            ( model, patchTitle apis.gql newForm TitleAck, Cmd.none )
+
+        TitleAck result ->
+            case result of
+                Success title ->
+                    let
+                        tension_d =
+                            case model.tension_data of
+                                Success t ->
+                                    Success { t | title = title }
+
+                                other ->
+                                    other
+
+                        resetForm =
+                            initTensionForm model.tensionid global.session.user
+                    in
+                    ( { model | tension_data = tension_d, tension_form = resetForm, title_result = result, isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
+
+                _ ->
+                    ( { model | title_result = result }, Cmd.none, Cmd.none )
+
         ChangeInputViewMode viewMode ->
             ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
 
@@ -523,7 +566,37 @@ viewTension u t model =
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
             [ div [ class "column is-8" ]
-                [ h1 [ class "title tensionTitle" ] [ text t.title ]
+                [ h1 [ class "title tensionTitle" ] <|
+                    case model.isTitleEdit of
+                        True ->
+                            [ div [ class "field is-grouped" ]
+                                [ p [ class "control is-expanded" ]
+                                    [ input
+                                        [ class "input"
+                                        , type_ "text"
+                                        , placeholder "Title*"
+                                        , value (Dict.get "title" model.tension_form.post |> withDefault t.title)
+                                        , onInput (ChangeTensionPost "title")
+                                        ]
+                                        []
+                                    ]
+                                , p [ class "control buttons" ]
+                                    [ span [ class "button has-text-weight-normal is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
+                                    , span [ class "button has-text-weight-normal is-success is-small", onClick (Submit <| SubmitTitle model.tension_form) ] [ text T.updateTitle ]
+                                    ]
+                                ]
+                            , case model.title_result of
+                                Failure err ->
+                                    viewGqlErrors err
+
+                                _ ->
+                                    div [] []
+                            ]
+
+                        False ->
+                            [ text t.title
+                            , span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ text T.edit ]
+                            ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
                         [ t.status |> TensionStatus.toString |> text ]
@@ -791,14 +864,14 @@ viewUpdateInput uctx comment form result =
                             , classList [ ( "is-danger", True ), ( "is-loading", isLoading ) ]
                             , onClick CancelCommentPatch
                             ]
-                            [ text "Cancel" ]
+                            [ text T.cancel ]
                         , button
                             [ class "button has-text-weight-semibold"
                             , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (Submit <| SubmitCommentPatch form)
                             ]
-                            [ text "Update comment" ]
+                            [ text T.updateComment ]
                         ]
                     ]
                 ]

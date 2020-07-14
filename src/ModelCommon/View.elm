@@ -85,8 +85,8 @@ mediaTension baseUri focus tension navigate =
                     ]
                     [ text tension.title ]
                 , span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments) ] <|
-                    if n_comments > 0 then
-                        [ Fa.icon0 "fas fa-comment-dots" (String.fromInt n_comments) ]
+                    if n_comments > 1 then
+                        [ Fa.icon0 "fas fa-comment-dots" (String.fromInt (n_comments - 1)) ]
 
                     else
                         []

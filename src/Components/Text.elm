@@ -23,6 +23,16 @@ checkItOut =
     "Check it out."
 
 
+edit : String
+edit =
+    "Edit"
+
+
+cancel : String
+cancel =
+    "Cancel"
+
+
 
 -- Genral
 
@@ -385,6 +395,16 @@ openedThe =
 commentedThe : String
 commentedThe =
     "commented the"
+
+
+updateTitle : String
+updateTitle =
+    "Update title"
+
+
+updateComment : String
+updateComment =
+    "Update comment"
 
 
 
