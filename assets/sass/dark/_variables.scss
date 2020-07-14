@@ -10,13 +10,11 @@ $text-strong: darken($text, 5);
 $border-color: $grey;
 $border-width: 2px;
 
-$body-background-color: #434e5b; // #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
-//$body-background-color: #4e5b6a; // #2e424bf2; darken($grey-darker, 4);
-$header-background-color: #44444d; // #24292e;
 $background: $grey-darker;
+$body-background-color: #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);
+$header-background-color: $grey-dark; // #37404d; // #44444d; // #24292e;
+$comment-header-background-color: lighten($header-background-color, 2);
 $footer-background-color: $background;
-
-$comment-header-background-color: #35434d;
 
 $button-background-color: $background;
 $button-border-color: lighten($button-background-color, 15);
@@ -30,6 +28,7 @@ $box-color: $text;
 $box-background-color: $grey-dark;
 $box-shadow: none;
 
+// Markdown
 $code-color: $grey-dark;
 
 //$link: $turquoise;

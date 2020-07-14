@@ -1,8 +1,10 @@
 $menu-left-background-color: #fafafa;
 $menu-left-border-color: #e5e5e5;
 
-$comment-header-background-color: #c6daf0;
+$header-background-color: #fafbfc;
+$comment-header-background-color: $header-background-color:;
 
+// Markdown
 $code-color: $grey;
 
 
@@ -27,5 +29,3 @@ $navbar-dropdown-item-hover-color: $grey-lighter;
 $navbar-dropdown-item-hover-background-color: hsl(210.7, 21.3%, 41.4%);
 $navbar-dropdown-item-active-background-color: transparent;
 $navbar-dropdown-item-active-color: $_link;
-
-$header-background-color: #fafbfc;

@@ -562,6 +562,9 @@ viewTension u t model =
 
                 LoggedOut ->
                     viewJoinNeeded model.node_focus
+
+        username =
+            model.tension_form.uctx.username
     in
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
@@ -595,7 +598,11 @@ viewTension u t model =
 
                         False ->
                             [ text t.title
-                            , span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ text T.edit ]
+                            , if t.createdBy.username == username then
+                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ text T.edit ]
+
+                              else
+                                span [] []
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]

@@ -221,22 +221,17 @@ html.has-modal-active {
 
 #helperBar {
     background-color: $header-background-color;
-
     & > .column {
         padding-top: 1.5rem !important;
         padding-bottom: 0 !important;
     }
-
     & nav > .level {
         margin-top: 1rem;
-        //margin-bottom: 1.75rem;
     }
 
     .tabs {
         font-size: 0.85rem;
     }
-
-
 }
 
 #footBar {
@@ -259,6 +254,7 @@ html.has-modal-active {
 
 #welcome {
     //background-color: #24292e;
+    filter: invert(5%);
     .title {
         margin-bottom: 2.9rem !important;
         line-height: 1.1 !important;
@@ -307,9 +303,7 @@ html.has-modal-active {
     li > a {
         padding-right: 0;
     }
-
   }
-
 }
 
 
@@ -346,7 +340,6 @@ html.has-modal-active {
         margin-top: 1.5rem !important;
         padding-top: 1.5rem !important;
     }
-
 }
 
 #profile {
@@ -395,9 +388,7 @@ html.has-modal-active {
             top: -5px;
             left: 5px;
         }
-
     }
-
 }
 
 #tensionPage {
@@ -428,14 +419,14 @@ html.has-modal-active {
 
         .message {
             background-color: $body-background-color !important;
-            border: 1px solid  $grey-darker  !important;
+            border: 1px solid  $dark  !important;
 
             .tabs a {
                 text-decoration: none !important;
             }
             .message-header {
                 background-color: $comment-header-background-color !important;
-                border-bottom: solid 1px $grey-darker !important;
+                border-bottom: solid 1px $dark !important;
                 .ellipsis {
                     opacity: 0.75 !important;
                 }
@@ -459,7 +450,7 @@ html.has-modal-active {
 			}
 			.message-header:before {
 				//border-color: rgba(52, 60, 61, 0);
-				border-right-color: $grey-darker;
+				border-right-color: $dark;
 				border-width: 9px;
 				margin-top: -9px;
 			}
@@ -467,7 +458,6 @@ html.has-modal-active {
             .message-body {
                 padding: 1rem 0.9rem !important;
             }
-
         }
 
         .tensionCommentInput {
@@ -610,7 +600,6 @@ html.has-modal-active {
 }
 #searchBarTensions {
     padding-top: 5px;
-
     .input {
         font-weight: 700 !important;
     }
@@ -797,10 +786,9 @@ html.has-modal-active {
         //position: absolute;
         //bottom: 12px;
         //right: -19px;
-        ///--
+        //-\\
         margin-left: -4px;
         margin-right: -4px;
-
         font-size: 13px;
         .far.fa-circle {
             color: black;
@@ -867,7 +855,6 @@ html.has-modal-active {
         opacity: 0;
         //transition: visibility 0s 1s, opacity 1s; // fadOut transition don't works ?
     }
-
 }
 
 #canvasButtons {
@@ -896,7 +883,6 @@ html.has-modal-active {
     .modal-card-body {
         background-color: #fff !important;
     }
-
 
     .modal-card-title,
     .modal-card-head,
@@ -993,7 +979,6 @@ html.has-modal-active {
         background-color: #dce3e3;
         color: black;
     }
-
 }
 
 .subForm {
@@ -1184,5 +1169,3 @@ html.has-modal-active {
 button::-moz-focus-inner { // remove outline inside button !
     border: 0 !important;
 }
-
-
