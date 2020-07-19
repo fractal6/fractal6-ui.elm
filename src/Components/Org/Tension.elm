@@ -1,5 +1,6 @@
 module Components.Org.Tension exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
@@ -14,6 +15,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
@@ -124,6 +126,7 @@ type Msg
       -- JS Interop
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
+    | Navigate String
       -- Util
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
@@ -493,8 +496,19 @@ update global msg model =
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
-        DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Ports.close_modal )
+        DoCloseModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | isModalActive = False }, gcmd, Ports.close_modal )
+
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1052,7 +1066,7 @@ setupActionModal isModalActive action =
                     viewGqlErrors [ err ]
 
                 ActionAuthNeeded ->
-                    viewAuthNeeded
+                    viewAuthNeeded (DoCloseModal (Route.toHref Route.Login))
 
                 other ->
                     div [] [ text "Action not implemented." ]

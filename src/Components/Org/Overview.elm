@@ -22,6 +22,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
@@ -1109,8 +1110,9 @@ view_ global model =
             global.session.user
             model.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
-        , div [ class "columns is-centered is-variable is-4" ]
+        , div [ class "columns is-centered is-variable is-5" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
+                --[ div [ class "column is-5-desktop is-5-widescreen is-5-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
@@ -1118,6 +1120,7 @@ view_ global model =
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
+                --, div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
                         [ viewActivies model ]
@@ -1194,7 +1197,7 @@ viewSearchBar odata maybePath qs =
         ]
         [ div [ class ("control has-icons-left is-expanded dropdown" ++ isActive) ]
             [ input
-                [ class "input is-small autofocus"
+                [ class "input is-small"
                 , type_ "text"
                 , placeholder "Find a Role or Circle"
                 , value qs.pattern
@@ -1370,7 +1373,7 @@ viewNodeDoc data focus =
                     , i [ class "far fa-circle fa-stack-2x" ] []
                     ]
                 , span [ class "nodeName" ] [ text "\u{00A0}", text " ", text focus.name ]
-                , span [ class "is-pulled-right button-light", onClick (DoEditAbout focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ]
+                , span [ class "is-pulled-right button-light", onClick (DoEditAbout focus) ] [ Fa.icon0 "fas fa-xs fa-pen" "" ]
                 ]
             , case data.about of
                 Just ab ->
@@ -1384,7 +1387,7 @@ viewNodeDoc data focus =
             Just mandate ->
                 div [ class "mandateDoc" ]
                     [ h1 [ class "subtitle is-5" ]
-                        [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-edit" "" ] ]
+                        [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-xs fa-pen" "" ] ]
                     , viewMandateSection T.purposeH (Just mandate.purpose)
                     , viewMandateSection T.responsabilitiesH mandate.responsabilities
                     , viewMandateSection T.domainsH mandate.domains
@@ -1393,7 +1396,7 @@ viewNodeDoc data focus =
 
             Nothing ->
                 div [ class "is-italic" ]
-                    [ text "No mandate for this circle.", span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-md fa-edit" "" ] ]
+                    [ text "No mandate for this circle.", span [ class "is-pulled-right button-light", onClick (DoEditMandate focus) ] [ Fa.icon0 "fas fa-md fa-pen" "" ] ]
         ]
 
 
@@ -1526,7 +1529,7 @@ viewActionStep model action =
             viewGqlErrors [ err ]
 
         ActionAuthNeeded ->
-            viewAuthNeeded
+            viewAuthNeeded (DoCloseModal (Route.toHref Route.Login))
 
 
 viewTensionStep : TensionStep TensionForm -> SubmitCircleData -> Html Msg

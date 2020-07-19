@@ -8,7 +8,8 @@ $text-light: lighten($text, 10);
 $text-strong: darken($text, 5);
 
 $border-color: $grey;
-$border-width: 2px;
+$border-width: 1px;
+$border-width-focus: 2px;
 
 $background: $grey-darker;
 $body-background-color: #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);

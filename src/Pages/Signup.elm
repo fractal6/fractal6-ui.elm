@@ -229,6 +229,7 @@ viewLogin global model =
                                     , onInput (ChangeUserPost "password")
                                     ]
                                     []
+                                , p [ class "help" ] [ text "Password must be 8 characters or longer." ]
                                 ]
                             ]
                         ]

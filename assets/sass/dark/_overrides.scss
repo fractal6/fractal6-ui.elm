@@ -36,7 +36,7 @@ a {
   &.is-focused,
   &:active,
   &:focus {
-    box-shadow: 0 0 0 2px rgba($button-focus-border-color, 0.5);
+    box-shadow: 0 0 0 $border-width-focus rgba($button-focus-border-color, 0.5);
   }
   @each $name, $pair in $colors {
     $color: nth($pair, 1);
@@ -53,7 +53,7 @@ a {
       &:active,
       &:focus {
         border-color: $color;
-        box-shadow: 0 0 0 2px rgba($color, 0.5);
+        box-shadow: 0 0 0 $border-width-focus rgba($color, 0.5);
       }
     }
   }
@@ -91,7 +91,7 @@ a {
 
 .input[disabled],
 .textarea[disabled] {
-  border-width: 1px !important;
+  border-width: $border-width !important;
   background-color: $white-ter !important;
 }
 
@@ -295,6 +295,5 @@ input, textarea {
     &:active, &:focus {
         background-color: none !important;
     }
-
 }
 

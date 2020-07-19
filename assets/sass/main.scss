@@ -231,6 +231,7 @@ html.has-modal-active {
 
     .tabs {
         font-size: 0.85rem;
+        overflow-x: hidden;
     }
 }
 
@@ -880,7 +881,13 @@ html.has-modal-active {
     visibility: hidden;
 
     .modal-content, .modal-card {
-        width: 680px;
+        @media (min-width: 680px){
+            min-width: 680px !important;
+        }
+        @media (max-width: 768px){
+            width: 96% !important;
+            margin: 2% 2% !important;
+        }
     }
 
     .card {

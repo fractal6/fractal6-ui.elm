@@ -19,7 +19,7 @@ view user =
                 [ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ Logo.logo_fractal
-                    , span [ class "is-subtitle is-size-7 has-text-warning", attribute "style" "padding-top: 15px; margin-left: -2px;" ] [ text "Alpha" ]
+                    , span [ class "is-subtitle is-size-7 has-text-warning", attribute "style" "padding-top: 15px; margin-left: -5px;" ] [ text "Alpha" ]
 
                     --, span [ class "is-size-5" ] [ text "Fractal6" ]
                     ]

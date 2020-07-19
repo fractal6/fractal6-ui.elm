@@ -128,7 +128,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "explore", class "columns" ]
-        [ div [ class "column is-offset-2 is-5 " ]
+        [ div [ class "column is-offset-2 is-6" ]
             [ div [ class "section" ]
                 [ viewOrgas model ]
             ]
@@ -169,26 +169,31 @@ viewOrgaMedia node =
     div [ class "media" ]
         [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar node.name ] ]
         , div [ class "media-content" ]
-            [ div [ class "" ]
-                [ div [ class "" ] [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ] ]
-                , case node.about of
-                    Just ab ->
-                        div [ class "is-italic" ] [ text ab ]
+            [ div [ class "columns" ]
+                [ div [ class "column is-10" ]
+                    [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ]
+                    , case node.about of
+                        Just ab ->
+                            div [ class "is-italic" ] [ text ab ]
 
-                    Nothing ->
-                        div [ class "is-italic" ] [ text "" ]
+                        Nothing ->
+                            div [ class "is-italic" ] [ text "" ]
+                    ]
+                , span [ class "column is-2" ]
+                    [ div [ class "level levelExplore" ]
+                        [ div [ class "level-item" ]
+                            [ span [ class "tags has-addons" ]
+                                [ span [ class "tag is-light" ] [ text "member" ], span [ class "tag is-white" ] [ text n_member ] ]
+                            ]
+                        , div [ class "level-item" ]
+                            [ span [ class "tags has-addons" ]
+                                [ span [ class "tag is-light" ] [ text "guest" ], span [ class "tag is-white" ] [ text n_guest ] ]
+                            ]
+                        ]
+                    ]
                 ]
             ]
-        , div [ class "media-right" ]
-            [ div [ class "level levelExplore" ]
-                [ div [ class "level-item" ]
-                    [ span [ class "tags has-addons" ]
-                        [ span [ class "tag is-light" ] [ text "member" ], span [ class "tag is-white" ] [ text n_member ] ]
-                    ]
-                , div [ class "level-item" ]
-                    [ span [ class "tags has-addons" ]
-                        [ span [ class "tag is-light" ] [ text "guest" ], span [ class "tag is-white" ] [ text n_guest ] ]
-                    ]
-                ]
-            ]
+
+        --, div [ class "media-right" ]
+        --    []
         ]

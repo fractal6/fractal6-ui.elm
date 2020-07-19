@@ -20,6 +20,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
@@ -89,6 +90,7 @@ type Msg
       -- JS Interop
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
+    | Navigate String
 
 
 
@@ -268,8 +270,19 @@ update global msg model =
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
-        DoCloseModal _ ->
-            ( { model | isModalActive = False }, Cmd.none, Ports.close_modal )
+        DoCloseModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | isModalActive = False }, gcmd, Ports.close_modal )
+
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -457,7 +470,7 @@ setupActionModal isModalActive action =
                     viewGqlErrors [ err ]
 
                 ActionAuthNeeded ->
-                    viewAuthNeeded
+                    viewAuthNeeded (DoCloseModal (Route.toHref Route.Login))
 
                 other ->
                     div [] [ text "Action not implemented." ]

@@ -16,9 +16,10 @@ module Components.Loading exposing
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
+import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
-import Html exposing (Html, a, div, img, p, text)
+import Html exposing (Html, a, button, div, img, p, text)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Http
 import Json.Decode as JD
@@ -183,12 +184,16 @@ spinner =
         []
 
 
-viewAuthNeeded : Html msg
-viewAuthNeeded =
+viewAuthNeeded : msg -> Html msg
+viewAuthNeeded msg =
     div [ class "box has-background-info" ]
         [ p []
             [ text "Please "
-            , a [ class "button is-small", href <| Route.toHref Route.Login ] [ text "login" ]
+            , button
+                [ class "button is-small"
+                , onClickPD msg
+                ]
+                [ text "login" ]
             , text " or create an account to perform this action."
             ]
         ]
