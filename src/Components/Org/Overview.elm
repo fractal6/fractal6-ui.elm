@@ -1112,7 +1112,6 @@ view_ global model =
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered is-variable is-5" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
-                --[ div [ class "column is-5-desktop is-5-widescreen is-5-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas maybeOrg
                 , br [] []
@@ -1120,7 +1119,6 @@ view_ global model =
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
-                --, div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
                         [ viewActivies model ]
@@ -1782,7 +1780,7 @@ updateNodeForm field value form =
                             newData =
                                 { data
                                     | name = Just value
-                                    , nameid = makeNewNodeTitle value
+                                    , nameid = makeNewNodeId value
                                 }
                         in
                         { form | post = newPost, data = newData }
@@ -1814,8 +1812,8 @@ updateNodeForm field value form =
             { form | post = Dict.insert field value form.post }
 
 
-makeNewNodeTitle : String -> Maybe String
-makeNewNodeTitle name =
+makeNewNodeId : String -> Maybe String
+makeNewNodeId name =
     name
         |> String.toLower
         |> String.trim
@@ -1824,7 +1822,7 @@ makeNewNodeTitle name =
                 if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
                     '-'
 
-                else if List.member c [ '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
+                else if List.member c [ '@', '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
                     '_'
 
                 else

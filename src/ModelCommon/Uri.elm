@@ -188,7 +188,7 @@ nameidFromFlags flags =
 -}
 guestIdCodec : String -> String -> String
 guestIdCodec rootnameid username =
-    String.join "#" [ rootnameid, "", username ]
+    String.join "#" [ rootnameid, "", "@" ++ username ]
 
 
 {-|
