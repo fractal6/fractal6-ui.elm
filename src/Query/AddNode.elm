@@ -4,6 +4,7 @@ module Query.AddNode exposing
     , buildComment
     , buildMandate
     , buildNodeFragmentRef
+    , tensionFromForm
     )
 
 import Dict exposing (Dict)

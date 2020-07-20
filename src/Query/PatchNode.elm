@@ -15,7 +15,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
-import Query.AddNode exposing (buildMandate)
+import Query.AddNode exposing (buildMandate, tensionFromForm)
 import RemoteData exposing (RemoteData)
 
 
@@ -107,6 +107,8 @@ buildNodePatch f =
                                     (\u -> { u | username = Present uname })
                             )
                         |> fromMaybe
+                , tensions_in =
+                    [ Input.buildTensionRef (tensionFromForm f) ] |> Present
             }
         )
         |> Present
