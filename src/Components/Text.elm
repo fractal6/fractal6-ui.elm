@@ -62,6 +62,11 @@ circleH =
     "Circle"
 
 
+parentH : String
+parentH =
+    "Parent"
+
+
 firstLinkH : String
 firstLinkH =
     "First Link"

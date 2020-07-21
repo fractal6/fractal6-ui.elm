@@ -52,6 +52,7 @@ type alias NodesQuickSearch =
     { pattern : String
     , lookup : Array Node
     , idx : Int
+    , visible : Bool
 
     --, lut : Qsearch.Table Node
     --, lookup : List Node

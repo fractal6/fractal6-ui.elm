@@ -11,7 +11,7 @@ import Components.Text as T
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMaybeData)
-import Extra.Events exposing (onEnter, onKeydown, onTab)
+import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Form
 import Form.EditCircle
 import Form.NewCircle
@@ -26,7 +26,7 @@ import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import List.Extra as LE
@@ -152,6 +152,8 @@ type Msg
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
       -- Quick search
+    | LookupFocus String (Maybe LocalGraph)
+    | LookupBlur
     | ChangePattern String
     | ChangeLookup Nodes_
     | SearchKeyDown Int
@@ -201,7 +203,7 @@ init global flags =
         --d2 = Debug.log "newfocus" [ newFocus ]
         -- QuickSearch
         qs =
-            session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0 }
+            session.node_quickSearch |> withDefault { pattern = "", lookup = Array.empty, idx = 0, visible = False }
 
         -- Model init
         model =
@@ -332,6 +334,41 @@ update global msg model =
                     ( { model | data = result }, Cmd.none, send (UpdateSessionData Nothing) )
 
         -- Search
+        LookupFocus pattern path_m ->
+            case pattern of
+                "" ->
+                    case path_m of
+                        Just path ->
+                            case model.orga_data of
+                                Success data ->
+                                    let
+                                        qs =
+                                            model.node_quickSearch
+
+                                        newLookup =
+                                            path.focus.children
+                                                |> List.map (\n -> Dict.get n.nameid data)
+                                                |> List.filterMap identity
+                                                |> Array.fromList
+                                    in
+                                    ( { model | node_quickSearch = { qs | lookup = newLookup, visible = True } }, Cmd.none, Cmd.none )
+
+                                _ ->
+                                    ( model, Cmd.none, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        LookupBlur ->
+            let
+                qs =
+                    model.node_quickSearch
+            in
+            ( { model | node_quickSearch = { qs | visible = False } }, Cmd.none, Cmd.none )
+
         ChangePattern pattern ->
             let
                 qs =
@@ -344,7 +381,7 @@ update global msg model =
                     else
                         qs.idx
             in
-            ( { model | node_quickSearch = { qs | pattern = pattern, idx = newIdx } }
+            ( { model | node_quickSearch = { qs | pattern = pattern, idx = newIdx, visible = True } }
             , Cmd.none
             , Ports.searchNode pattern
             )
@@ -356,10 +393,7 @@ update global msg model =
             in
             case nodes_ of
                 Ok nodes ->
-                    ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }
-                    , Cmd.none
-                    , Cmd.none
-                    )
+                    ( { model | node_quickSearch = { qs | lookup = Array.fromList nodes } }, Cmd.none, Cmd.none )
 
                 Err err ->
                     ( model, Cmd.none, Cmd.none )
@@ -1110,7 +1144,7 @@ view_ global model =
             global.session.user
             model.path_data
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
-        , div [ class "columns is-centered is-variable is-5" ]
+        , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas maybeOrg
@@ -1186,7 +1220,23 @@ viewSearchBar odata maybePath qs =
                 |> withDefault (Err "No path returned")
 
         isActive =
-            ternary (Array.length qs.lookup > 0) " is-active " ""
+            ternary (True && qs.visible && Array.length qs.lookup > 0) " is-active " ""
+
+        sortedLookup =
+            qs.lookup
+                |> Array.toList
+                |> List.sortWith
+                    (\n1 n2 ->
+                        case ( n1.type_, n2.type_ ) of
+                            ( NodeType.Circle, NodeType.Role ) ->
+                                GT
+
+                            ( NodeType.Role, NodeType.Circle ) ->
+                                LT
+
+                            _ ->
+                                compare n1.name n2.name
+                    )
     in
     div
         [ id "searchBarOverview"
@@ -1200,6 +1250,9 @@ viewSearchBar odata maybePath qs =
                 , placeholder "Find a Role or Circle"
                 , value qs.pattern
                 , onInput ChangePattern
+                , onFocus (LookupFocus qs.pattern maybePath)
+                , onClick (LookupFocus qs.pattern maybePath)
+                , onBlur LookupBlur
                 , onKeydown SearchKeyDown
 
                 --, list "searchList" -- impossible interaction !
@@ -1207,17 +1260,16 @@ viewSearchBar odata maybePath qs =
                 []
             , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
             , div [ id "searchList", class "dropdown-menu" ]
-                [ qs.lookup
-                    |> Array.indexedMap
+                [ sortedLookup
+                    |> List.indexedMap
                         (\i n ->
                             let
                                 isSelected =
                                     ternary (i == qs.idx) " is-active " ""
                             in
-                            --a [ href (uriFromNameid OverviewBaseUri n.nameid) ]
-                            tr
-                                [ class ("drpdwn-item" ++ isSelected), onClick (NodeClicked n.nameid) ]
-                            <|
+                            [ tr
+                                [ class ("drpdwn-item" ++ isSelected), onClickPD (NodeClicked n.nameid) ]
+                              <|
                                 [ th [] [ text n.name ] ]
                                     ++ (case n.type_ of
                                             NodeType.Circle ->
@@ -1230,11 +1282,22 @@ viewSearchBar odata maybePath qs =
                                                 , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
                                                 ]
                                        )
+                            ]
+                                |> List.append
+                                    (if i == 0 && n.type_ == NodeType.Role then
+                                        [ p [ class "help is-aligned-center is-size-5" ] [ text " --- Role ---" ] ]
+
+                                     else if n.type_ == NodeType.Circle && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Role) |> withDefault False) == True then
+                                        [ p [ class "help is-aligned-center is-size-5" ] [ text "--- Circle ---" ] ]
+
+                                     else
+                                        []
+                                    )
                         )
-                    |> Array.toList
+                    |> List.concat
                     |> tbody []
                     |> List.singleton
-                    |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.circleH ], th [] [ text T.firstLinkH ] ] ] ]
+                    |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.parentH ], th [] [ text T.firstLinkH ] ] ] ]
                     |> div [ class "dropdown-content table is-fullwidth" ]
                 ]
             , case node_ of

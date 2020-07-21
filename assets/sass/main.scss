@@ -229,6 +229,10 @@ html.has-modal-active {
     .tabs {
         font-size: 0.85rem;
         overflow-x: hidden;
+
+        &.is-boxed a {
+            border-radius: 8px 8px 0 0 !important;
+        }
     }
 }
 
@@ -617,15 +621,15 @@ html.has-modal-active {
     width: 99.9% !important;
     padding: 0 !important;
     padding-bottom: 0 !important;
+    max-height: 425px !important;
+    overflow-y: auto !important;
     &>div {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        max-height: 288px !important;
-        overflow-y: auto;
     }
 
     color: #24292e !important;
-    background-color: #fff9d8a3 !important;
+    background-color: #fff9d8dd !important;
 
     & .table.is-fullwidth {
         flex-grow: 1;
