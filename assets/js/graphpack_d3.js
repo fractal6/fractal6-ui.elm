@@ -4,6 +4,7 @@ import { timer } from 'd3-timer'
 import { interpolateZoom } from 'd3-interpolate'
 import { easePolyOut, easePolyInOut } from 'd3-ease'
 import { hierarchy, pack } from 'd3-hierarchy'
+import { shadeColor, setpixelated } from './custom.js'
 
 
 const d3 = Object.assign(
@@ -18,14 +19,6 @@ const d3 = Object.assign(
 	},
 )
 
-
-const setpixelated = (ctx2d, v) => {
-    ctx2d['imageSmoothingEnabled'] = v;       /* standard */
-    ctx2d['oImageSmoothingEnabled'] = v;      /* Opera */
-    ctx2d['webkitImageSmoothingEnabled'] = v; /* Safari */
-    ctx2d['msImageSmoothingEnabled'] = v;     /* IE */
-    //ctx2d['mozImageSmoothingEnabled'] = v;    /* Firefox (deprecated) */
-}
 
 const NodeType = {
     Circle: "Circle",
@@ -57,7 +50,6 @@ const formatGraph = dataset =>  {
     });
 
     dataset.forEach( aData => {
-
         if(aData.parentid) {
             dataDict[aData.parentid].children.push(dataDict[aData.nameid])
         } else {
@@ -125,10 +117,10 @@ export const GraphPack = {
     coordinatorRoleColor: "#ffdaa1", // ~orange
     peerRoleColor: "#edf5ff",// "#f0fff0", // "#FFFFF9"
     guestColor: "#f4fdf5", // ~yellow
-    focusCircleColor: "#375a7fcc", // blue>"#368ed3"
-    hoverCircleColor: "#3f3f3faa", //  grey-black>"#3f3f3f"
-    hoverCircleWidth: 1.66,
-    focusCircleWidth: 1.66*2, // warning, can break stroke with canvas drawing.
+    focusCircleColor: "#375a7fdd", // blue>"#368ed3"
+    hoverCircleColor: "#3f3f3fdd", //  grey-black>"#3f3f3f"
+    hoverCircleWidth: 2,
+    focusCircleWidth: 2*2.5, // warning, can break stroke with canvas drawing.
 
     // Html element ID
     canvasParentId: "canvasParent",
@@ -254,9 +246,9 @@ export const GraphPack = {
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
         this.mobileSize = (window.innerWidth < 768 ? true : false);
 
+        this.diameter = Math.min(this.width*0.97, this.height*0.97);
         this.centerX = this.width/2;
         this.centerY = this.height/2;
-        this.diameter = Math.min(this.width*0.97, this.height*0.97);
         this.zoomCtx = {
             // Init at CenterX, centerY
             centerX: this.centerX,
@@ -320,8 +312,12 @@ export const GraphPack = {
             // On the hidden canvas each rectangle gets a unique color.
             circleColor = node.color;
         } else {
+            var grd = ctx2d.createRadialGradient(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*0.1, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*2);
             if (type_ === NodeType.Circle) {
-                circleColor = this.colorCircle(node.depth)
+                //circleColor = this.colorCircle(node.depth)
+                var c = this.colorCircle(node.depth);
+                grd.addColorStop(0.25, this.colorCircle(node.depth));
+                grd.addColorStop(1, this.colorCircle(node.depth+1));
             } else if (type_ === NodeType.Role) {
                 // Check role type code color
                 if (role_type === RoleType.Guest) {
@@ -331,9 +327,19 @@ export const GraphPack = {
                 } else {
                     circleColor = this.peerRoleColor;
                 }
+                grd.addColorStop(0, circleColor);
+                grd.addColorStop(1, shadeColor(circleColor, -5));
             } else {
                 console.warn("Node type unknonw", type_);
             }
+
+            // Add opacity
+            //if (node !== this.focusedNode) {
+            //    if (!this.focusedNode.children || !(this.focusedNode.children.map(n => n.data.nameid).includes(node.data.nameid))) {
+            //        circleColor += "aa";
+            //    }
+            //}
+            circleColor = grd;
         }
 
         // Draw circle
@@ -344,7 +350,7 @@ export const GraphPack = {
         ctx2d.fill();
 
         if (!isHidden) {
-            if (node === this.hoveredNode) {
+            if (node === this.focusedNode) {
                 var hoverWidth = this.focusCircleWidth;
                 var hoverColor = this.focusCircleColor;
                 // Draw border
@@ -648,10 +654,10 @@ export const GraphPack = {
 
         // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
         // This will return that pixel's color
-        var col = hiddenCtx2d.getImageData(p.mouseX, p.mouseY, 1, 1).data;
+        var pixel = hiddenCtx2d.getImageData(p.mouseX, p.mouseY, 1, 1).data;
         //Our map uses these rgb strings as keys to nodes.
-        var colString = "rgb(" + col[0] + "," + col[1] + ","+ col[2] + ")";
-        var node = this.colToCircle[colString];
+        var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ")";
+        var node = this.colToCircle[color];
         if (node) {
             this.addNodeCtx(node);
         }
@@ -667,7 +673,7 @@ export const GraphPack = {
             return false
         }
 
-        // CLear Border
+        // Clear Border
         var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
         if (clearBorder) {
             this.clearNodeHover(this.hoveredNode);
@@ -721,10 +727,14 @@ export const GraphPack = {
             hoverWidth = this.hoverCircleWidth;
         }
 
+        // cant get the original colors !?!
+        //var pixel = ctx2d.getImageData(node.ctx.centerX+node.r+hoverWidth*30, node.ctx.centerY, 1, 1).data;
+        //var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ","+ pixel[3] + ")";
+
         // Clear Circle Border
         ctx2d.beginPath();
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-            node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
+            node.ctx.rayon+0.1+hoverWidth/2, 0, 2 * Math.PI, true);
         ctx2d.lineWidth = hoverWidth*1.75;
         ctx2d.strokeStyle = (node.depth == 0)? this.backgroundColor : this.colorCircle(node.depth-1);
         ctx2d.stroke();
@@ -978,7 +988,8 @@ export const GraphPack = {
             }
 
             if (isUpdated) {
-                this.clearNodeTooltip();
+                //this.clearNodeTooltip();
+                this.clearNodeHover(node);
                 //this.zoomToNode(node); @DEBUG: change behaviour, zoom from elm init
                 this.nodeClickedFromJs(node);
             }

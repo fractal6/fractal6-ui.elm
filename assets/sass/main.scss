@@ -225,9 +225,6 @@ html.has-modal-active {
         padding-top: 1.5rem !important;
         padding-bottom: 0 !important;
     }
-    & nav > .level {
-        margin-top: 1rem;
-    }
 
     .tabs {
         font-size: 0.85rem;
@@ -320,18 +317,6 @@ html.has-modal-active {
 
   /* is-paddingless compatibility */
   padding-top: 1.25rem;
-  /*********************************/
-
-  // the first children
-  .is-child:first-child {
-    padding-right: $size-small !important;
-  }
-
-  // all children except the first
-  .is-child + .is-child {
-    padding-right: $size-small !important;
-    padding-left: $size-small !important;
-  }
 
 }
 
