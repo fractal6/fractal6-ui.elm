@@ -1285,10 +1285,10 @@ viewSearchBar odata maybePath qs =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Role then
-                                        [ p [ class "help is-aligned-center is-size-5" ] [ text " --- Role ---" ] ]
+                                        [ p [ class "help is-aligned-center is-size-6" ] [ text " --- Role ---" ] ]
 
                                      else if n.type_ == NodeType.Circle && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Role) |> withDefault False) == True then
-                                        [ p [ class "help is-aligned-center is-size-5" ] [ text "--- Circle ---" ] ]
+                                        [ p [ class "help is-aligned-center is-size-6" ] [ text "--- Circle ---" ] ]
 
                                      else
                                         []
@@ -1770,7 +1770,7 @@ getNewNodeStepFromAuthForm form =
         roles ->
             let
                 nearestNid =
-                    ternary (form.target.type_ == NodeType.Circle)
+                    ternary (form.target.parent == Nothing)
                         form.target.nameid
                         (form.target.parent |> Maybe.map (\n -> n.nameid) |> withDefault form.target.nameid)
 
