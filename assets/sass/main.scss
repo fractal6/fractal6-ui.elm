@@ -102,14 +102,11 @@ hr {
 
 // Modal
 
-html.has-modal-active {
-    // @DEBUG: make a unpleaser window glitch when scollbar diseaper !
+html.has-modal-active, html.has-modal-active2 {
     overflow: hidden !important;
     padding-right: 14px; /* Avoid width reflow */
-    //position: fixed;
-    //width: 100%;
 }
-#navbarTop.has-modal-active {
+#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
     .navbar {
         padding-right: 14px; /* Avoid width reflow */
     }
@@ -175,10 +172,6 @@ html.has-modal-active {
 
 .is-flex-grow {
     flex-grow: 1;
-}
-
-.modal-close {
-    background-color: #952222b8 !important;
 }
 
 /*
@@ -403,7 +396,7 @@ html.has-modal-active {
 
     .tensionComments {
         .media + .media {
-            margin-top: 1.5rem !important;
+            margin-top: 2rem !important;
             border: 0 !important;
         }
 
@@ -628,18 +621,27 @@ html.has-modal-active {
         padding-bottom: 0 !important;
     }
 
-    color: #24292e !important;
-    background-color: #fff9d8dd !important;
+    .table {
+        background-color: #fffffdf2 !important;
+        line-height: 1.4 !important;
+        font-size: 0.775rem !important;
+
+        .help {
+            border-bottom: 1px solid #22222222;
+        }
+    }
 
     & .table.is-fullwidth {
         flex-grow: 1;
         flex-shrink: 1;
         display: inline-table;
+        background-color: #fffffdf2 !important;
     }
 
     & thead th,
     & thead td {
         color: #acb6c1 !important;
+        background-color: #eeeeedf2 !important;
     }
     & tbody th,
     & tbody td {
@@ -647,15 +649,6 @@ html.has-modal-active {
         padding-top: 0.4rem;
         padding-bottom: 0.4rem;
         color: #24292e !important;
-    }
-
-    & a, tr,
-    & div,
-    & span {
-        color: #24292e !important;
-        background-color: #fff9d880 !important;
-        line-height: 1.4 !important;
-        font-size: 0.775rem !important;
     }
 
     & a:hover,& a:focus,
@@ -667,7 +660,7 @@ html.has-modal-active {
      & a.is-active,
      & tr.is-active,
      & span.is-active {
-        background-color: #d5ceb5 !important;
+        background-color: #dfdfdf !important;
     }
 
 }
@@ -865,6 +858,10 @@ html.has-modal-active {
     }
 }
 
+//
+// Modal (Form)
+//
+
 .modal {
     display: flex;
     visibility: hidden;
@@ -915,11 +912,22 @@ html.has-modal-active {
                 transition: all $modal-transition-duration;
             }
 
-            &.is-active {
-                .modal-content {
-                    //transform: scale(1);
-                    opacity: 1;
-                }
+            &.is-active .modal-content {
+                //transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        &-slideTop {
+            .modal-content {
+                transform: translateY(-50%);
+                opacity: 0;
+                transition: all $modal-transition-duration;
+            }
+
+            &.is-active .modal-content {
+                transform: translateY(0);
+                opacity: 1;
             }
         }
     }
@@ -951,7 +959,6 @@ html.has-modal-active {
         // type
         &.is-image {
             text-align: center;
-
             &.is-huge {
                 width:auto;
             }
@@ -960,6 +967,10 @@ html.has-modal-active {
                 max-height: calc(100vh - 50px);
             }
         }
+    }
+
+    .modal-close {
+        background-color: #952222b8 !important;
     }
 
     // Positioning, center is default
@@ -985,6 +996,7 @@ html.has-modal-active {
     }
 }
 
+
 .subForm {
     padding: 0.666rem 1rem 0.1rem 0 !important;
     margin-bottom:0 !important;
@@ -1003,7 +1015,6 @@ html.has-modal-active {
     .select.is-orange select:active {
         border-color: $orange-frac6 !important;
     }
-
 }
 
 .cardForm {
@@ -1018,6 +1029,103 @@ html.has-modal-active {
     .select.is-orange select:focus,
     .select.is-orange select:active {
         border-color: $orange-frac6 !important;
+    }
+}
+
+//
+// Modal for session refreshing
+//
+
+.modal2 {
+    display: flex;
+    visibility: hidden;
+
+    &.is-active {
+        visibility: visible;
+        .modal-background {
+            opacity: 1;
+        }
+    }
+
+    &.modal-fx {
+        &-fadeIn {
+            .modal-content {
+                //transform: scale(0.7);
+                opacity: 0;
+                transition: all $modal-transition-duration;
+            }
+
+            &.is-active .modal-content {
+                //transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+    }
+
+    .modal-background {
+        background-color: $grey-light;
+        opacity: 0;
+        transition: all $modal-transition-duration;
+    }
+
+    .modal-content {
+        @media (min-width: 680px){
+            min-width: 680px !important;
+        }
+        @media (max-width: 768px){
+            width: 96% !important;
+            margin: 2% 2% !important;
+        }
+
+        // size
+        &.is-huge {
+            width: 100%;
+            margin: 0px 20px;
+            max-height: calc(100vh - 40px);
+        }
+        @include from($tablet) {
+            &.is-huge {
+                width: 100%;
+                margin: 0px 20px;
+                max-height: calc(100vh - 40px);
+            }
+        }
+        &.is-tiny {
+            max-width: 400px;
+        }
+
+        // type
+        &.is-image {
+            text-align: center;
+            &.is-huge {
+                width:auto;
+            }
+
+            img {
+                max-height: calc(100vh - 50px);
+            }
+        }
+    }
+
+    .modal-close {
+        background-color: #952222b8 !important;
+    }
+
+    // Positioning, center is default
+    &.modal-pos {
+        &-top {
+            align-items: flex-start;
+            .modal-content {
+                margin-top: 1rem;
+            }
+        }
+        &-bottom {
+            align-items: flex-end;
+            .modal-content {
+                margin-bottom: 1rem;
+            }
+        }
     }
 }
 

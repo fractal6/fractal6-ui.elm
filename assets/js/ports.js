@@ -79,6 +79,14 @@ const actions = {
         document.documentElement.classList.remove('has-modal-active');
         document.getElementById("navbarTop").classList.remove('has-modal-active');
     },
+    'OPEN_AUTH_MODAL': (app, session, message) => {
+        document.documentElement.classList.add('has-modal-active2');
+        document.getElementById("navbarTop").classList.add('has-modal-active2');
+    },
+    'CLOSE_AUTH_MODAL': (app, session, message) => {
+        document.documentElement.classList.remove('has-modal-active2');
+        document.getElementById("navbarTop").classList.remove('has-modal-active2');
+    },
     //
     // Quick Search
     //

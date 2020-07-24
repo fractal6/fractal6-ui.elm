@@ -41,12 +41,6 @@ type alias Model =
     { form : UserForm }
 
 
-type alias UserForm =
-    { post : Dict String String
-    , result : WebData UserCtx
-    }
-
-
 
 --
 -- Init
@@ -70,9 +64,7 @@ init global flags =
 
         model =
             { form =
-                { post = Dict.empty
-                , result = RemoteData.NotAsked
-                }
+                { post = Dict.empty, result = RemoteData.NotAsked }
             }
     in
     ( model, Cmd.none, gcmd )

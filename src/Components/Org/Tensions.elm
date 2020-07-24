@@ -778,8 +778,7 @@ setupActionModal isModalActive action =
             , ( "protected_", isModalActive )
             ]
         ]
-        [ div [ classList [ ( "modal-background", True ) ] ]
-            []
+        [ div [ class "modal-background" ] []
         , div [ class "modal-content" ]
             [ case action of
                 JoinOrga step ->
@@ -797,13 +796,7 @@ setupActionModal isModalActive action =
                 other ->
                     div [] [ text "Action not implemented." ]
             ]
-        , button
-            [ classList
-                [ ( "modal-close", True )
-                , ( "is-large", True )
-                ]
-            ]
-            []
+        , button [ class "modal-close is-large" ] []
         ]
 
 

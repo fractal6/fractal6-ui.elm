@@ -116,7 +116,7 @@ export function BulmaDriver(app, target, handlers) {
             el.classList.remove('is-active');
             $target_.classList.remove('is-active');
         });
-    }
+    };
 
     // Toggle is-active on click event for each {navbar-burger}
     const $navbarBurgers = $target.querySelectorAll('.navbar-burger');
@@ -240,69 +240,52 @@ export function BulmaDriver(app, target, handlers) {
      */
 
     // Close all modals if ESC pressed
-    const closeModals = (objs) => {
-        objs.forEach(function(el) {
-            // deactivate all buttons that are below that modal
-            el.querySelectorAll('.button').forEach(btn => {
-                btn.classList.remove('is-active');
-            });
-
-            removeChildHandler(el);
-
-            // Elm compatibility
-            if (el.classList.contains("protected_" )) {
-                // Close modal with elm
-                app.ports.closeModalFromJs.send("")
-            } else {
-                el.classList.remove('is-active');
-                // Fix block scrolling
-                document.documentElement.classList.remove('has-modal-active');
-                document.getElementById("navbarTop").classList.remove('has-modal-active');
-            }
-
+    const closeModal = (modal) => {
+        // deactivate all buttons that are below that modal
+        modal.querySelectorAll('.button').forEach(btn => {
+            btn.classList.remove('is-active');
         });
-    }
 
-    const $modals = $target.querySelectorAll('.modal');
-    const $modal_closes = $target.querySelectorAll('.modal-close');
-    const $modal_background = $target.querySelectorAll('.modal-background');
+        removeChildHandler(modal);
+
+        // Elm compatibility
+        if (modal.classList.contains("elmModal" )) {
+            // Close modal with elm
+            app.ports.closeModalFromJs.send("")
+        } else {
+            modal.classList.remove('is-active');
+            // Fix block scrolling
+            document.documentElement.classList.remove('has-modal-active');
+            document.getElementById("navbarTop").classList.remove('has-modal-active');
+        }
+    };
+
+    const $modal_esc = $target.querySelectorAll('.modal-escape');
     const $modal_triggers = $target.querySelectorAll('.modalTrigger'); // app specific
     //
-    // * toggle active modal when clicking *trigger elements.
+    // * toggle active modal when clicking *trigger* elements.
     // * fix scroll blocking by activating/deactivating has-modal-active on <html>.
-    // * close when clicking on background
-    // * close when clicking *close-modal.
-    // * /!\ When closing deactive all buttons.
+    // * close when pressing ESC
     //
     if ($modal_triggers.length > 0) {
         $modal_triggers.forEach( el => {
             el.addEventListener('mousedown', function(e) {
                 var $target_ = document.getElementById(el.dataset.modal);
-                // Activate modal
-                if (!el.classList.contains("protected_")) {
-                    document.documentElement.classList.add('has-modal-active');
-                    document.getElementById("navbarTop").classList.add('has-modal-active');
-                    $target_.classList.add("is-active");
-                }
+                document.documentElement.classList.add('has-modal-active');
+                document.getElementById("navbarTop").classList.add('has-modal-active');
+                $target_.classList.add("is-active");
             });
         });
     }
-    if ($modal_background.length > 0) {
-        $modal_background.forEach( el => {
+    if ($modal_esc.length > 0) {
+        $modal_esc.forEach( el => {
+            var $modal = document.getElementById(el.dataset.modal);
             el.addEventListener('mousedown', function(e) {
-                closeModals($modals);
+                closeModal($modal);
             });
+            eltThatCloseOnEsc.push([closeModal, $modal]);
         });
 
-        eltThatCloseOnEsc.push([closeModals, $modals]);
-
-    }
-    if ($modal_closes.length > 0) {
-        $modal_closes.forEach( el => {
-            el.addEventListener('mousedown', function(e) {
-                closeModals($modals);
-            });
-        });
     }
 
     //

@@ -72,6 +72,23 @@ type UserState
 
 
 --
+-- Modal
+--
+
+
+type alias UserForm =
+    { post : Dict String String
+    , result : WebData UserCtx
+    }
+
+
+type ModalAuth
+    = Inactive
+    | Active UserForm
+
+
+
+--
 -- Action Step and Form Data
 --
 

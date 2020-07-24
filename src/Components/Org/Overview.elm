@@ -5,7 +5,7 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewWarnings)
+import Components.Loading as Loading exposing (WebData, errorDecoder, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Debug
@@ -24,14 +24,15 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, type_, value)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD exposing (Value, decodeValue)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Requests exposing (login)
 import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.View exposing (action2SourceStr, actionNameStr, mediaTension, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
@@ -43,6 +44,8 @@ import Query.PatchNode exposing (patchNode)
 import Query.QueryNode exposing (queryGraphPack)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryCircleTension)
+import RemoteData exposing (RemoteData)
+import String.Extra as SE
 import Task
 import Time
 
@@ -79,7 +82,8 @@ type alias Model =
 
     -- common
     , node_action : ActionState
-    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+    , isModalActive : Bool
+    , modalAuth : ModalAuth
     , node_quickSearch : NodesQuickSearch
     }
 
@@ -160,14 +164,18 @@ type Msg
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
-    | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal String -- ports receive / Close modal
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
       -- Util
-    | ChangeInputViewMode InputViewMode
     | Navigate String
+    | ChangeInputViewMode InputViewMode
+    | DoOpenModal -- ports receive / Open  modal
+    | DoCloseModal String -- ports receive / Close modal
+    | DoCloseAuthModal -- ports receive / Close modal
+    | ChangeAuthPost String String
+    | SubmitUser UserForm
+    | GotSignin (WebData UserCtx)
 
 
 
@@ -223,6 +231,7 @@ init global flags =
                     |> withDefault Loading
             , node_action = session.node_action |> withDefault NoOp
             , isModalActive = False
+            , modalAuth = Inactive
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , subData = initSubData
             }
@@ -823,7 +832,51 @@ update global msg model =
                             )
 
                         other ->
-                            ( { model | node_action = EditAbout <| NodeFinal form result }, Cmd.none, Cmd.none )
+                            let
+                                doRefreshToken =
+                                    case other of
+                                        Failure err ->
+                                            if List.length err == 1 then
+                                                case List.head err of
+                                                    Just err_ ->
+                                                        let
+                                                            gqlErr =
+                                                                err_
+                                                                    |> String.replace "\n" ""
+                                                                    |> SE.rightOf "{"
+                                                                    |> SE.insertAt "{" 0
+                                                                    |> JD.decodeString errorDecoder
+                                                        in
+                                                        case gqlErr of
+                                                            Ok errGql ->
+                                                                case List.head errGql.errors of
+                                                                    Just e ->
+                                                                        if e.message == "token is expired" then
+                                                                            True
+
+                                                                        else
+                                                                            False
+
+                                                                    Nothing ->
+                                                                        False
+
+                                                            Err errJD ->
+                                                                False
+
+                                                    Nothing ->
+                                                        False
+
+                                            else
+                                                False
+
+                                        _ ->
+                                            False
+                            in
+                            if doRefreshToken then
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                            else
+                                ( { model | node_action = EditAbout <| NodeFinal form result }, Cmd.none, Cmd.none )
 
                 Nothing ->
                     ( { model | node_action = AskErr "Query method not implemented from AboutAck" }, Cmd.none, Cmd.none )
@@ -983,7 +1036,20 @@ update global msg model =
         ToggleTooltips ->
             ( model, () |> sendToggleTooltips, Cmd.none )
 
+        DoClearTooltip ->
+            ( model, Cmd.none, Ports.clearTooltip )
+
         -- Common
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
+
+        ChangeInputViewMode viewMode ->
+            let
+                subData =
+                    model.subData
+            in
+            ( { model | subData = { subData | viewMode = viewMode } }, Cmd.none, Cmd.none )
+
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
@@ -998,18 +1064,40 @@ update global msg model =
             in
             ( { model | isModalActive = False, subData = initSubData }, gcmd, Ports.close_modal )
 
-        DoClearTooltip ->
-            ( model, Cmd.none, Ports.clearTooltip )
+        DoCloseAuthModal ->
+            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
 
-        ChangeInputViewMode viewMode ->
-            let
-                subData =
-                    model.subData
-            in
-            ( { model | subData = { subData | viewMode = viewMode } }, Cmd.none, Cmd.none )
+        ChangeAuthPost field value ->
+            case model.modalAuth of
+                Active form ->
+                    let
+                        newForm =
+                            { form | post = Dict.insert field value form.post }
+                    in
+                    ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        SubmitUser form ->
+            ( model, login apis.auth form.post GotSignin, Cmd.none )
+
+        GotSignin result ->
+            case result of
+                RemoteData.Success uctx ->
+                    ( { model | modalAuth = Inactive }, Cmd.none, Global.send (UpdateUserSession uctx) )
+
+                other ->
+                    case model.modalAuth of
+                        Active form ->
+                            let
+                                newForm =
+                                    { form | result = result }
+                            in
+                            ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+
+                        Inactive ->
+                            ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1159,6 +1247,7 @@ view_ global model =
                     ]
                 ]
             ]
+        , refreshAuthModal model.modalAuth
         ]
 
 
@@ -1229,10 +1318,10 @@ viewSearchBar odata maybePath qs =
                     (\n1 n2 ->
                         case ( n1.type_, n2.type_ ) of
                             ( NodeType.Circle, NodeType.Role ) ->
-                                GT
+                                LT
 
                             ( NodeType.Role, NodeType.Circle ) ->
-                                LT
+                                GT
 
                             _ ->
                                 compare n1.name n2.name
@@ -1284,11 +1373,11 @@ viewSearchBar odata maybePath qs =
                                        )
                             ]
                                 |> List.append
-                                    (if i == 0 && n.type_ == NodeType.Role then
-                                        [ p [ class "help is-aligned-center is-size-6" ] [ text " --- Role ---" ] ]
+                                    (if i == 0 && n.type_ == NodeType.Circle then
+                                        [ p [ class "help is-aligned-center is-size-6" ] [ text " Circle " ] ]
 
-                                     else if n.type_ == NodeType.Circle && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Role) |> withDefault False) == True then
-                                        [ p [ class "help is-aligned-center is-size-6" ] [ text "--- Circle ---" ] ]
+                                     else if n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
+                                        [ p [ class "help is-aligned-center is-size-6" ] [ text " Role " ] ]
 
                                      else
                                         []
@@ -1517,27 +1606,21 @@ setupActionModal : Model -> Html Msg
 setupActionModal model =
     div
         [ id "actionModal"
-        , classList
-            [ ( "modal", True )
-            , ( "modal-fx-fadeIn", True )
-            , ( "is-active", model.isModalActive )
-            , ( "protected_", model.isModalActive )
-            ]
+        , class "modal modal-fx-fadeIn elmModal"
+        , classList [ ( "is-active", model.isModalActive ) ]
         ]
-        [ div [ classList [ ( "modal-background", True ) ] ]
+        [ div
+            [ class "modal-background modal-escape"
+            , attribute "data-modal" "actionModal"
+            , onClick (DoCloseModal "")
+            ]
             []
         , div [ class "modal-content" ]
             [ case model.node_action of
                 action ->
                     viewActionStep model action
             ]
-        , button
-            [ classList
-                [ ( "modal-close", True )
-                , ( "is-large", True )
-                ]
-            ]
-            []
+        , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
         ]
 
 
@@ -1729,6 +1812,81 @@ viewJoinOrgaStep orga step =
 -- Utils View
 
 
+refreshAuthModal : ModalAuth -> Html Msg
+refreshAuthModal modalAuth =
+    let
+        form_m =
+            case modalAuth of
+                Active f ->
+                    Just f
+
+                _ ->
+                    Nothing
+    in
+    div
+        [ id "refreshAuthModal"
+        , class "modal modal2 modal-pos-top modal-fx-fadeIn elmModal"
+        , classList [ ( "is-active", form_m /= Nothing ) ]
+        ]
+        [ div [ class "modal-background", onClick DoCloseAuthModal ] []
+        , div [ class "modal-content" ]
+            [ div [ class "box" ]
+                [ p [] [ text "Your session expired. Please, confirm your password:" ]
+                , div [ class "field is-horizntl" ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control" ]
+                                [ input
+                                    [ id "passwordInput"
+                                    , class "input followFocus"
+                                    , attribute "data-nextfocus" "submitButton"
+                                    , type_ "password"
+                                    , placeholder "password"
+                                    , name "password"
+                                    , attribute "autocomplete" "password"
+                                    , required True
+                                    , onInput (ChangeAuthPost "password")
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+                    ]
+                , div [ class "field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ case form_m of
+                            Just form ->
+                                if Form.isPostSendable [ "password" ] form.post then
+                                    button
+                                        [ id "submitButton"
+                                        , class "button is-success has-text-weight-semibold"
+                                        , onClick (SubmitUser form)
+                                        ]
+                                        [ text "Refresh" ]
+
+                                else
+                                    button [ class "button has-text-weight-semibold", disabled True ]
+                                        [ text "Refresh" ]
+
+                            Nothing ->
+                                div [] []
+                        ]
+                    ]
+                , div []
+                    [ case form_m |> Maybe.map (\f -> f.result) |> withDefault RemoteData.NotAsked of
+                        RemoteData.Failure err ->
+                            viewHttpErrors err
+
+                        default ->
+                            text ""
+                    ]
+                ]
+            ]
+        , button [ class "modal-close is-large", onClick DoCloseAuthModal ] []
+        ]
+
+
 viewSourceRoles : TensionForm -> List UserRole -> (UserRole -> Msg) -> Html Msg
 viewSourceRoles form roles nextStep =
     div [ class "modal-card" ]
@@ -1738,7 +1896,6 @@ viewSourceRoles form roles nextStep =
             [ div [ class "buttons buttonRadio", attribute "style" "margin-bottom: 2em; margin-right: 2em; margin-left: 2em;" ] <|
                 List.map
                     (\r ->
-                        --div [ class "button", onClick (nextStep role) ] [ String.join "/" [ getParentFragmentFromRole role, role.name ] |> text ]
                         button
                             [ class ("button buttonRole has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
                             , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")

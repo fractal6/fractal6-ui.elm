@@ -56,12 +56,6 @@ type ViewMode
     | Signup
 
 
-type alias UserForm =
-    { post : Dict String String
-    , result : WebData UserCtx
-    }
-
-
 
 ---- MSG ----
 
@@ -89,10 +83,7 @@ init global flags =
                     Cmd.none
 
         model =
-            { form =
-                { post = Dict.empty
-                , result = RemoteData.NotAsked
-                }
+            { form = { post = Dict.empty, result = RemoteData.NotAsked }
             , viewMode = Login
             }
     in

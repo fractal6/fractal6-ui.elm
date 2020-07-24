@@ -2,6 +2,7 @@ module Components.Loading exposing
     ( ErrorData
     , HttpError
     , WebData
+    , errorDecoder
     , errorGraphQLHttpToString
     , errorHttpToString
     , expectJson

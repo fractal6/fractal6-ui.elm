@@ -107,7 +107,7 @@ purposeH =
 
 responsabilitiesH : String
 responsabilitiesH =
-    "Responsabilities"
+    "Responsibilities"
 
 
 domainsH : String
@@ -122,7 +122,7 @@ policiesH =
 
 noResponsabilities : String
 noResponsabilities =
-    "no responsabilities provided"
+    "no responsibilities provided"
 
 
 noDomains : String
@@ -142,7 +142,7 @@ phCirclePurpose =
 
 phCircleResponsabilities : String
 phCircleResponsabilities =
-    "Define the circle responsabilities"
+    "Define the circle responsibilities"
 
 
 phCircleDomains : String
@@ -162,7 +162,7 @@ phRolePurpose =
 
 phRoleResponsabilities : String
 phRoleResponsabilities =
-    "Define the role responsabilities"
+    "Define the role responsibilities"
 
 
 phRoleDomains : String

@@ -173,6 +173,22 @@ close_modal =
         }
 
 
+open_auth_modal : Cmd msg
+open_auth_modal =
+    outgoing
+        { action = "OPEN_AUTH_MODAL"
+        , data = JE.string ""
+        }
+
+
+close_auth_modal : Cmd msg
+close_auth_modal =
+    outgoing
+        { action = "CLOSE_AUTH_MODAL"
+        , data = JE.string ""
+        }
+
+
 
 --- Quick Search
 
