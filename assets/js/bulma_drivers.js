@@ -4,65 +4,78 @@
  *
  */
 
+function catchEsc(e, fun) {
+    let evt = event || window.event;
+    if (evt.key === 'Esc' || evt.key === 'Escape') {
+        fun();
+    }
+}
+
+
 export function BulmaDriver(app, target, handlers) {
     //
     // Setup
     //
 
-    var $target;
+    var $doc;
     if (!target) {
-        $target = document;
+        $doc = document;
     } else {
         // @DEBUG: document handler may be added several times here...
         // --
         // Use parentNode to be sure to not miss the target in the case
         // where the eltId is defined at the same level of the wanted selector.
-        $target = document.getElementById(target).parentNode;
+        $doc = document.getElementById(target).parentNode;
     }
-
-    var eltThatCloseOnEsc = []; // Get along with handlers ?
 
     //
     // Object Behaviours
     //
 
     function setupHandler(evt, hdl, elt) {
-        if (!hasHandler(elt)) {
+        if (!hasHandler(evt, hdl, elt)) {
             elt.addEventListener(evt, hdl);
             handlers.push([evt, hdl, elt]);
         } else {
             // pass
         }
     }
-
     // @DEBUG: use a HashMap instead!
-    function hasHandler(el) {
+    function hasHandler(evt, hdl, elt) {
         // Check if the object is already in the list of handler return true
         for (var i=0; i < handlers.length; i++) {
-            var obj = handlers[i][2];
             // check if it belongs to modal
-            if (obj === el) return true;
+            if (evt === handlers[i][0] && hdl.name === handlers[i][1].name && elt === handlers[i][2] ) {
+                return true
+            }
         }
         return false
     }
-    // @DEBUG: use a HashMap instead!
-    function removeChildHandler(el) {
-        // Remove added handlers below the given element
-        for (var i=0; i < handlers.length; i++) {
-            var evt = handlers[i][0];
-            var func = handlers[i][1];
-            var obj = handlers[i][2];
-            // check if it belongs to modal
-            if (el.contains(obj)) obj.removeEventListener(evt, func);
+
+    // Remove document handlers
+    var idxToRemove = [];
+    for (var i=0; i < handlers.length; i++) {
+        var evt = handlers[i][0];
+        var func = handlers[i][1];
+        var obj = handlers[i][2];
+        // check if it belongs to modal
+        if (obj == document) {
+            obj.removeEventListener(evt, func)
+            idxToRemove.push(i)
         }
     }
+    for (var i = idxToRemove.length -1; i >= 0; i--)
+        handlers.splice(idxToRemove[i],1);
+
     ////////////////////////////////////////Bulma Behaviours
 
-    /*
-     * Activate autofocus
-     */
-    const $autofocuses = $target.querySelectorAll('.autofocus');
+    //
+    // Activate autofocus
+    //
+
+    const $autofocuses = $doc.querySelectorAll('.autofocus');
     // * listen for enter to advanced the focus on textarea
+    //
     if ($autofocuses.length > 0) {
         $autofocuses.forEach( el => {
             el.focus();
@@ -70,13 +83,13 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
-    /*
-     * Follow focus
-     */
+    //
+    // Follow focus
+    //
 
     function advanceFocus(e, el) {
         if (e.key == "Enter") {
-            $target = document.getElementById(el.dataset.nextfocus);
+            var $target = document.getElementById(el.dataset.nextfocus);
             if ($target) {
                 $target.focus();
                 return true
@@ -85,21 +98,20 @@ export function BulmaDriver(app, target, handlers) {
     }
 
     // Toggle is-active on click event for each {navbar-burger}
-    const $followFocuses = $target.querySelectorAll('.followFocus');
+    const $followFocuses = $doc.querySelectorAll('.followFocus');
     // * listen for enter to advanced the focus on textarea
+    //
     if ($followFocuses.length > 0) {
         // For each dropdown, add event handler to open on click.
         $followFocuses.forEach( el => {
-            var evt = "keypress";
             var h = e => advanceFocus(e, el);
             setupHandler("keypress", h, el);
         });
     }
 
-
-    /*
-     * Burger open/close rationale
-     */
+    //
+    // Burger open/close rationale
+    //
 
     function burgerToggleHandler(e, el) {
         // Get the target from the "data-target" attribute
@@ -110,35 +122,35 @@ export function BulmaDriver(app, target, handlers) {
     }
 
     // Close all burger by removing `is-active` class.
-    const closeBurgers = objs => {
+    function closeBurgers(e, objs) {
         objs.forEach(function(el) {
             const $target_ = document.getElementById(el.dataset.target);
             el.classList.remove('is-active');
             $target_.classList.remove('is-active');
         });
-    };
+    }
 
     // Toggle is-active on click event for each {navbar-burger}
-    const $navbarBurgers = $target.querySelectorAll('.navbar-burger');
-    //
+    const $navbarBurgers = $doc.querySelectorAll('.navbar-burger');
     // * toggle active state on click
     // * close on escape
     //
     // Toggle navbars when clicking on burgers
     if ($navbarBurgers.length > 0) {
-        // For each dropdown, add event handler to open on click.
         $navbarBurgers.forEach( el => {
-            var h = e => burgerToggleHandler(e, el);
-            setupHandler("click", h, el);
+            // For each dropdown, add event handler to open on click.
+            var h1 = e => burgerToggleHandler(e, el);
+            setupHandler("click", h1, el);
         });
 
-        // Close burger menu if ESC pressed
-        eltThatCloseOnEsc.push([closeBurgers, $navbarBurgers]);
+        // For each dropdown, add event handler to close on esc
+        var h2 = e => catchEsc(e, () => closeBurgers(e, $navbarBurgers));
+        setupHandler("keydown", h2, document);
     }
 
-    /*
-     * Dropdown open/close rationale
-     */
+    //
+    // Dropdown open/close rationale
+    //
 
     function buttonDropdownHandler(e, btn, all) {
         e.stopPropagation();
@@ -150,62 +162,57 @@ export function BulmaDriver(app, target, handlers) {
         btn.classList.toggle('is-active');
     }
 
-    // Close all dorpdown by removing `is-active` class.
-    function closeDropdowns(objs) {
+    // Close all dropdown by removing `is-active` class.
+    function closeDropdowns(e, objs) {
         objs.forEach(function(el) {
             el.classList.remove('is-active');
         });
     }
 
     // Get all dropdowns on the page that aren't hoverable.
-    const $dropdowns = $target.querySelectorAll('.has-dropdown:not(.is-hoverable)');
-    //
+    const $dropdowns = $doc.querySelectorAll('.has-dropdown:not(.is-hoverable)');
     // * toggle dropdown state on click
     // * close on Escape
     // * stopeventpropgation (difference witn preventdefault ?)
     //
     if ($dropdowns.length > 0) {
-        // For each dropdown, add event handler to open on click.
         $dropdowns.forEach(function(el) {
-            var h = e => buttonDropdownHandler(e, el, $dropdowns);
-            setupHandler("click", h, el);
+            // For each dropdown, add event handler to open on click.
+            var h3 = e => buttonDropdownHandler(e, el, $dropdowns);
+            setupHandler("click", h3, el);
         });
 
-        // If user clicks outside dropdown, close it.
-        document.addEventListener('click', function(e) {
-            closeDropdowns($dropdowns);
-        });
+        // For each dropdown, add event handler to close on Esc.
+        var h4 = e => catchEsc(e, () => closeDropdowns(e, $dropdowns));
+        setupHandler("keydown", h4, document);
 
-        // Close burger menu if ESC pressed
-        eltThatCloseOnEsc.push([closeDropdowns, $dropdowns]);
-
+        // For each dropdown, add event handler to close if a click occurs outside.
+        var h5 = e => closeDropdowns(e, $dropdowns);
+        setupHandler("click", h5, document);
     }
 
-    /*
-     * Button **Toggle** effect rational
-     */
-
+    //
+    // Button **Toggle** effect rational
+    //
     function buttonToggleHandler(e, btn) {
         btn.classList.toggle('is-active');
         e.preventDefault(); // important: don't let html handle the button element state
     }
 
-    var $btns = $target.querySelectorAll('.buttonToggle');
-    //
+    var $btns = $doc.querySelectorAll('.buttonToggle');
     // * toggle active state on click
     // * preventdefault
     //
     if ($btns.length > 0) {
         $btns.forEach(function(el) {
-            var evt = "mousedown";
-            var h = e => buttonToggleHandler(e, el);
-            setupHandler("mousedown", h, el);
+            var h6 = e => buttonToggleHandler(e, el);
+            setupHandler("mousedown", h6, el);
         });
     }
 
-    /*
-     * Button **Radio** effect rational
-     */
+    //
+    // Button **Radio** effect rational
+    //
 
     //function buttonRadioHandler(e, btn, btns) {
     //    btns.forEach( o => {
@@ -218,7 +225,7 @@ export function BulmaDriver(app, target, handlers) {
     //    e.preventDefault() // important: don't let html handle the button element state
     //}
 
-    //var $btns = $target.querySelectorAll('.buttonRadio');
+    //var $btns = $doc.querySelectorAll('.buttonRadio');
     ////
     //// * switch active state on click on each button child
     //// * preventdefault
@@ -228,25 +235,22 @@ export function BulmaDriver(app, target, handlers) {
     //        $subBtns = el.querySelectorAll('.button');
     //        // button click logics
     //        $subBtns.forEach( btn => {
-    //            var evt = "mousedown";
     //            var h = e => buttonRadioHandler(e, btn, $subBtns);
     //            setupHandler("mousedown", h, el);
     //        });
     //    });
     //}
 
-    /*
-     * Modal logics
-     */
+    //
+    // Modal logics
+    //
 
     // Close all modals if ESC pressed
-    const closeModal = (modal) => {
+    function closeModal(e, modal) {
         // deactivate all buttons that are below that modal
         modal.querySelectorAll('.button').forEach(btn => {
             btn.classList.remove('is-active');
         });
-
-        removeChildHandler(modal);
 
         // Elm compatibility
         if (modal.classList.contains("elmModal" )) {
@@ -258,51 +262,35 @@ export function BulmaDriver(app, target, handlers) {
             document.documentElement.classList.remove('has-modal-active');
             document.getElementById("navbarTop").classList.remove('has-modal-active');
         }
-    };
+    }
 
-    const $modal_esc = $target.querySelectorAll('.modal-escape');
-    const $modal_triggers = $target.querySelectorAll('.modalTrigger'); // app specific
-    //
+    // Activate modal
+    function triggerModal(e, el) {
+        var $target_ = document.getElementById(el.dataset.modal);
+        document.documentElement.classList.add('has-modal-active');
+        document.getElementById("navbarTop").classList.add('has-modal-active');
+        $target_.classList.add("is-active");
+    }
+
+    const $modal_esc = $doc.querySelectorAll('.modal-escape');
+    const $modal_triggers = $doc.querySelectorAll('.modalTrigger'); // app specific
     // * toggle active modal when clicking *trigger* elements.
     // * fix scroll blocking by activating/deactivating has-modal-active on <html>.
     // * close when pressing ESC
     //
     if ($modal_triggers.length > 0) {
         $modal_triggers.forEach( el => {
-            el.addEventListener('mousedown', function(e) {
-                var $target_ = document.getElementById(el.dataset.modal);
-                document.documentElement.classList.add('has-modal-active');
-                document.getElementById("navbarTop").classList.add('has-modal-active');
-                $target_.classList.add("is-active");
-            });
+            var h7 = e => triggerModal(e, el);
+            setupHandler("mousedown", h7, el);
         });
     }
     if ($modal_esc.length > 0) {
         $modal_esc.forEach( el => {
             var $modal = document.getElementById(el.dataset.modal);
-            el.addEventListener('mousedown', function(e) {
-                closeModal($modal);
-            });
-            eltThatCloseOnEsc.push([closeModal, $modal]);
+            var h8 = e => catchEsc(e, () => closeModal(e, $modal));
+            setupHandler("keydown", h8, document);
         });
-
     }
-
-    //
-    // Close on Esc Logics
-    //
-
-    document.addEventListener('keydown', function (event) {
-        let e = event || window.event;
-        if (e.key === 'Esc' || e.key === 'Escape') {
-
-            for (var i=0; i < eltThatCloseOnEsc.length; i++) {
-                var func = eltThatCloseOnEsc[i][0];
-                var objs = eltThatCloseOnEsc[i][1];
-                func(objs);
-            }
-        }
-    });
 
 }
 
