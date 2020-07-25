@@ -449,14 +449,15 @@ setupActionModal : Bool -> ActionState -> Html Msg
 setupActionModal isModalActive action =
     div
         [ id "actionModal"
-        , classList
-            [ ( "modal", True )
-            , ( "modal-fx-fadeIn", True )
-            , ( "is-active", isModalActive )
-            , ( "protected_", isModalActive )
-            ]
+        , class "modal modal-fx-fadeIn elmModal"
+        , classList [ ( "is-active", isModalActive ) ]
         ]
-        [ div [ class "modal-background" ] []
+        [ div
+            [ class "modal-background modal-escape"
+            , attribute "data-modal" "actionModal"
+            , onClick (DoCloseModal "")
+            ]
+            []
         , div [ class "modal-content" ]
             [ case action of
                 JoinOrga step ->
@@ -474,7 +475,7 @@ setupActionModal isModalActive action =
                 other ->
                     div [] [ text "Action not implemented." ]
             ]
-        , button [ class "modal-close is-large" ] []
+        , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
         ]
 
 

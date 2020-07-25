@@ -1,11 +1,12 @@
 port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (WebData, errorDecoder, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Debug
@@ -28,7 +29,7 @@ import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i,
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
-import Json.Decode as JD exposing (Value, decodeValue)
+import Json.Decode as JD
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -45,7 +46,6 @@ import Query.QueryNode exposing (queryGraphPack)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryCircleTension)
 import RemoteData exposing (RemoteData)
-import String.Extra as SE
 import Task
 import Time
 
@@ -179,7 +179,7 @@ type Msg
 
 
 
--- INIT --
+---- INIT ----
 
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -562,31 +562,33 @@ update global msg model =
 
                         other ->
                             Nothing
-
-                subData =
-                    model.subData
-
-                tensionId =
-                    result |> withMaybeData |> Maybe.map (\t -> t.id)
-
-                tensions =
-                    case result of
-                        Success t ->
-                            hotTensionPush t model.tensions_circle
-
-                        other ->
-                            []
             in
             case maybeForm of
                 Just form ->
-                    ( { model
-                        | node_action = AddTension <| TensionFinal form result
-                        , tensions_circle = Success tensions
-                        , subData = { subData | tensionId = tensionId }
-                      }
-                    , Cmd.none
-                    , send (UpdateSessionTensions (Just tensions))
-                    )
+                    case result of
+                        Success t ->
+                            let
+                                subData =
+                                    model.subData
+
+                                tensions =
+                                    hotTensionPush t model.tensions_circle
+                            in
+                            ( { model
+                                | node_action = AddTension <| TensionFinal form result
+                                , tensions_circle = Success tensions
+                                , subData = { subData | tensionId = Just t.id }
+                              }
+                            , Cmd.none
+                            , send (UpdateSessionTensions (Just tensions))
+                            )
+
+                        other ->
+                            if doRefreshToken other then
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                            else
+                                ( { model | node_action = AddTension <| TensionFinal form result }, Cmd.none, Cmd.none )
 
                 Nothing ->
                     ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
@@ -722,7 +724,11 @@ update global msg model =
                             )
 
                         other ->
-                            ( { model | node_action = AddCircle <| NodeFinal form result }, Cmd.none, Cmd.none )
+                            if doRefreshToken other then
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                            else
+                                ( { model | node_action = AddCircle <| NodeFinal form result }, Cmd.none, Cmd.none )
 
                 Nothing ->
                     ( { model | node_action = AskErr "Query method not implemented from CircleAck" }, Cmd.none, Cmd.none )
@@ -832,47 +838,7 @@ update global msg model =
                             )
 
                         other ->
-                            let
-                                doRefreshToken =
-                                    case other of
-                                        Failure err ->
-                                            if List.length err == 1 then
-                                                case List.head err of
-                                                    Just err_ ->
-                                                        let
-                                                            gqlErr =
-                                                                err_
-                                                                    |> String.replace "\n" ""
-                                                                    |> SE.rightOf "{"
-                                                                    |> SE.insertAt "{" 0
-                                                                    |> JD.decodeString errorDecoder
-                                                        in
-                                                        case gqlErr of
-                                                            Ok errGql ->
-                                                                case List.head errGql.errors of
-                                                                    Just e ->
-                                                                        if e.message == "token is expired" then
-                                                                            True
-
-                                                                        else
-                                                                            False
-
-                                                                    Nothing ->
-                                                                        False
-
-                                                            Err errJD ->
-                                                                False
-
-                                                    Nothing ->
-                                                        False
-
-                                            else
-                                                False
-
-                                        _ ->
-                                            False
-                            in
-                            if doRefreshToken then
+                            if doRefreshToken other then
                                 ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
 
                             else
@@ -964,7 +930,11 @@ update global msg model =
                             )
 
                         other ->
-                            ( { model | node_action = EditMandate <| NodeFinal form result }, Cmd.none, Cmd.none )
+                            if doRefreshToken other then
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                            else
+                                ( { model | node_action = EditMandate <| NodeFinal form result }, Cmd.none, Cmd.none )
 
                 Nothing ->
                     ( { model | node_action = AskErr "Query method not implemented from MandateAck" }, Cmd.none, Cmd.none )
@@ -1010,7 +980,11 @@ update global msg model =
                             )
 
                         other ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
+                            if doRefreshToken other then
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                            else
+                                ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->
                     ( model, Cmd.none, Cmd.none )
@@ -1247,7 +1221,7 @@ view_ global model =
                     ]
                 ]
             ]
-        , refreshAuthModal model.modalAuth
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser }
         ]
 
 
@@ -1616,9 +1590,7 @@ setupActionModal model =
             ]
             []
         , div [ class "modal-content" ]
-            [ case model.node_action of
-                action ->
-                    viewActionStep model action
+            [ viewActionStep model model.node_action
             ]
         , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
         ]
@@ -1810,81 +1782,6 @@ viewJoinOrgaStep orga step =
 
 
 -- Utils View
-
-
-refreshAuthModal : ModalAuth -> Html Msg
-refreshAuthModal modalAuth =
-    let
-        form_m =
-            case modalAuth of
-                Active f ->
-                    Just f
-
-                _ ->
-                    Nothing
-    in
-    div
-        [ id "refreshAuthModal"
-        , class "modal modal2 modal-pos-top modal-fx-fadeIn elmModal"
-        , classList [ ( "is-active", form_m /= Nothing ) ]
-        ]
-        [ div [ class "modal-background", onClick DoCloseAuthModal ] []
-        , div [ class "modal-content" ]
-            [ div [ class "box" ]
-                [ p [] [ text "Your session expired. Please, confirm your password:" ]
-                , div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
-                    , div [ class "field-body" ]
-                        [ div [ class "field" ]
-                            [ div [ class "control" ]
-                                [ input
-                                    [ id "passwordInput"
-                                    , class "input followFocus"
-                                    , attribute "data-nextfocus" "submitButton"
-                                    , type_ "password"
-                                    , placeholder "password"
-                                    , name "password"
-                                    , attribute "autocomplete" "password"
-                                    , required True
-                                    , onInput (ChangeAuthPost "password")
-                                    ]
-                                    []
-                                ]
-                            ]
-                        ]
-                    ]
-                , div [ class "field is-grouped is-grouped-right" ]
-                    [ div [ class "control" ]
-                        [ case form_m of
-                            Just form ->
-                                if Form.isPostSendable [ "password" ] form.post then
-                                    button
-                                        [ id "submitButton"
-                                        , class "button is-success has-text-weight-semibold"
-                                        , onClick (SubmitUser form)
-                                        ]
-                                        [ text "Refresh" ]
-
-                                else
-                                    button [ class "button has-text-weight-semibold", disabled True ]
-                                        [ text "Refresh" ]
-
-                            Nothing ->
-                                div [] []
-                        ]
-                    ]
-                , div []
-                    [ case form_m |> Maybe.map (\f -> f.result) |> withDefault RemoteData.NotAsked of
-                        RemoteData.Failure err ->
-                            viewHttpErrors err
-
-                        default ->
-                            text ""
-                    ]
-                ]
-            ]
-        , button [ class "modal-close is-large", onClick DoCloseAuthModal ] []
-        ]
 
 
 viewSourceRoles : TensionForm -> List UserRole -> (UserRole -> Msg) -> Html Msg

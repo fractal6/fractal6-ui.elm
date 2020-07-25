@@ -1,9 +1,10 @@
 module Components.Org.Tension exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Date exposing (formatTime)
@@ -24,6 +25,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Requests exposing (login)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
 import ModelCommon.View
     exposing
@@ -45,6 +47,7 @@ import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (patchComment, patchTitle, pushTensionComment)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTension)
+import RemoteData exposing (RemoteData)
 import Task
 import Time
 
@@ -81,6 +84,7 @@ type alias Model =
     -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+    , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
 
     -- Page
@@ -123,11 +127,14 @@ type Msg
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
-      -- JS Interop
+      -- Util
+    | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
-    | Navigate String
-      -- Util
+    | DoCloseAuthModal -- ports receive / Close modal
+    | ChangeAuthPost String String
+    | SubmitUser UserForm
+    | GotSignin (WebData UserCtx)
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
 
@@ -166,6 +173,7 @@ init global flags =
             , inputViewMode = Write
             , node_action = NoOp
             , isModalActive = False
+            , modalAuth = Inactive
             , isTitleEdit = False
             }
 
@@ -321,16 +329,20 @@ update global msg model =
 
                 Failure _ ->
                     let
-                        f =
+                        form =
                             model.tension_form
 
                         resetForm =
-                            { f
-                                | post = Dict.remove "message_action" f.post
+                            { form
+                                | post = Dict.remove "message_action" form.post
                                 , status = Nothing
                             }
                     in
-                    ( { model | tension_result = result, tension_form = resetForm }, Cmd.none, Cmd.none )
+                    if doRefreshToken result then
+                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                    else
+                        ( { model | tension_result = result, tension_form = resetForm }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( { model | tension_result = result }, Cmd.none, Cmd.none )
@@ -405,8 +417,12 @@ update global msg model =
                     in
                     ( { model | tension_data = tension_d, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
 
-                _ ->
-                    ( { model | comment_result = result }, Cmd.none, Cmd.none )
+                other ->
+                    if doRefreshToken other then
+                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.comment_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                    else
+                        ( { model | comment_result = result }, Cmd.none, Cmd.none )
 
         DoChangeTitle ->
             -- init form
@@ -440,8 +456,12 @@ update global msg model =
                     in
                     ( { model | tension_data = tension_d, tension_form = resetForm, title_result = result, isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
 
-                _ ->
-                    ( { model | title_result = result }, Cmd.none, Cmd.none )
+                other ->
+                    if doRefreshToken other then
+                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                    else
+                        ( { model | title_result = result }, Cmd.none, Cmd.none )
 
         ChangeInputViewMode viewMode ->
             ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
@@ -487,12 +507,19 @@ update global msg model =
                             )
 
                         other ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
+                            if doRefreshToken other then
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                            else
+                                ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->
                     ( model, Cmd.none, Cmd.none )
 
         -- Modal
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
+
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
@@ -507,8 +534,40 @@ update global msg model =
             in
             ( { model | isModalActive = False }, gcmd, Ports.close_modal )
 
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
+        DoCloseAuthModal ->
+            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+
+        ChangeAuthPost field value ->
+            case model.modalAuth of
+                Active form ->
+                    let
+                        newForm =
+                            { form | post = Dict.insert field value form.post }
+                    in
+                    ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        SubmitUser form ->
+            ( model, login apis.auth form.post GotSignin, Cmd.none )
+
+        GotSignin result ->
+            case result of
+                RemoteData.Success uctx ->
+                    ( { model | modalAuth = Inactive }, Cmd.none, Global.send (UpdateUserSession uctx) )
+
+                other ->
+                    case model.modalAuth of
+                        Active form ->
+                            let
+                                newForm =
+                                    { form | result = result }
+                            in
+                            ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+
+                        Inactive ->
+                            ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -558,6 +617,7 @@ view_ global model =
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser }
         ]
 
 
@@ -1045,14 +1105,15 @@ setupActionModal : Bool -> ActionState -> Html Msg
 setupActionModal isModalActive action =
     div
         [ id "actionModal"
-        , classList
-            [ ( "modal", True )
-            , ( "modal-fx-fadeIn", True )
-            , ( "is-active", isModalActive )
-            , ( "protected_", isModalActive )
-            ]
+        , class "modal modal-fx-fadeIn elmModal"
+        , classList [ ( "is-active", isModalActive ) ]
         ]
-        [ div [ class "modal-background" ] []
+        [ div
+            [ class "modal-background modal-escape"
+            , attribute "data-modal" "actionModal"
+            , onClick (DoCloseModal "")
+            ]
+            []
         , div [ class "modal-content" ]
             [ case action of
                 JoinOrga step ->
@@ -1070,7 +1131,7 @@ setupActionModal isModalActive action =
                 other ->
                     div [] [ text "Action not implemented." ]
             ]
-        , button [ class "modal-close is-large" ] []
+        , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
         ]
 
 
