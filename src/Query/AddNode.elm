@@ -433,20 +433,20 @@ buildNodeFragmentRef f =
 
 buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
 buildComment createdAt username message_m =
-    message_m
-        |> Maybe.map
-            (\message ->
-                [ Input.buildCommentRef
-                    (\x ->
-                        { x
-                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
-                            , createdBy =
-                                Input.buildUserRef
-                                    (\u -> { u | username = Present username })
-                                    |> Present
-                            , message = Present message
-                        }
-                    )
-                ]
+    let
+        message =
+            message_m |> withDefault ""
+    in
+    Present
+        [ Input.buildCommentRef
+            (\x ->
+                { x
+                    | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                    , createdBy =
+                        Input.buildUserRef
+                            (\u -> { u | username = Present username })
+                            |> Present
+                    , message = Present message
+                }
             )
-        |> fromMaybe
+        ]
