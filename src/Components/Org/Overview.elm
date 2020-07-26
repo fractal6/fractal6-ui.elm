@@ -1883,6 +1883,29 @@ updateNodeForm field value form =
         "role_type" ->
             { form | data = { data | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
 
+        "nameid" ->
+            { form | data = { data | nameid = Just value } }
+
+        "first_link" ->
+            { form | data = { data | first_link = Just value } }
+
+        "about" ->
+            { form | data = { data | about = Just value } }
+
+        -- Mandate data
+        "purpose" ->
+            { form | data = { data | mandate = Just { mandate | purpose = value } } }
+
+        "responsabilities" ->
+            { form | data = { data | mandate = Just { mandate | responsabilities = Just value } } }
+
+        "domains" ->
+            { form | data = { data | mandate = Just { mandate | domains = Just value } } }
+
+        "policies" ->
+            { form | data = { data | mandate = Just { mandate | policies = Just value } } }
+
+        -- Various
         "name" ->
             case form.action of
                 Nothing ->
@@ -1904,25 +1927,6 @@ updateNodeForm field value form =
 
                     else
                         { form | data = { data | name = Just value } }
-
-        "first_link" ->
-            { form | data = { data | first_link = Just value } }
-
-        "about" ->
-            { form | data = { data | about = Just value } }
-
-        -- Mandate data
-        "purpose" ->
-            { form | data = { data | mandate = Just { mandate | purpose = value } } }
-
-        "responsabilities" ->
-            { form | data = { data | mandate = Just { mandate | responsabilities = Just value } } }
-
-        "domains" ->
-            { form | data = { data | mandate = Just { mandate | domains = Just value } } }
-
-        "policies" ->
-            { form | data = { data | mandate = Just { mandate | policies = Just value } } }
 
         other ->
             -- title, message...
