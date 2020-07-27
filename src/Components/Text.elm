@@ -397,6 +397,16 @@ openedThe =
     "opened the"
 
 
+updatedThe : String
+updatedThe =
+    "updated the"
+
+
+editedThe : String
+editedThe =
+    "edited the"
+
+
 commentedThe : String
 commentedThe =
     "commented the"

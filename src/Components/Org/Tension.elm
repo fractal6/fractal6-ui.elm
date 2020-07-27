@@ -38,6 +38,7 @@ import ModelCommon.View
         , viewTensionArrowB
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
+        , viewUpdated
         , viewUsernameLink
         )
 import ModelSchema exposing (..)
@@ -761,11 +762,17 @@ viewComment c model =
                         div [ class "message" ]
                             [ div [ class "message-header" ]
                                 [ viewTensionDateAndUserC c.createdAt c.createdBy
+                                , case c.updatedAt of
+                                    Just updatedAt ->
+                                        viewUpdated updatedAt
+
+                                    Nothing ->
+                                        span [] []
                                 , if c.createdBy.username == username then
-                                    div [ class "dropdown has-dropdown is-right" ]
+                                    div [ class "dropdown has-dropdown is-right is-pulled-right" ]
                                         [ div [ class "dropdown-trigger" ]
                                             [ div
-                                                [ class "is-pulled-right ellipsis button-light"
+                                                [ class "ellipsis button-light"
                                                 , attribute "aria-controls" "dropdown-menu_ellipsis"
                                                 , attribute "aria-haspopup" "true"
                                                 ]
@@ -773,7 +780,7 @@ viewComment c model =
                                             ]
                                         , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
                                             [ div [ class "dropdown-content" ]
-                                                [ div [ class "dropdown-item" ] [ p [ onClick (DoUpdateComment c.id) ] [ text "Edit" ] ]
+                                                [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ text T.edit ] ]
                                                 ]
                                             ]
                                         ]

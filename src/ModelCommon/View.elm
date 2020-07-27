@@ -100,7 +100,7 @@ mediaTension baseUri focus tension navigate =
             , br [ class "is-block" ] []
             , span [ class "columns" ]
                 [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
-                , span [ class "has-text-weight-light column" ]
+                , span [ class " column" ]
                     [ span [ class "columns is-mobile mediaFragments" ]
                         [ span [ class "column is-1" ] <|
                             case tension.action of
@@ -196,7 +196,17 @@ viewUsernameLink username =
 viewOpenedDate : String -> Html msg
 viewOpenedDate date =
     span []
-        [ span [ class "is-itali" ] [ text T.openedThe ]
+        [ span [] [ text T.openedThe ]
+        , text " "
+        , text (formatTime date)
+        ]
+
+
+viewUpdated : String -> Html msg
+viewUpdated date =
+    span [ class "is-grey-light" ]
+        [ text " · "
+        , span [] [ text T.editedThe ]
         , text " "
         , text (formatTime date)
         ]
@@ -204,7 +214,7 @@ viewOpenedDate date =
 
 viewCommentedDate : String -> Html msg
 viewCommentedDate date =
-    span []
+    span [ class "is-grey-light" ]
         [ span [ class "is-itali" ] [ text T.commentedThe ]
         , text " "
         , text (formatTime date)
@@ -213,7 +223,7 @@ viewCommentedDate date =
 
 viewTensionDateAndUser : String -> Username -> Html msg
 viewTensionDateAndUser createdAt createdBy =
-    span []
+    span [ class "is-grey-light" ]
         [ viewOpenedDate createdAt
         , text (" " ++ T.by ++ " ")
         , viewUsernameLink createdBy.username

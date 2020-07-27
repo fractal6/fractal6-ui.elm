@@ -133,7 +133,10 @@ patchCommentInputEncoder form =
                 { set =
                     Input.buildCommentPatch
                         (\s ->
-                            { s | message = fromMaybe message }
+                            { s
+                                | updatedAt = fromMaybe updatedAt
+                                , message = fromMaybe message
+                            }
                         )
                         |> Present
                 , remove = Absent
