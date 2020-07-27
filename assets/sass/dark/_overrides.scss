@@ -87,6 +87,24 @@ a {
   box-shadow: none;
   border-width: $border-width;
   padding-right: 1em;
+
+  color: #24292e !important;
+  background-color: #fafbfc !important;
+  border-color: #8c9b9dab;
+
+  &:hover {
+      border-color: #8c9b9dab;
+  }
+
+  &:active, &:focus {
+      background-color: none !important;
+      border-color: $turquoise !important;
+  }
+
+  &::placeholder {
+      color: #6a737d !important;
+  }
+
 }
 
 .input[disabled],
@@ -278,22 +296,5 @@ a {
       }
     }
   }
-}
-
-//
-// Fixes
-//
-
-input, textarea {
-    color: #24292e !important;
-    background-color: #fafbfc !important;
-
-    &::placeholder {
-        color: #6a737d !important;
-    }
-
-    &:active, &:focus {
-        background-color: none !important;
-    }
 }
 

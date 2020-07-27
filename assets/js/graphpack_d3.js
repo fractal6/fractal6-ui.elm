@@ -111,7 +111,7 @@ export const GraphPack = {
     //backgroundColor: "#f0fff0",
 
     // Graph Colors
-    //var colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
+    //colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
     colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
     usernameColor: "#8282cc",
     coordinatorRoleColor: "#ffdaa1", // ~orange
@@ -281,19 +281,23 @@ export const GraphPack = {
         this.clearCanvas(ctx2d);
 
         //Select our dummy nodes and draw the data to canvas.
+        var depth = this.focusedNode.depth;
         var node;
         // It's slightly faster than nodes.forEach()
         for (var i = 0; i < this.nodes.length; i++) {
             node = this.nodes[i];
-            this.drawNode(isHidden, ctx2d, node);
-        }//for i
+            let d = node.depth - depth
+            if (node == this.focusedNode.parent || node.depth == 0 || d>= 0 && d < 4) {
+                this.drawNode(isHidden, ctx2d, node);
+            }
+        }
     },
 
     drawNode(isHidden, ctx2d, node) {
         var _name = node.data.name;
         var type_ = node.data.type_;
         var role_type = node.data.role_type;
-        var circleColor;
+        var circleColor = "#";
 
         if (type_ === "Hidden") {
             return
@@ -313,11 +317,15 @@ export const GraphPack = {
             circleColor = node.color;
         } else {
             var grd = ctx2d.createRadialGradient(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*0.1, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*2);
+            // opacity level
+            var opac = "";
+            // @DEBUG: compute this only one time when choosing the focusedNode
+            if (node !== this.rootNode && !this.gPack.path(node).map(n => n.data.nameid).includes(this.focusedNode.data.nameid)) {
+                opac = "55";
+            }
             if (type_ === NodeType.Circle) {
-                //circleColor = this.colorCircle(node.depth)
-                var c = this.colorCircle(node.depth);
-                grd.addColorStop(0.25, this.colorCircle(node.depth));
-                grd.addColorStop(1, this.colorCircle(node.depth+1));
+                grd.addColorStop(0.25, this.colorCircle(node.depth)+opac);
+                grd.addColorStop(1, this.colorCircle(node.depth+1)+opac);
             } else if (type_ === NodeType.Role) {
                 // Check role type code color
                 if (role_type === RoleType.Guest) {
@@ -327,18 +335,12 @@ export const GraphPack = {
                 } else {
                     circleColor = this.peerRoleColor;
                 }
-                grd.addColorStop(0, circleColor);
-                grd.addColorStop(1, shadeColor(circleColor, -5));
+                grd.addColorStop(0, circleColor+opac);
+                grd.addColorStop(1, shadeColor(circleColor, -5)+opac);
             } else {
                 console.warn("Node type unknonw", type_);
             }
 
-            // Add opacity
-            //if (node !== this.focusedNode) {
-            //    if (!this.focusedNode.children || !(this.focusedNode.children.map(n => n.data.nameid).includes(node.data.nameid))) {
-            //        circleColor += "aa";
-            //    }
-            //}
             circleColor = grd;
         }
 
@@ -362,12 +364,12 @@ export const GraphPack = {
                 ctx2d.stroke();
             }
 
-            if (type_ === NodeType.Role) {
+            if (type_ === NodeType.Role && opac === "") {
                 var text = null;
                 var user = null;
 
                 var textLong = _name;
-                var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase()) + ".";
+                var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase());
                 if (node.data.first_link) {
                     user = "@"+node.data.first_link;
                 }
@@ -381,22 +383,21 @@ export const GraphPack = {
                 var paddingBelow = 0;
                 if (textWidth+textHeight < node.ctx.rayon*2) {
                     text = textLong;
-                    paddingBelow = 4*textHeight;
-                } else if (ctx2d.measureText(textShort).width+1 < node.ctx.rayon*2) {
+                } else if (ctx2d.measureText(textShort).width+5 < node.ctx.rayon*2) {
                     text = textShort;
-                    paddingBelow = 3*textHeight;
                 } else {
-                    fontSize--;
-                    paddingBelow = 3*textHeight;
+                    fontSize = fontSize - 2;
                 }
 
                 // Username
                 var text_username = null;
-                var text_username_short = "@..";
+                var text_username_short = "@";
                 if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
                     text_username = user;
-                } else if (user && ctx2d.measureText(text_username_short).width+1 < node.ctx.rayon*2 - 2*textHeight) {
+                    paddingBelow = 4*textHeight;
+                } else if (user && ctx2d.measureText(text_username_short).width+5 < node.ctx.rayon*2 - 2*textHeight) {
                     text_username = text_username_short;
+                    paddingBelow = 3*textHeight;
                 }
 
                 if (text) {
@@ -736,7 +737,7 @@ export const GraphPack = {
         ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
             node.ctx.rayon+0.1+hoverWidth/2, 0, 2 * Math.PI, true);
         ctx2d.lineWidth = hoverWidth*1.75;
-        ctx2d.strokeStyle = (node.depth == 0)? this.backgroundColor : this.colorCircle(node.depth-1);
+        ctx2d.strokeStyle = ((node.depth == 0)? this.backgroundColor : this.colorCircle(node.depth-1));
         ctx2d.stroke();
 
         // Clear node tooltip
@@ -826,7 +827,7 @@ export const GraphPack = {
                 var x2 = n.ctx.centerX + w;
                 var y1 = n.ctx.centerY - n.ctx.rayon - h;
                 var y2;
-                if ( n === this.focusedNode) {
+                if (n === this.focusedNode) {
                     y2 = n.ctx.centerY - n.ctx.rayon*0.85;
                 } else {
                     y2 = n.ctx.centerY - n.ctx.rayon*0.75;
@@ -1043,6 +1044,10 @@ export const GraphPack = {
             var isInCanvas = this.checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
             if (!isInCanvas) {
                 this.clearNodeTooltip();
+                var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
+                if (clearBorder) {
+                    this.clearNodeHover(this.hoveredNode);
+                }
             }
 
             return false
