@@ -1,4 +1,4 @@
-module Pages.Tension.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
+module Pages.Tension.Dynamic.Dynamic.Action exposing (Flags, Model, Msg, page)
 
 import Components.Org.Tension as Tension exposing (TensionTab(..))
 import Global
@@ -32,4 +32,4 @@ page =
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
-    Tension.init global { param1 = flags.param1, param2 = flags.param2, param3 = Conversation }
+    Tension.init global { param1 = flags.param1, param2 = flags.param2, param3 = Action }

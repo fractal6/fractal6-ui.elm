@@ -133,7 +133,7 @@ nLabelPerTension =
 
 nCircleTensionPpg : Int
 nCircleTensionPpg =
-    15
+    8
 
 
 type alias NodeTensions =

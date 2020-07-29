@@ -1,4 +1,4 @@
-module Components.Org.Tension exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
@@ -16,7 +16,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
@@ -34,6 +34,7 @@ import ModelCommon.View
         , statusColor
         , tensionTypeColor
         , tensionTypeSpan
+        , viewActionIcon
         , viewLabels
         , viewTensionArrowB
         , viewTensionDateAndUser
@@ -49,6 +50,7 @@ import Query.PatchTension exposing (patchComment, patchTitle, pushTensionComment
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTension)
 import RemoteData exposing (RemoteData)
+import String.Extra as SE
 import Task
 import Time
 
@@ -60,6 +62,7 @@ import Time
 type alias Flags =
     { param1 : String
     , param2 : String
+    , param3 : TensionTab
     }
 
 
@@ -87,6 +90,7 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
+    , activeTab : TensionTab
 
     -- Page
     , tensionid : String
@@ -98,6 +102,11 @@ type alias Model =
     , comment_result : GqlData Comment
     , isTitleEdit : Bool
     }
+
+
+type TensionTab
+    = Conversation
+    | Action
 
 
 
@@ -138,6 +147,7 @@ type Msg
     | GotSignin (WebData UserCtx)
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
+    | ChangeTab TensionTab
 
 
 
@@ -172,6 +182,7 @@ init global flags =
             , comment_form = initCommentPatchForm global.session.user
             , comment_result = NotAsked
             , inputViewMode = Write
+            , activeTab = flags.param3
             , node_action = NoOp
             , isModalActive = False
             , modalAuth = Inactive
@@ -570,6 +581,9 @@ update global msg model =
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )
 
+        ChangeTab tab ->
+            ( { model | activeTab = tab }, Cmd.none, Cmd.none )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -687,17 +701,59 @@ viewTension u t model =
                     , viewTensionDateAndUser t.createdAt t.createdBy
                     , viewTensionArrowB "is-pulled-right" t.emitter t.receiver
                     ]
-                , hr [ class "has-background-grey-dark" ] []
                 ]
             ]
-        , div [ class "columns" ]
+        , div [ class "columns is-variable is-6" ]
             [ div [ class "column is-8 tensionComments" ]
-                [ div [] subComments
-                , hr [ class "has-background-grey is-3" ] []
-                , userInput
+                [ div [ class "tabs is-md" ]
+                    [ ul []
+                        [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
+                            [ a
+                                [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref)
+
+                                --target "_self"
+                                --, onClickPD (ChangeTab Conversation)
+                                ]
+                                [ Fa.icon "fas fa-comments fa-sm" "Conversation" ]
+                            ]
+                        , if t.action /= Nothing then
+                            li [ classList [ ( "is-active", model.activeTab == Action ) ] ]
+                                [ a
+                                    [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref)
+
+                                    --target "_self"
+                                    --, onClickPD (ChangeTab Action)
+                                    ]
+                                    [ Fa.icon "fas fa-clone fa-sm" "Action" ]
+                                ]
+
+                          else
+                            li [] []
+                        ]
+                    ]
+                , case model.activeTab of
+                    Conversation ->
+                        div []
+                            [ div [] subComments
+                            , hr [ class "has-background-grey is-3" ] []
+                            , userInput
+                            ]
+
+                    Action ->
+                        case t.action of
+                            Just action ->
+                                case t.data of
+                                    Just data ->
+                                        viewData model.node_focus t action data
+
+                                    Nothing ->
+                                        div [] [ text "no document attached" ]
+
+                            Nothing ->
+                                div [] [ text "no action for this tension" ]
                 ]
-            , div [ class "column tensionSidePane" ]
-                [ viewSidePane t ]
+            , div [ class "column is-3 tensionSidePane" ]
+                [ viewSidePane model.node_focus t ]
             ]
         ]
 
@@ -969,8 +1025,8 @@ viewUpdateInput uctx comment form result =
         ]
 
 
-viewSidePane : TensionExtended -> Html Msg
-viewSidePane t =
+viewSidePane : NodeFocus -> TensionExtended -> Html Msg
+viewSidePane focus t =
     let
         labels_m =
             t.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
@@ -978,42 +1034,48 @@ viewSidePane t =
     div []
         [ div [ class "media" ]
             [ div [ class "media-content" ]
-                [ h2 [ class "subtitle" ] [ text "Labels" ]
-                , case labels_m of
-                    Just labels ->
-                        viewLabels labels
+                [ h2 [ class "subtitle has-text-weight-semibold is-md" ] [ text "Labels" ]
+                , div [ class "" ]
+                    [ case labels_m of
+                        Just labels ->
+                            viewLabels labels
 
-                    Nothing ->
-                        div [ class "is-italic" ] [ text "no labels yet" ]
+                        Nothing ->
+                            div [ class "is-italic" ] [ text "no labels yet" ]
+                    ]
                 ]
             ]
         , div [ class "media" ]
             [ div [ class "media-content" ]
-                [ case t.action of
-                    Just action ->
-                        case t.data of
-                            Just data ->
-                                viewData action data
+                [ h2 [ class "subtitle has-text-weight-semibold is-md" ] [ text "Action" ]
+                , div [ class "" ]
+                    [ case t.action of
+                        Just action ->
+                            case t.data of
+                                Just data ->
+                                    a
+                                        [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = t.id } |> toHref) ]
+                                        [ viewActionIcon "icon-padding" (Just action), text (SE.humanize (TensionAction.toString action)) ]
 
-                            Nothing ->
-                                div [ class "is-italic" ] [ text ("no data attached for: " ++ TensionAction.toString action) ]
+                                Nothing ->
+                                    div [ class "is-italic" ] [ text ("no data attached for: " ++ TensionAction.toString action) ]
 
-                    Nothing ->
-                        div [ class "is-italic" ] [ text "no action requested" ]
+                        Nothing ->
+                            div [ class "is-italic" ] [ text "no action requested" ]
+                    ]
                 ]
             ]
         ]
 
 
-viewData : TensionAction.TensionAction -> NodeFragment -> Html Msg
-viewData action nf =
+viewData : NodeFocus -> TensionExtended -> TensionAction.TensionAction -> NodeFragment -> Html Msg
+viewData focus t action nf =
     let
         txt =
             getNodeTextFromAction action
     in
     div []
-        [ h2 [ class "subtitle" ] [ text ("Action | " ++ TensionAction.toString action) ]
-        , case nf.mandate of
+        [ case nf.mandate of
             Just mandate ->
                 div [ class "card" ]
                     [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]

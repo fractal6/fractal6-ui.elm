@@ -671,7 +671,7 @@ viewSearchBar pattern depthFilter statusFilter viewMode =
                     ]
                 ]
             ]
-        , div [ class "tabs is-small" ]
+        , div [ class "tabs is-md" ]
             [ ul []
                 [ li [ classList [ ( "is-active", viewMode == ListView ) ] ] [ a [ onClickPD (GoView ListView), target "_blank" ] [ text "List" ] ]
                 , li [ classList [ ( "is-active", viewMode == IntExtView ) ] ] [ a [ onClickPD (GoView IntExtView), target "_blank" ] [ text "Internal/External" ] ]

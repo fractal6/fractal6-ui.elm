@@ -58,6 +58,14 @@ hr {
     color: $grey-light2
 }
 
+.is-md {
+    font-size: 0.9rem !important;
+}
+
+.icon-padding {
+    padding-right: 10px;
+}
+
 // Tooltip
 
 .tooltip.has-tooltip-multiline::before {
@@ -375,6 +383,26 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
+    .column > .tabs {
+        ul {
+            border-bottom-color: $grey-darker !important;
+            border-bottom-with: 2px !important;
+        }
+        li {
+            a {
+                border-bottom-color: $grey-darker !important;
+            }
+            &.is-active a {
+                border-bottom-color: $link !important;
+                color: inherit;
+                font-weight: 600 !important;
+            }
+            & a:hover {
+                border-bottom-color: lighten($link, 25) !important;
+            }
+        }
+    }
+
     .tensionComments {
         .media + .media {
             margin-top: 2rem !important;
@@ -455,8 +483,12 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .tensionSidePane {
-        border-top: 1px solid $grey-dark !important;
-        margin-top: -37px !important;
+        margin-top: 2.25rem !important;
+
+        .media:first-child {
+            border-top: 1px solid $grey-dark !important;
+            padding-top: 1rem !important;
+        }
 
         .media + .media {
             border-top: 1px solid $grey-dark !important;
@@ -579,6 +611,24 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tabs {
         margin-bottom: 0.75rem !important;
+
+        ul {
+            border-bottom-color: $grey-darker !important;
+            border-bottom-with: 2px !important;
+        }
+        li {
+            a {
+                border-bottom-color: $grey-darker !important;
+            }
+            &.is-active a {
+                border-bottom-color: $link !important;
+                color: inherit;
+                font-weight: 600 !important;
+            }
+            & a:hover {
+                border-bottom-color: lighten($link, 20) !important;
+            }
+        }
     }
 
     .control {

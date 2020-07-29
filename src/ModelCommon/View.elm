@@ -86,7 +86,7 @@ mediaTension baseUri focus tension navigate =
                     [ text tension.title ]
                 , span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments) ] <|
                     if n_comments > 1 then
-                        [ Fa.icon0 "fas fa-comment-dots" (String.fromInt (n_comments - 1)) ]
+                        [ Fa.icon0 "fas fa-comment" (String.fromInt (n_comments - 1)) ]
 
                     else
                         []
@@ -102,44 +102,7 @@ mediaTension baseUri focus tension navigate =
                 [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
                 , span [ class " column" ]
                     [ span [ class "columns is-mobile mediaFragments" ]
-                        [ span [ class "column is-1" ] <|
-                            case tension.action of
-                                Just TensionAction.NewCircle ->
-                                    [ Fa.fa "far fa-circle" ]
-
-                                Just TensionAction.NewRole ->
-                                    [ Fa.fa "far fa-user" ]
-
-                                Just TensionAction.UpdateCircleAbout ->
-                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                                        , i [ class "far fa-circle fa-stack-2x" ] []
-                                        ]
-                                    ]
-
-                                Just TensionAction.UpdateCircleMandate ->
-                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                                        , i [ class "fas fa-scroll fa-stack-2x" ] []
-                                        ]
-                                    ]
-
-                                Just TensionAction.UpdateRoleAbout ->
-                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                                        , i [ class "far fa-user fa-stack-2x" ] []
-                                        ]
-                                    ]
-
-                                Just TensionAction.UpdateRoleMandate ->
-                                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                                        , i [ class "far fa-user fa-stack-2x" ] []
-                                        ]
-                                    ]
-
-                                Nothing ->
-                                    []
+                        [ viewActionIcon "column is-1" tension.action
                         , span [ class "column" ]
                             [ span [ class "is-pulled-right" ]
                                 [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
@@ -338,6 +301,48 @@ actionNameStr action =
 
         TensionAction.UpdateRoleMandate ->
             T.updateMandate
+
+
+viewActionIcon : String -> Maybe TensionAction.TensionAction -> Html msg
+viewActionIcon cls action =
+    span [ class cls ] <|
+        case action of
+            Just TensionAction.NewCircle ->
+                [ Fa.fa "far fa-circle" ]
+
+            Just TensionAction.NewRole ->
+                [ Fa.fa "far fa-user" ]
+
+            Just TensionAction.UpdateCircleAbout ->
+                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                    [ i [ class "fas fa-pen fa-stack-1x" ] []
+                    , i [ class "far fa-circle fa-stack-2x" ] []
+                    ]
+                ]
+
+            Just TensionAction.UpdateCircleMandate ->
+                [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                    [ i [ class "fas fa-pen fa-stack-1x" ] []
+                    , i [ class "fas fa-scroll fa-stack-2x" ] []
+                    ]
+                ]
+
+            Just TensionAction.UpdateRoleAbout ->
+                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                    [ i [ class "fas fa-pen fa-stack-1x" ] []
+                    , i [ class "far fa-user fa-stack-2x" ] []
+                    ]
+                ]
+
+            Just TensionAction.UpdateRoleMandate ->
+                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                    [ i [ class "fas fa-pen fa-stack-1x" ] []
+                    , i [ class "far fa-user fa-stack-2x" ] []
+                    ]
+                ]
+
+            Nothing ->
+                []
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String
