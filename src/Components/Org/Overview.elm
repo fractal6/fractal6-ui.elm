@@ -1059,7 +1059,10 @@ update global msg model =
         GotSignin result ->
             case result of
                 RemoteData.Success uctx ->
-                    ( { model | modalAuth = Inactive }, Cmd.none, Global.send (UpdateUserSession uctx) )
+                    ( { model | modalAuth = Inactive }
+                    , send DoCloseAuthModal
+                    , Global.send (UpdateUserSession uctx)
+                    )
 
                 other ->
                     case model.modalAuth of
@@ -1372,7 +1375,7 @@ viewSearchBar odata maybePath qs =
                             , attribute "data-modal" "actionModal"
                             , onClick (DoNodeAction node_)
                             ]
-                            [ span [ class "has-text-weight-semibold text" ] [ node.name |> text ]
+                            [ span [ class "has-text-weight-bold text" ] [ node.name |> text ]
                             , span [ class "fa-stack  ellipsisArt" ]
                                 [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
                             ]

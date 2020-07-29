@@ -247,6 +247,9 @@ export function BulmaDriver(app, target, handlers) {
 
     // Close all modals if ESC pressed
     function closeModal(e, modal) {
+        if (document.documentElement.classList.contains("has-modal-active2" )) {
+            return
+        }
         // deactivate all buttons that are below that modal
         modal.querySelectorAll('.button').forEach(btn => {
             btn.classList.remove('is-active');
