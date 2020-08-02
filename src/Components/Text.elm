@@ -252,16 +252,6 @@ editRole =
     "Edit Role"
 
 
-updateAbout : String
-updateAbout =
-    "Edit about"
-
-
-updateMandate : String
-updateMandate =
-    "Edit mandate"
-
-
 tensionTitleHelp : String
 tensionTitleHelp =
     "Title that sumarize your tension."
@@ -309,7 +299,7 @@ autoFieldMessageHelp =
 
 firstLinkRoleMessageHelp : String
 firstLinkRoleMessageHelp =
-    "Select a role type and assign user (first link)."
+    "Select a type of role and assign an user (first link)."
 
 
 firstLinkCircleMessageHelp : String

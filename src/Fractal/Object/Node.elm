@@ -170,6 +170,44 @@ mandate fillInOptionals object_ =
     Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
 
 
+type alias DocsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+docs : (DocsOptionalArguments -> DocsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.Node
+docs fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "docs" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias SourceOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+source : (SourceOptionalArguments -> SourceOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+source fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "source" optionalArgs object_ (identity >> Decode.nullable)
+
+
 n_tensions_out : SelectionSet (Maybe Int) Fractal.Object.Node
 n_tensions_out =
     Object.selectionForField "(Maybe Int)" "n_tensions_out" [] (Decode.int |> Decode.nullable)

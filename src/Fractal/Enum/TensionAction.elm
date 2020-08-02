@@ -10,15 +10,13 @@ import Json.Decode as Decode exposing (Decoder)
 type TensionAction
     = NewRole
     | NewCircle
-    | UpdateRoleAbout
-    | UpdateCircleAbout
-    | UpdateRoleMandate
-    | UpdateCircleMandate
+    | EditRole
+    | EditCircle
 
 
 list : List TensionAction
 list =
-    [ NewRole, NewCircle, UpdateRoleAbout, UpdateCircleAbout, UpdateRoleMandate, UpdateCircleMandate ]
+    [ NewRole, NewCircle, EditRole, EditCircle ]
 
 
 decoder : Decoder TensionAction
@@ -33,17 +31,11 @@ decoder =
                     "NewCircle" ->
                         Decode.succeed NewCircle
 
-                    "UpdateRoleAbout" ->
-                        Decode.succeed UpdateRoleAbout
+                    "EditRole" ->
+                        Decode.succeed EditRole
 
-                    "UpdateCircleAbout" ->
-                        Decode.succeed UpdateCircleAbout
-
-                    "UpdateRoleMandate" ->
-                        Decode.succeed UpdateRoleMandate
-
-                    "UpdateCircleMandate" ->
-                        Decode.succeed UpdateCircleMandate
+                    "EditCircle" ->
+                        Decode.succeed EditCircle
 
                     _ ->
                         Decode.fail ("Invalid TensionAction type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -61,17 +53,11 @@ toString enum =
         NewCircle ->
             "NewCircle"
 
-        UpdateRoleAbout ->
-            "UpdateRoleAbout"
+        EditRole ->
+            "EditRole"
 
-        UpdateCircleAbout ->
-            "UpdateCircleAbout"
-
-        UpdateRoleMandate ->
-            "UpdateRoleMandate"
-
-        UpdateCircleMandate ->
-            "UpdateCircleMandate"
+        EditCircle ->
+            "EditCircle"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -94,17 +80,11 @@ fromString enumString =
         "NewCircle" ->
             Just NewCircle
 
-        "UpdateRoleAbout" ->
-            Just UpdateRoleAbout
+        "EditRole" ->
+            Just EditRole
 
-        "UpdateCircleAbout" ->
-            Just UpdateCircleAbout
-
-        "UpdateRoleMandate" ->
-            Just UpdateRoleMandate
-
-        "UpdateCircleMandate" ->
-            Just UpdateCircleMandate
+        "EditCircle" ->
+            Just EditCircle
 
         _ ->
             Nothing

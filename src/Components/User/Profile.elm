@@ -329,7 +329,12 @@ viewUserOrgas user_data =
                             , div [ class "media-content" ]
                                 [ div [ class "" ]
                                     [ div [ class "" ] [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ] ]
-                                    , div [ class "is-italic" ] [ text "about this organisation" ]
+                                    , case root.about of
+                                        Just about ->
+                                            div [ class "is-italic" ] [ text about ]
+
+                                        Nothing ->
+                                            div [] []
                                     , hr [] []
                                     , div [ class "buttons" ] <|
                                         (ud.roles

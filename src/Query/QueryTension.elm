@@ -1,10 +1,11 @@
 module Query.QueryTension exposing
     ( commentPayload
-    , getTension
+    , getTensionComments
+    , getTensionHead
     , queryCircleTension
     , queryExtTension
     , queryIntTension
-    , tensionExtendedPayload
+    , tensionHeadPayload
     , tensionPayload
     )
 
@@ -39,7 +40,7 @@ import RemoteData exposing (RemoteData)
 
 
 {-
-   Get one tension
+   Get one tension Head/Comments/Blobs/History
 -}
 
 
@@ -48,17 +49,25 @@ nCommentPerTension =
     250
 
 
-getTension url tensionid msg =
+getTensionHead url tensionid msg =
     makeGQLQuery url
         (Query.getTension { id = encodeId tensionid }
-            tensionExtendedPayload
+            tensionHeadPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-tensionExtendedPayload : SelectionSet TensionExtended Fractal.Object.Tension
-tensionExtendedPayload =
-    SelectionSet.succeed TensionExtended
+getTensionComments url tensionid msg =
+    makeGQLQuery url
+        (Query.getTension { id = encodeId tensionid }
+            tensionCommentsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+tensionHeadPayload : SelectionSet TensionHead Fractal.Object.Tension
+tensionHeadPayload =
+    SelectionSet.succeed TensionHead
         |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
@@ -88,26 +97,33 @@ tensionExtendedPayload =
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.status
-        |> with Fractal.Object.Tension.message
+
+
+tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension
+tensionCommentsPayload =
+    SelectionSet.succeed TensionComments
         |> with
             (Fractal.Object.Tension.comments
                 (\args -> { args | first = Present nCommentPerTension })
                 commentPayload
             )
-        |> with
-            (Fractal.Object.Tension.data
-                (SelectionSet.succeed NodeFragment
-                    |> with Fractal.Object.NodeFragment.name
-                    |> with Fractal.Object.NodeFragment.nameid
-                    |> with Fractal.Object.NodeFragment.type_
-                    |> with Fractal.Object.NodeFragment.role_type
-                    |> with Fractal.Object.NodeFragment.about
-                    |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
-                    |> with Fractal.Object.NodeFragment.isPrivate
-                    |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
-                    |> with Fractal.Object.NodeFragment.first_link
-                )
-            )
+
+
+
+--|> with
+--    (Fractal.Object.Tension.data
+--        (SelectionSet.succeed NodeFragment
+--            |> with Fractal.Object.NodeFragment.name
+--            |> with Fractal.Object.NodeFragment.nameid
+--            |> with Fractal.Object.NodeFragment.type_
+--            |> with Fractal.Object.NodeFragment.role_type
+--            |> with Fractal.Object.NodeFragment.about
+--            |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+--            |> with Fractal.Object.NodeFragment.isPrivate
+--            |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
+--            |> with Fractal.Object.NodeFragment.first_link
+--        )
+--    )
 
 
 commentPayload : SelectionSet Comment Fractal.Object.Comment

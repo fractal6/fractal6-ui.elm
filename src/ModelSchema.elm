@@ -2,10 +2,12 @@ module ModelSchema exposing (..)
 
 import Components.Loading exposing (ErrorData, errorGraphQLHttpToString)
 import Dict exposing (Dict)
+import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.Scalar
@@ -144,7 +146,7 @@ type alias Label =
     { name : String }
 
 
-type alias TensionExtended =
+type alias TensionHead =
     { id : String
     , createdAt : String
     , createdBy : Username
@@ -158,10 +160,19 @@ type alias TensionExtended =
 
     --
     , status : TensionStatus.TensionStatus
-    , message : Maybe String
-    , comments : Maybe (List Comment)
-    , data : Maybe NodeFragment
     }
+
+
+type alias TensionComments =
+    { comments : Maybe (List Comment) }
+
+
+type alias TensionBlobs =
+    { blobs : Maybe (List Blob) }
+
+
+type alias TensionHistory =
+    { history : Maybe (List Event) }
 
 
 type alias Comment =
@@ -170,6 +181,26 @@ type alias Comment =
     , updatedAt : Maybe String
     , createdBy : Username
     , message : String
+    }
+
+
+type alias Blob =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , blob_type : BlobType.BlobType
+    , node : Maybe NodeFragment
+    , md : Maybe String
+    }
+
+
+type alias Event =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , event_type : TensionEvent.TensionEvent
+    , old : String
+    , new : String
     }
 
 

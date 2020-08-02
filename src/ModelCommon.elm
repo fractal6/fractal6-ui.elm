@@ -3,10 +3,12 @@ module ModelCommon exposing (..)
 import Array exposing (Array)
 import Components.Loading as Loading exposing (ErrorData, WebData)
 import Dict exposing (Dict)
+import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Json.Decode as JD
@@ -116,8 +118,12 @@ type alias TensionForm =
     , targetData : NodeData
     , tension_type : TensionType.TensionType
     , action : Maybe TensionAction.TensionAction
-    , post : Post -- createdBy, createdAt, title, message...
-    , data : NodeFragment
+    , post : Post -- For String type,  createdBy, createdAt, title, message, etc
+
+    -- data
+    , event_type : Maybe TensionEvent.TensionEvent
+    , blob_type : Maybe BlobType.BlobType
+    , node : NodeFragment
     }
 
 
@@ -128,6 +134,11 @@ type alias TensionPatchForm =
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message...
+
+    -- data
+    , event_type : Maybe TensionEvent.TensionEvent
+    , blob_type : Maybe BlobType.BlobType
+    , node : NodeFragment
     }
 
 

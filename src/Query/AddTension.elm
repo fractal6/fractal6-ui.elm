@@ -1,6 +1,12 @@
-module Query.AddTension exposing (addCircleTension, addOneTension)
+module Query.AddTension exposing
+    ( addCircleTension
+    , addOneTension
+    , buildMandate
+    , tensionFromForm
+    )
 
 import Dict exposing (Dict)
+import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
@@ -19,7 +25,6 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
-import Query.AddNode exposing (buildComment, buildMandate, buildNodeFragmentRef)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
 
@@ -161,9 +166,129 @@ addCircleInputEncoder f =
                 { t
                     | action = f.action |> fromMaybe
                     , comments = buildComment createdAt f.uctx.username message
-                    , data = buildNodeFragmentRef f
+                    , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
                 }
     in
     { input =
         [ Input.buildAddTensionInput tensionRequired tensionOpts ]
     }
+
+
+
+--- Utils
+
+
+tensionFromForm : TensionForm -> (Input.TensionRefOptionalFields -> Input.TensionRefOptionalFields)
+tensionFromForm f =
+    let
+        title =
+            Dict.get "title" f.post |> withDefault ""
+
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        status =
+            Dict.get "status" f.post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
+
+        message =
+            Dict.get "message" f.post
+    in
+    \t ->
+        { t
+            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+            , createdBy =
+                Input.buildUserRef
+                    (\x -> { x | username = Present f.uctx.username })
+                    |> Present
+            , title = title |> Present
+            , type_ = f.tension_type |> Present
+            , status = status |> Present
+            , action = f.action |> fromMaybe
+            , emitterid = f.source.nameid |> Present
+            , receiverid = f.target.nameid |> Present
+            , emitter =
+                Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present
+            , receiver =
+                Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid }) |> Present
+            , comments = buildComment createdAt f.uctx.username message
+            , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+        }
+
+
+buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
+buildComment createdAt username message_m =
+    let
+        message =
+            message_m |> withDefault ""
+    in
+    Present
+        [ Input.buildCommentRef
+            (\x ->
+                { x
+                    | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                    , createdBy =
+                        Input.buildUserRef
+                            (\u -> { u | username = Present username })
+                            |> Present
+                    , message = Present message
+                }
+            )
+        ]
+
+
+buildBlob : String -> String -> Maybe BlobType.BlobType -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
+buildBlob createdAt username blob_type_m node post =
+    blob_type_m
+        |> Maybe.map
+            (\blob_type ->
+                [ Input.buildBlobRef
+                    (\x ->
+                        { x
+                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            , createdBy =
+                                Input.buildUserRef
+                                    (\u -> { u | username = Present username })
+                                    |> Present
+                            , node = buildNodeFragmentRef node
+                            , md = Dict.get "md" post |> fromMaybe
+                        }
+                    )
+                ]
+            )
+        |> fromMaybe
+
+
+buildNodeFragmentRef : NodeFragment -> OptionalArgument Input.NodeFragmentRef
+buildNodeFragmentRef nf =
+    Input.buildNodeFragmentRef
+        (\n ->
+            { n
+                | name = fromMaybe nf.name
+                , nameid = fromMaybe nf.nameid
+                , type_ = fromMaybe nf.type_
+                , role_type = fromMaybe nf.role_type
+                , about = fromMaybe nf.about
+                , mandate = buildMandate nf.mandate
+                , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
+                , first_link = fromMaybe nf.first_link
+            }
+        )
+        |> Present
+
+
+buildMandate : Maybe Mandate -> OptionalArgument Input.MandateRef
+buildMandate maybeMandate =
+    maybeMandate
+        |> Maybe.map
+            (\mandate ->
+                Input.buildMandateRef
+                    (\m ->
+                        { m
+                            | purpose = mandate.purpose |> Present
+                            , responsabilities = mandate.responsabilities |> fromMaybe
+                            , domains = mandate.domains |> fromMaybe
+                            , policies = mandate.policies |> fromMaybe
+                        }
+                    )
+            )
+        |> fromMaybe

@@ -17,7 +17,7 @@ import Html.Attributes exposing (attribute, class, classList, href, id)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
-import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, TensionExtended, UserCtx, Username)
+import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, UserCtx, Username)
 
 
 
@@ -290,17 +290,11 @@ actionNameStr action =
         TensionAction.NewRole ->
             T.newRole
 
-        TensionAction.UpdateCircleAbout ->
-            T.updateAbout
+        TensionAction.EditCircle ->
+            T.editCircle
 
-        TensionAction.UpdateRoleAbout ->
-            T.updateAbout
-
-        TensionAction.UpdateCircleMandate ->
-            T.updateMandate
-
-        TensionAction.UpdateRoleMandate ->
-            T.updateMandate
+        TensionAction.EditRole ->
+            T.editRole
 
 
 viewActionIcon : String -> Maybe TensionAction.TensionAction -> Html msg
@@ -311,33 +305,19 @@ viewActionIcon cls action =
                 [ Fa.fa "far fa-circle" ]
 
             Just TensionAction.NewRole ->
-                [ Fa.fa "far fa-user" ]
+                [ Fa.fa "far fa-scroll" ]
 
-            Just TensionAction.UpdateCircleAbout ->
+            Just TensionAction.EditCircle ->
                 [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
                     [ i [ class "fas fa-pen fa-stack-1x" ] []
                     , i [ class "far fa-circle fa-stack-2x" ] []
                     ]
                 ]
 
-            Just TensionAction.UpdateCircleMandate ->
+            Just TensionAction.EditRole ->
                 [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
                     [ i [ class "fas fa-pen fa-stack-1x" ] []
                     , i [ class "fas fa-scroll fa-stack-2x" ] []
-                    ]
-                ]
-
-            Just TensionAction.UpdateRoleAbout ->
-                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                    [ i [ class "fas fa-pen fa-stack-1x" ] []
-                    , i [ class "far fa-user fa-stack-2x" ] []
-                    ]
-                ]
-
-            Just TensionAction.UpdateRoleMandate ->
-                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                    [ i [ class "fas fa-pen fa-stack-1x" ] []
-                    , i [ class "far fa-user fa-stack-2x" ] []
                     ]
                 ]
 
@@ -359,17 +339,11 @@ action2SourceStr action_m =
                 TensionAction.NewRole ->
                     "create this Role"
 
-                TensionAction.UpdateCircleAbout ->
+                TensionAction.EditCircle ->
                     "edit this circle"
 
-                TensionAction.UpdateRoleAbout ->
+                TensionAction.EditRole ->
                     "edit this role"
-
-                TensionAction.UpdateCircleMandate ->
-                    "edit this mandate"
-
-                TensionAction.UpdateRoleMandate ->
-                    "edit this mandate"
 
 
 getTensionText : NewNodeText
@@ -406,14 +380,8 @@ getNodeTextFromAction action =
         TensionAction.NewRole ->
             getNodeTextFromNodeType NodeType.Role
 
-        TensionAction.UpdateCircleAbout ->
+        TensionAction.EditCircle ->
             getCircleEdit
 
-        TensionAction.UpdateCircleMandate ->
-            getCircleEdit
-
-        TensionAction.UpdateRoleAbout ->
-            getRoleEdit
-
-        TensionAction.UpdateRoleMandate ->
+        TensionAction.EditRole ->
             getRoleEdit

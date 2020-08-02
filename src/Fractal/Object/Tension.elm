@@ -81,25 +81,14 @@ receiverid =
     Object.selectionForField "String" "receiverid" [] Decode.string
 
 
-type alias CommentsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.CommentFilter
-    , order : OptionalArgument Fractal.InputObject.CommentOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
+status : SelectionSet Fractal.Enum.TensionStatus.TensionStatus Fractal.Object.Tension
+status =
+    Object.selectionForField "Enum.TensionStatus.TensionStatus" "status" [] Fractal.Enum.TensionStatus.decoder
 
 
-comments : (CommentsOptionalArguments -> CommentsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Comment -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
-comments fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCommentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeCommentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "comments" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+action : SelectionSet (Maybe Fractal.Enum.TensionAction.TensionAction) Fractal.Object.Tension
+action =
+    Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
 
 
 type alias LabelsOptionalArguments =
@@ -123,19 +112,84 @@ labels fillInOptionals object_ =
     Object.selectionForCompositeField "labels" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
-status : SelectionSet Fractal.Enum.TensionStatus.TensionStatus Fractal.Object.Tension
-status =
-    Object.selectionForField "Enum.TensionStatus.TensionStatus" "status" [] Fractal.Enum.TensionStatus.decoder
+type alias CommentsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CommentFilter
+    , order : OptionalArgument Fractal.InputObject.CommentOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
 
 
-action : SelectionSet (Maybe Fractal.Enum.TensionAction.TensionAction) Fractal.Object.Tension
-action =
-    Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
+comments : (CommentsOptionalArguments -> CommentsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Comment -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+comments fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCommentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeCommentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "comments" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
-data : SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
-data object_ =
-    Object.selectionForCompositeField "data" [] object_ (identity >> Decode.nullable)
+type alias BlobsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.BlobFilter
+    , order : OptionalArgument Fractal.InputObject.BlobOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+blobs : (BlobsOptionalArguments -> BlobsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+blobs fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeBlobFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeBlobOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "blobs" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type alias HistoryOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFilter
+    , order : OptionalArgument Fractal.InputObject.EventOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+history : (HistoryOptionalArguments -> HistoryOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Event -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+history fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeEventOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "history" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type alias HeadOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.BlobFilter }
+
+
+head : (HeadOptionalArguments -> HeadOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
+head fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeBlobFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "head" optionalArgs object_ (identity >> Decode.nullable)
 
 
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension

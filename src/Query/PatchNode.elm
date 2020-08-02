@@ -15,7 +15,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm)
 import ModelSchema exposing (..)
-import Query.AddNode exposing (buildMandate, tensionFromForm)
+import Query.AddTension exposing (buildMandate, tensionFromForm)
 import RemoteData exposing (RemoteData)
 
 
@@ -88,7 +88,7 @@ buildNodePatch : TensionForm -> OptionalArgument Input.NodePatch
 buildNodePatch f =
     let
         nf =
-            f.data
+            f.node
     in
     Input.buildNodePatch
         (\n ->

@@ -17,10 +17,12 @@ import Form
 import Form.EditCircle
 import Form.NewCircle
 import Form.NewTension
+import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route)
@@ -486,7 +488,9 @@ update global msg model =
                     , tension_type = TensionType.Governance
                     , action = Nothing
                     , post = Dict.empty
-                    , data = initNodeFragment
+                    , event_type = Just TensionEvent.Created
+                    , blob_type = Nothing
+                    , node = initNodeFragment
                     }
 
                 newStep =
@@ -596,6 +600,14 @@ update global msg model =
         -- New Circle
         DoCircleInit node nodeType ->
             let
+                action =
+                    case node.type_ of
+                        NodeType.Role ->
+                            TensionAction.EditRole
+
+                        NodeType.Circle ->
+                            TensionAction.EditCircle
+
                 form =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
@@ -603,14 +615,10 @@ update global msg model =
                     , targetData = model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
                     , tension_type = TensionType.Governance
                     , post = Dict.empty
-                    , action =
-                        case nodeType of
-                            NodeType.Circle ->
-                                Just TensionAction.NewCircle
-
-                            NodeType.Role ->
-                                Just TensionAction.NewRole
-                    , data = initNodeFragmentCircle nodeType RoleType.Peer
+                    , action = Just action
+                    , event_type = Just TensionEvent.Created
+                    , blob_type = Just BlobType.InitBlob
+                    , node = initNodeFragmentCircle nodeType RoleType.Peer
                     }
 
                 newStep =
@@ -627,13 +635,13 @@ update global msg model =
                     case model.node_action of
                         AddCircle (NodeInit form) ->
                             let
-                                data =
-                                    form.data
+                                node =
+                                    form.node
 
                                 newForm =
                                     { form
                                         | uctx = uctx
-                                        , data = { data | charac = Just form.target.charac, first_link = Just uctx.username }
+                                        , node = { node | charac = Just form.target.charac, first_link = Just uctx.username }
                                     }
 
                                 newStep =
@@ -747,10 +755,10 @@ update global msg model =
                         action =
                             case node.type_ of
                                 NodeType.Role ->
-                                    TensionAction.UpdateRoleAbout
+                                    TensionAction.EditRole
 
                                 NodeType.Circle ->
-                                    TensionAction.UpdateCircleAbout
+                                    TensionAction.EditCircle
 
                         nodeData =
                             model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
@@ -763,7 +771,9 @@ update global msg model =
                             , tension_type = TensionType.Governance
                             , post = Dict.fromList [ ( "title", "[" ++ actionNameStr action ++ "] " ++ node.name ) ]
                             , action = Just action
-                            , data = { initNodeFragment | name = Just node.name, about = nodeData.about }
+                            , event_type = Nothing
+                            , blob_type = Just BlobType.OnAbout
+                            , node = { initNodeFragment | name = Just node.name, about = nodeData.about }
                             }
 
                         newStep =
@@ -790,26 +800,18 @@ update global msg model =
             let
                 newForm =
                     { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", statusFromDoClose doClose ) ]) form.post }
-
-                action =
-                    form.action |> withDefault TensionAction.UpdateRoleAbout
             in
             if doClose == True then
-                case action of
-                    TensionAction.UpdateRoleAbout ->
+                case form.blob_type |> withDefault BlobType.OnDoc of
+                    BlobType.OnAbout ->
                         ( model, patchNode apis.gql newForm AboutAck, Cmd.none )
 
-                    TensionAction.UpdateCircleAbout ->
-                        ( model, patchNode apis.gql newForm AboutAck, Cmd.none )
-
-                    TensionAction.UpdateRoleMandate ->
-                        ( model, patchNode apis.gql newForm MandateAck, Cmd.none )
-
-                    TensionAction.UpdateCircleMandate ->
+                    BlobType.OnMandate ->
                         ( model, patchNode apis.gql newForm MandateAck, Cmd.none )
 
                     _ ->
-                        ( model, addCircleTension apis.gql newForm TensionAck, Cmd.none )
+                        -- Not implemented
+                        ( model, Cmd.none, Cmd.none )
 
             else
                 ( model, addCircleTension apis.gql newForm TensionAck, Cmd.none )
@@ -832,7 +834,7 @@ update global msg model =
                                 data =
                                     model.data |> withDefaultData (NodeData form.target.nameid Nothing Nothing)
                             in
-                            ( { model | node_action = EditAbout <| NodeFinal form result, data = Success { data | about = form.data.about } }
+                            ( { model | node_action = EditAbout <| NodeFinal form result, data = Success { data | about = form.node.about } }
                             , Cmd.none
                             , Cmd.none
                             )
@@ -861,10 +863,10 @@ update global msg model =
                         action =
                             case node.type_ of
                                 NodeType.Role ->
-                                    TensionAction.UpdateRoleMandate
+                                    TensionAction.EditRole
 
                                 NodeType.Circle ->
-                                    TensionAction.UpdateCircleMandate
+                                    TensionAction.EditCircle
 
                         nodeData =
                             model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
@@ -876,14 +878,10 @@ update global msg model =
                             , targetData = nodeData
                             , tension_type = TensionType.Governance
                             , post = Dict.fromList [ ( "title", "[" ++ actionNameStr action ++ "] " ++ node.name ) ]
-                            , action =
-                                case node.type_ of
-                                    NodeType.Role ->
-                                        Just TensionAction.UpdateRoleMandate
-
-                                    NodeType.Circle ->
-                                        Just TensionAction.UpdateCircleMandate
-                            , data = { initNodeFragment | mandate = nodeData.mandate }
+                            , action = Just action
+                            , event_type = Nothing
+                            , blob_type = Just BlobType.OnMandate
+                            , node = { initNodeFragment | mandate = nodeData.mandate }
                             }
 
                         newStep =
@@ -924,7 +922,7 @@ update global msg model =
                                 data =
                                     model.data |> withDefaultData (NodeData form.target.nameid Nothing Nothing)
                             in
-                            ( { model | node_action = EditMandate <| NodeFinal form result, data = Success { data | mandate = form.data.mandate } }
+                            ( { model | node_action = EditMandate <| NodeFinal form result, data = Success { data | mandate = form.node.mandate } }
                             , Cmd.none
                             , Cmd.none
                             )
@@ -1429,7 +1427,7 @@ viewCanvas odata =
 
 viewNodeInfo : GqlData NodeData -> Maybe Node -> Html Msg
 viewNodeInfo nodeData maybeFocus =
-    div [ id "mandateContainer", class "hero is-small is-light" ]
+    div [ id "DocContainer", class "hero is-small is-light" ]
         [ div [ class "hero-body" ]
             [ case maybeFocus of
                 Just focus ->
@@ -1679,26 +1677,21 @@ viewTensionStep step subData =
             viewSourceRoles form roles DoTensionFinal
 
         TensionFinal form result ->
-            case form.action of
-                Just action ->
-                    case action of
-                        TensionAction.NewRole ->
+            case form.blob_type of
+                Just blob_type ->
+                    case blob_type of
+                        BlobType.InitBlob ->
                             Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
 
-                        TensionAction.NewCircle ->
-                            Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
-
-                        TensionAction.UpdateRoleAbout ->
+                        BlobType.OnAbout ->
                             Form.EditCircle.viewAbout form result { subData | submitNextMsg = SubmitNodePatch }
 
-                        TensionAction.UpdateCircleAbout ->
-                            Form.EditCircle.viewAbout form result { subData | submitNextMsg = SubmitNodePatch }
-
-                        TensionAction.UpdateRoleMandate ->
+                        BlobType.OnMandate ->
                             Form.EditCircle.viewMandate form result { subData | submitNextMsg = SubmitNodePatch }
 
-                        TensionAction.UpdateCircleMandate ->
-                            Form.EditCircle.viewMandate form result { subData | submitNextMsg = SubmitNodePatch }
+                        _ ->
+                            -- not implemented
+                            div [] []
 
                 Nothing ->
                     Form.NewTension.view form result { subData | submitNextMsg = SubmitTension }
@@ -1875,38 +1868,38 @@ getNewNodeStepFromAuthForm form =
 updateNodeForm : String -> String -> TensionForm -> TensionForm
 updateNodeForm field value form =
     let
-        data =
-            form.data
+        node =
+            form.node
 
         mandate =
-            data.mandate |> withDefault initMandate
+            node.mandate |> withDefault initMandate
     in
     case field of
         -- Node data
         "role_type" ->
-            { form | data = { data | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
+            { form | node = { node | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
 
         "nameid" ->
-            { form | data = { data | nameid = Just value } }
+            { form | node = { node | nameid = Just value } }
 
         "first_link" ->
-            { form | data = { data | first_link = Just value } }
+            { form | node = { node | first_link = Just value } }
 
         "about" ->
-            { form | data = { data | about = Just value } }
+            { form | node = { node | about = Just value } }
 
         -- Mandate data
         "purpose" ->
-            { form | data = { data | mandate = Just { mandate | purpose = value } } }
+            { form | node = { node | mandate = Just { mandate | purpose = value } } }
 
         "responsabilities" ->
-            { form | data = { data | mandate = Just { mandate | responsabilities = Just value } } }
+            { form | node = { node | mandate = Just { mandate | responsabilities = Just value } } }
 
         "domains" ->
-            { form | data = { data | mandate = Just { mandate | domains = Just value } } }
+            { form | node = { node | mandate = Just { mandate | domains = Just value } } }
 
         "policies" ->
-            { form | data = { data | mandate = Just { mandate | policies = Just value } } }
+            { form | node = { node | mandate = Just { mandate | policies = Just value } } }
 
         -- Various
         "name" ->
@@ -1921,15 +1914,15 @@ updateNodeForm field value form =
                                 Dict.insert "title" ("[" ++ actionNameStr action ++ "] " ++ value) form.post
 
                             newData =
-                                { data
+                                { node
                                     | name = Just value
                                     , nameid = makeNewNodeId value
                                 }
                         in
-                        { form | post = newPost, data = newData }
+                        { form | post = newPost, node = newData }
 
                     else
-                        { form | data = { data | name = Just value } }
+                        { form | node = { node | name = Just value } }
 
         other ->
             -- title, message...

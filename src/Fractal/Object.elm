@@ -5,8 +5,16 @@
 module Fractal.Object exposing (..)
 
 
+type AddBlobPayload
+    = AddBlobPayload
+
+
 type AddCommentPayload
     = AddCommentPayload
+
+
+type AddEventPayload
+    = AddEventPayload
 
 
 type AddLabelPayload
@@ -45,12 +53,24 @@ type AddUserRightsPayload
     = AddUserRightsPayload
 
 
+type Blob
+    = Blob
+
+
 type Comment
     = Comment
 
 
+type DeleteBlobPayload
+    = DeleteBlobPayload
+
+
 type DeleteCommentPayload
     = DeleteCommentPayload
+
+
+type DeleteEventPayload
+    = DeleteEventPayload
 
 
 type DeleteLabelPayload
@@ -79,6 +99,10 @@ type DeleteTensionPayload
 
 type DeleteUserPayload
     = DeleteUserPayload
+
+
+type Event
+    = Event
 
 
 type Label
@@ -113,8 +137,16 @@ type Tension
     = Tension
 
 
+type UpdateBlobPayload
+    = UpdateBlobPayload
+
+
 type UpdateCommentPayload
     = UpdateCommentPayload
+
+
+type UpdateEventPayload
+    = UpdateEventPayload
 
 
 type UpdateLabelPayload

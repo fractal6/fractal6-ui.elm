@@ -48,7 +48,7 @@ import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (patchComment, patchTitle, pushTensionComment)
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryTension exposing (getTension)
+import Query.QueryTension exposing (getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 import Task
@@ -94,7 +94,8 @@ type alias Model =
 
     -- Page
     , tensionid : String
-    , tension_data : GqlData TensionExtended
+    , tension_head : GqlData TensionHead
+    , tension_comments : GqlData TensionComments
     , tension_form : TensionPatchForm
     , tension_result : GqlData IdPayload
     , title_result : GqlData String
@@ -119,7 +120,7 @@ type Msg
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
-    | GotTension (GqlData TensionExtended)
+    | GotTensionHead (GqlData TensionHead)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
     | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
@@ -175,7 +176,8 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , tensionid = flags.param2
-            , tension_data = Loading
+            , tension_head = Loading
+            , tension_comments = Loading
             , tension_form = initTensionForm flags.param2 global.session.user
             , tension_result = NotAsked
             , title_result = NotAsked
@@ -191,7 +193,7 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , getTension apis.gql model.tensionid GotTension
+            , getTensionHead apis.gql model.tensionid GotTensionHead
             , Global.sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -214,10 +216,13 @@ update global msg model =
     case msg of
         PassedSlowLoadTreshold ->
             let
-                tension =
-                    ternary (model.tension_data == Loading) LoadingSlowly model.tension_data
+                tension_h =
+                    ternary (model.tension_head == Loading) LoadingSlowly model.tension_head
+
+                tension_c =
+                    ternary (model.tension_comments == Loading) LoadingSlowly model.tension_comments
             in
-            ( { model | tension_data = tension }, Cmd.none, Cmd.none )
+            ( { model | tension_head = tension_h, tension_comments = tension_c }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -273,10 +278,10 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        GotTension result ->
+        GotTensionHead result ->
             let
                 newModel =
-                    { model | tension_data = result }
+                    { model | tension_head = result }
             in
             ( newModel, Cmd.none, Ports.bulma_driver "" )
 
@@ -296,8 +301,8 @@ update global msg model =
                 newForm =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
-                        , emitter = model.tension_data |> withMaybeData |> Maybe.map (\t -> t.emitter)
-                        , receiver = model.tension_data |> withMaybeData |> Maybe.map (\t -> t.receiver)
+                        , emitter = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.emitter)
+                        , receiver = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.receiver)
                     }
             in
             ( model, pushTensionComment apis.gql newForm TensionPatchAck, Cmd.none )
@@ -319,17 +324,18 @@ update global msg model =
                         newComments =
                             commentsFromForm cid.id model.tension_form
 
-                        tension_d =
-                            case model.tension_data of
+                        tension_h =
+                            case model.tension_head of
                                 Success t ->
-                                    let
-                                        newTension =
-                                            { t
-                                                | comments = Just ((t.comments |> withDefault []) ++ newComments)
-                                                , status = model.tension_form.status |> withDefault t.status
-                                            }
-                                    in
-                                    Success newTension
+                                    Success { t | status = model.tension_form.status |> withDefault t.status }
+
+                                other ->
+                                    other
+
+                        tension_c =
+                            case model.tension_comments of
+                                Success t ->
+                                    Success { t | comments = Just ((t.comments |> withDefault []) ++ newComments) }
 
                                 other ->
                                     other
@@ -337,7 +343,15 @@ update global msg model =
                         resetForm =
                             initTensionForm model.tensionid global.session.user
                     in
-                    ( { model | tension_data = tension_d, tension_form = resetForm, tension_result = result }, Cmd.none, Ports.bulma_driver "" )
+                    ( { model
+                        | tension_head = tension_h
+                        , tension_comments = tension_c
+                        , tension_form = resetForm
+                        , tension_result = result
+                      }
+                    , Cmd.none
+                    , Ports.bulma_driver ""
+                    )
 
                 Failure _ ->
                     let
@@ -400,8 +414,8 @@ update global msg model =
             case result of
                 Success comment ->
                     let
-                        tension_d =
-                            case model.tension_data of
+                        tension_c =
+                            case model.tension_comments of
                                 Success t ->
                                     let
                                         comments =
@@ -412,14 +426,14 @@ update global msg model =
                                                 |> LE.findIndex (\c -> c.id == comment.id)
                                                 |> withDefault 0
 
-                                        newTension =
+                                        newComments =
                                             { t
                                                 | comments = Just (LE.setAt n comment comments)
 
                                                 --| comments = Just (List.take n comments ++ comment :: List.drop (n + 1) comments)
                                             }
                                     in
-                                    Success newTension
+                                    Success newComments
 
                                 other ->
                                     other
@@ -427,7 +441,7 @@ update global msg model =
                         resetForm =
                             initCommentPatchForm global.session.user
                     in
-                    ( { model | tension_data = tension_d, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
+                    ( { model | tension_comments = tension_c, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
 
                 other ->
                     if doRefreshToken other then
@@ -455,8 +469,8 @@ update global msg model =
             case result of
                 Success title ->
                     let
-                        tension_d =
-                            case model.tension_data of
+                        tension_h =
+                            case model.tension_head of
                                 Success t ->
                                     Success { t | title = title }
 
@@ -466,7 +480,7 @@ update global msg model =
                         resetForm =
                             initTensionForm model.tensionid global.session.user
                     in
-                    ( { model | tension_data = tension_d, tension_form = resetForm, title_result = result, isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
+                    ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
 
                 other ->
                     if doRefreshToken other then
@@ -598,12 +612,12 @@ subscriptions global model =
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title =
-        case model.tension_data of
+        case model.tension_head of
             Success t ->
                 t.title
 
             _ ->
-                "Loading tension"
+                "Loading tension..."
     , body = [ view_ global model ]
     }
 
@@ -617,7 +631,7 @@ view_ global model =
             (Submit <| DoJoinOrga model.node_focus.rootnameid)
         , div [ class "columns is-centered" ]
             [ div [ class "column is-11-desktop is-11-widescreen is-10-fullhd is-offset-1" ]
-                [ case model.tension_data of
+                [ case model.tension_head of
                     Success t ->
                         viewTension global.session.user t model
 
@@ -636,22 +650,9 @@ view_ global model =
         ]
 
 
-viewTension : UserState -> TensionExtended -> Model -> Html Msg
+viewTension : UserState -> TensionHead -> Model -> Html Msg
 viewTension u t model =
     let
-        subComments =
-            t.comments
-                |> withDefault []
-                |> List.map (\c -> viewComment c model)
-
-        userInput =
-            case u of
-                LoggedIn uctx ->
-                    viewCommentInput uctx t model.tension_form model.tension_result model.inputViewMode
-
-                LoggedOut ->
-                    viewJoinNeeded model.node_focus
-
         username =
             model.tension_form.uctx.username
     in
@@ -733,29 +734,49 @@ viewTension u t model =
                     ]
                 , case model.activeTab of
                     Conversation ->
-                        div []
-                            [ div [] subComments
-                            , hr [ class "has-background-grey is-3" ] []
-                            , userInput
-                            ]
+                        viewComments u t model
 
                     Action ->
-                        case t.action of
-                            Just action ->
-                                case t.data of
-                                    Just data ->
-                                        viewData model.node_focus t action data
-
-                                    Nothing ->
-                                        div [] [ text "no document attached" ]
-
-                            Nothing ->
-                                div [] [ text "no action for this tension" ]
+                        viewActions u t model
                 ]
             , div [ class "column is-3 tensionSidePane" ]
                 [ viewSidePane model.node_focus t ]
             ]
         ]
+
+
+viewComments : UserState -> TensionHead -> Model -> Html Msg
+viewComments u t model =
+    case model.tension_comments of
+        Success tension_c ->
+            let
+                subComments =
+                    tension_c.comments
+                        |> withDefault []
+                        |> List.map (\c -> viewComment c model)
+
+                userInput =
+                    case u of
+                        LoggedIn uctx ->
+                            viewCommentInput uctx t model.tension_form model.tension_result model.inputViewMode
+
+                        LoggedOut ->
+                            viewJoinNeeded model.node_focus
+            in
+            div []
+                [ div [] subComments
+                , hr [ class "has-background-grey is-3" ] []
+                , userInput
+                ]
+
+        Failure err ->
+            viewGqlErrors err
+
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        other ->
+            div [] []
 
 
 viewComment : Comment -> Model -> Html Msg
@@ -857,7 +878,7 @@ viewComment c model =
                 ]
 
 
-viewCommentInput : UserCtx -> TensionExtended -> TensionPatchForm -> GqlData IdPayload -> InputViewMode -> Html Msg
+viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData IdPayload -> InputViewMode -> Html Msg
 viewCommentInput uctx tension form result viewMode =
     let
         message =
@@ -1025,7 +1046,122 @@ viewUpdateInput uctx comment form result =
         ]
 
 
-viewSidePane : NodeFocus -> TensionExtended -> Html Msg
+viewActions : UserState -> TensionHead -> Model -> Html Msg
+viewActions u t model =
+    div [] [ text "Todo" ]
+
+
+
+--case t.action of
+--    Just action ->
+--        case t.data of
+--            Just data ->
+--                viewData model.node_focus t action data
+--            Nothing ->
+--                div [] [ text "no document attached" ]
+--    Nothing ->
+--        div [] [ text "no action for this tension" ]
+--
+--
+--viewData : NodeFocus -> TensionExtended -> TensionAction.TensionAction -> NodeFragment -> Html Msg
+--viewData focus t action nf =
+--    let
+--        txt =
+--            getNodeTextFromAction action
+--    in
+--    div []
+--        [ case nf.mandate of
+--            Just mandate ->
+--                div [ class "card" ]
+--                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
+--                    , div [ class "card-content" ]
+--                        [ div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.purposeH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value mandate.purpose
+--
+--                                    --, placeholder (txt.ph_purpose ++ "*")
+--                                    --, onInput <| changePostMsg "purpose"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        , div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.responsabilitiesH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value (mandate.responsabilities |> withDefault ("<" ++ T.noResponsabilities ++ ">"))
+--
+--                                    --, placeholder txt.ph_responsabilities
+--                                    --, onInput <| changePostMsg "responsabilities"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        , div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.domainsH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value (mandate.domains |> withDefault ("<" ++ T.noDomains ++ ">"))
+--
+--                                    --, placeholder txt.ph_domains
+--                                    --, onInput <| changePostMsg "domains"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        , div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.policiesH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value (mandate.policies |> withDefault ("<" ++ T.noPolicies ++ ">"))
+--
+--                                    --, placeholder txt.ph_policies
+--                                    --, onInput <| changePostMsg "policies"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        ]
+--                    ]
+--
+--            Nothing ->
+--                div [] []
+--        ]
+
+
+viewJoinNeeded : NodeFocus -> Html Msg
+viewJoinNeeded focus =
+    div [ class "box has-background-primary" ]
+        [ p []
+            [ button
+                [ class "button is-small"
+                , onClick (Submit <| DoJoinOrga focus.rootnameid)
+                ]
+                [ text "Join" ]
+            , text " this organisation to participate to this conversation."
+            ]
+        ]
+
+
+viewSidePane : NodeFocus -> TensionHead -> Html Msg
 viewSidePane focus t =
     let
         labels_m =
@@ -1051,117 +1187,14 @@ viewSidePane focus t =
                 , div [ class "" ]
                     [ case t.action of
                         Just action ->
-                            case t.data of
-                                Just data ->
-                                    a
-                                        [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = t.id } |> toHref) ]
-                                        [ viewActionIcon "icon-padding" (Just action), text (SE.humanize (TensionAction.toString action)) ]
-
-                                Nothing ->
-                                    div [ class "is-italic" ] [ text ("no data attached for: " ++ TensionAction.toString action) ]
+                            a
+                                [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = t.id } |> toHref) ]
+                                [ viewActionIcon "icon-padding" (Just action), text (SE.humanize (TensionAction.toString action)) ]
 
                         Nothing ->
                             div [ class "is-italic" ] [ text "no action requested" ]
                     ]
                 ]
-            ]
-        ]
-
-
-viewData : NodeFocus -> TensionExtended -> TensionAction.TensionAction -> NodeFragment -> Html Msg
-viewData focus t action nf =
-    let
-        txt =
-            getNodeTextFromAction action
-    in
-    div []
-        [ case nf.mandate of
-            Just mandate ->
-                div [ class "card" ]
-                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
-                    , div [ class "card-content" ]
-                        [ div [ class "field" ]
-                            [ div [ class "label" ] [ text T.purposeH ]
-                            , div [ class "control" ]
-                                [ textarea
-                                    [ id "textAreaModal"
-                                    , class "textarea"
-                                    , rows 5
-                                    , readonly True
-                                    , value mandate.purpose
-
-                                    --, placeholder (txt.ph_purpose ++ "*")
-                                    --, onInput <| changePostMsg "purpose"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        , div [ class "field" ]
-                            [ div [ class "label" ] [ text T.responsabilitiesH ]
-                            , div [ class "control" ]
-                                [ textarea
-                                    [ id "textAreaModal"
-                                    , class "textarea"
-                                    , rows 5
-                                    , readonly True
-                                    , value (mandate.responsabilities |> withDefault ("<" ++ T.noResponsabilities ++ ">"))
-
-                                    --, placeholder txt.ph_responsabilities
-                                    --, onInput <| changePostMsg "responsabilities"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        , div [ class "field" ]
-                            [ div [ class "label" ] [ text T.domainsH ]
-                            , div [ class "control" ]
-                                [ textarea
-                                    [ id "textAreaModal"
-                                    , class "textarea"
-                                    , rows 5
-                                    , readonly True
-                                    , value (mandate.domains |> withDefault ("<" ++ T.noDomains ++ ">"))
-
-                                    --, placeholder txt.ph_domains
-                                    --, onInput <| changePostMsg "domains"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        , div [ class "field" ]
-                            [ div [ class "label" ] [ text T.policiesH ]
-                            , div [ class "control" ]
-                                [ textarea
-                                    [ id "textAreaModal"
-                                    , class "textarea"
-                                    , rows 5
-                                    , readonly True
-                                    , value (mandate.policies |> withDefault ("<" ++ T.noPolicies ++ ">"))
-
-                                    --, placeholder txt.ph_policies
-                                    --, onInput <| changePostMsg "policies"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        ]
-                    ]
-
-            Nothing ->
-                div [] []
-        ]
-
-
-viewJoinNeeded : NodeFocus -> Html Msg
-viewJoinNeeded focus =
-    div [ class "box has-background-primary" ]
-        [ p []
-            [ button
-                [ class "button is-small"
-                , onClick (Submit <| DoJoinOrga focus.rootnameid)
-                ]
-                [ text "Join" ]
-            , text " this organisation to participate to this conversation."
             ]
         ]
 
@@ -1285,6 +1318,9 @@ initTensionForm tensionid user =
     , emitter = Nothing
     , receiver = Nothing
     , post = Dict.empty
+    , event_type = Nothing
+    , blob_type = Nothing
+    , node = initNodeFragment
     }
 
 

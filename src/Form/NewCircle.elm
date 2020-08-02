@@ -26,10 +26,10 @@ What should be the signature ?!
 view form result sd =
     let
         nodeType =
-            form.data.type_ |> withDefault NodeType.Role
+            form.node.type_ |> withDefault NodeType.Role
 
         roleType =
-            form.data.role_type |> withDefault RoleType.Peer
+            form.node.role_type |> withDefault RoleType.Peer
 
         txt =
             getNodeTextFromNodeType nodeType
@@ -38,7 +38,7 @@ view form result sd =
             result == LoadingSlowly
 
         isSendable =
-            form.data.name /= Nothing && (form.data.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
+            form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
 
         submitTension =
             ternary isSendable [ onClickPD2 (sd.submitMsg <| sd.submitNextMsg form False) ] []
@@ -76,10 +76,10 @@ view form result sd =
                     Dict.get "title" form.post |> withDefault ""
 
                 nameid =
-                    form.data.nameid |> withDefault ""
+                    form.node.nameid |> withDefault ""
 
                 firstLinks_ =
-                    form.data.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+                    form.node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
 
                 firstLinks =
                     ternary (firstLinks_ == []) [ "" ] firstLinks_

@@ -266,7 +266,7 @@ export const GraphPack = {
         this.$hiddenCanvas.height = this.height;
 
         // Size Element next to the canvas
-        this.$nextToChart.style.minHeight = 1.25*this.height+"px";
+        this.$nextToChart.style.minHeight = 1.5*this.height+"px";
     },
 
     //The draw function of the canvas that gets called on each frame

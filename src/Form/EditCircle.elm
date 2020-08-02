@@ -23,13 +23,13 @@ import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole, initMan
 viewAbout form result sd =
     let
         txt =
-            getNodeTextFromAction (form.action |> withDefault TensionAction.UpdateRoleAbout)
+            getNodeTextFromAction (form.action |> withDefault TensionAction.NewRole)
 
         isLoading =
             result == LoadingSlowly
 
         isSendable =
-            (form.data.name |> withDefault "") /= form.target.name || form.data.about /= form.targetData.about
+            (form.node.name |> withDefault "") /= form.target.name || form.node.about /= form.targetData.about
 
         submitTension =
             ternary isSendable [ onClickPD2 (sd.submitMsg <| sd.submitNextMsg form False) ] []
@@ -79,7 +79,7 @@ viewAbout form result sd =
                                 , attribute "data-nextfocus" "aboutField"
                                 , type_ "text"
                                 , placeholder "Name*"
-                                , value (form.data.name |> withDefault "")
+                                , value (form.node.name |> withDefault "")
                                 , onInput <| sd.changePostMsg "name"
                                 ]
                                 []
@@ -94,7 +94,7 @@ viewAbout form result sd =
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder "About"
-                                , value (form.data.about |> withDefault "")
+                                , value (form.node.about |> withDefault "")
                                 , onInput <| sd.changePostMsg "about"
                                 ]
                                 []
@@ -170,13 +170,13 @@ viewAbout form result sd =
 viewMandate form result sd =
     let
         txt =
-            getNodeTextFromAction (form.action |> withDefault TensionAction.UpdateRoleAbout)
+            getNodeTextFromAction (form.action |> withDefault TensionAction.NewRole)
 
         isLoading =
             result == LoadingSlowly
 
         isSendable =
-            form.data.mandate
+            form.node.mandate
                 |> Maybe.map
                     (\m ->
                         let
@@ -258,7 +258,7 @@ viewMandate form result sd =
                                         , rows 5
                                         , placeholder (txt.ph_purpose ++ "*")
                                         , required True
-                                        , value (form.data.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
+                                        , value (form.node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
                                         , onInput <| sd.changePostMsg "purpose"
                                         ]
                                         []
@@ -271,7 +271,7 @@ viewMandate form result sd =
                                         [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_responsabilities
-                                        , value (form.data.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
+                                        , value (form.node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
                                         , onInput <| sd.changePostMsg "responsabilities"
                                         ]
                                         []
@@ -284,7 +284,7 @@ viewMandate form result sd =
                                         [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_domains
-                                        , value (form.data.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
+                                        , value (form.node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
                                         , onInput <| sd.changePostMsg "domains"
                                         ]
                                         []
@@ -297,7 +297,7 @@ viewMandate form result sd =
                                         [ class "textarea"
                                         , rows 5
                                         , placeholder txt.ph_policies
-                                        , value (form.data.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
+                                        , value (form.node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
                                         , onInput <| sd.changePostMsg "policies"
                                         ]
                                         []
