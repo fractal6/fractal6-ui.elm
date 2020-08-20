@@ -32,4 +32,4 @@ page =
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
-    Tension.init global { param1 = flags.param1, param2 = flags.param2, param3 = Action }
+    Tension.init global { param1 = flags.param1, param2 = flags.param2, param3 = Document }

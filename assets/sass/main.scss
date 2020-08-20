@@ -374,7 +374,7 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tensionSubtitle {
         font-size: 14px !important;
-        & > span {
+        & > span:not(:last-child) {
             margin-right: 12px !important;
         }
 
@@ -384,14 +384,7 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .column > .tabs {
-        ul {
-            border-bottom-color: $grey-darker !important;
-            border-bottom-with: 2px !important;
-        }
         li {
-            a {
-                border-bottom-color: $grey-darker !important;
-            }
             &.is-active a {
                 border-bottom-color: $link !important;
                 color: inherit;
@@ -409,9 +402,20 @@ html.has-modal-active, html.has-modal-active2 {
             border: 0 !important;
         }
 
+        & >.tabs  {
+            ul {
+                border-bottom-color: $grey !important;
+            }
+            li {
+                a {
+                    border-bottom-color: $grey !important;
+                }
+            }
+        }
+
         .message {
             background-color: $body-background-color !important;
-            border: 1px solid  $dark  !important;
+            border: 1px solid  $grey-darker  !important;
 
             .tabs a {
                 text-decoration: none !important;
@@ -419,7 +423,7 @@ html.has-modal-active, html.has-modal-active2 {
             .message-header {
                 display: inherit !important;
                 background-color: $comment-header-background-color !important;
-                border-bottom: solid 1px $dark !important;
+                border-bottom: solid 1px $grey-darker !important;
                 .ellipsis {
                     opacity: 0.75 !important;
                 }
@@ -443,7 +447,7 @@ html.has-modal-active, html.has-modal-active2 {
 			}
 			.message-header:before {
 				//border-color: rgba(52, 60, 61, 0);
-				border-right-color: $dark;
+				border-right-color: $grey-darker;
 				border-width: 9px;
 				margin-top: -9px;
 			}
@@ -486,12 +490,12 @@ html.has-modal-active, html.has-modal-active2 {
         margin-top: 2.25rem !important;
 
         .media:first-child {
-            border-top: 1px solid $grey-dark !important;
+            border-top: 1px solid $grey !important;
             padding-top: 1rem !important;
         }
 
         .media + .media {
-            border-top: 1px solid $grey-dark !important;
+            border-top: 1px solid $grey !important;
         }
     }
 
@@ -613,12 +617,12 @@ html.has-modal-active, html.has-modal-active2 {
         margin-bottom: 0.75rem !important;
 
         ul {
-            border-bottom-color: $grey-darker !important;
+            border-bottom-color: $grey !important;
             border-bottom-with: 2px !important;
         }
         li {
             a {
-                border-bottom-color: $grey-darker !important;
+                border-bottom-color: $grey !important;
             }
             &.is-active a {
                 border-bottom-color: $link !important;
@@ -742,6 +746,10 @@ html.has-modal-active, html.has-modal-active2 {
     .message-body {
         padding-right: 1rem !important;
         padding-left: 1rem !important;
+    }
+
+    a {
+        color: $blue;
     }
 }
 
@@ -912,6 +920,7 @@ html.has-modal-active, html.has-modal-active2 {
 
     .modal-card-body {
         background-color: #fff !important;
+        color: #111;
     }
 
     .modal-card-title,
@@ -1214,7 +1223,7 @@ html.has-modal-active, html.has-modal-active2 {
         content: '';
         display: block;
         flex: 1;
-        background-color: $grey-light2;
+        background-color: $grey;
     }
 }
 
@@ -1230,22 +1239,40 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+
 .circleBase {
     border-radius: 50%;
+    color: white !important;
+}
+
+.circleBaseInline {
+    border-radius: 50%;
+    color: white !important;
+    display: inline-block !important;
+    margin: 0 10px 0 10px !important;
 }
 
 .circle1 {
-    width: 50px;
-    height: 50px;
-    //background: #939393;
+    width: 55px;
+    height: 55px;
+    background: $blue;
+    border: 1px solid #000;
+    // Text centering
+    text-align: center;
+    padding-top: 14px;
+}
+
+.circle2 {
+    width: 55px;
+    height: 55px;
     background: #285a86;
     border: 1px solid #000;
     // Text centering
     text-align: center;
-    padding-top: 10px;
+    padding-top: 14px;
 }
 
-.circle2 {
+.circle3 {
     width: 200px;
     height: 200px;
     background: #575c64;
@@ -1259,19 +1286,21 @@ html.has-modal-active, html.has-modal-active2 {
 
 /*
  *
- * Spinner
+ * Loading  Spinner
  *
  */
 
 @keyframes spinner {
-0% {
-	transform: translate3d(-50%, -50%, 0) rotate(0deg);
-}
-100% {
-	 transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    0% {
+        transform: translate3d(-50%, -50%, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    }
+
 }
 
-}.spinner {
+.spinner {
     // The height here is just for demo purposes
     height: 25vh;
     opacity: 1;
@@ -1293,6 +1322,146 @@ html.has-modal-active, html.has-modal-active2 {
 		width: 40px;
 		will-change: transform;
 	}
+}
+
+/*
+ *
+ * Placeholder Loading
+ *
+ */
+
+.is-lazy {
+    opacity: 0.6;
+
+    //animation: opac 1s infinite linear forwards;
+    //-webkit-animation:opac 1s infinite linear forwards;
+}
+
+@keyframes opac
+{
+  0%{
+    opacity: 0.5;
+  }
+  50%{
+    background-color: 0.6;
+  }
+  100%{
+    background-color: 0.7;
+  }
+}
+
+@-webkit-keyframes opac
+{
+  0%{
+    opacity: 0.5;
+  }
+  50%{
+    background-color: 0.6;
+  }
+  100%{
+    background-color: 0.7;
+  }
+}
+
+.ph{
+  margin:15px;
+  padding:10px;
+  height: 115px;
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+}
+
+.ph div{background:#E8E8E8;}
+
+.ph .square{
+  float:left;
+  width: 90px;
+  height:56px;
+  margin:0 0 10px;
+}
+
+.ph .line{height:12px;margin:0 0 10px 105px;}
+.ph .line:nth-child(2){width: 120px;}
+.ph .line:nth-child(3){width: 170px;}
+.ph .line:nth-child(4){width: 150px;}
+
+.ph .circle{
+  float:left;
+  width: 15px;
+  height:15px;
+  margin:0 15px 10px 0;
+  border-radius:15px;
+}
+
+/*
+  --------------
+  Pulse effect animation
+  Activated by adding a '.pulse' class to the placeholder
+  --------------
+*/
+
+.ph.pulse div{
+  animation: pulse 1s infinite ease-in-out;
+  -webkit-animation:pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse
+{
+  0%{
+    background-color: rgba(165,165,165,.1);
+  }
+  50%{
+    background-color: rgba(165,165,165,.3);
+  }
+  100%{
+    background-color: rgba(165,165,165,.1);
+  }
+}
+
+@-webkit-keyframes pulse
+{
+  0%{
+    background-color: rgba(165,165,165,.1);
+  }
+  50%{
+    background-color: rgba(165,165,165,.3);
+  }
+  100%{
+    background-color: rgba(165,165,165,.1);
+  }
+}
+
+/*
+  --------------
+  Wave effect animation
+  Activated by adding a '.wave' class to the placeholder
+  --------------
+*/
+
+.ph.wave div{
+    animation: wave 1s infinite linear forwards;
+    -webkit-animation:wave 1s infinite linear forwards;
+    background: #f6f7f8;
+    background: linear-gradient(to right, #eeeeee 8%, #dddddd 18%, #eeeeee 33%);
+    background-size: 800px 104px;
+}
+
+@keyframes wave{
+    0%{
+        background-position: -468px 0
+    }
+    100%{
+        background-position: 468px 0
+    }
+}
+
+@-webkit-keyframes wave{
+    0%{
+        background-position: -468px 0
+    }
+    100%{
+        background-position: 468px 0
+    }
 }
 
 

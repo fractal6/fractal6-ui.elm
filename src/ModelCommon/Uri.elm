@@ -20,6 +20,7 @@ type alias Flags_ =
 type FractalBaseRoute
     = OverviewBaseUri
     | TensionsBaseUri
+    | TensionBaseUri
     | MembersBaseUri
     | UsersBaseUri
 
@@ -58,6 +59,10 @@ toString route =
         TensionsBaseUri ->
             -- /tensions
             "/t"
+
+        TensionBaseUri ->
+            -- /tensions
+            "/tension"
 
         MembersBaseUri ->
             -- /tensions
@@ -207,4 +212,4 @@ nodeIdCodec parentid targetid nodeType =
             String.join "#" [ rootnameid, targetid ]
 
         NodeType.Role ->
-            String.join "#" [ rootnameid, "", targetid ]
+            String.join "#" [ parentid, targetid ]

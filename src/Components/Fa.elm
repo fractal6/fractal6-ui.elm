@@ -11,7 +11,7 @@ icon faClass words =
 
 icon0 : String -> String -> Html msg
 icon0 faClass words =
-    span [] [ i [ class faClass ] [], text ("\u{00A0}" ++ words) ]
+    span [] [ i [ class faClass ] [], text words ]
 
 
 fa : String -> Html msg

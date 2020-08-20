@@ -1,7 +1,7 @@
 module Pages.Logout exposing (Flags, Model, Msg, page)
 
 import Generated.Route as Route exposing (Route)
-import Global exposing (Msg(..))
+import Global exposing (Msg(..), send, sendSleep)
 import Html
 import ModelCommon exposing (UserState(..))
 import Page exposing (Document, Page)
@@ -38,7 +38,7 @@ init global flags =
                     Global.navigate <| Route.Top
 
                 LoggedIn _ ->
-                    Global.send LoggedOutUser
+                    send LoggedOutUser
     in
     ( {}, Cmd.none, gcmd )
 

@@ -547,7 +547,7 @@ export const GraphPack = {
     },
 
     // Init and create the GraphPack data structure
-    resetGraphPack(dataNodes, doFormat) {
+    resetGraphPack(dataNodes, doFormat, focusid) {
         var graph;
         if (doFormat) {
             if (dataNodes.length == 0) {
@@ -577,9 +577,15 @@ export const GraphPack = {
         this.nodesDict = Object.create(null);
         this.nodes = this.gPack.descendants(graph);
         this.rootNode = this.nodes[0];
-        this.focusedNode = this.rootNode;
         this.hoveredNode = null;
         this.nodes.forEach( n => this.nodesDict[n.data.nameid] = n);
+        if (focusid) {
+            // Whit it doesnt works ?
+            //this.focusedNode = this.nodes.find(n => {n.data.nameid === focusid });
+            this.focusedNode = this.nodesDict[focusid];
+        } else {
+            this.focusedNode = this.rootNode;
+        }
         this.vOld = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * this.zoomFactorCircle];
 
         this.graph = graph;

@@ -77,11 +77,12 @@ init flags url key =
             { referer = url
             , user = userState
             , token_data = RemoteData.NotAsked
-            , orga_data = Nothing
-            , path_data = Nothing
             , node_focus = Nothing
-            , tensions_circle = Nothing
+            , path_data = Nothing
+            , orga_data = Nothing
             , data = Nothing
+            , tensions_circle = Nothing
+            , tension_head = Nothing
             , node_action = Nothing
             , node_quickSearch = Nothing
             , apis = flags.apis
@@ -112,8 +113,9 @@ type Msg
     | UpdateSessionFocus (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionOrga (Maybe NodesData)
-    | UpdateSessionTensions (Maybe TensionsData)
     | UpdateSessionData (Maybe NodeData)
+    | UpdateSessionTensions (Maybe TensionsData)
+    | UpdateSessionTensionHead (Maybe TensionHead)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -171,12 +173,16 @@ update msg model =
         LoggedOutUserOk ->
             ( model, navigate Route.Top )
 
+        --
+        -- Update Session Data
+        --
         UpdateSessionFocus data ->
+            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | node_focus = data } }, Cmd.none )
+            ( { model | session = { session | node_focus = data, tension_head = Nothing } }, Cmd.none )
 
         UpdateSessionPath data ->
             let
@@ -192,19 +198,26 @@ update msg model =
             in
             ( { model | session = { session | orga_data = data } }, Cmd.none )
 
-        UpdateSessionTensions data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | tensions_circle = data } }, Cmd.none )
-
         UpdateSessionData data ->
             let
                 session =
                     model.session
             in
             ( { model | session = { session | data = data } }, Cmd.none )
+
+        UpdateSessionTensionHead data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tension_head = data } }, Cmd.none )
+
+        UpdateSessionTensions data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tensions_circle = data } }, Cmd.none )
 
         UpdateUserSession uctx ->
             let

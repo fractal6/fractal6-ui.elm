@@ -8,7 +8,7 @@ import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
-import Global exposing (Msg(..))
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -81,7 +81,7 @@ init global flags =
 
         cmds =
             [ queryPublicOrga apis.gql GotOrga
-            , Global.sendSleep PassedSlowLoadTreshold 500
+            , sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
@@ -167,7 +167,7 @@ viewOrgaMedia node =
             node.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
     in
     div [ class "media" ]
-        [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar node.name ] ]
+        [ div [ class "media-left" ] [ a [ class "image circleBase circle2", href (uriFromNameid OverviewBaseUri node.nameid) ] [ getAvatar node.name ] ]
         , div [ class "media-content" ]
             [ div [ class "columns" ]
                 [ div [ class "column is-10" ]

@@ -1,4 +1,4 @@
-module Form exposing (isPostSendable)
+module Form exposing (isLoginSendable, isPostSendable, isSignupSendable)
 
 import Dict
 import ModelSchema exposing (Post)
@@ -15,3 +15,13 @@ isPostSendable keys post =
                     |> Maybe.withDefault ""
             )
         |> List.all (\x -> String.length x > 0)
+
+
+isLoginSendable : Post -> Bool
+isLoginSendable post =
+    isPostSendable [ "username", "password" ] post
+
+
+isSignupSendable : Post -> Bool
+isSignupSendable post =
+    isPostSendable [ "username", "email", "password" ] post

@@ -1,6 +1,8 @@
 module Query.AddTension exposing
-    ( addCircleTension
-    , addOneTension
+    ( addOneTension
+    , buildBlob
+    , buildComment
+    , buildEvent
     , buildMandate
     , tensionFromForm
     )
@@ -8,6 +10,7 @@ module Query.AddTension exposing
 import Dict exposing (Dict)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
@@ -85,65 +88,11 @@ addTensionInputEncoder f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
-        message =
-            Dict.get "message" f.post
-
-        tensionRequired =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
-            , createdBy =
-                Input.buildUserRef
-                    (\x -> { x | username = Present f.uctx.username })
-            , title = title
-            , type_ = f.tension_type
-            , status = TensionStatus.Open
-            , emitter =
-                Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
-            , receiver =
-                Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
-            , emitterid = f.source.nameid
-            , receiverid = f.target.nameid
-            }
-
-        tensionOpts =
-            \t -> { t | comments = buildComment createdAt f.uctx.username message }
-    in
-    { input =
-        [ Input.buildAddTensionInput tensionRequired tensionOpts ]
-    }
-
-
-
-{-
-   Add a tension with with New Circle/Role Action
--}
-
-
-addCircleTension url form msg =
-    --@DEBUG: Infered type...
-    makeGQLMutation url
-        (Mutation.addTension
-            (addCircleInputEncoder form)
-            (SelectionSet.map AddTensionPayload
-                (Fractal.Object.AddTensionPayload.tension identity tensionPayload)
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
-
-
-addCircleInputEncoder : TensionForm -> Mutation.AddTensionRequiredArguments
-addCircleInputEncoder f =
-    let
-        title =
-            Dict.get "title" f.post |> withDefault ""
-
-        createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
-
         status =
             Dict.get "status" f.post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
 
         message =
-            Dict.get "message" f.post
+            Dict.get "message" f.post |> withDefault ""
 
         tensionRequired =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
@@ -153,20 +102,21 @@ addCircleInputEncoder f =
             , title = title
             , type_ = f.tension_type
             , status = status
+            , emitter =
+                Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
+            , receiver =
+                Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
-            , emitter =
-                Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid })
-            , receiver =
-                Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid })
             }
 
         tensionOpts =
             \t ->
                 { t
                     | action = f.action |> fromMaybe
-                    , comments = buildComment createdAt f.uctx.username message
+                    , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+                    , history = buildEvent createdAt f.uctx.username f.event_type f.post
                 }
     in
     { input =
@@ -191,7 +141,7 @@ tensionFromForm f =
             Dict.get "status" f.post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
 
         message =
-            Dict.get "message" f.post
+            Dict.get "message" f.post |> withDefault ""
     in
     \t ->
         { t
@@ -204,36 +154,37 @@ tensionFromForm f =
             , type_ = f.tension_type |> Present
             , status = status |> Present
             , action = f.action |> fromMaybe
-            , emitterid = f.source.nameid |> Present
-            , receiverid = f.target.nameid |> Present
             , emitter =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present
             , receiver =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid }) |> Present
-            , comments = buildComment createdAt f.uctx.username message
+            , emitterid = f.source.nameid |> Present
+            , receiverid = f.target.nameid |> Present
+            , comments = buildComment createdAt f.uctx.username (Just message)
             , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+            , history = buildEvent createdAt f.uctx.username f.event_type f.post
         }
 
 
 buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
 buildComment createdAt username message_m =
-    let
-        message =
-            message_m |> withDefault ""
-    in
-    Present
-        [ Input.buildCommentRef
-            (\x ->
-                { x
-                    | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
-                    , createdBy =
-                        Input.buildUserRef
-                            (\u -> { u | username = Present username })
-                            |> Present
-                    , message = Present message
-                }
+    message_m
+        |> Maybe.map
+            (\message ->
+                [ Input.buildCommentRef
+                    (\x ->
+                        { x
+                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            , createdBy =
+                                Input.buildUserRef
+                                    (\u -> { u | username = Present username })
+                                    |> Present
+                            , message = Present message
+                        }
+                    )
+                ]
             )
-        ]
+        |> fromMaybe
 
 
 buildBlob : String -> String -> Maybe BlobType.BlobType -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
@@ -249,11 +200,38 @@ buildBlob createdAt username blob_type_m node post =
                                 Input.buildUserRef
                                     (\u -> { u | username = Present username })
                                     |> Present
+                            , blob_type = Present blob_type
                             , node = buildNodeFragmentRef node
                             , md = Dict.get "md" post |> fromMaybe
                         }
                     )
                 ]
+            )
+        |> fromMaybe
+
+
+buildEvent : String -> String -> Maybe (List TensionEvent.TensionEvent) -> Post -> OptionalArgument (List Input.EventRef)
+buildEvent createdAt username event_type_m post =
+    event_type_m
+        |> Maybe.map
+            (\events_type ->
+                events_type
+                    |> List.map
+                        (\event_type ->
+                            Input.buildEventRef
+                                (\x ->
+                                    { x
+                                        | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                                        , createdBy =
+                                            Input.buildUserRef
+                                                (\u -> { u | username = Present username })
+                                                |> Present
+                                        , event_type = Present event_type
+                                        , old = Present ""
+                                        , new = Present ""
+                                    }
+                                )
+                        )
             )
         |> fromMaybe
 

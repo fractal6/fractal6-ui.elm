@@ -35,8 +35,9 @@ type alias Session =
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
-    , tensions_circle : Maybe TensionsData
     , data : Maybe NodeData
+    , tensions_circle : Maybe TensionsData
+    , tension_head : Maybe TensionHead
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
@@ -121,7 +122,7 @@ type alias TensionForm =
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc
 
     -- data
-    , event_type : Maybe TensionEvent.TensionEvent
+    , event_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     }
@@ -136,7 +137,7 @@ type alias TensionPatchForm =
     , post : Post -- createdBy, createdAt, title, message...
 
     -- data
-    , event_type : Maybe TensionEvent.TensionEvent
+    , event_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     }
@@ -269,6 +270,26 @@ hotNodePush nodes odata =
     case odata of
         Success data ->
             Dict.union (List.map (\n -> ( n.nameid, n )) nodes |> Dict.fromList) data
+
+        other ->
+            Dict.empty
+
+
+hotNodeUpdateName : TensionForm -> GqlData NodesData -> NodesData
+hotNodeUpdateName form odata =
+    case odata of
+        Success data ->
+            form.node.name
+                |> Maybe.map
+                    (\name ->
+                        case odata of
+                            Success ndata ->
+                                Dict.update form.target.nameid (\nm -> nm |> Maybe.map (\n -> { n | name = name })) ndata
+
+                            other ->
+                                Dict.empty
+                    )
+                |> withDefault Dict.empty
 
         other ->
             Dict.empty

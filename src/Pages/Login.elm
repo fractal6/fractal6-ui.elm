@@ -3,9 +3,10 @@ module Pages.Login exposing (Flags, Model, Msg, page)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
-import Form exposing (isPostSendable)
+import Extra.Events exposing (onKeydown)
+import Form exposing (isLoginSendable)
 import Generated.Route as Route exposing (Route)
-import Global exposing (Msg(..))
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_)
 import Html.Events exposing (onClick, onInput)
@@ -80,6 +81,7 @@ type Msg
     = SubmitUser UserForm
     | ChangeUserPost String String
     | GotSignin (WebData UserCtx) -- use remotedata.
+    | SubmitKeyDown Int
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -110,8 +112,8 @@ update global msg model =
                 cmds =
                     case result of
                         RemoteData.Success uctx ->
-                            [ Global.send (UpdateUserSession uctx)
-                            , Global.sendSleep RedirectOnLoggedIn 300
+                            [ send (UpdateUserSession uctx)
+                            , sendSleep RedirectOnLoggedIn 300
                             ]
 
                         default ->
@@ -127,6 +129,19 @@ update global msg model =
             , Cmd.none
             , Cmd.batch cmds
             )
+
+        SubmitKeyDown key ->
+            case key of
+                13 ->
+                    --ENTER
+                    if isLoginSendable model.form.post then
+                        ( model, send (SubmitUser model.form), Cmd.none )
+
+                    else
+                        ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -151,10 +166,6 @@ view_ global model =
 
 viewLogin : Global.Model -> Model -> Html Msg
 viewLogin global model =
-    let
-        isSendable =
-            isPostSendable [ "username", "password" ] model.form.post
-    in
     div [ class "form" ]
         [ div [ class "card" ]
             [ div [ class "card-header" ]
@@ -189,14 +200,14 @@ viewLogin global model =
                             [ div [ class "control" ]
                                 [ input
                                     [ id "passwordInput"
-                                    , class "input followFocus"
-                                    , attribute "data-nextfocus" "submitButton"
+                                    , class "input"
                                     , type_ "password"
                                     , placeholder "password"
                                     , name "password"
                                     , attribute "autocomplete" "password"
                                     , required True
                                     , onInput (ChangeUserPost "password")
+                                    , onKeydown SubmitKeyDown
                                     ]
                                     []
                                 ]
@@ -206,7 +217,7 @@ viewLogin global model =
                 , br [] []
                 , div [ class "field is-grouped is-grouped-right" ]
                     [ div [ class "control" ]
-                        [ if isSendable then
+                        [ if isLoginSendable model.form.post then
                             button
                                 [ id "submitButton"
                                 , class "button is-success has-text-weight-semibold"

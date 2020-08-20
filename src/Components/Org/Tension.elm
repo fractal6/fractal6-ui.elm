@@ -14,10 +14,11 @@ import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), send)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -26,7 +27,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (login)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState)
+import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState, uriFromUsername)
 import ModelCommon.View
     exposing
         ( getAvatar
@@ -53,6 +54,7 @@ import RemoteData exposing (RemoteData)
 import String.Extra as SE
 import Task
 import Time
+import Url exposing (Url)
 
 
 
@@ -107,7 +109,7 @@ type alias Model =
 
 type TensionTab
     = Conversation
-    | Action
+    | Document
 
 
 
@@ -121,6 +123,7 @@ type Msg
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
     | GotTensionHead (GqlData TensionHead)
+    | GotTensionComments (GqlData TensionComments)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
     | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
@@ -146,9 +149,9 @@ type Msg
     | ChangeAuthPost String String
     | SubmitUser UserForm
     | GotSignin (WebData UserCtx)
+    | SubmitKeyDown Int
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
-    | ChangeTab TensionTab
 
 
 
@@ -161,30 +164,42 @@ init global flags =
         apis =
             global.session.apis
 
+        rootnameid =
+            flags.param1
+
+        tensionid =
+            flags.param2
+
+        tab =
+            flags.param3
+
         -- Focus
         newFocus =
-            NodeFocus flags.param1 True flags.param1 NodeType.Circle
+            NodeFocus rootnameid True rootnameid NodeType.Circle
 
         -- What has changed
         fs =
-            focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
+            focusState TensionBaseUri global.session.referer global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
+            , tensionid = tensionid
             , path_data =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , tensionid = flags.param2
-            , tension_head = Loading
+            , tension_head =
+                global.session.tension_head
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
             , tension_comments = Loading
-            , tension_form = initTensionForm flags.param2 global.session.user
+            , tension_form = initTensionForm tensionid global.session.user
             , tension_result = NotAsked
             , title_result = NotAsked
             , comment_form = initCommentPatchForm global.session.user
             , comment_result = NotAsked
             , inputViewMode = Write
-            , activeTab = flags.param3
+            , activeTab = tab
             , node_action = NoOp
             , isModalActive = False
             , modalAuth = Inactive
@@ -193,13 +208,27 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , getTensionHead apis.gql model.tensionid GotTensionHead
-            , Global.sendSleep PassedSlowLoadTreshold 500
+            , if tensionChanged global.session.referer global.url || model.tension_head == Loading then
+                getTensionHead apis.gql model.tensionid GotTensionHead
+
+              else
+                Cmd.none
+            , case tab of
+                Conversation ->
+                    getTensionComments apis.gql model.tensionid GotTensionComments
+
+                Document ->
+                    Cmd.none
+            , sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
     , Cmd.batch cmds
-    , send (UpdateSessionFocus (Just newFocus))
+    , if fs.focusChange || fs.refresh then
+        send (UpdateSessionFocus (Just newFocus))
+
+      else
+        Cmd.none
     )
 
 
@@ -283,6 +312,13 @@ update global msg model =
                 newModel =
                     { model | tension_head = result }
             in
+            ( newModel, Ports.bulma_driver "", send (UpdateSessionTensionHead (withMaybeData result)) )
+
+        GotTensionComments result ->
+            let
+                newModel =
+                    { model | tension_comments = result }
+            in
             ( newModel, Cmd.none, Ports.bulma_driver "" )
 
         -- Page Action
@@ -301,8 +337,15 @@ update global msg model =
                 newForm =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
-                        , emitter = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.emitter)
-                        , receiver = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.receiver)
+
+                        --, emitter = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.emitter)
+                        --, receiver = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.receiver)
+                        , event_type =
+                            if form.status == Just TensionStatus.Open then
+                                Just [ TensionEvent.Reopened, TensionEvent.CommentPushed ]
+
+                            else
+                                Just [ TensionEvent.CommentPushed ]
                     }
             in
             ( model, pushTensionComment apis.gql newForm TensionPatchAck, Cmd.none )
@@ -310,10 +353,7 @@ update global msg model =
         SubmitChangeStatus form status time ->
             let
                 newForm =
-                    { form
-                        | post = Dict.insert "message_action" ("$action$ status " ++ TensionStatus.toString status) form.post
-                        , status = Just status
-                    }
+                    { form | status = Just status }
             in
             ( { model | tension_form = newForm }, send (SubmitTensionPatch newForm time), Cmd.none )
 
@@ -359,10 +399,7 @@ update global msg model =
                             model.tension_form
 
                         resetForm =
-                            { form
-                                | post = Dict.remove "message_action" form.post
-                                , status = Nothing
-                            }
+                            { form | status = Nothing }
                     in
                     if doRefreshToken result then
                         ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
@@ -451,17 +488,15 @@ update global msg model =
                         ( { model | comment_result = result }, Cmd.none, Cmd.none )
 
         DoChangeTitle ->
-            -- init form
             ( { model | isTitleEdit = True }, Cmd.none, Cmd.none )
 
         CancelTitle ->
-            -- init form
-            ( { model | isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitTitle form time ->
             let
                 newForm =
-                    { form | post = Dict.insert "createdAt" (fromTime time) form.post }
+                    { form | post = Dict.insert "createdAt" (fromTime time) form.post, event_type = Just [ TensionEvent.TitleUpdated ] }
             in
             ( model, patchTitle apis.gql newForm TitleAck, Cmd.none )
 
@@ -581,7 +616,10 @@ update global msg model =
         GotSignin result ->
             case result of
                 RemoteData.Success uctx ->
-                    ( { model | modalAuth = Inactive }, Cmd.none, Global.send (UpdateUserSession uctx) )
+                    ( { model | modalAuth = Inactive }
+                    , send DoCloseAuthModal
+                    , send (UpdateUserSession uctx)
+                    )
 
                 other ->
                     case model.modalAuth of
@@ -595,8 +633,27 @@ update global msg model =
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )
 
-        ChangeTab tab ->
-            ( { model | activeTab = tab }, Cmd.none, Cmd.none )
+        SubmitKeyDown key ->
+            case key of
+                13 ->
+                    let
+                        form =
+                            case model.modalAuth of
+                                Active f ->
+                                    f
+
+                                Inactive ->
+                                    UserForm Dict.empty RemoteData.NotAsked
+                    in
+                    --ENTER
+                    if isPostSendable [ "password" ] form.post then
+                        ( model, send (SubmitUser form), Cmd.none )
+
+                    else
+                        ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -646,7 +703,7 @@ view_ global model =
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser }
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 
 
@@ -690,10 +747,10 @@ viewTension u t model =
                         False ->
                             [ text t.title
                             , if t.createdBy.username == username then
-                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ text T.edit ]
+                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ Fa.icon0 "fas fa-pen" "" ]
 
                               else
-                                span [] []
+                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ Fa.icon0 "fas fa-pen" "" ]
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
@@ -710,22 +767,14 @@ viewTension u t model =
                     [ ul []
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
                             [ a
-                                [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref)
-
-                                --target "_self"
-                                --, onClickPD (ChangeTab Conversation)
-                                ]
+                                [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                 [ Fa.icon "fas fa-comments fa-sm" "Conversation" ]
                             ]
                         , if t.action /= Nothing then
-                            li [ classList [ ( "is-active", model.activeTab == Action ) ] ]
+                            li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
                                 [ a
-                                    [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref)
-
-                                    --target "_self"
-                                    --, onClickPD (ChangeTab Action)
-                                    ]
-                                    [ Fa.icon "fas fa-clone fa-sm" "Action" ]
+                                    [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
+                                    [ Fa.icon "fas fa-clone fa-sm" "Document" ]
                                 ]
 
                           else
@@ -736,8 +785,8 @@ viewTension u t model =
                     Conversation ->
                         viewComments u t model
 
-                    Action ->
-                        viewActions u t model
+                    Document ->
+                        viewDocument u t model
                 ]
             , div [ class "column is-3 tensionSidePane" ]
                 [ viewSidePane model.node_focus t ]
@@ -822,7 +871,7 @@ viewComment c model =
                     Tuple.second action
             in
             div [ class "media section is-paddingless actionComment" ]
-                [ div [ class "media-left" ] [ Fa.icon0 (actionIcon ++ "fa-2x has-text-" ++ statusColor status) "" ]
+                [ div [ class "media-left" ] [ Fa.icon (actionIcon ++ "fa-2x has-text-" ++ statusColor status) "" ]
                 , div [ class "media-content" ]
                     [ div [ class "is-italic" ] [ viewUsernameLink c.createdBy.username, text " ", text actionText, text " the ", text (formatTime c.createdAt) ]
                     ]
@@ -830,7 +879,7 @@ viewComment c model =
 
         Nothing ->
             div [ class "media section is-paddingless" ]
-                [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar c.createdBy.username ] ]
+                [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri c.createdBy.username) ] [ getAvatar c.createdBy.username ] ]
                 , div [ class "media-content" ]
                     [ if model.comment_form.id == c.id then
                         viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
@@ -910,7 +959,7 @@ viewCommentInput uctx tension form result viewMode =
                     ternary (message == "") "Reopen tension" "Reopen and comment"
     in
     div [ class "media section is-paddingless tensionCommentInput" ]
-        [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar uctx.username ] ]
+        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri uctx.username) ] [ getAvatar uctx.username ] ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header" ]
@@ -1046,8 +1095,8 @@ viewUpdateInput uctx comment form result =
         ]
 
 
-viewActions : UserState -> TensionHead -> Model -> Html Msg
-viewActions u t model =
+viewDocument : UserState -> TensionHead -> Model -> Html Msg
+viewDocument u t model =
     div [] [ text "Todo" ]
 
 
@@ -1228,7 +1277,7 @@ setupActionModal isModalActive action =
                     viewGqlErrors [ err ]
 
                 ActionAuthNeeded ->
-                    viewAuthNeeded (DoCloseModal (Route.toHref Route.Login))
+                    viewAuthNeeded DoCloseModal
 
                 other ->
                     div [] [ text "Action not implemented." ]
@@ -1250,7 +1299,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
                         ]
@@ -1290,16 +1339,6 @@ commentsFromForm tid form =
                 , message = comment
                 }
             )
-    , Dict.get "message_action" form.post
-        |> Maybe.map
-            (\message_action ->
-                { id = ""
-                , createdAt = createdAt
-                , updatedAt = Nothing
-                , createdBy = createdBy
-                , message = message_action
-                }
-            )
     ]
         |> List.filterMap identity
 
@@ -1337,3 +1376,41 @@ initCommentPatchForm user =
     , post = Dict.empty
     , viewMode = Write
     }
+
+
+tensionChanged : Url -> Url -> Bool
+tensionChanged from to =
+    let
+        id1 =
+            case Route.fromUrl from of
+                Just r ->
+                    case r of
+                        Route.Tension_Dynamic_Dynamic params ->
+                            params.param2
+
+                        Route.Tension_Dynamic_Dynamic_Action params ->
+                            params.param2
+
+                        _ ->
+                            ""
+
+                Nothing ->
+                    ""
+
+        id2 =
+            case Route.fromUrl to of
+                Just r ->
+                    case r of
+                        Route.Tension_Dynamic_Dynamic params ->
+                            params.param2
+
+                        Route.Tension_Dynamic_Dynamic_Action params ->
+                            params.param2
+
+                        _ ->
+                            ""
+
+                Nothing ->
+                    ""
+    in
+    id1 /= id2

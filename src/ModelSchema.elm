@@ -160,6 +160,7 @@ type alias TensionHead =
 
     --
     , status : TensionStatus.TensionStatus
+    , head : Maybe Blob
     }
 
 

@@ -17,6 +17,7 @@ import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.Blob
 import Fractal.Object.Comment
 import Fractal.Object.Label
 import Fractal.Object.Mandate
@@ -78,25 +79,12 @@ tensionHeadPayload =
                 (\args -> { args | first = Present nLabelPerTension })
                 (SelectionSet.map Label Fractal.Object.Label.name)
             )
-        |> with
-            (Fractal.Object.Tension.emitter identity
-                (SelectionSet.succeed EmitterOrReceiver
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.role_type
-                )
-            )
-        |> with
-            (Fractal.Object.Tension.receiver identity
-                (SelectionSet.succeed EmitterOrReceiver
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.role_type
-                )
-            )
+        |> with (Fractal.Object.Tension.emitter identity emmiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity emmiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.status
+        |> with (Fractal.Object.Tension.head identity blobPayload)
 
 
 tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension
@@ -109,21 +97,12 @@ tensionCommentsPayload =
             )
 
 
-
---|> with
---    (Fractal.Object.Tension.data
---        (SelectionSet.succeed NodeFragment
---            |> with Fractal.Object.NodeFragment.name
---            |> with Fractal.Object.NodeFragment.nameid
---            |> with Fractal.Object.NodeFragment.type_
---            |> with Fractal.Object.NodeFragment.role_type
---            |> with Fractal.Object.NodeFragment.about
---            |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
---            |> with Fractal.Object.NodeFragment.isPrivate
---            |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
---            |> with Fractal.Object.NodeFragment.first_link
---        )
---    )
+emmiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
+emmiterOrReceiverPayload =
+    SelectionSet.succeed EmitterOrReceiver
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.role_type
 
 
 commentPayload : SelectionSet Comment Fractal.Object.Comment
@@ -134,6 +113,31 @@ commentPayload =
         |> with (Fractal.Object.Comment.updatedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
         |> with (Fractal.Object.Comment.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with Fractal.Object.Comment.message
+
+
+blobPayload : SelectionSet Blob Fractal.Object.Blob
+blobPayload =
+    SelectionSet.succeed Blob
+        |> with (Fractal.Object.Blob.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Blob.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Blob.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Blob.blob_type
+        |> with (Fractal.Object.Blob.node nodeFragmentPayload)
+        |> with Fractal.Object.Blob.md
+
+
+nodeFragmentPayload : SelectionSet NodeFragment Fractal.Object.NodeFragment
+nodeFragmentPayload =
+    SelectionSet.succeed NodeFragment
+        |> with Fractal.Object.NodeFragment.name
+        |> with Fractal.Object.NodeFragment.nameid
+        |> with Fractal.Object.NodeFragment.type_
+        |> with Fractal.Object.NodeFragment.role_type
+        |> with Fractal.Object.NodeFragment.about
+        |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+        |> with Fractal.Object.NodeFragment.isPrivate
+        |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
+        |> with Fractal.Object.NodeFragment.first_link
 
 
 
@@ -149,7 +153,7 @@ nLabelPerTension =
 
 nCircleTensionPpg : Int
 nCircleTensionPpg =
-    8
+    10
 
 
 type alias NodeTensions =
@@ -225,10 +229,12 @@ circleFilter nid a =
 circleTensionFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments
 circleTensionFilter a =
     { a
-        | first = Present nCircleTensionPpg
+        | first = Present (nCircleTensionPpg + nCircleTensionPpg // 2)
         , filter = Input.buildTensionFilter (\x -> { x | status = Present { eq = TensionStatus.Open } }) |> Present
-
-        -- we reorder it anyway !
+        , order =
+            Input.buildTensionOrder
+                (\b -> { b | desc = Present TensionOrderable.CreatedAt })
+                |> Present
     }
 
 
@@ -306,26 +312,26 @@ subTensionDecoder data =
             )
 
 
-queryIntTension url targetids first offset query_ status_ msg =
+queryIntTension url targetids first offset query_ status_ type_ msg =
     makeGQLQuery url
         (Query.queryTension
-            (subTensionIntFilterByDate targetids first offset query_ status_)
+            (subTensionIntFilterByDate targetids first offset query_ status_ type_)
             tensionPayload
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-queryExtTension url targetids first offset query_ status_ msg =
+queryExtTension url targetids first offset query_ status_ type_ msg =
     makeGQLQuery url
         (Query.queryTension
-            (subTensionExtFilterByDate targetids first offset query_ status_)
+            (subTensionExtFilterByDate targetids first offset query_ status_ type_)
             tensionPayload
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionIntFilterByDate nameids first offset query_ status_ a =
+subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionIntFilterByDate nameids first offset query_ status_ type_ a =
     let
         nameidsRegxp_ =
             nameids
@@ -340,15 +346,14 @@ subTensionIntFilterByDate nameids first offset query_ status_ a =
         , offset = Present offset
         , order =
             Input.buildTensionOrder
-                (\b ->
-                    { b | desc = Present TensionOrderable.CreatedAt }
-                )
+                (\b -> { b | desc = Present TensionOrderable.CreatedAt })
                 |> Present
         , filter =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = status_ |> Maybe.map (\status -> { eq = status }) |> fromMaybe
+                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
                         , emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                         , receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
                         , and =
@@ -377,8 +382,8 @@ subTensionIntFilterByDate nameids first offset query_ status_ a =
     }
 
 
-subTensionExtFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionExtFilterByDate nameids first offset query_ status_ a =
+subTensionExtFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
     let
         nameidsRegxp_ =
             nameids
@@ -401,7 +406,8 @@ subTensionExtFilterByDate nameids first offset query_ status_ a =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = status_ |> Maybe.map (\status -> { eq = status }) |> fromMaybe
+                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
                         , title = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
                         , or =
                             Input.buildTensionFilter

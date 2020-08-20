@@ -23,6 +23,7 @@ import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, UserCtx, U
 
 {-
    Tension
+   @DEBUG: Factor this file to appropriate places in Component.{Tension, Node, User...}
 -}
 
 
@@ -86,7 +87,7 @@ mediaTension baseUri focus tension navigate =
                     [ text tension.title ]
                 , span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments) ] <|
                     if n_comments > 1 then
-                        [ Fa.icon0 "fas fa-comment" (String.fromInt (n_comments - 1)) ]
+                        [ Fa.icon "fas fa-comment" (String.fromInt (n_comments - 1)) ]
 
                     else
                         []
@@ -308,7 +309,7 @@ viewActionIcon cls action =
                 [ Fa.fa "far fa-scroll" ]
 
             Just TensionAction.EditCircle ->
-                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
                     [ i [ class "fas fa-pen fa-stack-1x" ] []
                     , i [ class "far fa-circle fa-stack-2x" ] []
                     ]

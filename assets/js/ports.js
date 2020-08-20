@@ -140,7 +140,7 @@ const actions = {
         var $canvas = document.getElementById("canvasOrga");
         if ($canvas) {
             var gp = session.gp;
-            gp.resetGraphPack(data.data, true);
+            gp.resetGraphPack(data.data, true, gp.focusedNode.data.nameid);
             gp.drawCanvas();
             gp.drawCanvas(true);
         }
@@ -157,7 +157,7 @@ const actions = {
             }
 
             var gp = session.gp;
-            gp.resetGraphPack(data.data, true);
+            gp.resetGraphPack(data.data, true, gp.focusedNode.data.nameid);
             gp.drawCanvas();
             gp.drawCanvas(true);
         }

@@ -185,17 +185,23 @@ spinner =
         []
 
 
-viewAuthNeeded : msg -> Html msg
-viewAuthNeeded msg =
-    div [ class "box has-background-info" ]
-        [ p []
-            [ text "Please "
-            , button
-                [ class "button is-small"
-                , onClickPD msg
+viewAuthNeeded : (String -> msg) -> Html msg
+viewAuthNeeded forward =
+    --div [ class "box has-background-info" ]
+    div [ class "modal-card" ]
+        [ div [ class "modal-card-head" ] [ div [ class "modal-card-title is-size-6" ] [ text "Authentication needed" ] ]
+        , div [ class "modal-card-body" ]
+            [ p []
+                [ text "Please "
+                , button
+                    [ class "button is-small is-success", onClickPD (forward (Route.toHref Route.Login)) ]
+                    [ text "Login" ]
+                , text " or "
+                , button
+                    [ class "button is-small is-primary", onClickPD (forward (Route.toHref Route.Signup)) ]
+                    [ text "Signup" ]
+                , text " to perform this action."
                 ]
-                [ text "login" ]
-            , text " or create an account to perform this action."
             ]
         ]
 

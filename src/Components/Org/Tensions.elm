@@ -21,8 +21,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route)
-import Global exposing (Msg(..), send)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -32,12 +31,12 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (fetchChildren)
 import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.View exposing (mediaTension)
+import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
-import Query.AddTension exposing (addCircleTension, addOneTension)
+import Query.AddTension exposing (addOneTension)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (queryCircleTension, queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
@@ -75,8 +74,9 @@ type alias Model =
     , pattern : Maybe String
     , initPattern : Maybe String
     , viewMode : ViewModeTensions
-    , depthFilter : DepthFilter
     , statusFilter : StatusFilter
+    , typeFilter : TypeFilter
+    , depthFilter : DepthFilter
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     }
@@ -174,6 +174,52 @@ statusFilterEncoder x =
             ""
 
 
+type TypeFilter
+    = AllTypes
+    | GovernanceType
+    | OperationalType
+    | PersonalType
+    | HelpType
+
+
+typeFilterDecoder : String -> TypeFilter
+typeFilterDecoder x =
+    case x of
+        "governance" ->
+            GovernanceType
+
+        "operational" ->
+            OperationalType
+
+        "personal" ->
+            PersonalType
+
+        "help" ->
+            HelpType
+
+        default ->
+            AllTypes
+
+
+typeFilterEncoder : TypeFilter -> String
+typeFilterEncoder x =
+    case x of
+        GovernanceType ->
+            "governance"
+
+        OperationalType ->
+            "operational"
+
+        PersonalType ->
+            "personal"
+
+        HelpType ->
+            "help"
+
+        AllTypes ->
+            ""
+
+
 nfirst : Int
 nfirst =
     15
@@ -193,10 +239,11 @@ type Msg
     | GotTensionsInt (GqlData TensionsData) -- GraphQL
     | GotTensionsExt (GqlData TensionsData) -- GraphQL
       -- Page Action
-    | DoLoad
+    | DoLoad -- query tensions
     | ChangePattern String
-    | ChangeDepthFilter String
     | ChangeStatusFilter String
+    | ChangeTypeFilter String
+    | ChangeDepthFilter String
     | SearchKeyDown Int
     | SubmitSearch
     | GoView ViewModeTensions
@@ -254,8 +301,9 @@ init global flags =
             , pattern = Dict.get "q" query
             , initPattern = Dict.get "q" query
             , viewMode = Dict.get "v" query |> withDefault "" |> viewModeDecoder
-            , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
             , statusFilter = Dict.get "s" query |> withDefault "" |> statusFilterDecoder
+            , typeFilter = Dict.get "t" query |> withDefault "" |> typeFilterDecoder
+            , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
             , node_action = NoOp
             , isModalActive = False
             }
@@ -266,7 +314,7 @@ init global flags =
               --  (ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none)
               queryLocalGraph apis.gql newFocus.nameid GotPath
             , ternary (model.depthFilter == AllSubChildren) (fetchChildren apis.rest newFocus.nameid GotChildren) Cmd.none
-            , Global.sendSleep PassedSlowLoadTreshold 500
+            , sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
@@ -420,28 +468,46 @@ update global msg model =
             ( { model | tensions_ext = newResult, load_more_ext = load_more }, Cmd.none, Cmd.none )
 
         DoLoad ->
+            let
+                status =
+                    case model.statusFilter of
+                        AllStatus ->
+                            Nothing
+
+                        OpenStatus ->
+                            Just TensionStatus.Open
+
+                        ClosedStatus ->
+                            Just TensionStatus.Closed
+
+                type_ =
+                    case model.typeFilter of
+                        AllTypes ->
+                            Nothing
+
+                        GovernanceType ->
+                            Just TensionType.Governance
+
+                        OperationalType ->
+                            Just TensionType.Operational
+
+                        PersonalType ->
+                            Just TensionType.Personal
+
+                        HelpType ->
+                            Just TensionType.Help
+            in
             case model.depthFilter of
                 AllSubChildren ->
                     case model.children of
                         RemoteData.Success children ->
                             let
-                                status =
-                                    case model.statusFilter of
-                                        AllStatus ->
-                                            Nothing
-
-                                        OpenStatus ->
-                                            Just TensionStatus.Open
-
-                                        ClosedStatus ->
-                                            Just TensionStatus.Closed
-
                                 nameids =
                                     children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
 
                                 cmds =
-                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
-                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
+                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsInt
+                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsExt
                                     ]
                             in
                             ( model, Cmd.batch cmds, Cmd.none )
@@ -453,23 +519,12 @@ update global msg model =
                     case model.path_data of
                         Success path ->
                             let
-                                status =
-                                    case model.statusFilter of
-                                        AllStatus ->
-                                            Nothing
-
-                                        OpenStatus ->
-                                            Just TensionStatus.Open
-
-                                        ClosedStatus ->
-                                            Just TensionStatus.Closed
-
                                 nameids =
                                     path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
                                 cmds =
-                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsInt
-                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status GotTensionsExt
+                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsInt
+                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsExt
                                     ]
                             in
                             ( model, Cmd.batch cmds, Cmd.none )
@@ -480,17 +535,24 @@ update global msg model =
         ChangePattern value ->
             ( { model | pattern = Just value }, Cmd.none, Cmd.none )
 
-        ChangeDepthFilter value ->
-            let
-                newModel =
-                    { model | depthFilter = depthFilterDecoder value }
-            in
-            ( newModel, send SubmitSearch, Cmd.none )
-
         ChangeStatusFilter value ->
             let
                 newModel =
                     { model | statusFilter = statusFilterDecoder value }
+            in
+            ( newModel, send SubmitSearch, Cmd.none )
+
+        ChangeTypeFilter value ->
+            let
+                newModel =
+                    { model | typeFilter = typeFilterDecoder value }
+            in
+            ( newModel, send SubmitSearch, Cmd.none )
+
+        ChangeDepthFilter value ->
+            let
+                newModel =
+                    { model | depthFilter = depthFilterDecoder value }
             in
             ( newModel, send SubmitSearch, Cmd.none )
 
@@ -517,6 +579,7 @@ update global msg model =
                                 , ( "v", model.viewMode |> viewModeEncoder )
                                 , ( "d", model.depthFilter |> depthFilterEncoder )
                                 , ( "s", model.statusFilter |> statusFilterEncoder )
+                                , ( "t", model.typeFilter |> typeFilterEncoder )
                                 ]
                     in
                     ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri path.focus.nameid ++ "?" ++ query) )
@@ -609,7 +672,7 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns is-centered" ]
-                    [ div [ class "column is-8-desktop is-6-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.viewMode ] ]
+                    [ div [ class "column is-10-desktop is-8-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.typeFilter model.viewMode ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -637,8 +700,8 @@ view_ global model =
         ]
 
 
-viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> ViewModeTensions -> Html Msg
-viewSearchBar pattern depthFilter statusFilter viewMode =
+viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> ViewModeTensions -> Html Msg
+viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "field has-addons" ]
             [ div [ class "control has-icons-left is-expanded dropdown" ]
@@ -655,18 +718,29 @@ viewSearchBar pattern depthFilter statusFilter viewMode =
                 ]
             , div [ class "control" ]
                 [ div [ class "is-small select" ]
-                    [ select [ onInput ChangeDepthFilter ]
-                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren), selected (depthFilter == AllSubChildren) ] [ text "All sub-circles" ]
-                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode), selected (depthFilter == SelectedNode) ] [ text "Selected circle" ]
+                    [ select [ onInput ChangeStatusFilter ]
+                        [ option [ class "dropdown-item", value (statusFilterEncoder OpenStatus), selected (statusFilter == OpenStatus) ] [ text "Open" ]
+                        , option [ class "dropdown-item", value (statusFilterEncoder ClosedStatus), selected (statusFilter == ClosedStatus) ] [ text "Closed" ]
+                        , option [ class "dropdown-item", value (statusFilterEncoder AllStatus), selected (statusFilter == AllStatus) ] [ text "All" ]
                         ]
                     ]
                 ]
             , div [ class "control" ]
                 [ div [ class "is-small select" ]
-                    [ select [ onInput ChangeStatusFilter ]
-                        [ option [ class "dropdown-item", value (statusFilterEncoder OpenStatus), selected (statusFilter == OpenStatus) ] [ text "Open" ]
-                        , option [ class "dropdown-item", value (statusFilterEncoder ClosedStatus), selected (statusFilter == ClosedStatus) ] [ text "Closed" ]
-                        , option [ class "dropdown-item", value (statusFilterEncoder AllStatus), selected (statusFilter == AllStatus) ] [ text "All" ]
+                    [ select [ onInput ChangeTypeFilter ]
+                        [ option [ class "dropdown-item", value (typeFilterEncoder AllTypes), selected (typeFilter == AllTypes) ] [ text "All types" ]
+                        , option [ class "dropdown-item", value (typeFilterEncoder GovernanceType), selected (typeFilter == GovernanceType) ] [ text "Governance" ]
+                        , option [ class "dropdown-item", value (typeFilterEncoder OperationalType), selected (typeFilter == OperationalType) ] [ text "Operational" ]
+                        , option [ class "dropdown-item", value (typeFilterEncoder PersonalType), selected (typeFilter == PersonalType) ] [ text "Personal" ]
+                        , option [ class "dropdown-item", value (typeFilterEncoder HelpType), selected (typeFilter == HelpType) ] [ text "Help" ]
+                        ]
+                    ]
+                ]
+            , div [ class "control" ]
+                [ div [ class "is-small select" ]
+                    [ select [ onInput ChangeDepthFilter ]
+                        [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren), selected (depthFilter == AllSubChildren) ] [ text "All sub-circles" ]
+                        , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode), selected (depthFilter == SelectedNode) ] [ text "Selected circle" ]
                         ]
                     ]
                 ]
@@ -792,7 +866,7 @@ setupActionModal isModalActive action =
                     viewGqlErrors [ err ]
 
                 ActionAuthNeeded ->
-                    viewAuthNeeded (DoCloseModal (Route.toHref Route.Login))
+                    viewAuthNeeded DoCloseModal
 
                 other ->
                     div [] [ text "Action not implemented." ]
@@ -814,7 +888,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
                         ]

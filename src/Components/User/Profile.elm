@@ -11,7 +11,7 @@ import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..))
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -161,7 +161,7 @@ init global flags =
 
                 _ ->
                     queryUctx apis.gql username GotUctx
-            , Global.sendSleep PassedSlowLoadTreshold 500
+            , sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
@@ -278,7 +278,7 @@ view_ global model uctx =
 viewProfileLeft : Model -> UserCtx -> Html Msg
 viewProfileLeft model uctx =
     div []
-        [ div [ class "content image circleBase circle2" ] [ getAvatar uctx.username ]
+        [ div [ class "content image circleBase circle3" ] [ getAvatar uctx.username ]
         , div [ class "content" ]
             [ case uctx.name of
                 Just name ->
@@ -325,7 +325,7 @@ viewUserOrgas user_data =
                                 root.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
                         in
                         div [ class "box media" ]
-                            [ div [ class "media-left" ] [ div [ class "image is-48x48 circleBase circle1" ] [ getAvatar root.name ] ]
+                            [ div [ class "media-left" ] [ a [ class "image circleBase circle2", href (uriFromNameid OverviewBaseUri root.nameid) ] [ getAvatar root.name ] ]
                             , div [ class "media-content" ]
                                 [ div [ class "" ]
                                     [ div [ class "" ] [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ] ]

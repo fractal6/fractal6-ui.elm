@@ -2,6 +2,7 @@ module Auth exposing (doRefreshToken, refreshAuthModal)
 
 import Components.Loading as Loading exposing (WebData, errorDecoder, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
+import Extra.Events exposing (onKeydown)
 import Form
 import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_)
@@ -88,14 +89,14 @@ refreshAuthModal modalAuth msgs =
                             [ div [ class "control" ]
                                 [ input
                                     [ id "passwordInput"
-                                    , class "input followFocus"
-                                    , attribute "data-nextfocus" "submitButton"
+                                    , class "input"
                                     , type_ "password"
                                     , placeholder "password"
                                     , name "password"
                                     , attribute "autocomplete" "password"
                                     , required True
                                     , onInput (msgs.changePost "password")
+                                    , onKeydown msgs.submitEnter
                                     ]
                                     []
                                 ]

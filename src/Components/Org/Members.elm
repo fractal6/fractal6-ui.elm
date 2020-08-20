@@ -20,8 +20,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route)
-import Global exposing (Msg(..), send)
+import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -117,7 +116,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
+            focusState MembersBaseUri global.session.referer global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -136,7 +135,7 @@ init global flags =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
             , queryMembers apis.gql newFocus.nameid GotMembersTop
             , fetchMembers apis.rest newFocus.nameid GotMembersSub
-            , Global.sendSleep PassedSlowLoadTreshold 500
+            , sendSleep PassedSlowLoadTreshold 500
             ]
     in
     ( model
@@ -470,7 +469,7 @@ setupActionModal isModalActive action =
                     viewGqlErrors [ err ]
 
                 ActionAuthNeeded ->
-                    viewAuthNeeded (DoCloseModal (Route.toHref Route.Login))
+                    viewAuthNeeded DoCloseModal
 
                 other ->
                     div [] [ text "Action not implemented." ]
@@ -492,7 +491,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
                         ]

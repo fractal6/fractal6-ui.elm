@@ -26,6 +26,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, TensionPatchForm)
 import ModelSchema exposing (..)
+import Query.AddTension exposing (buildBlob, buildComment, buildEvent)
 import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
 
@@ -171,7 +172,6 @@ tensionPushDecoder data =
                         List.filterMap identity items
                     )
                 |> withDefault []
-                -- Ignore the message_action id
                 |> List.head
                 |> Maybe.map
                     (\t ->
@@ -215,36 +215,27 @@ pushCommentFilter f a =
 
 
 pushTensionCommentInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
-pushTensionCommentInputEncoder form =
+pushTensionCommentInputEncoder f =
     let
         -- new comment
         createdAt =
-            Dict.get "createdAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+            -- Maybe.map (\x -> Fractal.Scalar.DateTime x) ???
+            Dict.get "createdAt" f.post |> withDefault ""
 
         updatedAt =
-            Dict.get "updatedAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+            Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
 
         title =
-            Dict.get "title" form.post
+            Dict.get "title" f.post
 
-        msg1 =
-            Dict.get "message" form.post
-
-        msg2 =
-            Dict.get "message_action" form.post
-
-        messages =
-            if msg1 /= Nothing || msg2 /= Nothing then
-                Just ( msg1, msg2 )
-
-            else
-                Nothing
+        message =
+            Dict.get "message" f.post
 
         patchRequired =
             { filter =
                 Input.buildTensionFilter
-                    (\f ->
-                        { f | id = Present [ encodeId form.id ] }
+                    (\ft ->
+                        { ft | id = Present [ encodeId f.id ] }
                     )
             }
 
@@ -256,45 +247,10 @@ pushTensionCommentInputEncoder form =
                             { s
                                 | updatedAt = fromMaybe updatedAt
                                 , title = fromMaybe title
-                                , status = fromMaybe form.status
-                                , comments =
-                                    messages
-                                        |> Maybe.map
-                                            (\( maybeMsg1, maybeMsg2 ) ->
-                                                [ Maybe.map
-                                                    (\message ->
-                                                        Input.buildCommentRef
-                                                            (\c ->
-                                                                { c
-                                                                    | createdAt = fromMaybe createdAt
-                                                                    , createdBy =
-                                                                        Input.buildUserRef
-                                                                            (\u -> { u | username = Present form.uctx.username })
-                                                                            |> Present
-                                                                    , message = Present message
-                                                                }
-                                                            )
-                                                    )
-                                                    maybeMsg1
-                                                , Maybe.map
-                                                    (\message_action ->
-                                                        Input.buildCommentRef
-                                                            (\c ->
-                                                                { c
-                                                                    | createdAt = fromMaybe createdAt
-                                                                    , createdBy =
-                                                                        Input.buildUserRef
-                                                                            (\u -> { u | username = Present form.uctx.username })
-                                                                            |> Present
-                                                                    , message = Present message_action
-                                                                }
-                                                            )
-                                                    )
-                                                    maybeMsg2
-                                                ]
-                                                    |> List.filterMap identity
-                                            )
-                                        |> fromMaybe
+                                , status = fromMaybe f.status
+                                , comments = buildComment createdAt f.uctx.username message
+                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+                                , history = buildEvent createdAt f.uctx.username f.event_type f.post
                             }
                         )
                         |> Present

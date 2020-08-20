@@ -40,7 +40,7 @@ viewAbout form result sd =
     case result of
         Success _ ->
             div [ class "box is-light" ]
-                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                 , case sd.tensionId of
                     Just id ->
                         let
@@ -196,7 +196,7 @@ viewMandate form result sd =
     case result of
         Success _ ->
             div [ class "box is-light" ]
-                [ Fa.icon0 "fas fa-check fa-2x has-text-success" " "
+                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                 , case sd.tensionId of
                     Just id ->
                         let

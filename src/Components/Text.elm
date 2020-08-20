@@ -95,6 +95,11 @@ aboutH =
     "About"
 
 
+linksH : String
+linksH =
+    "Links"
+
+
 mandateH : String
 mandateH =
     "Mandate"
@@ -107,7 +112,7 @@ purposeH =
 
 responsabilitiesH : String
 responsabilitiesH =
-    "Responsibilities"
+    "Accountabilities"
 
 
 domainsH : String
@@ -122,7 +127,7 @@ policiesH =
 
 noResponsabilities : String
 noResponsabilities =
-    "no responsibilities provided"
+    "no accountabilities provided"
 
 
 noDomains : String
@@ -142,7 +147,7 @@ phCirclePurpose =
 
 phCircleResponsabilities : String
 phCircleResponsabilities =
-    "Define the circle responsibilities"
+    "Define the circle accountabilities"
 
 
 phCircleDomains : String
@@ -162,7 +167,7 @@ phRolePurpose =
 
 phRoleResponsabilities : String
 phRoleResponsabilities =
-    "Define the role responsibilities"
+    "Define the role accountabilities"
 
 
 phRoleDomains : String
@@ -173,6 +178,11 @@ phRoleDomains =
 phRolePolicies : String
 phRolePolicies =
     "Define the role policies"
+
+
+noFirstLinks : String
+noFirstLinks =
+    "No member is linked to this role yet."
 
 
 
