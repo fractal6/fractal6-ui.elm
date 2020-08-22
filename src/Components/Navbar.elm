@@ -1,5 +1,6 @@
 module Components.Navbar exposing (view)
 
+import Components.Fa as Fa
 import Components.Logo as Logo
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
@@ -37,8 +38,8 @@ view user =
                 ]
             , div [ id "navMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ --viewLink "navbar-item" Route.Top "Help"
-                      viewLink "navbar-item" Route.Explore "Explore"
+                    [ --a [ class "navbar-item", href (toHref Route.Top) ] [ text "Help" ]
+                      a [ class "navbar-item", href (toHref Route.Explore) ] [ text "Explore" ]
                     ]
                 , div [ class "navbar-end" ]
                     [ userButton user ]
@@ -54,25 +55,22 @@ userButton user =
             div [ class "navbar-item has-dropdown" ]
                 [ div [ class "navbar-link" ] [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
-                    [ viewLink "navbar-item" (Route.User_Dynamic { param1 = uctx.username }) "Profile"
-                    , a [ class "navbar-item", href "#" ] [ text "Settings" ]
+                    [ a [ class "navbar-item", href (toHref <| Route.User_Dynamic { param1 = uctx.username }) ]
+                        [ Fa.icon "fas fa-user" "Profile" ]
+                    , a [ class "navbar-item", href "#" ]
+                        [ Fa.icon "fas fa-cog" "Settings" ]
 
                     --, hr [ class "navbar-divider" ] []
                     --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "fas fa-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
                     , hr [ class "navbar-divider" ] []
-                    , a [ class "navbar-item", href "/logout" ] [ text "Sign Out" ]
+                    , a [ class "navbar-item", href "/logout" ]
+                        --[ Fa.icon "fas fa-sign-out-alt" "Sign Out" ]
+                        [ text "Sign Out" ]
                     ]
                 ]
 
         LoggedOut ->
             div [ class "navbar-item" ]
-                [ viewLink "button is-small is-primary has-text-weight-bold" Route.Login "Login" ]
-
-
-viewLink : String -> Route.Route -> String -> Html msg
-viewLink classes route txt =
-    a
-        [ class classes
-        , href (toHref route)
-        ]
-        [ text txt ]
+                [ a [ class "button is-small is-primary has-text-weight-bold", href (toHref Route.Login) ]
+                    [ text "Login" ]
+                ]

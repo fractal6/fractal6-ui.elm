@@ -57,6 +57,12 @@ hr {
 .is-grey-light {
     color: $grey-light2
 }
+.is-bg-grey {
+    background-color: $grey
+}
+.is-bg-grey-light {
+    background-color: $grey-light2
+}
 
 .is-md {
     font-size: 0.9rem !important;
@@ -754,6 +760,14 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .aboutDoc {
+    & > .columns {
+        //margin-bottom: 0px !important;
+        & > .column {
+        padding-right: 6px !important;
+        padding-left: 6px !important;
+        margin-bottom: 0 !important;
+    }
+    }
     .nodeName {
         font-weight: 600 !important;
         color: $grey !important;

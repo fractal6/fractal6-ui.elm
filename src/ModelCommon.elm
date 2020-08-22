@@ -35,8 +35,8 @@ type alias Session =
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
-    , data : Maybe NodeData
-    , tensions_circle : Maybe TensionsData
+    , node_data : Maybe NodeData
+    , tensions_data : Maybe TensionsData
     , tension_head : Maybe TensionHead
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
@@ -122,7 +122,7 @@ type alias TensionForm =
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc
 
     -- data
-    , event_type : Maybe (List TensionEvent.TensionEvent)
+    , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     }
@@ -137,7 +137,7 @@ type alias TensionPatchForm =
     , post : Post -- createdBy, createdAt, title, message...
 
     -- data
-    , event_type : Maybe (List TensionEvent.TensionEvent)
+    , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     }

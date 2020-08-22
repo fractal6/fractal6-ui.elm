@@ -161,6 +161,7 @@ type alias TensionHead =
     --
     , status : TensionStatus.TensionStatus
     , head : Maybe Blob
+    , history : List Event
     }
 
 
@@ -173,7 +174,7 @@ type alias TensionBlobs =
 
 
 type alias TensionHistory =
-    { history : Maybe (List Event) }
+    { history : List Event }
 
 
 type alias Comment =
@@ -215,8 +216,20 @@ type alias NodeFragment =
     , isPrivate : Maybe Bool
     , charac : Maybe NodeCharac
     , first_link : Maybe String
+    , children : Maybe (List SubNodeFragment)
+    }
 
-    --,children    : [NodeFragment]
+
+type alias SubNodeFragment =
+    { name : Maybe String
+    , nameid : Maybe String
+    , type_ : Maybe NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
+    , about : Maybe String
+    , mandate : Maybe Mandate
+    , isPrivate : Maybe Bool
+    , charac : Maybe NodeCharac
+    , first_link : Maybe String
     }
 
 
@@ -227,9 +240,10 @@ type alias NodeFragment =
 
 
 type alias NodeData =
-    { nameid : String
+    { nameid : String -- needed for @isPrivate test
     , about : Maybe String
     , mandate : Maybe Mandate
+    , source : Maybe IdPayload
     }
 
 
@@ -243,6 +257,11 @@ type alias Mandate =
     }
 
 
+initNodeData : NodeData
+initNodeData =
+    NodeData "" Nothing Nothing Nothing
+
+
 initMandate : Mandate
 initMandate =
     Mandate "" Nothing Nothing Nothing
@@ -250,12 +269,12 @@ initMandate =
 
 initNodeFragment : NodeFragment
 initNodeFragment =
-    NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 initNodeFragmentCircle : NodeType.NodeType -> RoleType.RoleType -> NodeFragment
 initNodeFragmentCircle nt rt =
-    NodeFragment Nothing Nothing (Just nt) (Just rt) Nothing Nothing Nothing Nothing Nothing
+    NodeFragment Nothing Nothing (Just nt) (Just rt) Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 

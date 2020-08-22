@@ -1,5 +1,6 @@
 module Query.QueryTension exposing
     ( commentPayload
+    , getTensionBlobs
     , getTensionComments
     , getTensionHead
     , queryCircleTension
@@ -11,6 +12,7 @@ module Query.QueryTension exposing
 
 import Dict exposing (Dict)
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionOrderable as TensionOrderable
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
@@ -19,6 +21,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Comment
+import Fractal.Object.Event
 import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
@@ -66,6 +69,14 @@ getTensionComments url tensionid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
+getTensionBlobs url tensionid msg =
+    makeGQLQuery url
+        (Query.getTension { id = encodeId tensionid }
+            tensionBlobsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
 tensionHeadPayload : SelectionSet TensionHead Fractal.Object.Tension
 tensionHeadPayload =
     SelectionSet.succeed TensionHead
@@ -77,7 +88,7 @@ tensionHeadPayload =
         |> with
             (Fractal.Object.Tension.labels
                 (\args -> { args | first = Present nLabelPerTension })
-                (SelectionSet.map Label Fractal.Object.Label.name)
+                labelPayload
             )
         |> with (Fractal.Object.Tension.emitter identity emmiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emmiterOrReceiverPayload)
@@ -85,6 +96,26 @@ tensionHeadPayload =
         |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.status
         |> with (Fractal.Object.Tension.head identity blobPayload)
+        |> with
+            (Fractal.Object.Tension.history
+                (\args ->
+                    { args
+                        | filter =
+                            Input.buildEventFilter
+                                (\x ->
+                                    { x | not = Input.buildEventFilter (\e -> { e | event_type = Present { eq = TensionEvent.CommentPushed } }) |> Present }
+                                )
+                                |> Present
+                    }
+                )
+                eventPayload
+            )
+
+
+tensionBlobsPayload : SelectionSet TensionBlobs Fractal.Object.Tension
+tensionBlobsPayload =
+    SelectionSet.succeed TensionBlobs
+        |> with (Fractal.Object.Tension.blobs identity blobPayload)
 
 
 tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension
@@ -105,6 +136,11 @@ emmiterOrReceiverPayload =
         |> with Fractal.Object.Node.role_type
 
 
+labelPayload : SelectionSet Label Fractal.Object.Label
+labelPayload =
+    SelectionSet.map Label Fractal.Object.Label.name
+
+
 commentPayload : SelectionSet Comment Fractal.Object.Comment
 commentPayload =
     SelectionSet.succeed Comment
@@ -122,8 +158,19 @@ blobPayload =
         |> with (Fractal.Object.Blob.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Blob.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with Fractal.Object.Blob.blob_type
-        |> with (Fractal.Object.Blob.node nodeFragmentPayload)
+        |> with (Fractal.Object.Blob.node identity nodeFragmentPayload)
         |> with Fractal.Object.Blob.md
+
+
+eventPayload : SelectionSet Event Fractal.Object.Event
+eventPayload =
+    SelectionSet.succeed Event
+        |> with (Fractal.Object.Event.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Event.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Event.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Event.event_type
+        |> with Fractal.Object.Event.old
+        |> with Fractal.Object.Event.new
 
 
 nodeFragmentPayload : SelectionSet NodeFragment Fractal.Object.NodeFragment
@@ -138,6 +185,20 @@ nodeFragmentPayload =
         |> with Fractal.Object.NodeFragment.isPrivate
         |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
         |> with Fractal.Object.NodeFragment.first_link
+        |> with
+            (Fractal.Object.NodeFragment.children identity
+                (SelectionSet.succeed SubNodeFragment
+                    |> with Fractal.Object.NodeFragment.name
+                    |> with Fractal.Object.NodeFragment.nameid
+                    |> with Fractal.Object.NodeFragment.type_
+                    |> with Fractal.Object.NodeFragment.role_type
+                    |> with Fractal.Object.NodeFragment.about
+                    |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
+                    |> with Fractal.Object.NodeFragment.isPrivate
+                    |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
+                    |> with Fractal.Object.NodeFragment.first_link
+                )
+            )
 
 
 

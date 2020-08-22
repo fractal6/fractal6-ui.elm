@@ -58,11 +58,16 @@ page =
 
 
 type alias Model =
-    { node_focus : NodeFocus
+    { -- Focus
+      node_focus : NodeFocus
     , path_data : GqlData LocalGraph
     , children : WebData (List NodeId)
+
+    -- Page
     , members_top : GqlData (List Member)
     , members_sub : GqlData (List Member)
+
+    -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     }
@@ -82,14 +87,13 @@ type Msg
     | GotPath2 (GqlData LocalGraph) -- GraphQL
     | GotMembersTop (GqlData (List Member)) -- GraphQL
     | GotMembersSub (GqlData (List Member)) -- GraphQl
-      -- Page Action
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
-      -- JS Interop
+      -- Common
+    | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
-    | Navigate String
 
 
 
@@ -127,6 +131,8 @@ init global flags =
             , children = RemoteData.Loading
             , members_top = Loading
             , members_sub = Loading
+
+            -- Common
             , node_action = NoOp
             , isModalActive = False
             }

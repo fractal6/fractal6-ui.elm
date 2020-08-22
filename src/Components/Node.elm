@@ -1,17 +1,19 @@
-module Components.Node exposing (NodeInfoMsg, viewNodeInfo)
+module Components.Node exposing (nodeFragmentFromOrga, viewNodeInfo)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Dict
+import Extra exposing (withMaybeData)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
+import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), uriFromUsername)
+import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromUsername)
 import ModelCommon.View exposing (getAvatar)
 import ModelSchema exposing (..)
 
@@ -22,112 +24,121 @@ type alias NodeInfoMsg msg1 msg2 =
     }
 
 
-type alias Data_ =
-    { o : GqlData NodesData -- orga
-    , f : Maybe Node -- focus
-    , c : List NodeId -- children
+type alias OrgaNodeData data =
+    { data : GqlData data -- payload
+    , node : NodeFragment
+    , isLazy : Bool
     , source : FractalBaseRoute
+    , tid : String
+    , focus : NodeFocus
     }
 
 
-viewNodeInfo : GqlData NodeData -> Bool -> Data_ -> Html msg
-viewNodeInfo nodeData isLazy data_ =
+viewNodeInfo : OrgaNodeData d -> Html msg
+viewNodeInfo data =
     div [ id "DocContainer", class "hero is-small is-light" ]
         [ div [ class "hero-body" ]
-            [ case data_.f of
-                Just focus ->
-                    case focus.role_type of
-                        Just r ->
-                            let
-                                fs =
-                                    focus.first_link |> Maybe.map (\u -> u.username) |> withDefault "[Unknown]"
-                            in
-                            case nodeData of
-                                Failure err ->
-                                    case r of
-                                        RoleType.Guest ->
-                                            div [] [ [ "No mandate for Guest ", fs, "." ] |> String.join "" |> text ]
+            [ case data.data of
+                Failure err ->
+                    if data.node.role_type == Just RoleType.Guest then
+                        let
+                            fs =
+                                data.node.first_link |> withDefault "[Unknown]"
+                        in
+                        div [] [ [ "No mandate for Guest ", fs, "." ] |> String.join "" |> text ]
 
-                                        other ->
-                                            viewGqlErrors err
+                    else
+                        viewGqlErrors err
 
-                                LoadingSlowly ->
-                                    div [ class "spinner" ] []
+                LoadingSlowly ->
+                    div [ class "spinner" ] []
 
-                                Success data ->
-                                    viewNodeDoc data isLazy focus data_
+                Success _ ->
+                    viewNodeDoc data
 
-                                other ->
-                                    div [] []
-
-                        Nothing ->
-                            case nodeData of
-                                Failure err ->
-                                    viewGqlErrors err
-
-                                LoadingSlowly ->
-                                    div [ class "spinner" ] []
-
-                                Success data ->
-                                    viewNodeDoc data isLazy focus data_
-
-                                other ->
-                                    div [] []
-
-                Nothing ->
+                other ->
                     div [] []
             ]
         ]
 
 
-viewNodeDoc : NodeData -> Bool -> Node -> Data_ -> Html msg
-viewNodeDoc data isLazy focus data_ =
+viewNodeDoc : OrgaNodeData d -> Html msg
+viewNodeDoc data =
     let
+        node =
+            data.node
+
         links =
-            case data_.o of
-                Success ndata ->
-                    case focus.type_ of
-                        NodeType.Circle ->
-                            data_.c
-                                |> List.map (\n -> Dict.get n.nameid ndata)
-                                |> List.filterMap identity
-                                |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
-                                |> List.map (\n -> n.first_link)
-                                |> List.filterMap identity
+            case node.type_ |> withDefault NodeType.Role of
+                NodeType.Circle ->
+                    node.children
+                        |> Maybe.map
+                            (\c ->
+                                List.map (\c_ -> c_.first_link) c
+                            )
+                        |> withDefault []
+                        |> List.filterMap identity
 
-                        NodeType.Role ->
-                            focus.first_link |> Maybe.map (\fs -> [ fs ]) |> withDefault []
+                NodeType.Role ->
+                    [ node.first_link ] |> List.filterMap identity
 
-                _ ->
-                    []
+        name =
+            node.name |> withDefault ""
     in
-    div []
+    div [ classList [ ( "is-lazy", data.isLazy ) ] ]
         [ div [ class "aboutDoc" ]
-            [ div [ class "subtitle is-5" ]
-                [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                    [ i [ class "fas fa-info fa-stack-1x" ] []
-                    , i [ class "far fa-circle fa-stack-2x" ] []
+            [ div [ class "columns is-mobile" ]
+                [ div [ class "column is-9 subtitle is-5" ]
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                        [ i [ class "fas fa-info fa-stack-1x" ] []
+                        , i [ class "far fa-circle fa-stack-2x" ] []
+                        ]
+                    , span [ class "nodeName" ] [ text "\u{00A0}", text " ", text name ]
                     ]
-                , span [ class "nodeName" ] [ text "\u{00A0}", text " ", text focus.name ]
-                , span
-                    [ class "is-pulled-right button-light" ]
-                    [ Fa.icon0 "fas fa-xs fa-pen" "" ]
+                , case data.source of
+                    OverviewBaseUri ->
+                        div [ class "column is-3" ]
+                            [ span
+                                [ class "is-pulled-right field has-addons"
+                                , attribute "style" "margin-top:-9px;margin-right: -9px;"
+                                ]
+                                [ a
+                                    [ class "control"
+                                    , href (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = data.tid } |> toHref)
+                                    ]
+                                    [ div [ class "button is-small is-rounded" ] [ Fa.icon0 "fas fa-eye" "" ] ]
+                                , a
+                                    [ class "control"
+                                    , href (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = data.tid } |> toHref)
+                                    , (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = data.tid } |> toHref) ++ "?v=edit" |> href
+                                    ]
+                                    [ div [ class "button is-small" ] [ Fa.icon0 "fas fa-pen" "" ] ]
+                                , a
+                                    [ class "control"
+                                    , (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = data.tid } |> toHref) ++ "?v=history" |> href
+                                    ]
+                                    [ div [ class "button is-small is-rounded" ] [ Fa.icon0 "fas fa-history" "" ] ]
+                                ]
+                            ]
+
+                    _ ->
+                        div [] []
                 ]
-            , case data.about of
+            , case node.about of
                 Just ab ->
-                    p [ classList [ ( "is-lazy", isLazy ) ] ] [ text ab ]
+                    p [ class "column" ] [ text ab ]
 
                 Nothing ->
                     div [] []
             , hr [ class "has-background-grey-light" ] []
             ]
-        , div [ class "linksDoc", classList [ ( "is-lazy", isLazy ) ] ]
+        , div [ class "linksDoc" ]
             [ div [ class "subtitle is-5" ]
                 [ Fa.icon "fas fa-users fa-sm" T.linksH
                 , links
                     |> List.map
                         (\l ->
-                            span [] [ a [ class "image circleBaseInline circle1", href (uriFromUsername UsersBaseUri l.username) ] [ getAvatar l.username ] ]
+                            span [] [ a [ class "image circleBaseInline circle1", href (uriFromUsername UsersBaseUri l) ] [ getAvatar l ] ]
                         )
                     |> span [ attribute "style" "margin-left:20px;" ]
                 ]
@@ -138,15 +149,15 @@ viewNodeDoc data isLazy focus data_ =
                 div [] []
             ]
         , hr [ class "has-background-grey-light" ] []
-        , case data.mandate of
+        , case node.mandate of
             Just mandate ->
                 div [ class "mandateDoc" ]
                     [ div [ class "subtitle is-5" ]
                         [ Fa.icon "fas fa-scroll fa-sm" T.mandateH ]
-                    , viewMandateSection isLazy T.purposeH (Just mandate.purpose)
-                    , viewMandateSection isLazy T.responsabilitiesH mandate.responsabilities
-                    , viewMandateSection isLazy T.domainsH mandate.domains
-                    , viewMandateSection isLazy T.policiesH mandate.policies
+                    , viewMandateSection T.purposeH (Just mandate.purpose)
+                    , viewMandateSection T.responsabilitiesH mandate.responsabilities
+                    , viewMandateSection T.domainsH mandate.domains
+                    , viewMandateSection T.policiesH mandate.policies
                     ]
 
             Nothing ->
@@ -155,14 +166,65 @@ viewNodeDoc data isLazy focus data_ =
         ]
 
 
-viewMandateSection : Bool -> String -> Maybe String -> Html msg
-viewMandateSection isLazy name maybePara =
+viewMandateSection : String -> Maybe String -> Html msg
+viewMandateSection name maybePara =
     case maybePara of
         Just para ->
-            div [ class "message", classList [ ( "is-lazy", isLazy ) ] ]
+            div [ class "message" ]
                 [ div [ class "message-header" ] [ text name ]
                 , p [ class "message-body" ] [ renderMarkdown para "is-dark" ]
                 ]
 
         Nothing ->
             div [] []
+
+
+
+-- Utils
+
+
+nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List NodeId -> NodesData -> NodeFragment
+nodeFragmentFromOrga node_m nodeData c ndata =
+    let
+        children =
+            node_m
+                |> Maybe.map
+                    (\node ->
+                        case node.type_ of
+                            NodeType.Circle ->
+                                c
+                                    |> List.map (\n -> Dict.get n.nameid ndata)
+                                    |> List.filterMap identity
+                                    |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
+                                    |> List.map
+                                        (\n ->
+                                            { name = Just n.name
+                                            , nameid = Just n.nameid
+                                            , type_ = Just n.type_
+                                            , isPrivate = Just n.isPrivate
+                                            , charac = Just n.charac
+                                            , role_type = n.role_type
+                                            , about = Nothing
+                                            , mandate = Nothing
+                                            , first_link = n.first_link |> Maybe.map (\u -> u.username)
+                                            }
+                                        )
+                                    |> Just
+
+                            --|> List.map (\n -> n.first_link)
+                            --|> List.filterMap identity
+                            NodeType.Role ->
+                                Nothing
+                    )
+    in
+    { name = Maybe.map (\n -> n.name) node_m
+    , nameid = Maybe.map (\n -> n.nameid) node_m
+    , type_ = Maybe.map (\n -> n.type_) node_m
+    , isPrivate = Maybe.map (\n -> n.isPrivate) node_m
+    , charac = Maybe.map (\n -> n.charac) node_m
+    , role_type = Maybe.map (\n -> n.role_type) node_m |> withDefault Nothing
+    , about = Maybe.map (\n -> n.about) (withMaybeData nodeData) |> withDefault Nothing
+    , mandate = Maybe.map (\n -> n.mandate) (withMaybeData nodeData) |> withDefault Nothing
+    , first_link = Maybe.map (\n -> n.first_link |> Maybe.map (\u -> u.username)) node_m |> withDefault Nothing
+    , children = children |> withDefault Nothing
+    }

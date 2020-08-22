@@ -250,7 +250,7 @@ pushTensionCommentInputEncoder f =
                                 , status = fromMaybe f.status
                                 , comments = buildComment createdAt f.uctx.username message
                                 , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
-                                , history = buildEvent createdAt f.uctx.username f.event_type f.post
+                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
                             }
                         )
                         |> Present

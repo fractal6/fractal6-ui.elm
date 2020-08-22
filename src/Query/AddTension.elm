@@ -9,6 +9,7 @@ module Query.AddTension exposing
 
 import Dict exposing (Dict)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -108,6 +109,25 @@ addTensionInputEncoder f =
                 Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
+            , history =
+                f.events_type
+                    |> withDefault [ TensionEvent.Created ]
+                    |> List.map
+                        (\event_type ->
+                            Input.buildEventRef
+                                (\x ->
+                                    { x
+                                        | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                                        , createdBy =
+                                            Input.buildUserRef
+                                                (\u -> { u | username = Present f.uctx.username })
+                                                |> Present
+                                        , event_type = Present event_type
+                                        , old = Present ""
+                                        , new = Present ""
+                                    }
+                                )
+                        )
             }
 
         tensionOpts =
@@ -116,7 +136,6 @@ addTensionInputEncoder f =
                     | action = f.action |> fromMaybe
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
-                    , history = buildEvent createdAt f.uctx.username f.event_type f.post
                 }
     in
     { input =
@@ -162,7 +181,7 @@ tensionFromForm f =
             , receiverid = f.target.nameid |> Present
             , comments = buildComment createdAt f.uctx.username (Just message)
             , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
-            , history = buildEvent createdAt f.uctx.username f.event_type f.post
+            , history = buildEvent createdAt f.uctx.username f.events_type f.post
         }
 
 
@@ -211,8 +230,8 @@ buildBlob createdAt username blob_type_m node post =
 
 
 buildEvent : String -> String -> Maybe (List TensionEvent.TensionEvent) -> Post -> OptionalArgument (List Input.EventRef)
-buildEvent createdAt username event_type_m post =
-    event_type_m
+buildEvent createdAt username events_type_m post =
+    events_type_m
         |> Maybe.map
             (\events_type ->
                 events_type
@@ -236,24 +255,6 @@ buildEvent createdAt username event_type_m post =
         |> fromMaybe
 
 
-buildNodeFragmentRef : NodeFragment -> OptionalArgument Input.NodeFragmentRef
-buildNodeFragmentRef nf =
-    Input.buildNodeFragmentRef
-        (\n ->
-            { n
-                | name = fromMaybe nf.name
-                , nameid = fromMaybe nf.nameid
-                , type_ = fromMaybe nf.type_
-                , role_type = fromMaybe nf.role_type
-                , about = fromMaybe nf.about
-                , mandate = buildMandate nf.mandate
-                , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
-                , first_link = fromMaybe nf.first_link
-            }
-        )
-        |> Present
-
-
 buildMandate : Maybe Mandate -> OptionalArgument Input.MandateRef
 buildMandate maybeMandate =
     maybeMandate
@@ -270,3 +271,50 @@ buildMandate maybeMandate =
                     )
             )
         |> fromMaybe
+
+
+buildNodeFragmentRef : NodeFragment -> OptionalArgument Input.NodeFragmentRef
+buildNodeFragmentRef nf =
+    let
+        type_ =
+            nf.type_ |> withDefault NodeType.Role
+
+        first_links =
+            nf.first_link
+                |> withDefault ""
+                |> String.split "@"
+                |> List.filter (\x -> x /= "")
+    in
+    Input.buildNodeFragmentRef
+        (\n ->
+            let
+                commonFields =
+                    { n
+                        | name = fromMaybe nf.name
+                        , nameid = fromMaybe nf.nameid
+                        , type_ = fromMaybe nf.type_
+                        , role_type = fromMaybe nf.role_type
+                        , about = fromMaybe nf.about
+                        , mandate = buildMandate nf.mandate
+                        , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
+                    }
+            in
+            case type_ of
+                NodeType.Role ->
+                    -- Role
+                    { commonFields | first_link = fromMaybe nf.first_link }
+
+                NodeType.Circle ->
+                    -- Circle
+                    { commonFields
+                        | children =
+                            first_links
+                                |> List.indexedMap
+                                    (\i uname ->
+                                        Input.buildNodeFragmentRef
+                                            (\c -> { c | first_link = fromMaybe (Just uname) })
+                                    )
+                                |> Present
+                    }
+        )
+        |> Present

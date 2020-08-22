@@ -24,6 +24,7 @@ a {
   transition: all 200ms ease;
   border-width: $border-width;
   color: $white;
+  //background-color: #888;
 
   &.is-active,
   &.is-focused,

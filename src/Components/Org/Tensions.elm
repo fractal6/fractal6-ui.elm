@@ -63,9 +63,12 @@ page =
 
 
 type alias Model =
-    { node_focus : NodeFocus
+    { -- Focus
+      node_focus : NodeFocus
     , path_data : GqlData LocalGraph
     , children : WebData (List NodeId)
+
+    -- Pages
     , tensions_int : GqlData TensionsData
     , tensions_ext : GqlData TensionsData
     , offset : Int
@@ -73,10 +76,12 @@ type alias Model =
     , load_more_ext : Bool
     , pattern : Maybe String
     , initPattern : Maybe String
-    , viewMode : ViewModeTensions
+    , viewMode : TensionsView
     , statusFilter : StatusFilter
     , typeFilter : TypeFilter
     , depthFilter : DepthFilter
+
+    -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     }
@@ -92,22 +97,12 @@ type TensionDirection
 -- Query parameters
 
 
-type ViewModeTensions
+type TensionsView
     = ListView
     | IntExtView
 
 
-viewModeDecoder : String -> ViewModeTensions
-viewModeDecoder x =
-    case x of
-        "intext" ->
-            IntExtView
-
-        default ->
-            ListView
-
-
-viewModeEncoder : ViewModeTensions -> String
+viewModeEncoder : TensionsView -> String
 viewModeEncoder x =
     case x of
         ListView ->
@@ -117,19 +112,19 @@ viewModeEncoder x =
             "intext"
 
 
+viewModeDecoder : String -> TensionsView
+viewModeDecoder x =
+    case x of
+        "intext" ->
+            IntExtView
+
+        default ->
+            ListView
+
+
 type DepthFilter
     = SelectedNode
     | AllSubChildren
-
-
-depthFilterDecoder : String -> DepthFilter
-depthFilterDecoder x =
-    case x of
-        "selected" ->
-            SelectedNode
-
-        default ->
-            AllSubChildren
 
 
 depthFilterEncoder : DepthFilter -> String
@@ -142,23 +137,20 @@ depthFilterEncoder x =
             "selected"
 
 
+depthFilterDecoder : String -> DepthFilter
+depthFilterDecoder x =
+    case x of
+        "selected" ->
+            SelectedNode
+
+        default ->
+            AllSubChildren
+
+
 type StatusFilter
     = OpenStatus
     | ClosedStatus
     | AllStatus
-
-
-statusFilterDecoder : String -> StatusFilter
-statusFilterDecoder x =
-    case x of
-        "all" ->
-            AllStatus
-
-        "closed" ->
-            ClosedStatus
-
-        default ->
-            OpenStatus
 
 
 statusFilterEncoder : StatusFilter -> String
@@ -174,31 +166,25 @@ statusFilterEncoder x =
             ""
 
 
+statusFilterDecoder : String -> StatusFilter
+statusFilterDecoder x =
+    case x of
+        "all" ->
+            AllStatus
+
+        "closed" ->
+            ClosedStatus
+
+        default ->
+            OpenStatus
+
+
 type TypeFilter
     = AllTypes
     | GovernanceType
     | OperationalType
     | PersonalType
     | HelpType
-
-
-typeFilterDecoder : String -> TypeFilter
-typeFilterDecoder x =
-    case x of
-        "governance" ->
-            GovernanceType
-
-        "operational" ->
-            OperationalType
-
-        "personal" ->
-            PersonalType
-
-        "help" ->
-            HelpType
-
-        default ->
-            AllTypes
 
 
 typeFilterEncoder : TypeFilter -> String
@@ -218,6 +204,25 @@ typeFilterEncoder x =
 
         AllTypes ->
             ""
+
+
+typeFilterDecoder : String -> TypeFilter
+typeFilterDecoder x =
+    case x of
+        "governance" ->
+            GovernanceType
+
+        "operational" ->
+            OperationalType
+
+        "personal" ->
+            PersonalType
+
+        "help" ->
+            HelpType
+
+        default ->
+            AllTypes
 
 
 nfirst : Int
@@ -246,15 +251,14 @@ type Msg
     | ChangeDepthFilter String
     | SearchKeyDown Int
     | SubmitSearch
-    | GoView ViewModeTensions
+    | GoView TensionsView
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
-      -- JS Interop
+      -- Common
+    | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
-      -- Util
-    | Navigate String
 
 
 
@@ -304,6 +308,8 @@ init global flags =
             , statusFilter = Dict.get "s" query |> withDefault "" |> statusFilterDecoder
             , typeFilter = Dict.get "t" query |> withDefault "" |> typeFilterDecoder
             , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
+
+            -- Common
             , node_action = NoOp
             , isModalActive = False
             }
@@ -700,7 +706,7 @@ view_ global model =
         ]
 
 
-viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> ViewModeTensions -> Html Msg
+viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> TensionsView -> Html Msg
 viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "field has-addons" ]

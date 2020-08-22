@@ -13,13 +13,14 @@ type TensionEvent
     | Closed
     | TitleUpdated
     | CommentPushed
-    | BlobPushed
+    | BlobCreated
     | BlobCommitted
+    | BlobPushed
 
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, BlobPushed, BlobCommitted ]
+    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, BlobCreated, BlobCommitted, BlobPushed ]
 
 
 decoder : Decoder TensionEvent
@@ -43,11 +44,14 @@ decoder =
                     "CommentPushed" ->
                         Decode.succeed CommentPushed
 
-                    "BlobPushed" ->
-                        Decode.succeed BlobPushed
+                    "BlobCreated" ->
+                        Decode.succeed BlobCreated
 
                     "BlobCommitted" ->
                         Decode.succeed BlobCommitted
+
+                    "BlobPushed" ->
+                        Decode.succeed BlobPushed
 
                     _ ->
                         Decode.fail ("Invalid TensionEvent type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -74,11 +78,14 @@ toString enum =
         CommentPushed ->
             "CommentPushed"
 
-        BlobPushed ->
-            "BlobPushed"
+        BlobCreated ->
+            "BlobCreated"
 
         BlobCommitted ->
             "BlobCommitted"
+
+        BlobPushed ->
+            "BlobPushed"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -110,11 +117,14 @@ fromString enumString =
         "CommentPushed" ->
             Just CommentPushed
 
-        "BlobPushed" ->
-            Just BlobPushed
+        "BlobCreated" ->
+            Just BlobCreated
 
         "BlobCommitted" ->
             Just BlobCommitted
+
+        "BlobPushed" ->
+            Just BlobPushed
 
         _ ->
             Nothing

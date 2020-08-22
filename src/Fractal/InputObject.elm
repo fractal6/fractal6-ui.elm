@@ -314,7 +314,7 @@ buildAddNodeFragmentInput fillOptionals =
 type alias AddNodeFragmentInputOptionalFields =
     { name : OptionalArgument String
     , nameid : OptionalArgument String
-    , children : OptionalArgument (List (Maybe NodeFragmentRef))
+    , children : OptionalArgument (List NodeFragmentRef)
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , about : OptionalArgument String
     , mandate : OptionalArgument MandateRef
@@ -335,7 +335,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias AddNodeFragmentInputRaw =
     { name : OptionalArgument String
     , nameid : OptionalArgument String
-    , children : OptionalArgument (List (Maybe NodeFragmentRef))
+    , children : OptionalArgument (List NodeFragmentRef)
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , about : OptionalArgument String
     , mandate : OptionalArgument MandateRef
@@ -359,7 +359,7 @@ type AddNodeFragmentInput
 encodeAddNodeFragmentInput : AddNodeFragmentInput -> Value
 encodeAddNodeFragmentInput (AddNodeFragmentInput input) =
     Encode.maybeObject
-        [ ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "children", (encodeNodeFragmentRef |> Encode.maybe |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "children", (encodeNodeFragmentRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
 buildAddNodeInput : AddNodeInputRequiredFields -> (AddNodeInputOptionalFields -> AddNodeInputOptionalFields) -> AddNodeInput
@@ -494,9 +494,9 @@ buildAddTensionInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { updatedAt = Absent, message = Absent, nth = Absent, action = Absent, labels = Absent, comments = Absent, blobs = Absent, history = Absent, head = Absent, n_comments = Absent }
+                { updatedAt = Absent, message = Absent, nth = Absent, action = Absent, labels = Absent, comments = Absent, blobs = Absent, head = Absent, n_comments = Absent }
     in
-    AddTensionInput { createdAt = required.createdAt, updatedAt = optionals.updatedAt, createdBy = required.createdBy, message = optionals.message, nth = optionals.nth, title = required.title, type_ = required.type_, emitter = required.emitter, emitterid = required.emitterid, receiver = required.receiver, receiverid = required.receiverid, status = required.status, action = optionals.action, labels = optionals.labels, comments = optionals.comments, blobs = optionals.blobs, history = optionals.history, head = optionals.head, n_comments = optionals.n_comments }
+    AddTensionInput { createdAt = required.createdAt, updatedAt = optionals.updatedAt, createdBy = required.createdBy, message = optionals.message, nth = optionals.nth, title = required.title, type_ = required.type_, emitter = required.emitter, emitterid = required.emitterid, receiver = required.receiver, receiverid = required.receiverid, status = required.status, action = optionals.action, labels = optionals.labels, comments = optionals.comments, blobs = optionals.blobs, history = required.history, head = optionals.head, n_comments = optionals.n_comments }
 
 
 type alias AddTensionInputRequiredFields =
@@ -509,6 +509,7 @@ type alias AddTensionInputRequiredFields =
     , receiver : NodeRef
     , receiverid : String
     , status : Fractal.Enum.TensionStatus.TensionStatus
+    , history : List EventRef
     }
 
 
@@ -520,7 +521,6 @@ type alias AddTensionInputOptionalFields =
     , labels : OptionalArgument (List LabelRef)
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
-    , history : OptionalArgument (List EventRef)
     , head : OptionalArgument BlobRef
     , n_comments : OptionalArgument Int
     }
@@ -548,7 +548,7 @@ type alias AddTensionInputRaw =
     , labels : OptionalArgument (List LabelRef)
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
-    , history : OptionalArgument (List EventRef)
+    , history : List EventRef
     , head : OptionalArgument BlobRef
     , n_comments : OptionalArgument Int
     }
@@ -565,7 +565,7 @@ type AddTensionInput
 encodeAddTensionInput : AddTensionInput -> Value
 encodeAddTensionInput (AddTensionInput input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string input.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitter", encodeNodeRef input.emitter |> Just ), ( "emitterid", Encode.string input.emitterid |> Just ), ( "receiver", encodeNodeRef input.receiver |> Just ), ( "receiverid", Encode.string input.receiverid |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input.status |> Just ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "head", encodeBlobRef |> Encode.optional input.head ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string input.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitter", encodeNodeRef input.emitter |> Just ), ( "emitterid", Encode.string input.emitterid |> Just ), ( "receiver", encodeNodeRef input.receiver |> Just ), ( "receiverid", Encode.string input.receiverid |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input.status |> Just ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) input.history |> Just ), ( "head", encodeBlobRef |> Encode.optional input.head ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ) ]
 
 
 buildAddUserInput : AddUserInputRequiredFields -> (AddUserInputOptionalFields -> AddUserInputOptionalFields) -> AddUserInput
@@ -1209,15 +1209,16 @@ buildEventFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, message = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, message = Absent, event_type = Absent, and = Absent, or = Absent, not = Absent }
     in
-    EventFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, and = optionals.and, or = optionals.or, not = optionals.not }
+    EventFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, event_type = optionals.event_type, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias EventFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
+    , event_type : OptionalArgument TensionEvent_hash
     , and : OptionalArgument EventFilter
     , or : OptionalArgument EventFilter
     , not : OptionalArgument EventFilter
@@ -1233,6 +1234,7 @@ type alias EventFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
+    , event_type : OptionalArgument TensionEvent_hash
     , and : OptionalArgument EventFilter
     , or : OptionalArgument EventFilter
     , not : OptionalArgument EventFilter
@@ -1250,7 +1252,7 @@ type EventFilter
 encodeEventFilter : EventFilter -> Value
 encodeEventFilter (EventFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "and", encodeEventFilter |> Encode.optional input.and ), ( "or", encodeEventFilter |> Encode.optional input.or ), ( "not", encodeEventFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "event_type", encodeTensionEvent_hash |> Encode.optional input.event_type ), ( "and", encodeEventFilter |> Encode.optional input.and ), ( "or", encodeEventFilter |> Encode.optional input.or ), ( "not", encodeEventFilter |> Encode.optional input.not ) ]
 
 
 buildEventOrder : (EventOrderOptionalFields -> EventOrderOptionalFields) -> EventOrder
@@ -1972,6 +1974,47 @@ encodeNodeFilter (NodeFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.rootnameid ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input.about ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
 
 
+buildNodeFragmentFilter : (NodeFragmentFilterOptionalFields -> NodeFragmentFilterOptionalFields) -> NodeFragmentFilter
+buildNodeFragmentFilter fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, not = Absent }
+    in
+    NodeFragmentFilter { id = optionals.id, not = optionals.not }
+
+
+type alias NodeFragmentFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , not : OptionalArgument NodeFragmentFilter
+    }
+
+
+{-| Type alias for the `NodeFragmentFilter` attributes. Note that this type
+needs to use the `NodeFragmentFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NodeFragmentFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , not : OptionalArgument NodeFragmentFilter
+    }
+
+
+{-| Type for the NodeFragmentFilter input object.
+-}
+type NodeFragmentFilter
+    = NodeFragmentFilter NodeFragmentFilterRaw
+
+
+{-| Encode a NodeFragmentFilter into a value that can be used as an argument.
+-}
+encodeNodeFragmentFilter : NodeFragmentFilter -> Value
+encodeNodeFragmentFilter (NodeFragmentFilter input) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "not", encodeNodeFragmentFilter |> Encode.optional input.not ) ]
+
+
 buildNodeFragmentOrder : (NodeFragmentOrderOptionalFields -> NodeFragmentOrderOptionalFields) -> NodeFragmentOrder
 buildNodeFragmentOrder fillOptionals =
     let
@@ -2015,20 +2058,82 @@ encodeNodeFragmentOrder (NodeFragmentOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.NodeFragmentOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.NodeFragmentOrderable.toString |> Encode.optional input.desc ), ( "then", encodeNodeFragmentOrder |> Encode.optional input.then_ ) ]
 
 
-buildNodeFragmentRef : (NodeFragmentRefOptionalFields -> NodeFragmentRefOptionalFields) -> NodeFragmentRef
-buildNodeFragmentRef fillOptionals =
+buildNodeFragmentPatch : (NodeFragmentPatchOptionalFields -> NodeFragmentPatchOptionalFields) -> NodeFragmentPatch
+buildNodeFragmentPatch fillOptionals =
     let
         optionals =
             fillOptionals
                 { name = Absent, nameid = Absent, children = Absent, type_ = Absent, about = Absent, mandate = Absent, isPrivate = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    NodeFragmentRef { name = optionals.name, nameid = optionals.nameid, children = optionals.children, type_ = optionals.type_, about = optionals.about, mandate = optionals.mandate, isPrivate = optionals.isPrivate, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    NodeFragmentPatch { name = optionals.name, nameid = optionals.nameid, children = optionals.children, type_ = optionals.type_, about = optionals.about, mandate = optionals.mandate, isPrivate = optionals.isPrivate, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+
+
+type alias NodeFragmentPatchOptionalFields =
+    { name : OptionalArgument String
+    , nameid : OptionalArgument String
+    , children : OptionalArgument (List NodeFragmentRef)
+    , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
+    , about : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , isPrivate : OptionalArgument Bool
+    , charac : OptionalArgument NodeCharacRef
+    , first_link : OptionalArgument String
+    , second_link : OptionalArgument String
+    , skills : OptionalArgument (List String)
+    , role_type : OptionalArgument Fractal.Enum.RoleType.RoleType
+    }
+
+
+{-| Type alias for the `NodeFragmentPatch` attributes. Note that this type
+needs to use the `NodeFragmentPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NodeFragmentPatchRaw =
+    { name : OptionalArgument String
+    , nameid : OptionalArgument String
+    , children : OptionalArgument (List NodeFragmentRef)
+    , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
+    , about : OptionalArgument String
+    , mandate : OptionalArgument MandateRef
+    , isPrivate : OptionalArgument Bool
+    , charac : OptionalArgument NodeCharacRef
+    , first_link : OptionalArgument String
+    , second_link : OptionalArgument String
+    , skills : OptionalArgument (List String)
+    , role_type : OptionalArgument Fractal.Enum.RoleType.RoleType
+    }
+
+
+{-| Type for the NodeFragmentPatch input object.
+-}
+type NodeFragmentPatch
+    = NodeFragmentPatch NodeFragmentPatchRaw
+
+
+{-| Encode a NodeFragmentPatch into a value that can be used as an argument.
+-}
+encodeNodeFragmentPatch : NodeFragmentPatch -> Value
+encodeNodeFragmentPatch (NodeFragmentPatch input) =
+    Encode.maybeObject
+        [ ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "children", (encodeNodeFragmentRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+
+
+buildNodeFragmentRef : (NodeFragmentRefOptionalFields -> NodeFragmentRefOptionalFields) -> NodeFragmentRef
+buildNodeFragmentRef fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { id = Absent, name = Absent, nameid = Absent, children = Absent, type_ = Absent, about = Absent, mandate = Absent, isPrivate = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
+    in
+    NodeFragmentRef { id = optionals.id, name = optionals.name, nameid = optionals.nameid, children = optionals.children, type_ = optionals.type_, about = optionals.about, mandate = optionals.mandate, isPrivate = optionals.isPrivate, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias NodeFragmentRefOptionalFields =
-    { name : OptionalArgument String
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , name : OptionalArgument String
     , nameid : OptionalArgument String
-    , children : OptionalArgument (List (Maybe NodeFragmentRef))
+    , children : OptionalArgument (List NodeFragmentRef)
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , about : OptionalArgument String
     , mandate : OptionalArgument MandateRef
@@ -2047,9 +2152,10 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias NodeFragmentRefRaw =
-    { name : OptionalArgument String
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , name : OptionalArgument String
     , nameid : OptionalArgument String
-    , children : OptionalArgument (List (Maybe NodeFragmentRef))
+    , children : OptionalArgument (List NodeFragmentRef)
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , about : OptionalArgument String
     , mandate : OptionalArgument MandateRef
@@ -2073,7 +2179,7 @@ type NodeFragmentRef
 encodeNodeFragmentRef : NodeFragmentRef -> Value
 encodeNodeFragmentRef (NodeFragmentRef input) =
     Encode.maybeObject
-        [ ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "children", (encodeNodeFragmentRef |> Encode.maybe |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "children", (encodeNodeFragmentRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
 buildNodeMode_hash : NodeMode_hashRequiredFields -> NodeMode_hash
@@ -2796,6 +2902,29 @@ encodeStringTermFilter input =
         [ ( "allofterms", Encode.string |> Encode.optional input.allofterms ), ( "anyofterms", Encode.string |> Encode.optional input.anyofterms ) ]
 
 
+buildTensionEvent_hash : TensionEvent_hashRequiredFields -> TensionEvent_hash
+buildTensionEvent_hash required =
+    { eq = required.eq }
+
+
+type alias TensionEvent_hashRequiredFields =
+    { eq : Fractal.Enum.TensionEvent.TensionEvent }
+
+
+{-| Type for the TensionEvent\_hash input object.
+-}
+type alias TensionEvent_hash =
+    { eq : Fractal.Enum.TensionEvent.TensionEvent }
+
+
+{-| Encode a TensionEvent\_hash into a value that can be used as an argument.
+-}
+encodeTensionEvent_hash : TensionEvent_hash -> Value
+encodeTensionEvent_hash input =
+    Encode.maybeObject
+        [ ( "eq", Encode.enum Fractal.Enum.TensionEvent.toString input.eq |> Just ) ]
+
+
 buildTensionFilter : (TensionFilterOptionalFields -> TensionFilterOptionalFields) -> TensionFilter
 buildTensionFilter fillOptionals =
     let
@@ -3372,6 +3501,52 @@ encodeUpdateNodeCharacInput : UpdateNodeCharacInput -> Value
 encodeUpdateNodeCharacInput (UpdateNodeCharacInput input) =
     Encode.maybeObject
         [ ( "filter", encodeNodeCharacFilter input.filter |> Just ), ( "set", encodeNodeCharacPatch |> Encode.optional input.set ), ( "remove", encodeNodeCharacPatch |> Encode.optional input.remove ) ]
+
+
+buildUpdateNodeFragmentInput : UpdateNodeFragmentInputRequiredFields -> (UpdateNodeFragmentInputOptionalFields -> UpdateNodeFragmentInputOptionalFields) -> UpdateNodeFragmentInput
+buildUpdateNodeFragmentInput required fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { set = Absent, remove = Absent }
+    in
+    UpdateNodeFragmentInput { filter = required.filter, set = optionals.set, remove = optionals.remove }
+
+
+type alias UpdateNodeFragmentInputRequiredFields =
+    { filter : NodeFragmentFilter }
+
+
+type alias UpdateNodeFragmentInputOptionalFields =
+    { set : OptionalArgument NodeFragmentPatch
+    , remove : OptionalArgument NodeFragmentPatch
+    }
+
+
+{-| Type alias for the `UpdateNodeFragmentInput` attributes. Note that this type
+needs to use the `UpdateNodeFragmentInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateNodeFragmentInputRaw =
+    { filter : NodeFragmentFilter
+    , set : OptionalArgument NodeFragmentPatch
+    , remove : OptionalArgument NodeFragmentPatch
+    }
+
+
+{-| Type for the UpdateNodeFragmentInput input object.
+-}
+type UpdateNodeFragmentInput
+    = UpdateNodeFragmentInput UpdateNodeFragmentInputRaw
+
+
+{-| Encode a UpdateNodeFragmentInput into a value that can be used as an argument.
+-}
+encodeUpdateNodeFragmentInput : UpdateNodeFragmentInput -> Value
+encodeUpdateNodeFragmentInput (UpdateNodeFragmentInput input) =
+    Encode.maybeObject
+        [ ( "filter", encodeNodeFragmentFilter input.filter |> Just ), ( "set", encodeNodeFragmentPatch |> Encode.optional input.set ), ( "remove", encodeNodeFragmentPatch |> Encode.optional input.remove ) ]
 
 
 buildUpdateNodeInput : UpdateNodeInputRequiredFields -> (UpdateNodeInputOptionalFields -> UpdateNodeInputOptionalFields) -> UpdateNodeInput

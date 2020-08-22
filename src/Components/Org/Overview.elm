@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
-import Components.Node exposing (viewNodeInfo)
+import Components.Node exposing (nodeFragmentFromOrga, viewNodeInfo)
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
@@ -76,8 +76,8 @@ type alias Model =
     { node_focus : NodeFocus
     , path_data : Maybe LocalGraph
     , orga_data : GqlData NodesData
-    , tensions_circle : GqlData TensionsData
-    , data : GqlData NodeData
+    , tensions_data : GqlData TensionsData
+    , node_data : GqlData NodeData
     , init_tensions : Bool
     , init_data : Bool
     , subData : SubmitCircleData
@@ -129,6 +129,12 @@ type Msg
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
     | GotData (GqlData NodeData) -- graphql
+      -- Quick search
+    | LookupFocus String (Maybe LocalGraph)
+    | LookupBlur
+    | ChangePattern String
+    | ChangeLookup Nodes_
+    | SearchKeyDown Int
       -- Node Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
     | Submit (Time.Posix -> Msg) -- Get Current Time
@@ -157,19 +163,13 @@ type Msg
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
-      -- Quick search
-    | LookupFocus String (Maybe LocalGraph)
-    | LookupBlur
-    | ChangePattern String
-    | ChangeLookup Nodes_
-    | SearchKeyDown Int
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
-      -- Util
+      -- Common
     | Navigate String
     | ChangeInputViewMode InputViewMode
     | DoOpenModal -- ports receive / Open  modal
@@ -224,21 +224,23 @@ init global flags =
                 session.orga_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , tensions_circle =
-                session.tensions_circle
+            , tensions_data =
+                session.tensions_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , data =
-                session.data
+            , node_data =
+                session.node_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , init_tensions = True
             , init_data = True
+            , node_quickSearch = { qs | pattern = "", idx = 0 }
+            , subData = initSubData
+
+            -- Common
             , node_action = session.node_action |> withDefault NoOp
             , isModalActive = False
             , modalAuth = Inactive
-            , node_quickSearch = { qs | pattern = "", idx = 0 }
-            , subData = initSubData
             }
 
         cmds =
@@ -296,13 +298,13 @@ update global msg model =
                 orga_data =
                     ternary (model.orga_data == Loading) LoadingSlowly model.orga_data
 
-                tensions_circle =
-                    ternary (model.tensions_circle == Loading) LoadingSlowly model.tensions_circle
+                tensions_data =
+                    ternary (model.tensions_data == Loading) LoadingSlowly model.tensions_data
 
-                data =
-                    ternary (model.data == Loading) LoadingSlowly model.data
+                node_data =
+                    ternary (model.node_data == Loading) LoadingSlowly model.node_data
             in
-            ( { model | orga_data = orga_data, tensions_circle = tensions_circle, data = data }, Cmd.none, Cmd.none )
+            ( { model | orga_data = orga_data, tensions_data = tensions_data, node_data = node_data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -326,18 +328,18 @@ update global msg model =
         GotTensions result ->
             case result of
                 Success data ->
-                    ( { model | tensions_circle = result, init_tensions = False }, Cmd.none, send (UpdateSessionTensions (Just data)) )
+                    ( { model | tensions_data = result, init_tensions = False }, Cmd.none, send (UpdateSessionTensions (Just data)) )
 
                 other ->
-                    ( { model | tensions_circle = result }, Cmd.none, send (UpdateSessionTensions Nothing) )
+                    ( { model | tensions_data = result }, Cmd.none, send (UpdateSessionTensions Nothing) )
 
         GotData result ->
             case result of
                 Success data ->
-                    ( { model | data = result, init_data = False }, Cmd.none, send (UpdateSessionData (Just data)) )
+                    ( { model | node_data = result, init_data = False }, Cmd.none, send (UpdateSessionData (Just data)) )
 
                 other ->
-                    ( { model | data = result }, Cmd.none, send (UpdateSessionData Nothing) )
+                    ( { model | node_data = result }, Cmd.none, send (UpdateSessionData Nothing) )
 
         -- Search
         LookupFocus pattern path_m ->
@@ -479,11 +481,11 @@ update global msg model =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
-                    , targetData = model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
+                    , targetData = model.node_data |> withDefaultData initNodeData
                     , tension_type = TensionType.Governance
                     , action = Nothing
                     , post = Dict.empty
-                    , event_type = Just [ TensionEvent.Created ]
+                    , events_type = Nothing
                     , blob_type = Nothing
                     , node = initNodeFragment
                     }
@@ -539,7 +541,10 @@ update global msg model =
         SubmitTension form _ time ->
             let
                 newForm =
-                    { form | post = Dict.insert "createdAt" (fromTime time) form.post }
+                    { form
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , events_type = Just [ TensionEvent.Created ]
+                    }
             in
             ( model, addOneTension apis.gql newForm TensionAck, Cmd.none )
 
@@ -571,11 +576,11 @@ update global msg model =
                                     model.subData
 
                                 tensions =
-                                    hotTensionPush t model.tensions_circle
+                                    hotTensionPush t model.tensions_data
                             in
                             ( { model
                                 | node_action = AddTension <| TensionFinal form result
-                                , tensions_circle = Success tensions
+                                , tensions_data = Success tensions
                                 , subData = { subData | tensionId = Just t.id }
                               }
                             , Cmd.none
@@ -607,11 +612,11 @@ update global msg model =
                     { uctx = UserCtx "" Nothing (UserRights False False) []
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
-                    , targetData = model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
+                    , targetData = model.node_data |> withDefaultData initNodeData
                     , tension_type = TensionType.Governance
                     , post = Dict.empty
                     , action = Just action
-                    , event_type = Just [ TensionEvent.Created ]
+                    , events_type = Nothing
                     , blob_type = Just BlobType.InitBlob
                     , node = initNodeFragmentCircle nodeType RoleType.Peer
                     }
@@ -695,10 +700,18 @@ update global msg model =
                     { form | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", statusFromDoClose doClose ) ]) form.post }
             in
             if doClose == True then
-                ( model, addOneCircle apis.gql newForm CircleAck, Cmd.none )
+                let
+                    newForm2 =
+                        { newForm | events_type = Just [ TensionEvent.Created, TensionEvent.BlobCreated ] }
+                in
+                ( model, addOneCircle apis.gql newForm2 CircleAck, Cmd.none )
 
             else
-                ( model, addOneTension apis.gql newForm TensionAck, Cmd.none )
+                let
+                    newForm2 =
+                        { newForm | events_type = Just [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ] }
+                in
+                ( model, addOneTension apis.gql newForm2 TensionAck, Cmd.none )
 
         CircleAck result ->
             let
@@ -756,7 +769,7 @@ update global msg model =
                                     TensionAction.EditCircle
 
                         nodeData =
-                            model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
+                            model.node_data |> withDefaultData initNodeData
 
                         form =
                             { uctx = uctx
@@ -766,7 +779,7 @@ update global msg model =
                             , tension_type = TensionType.Governance
                             , post = Dict.fromList [ ( "title", "[" ++ actionNameStr action ++ "] " ++ node.name ) ]
                             , action = Just action
-                            , event_type = Nothing
+                            , events_type = Nothing
                             , blob_type = Just BlobType.OnAbout
                             , node = { initNodeFragment | name = Just node.name, about = nodeData.about }
                             }
@@ -801,7 +814,7 @@ update global msg model =
             if doClose == True then
                 let
                     newForm =
-                        { newForm_ | event_type = Just [ TensionEvent.BlobCommitted, TensionEvent.Closed ] }
+                        { newForm_ | events_type = Just [ TensionEvent.BlobCommitted, TensionEvent.BlobPushed, TensionEvent.Closed ] }
                 in
                 case form.blob_type |> withDefault BlobType.OnDoc of
                     BlobType.OnAbout ->
@@ -817,7 +830,7 @@ update global msg model =
             else
                 let
                     newForm =
-                        { newForm_ | event_type = Just [ TensionEvent.BlobPushed ] }
+                        { newForm_ | events_type = Just [ TensionEvent.BlobCommitted ] }
                 in
                 ( model, addOneTension apis.gql newForm TensionAck, Cmd.none )
 
@@ -837,14 +850,14 @@ update global msg model =
                         Success node ->
                             let
                                 data =
-                                    model.data |> withDefaultData (NodeData form.target.nameid Nothing Nothing)
+                                    model.node_data |> withDefaultData initNodeData
 
                                 ndata =
                                     hotNodeUpdateName form model.orga_data
                             in
                             ( { model
                                 | node_action = EditAbout <| NodeFinal form result
-                                , data = Success { data | about = form.node.about }
+                                , node_data = Success { data | about = form.node.about }
                                 , orga_data = Success ndata
                               }
                             , Cmd.none
@@ -881,7 +894,7 @@ update global msg model =
                                     TensionAction.EditCircle
 
                         nodeData =
-                            model.data |> withDefaultData (NodeData node.nameid Nothing Nothing)
+                            model.node_data |> withDefaultData initNodeData
 
                         form =
                             { uctx = uctx
@@ -891,7 +904,7 @@ update global msg model =
                             , tension_type = TensionType.Governance
                             , post = Dict.fromList [ ( "title", "[" ++ actionNameStr action ++ "] " ++ node.name ) ]
                             , action = Just action
-                            , event_type = Nothing
+                            , events_type = Nothing
                             , blob_type = Just BlobType.OnMandate
                             , node = { initNodeFragment | mandate = nodeData.mandate }
                             }
@@ -932,9 +945,9 @@ update global msg model =
                         Success node ->
                             let
                                 data =
-                                    model.data |> withDefaultData (NodeData form.target.nameid Nothing Nothing)
+                                    model.node_data |> withDefaultData initNodeData
                             in
-                            ( { model | node_action = EditMandate <| NodeFinal form result, data = Success { data | mandate = form.node.mandate } }
+                            ( { model | node_action = EditMandate <| NodeFinal form result, node_data = Success { data | mandate = form.node.mandate } }
                             , Cmd.none
                             , Cmd.none
                             )
@@ -1213,29 +1226,32 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
+        tid =
+            model.node_data |> withMaybeData |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
+
         data =
-            { o = Loading, f = Nothing, c = [], source = OverviewBaseUri }
+            { data = model.node_data, node = initNodeFragment, isLazy = model.init_data, source = OverviewBaseUri, tid = tid, focus = model.node_focus }
 
         data_ =
             case model.orga_data of
                 Success d ->
                     let
-                        focus =
+                        node =
                             Dict.get model.node_focus.nameid d
                     in
                     case model.path_data of
                         Just path ->
                             if List.length path.path > 0 then
-                                { data | o = Success d, f = focus, c = path.focus.children }
+                                { data | node = nodeFragmentFromOrga node model.node_data path.focus.children d }
 
                             else
-                                { data | o = Failure [ T.nodeNotExist ] }
+                                { data | data = Failure [ T.nodeNotExist ] }
 
                         Nothing ->
-                            { data | o = Success d, f = focus }
+                            data
 
                 other ->
-                    { data | o = other }
+                    data
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
@@ -1246,9 +1262,9 @@ view_ global model =
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
-                , viewCanvas data.o
+                , viewCanvas model.orga_data
                 , br [] []
-                , viewNodeInfo model.data model.init_data data_
+                , viewNodeInfo data_
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
@@ -1484,8 +1500,8 @@ viewActivies model =
                     ]
                 ]
             ]
-        , div [ classList [ ( "content", True ), ( "spinner", model.tensions_circle == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
-            [ case model.tensions_circle of
+        , div [ classList [ ( "content", True ), ( "spinner", model.tensions_data == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
+            [ case model.tensions_data of
                 Success tensions ->
                     if List.length tensions > 0 then
                         List.map (\t -> mediaTension OverviewBaseUri model.node_focus t Navigate) tensions

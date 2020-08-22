@@ -13,6 +13,7 @@ import Fractal.Object.AddNodePayload
 import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
+import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
@@ -52,6 +53,12 @@ nodeDataPayload =
         |> with Fractal.Object.Node.about
         |> with
             (Fractal.Object.Node.mandate identity mandatePayload)
+        |> with
+            (Fractal.Object.Node.source identity
+                (SelectionSet.succeed IdPayload
+                    |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                )
+            )
 
 
 mandatePayload : SelectionSet Mandate Fractal.Object.Mandate

@@ -59,8 +59,18 @@ queryNode fillInOptionals object_ =
     Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias GetNodeFragmentRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getNodeFragment : GetNodeFragmentRequiredArguments -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) RootQuery
+getNodeFragment requiredArgs object_ =
+    Object.selectionForCompositeField "getNodeFragment" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+
+
 type alias QueryNodeFragmentOptionalArguments =
-    { order : OptionalArgument Fractal.InputObject.NodeFragmentOrder
+    { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter
+    , order : OptionalArgument Fractal.InputObject.NodeFragmentOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -70,10 +80,10 @@ queryNodeFragment : (QueryNodeFragmentOptionalArguments -> QueryNodeFragmentOpti
 queryNodeFragment fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryNodeFragment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)

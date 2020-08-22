@@ -42,9 +42,21 @@ blob_type =
     Object.selectionForField "Enum.BlobType.BlobType" "blob_type" [] Fractal.Enum.BlobType.decoder
 
 
-node : SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) Fractal.Object.Blob
-node object_ =
-    Object.selectionForCompositeField "node" [] object_ (identity >> Decode.nullable)
+type alias NodeOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
+
+
+node : (NodeOptionalArguments -> NodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) Fractal.Object.Blob
+node fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "node" optionalArgs object_ (identity >> Decode.nullable)
 
 
 md : SelectionSet (Maybe String) Fractal.Object.Blob

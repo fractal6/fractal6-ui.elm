@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddNodeFragmentPayload exposing (..)
+module Fractal.Object.UpdateNodeFragmentPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -27,7 +27,7 @@ type alias NodeFragmentOptionalArguments =
     }
 
 
-nodeFragment : (NodeFragmentOptionalArguments -> NodeFragmentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeFragmentPayload
+nodeFragment : (NodeFragmentOptionalArguments -> NodeFragmentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateNodeFragmentPayload
 nodeFragment fillInOptionals object_ =
     let
         filledInOptionals =
@@ -40,6 +40,6 @@ nodeFragment fillInOptionals object_ =
     Object.selectionForCompositeField "nodeFragment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeFragmentPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateNodeFragmentPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

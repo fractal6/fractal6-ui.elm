@@ -55,6 +55,24 @@ addNodeFragment requiredArgs object_ =
     Object.selectionForCompositeField "addNodeFragment" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddNodeFragmentInput |> Encode.list) ] object_ (identity >> Decode.nullable)
 
 
+type alias UpdateNodeFragmentRequiredArguments =
+    { input : Fractal.InputObject.UpdateNodeFragmentInput }
+
+
+updateNodeFragment : UpdateNodeFragmentRequiredArguments -> SelectionSet decodesTo Fractal.Object.UpdateNodeFragmentPayload -> SelectionSet (Maybe decodesTo) RootMutation
+updateNodeFragment requiredArgs object_ =
+    Object.selectionForCompositeField "updateNodeFragment" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateNodeFragmentInput ] object_ (identity >> Decode.nullable)
+
+
+type alias DeleteNodeFragmentRequiredArguments =
+    { filter : Fractal.InputObject.NodeFragmentFilter }
+
+
+deleteNodeFragment : DeleteNodeFragmentRequiredArguments -> SelectionSet decodesTo Fractal.Object.DeleteNodeFragmentPayload -> SelectionSet (Maybe decodesTo) RootMutation
+deleteNodeFragment requiredArgs object_ =
+    Object.selectionForCompositeField "deleteNodeFragment" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeFragmentFilter ] object_ (identity >> Decode.nullable)
+
+
 type alias AddNodeCharacRequiredArguments =
     { input : List Fractal.InputObject.AddNodeCharacInput }
 

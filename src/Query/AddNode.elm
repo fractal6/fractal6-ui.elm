@@ -302,7 +302,27 @@ getAddCircleOptionals f =
                 }
         in
         case type_ of
+            NodeType.Role ->
+                -- Role
+                let
+                    first_link =
+                        first_links |> List.head
+                in
+                { commonFields
+                    | role_type = f.node.role_type |> fromMaybe
+                    , first_link =
+                        first_links
+                            |> List.head
+                            |> Maybe.map
+                                (\uname ->
+                                    Input.buildUserRef
+                                        (\u -> { u | username = uname |> Present })
+                                )
+                            |> fromMaybe
+                }
+
             NodeType.Circle ->
+                -- Circle
                 { commonFields
                     | children =
                         first_links
@@ -328,22 +348,4 @@ getAddCircleOptionals f =
                                         )
                                 )
                             |> Present
-                }
-
-            NodeType.Role ->
-                let
-                    first_link =
-                        first_links |> List.head
-                in
-                { commonFields
-                    | role_type = f.node.role_type |> fromMaybe
-                    , first_link =
-                        first_links
-                            |> List.head
-                            |> Maybe.map
-                                (\uname ->
-                                    Input.buildUserRef
-                                        (\u -> { u | username = uname |> Present })
-                                )
-                            |> fromMaybe
                 }

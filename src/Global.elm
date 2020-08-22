@@ -80,8 +80,8 @@ init flags url key =
             , node_focus = Nothing
             , path_data = Nothing
             , orga_data = Nothing
-            , data = Nothing
-            , tensions_circle = Nothing
+            , node_data = Nothing
+            , tensions_data = Nothing
             , tension_head = Nothing
             , node_action = Nothing
             , node_quickSearch = Nothing
@@ -203,7 +203,7 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | data = data } }, Cmd.none )
+            ( { model | session = { session | node_data = data } }, Cmd.none )
 
         UpdateSessionTensionHead data ->
             let
@@ -217,7 +217,7 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | tensions_circle = data } }, Cmd.none )
+            ( { model | session = { session | tensions_data = data } }, Cmd.none )
 
         UpdateUserSession uctx ->
             let

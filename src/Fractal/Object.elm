@@ -85,6 +85,10 @@ type DeleteNodeCharacPayload
     = DeleteNodeCharacPayload
 
 
+type DeleteNodeFragmentPayload
+    = DeleteNodeFragmentPayload
+
+
 type DeleteNodePayload
     = DeleteNodePayload
 
@@ -159,6 +163,10 @@ type UpdateMandatePayload
 
 type UpdateNodeCharacPayload
     = UpdateNodeCharacPayload
+
+
+type UpdateNodeFragmentPayload
+    = UpdateNodeFragmentPayload
 
 
 type UpdateNodePayload

@@ -6,11 +6,13 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.Markdown exposing (renderMarkdown)
+import Components.Node exposing (viewNodeInfo)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2)
+import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
@@ -49,7 +51,7 @@ import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (patchComment, patchTitle, pushTensionComment)
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryTension exposing (getTensionComments, getTensionHead)
+import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 import Task
@@ -87,29 +89,67 @@ type alias Model =
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
 
-    -- Common
-    , node_action : ActionState
-    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
-    , modalAuth : ModalAuth
-    , inputViewMode : InputViewMode
-    , activeTab : TensionTab
-
     -- Page
     , tensionid : String
+    , activeTab : TensionTab
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
+    , tension_blobs : GqlData TensionBlobs
     , tension_form : TensionPatchForm
     , tension_result : GqlData IdPayload
     , title_result : GqlData String
     , comment_form : CommentPatchForm
     , comment_result : GqlData Comment
     , isTitleEdit : Bool
+    , actionView : ActionView
+
+    -- Common
+    , node_action : ActionState
+    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+    , modalAuth : ModalAuth
+    , inputViewMode : InputViewMode
     }
+
+
+
+-- Query parameters
 
 
 type TensionTab
     = Conversation
     | Document
+
+
+type ActionView
+    = DocView
+    | DocEdit
+    | DocHistory
+
+
+actionViewEncoder : ActionView -> String
+actionViewEncoder x =
+    case x of
+        DocView ->
+            ""
+
+        DocEdit ->
+            "edit"
+
+        DocHistory ->
+            "history"
+
+
+actionViewDecoder : String -> ActionView
+actionViewDecoder x =
+    case x of
+        "edit" ->
+            DocEdit
+
+        "history" ->
+            DocHistory
+
+        default ->
+            DocView
 
 
 
@@ -124,6 +164,7 @@ type Msg
     | GotPath2 (GqlData LocalGraph) -- GraphQL
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
+    | GotTensionBlobs (GqlData TensionBlobs)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
     | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
@@ -141,11 +182,11 @@ type Msg
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
-      -- Util
+      -- Common
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoCloseAuthModal
     | ChangeAuthPost String String
     | SubmitUser UserForm
     | GotSignin (WebData UserCtx)
@@ -164,6 +205,11 @@ init global flags =
         apis =
             global.session.apis
 
+        -- Query parameters
+        query =
+            queryParser global.url
+
+        -- Focus
         rootnameid =
             flags.param1
 
@@ -184,6 +230,7 @@ init global flags =
         model =
             { node_focus = newFocus
             , tensionid = tensionid
+            , activeTab = tab
             , path_data =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
@@ -193,17 +240,20 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , tension_comments = Loading
+            , tension_blobs = Loading
             , tension_form = initTensionForm tensionid global.session.user
             , tension_result = NotAsked
             , title_result = NotAsked
             , comment_form = initCommentPatchForm global.session.user
             , comment_result = NotAsked
+            , isTitleEdit = False
             , inputViewMode = Write
-            , activeTab = tab
+            , actionView = Dict.get "v" query |> withDefault "" |> actionViewDecoder
+
+            -- Common
             , node_action = NoOp
             , isModalActive = False
             , modalAuth = Inactive
-            , isTitleEdit = False
             }
 
         cmds =
@@ -218,7 +268,15 @@ init global flags =
                     getTensionComments apis.gql model.tensionid GotTensionComments
 
                 Document ->
-                    Cmd.none
+                    case model.actionView of
+                        DocView ->
+                            Cmd.none
+
+                        DocEdit ->
+                            Cmd.none
+
+                        DocHistory ->
+                            getTensionBlobs apis.gql model.tensionid GotTensionBlobs
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -250,8 +308,11 @@ update global msg model =
 
                 tension_c =
                     ternary (model.tension_comments == Loading) LoadingSlowly model.tension_comments
+
+                tension_b =
+                    ternary (model.tension_blobs == Loading) LoadingSlowly model.tension_blobs
             in
-            ( { model | tension_head = tension_h, tension_comments = tension_c }, Cmd.none, Cmd.none )
+            ( { model | tension_head = tension_h, tension_comments = tension_c, tension_blobs = tension_b }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -321,6 +382,13 @@ update global msg model =
             in
             ( newModel, Cmd.none, Ports.bulma_driver "" )
 
+        GotTensionBlobs result ->
+            let
+                newModel =
+                    { model | tension_blobs = result }
+            in
+            ( newModel, Cmd.none, Ports.bulma_driver "" )
+
         -- Page Action
         ChangeTensionPost field value ->
             let
@@ -340,7 +408,7 @@ update global msg model =
 
                         --, emitter = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.emitter)
                         --, receiver = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.receiver)
-                        , event_type =
+                        , events_type =
                             if form.status == Just TensionStatus.Open then
                                 Just [ TensionEvent.Reopened, TensionEvent.CommentPushed ]
 
@@ -496,7 +564,7 @@ update global msg model =
         SubmitTitle form time ->
             let
                 newForm =
-                    { form | post = Dict.insert "createdAt" (fromTime time) form.post, event_type = Just [ TensionEvent.TitleUpdated ] }
+                    { form | post = Dict.insert "createdAt" (fromTime time) form.post, events_type = Just [ TensionEvent.TitleUpdated ] }
             in
             ( model, patchTitle apis.gql newForm TitleAck, Cmd.none )
 
@@ -1097,23 +1165,74 @@ viewUpdateInput uctx comment form result =
 
 viewDocument : UserState -> TensionHead -> Model -> Html Msg
 viewDocument u t model =
-    div [] [ text "Todo" ]
+    div []
+        [ span
+            [ class "field has-addons" ]
+            [ p [ class "control" ]
+                [ a
+                    [ class "button is-small is-rounded"
+                    , classList [ ( "is-active", model.actionView == DocView ) ]
+                    , href
+                        (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
+                            |> toHref
+                        )
+                    ]
+                    [ Fa.icon0 "fas fa-eye" "" ]
+                ]
+            , p [ class "control" ]
+                [ a
+                    [ class "button is-small is-rounded"
+                    , classList [ ( "is-active", model.actionView == DocEdit ) ]
+                    , (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
+                        |> toHref
+                      )
+                        ++ "?v=edit"
+                        |> href
+                    ]
+                    [ Fa.icon0 "fas fa-pen" "" ]
+                ]
+            , p [ class "control" ]
+                [ a
+                    [ class "button is-small is-rounded"
+                    , classList [ ( "is-active", model.actionView == DocHistory ) ]
+                    , (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
+                        |> toHref
+                      )
+                        ++ "?v=history"
+                        |> href
+                    ]
+                    [ Fa.icon0 "fas fa-history" "" ]
+                ]
+            ]
+        , case model.actionView of
+            DocView ->
+                viewDocView u t model
+
+            DocEdit ->
+                viewDocView u t model
+
+            DocHistory ->
+                viewDocView u t model
+        ]
+
+
+viewDocView : UserState -> TensionHead -> Model -> Html Msg
+viewDocView u t model =
+    let
+        node =
+            t.head
+                |> Maybe.map (\h -> h.node)
+                |> withDefault Nothing
+                |> withDefault initNodeFragment
+
+        data =
+            { data = Success t, node = node, isLazy = False, source = TensionBaseUri, tid = t.id, focus = model.node_focus }
+    in
+    div []
+        [ viewNodeInfo data ]
 
 
 
---case t.action of
---    Just action ->
---        case t.data of
---            Just data ->
---                viewData model.node_focus t action data
---            Nothing ->
---                div [] [ text "no document attached" ]
---    Nothing ->
---        div [] [ text "no action for this tension" ]
---
---
---viewData : NodeFocus -> TensionExtended -> TensionAction.TensionAction -> NodeFragment -> Html Msg
---viewData focus t action nf =
 --    let
 --        txt =
 --            getNodeTextFromAction action
@@ -1357,7 +1476,7 @@ initTensionForm tensionid user =
     , emitter = Nothing
     , receiver = Nothing
     , post = Dict.empty
-    , event_type = Nothing
+    , events_type = Nothing
     , blob_type = Nothing
     , node = initNodeFragment
     }
