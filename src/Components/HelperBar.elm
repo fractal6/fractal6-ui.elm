@@ -56,8 +56,7 @@ view baseUri user maybePath joinMsg =
                                         joinButton joinMsg
 
                                 Nothing ->
-                                    -- Loading
-                                    text ""
+                                    div [ class "is-pulled-right ph-button-1" ] []
 
                         LoggedOut ->
                             joinButton joinMsg
@@ -79,36 +78,32 @@ view baseUri user maybePath joinMsg =
 
 viewPath : FractalBaseRoute -> Maybe LocalGraph -> Html msg
 viewPath baseUri maybePath =
-    let
-        path =
-            case maybePath of
-                Just p ->
-                    p.path
-
-                Nothing ->
-                    []
-    in
     div
         [ class "breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
         [ Fa.icon "fas fa-angle-right" ""
-        , List.indexedMap
-            (\i p ->
-                if i < (List.length path - 1) then
-                    li []
-                        [ a [ href (uriFromNameid baseUri p.nameid) ]
-                            [ div [] [ text p.name ] ]
-                        ]
+        , case maybePath of
+            Just g ->
+                g.path
+                    |> List.indexedMap
+                        (\i p ->
+                            if i < (List.length g.path - 1) then
+                                li []
+                                    [ a [ href (uriFromNameid baseUri p.nameid) ]
+                                        [ div [] [ text p.name ] ]
+                                    ]
 
-                else
-                    li [ class "s-active has-text-weight-semibold" ]
-                        [ a [ href (uriFromNameid baseUri p.nameid) ]
-                            [ div [] [ text p.name ] ]
-                        ]
-            )
-            path
-            |> ul [ attribute "style" "display: inline-flex;" ]
+                            else
+                                li [ class "s-active has-text-weight-semibold" ]
+                                    [ a [ href (uriFromNameid baseUri p.nameid) ]
+                                        [ div [] [ text p.name ] ]
+                                    ]
+                        )
+                    |> ul [ attribute "style" "display: inline-flex;" ]
+
+            Nothing ->
+                div [ class "ph-line-1" ] []
         ]
 
 

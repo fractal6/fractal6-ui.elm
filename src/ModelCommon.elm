@@ -99,9 +99,7 @@ type ModalAuth
 type ActionState
     = ActionChoice Node
     | AddTension (TensionStep TensionForm)
-    | AddCircle (NodeStep TensionForm (List Node))
-    | EditAbout (NodeStep TensionForm IdPayload)
-    | EditMandate (NodeStep TensionForm IdPayload)
+    | AddCircle (NodeStep TensionForm)
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
@@ -110,6 +108,11 @@ type ActionState
 
 
 -- Tension Form
+
+
+type TypeForm
+    = NewNode
+    | NewTension
 
 
 type alias TensionForm =
@@ -125,6 +128,7 @@ type alias TensionForm =
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
+    , asked : TypeForm
     }
 
 
@@ -178,10 +182,10 @@ type TensionStep form
 
 {-| Node Step (Role Or Circle, add and edit)
 -}
-type NodeStep form data
+type NodeStep form
     = NodeInit form
     | NodeSource form (List UserRole)
-    | NodeFinal form (GqlData data)
+    | NodeFinal form (GqlData Tension)
     | NodeNotAuthorized ErrorData
 
 

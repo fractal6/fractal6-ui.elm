@@ -792,6 +792,14 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+.docButtons {
+    margin-top:-9px;
+    margin-right: -9px;
+    .button {
+        font-size: 0.65rem !important;
+        padding-bottom: 2px !important;
+    }
+}
 
 #membersTable {
     width: 100% !important;
@@ -1346,65 +1354,54 @@ html.has-modal-active, html.has-modal-active2 {
 
 .is-lazy {
     opacity: 0.6;
-
-    //animation: opac 1s infinite linear forwards;
-    //-webkit-animation:opac 1s infinite linear forwards;
 }
 
-@keyframes opac
-{
-  0%{
-    opacity: 0.5;
-  }
-  50%{
-    background-color: 0.6;
-  }
-  100%{
-    background-color: 0.7;
-  }
+@keyframes placeHolderLine{
+    0%{
+        background-position: -460px 0
+    }
+    100%{
+        background-position: 460px 0
+    }
+}
+.ph-line-1 {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderLine;
+    animation-timing-function: linear;
+    background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
+    display: inline-block;
+    height: 1.5rem;
+    overflow: hidden;
+	border-radius: 20px;
+    width: 460px;
+    position: relative;
+    top: 5px;
 }
 
-@-webkit-keyframes opac
-{
-  0%{
-    opacity: 0.5;
-  }
-  50%{
-    background-color: 0.6;
-  }
-  100%{
-    background-color: 0.7;
-  }
+@keyframes placeHolderButton{
+    0%{
+        background-position: -120px 0
+    }
+    100%{
+        background-position: 120px 0
+    }
 }
-
-.ph{
-  margin:15px;
-  padding:10px;
-  height: 115px;
-  border: 1px solid lightgrey;
-  border-radius: 5px;
-}
-
-.ph div{background:#E8E8E8;}
-
-.ph .square{
-  float:left;
-  width: 90px;
-  height:56px;
-  margin:0 0 10px;
-}
-
-.ph .line{height:12px;margin:0 0 10px 105px;}
-.ph .line:nth-child(2){width: 120px;}
-.ph .line:nth-child(3){width: 170px;}
-.ph .line:nth-child(4){width: 150px;}
-
-.ph .circle{
-  float:left;
-  width: 15px;
-  height:15px;
-  margin:0 15px 10px 0;
-  border-radius:15px;
+.ph-button-1 {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderButton;
+    animation-timing-function: linear;
+    background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
+    display: inline-block;
+    height: 2.2rem;
+    overflow: hidden;
+	border-radius: 5px;
+    width: 120px;
+    position: relative;
+    top: 5px;
 }
 
 /*

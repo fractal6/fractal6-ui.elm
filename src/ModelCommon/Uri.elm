@@ -198,7 +198,7 @@ guestIdCodec rootnameid username =
 
 {-|
 
-    Returns the namid of a new Circle/Role given the parenid and the nameid fragment.
+    Returns the namid of a new Circle/Role given the parentid and the nameid fragment.
 
 -}
 nodeIdCodec : String -> String -> NodeType.NodeType -> String
@@ -212,4 +212,8 @@ nodeIdCodec parentid targetid nodeType =
             String.join "#" [ rootnameid, targetid ]
 
         NodeType.Role ->
-            String.join "#" [ parentid, targetid ]
+            if rootnameid == parentid then
+                String.join "#" [ rootnameid, "", targetid ]
+
+            else
+                String.join "#" [ parentid, targetid ]

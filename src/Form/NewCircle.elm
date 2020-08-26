@@ -47,27 +47,20 @@ view form result sd =
             ternary isSendable [ onClickPD2 (sd.submitMsg <| sd.submitNextMsg form True) ] []
     in
     case result of
-        Success _ ->
+        Success res ->
+            let
+                link =
+                    Route.Tension_Dynamic_Dynamic_Action { param1 = form.target.rootnameid, param2 = res.id } |> toHref
+            in
             div [ class "box is-light" ]
                 [ Fa.icon "fas fa-check fa-2x has-text-success" " "
-                , case sd.tensionId of
-                    Just id ->
-                        let
-                            link =
-                                Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = id } |> toHref
-                        in
-                        span []
-                            [ text (txt.tension_added ++ " ")
-                            , a
-                                [ href link
-                                , onClickPD (sd.closeModalMsg link)
-                                , target "_blank"
-                                ]
-                                [ text T.checkItOut ]
-                            ]
-
-                    Nothing ->
-                        span [] [ text txt.added ]
+                , text (txt.added ++ " ")
+                , a
+                    [ href link
+                    , onClickPD (sd.closeModalMsg link)
+                    , target "_blank"
+                    ]
+                    [ text T.checkItOut ]
                 ]
 
         other ->
@@ -165,9 +158,10 @@ view form result sd =
                                                             RoleType.Coordinator
                                                     in
                                                     div [ class ("select is-" ++ roleColor r) ]
-                                                        [ select [ class "has-text-dark", onInput <| sd.changePostMsg "role_type" ]
-                                                            [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                        [ select
+                                                            [ class "has-text-dark" --, onInput <| sd.changePostMsg "role_type"
                                                             ]
+                                                            [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
                                                         ]
 
                                                 NodeType.Role ->
@@ -279,16 +273,22 @@ view form result sd =
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button is-small has-text-weight-semibold"
-                                     , classList [ ( "is-warning", isSendable ), ( "is-loading", isLoading ) ]
-                                     , disabled (not isSendable)
+                                     , classList
+                                        [ ( "is-warning", isSendable )
+                                        , ( "is-loading", isLoading && sd.activeButton == Just 0 )
+                                        ]
+                                     , disabled (not isSendable || isLoading)
                                      ]
                                         ++ submitCloseTension
                                     )
                                     [ text txt.close_submit ]
                                 , button
                                     ([ class "button  has-text-weight-semibold"
-                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
-                                     , disabled (not isSendable)
+                                     , classList
+                                        [ ( "is-success", isSendable )
+                                        , ( "is-loading", isLoading && sd.activeButton == Just 1 )
+                                        ]
+                                     , disabled (not isSendable || isLoading)
                                      ]
                                         ++ submitTension
                                     )

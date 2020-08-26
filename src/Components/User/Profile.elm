@@ -2,7 +2,7 @@ module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscrip
 
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.NotFound exposing (viewNotFound)
 import Components.Text as Text exposing (..)
 import Date exposing (formatTime)

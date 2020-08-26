@@ -306,7 +306,7 @@ viewActionIcon cls action =
                 [ Fa.fa "far fa-circle" ]
 
             Just TensionAction.NewRole ->
-                [ Fa.fa "far fa-scroll" ]
+                [ Fa.fa "fas fa-scroll" ]
 
             Just TensionAction.EditCircle ->
                 [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]

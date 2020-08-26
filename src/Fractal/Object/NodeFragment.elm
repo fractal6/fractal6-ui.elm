@@ -36,30 +36,31 @@ nameid =
     Object.selectionForField "(Maybe String)" "nameid" [] (Decode.string |> Decode.nullable)
 
 
-type alias ChildrenOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter
-    , order : OptionalArgument Fractal.InputObject.NodeFragmentOrder
-    , first : OptionalArgument Int
-    , offset : OptionalArgument Int
-    }
-
-
-children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.NodeFragment
-children fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "children" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
-
-
 type_ : SelectionSet (Maybe Fractal.Enum.NodeType.NodeType) Fractal.Object.NodeFragment
 type_ =
     Object.selectionForField "(Maybe Enum.NodeType.NodeType)" "type_" [] (Fractal.Enum.NodeType.decoder |> Decode.nullable)
+
+
+isPrivate : SelectionSet (Maybe Bool) Fractal.Object.NodeFragment
+isPrivate =
+    Object.selectionForField "(Maybe Bool)" "isPrivate" [] (Decode.bool |> Decode.nullable)
+
+
+type alias CharacOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
+
+
+charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
+charac fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "charac" optionalArgs object_ (identity >> Decode.nullable)
 
 
 about : SelectionSet (Maybe String) Fractal.Object.NodeFragment
@@ -84,26 +85,25 @@ mandate fillInOptionals object_ =
     Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
 
 
-isPrivate : SelectionSet (Maybe Bool) Fractal.Object.NodeFragment
-isPrivate =
-    Object.selectionForField "(Maybe Bool)" "isPrivate" [] (Decode.bool |> Decode.nullable)
+type alias ChildrenOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter
+    , order : OptionalArgument Fractal.InputObject.NodeFragmentOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
 
 
-type alias CharacOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
-
-
-charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
-charac fillInOptionals object_ =
+children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.NodeFragment
+children fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "charac" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "children" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
 first_link : SelectionSet (Maybe String) Fractal.Object.NodeFragment

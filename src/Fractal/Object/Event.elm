@@ -25,14 +25,14 @@ event_type =
     Object.selectionForField "Enum.TensionEvent.TensionEvent" "event_type" [] Fractal.Enum.TensionEvent.decoder
 
 
-old : SelectionSet String Fractal.Object.Event
+old : SelectionSet (Maybe String) Fractal.Object.Event
 old =
-    Object.selectionForField "String" "old" [] Decode.string
+    Object.selectionForField "(Maybe String)" "old" [] (Decode.string |> Decode.nullable)
 
 
-new : SelectionSet String Fractal.Object.Event
+new : SelectionSet (Maybe String) Fractal.Object.Event
 new =
-    Object.selectionForField "String" "new" [] Decode.string
+    Object.selectionForField "(Maybe String)" "new" [] (Decode.string |> Decode.nullable)
 
 
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Event

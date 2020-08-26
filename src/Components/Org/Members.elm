@@ -5,7 +5,7 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewWarnings)
+import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)

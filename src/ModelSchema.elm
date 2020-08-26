@@ -201,8 +201,8 @@ type alias Event =
     , createdAt : String
     , createdBy : Username
     , event_type : TensionEvent.TensionEvent
-    , old : String
-    , new : String
+    , old : Maybe String
+    , new : Maybe String
     }
 
 
@@ -272,9 +272,9 @@ initNodeFragment =
     NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
-initNodeFragmentCircle : NodeType.NodeType -> RoleType.RoleType -> NodeFragment
+initNodeFragmentCircle : NodeType.NodeType -> Maybe RoleType.RoleType -> NodeFragment
 initNodeFragmentCircle nt rt =
-    NodeFragment Nothing Nothing (Just nt) (Just rt) Nothing Nothing Nothing Nothing Nothing Nothing
+    NodeFragment Nothing Nothing (Just nt) rt Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 

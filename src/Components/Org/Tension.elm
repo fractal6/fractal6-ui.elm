@@ -4,7 +4,7 @@ import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Node exposing (viewNodeInfo)
 import Components.Text as T
@@ -1230,89 +1230,6 @@ viewDocView u t model =
     in
     div []
         [ viewNodeInfo data ]
-
-
-
---    let
---        txt =
---            getNodeTextFromAction action
---    in
---    div []
---        [ case nf.mandate of
---            Just mandate ->
---                div [ class "card" ]
---                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
---                    , div [ class "card-content" ]
---                        [ div [ class "field" ]
---                            [ div [ class "label" ] [ text T.purposeH ]
---                            , div [ class "control" ]
---                                [ textarea
---                                    [ id "textAreaModal"
---                                    , class "textarea"
---                                    , rows 5
---                                    , readonly True
---                                    , value mandate.purpose
---
---                                    --, placeholder (txt.ph_purpose ++ "*")
---                                    --, onInput <| changePostMsg "purpose"
---                                    ]
---                                    []
---                                ]
---                            ]
---                        , div [ class "field" ]
---                            [ div [ class "label" ] [ text T.responsabilitiesH ]
---                            , div [ class "control" ]
---                                [ textarea
---                                    [ id "textAreaModal"
---                                    , class "textarea"
---                                    , rows 5
---                                    , readonly True
---                                    , value (mandate.responsabilities |> withDefault ("<" ++ T.noResponsabilities ++ ">"))
---
---                                    --, placeholder txt.ph_responsabilities
---                                    --, onInput <| changePostMsg "responsabilities"
---                                    ]
---                                    []
---                                ]
---                            ]
---                        , div [ class "field" ]
---                            [ div [ class "label" ] [ text T.domainsH ]
---                            , div [ class "control" ]
---                                [ textarea
---                                    [ id "textAreaModal"
---                                    , class "textarea"
---                                    , rows 5
---                                    , readonly True
---                                    , value (mandate.domains |> withDefault ("<" ++ T.noDomains ++ ">"))
---
---                                    --, placeholder txt.ph_domains
---                                    --, onInput <| changePostMsg "domains"
---                                    ]
---                                    []
---                                ]
---                            ]
---                        , div [ class "field" ]
---                            [ div [ class "label" ] [ text T.policiesH ]
---                            , div [ class "control" ]
---                                [ textarea
---                                    [ id "textAreaModal"
---                                    , class "textarea"
---                                    , rows 5
---                                    , readonly True
---                                    , value (mandate.policies |> withDefault ("<" ++ T.noPolicies ++ ">"))
---
---                                    --, placeholder txt.ph_policies
---                                    --, onInput <| changePostMsg "policies"
---                                    ]
---                                    []
---                                ]
---                            ]
---                        ]
---                    ]
---
---            Nothing ->
---                div [] []
---        ]
 
 
 viewJoinNeeded : NodeFocus -> Html Msg

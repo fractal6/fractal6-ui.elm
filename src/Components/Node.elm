@@ -99,9 +99,7 @@ viewNodeDoc data =
                     OverviewBaseUri ->
                         div [ class "column is-3" ]
                             [ span
-                                [ class "is-pulled-right field has-addons"
-                                , attribute "style" "margin-top:-9px;margin-right: -9px;"
-                                ]
+                                [ class "is-pulled-right field has-addons docButtons" ]
                                 [ a
                                     [ class "control"
                                     , href (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = data.tid } |> toHref)
@@ -180,6 +178,86 @@ viewMandateSection name maybePara =
 
 
 
+--    let
+--        txt =
+--            getNodeTextFromAction action
+--    in
+--    div []
+--        [ case nf.mandate of
+--            Just mandate ->
+--                div [ class "card" ]
+--                    [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
+--                    , div [ class "card-content" ]
+--                        [ div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.purposeH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value mandate.purpose
+--
+--                                    --, placeholder (txt.ph_purpose ++ "*")
+--                                    --, onInput <| changePostMsg "purpose"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        , div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.responsabilitiesH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value (mandate.responsabilities |> withDefault ("<" ++ T.noResponsabilities ++ ">"))
+--
+--                                    --, placeholder txt.ph_responsabilities
+--                                    --, onInput <| changePostMsg "responsabilities"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        , div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.domainsH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value (mandate.domains |> withDefault ("<" ++ T.noDomains ++ ">"))
+--
+--                                    --, placeholder txt.ph_domains
+--                                    --, onInput <| changePostMsg "domains"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        , div [ class "field" ]
+--                            [ div [ class "label" ] [ text T.policiesH ]
+--                            , div [ class "control" ]
+--                                [ textarea
+--                                    [ id "textAreaModal"
+--                                    , class "textarea"
+--                                    , rows 5
+--                                    , readonly True
+--                                    , value (mandate.policies |> withDefault ("<" ++ T.noPolicies ++ ">"))
+--
+--                                    --, placeholder txt.ph_policies
+--                                    --, onInput <| changePostMsg "policies"
+--                                    ]
+--                                    []
+--                                ]
+--                            ]
+--                        ]
+--                    ]
+--
+--            Nothing ->
+--                div [] []
+--        ]
 -- Utils
 
 
