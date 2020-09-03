@@ -175,23 +175,6 @@ history fillInOptionals object_ =
     Object.selectionForCompositeField "history" optionalArgs object_ (identity >> Decode.list)
 
 
-type alias HeadOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.BlobFilter }
-
-
-head : (HeadOptionalArguments -> HeadOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe decodesTo) Fractal.Object.Tension
-head fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeBlobFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "head" optionalArgs object_ (identity >> Decode.nullable)
-
-
 n_comments : SelectionSet (Maybe Int) Fractal.Object.Tension
 n_comments =
     Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)

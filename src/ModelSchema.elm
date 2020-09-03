@@ -160,7 +160,7 @@ type alias TensionHead =
 
     --
     , status : TensionStatus.TensionStatus
-    , head : Maybe Blob
+    , blobs : Maybe (List Blob) -- head
     , history : List Event
     }
 
@@ -193,6 +193,7 @@ type alias Blob =
     , blob_type : BlobType.BlobType
     , node : Maybe NodeFragment
     , md : Maybe String
+    , pushedFlag : Maybe String
     }
 
 

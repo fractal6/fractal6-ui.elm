@@ -4,6 +4,7 @@ module Query.AddNode exposing
     )
 
 import Dict exposing (Dict)
+import Form.NewCircle exposing (getFirstLinks)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -282,10 +283,7 @@ getAddCircleOptionals f =
             f.node.nameid |> Maybe.map (\nid -> nodeIdCodec f.target.nameid nid type_) |> withDefault ""
 
         first_links =
-            f.node.first_link
-                |> withDefault ""
-                |> String.split "@"
-                |> List.filter (\x -> x /= "")
+            getFirstLinks f.node
     in
     \n ->
         let

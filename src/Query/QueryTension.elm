@@ -1,5 +1,6 @@
 module Query.QueryTension exposing
-    ( commentPayload
+    ( blobPayload
+    , commentPayload
     , getTensionBlobs
     , getTensionComments
     , getTensionHead
@@ -11,6 +12,7 @@ module Query.QueryTension exposing
     )
 
 import Dict exposing (Dict)
+import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionOrderable as TensionOrderable
@@ -51,6 +53,11 @@ import RemoteData exposing (RemoteData)
 nCommentPerTension : Int
 nCommentPerTension =
     250
+
+
+nBlobPerTension : Int
+nBlobPerTension =
+    50
 
 
 getTensionHead url tensionid msg =
@@ -95,7 +102,19 @@ tensionHeadPayload =
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.status
-        |> with (Fractal.Object.Tension.head identity blobPayload)
+        |> with
+            (Fractal.Object.Tension.blobs
+                (\args ->
+                    { args
+                        | first = Present 1
+                        , order =
+                            Input.buildBlobOrder
+                                (\b -> { b | desc = Present BlobOrderable.CreatedAt })
+                                |> Present
+                    }
+                )
+                blobPayload
+            )
         |> with
             (Fractal.Object.Tension.history
                 (\args ->
@@ -115,7 +134,19 @@ tensionHeadPayload =
 tensionBlobsPayload : SelectionSet TensionBlobs Fractal.Object.Tension
 tensionBlobsPayload =
     SelectionSet.succeed TensionBlobs
-        |> with (Fractal.Object.Tension.blobs identity blobPayload)
+        |> with
+            (Fractal.Object.Tension.blobs
+                (\args ->
+                    { args
+                        | first = Present nBlobPerTension
+                        , order =
+                            Input.buildBlobOrder
+                                (\b -> { b | desc = Present BlobOrderable.CreatedAt })
+                                |> Present
+                    }
+                )
+                blobPayload
+            )
 
 
 tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension
@@ -160,6 +191,7 @@ blobPayload =
         |> with Fractal.Object.Blob.blob_type
         |> with (Fractal.Object.Blob.node identity nodeFragmentPayload)
         |> with Fractal.Object.Blob.md
+        |> with Fractal.Object.Blob.pushedFlag
 
 
 eventPayload : SelectionSet Event Fractal.Object.Event

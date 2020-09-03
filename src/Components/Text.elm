@@ -1,6 +1,6 @@
 module Components.Text exposing (..)
 
--- Operational
+-- General
 
 
 loading : String
@@ -33,13 +33,14 @@ cancel =
     "Cancel"
 
 
-
--- Genral
-
-
 by : String
 by =
     "by"
+
+
+saveChanges : String
+saveChanges =
+    "Save changes"
 
 
 leaveComment : String
@@ -60,6 +61,11 @@ nameH =
 circleH : String
 circleH =
     "Circle"
+
+
+roleH : String
+roleH =
+    "Role"
 
 
 parentH : String

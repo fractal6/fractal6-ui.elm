@@ -64,6 +64,11 @@ md =
     Object.selectionForField "(Maybe String)" "md" [] (Decode.string |> Decode.nullable)
 
 
+pushedFlag : SelectionSet (Maybe String) Fractal.Object.Blob
+pushedFlag =
+    Object.selectionForField "(Maybe String)" "pushedFlag" [] (Decode.string |> Decode.nullable)
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Blob
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)

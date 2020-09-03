@@ -5,6 +5,7 @@ import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -70,8 +71,8 @@ mediaTension baseUri focus tension navigate =
     div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
             [ div
-                [ class "tooltip has-tooltip-top"
-                , attribute "data-tooltip" ("type: " ++ TensionType.toString tension.type_)
+                [ class "tooltip has-tooltip-top "
+                , attribute "data-tooltip" (TensionType.toString tension.type_)
                 ]
                 [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
             ]
@@ -85,12 +86,12 @@ mediaTension baseUri focus tension navigate =
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
-                , span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" ("comments: " ++ String.fromInt n_comments) ] <|
-                    if n_comments > 1 then
+                , if n_comments > 1 then
+                    span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments") ]
                         [ Fa.icon "fas fa-comment" (String.fromInt (n_comments - 1)) ]
 
-                    else
-                        []
+                  else
+                    span [] []
                 ]
             , case labels_m of
                 Just labels ->
@@ -99,16 +100,11 @@ mediaTension baseUri focus tension navigate =
                 Nothing ->
                     span [] []
             , br [ class "is-block" ] []
-            , span [ class "columns" ]
-                [ span [ class "column is-two-thirds" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
-                , span [ class " column" ]
-                    [ span [ class "columns is-mobile mediaFragments" ]
-                        [ viewActionIcon "column is-1" tension.action
-                        , span [ class "column" ]
-                            [ span [ class "is-pulled-right" ]
-                                [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
-                            ]
-                        ]
+            , span [ class "columns is-variable is-mobile" ]
+                [ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
+                , span [ class "column" ]
+                    [ viewActionIcon tension.action
+                    , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
                     ]
                 ]
             ]
@@ -203,6 +199,16 @@ viewTensionDateAndUserC createdAt createdBy =
         ]
 
 
+byAt : Username -> String -> Html msg
+byAt createdBy createdAt =
+    span []
+        [ text " by "
+        , viewUsernameLink createdBy.username
+        , text " the "
+        , text (formatTime createdAt)
+        ]
+
+
 
 {-
    Node
@@ -286,27 +292,50 @@ actionNameStr : TensionAction.TensionAction -> String
 actionNameStr action =
     case action of
         TensionAction.NewCircle ->
-            T.newCircle
-
-        TensionAction.NewRole ->
-            T.newRole
+            T.circleH
 
         TensionAction.EditCircle ->
-            T.editCircle
+            T.circleH
+
+        TensionAction.NewRole ->
+            T.roleH
 
         TensionAction.EditRole ->
-            T.editRole
+            T.roleH
 
 
-viewActionIcon : String -> Maybe TensionAction.TensionAction -> Html msg
-viewActionIcon cls action =
-    span [ class cls ] <|
+blobTypeStr : BlobType.BlobType -> String
+blobTypeStr btype =
+    case btype of
+        BlobType.InitBlob ->
+            "Document created"
+
+        BlobType.OnAbout ->
+            "Description edited"
+
+        BlobType.OnFirstLink ->
+            "First link edited"
+
+        BlobType.OnMandate ->
+            "Mandate edited"
+
+        BlobType.OnDoc ->
+            "File edited"
+
+
+viewActionIcon : Maybe TensionAction.TensionAction -> Html msg
+viewActionIcon action =
+    span
+        [ class "stackPen icon-padding tooltip"
+        , attribute "data-tooltip" ("1 " ++ actionNameStr (withDefault TensionAction.NewRole action) ++ " attached")
+        ]
+    <|
         case action of
             Just TensionAction.NewCircle ->
                 [ Fa.fa "far fa-circle" ]
 
             Just TensionAction.NewRole ->
-                [ Fa.fa "fas fa-scroll" ]
+                [ Fa.fa "fas fa-circle" ]
 
             Just TensionAction.EditCircle ->
                 [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
@@ -318,7 +347,7 @@ viewActionIcon cls action =
             Just TensionAction.EditRole ->
                 [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
                     [ i [ class "fas fa-pen fa-stack-1x" ] []
-                    , i [ class "fas fa-scroll fa-stack-2x" ] []
+                    , i [ class "far fa-circle fa-stack-2x" ] []
                     ]
                 ]
 

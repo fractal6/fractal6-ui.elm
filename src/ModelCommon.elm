@@ -136,6 +136,8 @@ type alias TensionPatchForm =
     { id : String
     , uctx : UserCtx
     , status : Maybe TensionStatus.TensionStatus
+    , tension_type : Maybe TensionType.TensionType
+    , action : Maybe TensionAction.TensionAction
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message...
@@ -144,6 +146,7 @@ type alias TensionPatchForm =
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
+    , md : Maybe String
     }
 
 

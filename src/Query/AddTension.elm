@@ -8,6 +8,7 @@ module Query.AddTension exposing
     )
 
 import Dict exposing (Dict)
+import Form.NewCircle exposing (getFirstLinks)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
@@ -280,10 +281,7 @@ buildNodeFragmentRef nf =
             nf.type_ |> withDefault NodeType.Role
 
         first_links =
-            nf.first_link
-                |> withDefault ""
-                |> String.split "@"
-                |> List.filter (\x -> x /= "")
+            getFirstLinks nf
     in
     Input.buildNodeFragmentRef
         (\n ->

@@ -8,6 +8,7 @@ module Query.QueryNode exposing
     , queryLocalGraph
     , queryMembers
     , queryNodeExt
+    , queryNodesSub
     , queryPublicOrga
     )
 
@@ -61,8 +62,8 @@ type alias NodeStats =
     }
 
 
-publicOrgaDecoder : Maybe (List (Maybe NodeExt)) -> Maybe (List NodeExt)
-publicOrgaDecoder data =
+nodesDecoder : Maybe (List (Maybe node)) -> Maybe (List node)
+nodesDecoder data =
     data
         |> Maybe.map
             (\d ->
@@ -83,7 +84,7 @@ queryPublicOrga url msg =
             publicOrgaFilter
             nodeOrgaExtPayload
         )
-        (RemoteData.fromResult >> decodeResponse publicOrgaDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
 
 
 publicOrgaFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
@@ -139,7 +140,7 @@ queryNodeExt url nameids msg =
             (nodeExtFilter nameids)
             nodeOrgaExtPayload
         )
-        (RemoteData.fromResult >> decodeResponse publicOrgaDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
 
 
 nodeExtFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
@@ -159,6 +160,39 @@ nodeExtFilter nameids a =
                 (\b ->
                     { b
                         | nameid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                    }
+                )
+                |> Present
+    }
+
+
+
+{-
+   Query Node and Sub Nodes / FetchNodes
+-}
+
+
+queryNodesSub url nameid msg =
+    makeGQLQuery url
+        (Query.queryNode
+            (nodesSubFilter nameid)
+            nodeOrgaPayload
+        )
+        (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
+
+
+nodesSubFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nodesSubFilter nameid a =
+    let
+        nameidRegxp =
+            "/^" ++ nameid ++ "/"
+    in
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | nameid = { eq = Absent, regexp = Present nameidRegxp } |> Present
                     }
                 )
                 |> Present

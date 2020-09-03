@@ -1,10 +1,12 @@
 module Query.PatchTension exposing
-    ( patchComment
+    ( PatchTensionPayloadID
+    , patchComment
     , patchTitle
-    , pushTensionComment
+    , pushTensionPatch
     )
 
 import Dict exposing (Dict)
+import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.CommentOrderable as CommentOrderable
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -12,6 +14,7 @@ import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.Blob
 import Fractal.Object.Comment
 import Fractal.Object.Label
 import Fractal.Object.Tension
@@ -27,8 +30,137 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvent)
-import Query.QueryTension exposing (commentPayload)
+import Query.QueryTension exposing (blobPayload, commentPayload)
 import RemoteData exposing (RemoteData)
+
+
+
+{-
+   Patch a single tension
+-}
+
+
+type alias PatchTensionPayload =
+    { tension : Maybe (List (Maybe PatchTensionPayloadID)) }
+
+
+type alias PatchTensionPayloadID =
+    { comments : Maybe (List Comment)
+    , blobs : Maybe (List Blob)
+    }
+
+
+tensionPushDecoder : Maybe PatchTensionPayload -> Maybe PatchTensionPayloadID
+tensionPushDecoder data =
+    case data of
+        Just d ->
+            d.tension
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+
+        Nothing ->
+            Nothing
+
+
+pushTensionPatch url form msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (pushTensionCommentInputEncoder form)
+            (SelectionSet.map PatchTensionPayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    (SelectionSet.succeed PatchTensionPayloadID
+                        |> with
+                            (Fractal.Object.Tension.comments (pushCommentFilter form) <|
+                                commentPayload
+                            )
+                        |> with
+                            (Fractal.Object.Tension.blobs (pushBlobFilter form) <|
+                                blobPayload
+                            )
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionPushDecoder >> msg)
+
+
+pushCommentFilter : TensionPatchForm -> Fractal.Object.Tension.CommentsOptionalArguments -> Fractal.Object.Tension.CommentsOptionalArguments
+pushCommentFilter f a =
+    { a
+        | first = Present 1
+        , order =
+            Input.buildCommentOrder
+                (\b -> { b | desc = Present CommentOrderable.CreatedAt })
+                |> Present
+
+        -- @debug: cant filter by createdBy for now !?
+    }
+
+
+pushBlobFilter : TensionPatchForm -> Fractal.Object.Tension.BlobsOptionalArguments -> Fractal.Object.Tension.BlobsOptionalArguments
+pushBlobFilter f a =
+    { a
+        | first = Present 1
+        , order =
+            Input.buildBlobOrder
+                (\b -> { b | desc = Present BlobOrderable.CreatedAt })
+                |> Present
+
+        -- @debug: cant filter by createdBy for now !?
+    }
+
+
+pushTensionCommentInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
+pushTensionCommentInputEncoder f =
+    --@Debug: receiver and receiverid
+    let
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        updatedAt =
+            Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+
+        title =
+            Dict.get "title" f.post
+
+        message =
+            -- new comment
+            Dict.get "message" f.post
+
+        patchRequired =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId f.id ] }
+                    )
+            }
+
+        patchOpts =
+            \x ->
+                { set =
+                    Input.buildTensionPatch
+                        (\s ->
+                            { s
+                                | updatedAt = fromMaybe updatedAt
+                                , title = fromMaybe title
+                                , status = fromMaybe f.status
+                                , action = fromMaybe f.action
+                                , type_ = fromMaybe f.tension_type
+                                , comments = buildComment createdAt f.uctx.username message
+                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input =
+        Input.buildUpdateTensionInput patchRequired patchOpts
+    }
 
 
 
@@ -145,118 +277,4 @@ patchCommentInputEncoder form =
     in
     { input =
         Input.buildUpdateCommentInput patchRequired patchOpts
-    }
-
-
-
-{-
-   Patch a single tension
--}
-
-
-type alias PatchTensionIdPayload =
-    { tension : Maybe (List (Maybe CommentId)) }
-
-
-type alias CommentId =
-    { comments : Maybe (List IdPayload) }
-
-
-tensionPushDecoder : Maybe PatchTensionIdPayload -> Maybe IdPayload
-tensionPushDecoder data =
-    case data of
-        Just d ->
-            d.tension
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-                |> Maybe.map
-                    (\t ->
-                        t.comments |> Maybe.map (\cs -> List.head cs)
-                    )
-                |> withDefault Nothing
-                |> withDefault Nothing
-
-        Nothing ->
-            Nothing
-
-
-pushTensionComment url form msg =
-    makeGQLMutation url
-        (Mutation.updateTension
-            (pushTensionCommentInputEncoder form)
-            (SelectionSet.map PatchTensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
-                    (SelectionSet.succeed CommentId
-                        |> with
-                            (Fractal.Object.Tension.comments (pushCommentFilter form) <|
-                                SelectionSet.map IdPayload (Fractal.Object.Comment.id |> SelectionSet.map decodedId)
-                            )
-                    )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse tensionPushDecoder >> msg)
-
-
-pushCommentFilter : TensionPatchForm -> Fractal.Object.Tension.CommentsOptionalArguments -> Fractal.Object.Tension.CommentsOptionalArguments
-pushCommentFilter f a =
-    { a
-        | first = Present 1
-        , order =
-            Input.buildCommentOrder
-                (\b -> { b | desc = Present CommentOrderable.CreatedAt })
-                |> Present
-
-        -- @debug: cant filter by createdBy for now !?
-    }
-
-
-pushTensionCommentInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
-pushTensionCommentInputEncoder f =
-    let
-        -- new comment
-        createdAt =
-            -- Maybe.map (\x -> Fractal.Scalar.DateTime x) ???
-            Dict.get "createdAt" f.post |> withDefault ""
-
-        updatedAt =
-            Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
-
-        title =
-            Dict.get "title" f.post
-
-        message =
-            Dict.get "message" f.post
-
-        patchRequired =
-            { filter =
-                Input.buildTensionFilter
-                    (\ft ->
-                        { ft | id = Present [ encodeId f.id ] }
-                    )
-            }
-
-        patchOpts =
-            \x ->
-                { set =
-                    Input.buildTensionPatch
-                        (\s ->
-                            { s
-                                | updatedAt = fromMaybe updatedAt
-                                , title = fromMaybe title
-                                , status = fromMaybe f.status
-                                , comments = buildComment createdAt f.uctx.username message
-                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
-                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
-                            }
-                        )
-                        |> Present
-                , remove = Absent
-                }
-    in
-    { input =
-        Input.buildUpdateTensionInput patchRequired patchOpts
     }

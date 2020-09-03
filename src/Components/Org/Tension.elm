@@ -6,14 +6,15 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
-import Components.Node exposing (viewNodeInfo)
+import Components.Node exposing (updateNodeForm, viewNodeDoc)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, withMaybeData)
+import Extra exposing (ternary, withMaybeData, withStateString)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
+import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -32,7 +33,9 @@ import ModelCommon.Requests exposing (login)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState, uriFromUsername)
 import ModelCommon.View
     exposing
-        ( getAvatar
+        ( blobTypeStr
+        , byAt
+        , getAvatar
         , getNodeTextFromAction
         , statusColor
         , tensionTypeColor
@@ -49,7 +52,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (patchComment, patchTitle, pushTensionComment)
+import Query.PatchTension exposing (PatchTensionPayloadID, patchComment, patchTitle, pushTensionPatch)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -92,17 +95,21 @@ type alias Model =
     -- Page
     , tensionid : String
     , activeTab : TensionTab
+    , actionView : ActionView
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
     , tension_form : TensionPatchForm
-    , tension_result : GqlData IdPayload
-    , title_result : GqlData String
+    , tension_patch : GqlData PatchTensionPayloadID
     , comment_form : CommentPatchForm
     , comment_result : GqlData Comment
     , isTitleEdit : Bool
-    , actionView : ActionView
+    , title_result : GqlData String
 
+    -- Blob Edit Section
+    , isBlobEdit : Bool
+
+    --
     -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
@@ -123,7 +130,7 @@ type TensionTab
 type ActionView
     = DocView
     | DocEdit
-    | DocHistory
+    | DocVersion
 
 
 actionViewEncoder : ActionView -> String
@@ -135,7 +142,7 @@ actionViewEncoder x =
         DocEdit ->
             "edit"
 
-        DocHistory ->
+        DocVersion ->
             "history"
 
 
@@ -146,7 +153,7 @@ actionViewDecoder x =
             DocEdit
 
         "history" ->
-            DocHistory
+            DocVersion
 
         default ->
             DocView
@@ -168,17 +175,23 @@ type Msg
       -- Page Action
     | ChangeTensionPost String String -- {field value}
     | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
-    | SubmitChangeStatus TensionPatchForm TensionStatus.TensionStatus Time.Posix -- Send form
-    | TensionPatchAck (GqlData IdPayload)
+    | SubmitComment TensionPatchForm (Maybe TensionStatus.TensionStatus) Time.Posix -- Send form
+    | TensionPatchAck (GqlData PatchTensionPayloadID)
     | DoUpdateComment String
     | ChangeCommentPost String String
-    | CancelCommentPatch
     | SubmitCommentPatch CommentPatchForm Time.Posix
     | CommentPatchAck (GqlData Comment)
+    | CancelCommentPatch
     | DoChangeTitle
-    | CancelTitle
     | SubmitTitle TensionPatchForm Time.Posix
     | TitleAck (GqlData String)
+    | CancelTitle
+      -- Blob edit
+    | DoBlobEdit BlobType.BlobType
+    | ChangeBlobNode String String
+    | ChangeBlobMD String
+    | SubmitBlob TensionPatchForm Bool Time.Posix -- Send form
+    | CancelBlob
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -231,6 +244,7 @@ init global flags =
             { node_focus = newFocus
             , tensionid = tensionid
             , activeTab = tab
+            , actionView = Dict.get "v" query |> withDefault "" |> actionViewDecoder
             , path_data =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
@@ -242,18 +256,20 @@ init global flags =
             , tension_comments = Loading
             , tension_blobs = Loading
             , tension_form = initTensionForm tensionid global.session.user
-            , tension_result = NotAsked
-            , title_result = NotAsked
+            , tension_patch = NotAsked
             , comment_form = initCommentPatchForm global.session.user
             , comment_result = NotAsked
             , isTitleEdit = False
-            , inputViewMode = Write
-            , actionView = Dict.get "v" query |> withDefault "" |> actionViewDecoder
+            , title_result = NotAsked
+
+            -- Blob
+            , isBlobEdit = False
 
             -- Common
             , node_action = NoOp
             , isModalActive = False
             , modalAuth = Inactive
+            , inputViewMode = Write
             }
 
         cmds =
@@ -275,7 +291,7 @@ init global flags =
                         DocEdit ->
                             Cmd.none
 
-                        DocHistory ->
+                        DocVersion ->
                             getTensionBlobs apis.gql model.tensionid GotTensionBlobs
             , sendSleep PassedSlowLoadTreshold 500
             ]
@@ -405,37 +421,77 @@ update global msg model =
                 newForm =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
-
-                        --, emitter = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.emitter)
-                        --, receiver = model.tension_head |> withMaybeData |> Maybe.map (\t -> t.receiver)
-                        , events_type =
-                            if form.status == Just TensionStatus.Open then
-                                Just [ TensionEvent.Reopened, TensionEvent.CommentPushed ]
-
-                            else
-                                Just [ TensionEvent.CommentPushed ]
                     }
             in
-            ( model, pushTensionComment apis.gql newForm TensionPatchAck, Cmd.none )
+            ( { model | tension_patch = LoadingSlowly }, pushTensionPatch apis.gql newForm TensionPatchAck, Cmd.none )
 
-        SubmitChangeStatus form status time ->
+        SubmitComment form status_m time ->
             let
+                eventComment =
+                    case Dict.get "message" form.post of
+                        Just _ ->
+                            [ TensionEvent.CommentPushed ]
+
+                        Nothing ->
+                            []
+
+                eventStatus =
+                    case status_m of
+                        Just TensionStatus.Open ->
+                            [ TensionEvent.Reopened ]
+
+                        Just TensionStatus.Closed ->
+                            [ TensionEvent.Closed ]
+
+                        Nothing ->
+                            []
+
+                action_m =
+                    if List.member TensionEvent.Reopened eventStatus then
+                        withMaybeData model.tension_head
+                            |> Maybe.map
+                                (\th ->
+                                    th.action
+                                        |> Maybe.map
+                                            (\a ->
+                                                case a of
+                                                    TensionAction.NewRole ->
+                                                        TensionAction.EditRole
+
+                                                    TensionAction.NewCircle ->
+                                                        TensionAction.EditCircle
+
+                                                    _ ->
+                                                        a
+                                            )
+                                )
+                            |> withDefault Nothing
+
+                    else
+                        Nothing
+
                 newForm =
-                    { form | status = Just status }
+                    { form
+                        | status = status_m
+                        , action = action_m
+                        , events_type = Just (eventComment ++ eventStatus)
+                    }
             in
             ( { model | tension_form = newForm }, send (SubmitTensionPatch newForm time), Cmd.none )
 
         TensionPatchAck result ->
             case result of
-                Success cid ->
+                Success tp ->
                     let
-                        newComments =
-                            commentsFromForm cid.id model.tension_form
-
                         tension_h =
                             case model.tension_head of
                                 Success t ->
-                                    Success { t | status = model.tension_form.status |> withDefault t.status }
+                                    Success
+                                        { t
+                                            | status = model.tension_form.status |> withDefault t.status
+                                            , action = ternary (model.tension_form.action == Nothing) t.action model.tension_form.action
+                                            , blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs
+                                        }
 
                                 other ->
                                     other
@@ -443,7 +499,7 @@ update global msg model =
                         tension_c =
                             case model.tension_comments of
                                 Success t ->
-                                    Success { t | comments = Just ((t.comments |> withDefault []) ++ newComments) }
+                                    Success { t | comments = Just ((t.comments |> withDefault []) ++ (tp.comments |> withDefault [])) }
 
                                 other ->
                                     other
@@ -455,10 +511,10 @@ update global msg model =
                         | tension_head = tension_h
                         , tension_comments = tension_c
                         , tension_form = resetForm
-                        , tension_result = result
+                        , tension_patch = result
                       }
-                    , Cmd.none
                     , Ports.bulma_driver ""
+                    , send (UpdateSessionTensionHead (withMaybeData tension_h))
                     )
 
                 Failure _ ->
@@ -470,13 +526,16 @@ update global msg model =
                             { form | status = Nothing }
                     in
                     if doRefreshToken result then
-                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, tension_patch = NotAsked }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
 
                     else
-                        ( { model | tension_result = result, tension_form = resetForm }, Cmd.none, Cmd.none )
+                        ( { model | tension_patch = result, tension_form = resetForm }, Cmd.none, Cmd.none )
 
                 _ ->
-                    ( { model | tension_result = result }, Cmd.none, Cmd.none )
+                    ( { model | tension_patch = result }, Cmd.none, Cmd.none )
 
         DoUpdateComment id ->
             let
@@ -506,7 +565,7 @@ update global msg model =
                 newForm =
                     { form | id = "" }
             in
-            ( { model | comment_form = newForm }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | comment_form = newForm, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitCommentPatch form time ->
             let
@@ -559,12 +618,15 @@ update global msg model =
             ( { model | isTitleEdit = True }, Cmd.none, Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitTitle form time ->
             let
                 newForm =
-                    { form | post = Dict.insert "createdAt" (fromTime time) form.post, events_type = Just [ TensionEvent.TitleUpdated ] }
+                    { form
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , events_type = Just [ TensionEvent.TitleUpdated ]
+                    }
             in
             ( model, patchTitle apis.gql newForm TitleAck, Cmd.none )
 
@@ -604,6 +666,50 @@ update global msg model =
                     { form | viewMode = viewMode }
             in
             ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+
+        DoBlobEdit blobType ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    { form
+                        | blob_type = Just blobType
+                        , node = withMaybeData model.tension_head |> Maybe.map (\th -> nodeFragmentFromTensionHead th) |> withDefault initNodeFragment
+                        , md = withMaybeData model.tension_head |> Maybe.map (\th -> mdFromTensionHead th) |> withDefault Nothing
+                    }
+            in
+            ( { model | isBlobEdit = True, tension_form = newForm }, Cmd.none, Cmd.none )
+
+        ChangeBlobNode field value ->
+            let
+                newForm =
+                    updateNodeForm field value model.tension_form
+            in
+            ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
+
+        ChangeBlobMD value ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    { form | md = Just value }
+            in
+            ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
+
+        SubmitBlob form doPush time ->
+            let
+                eventPushed =
+                    ternary doPush [ TensionEvent.BlobPushed ] []
+
+                newForm =
+                    { form | events_type = Just ([ TensionEvent.BlobCommitted ] ++ eventPushed) }
+            in
+            ( { model | tension_form = newForm }, send (SubmitTensionPatch newForm time), Cmd.none )
+
+        CancelBlob ->
+            ( { model | isBlobEdit = False, tension_form = initTensionForm model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -830,7 +936,7 @@ viewTension u t model =
                 ]
             ]
         , div [ class "columns is-variable is-6" ]
-            [ div [ class "column is-8 tensionComments" ]
+            [ div [ class "column is-8 " ]
                 [ div [ class "tabs is-md" ]
                     [ ul []
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
@@ -875,12 +981,12 @@ viewComments u t model =
                 userInput =
                     case u of
                         LoggedIn uctx ->
-                            viewCommentInput uctx t model.tension_form model.tension_result model.inputViewMode
+                            viewCommentInput uctx t model.tension_form model.tension_patch model.inputViewMode
 
                         LoggedOut ->
                             viewJoinNeeded model.node_focus
             in
-            div []
+            div [ class "tensionComments" ]
                 [ div [] subComments
                 , hr [ class "has-background-grey is-3" ] []
                 , userInput
@@ -995,7 +1101,7 @@ viewComment c model =
                 ]
 
 
-viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData IdPayload -> InputViewMode -> Html Msg
+viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html Msg
 viewCommentInput uctx tension form result viewMode =
     let
         message =
@@ -1008,15 +1114,15 @@ viewCommentInput uctx tension form result viewMode =
             isPostSendable [ "message" ] form.post
 
         submitComment =
-            ternary isSendable [ onClick (Submit <| SubmitTensionPatch form) ] []
+            ternary isSendable [ onClick (Submit <| SubmitComment form Nothing) ] []
 
         submitCloseOpenTension =
             case tension.status of
                 TensionStatus.Open ->
-                    [ onClick (Submit <| SubmitChangeStatus form TensionStatus.Closed) ]
+                    [ onClick (Submit <| SubmitComment form (Just TensionStatus.Closed)) ]
 
                 TensionStatus.Closed ->
-                    [ onClick (Submit <| SubmitChangeStatus form TensionStatus.Open) ]
+                    [ onClick (Submit <| SubmitComment form (Just TensionStatus.Open)) ]
 
         closeOpenText =
             case tension.status of
@@ -1144,8 +1250,7 @@ viewUpdateInput uctx comment form result =
                 [ div [ class "control" ]
                     [ div [ class "buttons" ]
                         [ button
-                            [ class "button has-text-weight-semibold"
-                            , classList [ ( "is-danger", True ), ( "is-loading", isLoading ) ]
+                            [ class "button has-text-weight-semibold is-danger"
                             , onClick CancelCommentPatch
                             ]
                             [ text T.cancel ]
@@ -1165,7 +1270,20 @@ viewUpdateInput uctx comment form result =
 
 viewDocument : UserState -> TensionHead -> Model -> Html Msg
 viewDocument u t model =
-    div []
+    let
+        md =
+            mdFromTensionHead t
+
+        node =
+            nodeFragmentFromTensionHead t
+
+        nodeData =
+            { data = Success t.id, node = node, isLazy = False, source = TensionBaseUri, focus = model.node_focus }
+
+        hasBeenPushed =
+            t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+    in
+    div [ class "tensionDocument" ]
         [ span
             [ class "field has-addons" ]
             [ p [ class "control" ]
@@ -1194,7 +1312,7 @@ viewDocument u t model =
             , p [ class "control" ]
                 [ a
                     [ class "button is-small is-rounded"
-                    , classList [ ( "is-active", model.actionView == DocHistory ) ]
+                    , classList [ ( "is-active", model.actionView == DocVersion ) ]
                     , (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
                         |> toHref
                       )
@@ -1206,30 +1324,65 @@ viewDocument u t model =
             ]
         , case model.actionView of
             DocView ->
-                viewDocView u t model
+                viewNodeDoc nodeData Nothing hasBeenPushed
 
             DocEdit ->
-                viewDocView u t model
+                let
+                    msgs =
+                        { editBlob = DoBlobEdit
+                        , changeNode = ChangeBlobNode
+                        , cancel = CancelBlob
+                        , submit = Submit
+                        , submitBlob = SubmitBlob
+                        , isBlobEdit = model.isBlobEdit
+                        , form = model.tension_form
+                        , result = model.tension_patch
+                        }
+                in
+                viewNodeDoc nodeData (Just msgs) hasBeenPushed
 
-            DocHistory ->
-                viewDocView u t model
+            DocVersion ->
+                viewDocVersions model.tension_blobs
         ]
 
 
-viewDocView : UserState -> TensionHead -> Model -> Html Msg
-viewDocView u t model =
-    let
-        node =
-            t.head
-                |> Maybe.map (\h -> h.node)
-                |> withDefault Nothing
-                |> withDefault initNodeFragment
+viewDocVersions : GqlData TensionBlobs -> Html Msg
+viewDocVersions blobsData =
+    case blobsData of
+        Success tblobs ->
+            div [ class "box" ]
+                [ tblobs.blobs
+                    |> withDefault []
+                    |> List.map
+                        (\blob ->
+                            div [ class "media" ]
+                                [ div [ class "media-content" ]
+                                    [ div [ class "level" ]
+                                        [ span [ class "level-left" ]
+                                            [ span [] [ text (blobTypeStr blob.blob_type) ]
+                                            , text "\u{00A0}"
+                                            , byAt blob.createdBy blob.createdAt
+                                            ]
+                                        , if blob.pushedFlag /= Nothing then
+                                            span [ class "level-item" ] [ Fa.icon0 "fas fa-tag" "" ]
 
-        data =
-            { data = Success t, node = node, isLazy = False, source = TensionBaseUri, tid = t.id, focus = model.node_focus }
-    in
-    div []
-        [ viewNodeInfo data ]
+                                          else
+                                            span [] []
+                                        ]
+                                    ]
+                                ]
+                        )
+                    |> div []
+                ]
+
+        Failure err ->
+            viewGqlErrors err
+
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        _ ->
+            div [] []
 
 
 viewJoinNeeded : NodeFocus -> Html Msg
@@ -1274,7 +1427,7 @@ viewSidePane focus t =
                         Just action ->
                             a
                                 [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = t.id } |> toHref) ]
-                                [ viewActionIcon "icon-padding" (Just action), text (SE.humanize (TensionAction.toString action)) ]
+                                [ viewActionIcon (Just action), text (SE.humanize (TensionAction.toString action)) ]
 
                         Nothing ->
                             div [ class "is-italic" ] [ text "no action requested" ]
@@ -1353,32 +1506,6 @@ viewJoinOrgaStep step =
 --
 
 
-commentsFromForm : String -> TensionPatchForm -> List Comment
-commentsFromForm tid form =
-    let
-        createdAt =
-            Dict.get "createdAt" form.post |> withDefault ""
-
-        updatedAt =
-            Dict.get "updatedAt" form.post
-
-        createdBy =
-            Username form.uctx.username
-    in
-    [ Dict.get "message" form.post
-        |> Maybe.map
-            (\comment ->
-                { id = tid
-                , createdAt = createdAt
-                , updatedAt = updatedAt
-                , createdBy = createdBy
-                , message = comment
-                }
-            )
-    ]
-        |> List.filterMap identity
-
-
 initTensionForm : String -> UserState -> TensionPatchForm
 initTensionForm tensionid user =
     { uctx =
@@ -1390,12 +1517,15 @@ initTensionForm tensionid user =
                 UserCtx "" Nothing (UserRights False False) []
     , id = tensionid
     , status = Nothing
+    , tension_type = Nothing
+    , action = Nothing
     , emitter = Nothing
     , receiver = Nothing
     , post = Dict.empty
     , events_type = Nothing
     , blob_type = Nothing
     , node = initNodeFragment
+    , md = Nothing
     }
 
 
@@ -1450,3 +1580,22 @@ tensionChanged from to =
                     ""
     in
     id1 /= id2
+
+
+nodeFragmentFromTensionHead : TensionHead -> NodeFragment
+nodeFragmentFromTensionHead t =
+    t.blobs
+        |> withDefault []
+        |> List.head
+        |> Maybe.map (\h -> h.node)
+        |> withDefault Nothing
+        |> withDefault initNodeFragment
+
+
+mdFromTensionHead : TensionHead -> Maybe String
+mdFromTensionHead t =
+    t.blobs
+        |> withDefault []
+        |> List.head
+        |> Maybe.map (\h -> h.md)
+        |> withDefault Nothing

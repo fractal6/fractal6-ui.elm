@@ -6,11 +6,11 @@ import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
-import Components.Node exposing (nodeFragmentFromOrga, viewNodeInfo)
+import Components.Node exposing (nodeFragmentFromOrga, updateNodeForm, viewNodeDoc)
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData, withMaybeData)
+import Extra exposing (ternary, withDefaultData, withMaybeData, withStateString)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.EditCircle
@@ -34,15 +34,15 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (login)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (action2SourceStr, actionNameStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
+import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchNode exposing (patchNode)
-import Query.QueryNode exposing (queryGraphPack)
+import Query.QueryNode exposing (queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryCircleTension)
 import RemoteData exposing (RemoteData)
@@ -147,11 +147,12 @@ type Msg
     | DoTensionInit Node -- {target}
     | DoTensionSource TensionType.TensionType -- {type}
     | DoTensionFinal UserRole --  {source}
-    | TensionAck (GqlData Tension) -- decode better to get IdPayload
+    | TensionAck (GqlData Tension)
       -- New Circle Action
     | DoCircleInit Node NodeType.NodeType -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
+    | NewNodesAck (GqlData (List Node))
       -- CircleAck === TensionAck
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
@@ -554,60 +555,65 @@ update global msg model =
             ( { model | node_action = na }, addOneTension apis.gql newForm TensionAck, Cmd.none )
 
         TensionAck result ->
-            let
-                maybeForm =
-                    case model.node_action of
-                        AddTension (TensionFinal form _) ->
-                            Just form
-
-                        AddCircle (NodeFinal form _) ->
-                            Just form
-
-                        other ->
-                            Nothing
-            in
-            case maybeForm of
-                Just form ->
+            case model.node_action of
+                AddTension (TensionFinal form _) ->
                     case result of
                         Success t ->
-                            case form.asked of
-                                NewTension ->
-                                    let
-                                        tensions =
-                                            hotTensionPush t model.tensions_data
-                                    in
-                                    ( { model
-                                        | node_action = AddTension <| TensionFinal form result
-                                        , tensions_data = Success tensions
-                                      }
-                                    , Cmd.none
-                                    , send (UpdateSessionTensions (Just tensions))
-                                    )
-
-                                NewNode ->
-                                    let
-                                        nodes =
-                                            []
-
-                                        ndata =
-                                            hotNodePush nodes model.orga_data
-                                    in
-                                    ( { model
-                                        | node_action = AddCircle <| NodeFinal form result
-                                        , orga_data = Success ndata
-                                      }
-                                    , Cmd.none
-                                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
-                                    )
+                            let
+                                tensions =
+                                    hotTensionPush t model.tensions_data
+                            in
+                            ( { model
+                                | node_action = AddTension <| TensionFinal form result
+                                , tensions_data = Success tensions
+                              }
+                            , Cmd.none
+                            , send (UpdateSessionTensions (Just tensions))
+                            )
 
                         other ->
                             if doRefreshToken other then
-                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+                                let
+                                    na =
+                                        AddTension (TensionFinal form NotAsked)
+                                in
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, node_action = na }
+                                , Cmd.none
+                                , Ports.open_auth_modal
+                                )
 
                             else
                                 ( { model | node_action = AddTension <| TensionFinal form result }, Cmd.none, Cmd.none )
 
-                Nothing ->
+                AddCircle (NodeFinal form _) ->
+                    case result of
+                        Success t ->
+                            let
+                                nameid =
+                                    form.node.nameid
+                                        |> Maybe.map (\nid -> nodeIdCodec form.target.nameid nid (withDefault NodeType.Role form.node.type_))
+                                        |> withDefault ""
+                            in
+                            ( { model | node_action = AddCircle <| NodeFinal form result }
+                            , queryNodesSub apis.gql nameid NewNodesAck
+                            , Cmd.none
+                            )
+
+                        other ->
+                            if doRefreshToken other then
+                                let
+                                    na =
+                                        AddCircle (NodeFinal form NotAsked)
+                                in
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, node_action = na }
+                                , Cmd.none
+                                , Ports.open_auth_modal
+                                )
+
+                            else
+                                ( { model | node_action = AddCircle <| NodeFinal form result }, Cmd.none, Cmd.none )
+
+                other ->
                     ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
 
         -- New Circle
@@ -712,7 +718,7 @@ update global msg model =
                 na =
                     case model.node_action of
                         AddCircle step ->
-                            AddTension (TensionFinal form LoadingSlowly)
+                            AddCircle (NodeFinal form LoadingSlowly)
 
                         other ->
                             other
@@ -728,6 +734,25 @@ update global msg model =
                         { subData | activeButton = Just 1 }
             in
             ( { model | node_action = na, subData = sd }, addOneTension apis.gql newForm TensionAck, Cmd.none )
+
+        NewNodesAck result ->
+            case result of
+                Success nodes ->
+                    let
+                        first_nameid =
+                            List.head nodes |> Maybe.map (\n -> n.nameid) |> withDefault ""
+
+                        ndata =
+                            hotNodePush nodes model.orga_data
+                    in
+                    ( { model | orga_data = Success ndata }
+                      --, send (NodeClicked first_nameid)
+                    , Cmd.none
+                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+                    )
+
+                other ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -997,9 +1022,12 @@ view_ global model =
             model.node_data |> withMaybeData |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
 
         data =
-            { data = model.node_data, node = initNodeFragment, isLazy = model.init_data, source = OverviewBaseUri, tid = tid, focus = model.node_focus }
+            withStateString tid model.node_data
 
-        data_ =
+        nodeData_ =
+            { data = data, node = initNodeFragment, isLazy = model.init_data, source = OverviewBaseUri, focus = model.node_focus }
+
+        nodeData =
             case model.orga_data of
                 Success d ->
                     let
@@ -1009,16 +1037,16 @@ view_ global model =
                     case model.path_data of
                         Just path ->
                             if List.length path.path > 0 then
-                                { data | node = nodeFragmentFromOrga node model.node_data path.focus.children d }
+                                { nodeData_ | node = nodeFragmentFromOrga node model.node_data path.focus.children d }
 
                             else
-                                { data | data = Failure [ T.nodeNotExist ] }
+                                { nodeData_ | data = Failure [ T.nodeNotExist ] }
 
                         Nothing ->
-                            data
+                            nodeData_
 
                 other ->
-                    data
+                    nodeData_
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
@@ -1031,7 +1059,7 @@ view_ global model =
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas model.orga_data
                 , br [] []
-                , viewNodeInfo data_
+                , viewNodeDoc nodeData Nothing True
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
@@ -1170,10 +1198,10 @@ viewSearchBar odata maybePath qs =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ p [ class "is-grey is-aligned-center is-size-6" ] [ text " Circle " ] ]
+                                        [ p [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
 
                                      else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
-                                        [ p [ class "is-grey is-aligned-center is-size-6" ] [ text " Role " ] ]
+                                        [ p [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
 
                                      else
                                         []
@@ -1194,9 +1222,10 @@ viewSearchBar odata maybePath qs =
                             , attribute "data-modal" "actionModal"
                             , onClick (DoNodeAction node_)
                             ]
-                            [ span [ class "has-text-weight-bold text" ] [ node.name |> text ]
+                            [ span [ class "has-text-weight-bold text" ] [ text node.name ]
                             , span [ class "fa-stack  ellipsisArt" ]
-                                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                                --[ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                                [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
                             ]
                         ]
 
@@ -1241,7 +1270,7 @@ viewCanvas odata =
             ]
             [ span [] [ text "void" ] -- Node name
             , span [ class "fa-stack fa-sm ellipsisArt" ]
-                [ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
             ]
         ]
 
@@ -1543,89 +1572,6 @@ getNewNodeStepFromAuthForm form =
 
                                 subRoles2 ->
                                     NodeSource form subRoles2
-
-
-updateNodeForm : String -> String -> TensionForm -> TensionForm
-updateNodeForm field value form =
-    let
-        node =
-            form.node
-
-        mandate =
-            node.mandate |> withDefault initMandate
-    in
-    case field of
-        -- Node data
-        "role_type" ->
-            { form | node = { node | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
-
-        "nameid" ->
-            { form | node = { node | nameid = Just value } }
-
-        "first_link" ->
-            { form | node = { node | first_link = Just value } }
-
-        "about" ->
-            { form | node = { node | about = Just value } }
-
-        -- Mandate data
-        "purpose" ->
-            { form | node = { node | mandate = Just { mandate | purpose = value } } }
-
-        "responsabilities" ->
-            { form | node = { node | mandate = Just { mandate | responsabilities = Just value } } }
-
-        "domains" ->
-            { form | node = { node | mandate = Just { mandate | domains = Just value } } }
-
-        "policies" ->
-            { form | node = { node | mandate = Just { mandate | policies = Just value } } }
-
-        -- Various
-        "name" ->
-            case form.action of
-                Nothing ->
-                    { form | post = Dict.insert field value form.post }
-
-                Just action ->
-                    if List.member action [ TensionAction.NewRole, TensionAction.NewCircle ] then
-                        let
-                            newPost =
-                                Dict.insert "title" ("[" ++ actionNameStr action ++ "] " ++ value) form.post
-
-                            newData =
-                                { node
-                                    | name = Just value
-                                    , nameid = makeNewNodeId value
-                                }
-                        in
-                        { form | post = newPost, node = newData }
-
-                    else
-                        { form | node = { node | name = Just value } }
-
-        other ->
-            -- title, message...
-            { form | post = Dict.insert field value form.post }
-
-
-makeNewNodeId : String -> Maybe String
-makeNewNodeId name =
-    name
-        |> String.toLower
-        |> String.trim
-        |> String.map
-            (\c ->
-                if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
-                    '-'
-
-                else if List.member c [ '@', '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
-                    '_'
-
-                else
-                    c
-            )
-        |> Just
 
 
 statusFromDoClose : Bool -> String

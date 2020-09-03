@@ -1,4 +1,4 @@
-module Extra exposing (ternary, withDefaultData, withMaybeData)
+module Extra exposing (ternary, withDefaultData, withMaybeData, withStateString)
 
 import Dict exposing (Dict)
 import ModelSchema exposing (RequestResult(..))
@@ -31,3 +31,22 @@ withMaybeData result =
 
         _ ->
             Nothing
+
+
+withStateString : String -> RequestResult e a -> RequestResult e String
+withStateString newres result =
+    case result of
+        Success _ ->
+            Success newres
+
+        Failure err ->
+            Failure err
+
+        Loading ->
+            Loading
+
+        LoadingSlowly ->
+            LoadingSlowly
+
+        NotAsked ->
+            NotAsked

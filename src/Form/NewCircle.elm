@@ -1,4 +1,10 @@
-module Form.NewCircle exposing (view)
+module Form.NewCircle exposing
+    ( getFirstLinks
+    , nodeAboutInputView
+    , nodeLinksInputView
+    , nodeMandateInputView
+    , view
+    )
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
@@ -16,8 +22,8 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, roleColor, tensionTypeSpan)
-import ModelSchema exposing (GqlData, Node, RequestResult(..), UserRole)
+import ModelCommon.View exposing (NewNodeText, edgeArrow, getNodeTextFromNodeType, roleColor, tensionTypeSpan)
+import ModelSchema exposing (GqlData, Node, NodeFragment, RequestResult(..), UserRole, initNodeFragment)
 
 
 {-| --view : TensionForm -> GqlData data -> subData -> Html msg
@@ -25,14 +31,8 @@ What should be the signature ?!
 -}
 view form result sd =
     let
-        nodeType =
-            form.node.type_ |> withDefault NodeType.Role
-
-        roleType =
-            form.node.role_type |> withDefault RoleType.Peer
-
         txt =
-            getNodeTextFromNodeType nodeType
+            getNodeTextFromNodeType (form.node.type_ |> withDefault NodeType.Role)
 
         isLoading =
             result == LoadingSlowly
@@ -70,12 +70,6 @@ view form result sd =
 
                 nameid =
                     form.node.nameid |> withDefault ""
-
-                firstLinks_ =
-                    form.node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
-
-                firstLinks =
-                    ternary (firstLinks_ == []) [ "" ] firstLinks_
             in
             div [ class "modal-card finalModal" ]
                 [ div [ class "modal-card-head" ]
@@ -87,35 +81,7 @@ view form result sd =
                         ]
                     ]
                 , div [ class "modal-card-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ class "input autofocus followFocus"
-                                , attribute "data-nextfocus" "aboutField"
-                                , type_ "text"
-                                , placeholder "Name*"
-                                , required True
-                                , onInput <| sd.changePostMsg "name"
-                                ]
-                                []
-                            ]
-                        , p [ class "help-label" ] [ text txt.name_help ]
-                        ]
-                    , div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ input
-                                [ id "aboutField"
-                                , class "input followFocus"
-                                , attribute "data-nextfocus" "textAreaModal"
-                                , type_ "text"
-                                , placeholder "About"
-                                , onInput <| sd.changePostMsg "about"
-                                ]
-                                []
-                            ]
-                        , p [ class "help-label" ] [ text txt.about_help ]
-                        , br [] []
-                        ]
+                    [ nodeAboutInputView form.node sd.changePostMsg txt.name_help txt.about_help
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
@@ -146,105 +112,12 @@ view form result sd =
                     , br [] []
                     , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
-                        , div [ class "card-content" ]
-                            (List.indexedMap
-                                (\i uname ->
-                                    div [ class "field is-horizontal" ]
-                                        [ div [ class "field-label is-small has-text-grey-darker control" ]
-                                            [ case nodeType of
-                                                NodeType.Circle ->
-                                                    let
-                                                        r =
-                                                            RoleType.Coordinator
-                                                    in
-                                                    div [ class ("select is-" ++ roleColor r) ]
-                                                        [ select
-                                                            [ class "has-text-dark" --, onInput <| sd.changePostMsg "role_type"
-                                                            ]
-                                                            [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
-                                                        ]
-
-                                                NodeType.Role ->
-                                                    div [ class ("select is-" ++ roleColor roleType) ]
-                                                        [ RoleType.list
-                                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
-                                                            |> List.map
-                                                                (\r ->
-                                                                    option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
-                                                                )
-                                                            |> select [ class "has-text-dark", onInput <| sd.changePostMsg "role_type" ]
-                                                        ]
-                                            ]
-                                        , div [ class "field-body control" ]
-                                            [ input
-                                                [ class "input is-small"
-                                                , type_ "text"
-                                                , value ("@" ++ uname)
-                                                , onInput <| sd.changePostMsg "first_link"
-                                                ]
-                                                []
-                                            ]
-                                        ]
-                                )
-                                firstLinks
-                                ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
-                            )
+                        , div [ class "card-content" ] [ nodeLinksInputView form.node sd.changePostMsg txt.firstLink_help ]
                         ]
                     , br [] []
                     , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
-                        , div [ class "card-content" ]
-                            [ div [ class "field" ]
-                                [ div [ class "label" ] [ text T.purposeH ]
-                                , div [ class "control" ]
-                                    [ textarea
-                                        [ id "textAreaModal"
-                                        , class "textarea"
-                                        , rows 5
-                                        , placeholder (txt.ph_purpose ++ "*")
-                                        , required True
-                                        , onInput <| sd.changePostMsg "purpose"
-                                        ]
-                                        []
-                                    ]
-                                ]
-                            , div [ class "field" ]
-                                [ div [ class "label" ] [ text T.responsabilitiesH ]
-                                , div [ class "control" ]
-                                    [ textarea
-                                        [ class "textarea"
-                                        , rows 5
-                                        , placeholder txt.ph_responsabilities
-                                        , onInput <| sd.changePostMsg "responsabilities"
-                                        ]
-                                        []
-                                    ]
-                                ]
-                            , div [ class "field" ]
-                                [ div [ class "label" ] [ text T.domainsH ]
-                                , div [ class "control" ]
-                                    [ textarea
-                                        [ class "textarea"
-                                        , rows 5
-                                        , placeholder txt.ph_domains
-                                        , onInput <| sd.changePostMsg "domains"
-                                        ]
-                                        []
-                                    ]
-                                ]
-                            , div [ class "field" ]
-                                [ div [ class "label" ] [ text T.policiesH ]
-                                , div [ class "control" ]
-                                    [ textarea
-                                        [ class "textarea"
-                                        , rows 5
-                                        , placeholder txt.ph_policies
-                                        , onInput <| sd.changePostMsg "policies"
-                                        ]
-                                        []
-                                    ]
-                                ]
-                            ]
+                        , div [ class "card-content" ] [ nodeMandateInputView form.node sd.changePostMsg txt ]
                         ]
                     , br [] []
                     , div [ class "field" ]
@@ -298,3 +171,186 @@ view form result sd =
                         ]
                     ]
                 ]
+
+
+
+--- Components
+
+
+nodeAboutInputView : NodeFragment -> (String -> String -> msg) -> String -> String -> Html msg
+nodeAboutInputView node changePostMsg nameHelpText aboutHelpText =
+    div [ class "field" ]
+        [ div [ class "field " ]
+            [ div [ class "control" ]
+                [ input
+                    [ class "input autofocus followFocus"
+                    , attribute "data-nextfocus" "aboutField"
+                    , type_ "text"
+                    , placeholder "Name*"
+                    , value (node.name |> withDefault "")
+                    , onInput <| changePostMsg "name"
+                    , required True
+                    ]
+                    []
+                ]
+            , p [ class "help-label" ] [ text nameHelpText ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "control" ]
+                [ input
+                    [ id "aboutField"
+                    , class "input followFocus"
+                    , attribute "data-nextfocus" "textAreaModal"
+                    , type_ "text"
+                    , placeholder "About"
+                    , value (node.about |> withDefault "")
+                    , onInput <| changePostMsg "about"
+                    ]
+                    []
+                ]
+            , p [ class "help-label" ] [ text aboutHelpText ]
+            , br [] []
+            ]
+        ]
+
+
+nodeLinksInputView : NodeFragment -> (String -> String -> msg) -> String -> Html msg
+nodeLinksInputView node changePostMsg firstLink_help =
+    let
+        nodeType =
+            node.type_ |> withDefault NodeType.Role
+
+        roleType =
+            node.role_type |> withDefault RoleType.Peer
+
+        firstLinks =
+            getFirstLinks node
+    in
+    div []
+        (List.indexedMap
+            (\i uname ->
+                div [ class "field is-horizontal" ]
+                    [ div [ class "field-label is-small has-text-grey-darker control" ]
+                        [ case nodeType of
+                            NodeType.Circle ->
+                                let
+                                    r =
+                                        RoleType.Coordinator
+                                in
+                                div [ class ("select is-" ++ roleColor r) ]
+                                    [ select
+                                        [ class "has-text-dark" --, onInput <| sd.changePostMsg "role_type"
+                                        ]
+                                        [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
+                                    ]
+
+                            NodeType.Role ->
+                                div [ class ("select is-" ++ roleColor roleType) ]
+                                    [ RoleType.list
+                                        |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
+                                        |> List.map
+                                            (\r ->
+                                                option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                            )
+                                        |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                    ]
+                        ]
+                    , div [ class "field-body control" ]
+                        [ input
+                            [ class "input is-small"
+                            , type_ "text"
+                            , value ("@" ++ uname)
+                            , onInput <| changePostMsg "first_link"
+                            ]
+                            []
+                        ]
+                    ]
+            )
+            firstLinks
+            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text firstLink_help ] ]
+        )
+
+
+nodeMandateInputView : NodeFragment -> (String -> String -> msg) -> NewNodeText -> Html msg
+nodeMandateInputView node changePostMsg txt =
+    div [ class "field" ]
+        [ div [ class "field" ]
+            [ div [ class "label" ] [ text T.purposeH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ id "textAreaModal"
+                    , class "textarea"
+                    , rows 5
+                    , placeholder (txt.ph_purpose ++ "*")
+                    , value (node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
+                    , onInput <| changePostMsg "purpose"
+                    , required True
+                    ]
+                    []
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.responsabilitiesH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 5
+                    , placeholder txt.ph_responsabilities
+                    , value (node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
+                    , onInput <| changePostMsg "responsabilities"
+                    ]
+                    []
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.domainsH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 5
+                    , placeholder txt.ph_domains
+                    , value (node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
+                    , onInput <| changePostMsg "domains"
+                    ]
+                    []
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.policiesH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 5
+                    , placeholder txt.ph_policies
+                    , value (node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
+                    , onInput <| changePostMsg "policies"
+                    ]
+                    []
+                ]
+            ]
+        ]
+
+
+
+-- Utils
+
+
+getFirstLinks : NodeFragment -> List String
+getFirstLinks node =
+    let
+        fs =
+            case node.type_ |> withDefault NodeType.Role of
+                NodeType.Role ->
+                    node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+
+                NodeType.Circle ->
+                    case node.children of
+                        Just children ->
+                            children
+                                |> List.map (\c -> c.first_link)
+                                |> List.filterMap identity
+
+                        Nothing ->
+                            node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+    in
+    ternary (fs == []) [ "" ] fs

@@ -1,6 +1,6 @@
 
 html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
 }
 
 /*
@@ -336,8 +336,10 @@ html.has-modal-active, html.has-modal-active2 {
     //border-bottom: 1px solid #e1e4e8;
     //margin-bottom: -1.11rem !important;
     & .media-content {
+        overflow: unset;
+
         // Improve UX when hovering content
-        & .content  {
+        .content  {
             &:hover {
                 a {
                     color: $link !important;
@@ -345,7 +347,7 @@ html.has-modal-active, html.has-modal-active2 {
                 cursor: pointer !important;
             }
         }
-        & .content > a  {
+        .content > a  {
             color: $text !important;
             &:hover {
                 color: $link !important;
@@ -353,19 +355,12 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
-    .mediaFragments {
-        //.column:not(:last-child), .column.is-mobile:not(:last-child) {
-        .column, .column.is-mobile {
-            padding-left:0 !important;
-            padding-right:0 !important;
-            margin-left:4px !important;
-            margin-right:4px !important;
-        }
+}
 
-        .fa-stack > i.fa-pen {
-            top: -5px;
-            left: 5px;
-        }
+.stackPen {
+    .fa-stack > i.fa-pen {
+        top: -5px;
+        left: 5px;
     }
 }
 
@@ -390,11 +385,17 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .column > .tabs {
+        ul {
+            border-bottom-color: $grey !important;
+        }
+
         li {
+            a {
+                border-bottom-color: $grey !important;
+            }
             &.is-active a {
                 border-bottom-color: $link !important;
                 color: inherit;
-                font-weight: 600 !important;
             }
             & a:hover {
                 border-bottom-color: lighten($link, 25) !important;
@@ -406,17 +407,6 @@ html.has-modal-active, html.has-modal-active2 {
         .media + .media {
             margin-top: 2rem !important;
             border: 0 !important;
-        }
-
-        & >.tabs  {
-            ul {
-                border-bottom-color: $grey !important;
-            }
-            li {
-                a {
-                    border-bottom-color: $grey !important;
-                }
-            }
         }
 
         .message {
@@ -760,13 +750,17 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .aboutDoc {
-    & > .columns {
-        //margin-bottom: 0px !important;
+    .columns {
         & > .column {
-        padding-right: 6px !important;
-        padding-left: 6px !important;
-        margin-bottom: 0 !important;
-    }
+            margin-bottom: 0 !important;
+        }
+        & > .column.buttonBar {
+            padding-right: 6px !important;
+            padding-left: 6px !important;
+        }
+        & > .column.buttonEdit {
+            padding-right: 12px !important;
+        }
     }
     .nodeName {
         font-weight: 600 !important;
@@ -822,6 +816,14 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 
+.ellipsisArt {
+    margin-right: -10px;
+    margin-left: 2px;
+    .fas, .far{
+        color: $green-frac6 !important;
+        font-size: 20px !important;
+    }
+}
 
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
@@ -830,24 +832,11 @@ html.has-modal-active, html.has-modal-active2 {
     // Content
     color: black;
     background-color: $node-tooltip-background;
-
-    // Icon font button
     .ellipsisArt {
-        //position: absolute;
-        //bottom: 12px;
-        //right: -19px;
-        //-\\
-        margin-left: -4px;
-        margin-right: -4px;
-        font-size: 13px;
-        .far.fa-circle {
-            color: black;
-        }
-        .fas.fa-circle {
-            color: $node-tooltip-background;
-        }
-        .fas.fa-ellipsis-h {
-            color: $primary;
+        margin-top: -2px;
+        margin-left: -2px;
+        .fas, .far {
+            color: $green !important;
         }
     }
 
@@ -1272,6 +1261,17 @@ html.has-modal-active, html.has-modal-active2 {
     color: white !important;
     display: inline-block !important;
     margin: 0 10px 0 10px !important;
+}
+
+.circle0 {
+    width: 38px;
+    height: 38px;
+    background: $blue;
+    border: 1px solid #000;
+    // Text centering
+    text-align: center;
+    padding-top: 9px;
+    font-size: 0.9rem;
 }
 
 .circle1 {
