@@ -23,6 +23,21 @@ checkItOut =
     "Check it out."
 
 
+view : String
+view =
+    "View"
+
+
+versions : String
+versions =
+    "Versions"
+
+
+history : String
+history =
+    "History"
+
+
 edit : String
 edit =
     "Edit"
@@ -266,6 +281,11 @@ editCircle =
 editRole : String
 editRole =
     "Edit Role"
+
+
+editTitle : String
+editTitle =
+    "Edit Tiltle"
 
 
 tensionTitleHelp : String

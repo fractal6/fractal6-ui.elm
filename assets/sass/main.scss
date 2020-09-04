@@ -735,28 +735,28 @@ html.has-modal-active, html.has-modal-active2 {
         margin-bottom: 1.5rem !important;
     }
 
-    & .content p {
-        font-size: 15px !important;
-    }
-
     .message-body {
         padding-right: 1rem !important;
         padding-left: 1rem !important;
     }
 
-    a {
-        color: $blue;
+    .content {
+        p {
+            font-size: 15px !important;
+        }
+
+        a {
+            color: $blue;
+        }
     }
+
+
 }
 
 .aboutDoc {
     .columns {
         & > .column {
             margin-bottom: 0 !important;
-        }
-        & > .column.buttonBar {
-            padding-right: 6px !important;
-            padding-left: 6px !important;
         }
         & > .column.buttonEdit {
             padding-right: 12px !important;
@@ -786,12 +786,15 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.docButtons {
-    margin-top:-9px;
-    margin-right: -9px;
+.buttonsToolbar {
+    .field {
+        float: right !important; //is-pulled-right
+        margin-top:-9px;
+        margin-right: -9px !important;
+    }
     .button {
         font-size: 0.65rem !important;
-        padding-bottom: 2px !important;
+        //padding-bottom: 2px !important;
     }
 }
 

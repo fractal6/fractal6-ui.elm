@@ -1,4 +1,4 @@
-module Components.Node exposing (nodeFragmentFromOrga, updateNodeForm, viewNodeDoc)
+module Components.Node exposing (ActionView(..), nodeFragmentFromOrga, updateNodeForm, viewNodeDoc, viewTensionToolbar)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
@@ -43,6 +43,12 @@ type alias OrgaNodeData =
     , source : FractalBaseRoute
     , focus : NodeFocus
     }
+
+
+type ActionView
+    = DocView
+    | DocEdit
+    | DocVersion
 
 
 {-| doEditView : Maybe (EditMsgs msg1 msg2) -> BlobType.BlobType -> Html msg
@@ -144,32 +150,13 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                                 [ i [ class "fas fa-info fa-stack-1x" ] []
                                 , i [ class "far fa-circle fa-stack-2x" ] []
                                 ]
-                            , span [ class "nodeName" ] [ text "\u{00A0}", text " ", text (node.name |> withDefault "") ]
+                            , span [ class "content nodeName" ] [ text "\u{00A0}", text " ", text (node.name |> withDefault "") ]
                             ]
                         ]
                     , case data.source of
                         OverviewBaseUri ->
-                            div [ class "column is-3 buttonBar" ]
-                                [ span
-                                    [ class "is-pulled-right field has-addons docButtons" ]
-                                    [ a
-                                        [ class "control"
-                                        , href (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
-                                        ]
-                                        [ div [ class "button is-small is-rounded" ] [ Fa.icon0 "fas fa-eye" "" ] ]
-                                    , a
-                                        [ class "control"
-                                        , href (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
-                                        , (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=edit" |> href
-                                        ]
-                                        [ div [ class "button is-small" ] [ Fa.icon0 "fas fa-pen" "" ] ]
-                                    , a
-                                        [ class "control"
-                                        , (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history" |> href
-                                        ]
-                                        [ div [ class "button is-small is-rounded" ] [ Fa.icon0 "fas fa-history" "" ] ]
-                                    ]
-                                ]
+                            div [ class "column is-3 buttonsToolbar" ]
+                                [ viewTensionToolbar data.focus tid Nothing ]
 
                         _ ->
                             div [ class "column buttonEdit" ] [ doEditView edit BlobType.OnAbout ]
@@ -298,6 +285,53 @@ blobButtonsView edit isSendable isLoading =
                 ]
             ]
         ]
+
+
+viewTensionToolbar : NodeFocus -> String -> Maybe ActionView -> Html msg
+viewTensionToolbar focus tid actionView =
+    div
+        [ class "field has-addons" ]
+        [ p
+            [ class "control tooltip"
+            , attribute "data-tooltip" T.view
+            ]
+            [ a
+                [ class "button is-small is-rounded"
+                , classList [ ( "is-active", actionView == Just DocView ) ]
+                , href
+                    (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref)
+                ]
+                [ Fa.icon0 "fas fa-eye" "" ]
+            ]
+        , p
+            [ class "control tooltip"
+            , attribute "data-tooltip" T.edit
+            ]
+            [ a
+                [ class "button is-small is-rounded"
+                , classList [ ( "is-active", actionView == Just DocEdit ) ]
+                , href
+                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref) ++ "?v=edit")
+                ]
+                [ Fa.icon0 "fas fa-pen" "" ]
+            ]
+        , p
+            [ class "control tooltip"
+            , attribute "data-tooltip" T.versions
+            ]
+            [ a
+                [ class "button is-small is-rounded"
+                , classList [ ( "is-active", actionView == Just DocVersion ) ]
+                , href
+                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
+                ]
+                [ Fa.icon0 "fas fa-history" "" ]
+            ]
+        ]
+
+
+
+--- Utils
 
 
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List NodeId -> NodesData -> NodeFragment

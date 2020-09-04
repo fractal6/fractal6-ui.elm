@@ -6,7 +6,7 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
-import Components.Node exposing (updateNodeForm, viewNodeDoc)
+import Components.Node exposing (ActionView(..), updateNodeForm, viewNodeDoc, viewTensionToolbar)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -125,12 +125,6 @@ type alias Model =
 type TensionTab
     = Conversation
     | Document
-
-
-type ActionView
-    = DocView
-    | DocEdit
-    | DocVersion
 
 
 actionViewEncoder : ActionView -> String
@@ -921,7 +915,13 @@ viewTension u t model =
                         False ->
                             [ text t.title
                             , if t.createdBy.username == username then
-                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ Fa.icon0 "fas fa-pen" "" ]
+                                -- @Debug check user rights
+                                span
+                                    [ class "button has-text-weight-normal is-pulled-right is-small tooltip"
+                                    , attribute "data-tooltip" T.editTitle
+                                    , onClick DoChangeTitle
+                                    ]
+                                    [ Fa.icon0 "fas fa-pen" "" ]
 
                               else
                                 span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ Fa.icon0 "fas fa-pen" "" ]
@@ -1284,44 +1284,7 @@ viewDocument u t model =
             t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
     in
     div [ class "tensionDocument" ]
-        [ span
-            [ class "field has-addons" ]
-            [ p [ class "control" ]
-                [ a
-                    [ class "button is-small is-rounded"
-                    , classList [ ( "is-active", model.actionView == DocView ) ]
-                    , href
-                        (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
-                            |> toHref
-                        )
-                    ]
-                    [ Fa.icon0 "fas fa-eye" "" ]
-                ]
-            , p [ class "control" ]
-                [ a
-                    [ class "button is-small is-rounded"
-                    , classList [ ( "is-active", model.actionView == DocEdit ) ]
-                    , (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
-                        |> toHref
-                      )
-                        ++ "?v=edit"
-                        |> href
-                    ]
-                    [ Fa.icon0 "fas fa-pen" "" ]
-                ]
-            , p [ class "control" ]
-                [ a
-                    [ class "button is-small is-rounded"
-                    , classList [ ( "is-active", model.actionView == DocVersion ) ]
-                    , (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id }
-                        |> toHref
-                      )
-                        ++ "?v=history"
-                        |> href
-                    ]
-                    [ Fa.icon0 "fas fa-history" "" ]
-                ]
-            ]
+        [ viewTensionToolbar model.node_focus t.id (Just model.actionView)
         , case model.actionView of
             DocView ->
                 viewNodeDoc nodeData Nothing hasBeenPushed
