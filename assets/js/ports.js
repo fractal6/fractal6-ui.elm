@@ -107,13 +107,16 @@ const actions = {
     // GraphPack
     //
     'INIT_GRAPHPACK': (app, session, data) => {
-        setTimeout(() => {
-            var gp = session.gp;
-            //var data = JSON.parse(data);
-
+        var gp = session.gp;
+        if (!data.data || data.data.length == 0 ) {
+            gp.isLoading = true;
+            gp.init_canvas()
+            return
+        }
+        setTimeout(() => { // to wait that layout is ready
             var ok = gp.init(app, data, session.isInit);
             if (ok) {
-                gp.zoomToNode(data.focusid, 1.5);
+                gp.zoomToNode(data.focusid, 0.5);
                 session.isInit = false;
             }
 

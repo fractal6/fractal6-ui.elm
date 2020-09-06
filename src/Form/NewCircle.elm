@@ -1,13 +1,8 @@
-module Form.NewCircle exposing
-    ( getFirstLinks
-    , nodeAboutInputView
-    , nodeLinksInputView
-    , nodeMandateInputView
-    , view
-    )
+module Form.NewCircle exposing (view)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
+import Components.NodeDoc exposing (getFirstLinks, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
@@ -17,12 +12,12 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (toHref)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, selected, target, type_, value)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.View exposing (NewNodeText, edgeArrow, getNodeTextFromNodeType, roleColor, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeSpan)
 import ModelSchema exposing (GqlData, Node, NodeFragment, RequestResult(..), UserRole, initNodeFragment)
 
 
@@ -54,7 +49,11 @@ view form result sd =
             in
             div [ class "box is-light" ]
                 [ Fa.icon "fas fa-check fa-2x has-text-success" " "
-                , text (txt.added ++ " ")
+                , if sd.activeButton == Just 0 then
+                    text (txt.added ++ " ")
+
+                  else
+                    text (txt.tension_added ++ " ")
                 , a
                     [ href link
                     , onClickPD (sd.closeModalMsg link)
@@ -145,7 +144,7 @@ view form result sd =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button is-small has-text-weight-semibold"
+                                    ([ class "button"
                                      , classList
                                         [ ( "is-warning", isSendable )
                                         , ( "is-loading", isLoading && sd.activeButton == Just 0 )
@@ -156,7 +155,7 @@ view form result sd =
                                     )
                                     [ text txt.close_submit ]
                                 , button
-                                    ([ class "button  has-text-weight-semibold"
+                                    ([ class "button has-text-weight-semibold"
                                      , classList
                                         [ ( "is-success", isSendable )
                                         , ( "is-loading", isLoading && sd.activeButton == Just 1 )
@@ -171,186 +170,3 @@ view form result sd =
                         ]
                     ]
                 ]
-
-
-
---- Components
-
-
-nodeAboutInputView : NodeFragment -> (String -> String -> msg) -> String -> String -> Html msg
-nodeAboutInputView node changePostMsg nameHelpText aboutHelpText =
-    div [ class "field" ]
-        [ div [ class "field " ]
-            [ div [ class "control" ]
-                [ input
-                    [ class "input autofocus followFocus"
-                    , attribute "data-nextfocus" "aboutField"
-                    , type_ "text"
-                    , placeholder "Name*"
-                    , value (node.name |> withDefault "")
-                    , onInput <| changePostMsg "name"
-                    , required True
-                    ]
-                    []
-                ]
-            , p [ class "help-label" ] [ text nameHelpText ]
-            ]
-        , div [ class "field" ]
-            [ div [ class "control" ]
-                [ input
-                    [ id "aboutField"
-                    , class "input followFocus"
-                    , attribute "data-nextfocus" "textAreaModal"
-                    , type_ "text"
-                    , placeholder "About"
-                    , value (node.about |> withDefault "")
-                    , onInput <| changePostMsg "about"
-                    ]
-                    []
-                ]
-            , p [ class "help-label" ] [ text aboutHelpText ]
-            , br [] []
-            ]
-        ]
-
-
-nodeLinksInputView : NodeFragment -> (String -> String -> msg) -> String -> Html msg
-nodeLinksInputView node changePostMsg firstLink_help =
-    let
-        nodeType =
-            node.type_ |> withDefault NodeType.Role
-
-        roleType =
-            node.role_type |> withDefault RoleType.Peer
-
-        firstLinks =
-            getFirstLinks node
-    in
-    div []
-        (List.indexedMap
-            (\i uname ->
-                div [ class "field is-horizontal" ]
-                    [ div [ class "field-label is-small has-text-grey-darker control" ]
-                        [ case nodeType of
-                            NodeType.Circle ->
-                                let
-                                    r =
-                                        RoleType.Coordinator
-                                in
-                                div [ class ("select is-" ++ roleColor r) ]
-                                    [ select
-                                        [ class "has-text-dark" --, onInput <| sd.changePostMsg "role_type"
-                                        ]
-                                        [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
-                                    ]
-
-                            NodeType.Role ->
-                                div [ class ("select is-" ++ roleColor roleType) ]
-                                    [ RoleType.list
-                                        |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
-                                        |> List.map
-                                            (\r ->
-                                                option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
-                                            )
-                                        |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
-                                    ]
-                        ]
-                    , div [ class "field-body control" ]
-                        [ input
-                            [ class "input is-small"
-                            , type_ "text"
-                            , value ("@" ++ uname)
-                            , onInput <| changePostMsg "first_link"
-                            ]
-                            []
-                        ]
-                    ]
-            )
-            firstLinks
-            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text firstLink_help ] ]
-        )
-
-
-nodeMandateInputView : NodeFragment -> (String -> String -> msg) -> NewNodeText -> Html msg
-nodeMandateInputView node changePostMsg txt =
-    div [ class "field" ]
-        [ div [ class "field" ]
-            [ div [ class "label" ] [ text T.purposeH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ id "textAreaModal"
-                    , class "textarea"
-                    , rows 5
-                    , placeholder (txt.ph_purpose ++ "*")
-                    , value (node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
-                    , onInput <| changePostMsg "purpose"
-                    , required True
-                    ]
-                    []
-                ]
-            ]
-        , div [ class "field" ]
-            [ div [ class "label" ] [ text T.responsabilitiesH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 5
-                    , placeholder txt.ph_responsabilities
-                    , value (node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
-                    , onInput <| changePostMsg "responsabilities"
-                    ]
-                    []
-                ]
-            ]
-        , div [ class "field" ]
-            [ div [ class "label" ] [ text T.domainsH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 5
-                    , placeholder txt.ph_domains
-                    , value (node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
-                    , onInput <| changePostMsg "domains"
-                    ]
-                    []
-                ]
-            ]
-        , div [ class "field" ]
-            [ div [ class "label" ] [ text T.policiesH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 5
-                    , placeholder txt.ph_policies
-                    , value (node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
-                    , onInput <| changePostMsg "policies"
-                    ]
-                    []
-                ]
-            ]
-        ]
-
-
-
--- Utils
-
-
-getFirstLinks : NodeFragment -> List String
-getFirstLinks node =
-    let
-        fs =
-            case node.type_ |> withDefault NodeType.Role of
-                NodeType.Role ->
-                    node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
-
-                NodeType.Circle ->
-                    case node.children of
-                        Just children ->
-                            children
-                                |> List.map (\c -> c.first_link)
-                                |> List.filterMap identity
-
-                        Nothing ->
-                            node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
-    in
-    ternary (fs == []) [ "" ] fs

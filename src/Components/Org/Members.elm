@@ -4,7 +4,7 @@ import Array
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Components.Fa as Fa
-import Components.HelperBar as HelperBar
+import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors)
 import Components.Text as T
 import Date exposing (formatTime)
@@ -70,6 +70,7 @@ type alias Model =
     -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
+    , helperBar : HelperBar
     }
 
 
@@ -94,6 +95,8 @@ type Msg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
+    | ExpandRoles
+    | CollapseRoles
 
 
 
@@ -135,6 +138,7 @@ init global flags =
             -- Common
             , node_action = NoOp
             , isModalActive = False
+            , helperBar = HelperBar.create
             }
 
         cmds =
@@ -289,6 +293,12 @@ update global msg model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
+        ExpandRoles ->
+            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
+
+        CollapseRoles ->
+            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -309,11 +319,19 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
+    let
+        helperData =
+            { onJoin = Submit <| DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , user = global.session.user
+            , path_data = global.session.path_data
+            , baseUri = MembersBaseUri
+            , data = model.helperBar
+            }
+    in
     div [ id "mainPane" ]
-        [ HelperBar.view MembersBaseUri
-            global.session.user
-            global.session.path_data
-            (Submit <| DoJoinOrga model.node_focus.rootnameid)
+        [ HelperBar.view helperData
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]

@@ -8,7 +8,7 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type BlobType
-    = InitBlob
+    = OnNode
     | OnAbout
     | OnMandate
     | OnFirstLink
@@ -17,7 +17,7 @@ type BlobType
 
 list : List BlobType
 list =
-    [ InitBlob, OnAbout, OnMandate, OnFirstLink, OnDoc ]
+    [ OnNode, OnAbout, OnMandate, OnFirstLink, OnDoc ]
 
 
 decoder : Decoder BlobType
@@ -26,8 +26,8 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "InitBlob" ->
-                        Decode.succeed InitBlob
+                    "OnNode" ->
+                        Decode.succeed OnNode
 
                     "OnAbout" ->
                         Decode.succeed OnAbout
@@ -51,8 +51,8 @@ decoder =
 toString : BlobType -> String
 toString enum =
     case enum of
-        InitBlob ->
-            "InitBlob"
+        OnNode ->
+            "OnNode"
 
         OnAbout ->
             "OnAbout"
@@ -81,8 +81,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe BlobType
 fromString enumString =
     case enumString of
-        "InitBlob" ->
-            Just InitBlob
+        "OnNode" ->
+            Just OnNode
 
         "OnAbout" ->
             Just OnAbout

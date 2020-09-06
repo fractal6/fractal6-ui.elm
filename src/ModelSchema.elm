@@ -156,7 +156,6 @@ type alias TensionHead =
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
-    , n_comments : Maybe Int
 
     --
     , status : TensionStatus.TensionStatus
@@ -166,11 +165,17 @@ type alias TensionHead =
 
 
 type alias TensionComments =
-    { comments : Maybe (List Comment) }
+    { id : String
+    , comments : Maybe (List Comment)
+    , n_comments : Maybe Int
+    }
 
 
 type alias TensionBlobs =
-    { blobs : Maybe (List Blob) }
+    { id : String
+    , blobs : Maybe (List Blob)
+    , n_blobs : Maybe Int
+    }
 
 
 type alias TensionHistory =
@@ -231,6 +236,12 @@ type alias SubNodeFragment =
     , isPrivate : Maybe Bool
     , charac : Maybe NodeCharac
     , first_link : Maybe String
+    }
+
+
+type alias PatchTensionPayloadID =
+    { comments : Maybe (List Comment)
+    , blobs : Maybe (List Blob)
     }
 
 

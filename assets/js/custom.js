@@ -52,3 +52,4 @@ const toggleTheme = () =>  {
         element.classList.add('dark_theme');
     }
 }
+

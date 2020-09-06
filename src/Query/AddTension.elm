@@ -7,8 +7,8 @@ module Query.AddTension exposing
     , tensionFromForm
     )
 
+import Components.NodeDoc exposing (getFirstLinks)
 import Dict exposing (Dict)
-import Form.NewCircle exposing (getFirstLinks)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
@@ -90,9 +90,6 @@ addTensionInputEncoder f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
-        status =
-            Dict.get "status" f.post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
-
         message =
             Dict.get "message" f.post |> withDefault ""
 
@@ -103,7 +100,7 @@ addTensionInputEncoder f =
                     (\x -> { x | username = Present f.uctx.username })
             , title = title
             , type_ = f.tension_type
-            , status = status
+            , status = f.status
             , emitter =
                 Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
             , receiver =
@@ -157,9 +154,6 @@ tensionFromForm f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
-        status =
-            Dict.get "status" f.post |> withDefault "" |> TensionStatus.fromString |> withDefault TensionStatus.Open
-
         message =
             Dict.get "message" f.post |> withDefault ""
     in
@@ -172,7 +166,7 @@ tensionFromForm f =
                     |> Present
             , title = title |> Present
             , type_ = f.tension_type |> Present
-            , status = status |> Present
+            , status = f.status |> Present
             , action = f.action |> fromMaybe
             , emitter =
                 Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present

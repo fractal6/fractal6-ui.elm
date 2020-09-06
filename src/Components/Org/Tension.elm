@@ -2,11 +2,13 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
+import Components.Doc exposing (ActionView(..))
+import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
-import Components.HelperBar as HelperBar
+import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
-import Components.Node exposing (ActionView(..), updateNodeForm, viewNodeDoc, viewTensionToolbar)
+import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -40,7 +42,7 @@ import ModelCommon.View
         , statusColor
         , tensionTypeColor
         , tensionTypeSpan
-        , viewActionIcon
+        , viewActionIconLink
         , viewLabels
         , viewTensionArrowB
         , viewTensionDateAndUser
@@ -52,7 +54,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (PatchTensionPayloadID, patchComment, patchTitle, pushTensionPatch)
+import Query.PatchTension exposing (patchComment, patchTitle, publishBlob, pushTensionPatch)
 import Query.QueryNode exposing (queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -107,7 +109,8 @@ type alias Model =
     , title_result : GqlData String
 
     -- Blob Edit Section
-    , isBlobEdit : Bool
+    , nodeDoc : NodeDoc
+    , publish_result : GqlData IdPayload
 
     --
     -- Common
@@ -115,6 +118,7 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
+    , helperBar : HelperBar
     }
 
 
@@ -139,6 +143,9 @@ actionViewEncoder x =
         DocVersion ->
             "history"
 
+        NoView ->
+            "noview"
+
 
 actionViewDecoder : String -> ActionView
 actionViewDecoder x =
@@ -148,6 +155,9 @@ actionViewDecoder x =
 
         "history" ->
             DocVersion
+
+        "noview" ->
+            NoView
 
         default ->
             DocView
@@ -168,24 +178,26 @@ type Msg
     | GotTensionBlobs (GqlData TensionBlobs)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
-    | SubmitTensionPatch TensionPatchForm Time.Posix -- Send form
-    | SubmitComment TensionPatchForm (Maybe TensionStatus.TensionStatus) Time.Posix -- Send form
+    | SubmitTensionPatch Time.Posix
+    | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | TensionPatchAck (GqlData PatchTensionPayloadID)
     | DoUpdateComment String
     | ChangeCommentPost String String
-    | SubmitCommentPatch CommentPatchForm Time.Posix
+    | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
     | CancelCommentPatch
     | DoChangeTitle
-    | SubmitTitle TensionPatchForm Time.Posix
+    | SubmitTitle Time.Posix
     | TitleAck (GqlData String)
     | CancelTitle
       -- Blob edit
     | DoBlobEdit BlobType.BlobType
     | ChangeBlobNode String String
     | ChangeBlobMD String
-    | SubmitBlob TensionPatchForm Bool Time.Posix -- Send form
+    | SubmitBlob Bool Time.Posix
     | CancelBlob
+    | PushBlob String Time.Posix
+    | PushBlobAck (GqlData IdPayload)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -197,9 +209,11 @@ type Msg
     | ChangeAuthPost String String
     | SubmitUser UserForm
     | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int
+    | SubmitKeyDown Int -- Detect Enter (for form sending)
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
+    | ExpandRoles
+    | CollapseRoles
 
 
 
@@ -257,13 +271,15 @@ init global flags =
             , title_result = NotAsked
 
             -- Blob
-            , isBlobEdit = False
+            , nodeDoc = NodeDoc.create
+            , publish_result = NotAsked
 
             -- Common
             , node_action = NoOp
             , isModalActive = False
             , modalAuth = Inactive
             , inputViewMode = Write
+            , helperBar = HelperBar.create
             }
 
         cmds =
@@ -287,6 +303,9 @@ init global flags =
 
                         DocVersion ->
                             getTensionBlobs apis.gql model.tensionid GotTensionBlobs
+
+                        NoView ->
+                            Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -410,8 +429,11 @@ update global msg model =
             in
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
 
-        SubmitTensionPatch form time ->
+        SubmitTensionPatch time ->
             let
+                form =
+                    model.tension_form
+
                 newForm =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
@@ -419,8 +441,11 @@ update global msg model =
             in
             ( { model | tension_patch = LoadingSlowly }, pushTensionPatch apis.gql newForm TensionPatchAck, Cmd.none )
 
-        SubmitComment form status_m time ->
+        SubmitComment status_m time ->
             let
+                form =
+                    model.tension_form
+
                 eventComment =
                     case Dict.get "message" form.post of
                         Just _ ->
@@ -471,7 +496,7 @@ update global msg model =
                         , events_type = Just (eventComment ++ eventStatus)
                     }
             in
-            ( { model | tension_form = newForm }, send (SubmitTensionPatch newForm time), Cmd.none )
+            ( { model | tension_form = newForm }, send (SubmitTensionPatch time), Cmd.none )
 
         TensionPatchAck result ->
             case result of
@@ -561,8 +586,11 @@ update global msg model =
             in
             ( { model | comment_form = newForm, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
-        SubmitCommentPatch form time ->
+        SubmitCommentPatch time ->
             let
+                form =
+                    model.comment_form
+
                 newForm =
                     { form | post = Dict.insert "updatedAt" (fromTime time) form.post }
             in
@@ -614,8 +642,11 @@ update global msg model =
         CancelTitle ->
             ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
-        SubmitTitle form time ->
+        SubmitTitle time ->
             let
+                form =
+                    model.tension_form
+
                 newForm =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
@@ -648,19 +679,6 @@ update global msg model =
                     else
                         ( { model | title_result = result }, Cmd.none, Cmd.none )
 
-        ChangeInputViewMode viewMode ->
-            ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
-
-        ChangeUpdateViewMode viewMode ->
-            let
-                form =
-                    model.comment_form
-
-                newForm =
-                    { form | viewMode = viewMode }
-            in
-            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
-
         DoBlobEdit blobType ->
             let
                 form =
@@ -673,14 +691,10 @@ update global msg model =
                         , md = withMaybeData model.tension_head |> Maybe.map (\th -> mdFromTensionHead th) |> withDefault Nothing
                     }
             in
-            ( { model | isBlobEdit = True, tension_form = newForm }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.edit model.nodeDoc, tension_form = newForm }, Cmd.none, Cmd.none )
 
         ChangeBlobNode field value ->
-            let
-                newForm =
-                    updateNodeForm field value model.tension_form
-            in
-            ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
+            ( { model | tension_form = NodeDoc.updateForm field value model.tension_form }, Cmd.none, Cmd.none )
 
         ChangeBlobMD value ->
             let
@@ -692,18 +706,37 @@ update global msg model =
             in
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
 
-        SubmitBlob form doPush time ->
+        SubmitBlob doPush time ->
             let
                 eventPushed =
                     ternary doPush [ TensionEvent.BlobPushed ] []
 
+                form =
+                    model.tension_form
+
                 newForm =
                     { form | events_type = Just ([ TensionEvent.BlobCommitted ] ++ eventPushed) }
             in
-            ( { model | tension_form = newForm }, send (SubmitTensionPatch newForm time), Cmd.none )
+            ( { model | tension_form = newForm }, send (SubmitTensionPatch time), Cmd.none )
 
         CancelBlob ->
-            ( { model | isBlobEdit = False, tension_form = initTensionForm model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc, tension_form = initTensionForm model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+
+        PushBlob blobid time ->
+            let
+                form =
+                    model.tension_form
+
+                newForm =
+                    { form
+                        | events_type = Just [ TensionEvent.BlobPushed ]
+                        , post = Dict.fromList [ ( "createdAt", fromTime time ), ( "blobid", blobid ) ]
+                    }
+            in
+            ( { model | tension_form = newForm }, publishBlob apis.gql newForm PushBlobAck, Cmd.none )
+
+        PushBlobAck result ->
+            ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -823,6 +856,25 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
+        ChangeInputViewMode viewMode ->
+            ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
+
+        ChangeUpdateViewMode viewMode ->
+            let
+                form =
+                    model.comment_form
+
+                newForm =
+                    { form | viewMode = viewMode }
+            in
+            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+
+        ExpandRoles ->
+            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
+
+        CollapseRoles ->
+            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -849,11 +901,19 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
+    let
+        helperData =
+            { onJoin = Submit <| DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , user = global.session.user
+            , path_data = global.session.path_data
+            , baseUri = TensionsBaseUri
+            , data = model.helperBar
+            }
+    in
     div [ id "mainPane" ]
-        [ HelperBar.view TensionsBaseUri
-            global.session.user
-            global.session.path_data
-            (Submit <| DoJoinOrga model.node_focus.rootnameid)
+        [ HelperBar.view helperData
         , div [ class "columns is-centered" ]
             [ div [ class "column is-11-desktop is-11-widescreen is-10-fullhd is-offset-1" ]
                 [ case model.tension_head of
@@ -901,7 +961,7 @@ viewTension u t model =
                                     ]
                                 , p [ class "control buttons" ]
                                     [ span [ class "button has-text-weight-normal is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
-                                    , span [ class "button has-text-weight-normal is-success is-small", onClick (Submit <| SubmitTitle model.tension_form) ] [ text T.updateTitle ]
+                                    , span [ class "button has-text-weight-normal is-success is-small", onClick (Submit <| SubmitTitle) ] [ text T.updateTitle ]
                                     ]
                                 ]
                             , case model.title_result of
@@ -960,7 +1020,12 @@ viewTension u t model =
                         viewComments u t model
 
                     Document ->
-                        viewDocument u t model
+                        case t.blobs |> withDefault [] of
+                            [ b ] ->
+                                viewDocument u t b model
+
+                            _ ->
+                                div [] [ text "No data to show..." ]
                 ]
             , div [ class "column is-3 tensionSidePane" ]
                 [ viewSidePane model.node_focus t ]
@@ -1114,15 +1179,15 @@ viewCommentInput uctx tension form result viewMode =
             isPostSendable [ "message" ] form.post
 
         submitComment =
-            ternary isSendable [ onClick (Submit <| SubmitComment form Nothing) ] []
+            ternary isSendable [ onClick (Submit <| SubmitComment Nothing) ] []
 
         submitCloseOpenTension =
             case tension.status of
                 TensionStatus.Open ->
-                    [ onClick (Submit <| SubmitComment form (Just TensionStatus.Closed)) ]
+                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Closed)) ]
 
                 TensionStatus.Closed ->
-                    [ onClick (Submit <| SubmitComment form (Just TensionStatus.Open)) ]
+                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Open)) ]
 
         closeOpenText =
             case tension.status of
@@ -1258,7 +1323,7 @@ viewUpdateInput uctx comment form result =
                             [ class "button has-text-weight-semibold"
                             , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (Submit <| SubmitCommentPatch form)
+                            , onClick (Submit <| SubmitCommentPatch)
                             ]
                             [ text T.updateComment ]
                         ]
@@ -1268,44 +1333,90 @@ viewUpdateInput uctx comment form result =
         ]
 
 
-viewDocument : UserState -> TensionHead -> Model -> Html Msg
-viewDocument u t model =
-    let
-        md =
-            mdFromTensionHead t
-
-        node =
-            nodeFragmentFromTensionHead t
-
-        nodeData =
-            { data = Success t.id, node = node, isLazy = False, source = TensionBaseUri, focus = model.node_focus }
-
-        hasBeenPushed =
-            t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
-    in
+viewDocument : UserState -> TensionHead -> Blob -> Model -> Html Msg
+viewDocument u t b model =
     div [ class "tensionDocument" ]
-        [ viewTensionToolbar model.node_focus t.id (Just model.actionView)
-        , case model.actionView of
-            DocView ->
-                viewNodeDoc nodeData Nothing hasBeenPushed
+        [ viewBlobToolBar u t b model
+        , if b.md /= Nothing then
+            -- Markdown Document
+            case model.actionView of
+                _ ->
+                    div [] [ text "todo show markdown" ]
 
-            DocEdit ->
-                let
-                    msgs =
-                        { editBlob = DoBlobEdit
-                        , changeNode = ChangeBlobNode
-                        , cancel = CancelBlob
-                        , submit = Submit
-                        , submitBlob = SubmitBlob
-                        , isBlobEdit = model.isBlobEdit
-                        , form = model.tension_form
-                        , result = model.tension_patch
-                        }
-                in
-                viewNodeDoc nodeData (Just msgs) hasBeenPushed
+          else
+            -- Node Document
+            let
+                nodeData =
+                    { data = Success t.id
+                    , node = b.node |> withDefault initNodeFragment
+                    , isLazy = False
+                    , source = TensionBaseUri
+                    , focus = model.node_focus
+                    , hasBeenPushed = t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+                    , toolbar = Nothing
+                    }
+            in
+            case model.actionView of
+                DocView ->
+                    NodeDoc.view nodeData Nothing
 
-            DocVersion ->
-                viewDocVersions model.tension_blobs
+                DocEdit ->
+                    let
+                        msgs =
+                            { onBlobEdit = DoBlobEdit
+                            , onChangeNode = ChangeBlobNode
+                            , onCancelBlob = CancelBlob
+                            , onSubmitBlob = SubmitBlob
+                            , onSubmit = Submit
+                            , form = model.tension_form
+                            , result = model.tension_patch
+                            , data = model.nodeDoc
+                            }
+                    in
+                    NodeDoc.view nodeData (Just msgs)
+
+                DocVersion ->
+                    viewDocVersions model.tension_blobs
+
+                NoView ->
+                    div [] []
+        ]
+
+
+viewBlobToolBar : UserState -> TensionHead -> Blob -> Model -> Html Msg
+viewBlobToolBar u t b model =
+    div [ class "blobToolBar" ]
+        [ div [ class "level" ]
+            [ div [ class "level-left" ]
+                [ DocToolBar.view model.node_focus t.id (Just model.actionView) ]
+            , if model.actionView /= DocVersion then
+                div [ class "level-right" ]
+                    [ case b.pushedFlag of
+                        Just flag ->
+                            div [ class "has-text-success text-status" ]
+                                [ text (T.publishedThe ++ " " ++ formatTime flag) ]
+
+                        Nothing ->
+                            div [ class "field has-addons" ]
+                                [ div [ class "has-text-warning text-status" ]
+                                    [ text "Revision not published" ]
+                                , div
+                                    [ class "button is-small is-success has-text-weight-semibold"
+                                    , onClick (Submit <| PushBlob b.id)
+                                    ]
+                                    [ text T.publish ]
+                                ]
+                    ]
+
+              else
+                div [] []
+            ]
+        , case model.publish_result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                div [] []
         ]
 
 
@@ -1313,24 +1424,33 @@ viewDocVersions : GqlData TensionBlobs -> Html Msg
 viewDocVersions blobsData =
     case blobsData of
         Success tblobs ->
-            div [ class "box" ]
+            let
+                n_blobs =
+                    tblobs.n_blobs |> withDefault 0
+            in
+            div [ class "box boxShrinked" ]
                 [ tblobs.blobs
                     |> withDefault []
-                    |> List.map
-                        (\blob ->
-                            div [ class "media" ]
+                    |> List.indexedMap
+                        (\i blob ->
+                            div [ class "media", classList [ ( "is-active", i == 0 ) ] ]
                                 [ div [ class "media-content" ]
                                     [ div [ class "level" ]
                                         [ span [ class "level-left" ]
-                                            [ span [] [ text (blobTypeStr blob.blob_type) ]
+                                            [ ternary (i == n_blobs - 1) (span [] [ text "Document created" ]) (span [] [ text (blobTypeStr blob.blob_type) ])
                                             , text "\u{00A0}"
                                             , byAt blob.createdBy blob.createdAt
                                             ]
-                                        , if blob.pushedFlag /= Nothing then
-                                            span [ class "level-item" ] [ Fa.icon0 "fas fa-tag" "" ]
+                                        , case blob.pushedFlag of
+                                            Just flag ->
+                                                span
+                                                    [ class "level-item tooltip"
+                                                    , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
+                                                    ]
+                                                    [ Fa.icon0 "fas fa-tag" "" ]
 
-                                          else
-                                            span [] []
+                                            Nothing ->
+                                                span [] []
                                         ]
                                     ]
                                 ]
@@ -1388,9 +1508,7 @@ viewSidePane focus t =
                 , div [ class "" ]
                     [ case t.action of
                         Just action ->
-                            a
-                                [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = t.id } |> toHref) ]
-                                [ viewActionIcon (Just action), text (SE.humanize (TensionAction.toString action)) ]
+                            viewActionIconLink action focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
 
                         Nothing ->
                             div [ class "is-italic" ] [ text "no action requested" ]

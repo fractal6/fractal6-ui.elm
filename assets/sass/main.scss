@@ -68,8 +68,39 @@ hr {
     font-size: 0.9rem !important;
 }
 
+.is-flex-grow {
+    flex-grow: 1;
+}
+
+.is-aligned-center {
+    text-align: center !important;
+}
+
+.is-underline {
+    //text-decoration: underline;
+    border-bottom: 1px ridge;
+}
+
+.is-underline-dotted {
+    border-bottom: 1px dotted;
+}
+
+.icon {
+    color: #11111133 !important;
+}
+
+.icon-padding-left {
+    padding-left: 8px !important;
+}
+
+
 .icon-padding {
     padding-right: 10px;
+}
+
+.text-status {
+    margin: 0 1rem 0 1rem !important;
+    font-style: italic !important;
 }
 
 // Tooltip
@@ -154,9 +185,6 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.icon {
-    color: #11111133 !important;
-}
 
 .has-background-turquoise {
     background-color: $turquoise !important;
@@ -165,18 +193,30 @@ html.has-modal-active, html.has-modal-active2 {
     color: $turquoise !important;
 }
 
-.is-flex-grow {
-    flex-grow: 1;
+.boxShrinked {
+    &.box {
+        padding:0 !important;
+    }
+
+    .media {
+        padding: 1rem !important;
+
+        &.is-active {
+            border: solid 2px  $grey-light  !important;
+        }
+    }
+
+    .media + .media {
+        margin-top: 0 !important;
+    }
 }
+
 
 /*
  *
  * My style
  *
  */
-
-
-/////
 
 .menu .menu-label {
     font-weight: bold !important;
@@ -332,37 +372,99 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.mediaTension {
-    //border-bottom: 1px solid #e1e4e8;
-    //margin-bottom: -1.11rem !important;
-    & .media-content {
-        overflow: unset;
-
-        // Improve UX when hovering content
-        .content  {
-            &:hover {
-                a {
-                    color: $link !important;
-                }
-                cursor: pointer !important;
-            }
-        }
-        .content > a  {
-            color: $text !important;
-            &:hover {
-                color: $link !important;
-            }
-        }
-    }
-
-}
-
 .stackPen {
     .fa-stack > i.fa-pen {
         top: -5px;
         left: 5px;
     }
 }
+
+//
+// Overview and Doc
+//
+
+.buttonRole {
+    border-width: 0 !important;
+    font-weight: 500;
+    &.is-orange {
+        background-color: $orange-frac6 !important;
+        color: white !important;
+    }
+}
+
+.buttonsToolbar {
+    .field {
+        float: right !important; //is-pulled-right
+        margin-top:-9px;
+        margin-right: -9px !important;
+    }
+    .button {
+        font-size: 0.65rem !important;
+        //padding-bottom: 2px !important;
+    }
+}
+
+#DocContainer {
+    border-radius: 5px;
+
+    .title {
+        //margin-bottom: 1rem !important;
+    }
+
+    .hero-body > hr {
+        margin-top: 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    .message-body {
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
+    }
+
+    .content {
+        p {
+            font-size: 15px !important;
+        }
+
+        a {
+            color: $blue;
+        }
+    }
+}
+
+.aboutDoc {
+    .columns {
+        & > .column {
+            margin-bottom: 0 !important;
+        }
+        & > .column.buttonEdit {
+            padding-right: 12px !important;
+        }
+    }
+    .nodeName {
+        font-weight: 600 !important;
+        color: $grey !important;
+    }
+}
+
+.mandateDoc {
+    .message-header {
+        background-color: $grey !important;
+    }
+    .message-body {
+        background-color: $white-light !important;
+    }
+}
+
+.mandateEdit {
+    .label { color: #363636 }
+}
+
+
+
+//
+// Tension/Blob Page
+//
 
 #tensionPage {
 
@@ -397,7 +499,7 @@ html.has-modal-active, html.has-modal-active2 {
                 border-bottom-color: $link !important;
                 color: inherit;
             }
-            & a:hover {
+            a:hover {
                 border-bottom-color: lighten($link, 25) !important;
             }
         }
@@ -504,59 +606,29 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+.tensionDocument {
 
-.finalModal {
-    .message {
-        background-color: $white-light !important;
-        border: solid 2px  $white-ter  !important;
-
-        .tabs, .tabs.is-boxed  {
-            li a  {
-                color: #111 !important;
-            }
-            li a:hover{
-                background-color: $white-ter !important;
-            }
-            li.is-active a {
-                text-decoration: none !important;
-                background-color: $white-light !important;
-            }
-        }
-    }
-
-    .message-header {
-        background-color: $white-ter;
-        padding-bottom: 0 !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-        border-radius: 0 !important;
-        //padding-bottom: 0 !important;
-        a {
-            font-weight: 600 !important;
-            text-decoration: none !important;
-        }
-        a:hover {
-            text-decoration: underline !important;
-        }
-    }
-
-    .message-body {
-        padding: 0.75rem 0.75rem !important;
+    .blobToolBar {
+        margin-bottom: 1rem;
     }
 }
 
+//
+// Search Bar and QuickSearch
+//
+
 .searchBar {
+
     .input, .button, select {
         height: 2.2rem !important;
     }
 
     .select {
-
         &::after {
             border-color: $primary !important;
         }
 
-        & select, & select::after {
+        select, & select::after {
             //color: rgba(0, 0, 0, 0.7) !important;
             color: $white-light !important;
             //background-color: $grey-lighter !important;
@@ -564,12 +636,12 @@ html.has-modal-active, html.has-modal-active2 {
             font-weight: 600 !important;
             border: 0 !important;
         }
-        & select:hover {
+        select:hover {
             //background-color: $white-light !important;
             background-color: #4281ac !important;
         }
         // Don't work, we still have the dotted square
-        & select:focus, & select:-moz-focusring {
+        select:focus, & select:-moz-focusring {
             color: transparent;
             text-shadow: 0 0 0 #000;
             outline: none !important;
@@ -660,36 +732,83 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
-    & .table.is-fullwidth {
+    .table.is-fullwidth {
         flex-grow: 1;
         flex-shrink: 1;
         display: inline-table;
         background-color: #fffffdf2 !important;
     }
 
-    & thead th,
-    & thead td {
+    thead th,
+    thead td {
         color: #acb6c1 !important;
         background-color: #eeeeedf2 !important;
     }
-    & tbody th,
-    & tbody td {
+    tbody th,
+    tbody td {
         border: 0 !important;
         padding-top: 0.4rem;
         padding-bottom: 0.4rem;
         color: #24292e !important;
     }
 
-    & a:hover,& a:focus,
-    & tr:hover,& tr:focus,
-    & span:hover,&  span:focus {
+    a:hover,& a:focus,
+    tr:hover,& tr:focus,
+    span:hover,&  span:focus {
         background-color: #eee9d8 !important;
     }
 
-     & a.is-active,
-     & tr.is-active,
-     & span.is-active {
+     a.is-active,
+     tr.is-active,
+     span.is-active {
         background-color: #dfdfdf !important;
+    }
+
+}
+
+//
+// Tensions
+//
+
+#tensionsTab  {
+    .tooltip {
+        // Increase the area of activation (better UX)
+        margin: -8px;
+		border: 8px solid transparent;
+        &::before,
+        &::after {
+             font-size: $size-6 !important;
+        }
+     }
+}
+
+.box #tensionsTab {
+    .media {
+        margin-top: 10px !important;
+    }
+}
+
+.mediaTension {
+    //border-bottom: 1px solid #e1e4e8;
+    //margin-bottom: -1.11rem !important;
+    .media-content {
+        overflow: unset;
+
+        // Improve UX when hovering content
+        .content  {
+            &:hover {
+                a {
+                    color: $link !important;
+                }
+                cursor: pointer !important;
+            }
+        }
+        .content > a  {
+            color: $text !important;
+            &:hover {
+                color: $link !important;
+            }
+        }
     }
 
 }
@@ -704,99 +823,16 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-#tensionsTab  {
-    .tooltip {
-        // Increase the area of activation (better UX)
-        margin: -8px;
-		border: 8px solid transparent;
-        &::before,
-        &::after {
-             font-size: $size-6 !important;
-        }
-     }
-}
-
-
-.box #tensionsTab {
-    .media {
-        margin-top: 10px !important;
+a.actionLink {
+    color: inherit !important;
+    &:hover {
+        color: $link !important;
     }
 }
 
-#DocContainer {
-    border-radius: 5px;
-
-    .title {
-        //margin-bottom: 1rem !important;
-    }
-
-    .hero-body > hr {
-        margin-top: 1rem !important;
-        margin-bottom: 1.5rem !important;
-    }
-
-    .message-body {
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
-    }
-
-    .content {
-        p {
-            font-size: 15px !important;
-        }
-
-        a {
-            color: $blue;
-        }
-    }
-
-
-}
-
-.aboutDoc {
-    .columns {
-        & > .column {
-            margin-bottom: 0 !important;
-        }
-        & > .column.buttonEdit {
-            padding-right: 12px !important;
-        }
-    }
-    .nodeName {
-        font-weight: 600 !important;
-        color: $grey !important;
-    }
-}
-
-.mandateDoc {
-    .message-header {
-        background-color: $grey !important;
-    }
-    .message-body {
-        background-color: $white-light !important;
-    }
-}
-
-.buttonRole {
-    border-width: 0 !important;
-    font-weight: 500 !important;
-    &.is-orange {
-        background-color: $orange-frac6 !important;
-        color: white !important;
-    }
-}
-
-.buttonsToolbar {
-    .field {
-        float: right !important; //is-pulled-right
-        margin-top:-9px;
-        margin-right: -9px !important;
-    }
-    .button {
-        font-size: 0.65rem !important;
-        //padding-bottom: 2px !important;
-    }
-}
+//
+// Members
+//
 
 #membersTable {
     width: 100% !important;
@@ -931,7 +967,6 @@ html.has-modal-active, html.has-modal-active2 {
         background-color: #eee;
     }
 
-
     .modal-card-body {
         background-color: #fff !important;
         color: #111;
@@ -1045,6 +1080,46 @@ html.has-modal-active, html.has-modal-active2 {
     .box.is-light {
         background-color: #dce3e3;
         color: black;
+    }
+}
+
+.finalModal {
+    .message {
+        background-color: $white-light !important;
+        border: solid 2px  $white-ter  !important;
+
+        .tabs, .tabs.is-boxed  {
+            li a  {
+                color: #111 !important;
+            }
+            li a:hover{
+                background-color: $white-ter !important;
+            }
+            li.is-active a {
+                text-decoration: none !important;
+                background-color: $white-light !important;
+            }
+        }
+    }
+
+    .message-header {
+        background-color: $white-ter;
+        padding-bottom: 0 !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        border-radius: 0 !important;
+        //padding-bottom: 0 !important;
+        a {
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+        a:hover {
+            text-decoration: underline !important;
+        }
+    }
+
+    .message-body {
+        padding: 0.75rem 0.75rem !important;
     }
 }
 
@@ -1197,15 +1272,6 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.is-underline {
-    //text-decoration: underline;
-    border-bottom: 1px ridge;
-}
-
-.is-underline-dotted {
-    border-bottom: 1px dotted;
-}
-
 .right-arrow {
     &::after {
         content: " \27F6 ";
@@ -1241,10 +1307,6 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.is-aligned-center {
-    text-align: center !important;
-}
-
 .Circle {
     padding-bottom: 2px;
     &::before {
@@ -1252,7 +1314,6 @@ html.has-modal-active, html.has-modal-active2 {
         font-size: 9px;
     }
 }
-
 
 .circleBase {
     border-radius: 50%;
@@ -1315,16 +1376,6 @@ html.has-modal-active, html.has-modal-active2 {
  *
  */
 
-@keyframes spinner {
-    0% {
-        transform: translate3d(-50%, -50%, 0) rotate(0deg);
-    }
-    100% {
-        transform: translate3d(-50%, -50%, 0) rotate(360deg);
-    }
-
-}
-
 .spinner {
     // The height here is just for demo purposes
     height: 25vh;
@@ -1348,6 +1399,15 @@ html.has-modal-active, html.has-modal-active2 {
 		will-change: transform;
 	}
 }
+@keyframes spinner {
+    0% {
+        transform: translate3d(-50%, -50%, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    }
+}
+
 
 /*
  *
@@ -1478,6 +1538,21 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+/*
+ * Canvas spinner
+ */
+
+
+// don't work, but cool to rotate an element xD
+.rotate-spinner {
+	-webkit-animation:busyIcon 2s linear infinite;
+	-moz-animation:busyIcon 2s linear infinite;
+	animation:busyIcon 2s linear infinite;
+}
+@-moz-keyframes busyIcon { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes busyIcon { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes busyIcon { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
 
 /*
  *
@@ -1493,3 +1568,4 @@ html.has-modal-active, html.has-modal-active2 {
 button::-moz-focus-inner { // remove outline inside button !
     border: 0 !important;
 }
+

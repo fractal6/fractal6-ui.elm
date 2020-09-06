@@ -1,78 +1,90 @@
-module Components.Node exposing (ActionView(..), nodeFragmentFromOrga, updateNodeForm, viewNodeDoc, viewTensionToolbar)
+module Components.NodeDoc exposing
+    ( NodeDoc
+    , cancelEdit
+    , create
+    , edit
+    , getFirstLinks
+    , nodeAboutInputView
+    , nodeFragmentFromOrga
+    , nodeLinksInputView
+    , nodeMandateInputView
+    , updateForm
+    , updateNodeForm
+    , view
+    )
 
+import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
-import Form.NewCircle exposing (getFirstLinks, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm)
 import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromUsername)
-import ModelCommon.View exposing (actionNameStr, getAvatar, getNodeTextFromNodeType)
+import ModelCommon.View exposing (NewNodeText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor)
 import ModelSchema exposing (..)
-import Query.PatchTension exposing (PatchTensionPayloadID)
 import Time
 
 
-type alias EditMsgs msg1 msg2 msg3 msg4 msg5 =
-    { editBlob : BlobType.BlobType -> msg1
-    , changeNode : String -> String -> msg2
-    , cancelBlob : msg3
-    , submit : (Time.Posix -> msg4) -> msg5
-    , submitBlob : TensionPatchForm -> Bool -> Time.Posix -> msg4
-    , isBlobEdit : Bool
-    , form : TensionPatchForm
-    , result : GqlData PatchTensionPayloadID
+type alias NodeDoc =
+    { isBlobEdit : Bool
     }
 
 
-type alias OrgaNodeData =
+create : NodeDoc
+create =
+    { isBlobEdit = False }
+
+
+edit : NodeDoc -> NodeDoc
+edit nd =
+    { nd | isBlobEdit = True }
+
+
+updateForm : String -> String -> TensionPatchForm -> TensionPatchForm
+updateForm field value form =
+    updateNodeForm field value form
+
+
+cancelEdit : NodeDoc -> NodeDoc
+cancelEdit nd =
+    { nd | isBlobEdit = False }
+
+
+type alias TensionNodeData msg =
+    { onBlobEdit : BlobType.BlobType -> msg
+    , onChangeNode : String -> String -> msg
+    , onCancelBlob : msg
+    , onSubmitBlob : Bool -> Time.Posix -> msg
+    , onSubmit : (Time.Posix -> msg) -> msg
+    , form : TensionPatchForm
+    , result : GqlData PatchTensionPayloadID
+    , data : NodeDoc
+    }
+
+
+type alias OrgaNodeData msg =
     { data : GqlData String -- payload
     , node : NodeFragment
     , isLazy : Bool
     , source : FractalBaseRoute
     , focus : NodeFocus
+    , hasBeenPushed : Bool
+    , toolbar : Maybe (Html msg)
     }
 
 
-type ActionView
-    = DocView
-    | DocEdit
-    | DocVersion
-
-
-{-| doEditView : Maybe (EditMsgs msg1 msg2) -> BlobType.BlobType -> Html msg
--}
-doEditView edit btype =
-    case edit of
-        Just doEdit ->
-            if doEdit.isBlobEdit && Just btype == doEdit.form.blob_type then
-                span [] []
-
-            else
-                span
-                    [ class "button has-text-weight-normal is-pulled-right is-small"
-                    , onClick (doEdit.editBlob btype)
-                    ]
-                    [ Fa.icon0 "fas fa-pen" "" ]
-
-        Nothing ->
-            span [] []
-
-
-{-| viewNodeDoc :OrgaNodeData data -> Maybe (EditMsgs msg1 msg2) -> Html msg
--}
-viewNodeDoc data edit hasBeenPushed =
+view : OrgaNodeData msg -> Maybe (TensionNodeData msg) -> Html msg
+view data tdata =
     div [ id "DocContainer", class "hero is-small is-light" ]
         [ div [ class "hero-body" ]
             [ case data.data of
@@ -91,7 +103,7 @@ viewNodeDoc data edit hasBeenPushed =
                     div [ class "spinner" ] []
 
                 Success tid ->
-                    viewNodeDoc_ tid data edit hasBeenPushed
+                    view_ tid data tdata
 
                 other ->
                     div [] []
@@ -99,7 +111,8 @@ viewNodeDoc data edit hasBeenPushed =
         ]
 
 
-viewNodeDoc_ tid data edit hasBeenPushed =
+view_ : String -> OrgaNodeData msg -> Maybe (TensionNodeData msg) -> Html msg
+view_ tid data tdata =
     let
         node =
             data.node
@@ -109,25 +122,25 @@ viewNodeDoc_ tid data edit hasBeenPushed =
 
         --
         blobTypeEdit =
-            edit
-                |> Maybe.map (\e -> ternary e.isBlobEdit e.form.blob_type Nothing)
+            tdata
+                |> Maybe.map (\e -> ternary e.data.isBlobEdit e.form.blob_type Nothing)
                 |> withDefault Nothing
 
         isLinksHidden =
             if node.type_ == Just NodeType.Circle && data.source == TensionBaseUri then
-                hasBeenPushed
+                data.hasBeenPushed
 
             else
                 False
 
         isLoading =
-            edit
+            tdata
                 |> Maybe.map (\e -> e.result == LoadingSlowly)
                 |> withDefault False
     in
     div [ classList [ ( "is-lazy", data.isLazy ) ] ]
         [ if blobTypeEdit == Just BlobType.OnAbout then
-            edit
+            tdata
                 |> Maybe.map
                     (\e ->
                         let
@@ -135,7 +148,7 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                                 node.name /= e.form.node.name || node.about /= e.form.node.about
                         in
                         div []
-                            [ nodeAboutInputView e.form.node e.changeNode txt.name_help txt.about_help
+                            [ nodeAboutInputView e.form.node e.onChangeNode txt.name_help txt.about_help
                             , blobButtonsView e isSendable isLoading
                             ]
                     )
@@ -153,13 +166,14 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                             , span [ class "content nodeName" ] [ text "\u{00A0}", text " ", text (node.name |> withDefault "") ]
                             ]
                         ]
-                    , case data.source of
-                        OverviewBaseUri ->
+                    , case data.toolbar of
+                        -- From OverviewBaseUri: show toolbar that is links to the tension id.
+                        Just tb ->
                             div [ class "column is-3 buttonsToolbar" ]
-                                [ viewTensionToolbar data.focus tid Nothing ]
+                                [ tb ]
 
-                        _ ->
-                            div [ class "column buttonEdit" ] [ doEditView edit BlobType.OnAbout ]
+                        Nothing ->
+                            div [ class "column buttonEdit" ] [ doEditView tdata BlobType.OnAbout ]
                     ]
                 , case node.about of
                     Just ab ->
@@ -170,7 +184,7 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                 ]
         , hr [ class "has-background-grey-light" ] []
         , if blobTypeEdit == Just BlobType.OnFirstLink then
-            edit
+            tdata
                 |> Maybe.map
                     (\e ->
                         let
@@ -178,7 +192,7 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                                 node.first_link /= e.form.node.first_link || node.role_type /= e.form.node.role_type
                         in
                         div []
-                            [ nodeLinksInputView e.form.node e.changeNode txt.firstLink_help
+                            [ nodeLinksInputView e.form.node e.onChangeNode txt.firstLink_help
                             , blobButtonsView e isSendable isLoading
                             ]
                     )
@@ -201,7 +215,7 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                                 span [] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri l) ] [ getAvatar l ] ]
                             )
                         |> span [ attribute "style" "margin-left:20px;" ]
-                    , doEditView edit BlobType.OnFirstLink
+                    , doEditView tdata BlobType.OnFirstLink
                     ]
                 , if List.length links == 0 then
                     span [ class "is-italic" ] [ text T.noFirstLinks ]
@@ -211,15 +225,15 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                 ]
         , ternary isLinksHidden (div [] []) (hr [ class "has-background-grey-light" ] [])
         , if blobTypeEdit == Just BlobType.OnMandate then
-            edit
+            tdata
                 |> Maybe.map
                     (\e ->
                         let
                             isSendable =
                                 node.mandate /= e.form.node.mandate
                         in
-                        div []
-                            [ nodeMandateInputView e.form.node e.changeNode txt
+                        div [ class "mandateEdit" ]
+                            [ nodeMandateInputView e.form.node e.onChangeNode txt
                             , blobButtonsView e isSendable isLoading
                             ]
                     )
@@ -230,7 +244,7 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                 Just mandate ->
                     div [ class "mandateDoc" ]
                         [ div [ class "subtitle is-5" ]
-                            [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, doEditView edit BlobType.OnMandate ]
+                            [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, doEditView tdata BlobType.OnMandate ]
                         , viewMandateSection T.purposeH (Just mandate.purpose)
                         , viewMandateSection T.responsabilitiesH mandate.responsabilities
                         , viewMandateSection T.domainsH mandate.domains
@@ -240,9 +254,13 @@ viewNodeDoc_ tid data edit hasBeenPushed =
                 Nothing ->
                     div [ class "is-italic" ]
                         [ text "No mandate for this circle."
-                        , doEditView edit BlobType.OnMandate
+                        , doEditView tdata BlobType.OnMandate
                         ]
         ]
+
+
+
+---- Template view
 
 
 viewMandateSection : String -> Maybe String -> Html msg
@@ -258,9 +276,190 @@ viewMandateSection name maybePara =
             div [] []
 
 
-blobButtonsView edit isSendable isLoading =
+
+-- Input view
+
+
+nodeAboutInputView : NodeFragment -> (String -> String -> msg) -> String -> String -> Html msg
+nodeAboutInputView node changePostMsg nameHelpText aboutHelpText =
+    div [ class "field" ]
+        [ div [ class "field " ]
+            [ div [ class "control" ]
+                [ input
+                    [ class "input autofocus followFocus"
+                    , attribute "data-nextfocus" "aboutField"
+                    , type_ "text"
+                    , placeholder "Name*"
+                    , value (node.name |> withDefault "")
+                    , onInput <| changePostMsg "name"
+                    , required True
+                    ]
+                    []
+                ]
+            , p [ class "help-label" ] [ text nameHelpText ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "control" ]
+                [ input
+                    [ id "aboutField"
+                    , class "input followFocus"
+                    , attribute "data-nextfocus" "textAreaModal"
+                    , type_ "text"
+                    , placeholder "About"
+                    , value (node.about |> withDefault "")
+                    , onInput <| changePostMsg "about"
+                    ]
+                    []
+                ]
+            , p [ class "help-label" ] [ text aboutHelpText ]
+            , br [] []
+            ]
+        ]
+
+
+nodeLinksInputView : NodeFragment -> (String -> String -> msg) -> String -> Html msg
+nodeLinksInputView node changePostMsg firstLink_help =
+    let
+        nodeType =
+            node.type_ |> withDefault NodeType.Role
+
+        roleType =
+            node.role_type |> withDefault RoleType.Peer
+
+        firstLinks =
+            getFirstLinks node
+    in
     div []
-        [ case edit.result of
+        (List.indexedMap
+            (\i uname ->
+                div [ class "field is-horizontal" ]
+                    [ div [ class "field-label is-small has-text-grey-darker control" ]
+                        [ case nodeType of
+                            NodeType.Circle ->
+                                let
+                                    r =
+                                        RoleType.Coordinator
+                                in
+                                div [ class ("select is-" ++ roleColor r) ]
+                                    [ select
+                                        [ class "has-text-dark" --, onInput <| sd.changePostMsg "role_type"
+                                        ]
+                                        [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
+                                    ]
+
+                            NodeType.Role ->
+                                div [ class ("select is-" ++ roleColor roleType) ]
+                                    [ RoleType.list
+                                        |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
+                                        |> List.map
+                                            (\r ->
+                                                option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                            )
+                                        |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                    ]
+                        ]
+                    , div [ class "field-body control" ]
+                        [ input
+                            [ class "input is-small"
+                            , type_ "text"
+                            , value ("@" ++ uname)
+                            , onInput <| changePostMsg "first_link"
+                            ]
+                            []
+                        ]
+                    ]
+            )
+            firstLinks
+            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text firstLink_help ] ]
+        )
+
+
+nodeMandateInputView : NodeFragment -> (String -> String -> msg) -> NewNodeText -> Html msg
+nodeMandateInputView node changePostMsg txt =
+    div [ class "field" ]
+        [ div [ class "field" ]
+            [ div [ class "label" ] [ text T.purposeH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ id "textAreaModal"
+                    , class "textarea"
+                    , rows 5
+                    , placeholder (txt.ph_purpose ++ "*")
+                    , value (node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
+                    , onInput <| changePostMsg "purpose"
+                    , required True
+                    ]
+                    []
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.responsabilitiesH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 5
+                    , placeholder txt.ph_responsabilities
+                    , value (node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
+                    , onInput <| changePostMsg "responsabilities"
+                    ]
+                    []
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.domainsH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 5
+                    , placeholder txt.ph_domains
+                    , value (node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
+                    , onInput <| changePostMsg "domains"
+                    ]
+                    []
+                ]
+            ]
+        , div [ class "field" ]
+            [ div [ class "label" ] [ text T.policiesH ]
+            , div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 5
+                    , placeholder txt.ph_policies
+                    , value (node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
+                    , onInput <| changePostMsg "policies"
+                    ]
+                    []
+                ]
+            ]
+        ]
+
+
+
+---- Components view
+
+
+doEditView : Maybe (TensionNodeData msg) -> BlobType.BlobType -> Html msg
+doEditView tdata btype =
+    case tdata of
+        Just doEdit ->
+            if doEdit.data.isBlobEdit && Just btype == doEdit.form.blob_type then
+                span [] []
+
+            else
+                span
+                    [ class "button has-text-weight-normal is-pulled-right is-small"
+                    , onClick (doEdit.onBlobEdit btype)
+                    ]
+                    [ Fa.icon0 "fas fa-pen" "" ]
+
+        Nothing ->
+            span [] []
+
+
+blobButtonsView : TensionNodeData msg -> Bool -> Bool -> Html msg
+blobButtonsView tdata isSendable isLoading =
+    div []
+        [ case tdata.result of
             Failure err ->
                 viewGqlErrors err
 
@@ -271,14 +470,14 @@ blobButtonsView edit isSendable isLoading =
                 [ div [ class "buttons" ]
                     [ button
                         [ class "button has-text-weight-semibold is-danger"
-                        , onClick edit.cancel
+                        , onClick tdata.onCancelBlob
                         ]
                         [ text T.cancel ]
                     , button
                         [ class "button has-text-weight-semibold"
                         , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
-                        , onClick (edit.submit <| edit.submitBlob edit.form False)
+                        , onClick (tdata.onSubmit <| tdata.onSubmitBlob False)
                         ]
                         [ text T.saveChanges ]
                     ]
@@ -287,51 +486,29 @@ blobButtonsView edit isSendable isLoading =
         ]
 
 
-viewTensionToolbar : NodeFocus -> String -> Maybe ActionView -> Html msg
-viewTensionToolbar focus tid actionView =
-    div
-        [ class "field has-addons" ]
-        [ p
-            [ class "control tooltip"
-            , attribute "data-tooltip" T.view
-            ]
-            [ a
-                [ class "button is-small is-rounded"
-                , classList [ ( "is-active", actionView == Just DocView ) ]
-                , href
-                    (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref)
-                ]
-                [ Fa.icon0 "fas fa-eye" "" ]
-            ]
-        , p
-            [ class "control tooltip"
-            , attribute "data-tooltip" T.edit
-            ]
-            [ a
-                [ class "button is-small is-rounded"
-                , classList [ ( "is-active", actionView == Just DocEdit ) ]
-                , href
-                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref) ++ "?v=edit")
-                ]
-                [ Fa.icon0 "fas fa-pen" "" ]
-            ]
-        , p
-            [ class "control tooltip"
-            , attribute "data-tooltip" T.versions
-            ]
-            [ a
-                [ class "button is-small is-rounded"
-                , classList [ ( "is-active", actionView == Just DocVersion ) ]
-                , href
-                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
-                ]
-                [ Fa.icon0 "fas fa-history" "" ]
-            ]
-        ]
-
-
 
 --- Utils
+
+
+getFirstLinks : NodeFragment -> List String
+getFirstLinks node =
+    let
+        fs =
+            case node.type_ |> withDefault NodeType.Role of
+                NodeType.Role ->
+                    node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+
+                NodeType.Circle ->
+                    case node.children of
+                        Just children ->
+                            children
+                                |> List.map (\c -> c.first_link)
+                                |> List.filterMap identity
+
+                        Nothing ->
+                            node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+    in
+    ternary (fs == []) [ "" ] fs
 
 
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List NodeId -> NodesData -> NodeFragment

@@ -180,6 +180,11 @@ n_comments =
     Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
 
 
+n_blobs : SelectionSet (Maybe Int) Fractal.Object.Tension
+n_blobs =
+    Object.selectionForField "(Maybe Int)" "n_blobs" [] (Decode.int |> Decode.nullable)
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Tension
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)

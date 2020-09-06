@@ -100,7 +100,6 @@ tensionHeadPayload =
         |> with (Fractal.Object.Tension.emitter identity emmiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emmiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
-        |> with Fractal.Object.Tension.n_comments
         |> with Fractal.Object.Tension.status
         |> with
             (Fractal.Object.Tension.blobs
@@ -134,6 +133,7 @@ tensionHeadPayload =
 tensionBlobsPayload : SelectionSet TensionBlobs Fractal.Object.Tension
 tensionBlobsPayload =
     SelectionSet.succeed TensionBlobs
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with
             (Fractal.Object.Tension.blobs
                 (\args ->
@@ -147,16 +147,19 @@ tensionBlobsPayload =
                 )
                 blobPayload
             )
+        |> with Fractal.Object.Tension.n_blobs
 
 
 tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension
 tensionCommentsPayload =
     SelectionSet.succeed TensionComments
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with
             (Fractal.Object.Tension.comments
                 (\args -> { args | first = Present nCommentPerTension })
                 commentPayload
             )
+        |> with Fractal.Object.Tension.n_comments
 
 
 emmiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
@@ -191,7 +194,7 @@ blobPayload =
         |> with Fractal.Object.Blob.blob_type
         |> with (Fractal.Object.Blob.node identity nodeFragmentPayload)
         |> with Fractal.Object.Blob.md
-        |> with Fractal.Object.Blob.pushedFlag
+        |> with (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
 
 
 eventPayload : SelectionSet Event Fractal.Object.Event

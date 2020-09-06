@@ -33,6 +33,11 @@ versions =
     "Versions"
 
 
+revisions : String
+revisions =
+    "Revisions"
+
+
 history : String
 history =
     "History"
@@ -46,6 +51,16 @@ edit =
 cancel : String
 cancel =
     "Cancel"
+
+
+publish : String
+publish =
+    "Publish"
+
+
+publishedThe : String
+publishedThe =
+    "published the"
 
 
 by : String
@@ -370,22 +385,12 @@ circleEdited =
 
 tensionCircleAdded : String
 tensionCircleAdded =
-    "Tension added (new Circle)."
+    "Tension added for Circle (not published)."
 
 
 tensionRoleAdded : String
 tensionRoleAdded =
-    "Tension added (new Role)."
-
-
-tensionRoleEdit : String
-tensionRoleEdit =
-    "Tension added (Role edit)."
-
-
-tensionCircleEdit : String
-tensionCircleEdit =
-    "Tension added (Circle edit)."
+    "Tension added for Role (not published)."
 
 
 tensionSubmit : String

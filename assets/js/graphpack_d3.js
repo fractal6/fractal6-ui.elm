@@ -6,6 +6,12 @@ import { easePolyOut, easePolyInOut } from 'd3-ease'
 import { hierarchy, pack } from 'd3-hierarchy'
 import { shadeColor, setpixelated } from './custom.js'
 
+(function() {
+    var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+        window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+    window.requestAnimationFrame = requestAnimationFrame;
+})();
+
 
 const d3 = Object.assign(
 	{},
@@ -117,7 +123,7 @@ export const GraphPack = {
     coordinatorRoleColor: "#ffdaa1", // ~orange
     peerRoleColor: "#edf5ff",// "#f0fff0", // "#FFFFF9"
     guestColor: "#f4fdf5", // ~yellow
-    focusCircleColor: "#375a7fdd", // blue>"#368ed3"
+    focusCircleColor: "#4a79ac", // blue>"#368ed3"
     hoverCircleColor: "#3f3f3fdd", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 2,
     focusCircleWidth: 2*2.5, // warning, can break stroke with canvas drawing.
@@ -143,6 +149,7 @@ export const GraphPack = {
     fontstyleCircle: "Arial",
 
     // Graph fx settings
+    isLoading: true,
     minZoomDuration: 500, // 1250
     zoomFactorCircle: 2.02,
     zoomFactorRole: 3,
@@ -262,8 +269,10 @@ export const GraphPack = {
         // Size Canvas
         this.$canvas.width = this.width;
         this.$canvas.height = this.height;
-        this.$hiddenCanvas.width = this.width;
-        this.$hiddenCanvas.height = this.height;
+        if (this.$hiddenCanvas) {
+            this.$hiddenCanvas.width = this.width;
+            this.$hiddenCanvas.height = this.height;
+        }
 
         // Size Element next to the canvas
         this.$nextToChart.style.minHeight = 1.5*this.height+"px";
@@ -904,6 +913,125 @@ export const GraphPack = {
         }
     },
 
+    init_canvas() {
+        this.$canvas = document.getElementById(this.canvasId);
+        this.$canvasParent = document.getElementById(this.canvasParentId);
+        this.$nextToChart = document.getElementById('nextToChart')
+        if (!this.$canvas) return
+
+        this.$canvas.classList.remove("is-invisible");
+        this.ctx2d = this.$canvas.getContext("2d");
+
+        this.$nextToChart.style.display = "flex";
+        this.$nextToChart.style.flexDirection = "column";
+        //this.$nextToChart.style.overflowY = "auto";
+
+        this.sizeDom();
+        this.clearCanvas(this.ctx2d);
+
+        // Not ready
+        //this.loading()
+        setTimeout(() => this.drawStargate(0, 1), 10);
+    },
+
+    drawStargate(radius, down) {
+        // sleep time expects milliseconds
+        function sleep (time) {
+            return new Promise((resolve) => setTimeout(resolve, time));
+        }
+
+        if (radius > 33) {
+            down = -1
+        } else if (radius <= 0) {
+            down = 1
+        }
+
+        var ctx = this.ctx2d;
+        var canvas = this.$canvas;
+
+        // First
+        var x = canvas.width / 2;
+        var y = canvas.height / 2;
+        var r = canvas.height/2.1 ;
+
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = this.hoverCircleColor;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 3;
+        ctx.shadowColor = '#656565';
+        //ctx.fillStyle = this.colorCircle(0);
+        ctx.fillStyle = shadeColor(this.colorCircle(0), -radius)+"55";
+
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 2*Math.PI, false);
+        //ctx.stroke();
+        ctx.fill();
+
+        //// Second
+        //var x = canvas.width / 2;
+        //var y = canvas.height / 2;
+        //var r = canvas.height/2.1 - canvas.height/2.1/20 * radius  ;
+
+        //ctx.lineWidth = 10;
+        //ctx.strokeStyle = this.hoverCircleColor;
+        //ctx.shadowOffsetX = 0;
+        //ctx.shadowOffsetY = 0;
+        //ctx.shadowBlur = 3;
+        //ctx.shadowColor = '#656565';
+        //ctx.fillStyle = this.colorCircle(1);
+
+        //ctx.beginPath();
+        //ctx.arc(x, y, r, 0, 2*Math.PI, false);
+        //ctx.stroke();
+        //ctx.fill();
+        sleep(100).then(() => {
+            if (this.isLoading) {
+                this.clearCanvas(this.ctx2d);
+                this.drawStargate(radius+down*4, down);
+            }
+        });
+    },
+
+    loading() {
+        var r = this.$canvas.getBoundingClientRect();
+
+        var canvas = this.$canvas;
+		var ctx = this.ctx2d;
+		var x = canvas.width / 2;
+		var y = canvas.height / 2;
+		var radius = canvas.height/2.1;
+
+		ctx.lineWidth = 10;
+		ctx.strokeStyle = this.hoverCircleColor;
+		ctx.shadowOffsetX = 0;
+		ctx.shadowOffsetY = 0;
+		ctx.shadowBlur = 3;
+		ctx.shadowColor = '#656565';
+
+        var isLoading = this.isLoading;
+		function animate(r) {
+			ctx.beginPath();
+			ctx.arc(x, y, r, 0, 2*Math.PI, false);
+			ctx.stroke();
+			r--;
+            // @Debug, can't we stopt it !?
+            //console.log(r)
+            if (r <= 0) {
+                r = canvas.height/2.1;
+            }
+            if (isLoading) {
+                requestAnimationFrame(function () {
+                    animate(radius)
+                });
+            }
+        }
+
+        if (isLoading) {
+            animate();
+        }
+    },
+
     // Init the canvas and draw the graph
     init(app, data, isInit) {
         var dataNodes = data.data;
@@ -923,11 +1051,6 @@ export const GraphPack = {
         //
 
         // Create the visible canvas and context
-        //var canvas = d3.select("#"+this.canvasParentId).append("canvas")
-        //    .attr("id", this.canvasId)
-        //    .attr("width", this.width)
-        //    .attr("height", this.height);
-        //this.$canvas = canvas.node();
         this.$canvas = document.getElementById(this.canvasId);
         this.$canvas.classList.remove("is-invisible");
         this.ctx2d = this.$canvas.getContext("2d");
@@ -1076,7 +1199,8 @@ export const GraphPack = {
         //////////////////////////////////////////////////////////////
 
         console.log("Orga Canvas Initalization");
-        this.drawCanvas(true); // to add node.ctx
+        this.isLoading = false;
+		this.drawCanvas(true); // to add node.ctx
 
         //
         // Event listeners

@@ -3,8 +3,8 @@ module Query.AddNode exposing
     , addOneCircle
     )
 
+import Components.NodeDoc exposing (getFirstLinks)
 import Dict exposing (Dict)
-import Form.NewCircle exposing (getFirstLinks)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType

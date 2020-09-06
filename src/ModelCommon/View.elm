@@ -103,7 +103,12 @@ mediaTension baseUri focus tension navigate =
             , span [ class "columns is-variable is-mobile" ]
                 [ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
                 , span [ class "column" ]
-                    [ viewActionIcon tension.action
+                    [ case tension.action of
+                        Just action ->
+                            viewActionIconLink action focus.rootnameid tension.id ""
+
+                        Nothing ->
+                            span [] []
                     , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
                     ]
                 ]
@@ -307,7 +312,7 @@ actionNameStr action =
 blobTypeStr : BlobType.BlobType -> String
 blobTypeStr btype =
     case btype of
-        BlobType.InitBlob ->
+        BlobType.OnNode ->
             "Document created"
 
         BlobType.OnAbout ->
@@ -323,36 +328,39 @@ blobTypeStr btype =
             "File edited"
 
 
-viewActionIcon : Maybe TensionAction.TensionAction -> Html msg
-viewActionIcon action =
-    span
-        [ class "stackPen icon-padding tooltip"
-        , attribute "data-tooltip" ("1 " ++ actionNameStr (withDefault TensionAction.NewRole action) ++ " attached")
+viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> Html msg
+viewActionIconLink action org tid words =
+    a
+        [ class "actionLink"
+        , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
         ]
-    <|
-        case action of
-            Just TensionAction.NewCircle ->
-                [ Fa.fa "far fa-circle" ]
+        [ span
+            [ class "stackPen icon-padding tooltip"
+            , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
+            ]
+            (case action of
+                TensionAction.NewCircle ->
+                    [ Fa.fa "far fa-circle" ]
 
-            Just TensionAction.NewRole ->
-                [ Fa.fa "fas fa-circle" ]
+                TensionAction.NewRole ->
+                    [ Fa.fa "fas fa-circle" ]
 
-            Just TensionAction.EditCircle ->
-                [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                    [ i [ class "fas fa-pen fa-stack-1x" ] []
-                    , i [ class "far fa-circle fa-stack-2x" ] []
+                TensionAction.EditCircle ->
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                        , i [ class "far fa-circle fa-stack-2x" ] []
+                        ]
                     ]
-                ]
 
-            Just TensionAction.EditRole ->
-                [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                    [ i [ class "fas fa-pen fa-stack-1x" ] []
-                    , i [ class "far fa-circle fa-stack-2x" ] []
+                TensionAction.EditRole ->
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                        , i [ class "far fa-circle fa-stack-2x" ] []
+                        ]
                     ]
-                ]
-
-            Nothing ->
-                []
+            )
+        , text words
+        ]
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String
@@ -383,12 +391,12 @@ getTensionText =
 
 getRoleEdit : NewNodeText
 getRoleEdit =
-    NewNodeText T.editRole T.roleEdited T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.editAndClose T.firstLinkRoleMessageHelp T.tensionRoleEdit
+    NewNodeText T.editRole T.roleEdited T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.editAndClose T.firstLinkRoleMessageHelp ""
 
 
 getCircleEdit : NewNodeText
 getCircleEdit =
-    NewNodeText T.editCircle T.circleEdited T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.editAndClose T.firstLinkCircleMessageHelp T.tensionCircleEdit
+    NewNodeText T.editCircle T.circleEdited T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.editAndClose T.firstLinkCircleMessageHelp ""
 
 
 getNodeTextFromNodeType : NodeType.NodeType -> NewNodeText

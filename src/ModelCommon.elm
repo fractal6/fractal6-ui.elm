@@ -120,6 +120,7 @@ type alias TensionForm =
     , source : UserRole
     , target : Node
     , targetData : NodeData
+    , status : TensionStatus.TensionStatus
     , tension_type : TensionType.TensionType
     , action : Maybe TensionAction.TensionAction
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc

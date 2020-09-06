@@ -1,7 +1,7 @@
 module Query.PatchTension exposing
-    ( PatchTensionPayloadID
-    , patchComment
+    ( patchComment
     , patchTitle
+    , publishBlob
     , pushTensionPatch
     )
 
@@ -44,12 +44,6 @@ type alias PatchTensionPayload =
     { tension : Maybe (List (Maybe PatchTensionPayloadID)) }
 
 
-type alias PatchTensionPayloadID =
-    { comments : Maybe (List Comment)
-    , blobs : Maybe (List Blob)
-    }
-
-
 tensionPushDecoder : Maybe PatchTensionPayload -> Maybe PatchTensionPayloadID
 tensionPushDecoder data =
     case data of
@@ -69,7 +63,7 @@ tensionPushDecoder data =
 pushTensionPatch url form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (pushTensionCommentInputEncoder form)
+            (patchTensionInputEncoder form)
             (SelectionSet.map PatchTensionPayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     (SelectionSet.succeed PatchTensionPayloadID
@@ -113,8 +107,8 @@ pushBlobFilter f a =
     }
 
 
-pushTensionCommentInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
-pushTensionCommentInputEncoder f =
+patchTensionInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
+patchTensionInputEncoder f =
     --@Debug: receiver and receiverid
     let
         createdAt =
@@ -165,6 +159,91 @@ pushTensionCommentInputEncoder f =
 
 
 {-
+   Publish Blob
+-}
+
+
+type alias TensionPayloadID =
+    { tension : Maybe (List (Maybe IdPayload)) }
+
+
+publishBlobDecoder : Maybe TensionPayloadID -> Maybe IdPayload
+publishBlobDecoder data =
+    case data of
+        Just d ->
+            d.tension
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+                |> Maybe.map
+                    (\t ->
+                        { id = t.id }
+                    )
+
+        Nothing ->
+            Nothing
+
+
+publishBlob url form msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (publishBlobInputEncoder form)
+            (SelectionSet.map TensionPayloadID <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    SelectionSet.map IdPayload (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse publishBlobDecoder >> msg)
+
+
+publishBlobInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
+publishBlobInputEncoder f =
+    --@Debug: receiver and receiverid
+    let
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        blobid =
+            Dict.get "blobid" f.post |> withDefault ""
+
+        inputReq =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId f.id ] }
+                    )
+            }
+
+        inputOpt =
+            \x ->
+                { set =
+                    Input.buildTensionPatch
+                        (\s ->
+                            { s
+                                | blobs =
+                                    [ Input.buildBlobRef
+                                        (\b ->
+                                            { b | id = Present (encodeId blobid), pushedFlag = createdAt |> Fractal.Scalar.DateTime |> Present }
+                                        )
+                                    ]
+                                        |> Present
+                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input =
+        Input.buildUpdateTensionInput inputReq inputOpt
+    }
+
+
+
+{-
    Update a tension title
 -}
 
@@ -197,7 +276,7 @@ titlePatchDecoder data =
 patchTitle url form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (pushTensionCommentInputEncoder form)
+            (patchTensionInputEncoder form)
             (SelectionSet.map PatchTitlePayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map TensionTitle Fractal.Object.Tension.title

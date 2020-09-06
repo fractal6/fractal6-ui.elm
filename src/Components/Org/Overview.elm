@@ -3,17 +3,17 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
+import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
-import Components.HelperBar as HelperBar
+import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
-import Components.Node exposing (nodeFragmentFromOrga, updateNodeForm, viewNodeDoc)
+import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga, updateNodeForm)
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMaybeData, withStateString)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
-import Form.EditCircle
 import Form.NewCircle
 import Form.NewTension
 import Fractal.Enum.BlobType as BlobType
@@ -87,6 +87,7 @@ type alias Model =
     , isModalActive : Bool
     , modalAuth : ModalAuth
     , node_quickSearch : NodesQuickSearch
+    , helperBar : HelperBar
     }
 
 
@@ -165,14 +166,16 @@ type Msg
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
       -- Common
     | Navigate String
-    | ChangeInputViewMode InputViewMode
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
     | SubmitUser UserForm
     | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int
+    | SubmitKeyDown Int -- Detect Enter (for form sending)
+    | ChangeInputViewMode InputViewMode
+    | ExpandRoles
+    | CollapseRoles
 
 
 
@@ -235,11 +238,13 @@ init global flags =
             , node_action = session.node_action |> withDefault NoOp
             , isModalActive = False
             , modalAuth = Inactive
+            , helperBar = HelperBar.create
             }
 
         cmds =
             if fs.orgChange || isInit then
                 [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                , Ports.initGraphPack Dict.empty "" -- canvas loading effet
                 , queryCircleTension apis.gql newFocus.nameid GotTensions
                 , queryNodeData apis.gql newFocus.nameid GotData
                 ]
@@ -252,7 +257,9 @@ init global flags =
                             case session.orga_data of
                                 Just ndata ->
                                     --[ Ports.initGraphPack ndata model.node_focus.nameid ]
-                                    [ queryGraphPack apis.gql newFocus.rootnameid GotOrga ]
+                                    [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                                    , Ports.initGraphPack Dict.empty ""
+                                    ]
 
                                 Nothing ->
                                     []
@@ -263,6 +270,7 @@ init global flags =
 
             else if fs.refresh then
                 [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                , Ports.initGraphPack Dict.empty "" --canvas loading effect
                 , queryCircleTension apis.gql newFocus.nameid GotTensions
                 , queryNodeData apis.gql newFocus.nameid GotData
                 ]
@@ -479,6 +487,7 @@ update global msg model =
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
                     , targetData = model.node_data |> withDefaultData initNodeData
+                    , status = TensionStatus.Open
                     , tension_type = TensionType.Governance
                     , action = Nothing
                     , post = Dict.empty
@@ -547,7 +556,7 @@ update global msg model =
                 na =
                     case model.node_action of
                         AddTension step ->
-                            AddTension (TensionFinal form LoadingSlowly)
+                            AddTension (TensionFinal newForm LoadingSlowly)
 
                         other ->
                             other
@@ -555,7 +564,27 @@ update global msg model =
             ( { model | node_action = na }, addOneTension apis.gql newForm TensionAck, Cmd.none )
 
         TensionAck result ->
-            case model.node_action of
+            let
+                -- Redirect Success new node* tension to then AddTension pipeline
+                -- @Debug: Make the form (and the result) accessible from the model (as for the Tension page,
+                --         in order to avoid doing several "switch/case" to get the form ?
+                node_action =
+                    if withMaybeData result /= Nothing then
+                        case model.node_action of
+                            AddCircle (NodeFinal form _) ->
+                                if form.status == TensionStatus.Open then
+                                    AddTension (TensionFinal form result)
+
+                                else
+                                    model.node_action
+
+                            _ ->
+                                model.node_action
+
+                    else
+                        model.node_action
+            in
+            case node_action of
                 AddTension (TensionFinal form _) ->
                     case result of
                         Success t ->
@@ -632,11 +661,12 @@ update global msg model =
                     , source = UserRole "" "" "" RoleType.Guest
                     , target = node
                     , targetData = model.node_data |> withDefaultData initNodeData
+                    , status = TensionStatus.Open
                     , tension_type = TensionType.Governance
                     , post = Dict.empty
                     , action = Just action
                     , events_type = Nothing
-                    , blob_type = Just BlobType.InitBlob
+                    , blob_type = Just BlobType.OnNode
                     , node = initNodeFragmentCircle nodeType (ternary (nodeType == NodeType.Role) (Just RoleType.Peer) Nothing)
                     , asked = NewNode
                     }
@@ -706,7 +736,8 @@ update global msg model =
             let
                 newForm =
                     { form
-                        | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ), ( "status", statusFromDoClose doClose ) ]) form.post
+                        | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ) ]) form.post
+                        , status = ternary (doClose == True) TensionStatus.Closed TensionStatus.Open
                         , events_type =
                             if doClose == True then
                                 Just [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
@@ -718,7 +749,7 @@ update global msg model =
                 na =
                     case model.node_action of
                         AddCircle step ->
-                            AddCircle (NodeFinal form LoadingSlowly)
+                            AddCircle (NodeFinal newForm LoadingSlowly)
 
                         other ->
                             other
@@ -832,13 +863,6 @@ update global msg model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
-        ChangeInputViewMode viewMode ->
-            let
-                subData =
-                    model.subData
-            in
-            ( { model | subData = { subData | viewMode = viewMode } }, Cmd.none, Cmd.none )
-
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
@@ -917,6 +941,19 @@ update global msg model =
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        ChangeInputViewMode viewMode ->
+            let
+                subData =
+                    model.subData
+            in
+            ( { model | subData = { subData | viewMode = viewMode } }, Cmd.none, Cmd.none )
+
+        ExpandRoles ->
+            ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
+
+        CollapseRoles ->
+            ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1021,11 +1058,15 @@ view_ global model =
         tid =
             model.node_data |> withMaybeData |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
 
-        data =
-            withStateString tid model.node_data
-
         nodeData_ =
-            { data = data, node = initNodeFragment, isLazy = model.init_data, source = OverviewBaseUri, focus = model.node_focus }
+            { data = withStateString tid model.node_data
+            , node = initNodeFragment
+            , isLazy = model.init_data
+            , source = OverviewBaseUri
+            , focus = model.node_focus
+            , hasBeenPushed = True
+            , toolbar = Just (DocToolBar.view model.node_focus tid Nothing)
+            }
 
         nodeData =
             case model.orga_data of
@@ -1047,19 +1088,26 @@ view_ global model =
 
                 other ->
                     nodeData_
+
+        helperData =
+            { onJoin = Submit <| DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , user = global.session.user
+            , path_data = model.path_data
+            , baseUri = OverviewBaseUri
+            , data = model.helperBar
+            }
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
-        [ HelperBar.view OverviewBaseUri
-            global.session.user
-            model.path_data
-            (Submit <| DoJoinOrga model.node_focus.rootnameid)
+        [ HelperBar.view helperData
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas model.orga_data
                 , br [] []
-                , viewNodeDoc nodeData Nothing True
+                , NodeDoc.view nodeData Nothing
                 , setupActionModal model
                 ]
             , div [ class "column is-5" ]
@@ -1254,14 +1302,6 @@ viewCanvas odata =
                 , onClick ToggleGraphReverse
                 ]
                 [ Fa.icon0 "fas fa-sort-amount-up" "" ]
-
-            --, div
-            --    [ id "showLabel_cvbtn"
-            --    , class "button buttonToggle tooltip has-tooltip-right"
-            --    , attribute "data-tooltip" "Show/Hide circle tooltips."
-            --    , onClick ToggleTooltips
-            --    ]
-            --    [ Fa.icon0 "fas fa-caret-square-down" "" ]
             ]
         , div
             [ id "nodeTooltip"
@@ -1426,12 +1466,11 @@ viewTensionStep step subData =
             case form.blob_type of
                 Just blob_type ->
                     case blob_type of
-                        BlobType.InitBlob ->
+                        BlobType.OnNode ->
                             Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
 
                         _ ->
-                            -- not implemented
-                            div [] []
+                            div [] [ text "Not implemented" ]
 
                 Nothing ->
                     Form.NewTension.view form result { subData | submitNextMsg = SubmitTension }
@@ -1572,10 +1611,3 @@ getNewNodeStepFromAuthForm form =
 
                                 subRoles2 ->
                                     NodeSource form subRoles2
-
-
-statusFromDoClose : Bool -> String
-statusFromDoClose doClose =
-    ternary (doClose == True)
-        (TensionStatus.toString TensionStatus.Closed)
-        (TensionStatus.toString TensionStatus.Open)

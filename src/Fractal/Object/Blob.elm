@@ -42,6 +42,11 @@ blob_type =
     Object.selectionForField "Enum.BlobType.BlobType" "blob_type" [] Fractal.Enum.BlobType.decoder
 
 
+pushedFlag : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Blob
+pushedFlag =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "pushedFlag" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
 type alias NodeOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
 
@@ -62,11 +67,6 @@ node fillInOptionals object_ =
 md : SelectionSet (Maybe String) Fractal.Object.Blob
 md =
     Object.selectionForField "(Maybe String)" "md" [] (Decode.string |> Decode.nullable)
-
-
-pushedFlag : SelectionSet (Maybe String) Fractal.Object.Blob
-pushedFlag =
-    Object.selectionForField "(Maybe String)" "pushedFlag" [] (Decode.string |> Decode.nullable)
 
 
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Blob

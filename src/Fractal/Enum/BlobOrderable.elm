@@ -11,13 +11,13 @@ type BlobOrderable
     = CreatedAt
     | UpdatedAt
     | Message
-    | Md
     | PushedFlag
+    | Md
 
 
 list : List BlobOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, Md, PushedFlag ]
+    [ CreatedAt, UpdatedAt, Message, PushedFlag, Md ]
 
 
 decoder : Decoder BlobOrderable
@@ -35,11 +35,11 @@ decoder =
                     "message" ->
                         Decode.succeed Message
 
-                    "md" ->
-                        Decode.succeed Md
-
                     "pushedFlag" ->
                         Decode.succeed PushedFlag
+
+                    "md" ->
+                        Decode.succeed Md
 
                     _ ->
                         Decode.fail ("Invalid BlobOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -60,11 +60,11 @@ toString enum =
         Message ->
             "message"
 
-        Md ->
-            "md"
-
         PushedFlag ->
             "pushedFlag"
+
+        Md ->
+            "md"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -90,11 +90,11 @@ fromString enumString =
         "message" ->
             Just Message
 
-        "md" ->
-            Just Md
-
         "pushedFlag" ->
             Just PushedFlag
+
+        "md" ->
+            Just Md
 
         _ ->
             Nothing

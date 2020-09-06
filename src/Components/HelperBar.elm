@@ -1,4 +1,4 @@
-module Components.HelperBar exposing (view)
+module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Components.Fa as Fa
@@ -16,11 +16,42 @@ import ModelSchema exposing (LocalGraph, UserRole)
 import Ports
 
 
-view : FractalBaseRoute -> UserState -> Maybe LocalGraph -> msg -> Html msg
-view baseUri user maybePath joinMsg =
+type HelperBar
+    = Expanded
+    | Collapsed
+
+
+create : HelperBar
+create =
+    Collapsed
+
+
+expand : HelperBar -> HelperBar
+expand hb =
+    Expanded
+
+
+collapse : HelperBar -> HelperBar
+collapse hb =
+    Collapsed
+
+
+type alias HelperBarData msg =
+    { onJoin : msg
+    , onExpand : msg
+    , onCollapse : msg
+    , baseUri : FractalBaseRoute
+    , user : UserState
+    , path_data : Maybe LocalGraph
+    , data : HelperBar
+    }
+
+
+view : HelperBarData msg -> Html msg
+view hb =
     let
         rootnameid =
-            case maybePath of
+            case hb.path_data of
                 Just path ->
                     path.root |> Maybe.map (\r -> r.nameid) |> withDefault ""
 
@@ -28,7 +59,7 @@ view baseUri user maybePath joinMsg =
                     ""
 
         focusid =
-            case maybePath of
+            case hb.path_data of
                 Just path ->
                     path.focus.nameid
 
@@ -39,36 +70,36 @@ view baseUri user maybePath joinMsg =
         [ nav [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
             [ div [ class "columns is-mobile" ]
                 [ div [ class "column is-5" ]
-                    [ viewPath OverviewBaseUri maybePath ]
+                    [ viewPath OverviewBaseUri hb.path_data ]
                 , div [ class "column is-6 is-offset-1" ]
-                    [ case user of
+                    [ case hb.user of
                         LoggedIn uctx ->
-                            case maybePath of
+                            case hb.path_data of
                                 Just path ->
                                     let
                                         roles =
                                             List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
                                     in
                                     if List.length roles > 0 then
-                                        memberButtons OverviewBaseUri roles
+                                        memberButtons roles { hb | baseUri = OverviewBaseUri }
 
                                     else
-                                        joinButton joinMsg
+                                        joinButton hb.onJoin
 
                                 Nothing ->
                                     div [ class "is-pulled-right ph-button-1" ] []
 
                         LoggedOut ->
-                            joinButton joinMsg
+                            joinButton hb.onJoin
                     ]
                 ]
             , div [ class "tabs is-boxed" ]
                 [ ul []
-                    [ li [ classList [ ( "is-active", baseUri == OverviewBaseUri ) ] ]
+                    [ li [ classList [ ( "is-active", hb.baseUri == OverviewBaseUri ) ] ]
                         [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ Fa.icon "fas fa-circle" "Overview" ] ]
-                    , li [ classList [ ( "is-active", baseUri == TensionsBaseUri ) ] ]
+                    , li [ classList [ ( "is-active", hb.baseUri == TensionsBaseUri ) ] ]
                         [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
-                    , li [ classList [ ( "is-active", baseUri == MembersBaseUri ) ] ]
+                    , li [ classList [ ( "is-active", hb.baseUri == MembersBaseUri ) ] ]
                         [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ Fa.icon "fas fa-user" "Members" ] ]
                     ]
                 ]
@@ -119,8 +150,35 @@ joinButton msg =
         [ text "Join this organisation" ]
 
 
-memberButtons : FractalBaseRoute -> List UserRole -> Html msg
-memberButtons baseUri roles =
+memberButtons : List UserRole -> HelperBarData msg -> Html msg
+memberButtons roles_ hb =
+    let
+        roles =
+            case hb.data of
+                Expanded ->
+                    roles_
+
+                Collapsed ->
+                    List.take 10 roles_
+
+        roleMoreLen =
+            List.length roles_ - List.length roles
+
+        lastButton =
+            case hb.data of
+                Expanded ->
+                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ Fa.icon0 "fas fa-angle-left" "" ]
+
+                Collapsed ->
+                    if roleMoreLen > 0 then
+                        div [ class "button has-font-weight-semibold is-small is-primary", onClick hb.onExpand ]
+                            [ text ("+" ++ String.fromInt roleMoreLen)
+                            , Fa.icon0 "fas fa-angle-right icon-padding-left" ""
+                            ]
+
+                    else
+                        div [] []
+    in
     roles
         |> List.indexedMap
             (\i r ->
@@ -131,7 +189,7 @@ memberButtons baseUri roles =
                                 uriFromNameid MembersBaseUri r.rootnameid
 
                             else
-                                uriFromNameid baseUri r.nameid
+                                uriFromNameid hb.baseUri r.nameid
 
                         vBar =
                             if List.length roles == 1 then
@@ -142,7 +200,7 @@ memberButtons baseUri roles =
                     in
                     [ div
                         -- @DEBUG: tooltip get stucked on click !
-                        [ class ("button buttonRole is-hovered is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
+                        [ class ("button buttonRole is-hovered is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                         , href href_
                         ]
@@ -152,12 +210,15 @@ memberButtons baseUri roles =
 
                 else
                     [ a
-                        [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
+                        [ class ("button buttonRole is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                        , href <| uriFromNameid baseUri r.nameid
+                        , href <| uriFromNameid hb.baseUri r.nameid
                         ]
                         [ text r.name ]
                     ]
             )
         |> List.concat
+        |> List.reverse
+        |> List.append [ lastButton ]
+        |> List.reverse
         |> div [ class "buttons is-pulled-right" ]
