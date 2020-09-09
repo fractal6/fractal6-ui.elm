@@ -60,7 +60,7 @@ publish =
 
 publishedThe : String
 publishedThe =
-    "published the"
+    "Published the"
 
 
 by : String
@@ -280,7 +280,7 @@ noExtTensionCircle =
 
 newTension : String
 newTension =
-    "new Tension"
+    "New Tension"
 
 
 newCircle : String
@@ -293,19 +293,9 @@ newRole =
     "New Role"
 
 
-editCircle : String
-editCircle =
-    "Edit Circle"
-
-
-editRole : String
-editRole =
-    "Edit Role"
-
-
 editTitle : String
 editTitle =
-    "Edit Tiltle"
+    "Edit title"
 
 
 tensionTitleHelp : String
@@ -401,16 +391,6 @@ tensionRoleAdded =
 tensionSubmit : String
 tensionSubmit =
     "Submit tension"
-
-
-tensionCircleSubmit : String
-tensionCircleSubmit =
-    tensionSubmit
-
-
-tensionRoleSubmit : String
-tensionRoleSubmit =
-    tensionSubmit
 
 
 editAndClose : String

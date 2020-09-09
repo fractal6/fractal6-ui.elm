@@ -38,7 +38,6 @@ import ModelCommon.View
         ( blobTypeStr
         , byAt
         , getAvatar
-        , getNodeTextFromAction
         , statusColor
         , tensionTypeColor
         , tensionTypeSpan
@@ -1465,6 +1464,7 @@ viewDocVersions blobsData =
                                             Just flag ->
                                                 span
                                                     [ class "level-item tooltip"
+                                                    , attribute "style" "cursor: inherit;"
                                                     , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
                                                     ]
                                                     [ Fa.icon0 "fas fa-flag" "" ]
