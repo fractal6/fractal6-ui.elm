@@ -8,7 +8,7 @@ import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i,
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromUsername)
 import ModelSchema exposing (..)
 
 

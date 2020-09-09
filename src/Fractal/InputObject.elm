@@ -712,9 +712,9 @@ buildBlobFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, message = Absent, blob_type = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, message = Absent, blob_type = Absent, pushedFlag = Absent, and = Absent, or = Absent, not = Absent }
     in
-    BlobFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, blob_type = optionals.blob_type, and = optionals.and, or = optionals.or, not = optionals.not }
+    BlobFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias BlobFilterOptionalFields =
@@ -722,6 +722,7 @@ type alias BlobFilterOptionalFields =
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
     , blob_type : OptionalArgument BlobType_hash
+    , pushedFlag : OptionalArgument DateTimeFilter
     , and : OptionalArgument BlobFilter
     , or : OptionalArgument BlobFilter
     , not : OptionalArgument BlobFilter
@@ -738,6 +739,7 @@ type alias BlobFilterRaw =
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
     , blob_type : OptionalArgument BlobType_hash
+    , pushedFlag : OptionalArgument DateTimeFilter
     , and : OptionalArgument BlobFilter
     , or : OptionalArgument BlobFilter
     , not : OptionalArgument BlobFilter
@@ -755,7 +757,7 @@ type BlobFilter
 encodeBlobFilter : BlobFilter -> Value
 encodeBlobFilter (BlobFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "blob_type", encodeBlobType_hash |> Encode.optional input.blob_type ), ( "and", encodeBlobFilter |> Encode.optional input.and ), ( "or", encodeBlobFilter |> Encode.optional input.or ), ( "not", encodeBlobFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "blob_type", encodeBlobType_hash |> Encode.optional input.blob_type ), ( "pushedFlag", encodeDateTimeFilter |> Encode.optional input.pushedFlag ), ( "and", encodeBlobFilter |> Encode.optional input.and ), ( "or", encodeBlobFilter |> Encode.optional input.or ), ( "not", encodeBlobFilter |> Encode.optional input.not ) ]
 
 
 buildBlobOrder : (BlobOrderOptionalFields -> BlobOrderOptionalFields) -> BlobOrder

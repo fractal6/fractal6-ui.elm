@@ -33,8 +33,8 @@ import Json.Decode as JD
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (login)
-import ModelCommon.Uri exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)

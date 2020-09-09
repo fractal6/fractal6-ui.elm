@@ -17,7 +17,7 @@ import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, UserCtx, Username)
 
 
@@ -276,23 +276,6 @@ roleColor rt =
 -}
 
 
-type alias NewNodeText =
-    { title : String
-    , added : String
-    , name_help : String
-    , about_help : String
-    , message_help : String
-    , ph_purpose : String
-    , ph_responsabilities : String
-    , ph_domains : String
-    , ph_policies : String
-    , submit : String
-    , close_submit : String
-    , firstLink_help : String
-    , tension_added : String
-    }
-
-
 actionNameStr : TensionAction.TensionAction -> String
 actionNameStr action =
     case action of
@@ -307,6 +290,12 @@ actionNameStr action =
 
         TensionAction.EditRole ->
             T.roleH
+
+        TensionAction.NewMd ->
+            T.documentH
+
+        TensionAction.EditMd ->
+            T.documentH
 
 
 blobTypeStr : BlobType.BlobType -> String
@@ -342,9 +331,6 @@ viewActionIconLink action org tid words =
                 TensionAction.NewCircle ->
                     [ Fa.fa "far fa-circle" ]
 
-                TensionAction.NewRole ->
-                    [ Fa.fa "fas fa-circle" ]
-
                 TensionAction.EditCircle ->
                     [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
                         [ i [ class "fas fa-pen fa-stack-1x" ] []
@@ -352,10 +338,23 @@ viewActionIconLink action org tid words =
                         ]
                     ]
 
+                TensionAction.NewRole ->
+                    [ Fa.fa "fas fa-circle" ]
+
                 TensionAction.EditRole ->
                     [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
                         [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "far fa-circle fa-stack-2x" ] []
+                        , i [ class "fas fa-circle fa-stack-2x" ] []
+                        ]
+                    ]
+
+                TensionAction.NewMd ->
+                    [ Fa.fa "fas fa-markdown" ]
+
+                TensionAction.EditMd ->
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                        , i [ class "fas fa-markdown fa-stack-2x" ] []
                         ]
                     ]
             )
@@ -374,52 +373,83 @@ action2SourceStr action_m =
                 TensionAction.NewCircle ->
                     "create this Circle"
 
-                TensionAction.NewRole ->
-                    "create this Role"
-
                 TensionAction.EditCircle ->
                     "edit this circle"
+
+                TensionAction.NewRole ->
+                    "create this Role"
 
                 TensionAction.EditRole ->
                     "edit this role"
 
+                TensionAction.NewMd ->
+                    "create this Document"
 
-getTensionText : NewNodeText
+                TensionAction.EditMd ->
+                    "edit this Document"
+
+
+type alias FormText =
+    { title : String
+    , added : String
+    , name_help : String
+    , about_help : String
+    , message_help : String
+    , ph_purpose : String
+    , ph_responsabilities : String
+    , ph_domains : String
+    , ph_policies : String
+    , submit : String
+    , close_submit : String
+    , firstLink_help : String
+    , tension_added : String
+    }
+
+
+emptyFormText : FormText
+emptyFormText =
+    FormText "" "" "" "" "" "" "" "" "" "" "" "" ""
+
+
+getTensionText : FormText
 getTensionText =
-    NewNodeText T.newTension T.tensionAdded T.tensionTitleHelp "" T.tensionMessageHelp "" "" "" "" T.tensionSubmit "" "" ""
+    FormText T.newTension T.tensionAdded T.tensionTitleHelp "" T.tensionMessageHelp "" "" "" "" T.tensionSubmit "" "" ""
 
 
-getRoleEdit : NewNodeText
+getRoleEdit : FormText
 getRoleEdit =
-    NewNodeText T.editRole T.roleEdited T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.editAndClose T.firstLinkRoleMessageHelp ""
+    FormText T.editRole T.roleEdited T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.editAndClose T.firstLinkRoleMessageHelp ""
 
 
-getCircleEdit : NewNodeText
+getCircleEdit : FormText
 getCircleEdit =
-    NewNodeText T.editCircle T.circleEdited T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.editAndClose T.firstLinkCircleMessageHelp ""
+    FormText T.editCircle T.circleEdited T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionSubmit T.editAndClose T.firstLinkCircleMessageHelp ""
 
 
-getNodeTextFromNodeType : NodeType.NodeType -> NewNodeText
+getNodeTextFromNodeType : NodeType.NodeType -> FormText
 getNodeTextFromNodeType type_ =
     case type_ of
         NodeType.Circle ->
-            NewNodeText T.newCircle T.circleAdded T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit T.firstLinkCircleMessageHelp T.tensionCircleAdded
+            FormText T.newCircle T.circleAdded T.circleNameHelp T.circleAboutHelp T.circleMessageHelp T.phCirclePurpose T.phCircleResponsabilities T.phCircleDomains T.phCirclePolicies T.tensionCircleSubmit T.tensionCircleCloseSubmit T.firstLinkCircleMessageHelp T.tensionCircleAdded
 
         NodeType.Role ->
-            NewNodeText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp T.tensionRoleAdded
+            FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionRoleSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp T.tensionRoleAdded
 
 
-getNodeTextFromAction : TensionAction.TensionAction -> NewNodeText
+getNodeTextFromAction : TensionAction.TensionAction -> FormText
 getNodeTextFromAction action =
     case action of
         TensionAction.NewCircle ->
             getNodeTextFromNodeType NodeType.Circle
 
-        TensionAction.NewRole ->
-            getNodeTextFromNodeType NodeType.Role
-
         TensionAction.EditCircle ->
             getCircleEdit
 
+        TensionAction.NewRole ->
+            getNodeTextFromNodeType NodeType.Role
+
         TensionAction.EditRole ->
             getRoleEdit
+
+        _ ->
+            emptyFormText

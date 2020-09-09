@@ -80,7 +80,7 @@ view form result sd =
                         ]
                     ]
                 , div [ class "modal-card-body" ]
-                    [ nodeAboutInputView form.node sd.changePostMsg txt.name_help txt.about_help
+                    [ nodeAboutInputView form.node False sd.changePostMsg txt.name_help txt.about_help
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]

@@ -31,8 +31,8 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusState, uriFromUsername)
 import ModelCommon.Requests exposing (login)
-import ModelCommon.Uri exposing (FractalBaseRoute(..), NodeFocus, focusState, uriFromUsername)
 import ModelCommon.View
     exposing
         ( blobTypeStr
@@ -110,7 +110,7 @@ type alias Model =
 
     -- Blob Edit Section
     , nodeDoc : NodeDoc
-    , publish_result : GqlData IdPayload
+    , publish_result : GqlData BlobFlag
 
     --
     -- Common
@@ -197,7 +197,7 @@ type Msg
     | SubmitBlob Bool Time.Posix
     | CancelBlob
     | PushBlob String Time.Posix
-    | PushBlobAck (GqlData IdPayload)
+    | PushBlobAck (GqlData BlobFlag)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -465,34 +465,9 @@ update global msg model =
                         Nothing ->
                             []
 
-                action_m =
-                    if List.member TensionEvent.Reopened eventStatus then
-                        withMaybeData model.tension_head
-                            |> Maybe.map
-                                (\th ->
-                                    th.action
-                                        |> Maybe.map
-                                            (\a ->
-                                                case a of
-                                                    TensionAction.NewRole ->
-                                                        TensionAction.EditRole
-
-                                                    TensionAction.NewCircle ->
-                                                        TensionAction.EditCircle
-
-                                                    _ ->
-                                                        a
-                                            )
-                                )
-                            |> withDefault Nothing
-
-                    else
-                        Nothing
-
                 newForm =
                     { form
                         | status = status_m
-                        , action = action_m
                         , events_type = Just (eventComment ++ eventStatus)
                     }
             in
@@ -694,7 +669,11 @@ update global msg model =
             ( { model | nodeDoc = NodeDoc.edit model.nodeDoc, tension_form = newForm }, Cmd.none, Cmd.none )
 
         ChangeBlobNode field value ->
-            ( { model | tension_form = NodeDoc.updateForm field value model.tension_form }, Cmd.none, Cmd.none )
+            let
+                action =
+                    model.tension_head |> withMaybeData |> Maybe.map (\th -> th.action) |> withDefault Nothing
+            in
+            ( { model | tension_form = NodeDoc.updateForm field value action model.tension_form }, Cmd.none, Cmd.none )
 
         ChangeBlobMD value ->
             let
@@ -722,7 +701,7 @@ update global msg model =
         CancelBlob ->
             ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc, tension_form = initTensionForm model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
-        PushBlob blobid time ->
+        PushBlob bid time ->
             let
                 form =
                     model.tension_form
@@ -730,13 +709,53 @@ update global msg model =
                 newForm =
                     { form
                         | events_type = Just [ TensionEvent.BlobPushed ]
-                        , post = Dict.fromList [ ( "createdAt", fromTime time ), ( "blobid", blobid ) ]
+                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                     }
             in
-            ( { model | tension_form = newForm }, publishBlob apis.gql newForm PushBlobAck, Cmd.none )
+            ( { model | tension_form = newForm }, publishBlob apis.gql bid newForm PushBlobAck, Cmd.none )
 
         PushBlobAck result ->
-            ( { model | publish_result = result }, Cmd.none, Cmd.none )
+            case result of
+                Success r ->
+                    case model.tension_head of
+                        Success th ->
+                            let
+                                blobs =
+                                    th.blobs
+                                        |> Maybe.map
+                                            (\bs ->
+                                                let
+                                                    -- @debug r.pushedFlag is empty
+                                                    pushedFlag =
+                                                        Dict.get "createdAt" model.tension_form.post
+                                                in
+                                                bs
+                                                    |> List.head
+                                                    |> Maybe.map
+                                                        (\b -> [ { b | pushedFlag = pushedFlag } ])
+                                            )
+                                        |> withDefault Nothing
+
+                                newTh =
+                                    { th | blobs = blobs }
+
+                                resetForm =
+                                    initTensionForm model.tensionid global.session.user
+                            in
+                            ( { model
+                                | publish_result = result
+                                , tension_head = Success newTh
+                                , tension_form = resetForm
+                              }
+                            , Cmd.none
+                            , send (UpdateSessionTensionHead (Just newTh))
+                            )
+
+                        _ ->
+                            ( { model | publish_result = result }, Cmd.none, Cmd.none )
+
+                other ->
+                    ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1370,6 +1389,7 @@ viewDocument u t b model =
                             , onSubmit = Submit
                             , form = model.tension_form
                             , result = model.tension_patch
+                            , tension = t
                             , data = model.nodeDoc
                             }
                     in
@@ -1447,7 +1467,7 @@ viewDocVersions blobsData =
                                                     [ class "level-item tooltip"
                                                     , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
                                                     ]
-                                                    [ Fa.icon0 "fas fa-tag" "" ]
+                                                    [ Fa.icon0 "fas fa-flag" "" ]
 
                                             Nothing ->
                                                 span [] []

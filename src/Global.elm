@@ -20,8 +20,8 @@ import Generated.Route as Route exposing (Route)
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
+import ModelCommon.Codecs exposing (NodeFocus)
 import ModelCommon.Requests exposing (tokenack)
-import ModelCommon.Uri exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
 import Process

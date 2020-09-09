@@ -10,7 +10,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (LocalGraph, UserRole)
 import Ports

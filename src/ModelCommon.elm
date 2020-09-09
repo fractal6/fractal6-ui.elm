@@ -16,7 +16,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelCommon.Uri as Uri exposing (FractalBaseRoute(..), NodeFocus)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus)
 import ModelSchema exposing (..)
 import QuickSearch as Qsearch
 import Url exposing (Url)

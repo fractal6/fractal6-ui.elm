@@ -202,6 +202,10 @@ type alias Blob =
     }
 
 
+type alias BlobFlag =
+    { pushedFlag : Maybe String }
+
+
 type alias Event =
     { id : String
     , createdAt : String

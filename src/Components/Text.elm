@@ -113,6 +113,11 @@ phQS =
     "Find a Role or Circle"
 
 
+documentH : String
+documentH =
+    "Document"
+
+
 
 --Canvas
 

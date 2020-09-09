@@ -163,11 +163,15 @@ patchTensionInputEncoder f =
 -}
 
 
-type alias TensionPayloadID =
-    { tension : Maybe (List (Maybe IdPayload)) }
+type alias TensionBlobFlagPayload =
+    { tension : Maybe (List (Maybe TensionBlobFlag)) }
 
 
-publishBlobDecoder : Maybe TensionPayloadID -> Maybe IdPayload
+type alias TensionBlobFlag =
+    { blobs : Maybe (List BlobFlag) }
+
+
+publishBlobDecoder : Maybe TensionBlobFlagPayload -> Maybe BlobFlag
 publishBlobDecoder data =
     case data of
         Just d ->
@@ -178,36 +182,52 @@ publishBlobDecoder data =
                     )
                 |> withDefault []
                 |> List.head
+                |> Maybe.map (\t -> t.blobs)
+                |> withDefault Nothing
+                |> withDefault []
+                |> List.head
                 |> Maybe.map
-                    (\t ->
-                        { id = t.id }
+                    (\b ->
+                        { pushedFlag = b.pushedFlag }
                     )
 
         Nothing ->
             Nothing
 
 
-publishBlob url form msg =
+publishBlob url bid form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (publishBlobInputEncoder form)
-            (SelectionSet.map TensionPayloadID <|
+            (publishBlobInputEncoder bid form)
+            (SelectionSet.map TensionBlobFlagPayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map IdPayload (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    SelectionSet.map TensionBlobFlag
+                        (Fractal.Object.Tension.blobs (bidFilter bid) <|
+                            SelectionSet.map BlobFlag (Fractal.Object.Blob.pushedFlag |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+                        )
             )
         )
         (RemoteData.fromResult >> decodeResponse publishBlobDecoder >> msg)
 
 
-publishBlobInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
-publishBlobInputEncoder f =
+bidFilter : String -> Fractal.Object.Tension.BlobsOptionalArguments -> Fractal.Object.Tension.BlobsOptionalArguments
+bidFilter bid a =
+    { a
+        | filter =
+            Input.buildBlobFilter
+                (\f ->
+                    { f | id = Present [ encodeId bid ] }
+                )
+                |> Present
+    }
+
+
+publishBlobInputEncoder : String -> TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
+publishBlobInputEncoder bid f =
     --@Debug: receiver and receiverid
     let
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
-
-        blobid =
-            Dict.get "blobid" f.post |> withDefault ""
 
         inputReq =
             { filter =
@@ -226,7 +246,9 @@ publishBlobInputEncoder f =
                                 | blobs =
                                     [ Input.buildBlobRef
                                         (\b ->
-                                            { b | id = Present (encodeId blobid), pushedFlag = createdAt |> Fractal.Scalar.DateTime |> Present }
+                                            --@debug: check if directive alter_RO works and if deep update works with dgraph
+                                            --{ b | id = Present (encodeId bid), pushedFlag = createdAt |> Fractal.Scalar.DateTime |> Present }
+                                            { b | id = Present (encodeId bid) }
                                         )
                                     ]
                                         |> Present

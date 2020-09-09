@@ -1,7 +1,8 @@
-module ModelCommon.Uri exposing (..)
+module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
 import Url exposing (Url)
@@ -124,6 +125,33 @@ uriFromUsername loc username =
         |> String.join "/"
 
 
+nameidFromFlags : Flags_ -> String
+nameidFromFlags flags =
+    let
+        rootnameid =
+            flags.param1
+                |> Url.percentDecode
+                |> withDefault ""
+
+        focusFragment =
+            String.join "#"
+                [ flags.param2
+                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
+                    |> withDefault ""
+                , flags.param3
+                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
+                    |> withDefault ""
+                ]
+    in
+    String.join "#" [ rootnameid, focusFragment ]
+
+
+
+{-
+   Node Codec
+-}
+
+
 focusFromNameid : String -> NodeFocus
 focusFromNameid nameid_ =
     let
@@ -165,27 +193,6 @@ focusFromNameid nameid_ =
     NodeFocus rootid isRoot nameid nodeType
 
 
-nameidFromFlags : Flags_ -> String
-nameidFromFlags flags =
-    let
-        rootnameid =
-            flags.param1
-                |> Url.percentDecode
-                |> withDefault ""
-
-        focusFragment =
-            String.join "#"
-                [ flags.param2
-                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
-                    |> withDefault ""
-                , flags.param3
-                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
-                    |> withDefault ""
-                ]
-    in
-    String.join "#" [ rootnameid, focusFragment ]
-
-
 {-|
 
     Returns the namid of a new Role given an username and a rootnameid
@@ -217,3 +224,37 @@ nodeIdCodec parentid targetid nodeType =
 
             else
                 String.join "#" [ parentid, targetid ]
+
+
+
+{-
+   Tension Codec
+-}
+
+
+type alias TensionCharac =
+    { action_type : String
+    , doc_type : String
+    }
+
+
+getTensionCharac : TensionAction.TensionAction -> TensionCharac
+getTensionCharac action =
+    case action of
+        TensionAction.NewRole ->
+            { action_type = "new", doc_type = "node" }
+
+        TensionAction.EditRole ->
+            { action_type = "edit", doc_type = "node" }
+
+        TensionAction.NewCircle ->
+            { action_type = "new", doc_type = "node" }
+
+        TensionAction.EditCircle ->
+            { action_type = "edit", doc_type = "node" }
+
+        TensionAction.NewMd ->
+            { action_type = "new", doc_type = "doc" }
+
+        TensionAction.EditMd ->
+            { action_type = "edit", doc_type = "doc" }
