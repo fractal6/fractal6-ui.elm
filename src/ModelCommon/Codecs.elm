@@ -193,6 +193,11 @@ focusFromNameid nameid_ =
     NodeFocus rootid isRoot nameid nodeType
 
 
+nid2pid : String -> String
+nid2pid nameid =
+    nameid |> String.split "#" |> List.head |> withDefault ""
+
+
 {-|
 
     Returns the namid of a new Role given an username and a rootnameid
@@ -212,7 +217,7 @@ nodeIdCodec : String -> String -> NodeType.NodeType -> String
 nodeIdCodec parentid targetid nodeType =
     let
         rootnameid =
-            parentid |> String.split "#" |> List.head |> withDefault ""
+            nid2pid parentid
     in
     case nodeType of
         NodeType.Circle ->

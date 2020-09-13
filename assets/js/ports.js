@@ -1,5 +1,5 @@
 import MiniSearch from 'minisearch'
-import { BulmaDriver } from './bulma_drivers'
+import { BulmaDriver, InitBulma } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 
 
@@ -7,6 +7,12 @@ import { GraphPack } from './graphpack_d3'
 window.addEventListener('load', _ => {
     window.ports = {
         init: (app) => {
+            // Show the footbar
+            document.getElementById("footBar").style.display= "none";
+            setTimeout( function () {
+                document.getElementById("footBar").style.display= "block";
+            }, 0.5);
+
             // Ephemere Objects
             var session = {
                 isInit: true,
@@ -47,18 +53,7 @@ const actions = {
         console.log(`From Elm:`, message)
     },
     'BULMA': (app, session, eltId) => {
-        console.log(`Activate Bulma driver...`);
-        document.getElementById("footBar").style.display= "none";
-        setTimeout( function () {
-            document.getElementById("footBar").style.display= "block";
-        }, 0.5);
-
-        // This timeout is needed when bulma driver is called by elm Cmd,
-        // to wait foe the Html Msg to be updated by elm in order
-        // to have new node accessible by Javascript.
-        //document.addEventListener('DOMContentLoaded', () => {
-        var handlers = session.bulmaHandlers;
-        setTimeout(BulmaDriver, 300, app, eltId, handlers);
+        InitBulma(app, session, eltId)
     },
     'TOGGLE_TH': (app, session, message) => {
         var $tt = document.getElementById("themeButton_port");
@@ -78,6 +73,7 @@ const actions = {
     'CLOSE_MODAL': (app, session, message) => {
         document.documentElement.classList.remove('has-modal-active');
         document.getElementById("navbarTop").classList.remove('has-modal-active');
+        InitBulma(app, session, "")
     },
     'OPEN_AUTH_MODAL': (app, session, message) => {
         document.documentElement.classList.add('has-modal-active2');
@@ -86,6 +82,7 @@ const actions = {
     'CLOSE_AUTH_MODAL': (app, session, message) => {
         document.documentElement.classList.remove('has-modal-active2');
         document.getElementById("navbarTop").classList.remove('has-modal-active2');
+        InitBulma(app, session, "")
     },
     //
     // Quick Search

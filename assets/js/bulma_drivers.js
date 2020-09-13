@@ -4,6 +4,16 @@
  *
  */
 
+export function InitBulma(app, session, eltId) {
+    console.log(`Activate Bulma driver...`);
+    // This timeout is needed when bulma driver is called by elm Cmd,
+    // to wait foe the Html Msg to be updated by elm in order
+    // to have new node accessible by Javascript.
+    //document.addEventListener('DOMContentLoaded', () => {
+    var handlers = session.bulmaHandlers;
+    setTimeout(BulmaDriver, 300, app, eltId, handlers);
+}
+
 function catchEsc(e, fun) {
     let evt = event || window.event;
     if (evt.key === 'Esc' || evt.key === 'Escape') {

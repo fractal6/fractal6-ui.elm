@@ -31,7 +31,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusState, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusState, nid2pid, uriFromUsername)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View
     exposing
@@ -754,7 +754,11 @@ update global msg model =
                             ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
                 other ->
-                    ( { model | publish_result = result }, Cmd.none, Cmd.none )
+                    if doRefreshToken other then
+                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                    else
+                        ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1064,7 +1068,16 @@ viewComments u t model =
                 userInput =
                     case u of
                         LoggedIn uctx ->
-                            viewCommentInput uctx t model.tension_form model.tension_patch model.inputViewMode
+                            let
+                                orgaRoles =
+                                    uctx.roles |> List.filter (\r -> List.member r.rootnameid [ nid2pid t.emitter.nameid, nid2pid t.receiver.nameid ])
+                            in
+                            case orgaRoles of
+                                [] ->
+                                    viewJoinNeeded model.node_focus
+
+                                _ ->
+                                    viewCommentInput uctx t model.tension_form model.tension_patch model.inputViewMode
 
                         LoggedOut ->
                             viewJoinNeeded model.node_focus

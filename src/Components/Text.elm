@@ -469,6 +469,11 @@ joinForTension =
     "Please, Join this organisation to be able to create a tension."
 
 
+joinForComment : String
+joinForComment =
+    "Please, Join this organisation to participate to this conversation."
+
+
 joinForCircle : String
 joinForCircle =
     "Please, Join this organisation to be able to create a circle."

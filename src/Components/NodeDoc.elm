@@ -50,9 +50,21 @@ edit nd =
     { nd | isBlobEdit = True }
 
 
+{-|
+
+    reset action and title (Tension title can't be change in this function)
+
+-}
 updateForm : String -> String -> Maybe TensionAction.TensionAction -> TensionPatchForm -> TensionPatchForm
 updateForm field value action form =
-    updateNodeForm field value { form | action = action }
+    let
+        oldAction =
+            form.action
+
+        f =
+            updateNodeForm field value { form | action = action }
+    in
+    { f | action = oldAction, post = Dict.remove "title" f.post }
 
 
 cancelEdit : NodeDoc -> NodeDoc
