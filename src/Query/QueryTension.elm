@@ -97,6 +97,11 @@ tensionHeadPayload =
                 (\args -> { args | first = Present nLabelPerTension })
                 labelPayload
             )
+        |> with
+            (Fractal.Object.Tension.assignees
+                identity
+                (SelectionSet.map Username Fractal.Object.User.username)
+            )
         |> with (Fractal.Object.Tension.emitter identity emmiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emmiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
@@ -244,7 +249,7 @@ nodeFragmentPayload =
 
 nLabelPerTension : Int
 nLabelPerTension =
-    3
+    4
 
 
 nCircleTensionPpg : Int

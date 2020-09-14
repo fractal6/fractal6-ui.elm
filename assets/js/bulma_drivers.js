@@ -14,7 +14,7 @@ export function InitBulma(app, session, eltId) {
     setTimeout(BulmaDriver, 300, app, eltId, handlers);
 }
 
-function catchEsc(e, fun) {
+export function catchEsc(e, fun) {
     let evt = event || window.event;
     if (evt.key === 'Esc' || evt.key === 'Escape') {
         fun();

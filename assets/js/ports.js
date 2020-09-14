@@ -1,5 +1,5 @@
 import MiniSearch from 'minisearch'
-import { BulmaDriver, InitBulma } from './bulma_drivers'
+import { BulmaDriver, InitBulma, catchEsc } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 
 
@@ -185,5 +185,40 @@ const actions = {
         localStorage.removeItem(user_ctx_key);
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/";
         app.ports.loggedOutOkFromJs.send(null);
+    },
+    //
+    // Popups
+    //
+    'OUTSIDE_CLICK_CLOSE' : (app, session, data) => {
+        // close if a outiside (of data.target) click occurs
+        // or if ESC is pressed. Additionally, an ongoing
+        // msg (data.msg) is sent outgoint ports.
+        var msg = data.msg;
+        var id = data.target;
+
+        const closeEvent = () => {
+            app.ports[msg].send(null);
+            removeClickListener();
+        }
+
+        const outsideClickListener = event => {
+            if (event.target.closest("#"+id) === null) {
+                closeEvent();
+            }
+        }
+
+        const escListener = event => {
+            catchEsc(event, closeEvent);
+        }
+
+        const removeClickListener = () => {
+            document.removeEventListener('click', outsideClickListener);
+            document.removeEventListener('keydown', escListener);
+        }
+
+        setTimeout(() => {
+            document.addEventListener('click', outsideClickListener);
+            document.addEventListener('keydown', escListener);
+        }, 50);
     },
 }

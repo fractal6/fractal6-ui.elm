@@ -158,6 +158,11 @@ viewUsernameLink username =
     a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
 
 
+viewUser : String -> Html msg
+viewUser username =
+    span [] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ] [ getAvatar username ] ]
+
+
 viewOpenedDate : String -> Html msg
 viewOpenedDate date =
     span []

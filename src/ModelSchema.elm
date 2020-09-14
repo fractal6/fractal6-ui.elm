@@ -142,6 +142,12 @@ type alias Username =
     { username : String }
 
 
+type alias User =
+    { username : String
+    , name : Maybe String
+    }
+
+
 type alias Label =
     { name : String }
 
@@ -153,6 +159,7 @@ type alias TensionHead =
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
+    , assignees : Maybe (List Username)
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction

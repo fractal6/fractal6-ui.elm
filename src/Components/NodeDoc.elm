@@ -30,7 +30,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromUsername)
-import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor)
+import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import Time
 
@@ -225,10 +225,7 @@ view_ tid data tdata_m =
                 [ div [ class "subtitle is-5" ]
                     [ Fa.icon "fas fa-users fa-sm" T.linksH
                     , links
-                        |> List.map
-                            (\l ->
-                                span [] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri l) ] [ getAvatar l ] ]
-                            )
+                        |> List.map (\l -> viewUser l)
                         |> span [ attribute "style" "margin-left:20px;" ]
                     , doEditView tdata_m BlobType.OnFirstLink
                     ]

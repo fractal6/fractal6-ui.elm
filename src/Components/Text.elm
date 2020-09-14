@@ -257,7 +257,7 @@ actionH =
 
 noAssignees : String
 noAssignees =
-    "No assignee"
+    "No assignees"
 
 
 noLabels : String

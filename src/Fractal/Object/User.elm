@@ -106,6 +106,48 @@ backed_roles fillInOptionals object_ =
     Object.selectionForCompositeField "backed_roles" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+type alias TensionsCreatedOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+tensions_created : (TensionsCreatedOptionalArguments -> TensionsCreatedOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+tensions_created fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tensions_created" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type alias TensionsAssignedOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+tensions_assigned : (TensionsAssignedOptionalArguments -> TensionsAssignedOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+tensions_assigned fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tensions_assigned" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
 bio : SelectionSet (Maybe String) Fractal.Object.User
 bio =
     Object.selectionForField "(Maybe String)" "bio" [] (Decode.string |> Decode.nullable)

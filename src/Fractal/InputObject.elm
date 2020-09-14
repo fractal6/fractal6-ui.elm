@@ -496,9 +496,9 @@ buildAddTensionInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { updatedAt = Absent, message = Absent, nth = Absent, action = Absent, labels = Absent, comments = Absent, blobs = Absent, n_comments = Absent, n_blobs = Absent }
+                { updatedAt = Absent, message = Absent, nth = Absent, labels = Absent, assignees = Absent, action = Absent, comments = Absent, blobs = Absent, n_comments = Absent, n_blobs = Absent }
     in
-    AddTensionInput { createdAt = required.createdAt, updatedAt = optionals.updatedAt, createdBy = required.createdBy, message = optionals.message, nth = optionals.nth, title = required.title, type_ = required.type_, emitter = required.emitter, emitterid = required.emitterid, receiver = required.receiver, receiverid = required.receiverid, status = required.status, action = optionals.action, labels = optionals.labels, comments = optionals.comments, blobs = optionals.blobs, history = required.history, n_comments = optionals.n_comments, n_blobs = optionals.n_blobs }
+    AddTensionInput { createdAt = required.createdAt, updatedAt = optionals.updatedAt, createdBy = required.createdBy, message = optionals.message, nth = optionals.nth, title = required.title, type_ = required.type_, emitterid = required.emitterid, receiverid = required.receiverid, emitter = required.emitter, receiver = required.receiver, status = required.status, labels = optionals.labels, assignees = optionals.assignees, action = optionals.action, comments = optionals.comments, blobs = optionals.blobs, history = required.history, n_comments = optionals.n_comments, n_blobs = optionals.n_blobs }
 
 
 type alias AddTensionInputRequiredFields =
@@ -506,10 +506,10 @@ type alias AddTensionInputRequiredFields =
     , createdBy : UserRef
     , title : String
     , type_ : Fractal.Enum.TensionType.TensionType
-    , emitter : NodeRef
     , emitterid : String
-    , receiver : NodeRef
     , receiverid : String
+    , emitter : NodeRef
+    , receiver : NodeRef
     , status : Fractal.Enum.TensionStatus.TensionStatus
     , history : List EventRef
     }
@@ -519,8 +519,9 @@ type alias AddTensionInputOptionalFields =
     { updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , nth : OptionalArgument String
-    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , labels : OptionalArgument (List LabelRef)
+    , assignees : OptionalArgument (List UserRef)
+    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
     , n_comments : OptionalArgument Int
@@ -541,13 +542,14 @@ type alias AddTensionInputRaw =
     , nth : OptionalArgument String
     , title : String
     , type_ : Fractal.Enum.TensionType.TensionType
-    , emitter : NodeRef
     , emitterid : String
-    , receiver : NodeRef
     , receiverid : String
+    , emitter : NodeRef
+    , receiver : NodeRef
     , status : Fractal.Enum.TensionStatus.TensionStatus
-    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , labels : OptionalArgument (List LabelRef)
+    , assignees : OptionalArgument (List UserRef)
+    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
     , history : List EventRef
@@ -567,7 +569,7 @@ type AddTensionInput
 encodeAddTensionInput : AddTensionInput -> Value
 encodeAddTensionInput (AddTensionInput input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string input.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitter", encodeNodeRef input.emitter |> Just ), ( "emitterid", Encode.string input.emitterid |> Just ), ( "receiver", encodeNodeRef input.receiver |> Just ), ( "receiverid", Encode.string input.receiverid |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input.status |> Just ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) input.history |> Just ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string input.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitterid", Encode.string input.emitterid |> Just ), ( "receiverid", Encode.string input.receiverid |> Just ), ( "emitter", encodeNodeRef input.emitter |> Just ), ( "receiver", encodeNodeRef input.receiver |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input.status |> Just ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input.assignees ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) input.history |> Just ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
 
 
 buildAddUserInput : AddUserInputRequiredFields -> (AddUserInputOptionalFields -> AddUserInputOptionalFields) -> AddUserInput
@@ -575,9 +577,9 @@ buildAddUserInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { name = Absent, emailHash = Absent, roles = Absent, backed_roles = Absent, bio = Absent, utc = Absent }
+                { name = Absent, emailHash = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
     in
-    AddUserInput { createdAt = required.createdAt, username = required.username, name = optionals.name, password = required.password, email = required.email, emailHash = optionals.emailHash, emailValidated = required.emailValidated, rights = required.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, bio = optionals.bio, utc = optionals.utc }
+    AddUserInput { createdAt = required.createdAt, username = required.username, name = optionals.name, password = required.password, email = required.email, emailHash = optionals.emailHash, emailValidated = required.emailValidated, rights = required.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
 
 
 type alias AddUserInputRequiredFields =
@@ -595,6 +597,8 @@ type alias AddUserInputOptionalFields =
     , emailHash : OptionalArgument String
     , roles : OptionalArgument (List NodeRef)
     , backed_roles : OptionalArgument (List NodeRef)
+    , tensions_created : OptionalArgument (List TensionRef)
+    , tensions_assigned : OptionalArgument (List TensionRef)
     , bio : OptionalArgument String
     , utc : OptionalArgument String
     }
@@ -616,6 +620,8 @@ type alias AddUserInputRaw =
     , rights : UserRightsRef
     , roles : OptionalArgument (List NodeRef)
     , backed_roles : OptionalArgument (List NodeRef)
+    , tensions_created : OptionalArgument (List TensionRef)
+    , tensions_assigned : OptionalArgument (List TensionRef)
     , bio : OptionalArgument String
     , utc : OptionalArgument String
     }
@@ -632,7 +638,7 @@ type AddUserInput
 encodeAddUserInput : AddUserInput -> Value
 encodeAddUserInput (AddUserInput input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "username", Encode.string input.username |> Just ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string input.password |> Just ), ( "email", Encode.string input.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool input.emailValidated |> Just ), ( "rights", encodeUserRightsRef input.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "username", Encode.string input.username |> Just ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string input.password |> Just ), ( "email", Encode.string input.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool input.emailValidated |> Just ), ( "rights", encodeUserRightsRef input.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
 buildAddUserRightsInput : AddUserRightsInputRequiredFields -> AddUserRightsInput
@@ -3042,9 +3048,9 @@ buildTensionPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, nth = Absent, title = Absent, type_ = Absent, emitter = Absent, emitterid = Absent, receiver = Absent, receiverid = Absent, status = Absent, action = Absent, labels = Absent, comments = Absent, blobs = Absent, history = Absent, n_comments = Absent, n_blobs = Absent }
+                { createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, nth = Absent, title = Absent, type_ = Absent, emitterid = Absent, receiverid = Absent, emitter = Absent, receiver = Absent, status = Absent, labels = Absent, assignees = Absent, action = Absent, comments = Absent, blobs = Absent, history = Absent, n_comments = Absent, n_blobs = Absent }
     in
-    TensionPatch { createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, nth = optionals.nth, title = optionals.title, type_ = optionals.type_, emitter = optionals.emitter, emitterid = optionals.emitterid, receiver = optionals.receiver, receiverid = optionals.receiverid, status = optionals.status, action = optionals.action, labels = optionals.labels, comments = optionals.comments, blobs = optionals.blobs, history = optionals.history, n_comments = optionals.n_comments, n_blobs = optionals.n_blobs }
+    TensionPatch { createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, nth = optionals.nth, title = optionals.title, type_ = optionals.type_, emitterid = optionals.emitterid, receiverid = optionals.receiverid, emitter = optionals.emitter, receiver = optionals.receiver, status = optionals.status, labels = optionals.labels, assignees = optionals.assignees, action = optionals.action, comments = optionals.comments, blobs = optionals.blobs, history = optionals.history, n_comments = optionals.n_comments, n_blobs = optionals.n_blobs }
 
 
 type alias TensionPatchOptionalFields =
@@ -3055,13 +3061,14 @@ type alias TensionPatchOptionalFields =
     , nth : OptionalArgument String
     , title : OptionalArgument String
     , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
-    , emitter : OptionalArgument NodeRef
     , emitterid : OptionalArgument String
-    , receiver : OptionalArgument NodeRef
     , receiverid : OptionalArgument String
+    , emitter : OptionalArgument NodeRef
+    , receiver : OptionalArgument NodeRef
     , status : OptionalArgument Fractal.Enum.TensionStatus.TensionStatus
-    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , labels : OptionalArgument (List LabelRef)
+    , assignees : OptionalArgument (List UserRef)
+    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
     , history : OptionalArgument (List EventRef)
@@ -3083,13 +3090,14 @@ type alias TensionPatchRaw =
     , nth : OptionalArgument String
     , title : OptionalArgument String
     , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
-    , emitter : OptionalArgument NodeRef
     , emitterid : OptionalArgument String
-    , receiver : OptionalArgument NodeRef
     , receiverid : OptionalArgument String
+    , emitter : OptionalArgument NodeRef
+    , receiver : OptionalArgument NodeRef
     , status : OptionalArgument Fractal.Enum.TensionStatus.TensionStatus
-    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , labels : OptionalArgument (List LabelRef)
+    , assignees : OptionalArgument (List UserRef)
+    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
     , history : OptionalArgument (List EventRef)
@@ -3109,7 +3117,7 @@ type TensionPatch
 encodeTensionPatch : TensionPatch -> Value
 encodeTensionPatch (TensionPatch input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "emitterid", Encode.string |> Encode.optional input.emitterid ), ( "receiver", encodeNodeRef |> Encode.optional input.receiver ), ( "receiverid", Encode.string |> Encode.optional input.receiverid ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString |> Encode.optional input.status ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitterid", Encode.string |> Encode.optional input.emitterid ), ( "receiverid", Encode.string |> Encode.optional input.receiverid ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receiver", encodeNodeRef |> Encode.optional input.receiver ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString |> Encode.optional input.status ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input.assignees ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
 
 
 buildTensionRef : (TensionRefOptionalFields -> TensionRefOptionalFields) -> TensionRef
@@ -3117,9 +3125,9 @@ buildTensionRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, nth = Absent, title = Absent, type_ = Absent, emitter = Absent, emitterid = Absent, receiver = Absent, receiverid = Absent, status = Absent, action = Absent, labels = Absent, comments = Absent, blobs = Absent, history = Absent, n_comments = Absent, n_blobs = Absent }
+                { id = Absent, createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, nth = Absent, title = Absent, type_ = Absent, emitterid = Absent, receiverid = Absent, emitter = Absent, receiver = Absent, status = Absent, labels = Absent, assignees = Absent, action = Absent, comments = Absent, blobs = Absent, history = Absent, n_comments = Absent, n_blobs = Absent }
     in
-    TensionRef { id = optionals.id, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, nth = optionals.nth, title = optionals.title, type_ = optionals.type_, emitter = optionals.emitter, emitterid = optionals.emitterid, receiver = optionals.receiver, receiverid = optionals.receiverid, status = optionals.status, action = optionals.action, labels = optionals.labels, comments = optionals.comments, blobs = optionals.blobs, history = optionals.history, n_comments = optionals.n_comments, n_blobs = optionals.n_blobs }
+    TensionRef { id = optionals.id, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, nth = optionals.nth, title = optionals.title, type_ = optionals.type_, emitterid = optionals.emitterid, receiverid = optionals.receiverid, emitter = optionals.emitter, receiver = optionals.receiver, status = optionals.status, labels = optionals.labels, assignees = optionals.assignees, action = optionals.action, comments = optionals.comments, blobs = optionals.blobs, history = optionals.history, n_comments = optionals.n_comments, n_blobs = optionals.n_blobs }
 
 
 type alias TensionRefOptionalFields =
@@ -3131,13 +3139,14 @@ type alias TensionRefOptionalFields =
     , nth : OptionalArgument String
     , title : OptionalArgument String
     , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
-    , emitter : OptionalArgument NodeRef
     , emitterid : OptionalArgument String
-    , receiver : OptionalArgument NodeRef
     , receiverid : OptionalArgument String
+    , emitter : OptionalArgument NodeRef
+    , receiver : OptionalArgument NodeRef
     , status : OptionalArgument Fractal.Enum.TensionStatus.TensionStatus
-    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , labels : OptionalArgument (List LabelRef)
+    , assignees : OptionalArgument (List UserRef)
+    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
     , history : OptionalArgument (List EventRef)
@@ -3160,13 +3169,14 @@ type alias TensionRefRaw =
     , nth : OptionalArgument String
     , title : OptionalArgument String
     , type_ : OptionalArgument Fractal.Enum.TensionType.TensionType
-    , emitter : OptionalArgument NodeRef
     , emitterid : OptionalArgument String
-    , receiver : OptionalArgument NodeRef
     , receiverid : OptionalArgument String
+    , emitter : OptionalArgument NodeRef
+    , receiver : OptionalArgument NodeRef
     , status : OptionalArgument Fractal.Enum.TensionStatus.TensionStatus
-    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , labels : OptionalArgument (List LabelRef)
+    , assignees : OptionalArgument (List UserRef)
+    , action : OptionalArgument Fractal.Enum.TensionAction.TensionAction
     , comments : OptionalArgument (List CommentRef)
     , blobs : OptionalArgument (List BlobRef)
     , history : OptionalArgument (List EventRef)
@@ -3186,7 +3196,7 @@ type TensionRef
 encodeTensionRef : TensionRef -> Value
 encodeTensionRef (TensionRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "emitterid", Encode.string |> Encode.optional input.emitterid ), ( "receiver", encodeNodeRef |> Encode.optional input.receiver ), ( "receiverid", Encode.string |> Encode.optional input.receiverid ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString |> Encode.optional input.status ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitterid", Encode.string |> Encode.optional input.emitterid ), ( "receiverid", Encode.string |> Encode.optional input.receiverid ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receiver", encodeNodeRef |> Encode.optional input.receiver ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString |> Encode.optional input.status ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input.assignees ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
 
 
 buildTensionStatus_hash : TensionStatus_hashRequiredFields -> TensionStatus_hash
@@ -3838,9 +3848,9 @@ buildUserPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { createdAt = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, bio = Absent, utc = Absent }
+                { createdAt = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
     in
-    UserPatch { createdAt = optionals.createdAt, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, bio = optionals.bio, utc = optionals.utc }
+    UserPatch { createdAt = optionals.createdAt, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
 
 
 type alias UserPatchOptionalFields =
@@ -3853,6 +3863,8 @@ type alias UserPatchOptionalFields =
     , rights : OptionalArgument UserRightsRef
     , roles : OptionalArgument (List NodeRef)
     , backed_roles : OptionalArgument (List NodeRef)
+    , tensions_created : OptionalArgument (List TensionRef)
+    , tensions_assigned : OptionalArgument (List TensionRef)
     , bio : OptionalArgument String
     , utc : OptionalArgument String
     }
@@ -3873,6 +3885,8 @@ type alias UserPatchRaw =
     , rights : OptionalArgument UserRightsRef
     , roles : OptionalArgument (List NodeRef)
     , backed_roles : OptionalArgument (List NodeRef)
+    , tensions_created : OptionalArgument (List TensionRef)
+    , tensions_assigned : OptionalArgument (List TensionRef)
     , bio : OptionalArgument String
     , utc : OptionalArgument String
     }
@@ -3889,7 +3903,7 @@ type UserPatch
 encodeUserPatch : UserPatch -> Value
 encodeUserPatch (UserPatch input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
 buildUserRef : (UserRefOptionalFields -> UserRefOptionalFields) -> UserRef
@@ -3897,9 +3911,9 @@ buildUserRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, bio = Absent, utc = Absent }
+                { id = Absent, createdAt = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
     in
-    UserRef { id = optionals.id, createdAt = optionals.createdAt, username = optionals.username, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, bio = optionals.bio, utc = optionals.utc }
+    UserRef { id = optionals.id, createdAt = optionals.createdAt, username = optionals.username, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
 
 
 type alias UserRefOptionalFields =
@@ -3914,6 +3928,8 @@ type alias UserRefOptionalFields =
     , rights : OptionalArgument UserRightsRef
     , roles : OptionalArgument (List NodeRef)
     , backed_roles : OptionalArgument (List NodeRef)
+    , tensions_created : OptionalArgument (List TensionRef)
+    , tensions_assigned : OptionalArgument (List TensionRef)
     , bio : OptionalArgument String
     , utc : OptionalArgument String
     }
@@ -3936,6 +3952,8 @@ type alias UserRefRaw =
     , rights : OptionalArgument UserRightsRef
     , roles : OptionalArgument (List NodeRef)
     , backed_roles : OptionalArgument (List NodeRef)
+    , tensions_created : OptionalArgument (List TensionRef)
+    , tensions_assigned : OptionalArgument (List TensionRef)
     , bio : OptionalArgument String
     , utc : OptionalArgument String
     }
@@ -3952,7 +3970,7 @@ type UserRef
 encodeUserRef : UserRef -> Value
 encodeUserRef (UserRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "username", Encode.string |> Encode.optional input.username ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "username", Encode.string |> Encode.optional input.username ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
 buildUserRightsRef : (UserRightsRefOptionalFields -> UserRightsRefOptionalFields) -> UserRightsRef

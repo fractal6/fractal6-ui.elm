@@ -125,7 +125,7 @@ saveUserCtx userCtx =
         data =
             JE.object
                 --[ ( "key", JE.string <| "user_ctx" ++ userCtx.username )
-                [ ( "key", JE.string <| "user_ctx" )
+                [ ( "key", JE.string "user_ctx" )
                 , ( "data", userEncoder userCtx )
                 ]
     in
@@ -147,7 +147,7 @@ removeUserCtx : UserCtx -> Cmd msg
 removeUserCtx userCtx =
     outgoing
         { action = "REMOVE_USERCTX"
-        , data = JE.string <| "user_ctx"
+        , data = JE.string "user_ctx"
 
         --, data = JE.string <| "user_ctx" ++ userCtx.username
         }
@@ -198,4 +198,20 @@ searchNode pattern =
     outgoing
         { action = "SEARCH_NODES"
         , data = JE.string pattern
+        }
+
+
+
+--- Popups
+
+
+outsideClickClose : String -> String -> Cmd msg
+outsideClickClose msg target =
+    outgoing
+        { action = "OUTSIDE_CLICK_CLOSE"
+        , data =
+            JE.object
+                [ ( "msg", JE.string msg )
+                , ( "target", JE.string target )
+                ]
         }

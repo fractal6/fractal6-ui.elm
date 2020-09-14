@@ -1,4 +1,4 @@
-module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
+port module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
@@ -47,6 +47,7 @@ import ModelCommon.View
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
         , viewUpdated
+        , viewUser
         , viewUsernameLink
         )
 import ModelSchema exposing (..)
@@ -111,7 +112,10 @@ type alias Model =
     , nodeDoc : NodeDoc
     , publish_result : GqlData BlobFlag
 
-    --
+    -- Side Pane
+    , isAssigneesEdit : Bool
+    , users_result : GqlData User
+
     -- Common
     , node_action : ActionState
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
@@ -197,6 +201,9 @@ type Msg
     | CancelBlob
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
+      -- Assignees
+    | DoAssigneesEdit
+    | DoAssigneesCancel
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -272,6 +279,10 @@ init global flags =
             -- Blob
             , nodeDoc = NodeDoc.create
             , publish_result = NotAsked
+
+            -- Side Pane
+            , isAssigneesEdit = False
+            , users_result = NotAsked
 
             -- Common
             , node_action = NoOp
@@ -760,6 +771,17 @@ update global msg model =
                     else
                         ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
+        -- Assignees
+        DoAssigneesEdit ->
+            if model.isAssigneesEdit == False then
+                ( { model | isAssigneesEdit = True }, Cmd.none, Ports.outsideClickClose "doAssigneesCancelFromJs" "assigneesMedia" )
+
+            else
+                ( model, Cmd.none, Cmd.none )
+
+        DoAssigneesCancel ->
+            ( { model | isAssigneesEdit = False }, Cmd.none, Cmd.none )
+
         -- Join
         DoJoinOrga rootnameid time ->
             case global.session.user of
@@ -901,7 +923,12 @@ update global msg model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.batch
-        [ Ports.closeModalFromJs DoCloseModal ]
+        [ Ports.closeModalFromJs DoCloseModal
+        , doAssigneesCancelFromJs (always DoAssigneesCancel)
+        ]
+
+
+port doAssigneesCancelFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -1050,7 +1077,7 @@ viewTension u t model =
                                 div [] [ text "No data to show..." ]
                 ]
             , div [ class "column is-3" ]
-                [ viewSidePane model.node_focus t ]
+                [ viewSidePane model.node_focus t model ]
             ]
         ]
 
@@ -1515,26 +1542,33 @@ viewJoinNeeded focus =
         ]
 
 
-viewSidePane : NodeFocus -> TensionHead -> Html Msg
-viewSidePane focus t =
+viewSidePane : NodeFocus -> TensionHead -> Model -> Html Msg
+viewSidePane focus t model =
     let
+        assignees_m =
+            t.assignees |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
+
         labels_m =
             t.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div [ class "tensionSidePane" ]
-        [ div [ class "media" ]
+        [ div [ id "assigneesMedia", class "media" ]
             [ div [ class "media-content" ]
-                [ h2 [ class "subtitle is-w" ]
+                [ h2 [ class "subtitle is-w", onClick DoAssigneesEdit ]
                     [ text T.assigneesH
                     , Fa.icon0 "fas fa-cog is-pulled-right" ""
                     ]
                 , div [ class "" ]
-                    [ case labels_m of
-                        Just labels ->
-                            viewLabels labels
+                    [ if model.isAssigneesEdit then
+                        text "edit me ya !"
 
-                        Nothing ->
-                            div [ class "is-italic" ] [ text T.noAssignees ]
+                      else
+                        case assignees_m of
+                            Just assignees ->
+                                assignees |> List.map (\a -> viewUser a.username) |> span []
+
+                            Nothing ->
+                                div [ class "is-italic" ] [ text T.noAssignees ]
                     ]
                 ]
             ]
