@@ -563,6 +563,23 @@ html.has-modal-active, html.has-modal-active2 {
             .message-body {
                 padding: 0.75rem 0.75rem !important;
             }
+
+            .tabs.is-boxed {
+                ul {
+                    border-bottom-color: $grey !important;
+                }
+
+                li a {
+                    &:hover {
+                        text-decoration: none !important;
+                    }
+                }
+
+                li.is-active a {
+                    border-color: $grey !important;
+                    border-bottom-color: transparent !important;
+                }
+            }
         }
 
         .message-header {
@@ -594,6 +611,15 @@ html.has-modal-active, html.has-modal-active2 {
 
         .media + .media {
             border-top: 1px solid $grey !important;
+        }
+
+        .media-content {
+            .subtitle {
+                margin-bottom: 1rem !important;
+                font-size: 0.9rem !important;
+                font-weight: 600 !important;
+                color: $grey-light2;
+            }
         }
     }
 
@@ -1262,6 +1288,13 @@ a.actionLink {
  *
  */
 
+.is-w {
+    &:hover {
+        color: $white-ter !important;
+        cursor: pointer;
+    }
+}
+
 .button-light {
     &:hover {
         cursor: pointer !important;
@@ -1334,18 +1367,19 @@ a.actionLink {
     border: 1px solid #000;
     // Text centering
     text-align: center;
-    padding-top: 9px;
-    font-size: 0.9rem;
+    padding-top: 11px;
+    font-size: 0.8rem;
 }
 
 .circle1 {
-    width: 55px;
-    height: 55px;
+    width: 45px;
+    height: 45px;
     background: $blue;
     border: 1px solid #000;
     // Text centering
     text-align: center;
-    padding-top: 14px;
+    padding-top: 12px;
+    font-size: 0.9rem;
 }
 
 .circle2 {

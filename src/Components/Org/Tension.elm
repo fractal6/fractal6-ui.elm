@@ -1017,7 +1017,7 @@ viewTension u t model =
                     ]
                 ]
             ]
-        , div [ class "columns is-variable is-6" ]
+        , div [ class "columns is-variable is-4" ]
             [ div [ class "column is-8 " ]
                 [ div [ class "tabs is-md" ]
                     [ ul []
@@ -1049,7 +1049,7 @@ viewTension u t model =
                             _ ->
                                 div [] [ text "No data to show..." ]
                 ]
-            , div [ class "column is-3 tensionSidePane" ]
+            , div [ class "column is-3" ]
                 [ viewSidePane model.node_focus t ]
             ]
         ]
@@ -1307,7 +1307,7 @@ viewUpdateInput uctx comment form result =
         isSendable =
             message /= comment.message
     in
-    div [ class "message" ]
+    div [ class "message tensionCommentInput" ]
         [ div [ class "message-header" ]
             [ div [ class "tabs is-boxed is-small" ]
                 [ ul []
@@ -1521,30 +1521,46 @@ viewSidePane focus t =
         labels_m =
             t.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
-    div []
+    div [ class "tensionSidePane" ]
         [ div [ class "media" ]
             [ div [ class "media-content" ]
-                [ h2 [ class "subtitle has-text-weight-semibold is-md" ] [ text "Labels" ]
+                [ h2 [ class "subtitle is-w" ]
+                    [ text T.assigneesH
+                    , Fa.icon0 "fas fa-cog is-pulled-right" ""
+                    ]
                 , div [ class "" ]
                     [ case labels_m of
                         Just labels ->
                             viewLabels labels
 
                         Nothing ->
-                            div [ class "is-italic" ] [ text "no labels yet" ]
+                            div [ class "is-italic" ] [ text T.noAssignees ]
                     ]
                 ]
             ]
         , div [ class "media" ]
             [ div [ class "media-content" ]
-                [ h2 [ class "subtitle has-text-weight-semibold is-md" ] [ text "Action" ]
+                [ h2 [ class "subtitle" ] [ text T.labelsH ]
+                , div [ class "" ]
+                    [ case labels_m of
+                        Just labels ->
+                            viewLabels labels
+
+                        Nothing ->
+                            div [ class "is-italic" ] [ text T.noLabels ]
+                    ]
+                ]
+            ]
+        , div [ class "media" ]
+            [ div [ class "media-content" ]
+                [ h2 [ class "subtitle has-text-weight-semibold is-md" ] [ text T.actionH ]
                 , div [ class "" ]
                     [ case t.action of
                         Just action ->
                             viewActionIconLink action focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
 
                         Nothing ->
-                            div [ class "is-italic" ] [ text "no action requested" ]
+                            div [ class "is-italic" ] [ text T.noAction ]
                     ]
                 ]
             ]

@@ -240,6 +240,36 @@ journalH =
     "Journal"
 
 
+labelsH : String
+labelsH =
+    "Labels"
+
+
+assigneesH : String
+assigneesH =
+    "Assignees"
+
+
+actionH : String
+actionH =
+    "Action"
+
+
+noAssignees : String
+noAssignees =
+    "No assignee"
+
+
+noLabels : String
+noLabels =
+    "None yet"
+
+
+noAction : String
+noAction =
+    "No action requested"
+
+
 noTensionRole : String
 noTensionRole =
     "No tensions for this Role yet."
