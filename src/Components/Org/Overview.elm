@@ -11,7 +11,7 @@ import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga, updateNodeF
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData, withMaybeData, withStateString)
+import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.NewCircle
@@ -33,7 +33,7 @@ import Json.Decode as JD
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, nameidFromFlags, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, nameidFromFlags, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
@@ -515,7 +515,7 @@ update global msg model =
                                     { form | uctx = uctx, tension_type = tensionType }
 
                                 orgaRoles =
-                                    uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
+                                    getOrgaRoles uctx.roles [ form.target.rootnameid ]
 
                                 newStep =
                                     case orgaRoles of
@@ -1059,7 +1059,7 @@ view_ global model =
             model.node_data |> withMaybeData |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
 
         nodeData_ =
-            { data = withStateString tid model.node_data
+            { data = withMapData (\x -> tid) model.node_data
             , node = initNodeFragment
             , isLazy = model.init_data
             , source = OverviewBaseUri
@@ -1556,7 +1556,7 @@ getNewNodeStepFromAuthForm : TensionForm -> NodeStep TensionForm
 getNewNodeStepFromAuthForm form =
     let
         orgaRoles =
-            form.uctx.roles |> List.filter (\r -> r.rootnameid == form.target.rootnameid)
+            getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
     in
     case orgaRoles of
         [] ->
@@ -1573,7 +1573,7 @@ getNewNodeStepFromAuthForm form =
                             form.target.parent |> Maybe.map (\n -> n.nameid) |> withDefault form.target.nameid
 
                 circleRoles =
-                    List.filter (\r -> getParentidFromRole r == nearestNid) roles
+                    getCircleRoles roles [ form.target.nameid ]
             in
             case circleRoles of
                 [] ->
@@ -1596,7 +1596,7 @@ getNewNodeStepFromAuthForm form =
                         NodeMode.Coordinated ->
                             let
                                 coordoRoles =
-                                    subRoles |> List.filter (\r -> r.role_type == RoleType.Coordinator)
+                                    getCoordoRoles subRoles
                             in
                             case coordoRoles of
                                 [] ->

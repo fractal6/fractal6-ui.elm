@@ -4,7 +4,7 @@ import { timer } from 'd3-timer'
 import { interpolateZoom } from 'd3-interpolate'
 import { easePolyOut, easePolyInOut } from 'd3-ease'
 import { hierarchy, pack } from 'd3-hierarchy'
-import { shadeColor, setpixelated } from './custom.js'
+import { shadeColor, setpixelated, sleep } from './custom.js'
 
 (function() {
     var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
@@ -935,11 +935,6 @@ export const GraphPack = {
     },
 
     drawStargate(radius, down) {
-        // sleep time expects milliseconds
-        function sleep (time) {
-            return new Promise((resolve) => setTimeout(resolve, time));
-        }
-
         if (radius > 33) {
             down = -1
         } else if (radius <= 0) {

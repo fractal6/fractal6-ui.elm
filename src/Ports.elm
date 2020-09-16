@@ -205,6 +205,14 @@ searchNode pattern =
 --- Popups
 
 
+inheritWith : String -> Cmd msg
+inheritWith target =
+    outgoing
+        { action = "INHERIT_WIDTH"
+        , data = JE.string target
+        }
+
+
 outsideClickClose : String -> String -> Cmd msg
 outsideClickClose msg target =
     outgoing

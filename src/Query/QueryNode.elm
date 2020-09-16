@@ -10,6 +10,7 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryPublicOrga
+    , userPayload
     )
 
 import Dict exposing (Dict)
@@ -265,9 +266,16 @@ nodeOrgaPayload =
             (Fractal.Object.Node.parent identity <| SelectionSet.map NodeId Fractal.Object.Node.nameid)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Node.first_link identity userPayload)
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
+
+
+userPayload : SelectionSet User Fractal.Object.User
+userPayload =
+    SelectionSet.map2 User
+        Fractal.Object.User.username
+        Fractal.Object.User.name
 
 
 nodeCharacPayload : SelectionSet NodeCharac Fractal.Object.NodeCharac

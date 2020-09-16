@@ -50,6 +50,11 @@ edit nd =
     { nd | isBlobEdit = True }
 
 
+cancelEdit : NodeDoc -> NodeDoc
+cancelEdit nd =
+    { nd | isBlobEdit = False }
+
+
 {-|
 
     reset action and title (Tension title can't be change in this function)
@@ -65,11 +70,6 @@ updateForm field value action form =
             updateNodeForm field value { form | action = action }
     in
     { f | action = oldAction, post = Dict.remove "title" f.post }
-
-
-cancelEdit : NodeDoc -> NodeDoc
-cancelEdit nd =
-    { nd | isBlobEdit = False }
 
 
 type alias TensionNodeData msg =

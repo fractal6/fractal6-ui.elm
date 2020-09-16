@@ -68,7 +68,7 @@ type alias Node =
     , parent : Maybe NodeId -- see issue with recursive structure
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
-    , first_link : Maybe Username
+    , first_link : Maybe User
     , charac : NodeCharac
     , isPrivate : Bool
     }
@@ -145,6 +145,8 @@ type alias Username =
 type alias User =
     { username : String
     , name : Maybe String
+
+    -- logo
     }
 
 
@@ -159,7 +161,7 @@ type alias TensionHead =
     , title : String
     , type_ : TensionType.TensionType
     , labels : Maybe (List Label)
-    , assignees : Maybe (List Username)
+    , assignees : Maybe (List User)
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction

@@ -52,16 +52,16 @@ hr {
   color: $grey-light !important;
 }
 .is-grey {
-    color: $grey
+    color: $grey !important;
 }
 .is-grey-light {
-    color: $grey-light2
+    color: $grey-light2 !important;
 }
 .is-bg-grey {
-    background-color: $grey
+    background-color: $grey !important;
 }
 .is-bg-grey-light {
-    background-color: $grey-light2
+    background-color: $grey-light2 !important;
 }
 
 .is-md {
@@ -69,7 +69,7 @@ hr {
 }
 
 .is-flex-grow {
-    flex-grow: 1;
+    flex-grow: 1 !important;
 }
 
 .is-aligned-center {
@@ -637,6 +637,32 @@ html.has-modal-active, html.has-modal-active2 {
     .blobToolBar {
         margin-bottom: 1rem;
     }
+}
+
+#userSearchPanel {
+    position: absolute;
+    background: lighten($body-background-color, 7);
+    border: 1px solid $grey-light;
+    min-width: 250px;
+    z-index: 90;
+
+    .selectors {
+        max-height: 444px;
+        overflow-y: auto;
+    }
+
+    p {
+        &.panel-block {
+            &:hover {
+                cursor: pointer !important;
+                background: lighten($body-background-color, 5) !important;
+            }
+        }
+        .panel-icon {
+            font-size: 1.5rem;
+        }
+    }
+
 }
 
 //
@@ -1367,7 +1393,7 @@ a.actionLink {
     border: 1px solid #000;
     // Text centering
     text-align: center;
-    padding-top: 11px;
+    padding-top: 10px;
     font-size: 0.8rem;
 }
 

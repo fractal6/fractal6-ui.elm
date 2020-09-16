@@ -53,3 +53,8 @@ const toggleTheme = () =>  {
     }
 }
 
+// sleep time expects milliseconds
+// usage: sleep(1000).then(() => {...})
+export function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}

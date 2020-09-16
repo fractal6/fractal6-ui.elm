@@ -10,9 +10,10 @@ import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlE
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.Text as T
+import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, withMaybeData, withStateString)
+import Extra exposing (ternary, withMapData, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -31,7 +32,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusState, nid2pid, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, uriFromUsername)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View
     exposing
@@ -55,7 +56,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (patchComment, patchTitle, publishBlob, pushTensionPatch)
-import Query.QueryNode exposing (queryLocalGraph)
+import Query.QueryNode exposing (queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -113,8 +114,8 @@ type alias Model =
     , publish_result : GqlData BlobFlag
 
     -- Side Pane
-    , isAssigneesEdit : Bool
-    , users_result : GqlData User
+    , isTensionAdmin : Bool
+    , assigneesPanel : UserSearchPanel
 
     -- Common
     , node_action : ActionState
@@ -203,7 +204,9 @@ type Msg
     | PushBlobAck (GqlData BlobFlag)
       -- Assignees
     | DoAssigneesEdit
+    | ChangeAssigneePattern String
     | DoAssigneesCancel
+    | GotOrga (GqlData NodesData) -- GraphQl
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -281,8 +284,8 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isAssigneesEdit = False
-            , users_result = NotAsked
+            , isTensionAdmin = getTensionUserAuth global.session.user (global.session.tension_head |> Maybe.map (\x -> Success x) |> withDefault Loading)
+            , assigneesPanel = UserSearchPanel.create global.session.user (global.session.orga_data |> Maybe.map (\x -> Success x) |> withDefault Loading)
 
             -- Common
             , node_action = NoOp
@@ -410,7 +413,7 @@ update global msg model =
         GotTensionHead result ->
             let
                 newModel =
-                    { model | tension_head = result }
+                    { model | tension_head = result, isTensionAdmin = getTensionUserAuth global.session.user result }
             in
             ( newModel, Ports.bulma_driver "", send (UpdateSessionTensionHead (withMaybeData result)) )
 
@@ -773,14 +776,40 @@ update global msg model =
 
         -- Assignees
         DoAssigneesEdit ->
-            if model.isAssigneesEdit == False then
-                ( { model | isAssigneesEdit = True }, Cmd.none, Ports.outsideClickClose "doAssigneesCancelFromJs" "assigneesMedia" )
+            if model.assigneesPanel.isEdit == False then
+                let
+                    gcmd =
+                        case model.assigneesPanel.users_data of
+                            Success _ ->
+                                Cmd.none
+
+                            _ ->
+                                queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
+                in
+                ( { model | assigneesPanel = UserSearchPanel.edit model.assigneesPanel }
+                , gcmd
+                , Cmd.batch [ Ports.outsideClickClose "doAssigneesCancelFromJs" "assigneesPanelContent", Ports.inheritWith "userSearchPanel" ]
+                )
 
             else
                 ( model, Cmd.none, Cmd.none )
 
+        ChangeAssigneePattern pattern ->
+            ( model, Cmd.none, Cmd.none )
+
         DoAssigneesCancel ->
-            ( { model | isAssigneesEdit = False }, Cmd.none, Cmd.none )
+            ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel }, Cmd.none, Cmd.none )
+
+        GotOrga result ->
+            case result of
+                Success data ->
+                    ( { model | assigneesPanel = UserSearchPanel.refresh global.session.user result model.assigneesPanel }
+                    , Ports.inheritWith "userSearchPanel"
+                    , send (UpdateSessionOrga (Just data))
+                    )
+
+                other ->
+                    ( { model | assigneesPanel = UserSearchPanel.refresh global.session.user result model.assigneesPanel }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1077,7 +1106,7 @@ viewTension u t model =
                                 div [] [ text "No data to show..." ]
                 ]
             , div [ class "column is-3" ]
-                [ viewSidePane model.node_focus t model ]
+                [ viewSidePane u t model ]
             ]
         ]
 
@@ -1097,7 +1126,7 @@ viewComments u t model =
                         LoggedIn uctx ->
                             let
                                 orgaRoles =
-                                    uctx.roles |> List.filter (\r -> List.member r.rootnameid [ nid2pid t.emitter.nameid, nid2pid t.receiver.nameid ])
+                                    getOrgaRoles uctx.roles [ t.emitter.nameid, t.receiver.nameid ]
                             in
                             case orgaRoles of
                                 [] ->
@@ -1542,46 +1571,66 @@ viewJoinNeeded focus =
         ]
 
 
-viewSidePane : NodeFocus -> TensionHead -> Model -> Html Msg
-viewSidePane focus t model =
+viewSidePane : UserState -> TensionHead -> Model -> Html Msg
+viewSidePane u t model =
     let
-        assignees_m =
-            t.assignees |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
+        assignees =
+            t.assignees |> withDefault []
 
-        labels_m =
-            t.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
+        labels =
+            t.labels |> withDefault []
     in
     div [ class "tensionSidePane" ]
-        [ div [ id "assigneesMedia", class "media" ]
-            [ div [ class "media-content" ]
-                [ h2 [ class "subtitle is-w", onClick DoAssigneesEdit ]
-                    [ text T.assigneesH
-                    , Fa.icon0 "fas fa-cog is-pulled-right" ""
-                    ]
-                , div [ class "" ]
-                    [ if model.isAssigneesEdit then
-                        text "edit me ya !"
+        [ div [ class "media" ]
+            [ div [ class "media-content" ] <|
+                (case u of
+                    LoggedIn uctx ->
+                        [ h2 [ class "subtitle is-w", onClick DoAssigneesEdit ]
+                            [ text T.assigneesH
+                            , if model.assigneesPanel.isEdit then
+                                Fa.icon0 "fas fa-times is-pulled-right" ""
 
-                      else
-                        case assignees_m of
-                            Just assignees ->
-                                assignees |> List.map (\a -> viewUser a.username) |> span []
+                              else if model.isTensionAdmin then
+                                Fa.icon0 "fas fa-cog is-pulled-right" ""
 
-                            Nothing ->
-                                div [ class "is-italic" ] [ text T.noAssignees ]
-                    ]
-                ]
+                              else
+                                span [] []
+                            ]
+                        , div [ id "assigneesPanelContent" ]
+                            [ if model.assigneesPanel.isEdit then
+                                let
+                                    panelData =
+                                        { selectedUsers = assignees
+                                        , targets = [ t.emitter.nameid, t.receiver.nameid ]
+                                        , data = model.assigneesPanel
+                                        }
+                                in
+                                UserSearchPanel.view panelData
+
+                              else
+                                div [] []
+                            ]
+                        ]
+
+                    LoggedOut ->
+                        [ h2 [ class "subtitle" ] [ text T.assigneesH ] ]
+                )
+                    ++ [ if List.length assignees > 0 then
+                            assignees |> List.map (\a -> viewUser a.username) |> span []
+
+                         else
+                            div [ class "is-italic" ] [ text T.noAssignees ]
+                       ]
             ]
         , div [ class "media" ]
             [ div [ class "media-content" ]
                 [ h2 [ class "subtitle" ] [ text T.labelsH ]
                 , div [ class "" ]
-                    [ case labels_m of
-                        Just labels ->
-                            viewLabels labels
+                    [ if List.length labels > 0 then
+                        viewLabels labels
 
-                        Nothing ->
-                            div [ class "is-italic" ] [ text T.noLabels ]
+                      else
+                        div [ class "is-italic" ] [ text T.noLabels ]
                     ]
                 ]
             ]
@@ -1591,7 +1640,7 @@ viewSidePane focus t model =
                 , div [ class "" ]
                     [ case t.action of
                         Just action ->
-                            viewActionIconLink action focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
+                            viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
 
                         Nothing ->
                             div [ class "is-italic" ] [ text T.noAction ]
@@ -1763,3 +1812,31 @@ mdFromTensionHead t =
         |> List.head
         |> Maybe.map (\h -> h.md)
         |> withDefault Nothing
+
+
+getTensionUserAuth : UserState -> GqlData TensionHead -> Bool
+getTensionUserAuth user th_data =
+    case user of
+        LoggedIn uctx ->
+            case th_data of
+                Success th ->
+                    if uctx.username == th.createdBy.username then
+                        -- Author
+                        True
+
+                    else if List.member uctx.username (th.assignees |> withDefault [] |> List.map (\u -> u.username)) then
+                        -- assignee
+                        True
+
+                    else if (getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ] |> getCoordoRoles |> List.length) > 0 then
+                        -- Coordinator of receiver or emitter
+                        True
+
+                    else
+                        False
+
+                _ ->
+                    False
+
+        LoggedOut ->
+            False

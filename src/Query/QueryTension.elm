@@ -39,7 +39,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (nodeCharacPayload)
+import Query.QueryNode exposing (nodeCharacPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 
@@ -97,11 +97,7 @@ tensionHeadPayload =
                 (\args -> { args | first = Present nLabelPerTension })
                 labelPayload
             )
-        |> with
-            (Fractal.Object.Tension.assignees
-                identity
-                (SelectionSet.map Username Fractal.Object.User.username)
-            )
+        |> with (Fractal.Object.Tension.assignees identity userPayload)
         |> with (Fractal.Object.Tension.emitter identity emmiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emmiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action

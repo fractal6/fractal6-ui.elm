@@ -1,4 +1,4 @@
-module Extra exposing (ternary, withDefaultData, withMaybeData, withStateString)
+module Extra exposing (ternary, withDefaultData, withMapData, withMaybeData)
 
 import Dict exposing (Dict)
 import ModelSchema exposing (RequestResult(..))
@@ -11,6 +11,10 @@ ternary test positive negative =
 
         False ->
             negative
+
+
+
+-- RequestResult / Data methods
 
 
 withDefaultData : a -> RequestResult e a -> a
@@ -33,11 +37,11 @@ withMaybeData result =
             Nothing
 
 
-withStateString : String -> RequestResult e a -> RequestResult e String
-withStateString newres result =
+withMapData : (b -> a) -> RequestResult e b -> RequestResult e a
+withMapData resMap result =
     case result of
-        Success _ ->
-            Success newres
+        Success d ->
+            Success (resMap d)
 
         Failure err ->
             Failure err

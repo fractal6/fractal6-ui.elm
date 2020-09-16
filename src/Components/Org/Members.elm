@@ -87,7 +87,7 @@ type Msg
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
     | GotMembersTop (GqlData (List Member)) -- GraphQL
-    | GotMembersSub (GqlData (List Member)) -- GraphQl
+    | GotMembersSub (GqlData (List Member)) -- Rest
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)

@@ -2,9 +2,11 @@ module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
+import ModelSchema exposing (UserCtx, UserRole)
 import Url exposing (Url)
 
 
@@ -193,31 +195,63 @@ focusFromNameid nameid_ =
     NodeFocus rootid isRoot nameid nodeType
 
 
-nid2pid : String -> String
-nid2pid nameid =
+nearestCircleid : String -> String
+nearestCircleid nameid =
+    let
+        path =
+            String.split "#" nameid |> Array.fromList
+    in
+    case Array.length path of
+        3 ->
+            -- Role
+            Array.slice 0 2 path |> Array.toList |> List.filter (\x -> x /= "") |> String.join "#"
+
+        _ ->
+            nameid
+
+
+nid2rootid : String -> String
+nid2rootid nameid =
     nameid |> String.split "#" |> List.head |> withDefault ""
 
 
-{-|
+getOrgaRoles : List UserRole -> List String -> List UserRole
+getOrgaRoles roles nameids =
+    -- Return all roles of an user inside organisations given the nameids in those organisations
+    let
+        rootnameids =
+            List.map (\nid -> nid2rootid nid) nameids
+    in
+    List.filter (\r -> List.member r.rootnameid rootnameids) roles
 
-    Returns the namid of a new Role given an username and a rootnameid
 
--}
+getCircleRoles : List UserRole -> List String -> List UserRole
+getCircleRoles roles nameids =
+    -- Return all roles of an user inside circles given the nameids of thoses circles (or the nearest circles if a role is given).
+    let
+        circleids =
+            List.map (\nid -> nearestCircleid nid) nameids
+    in
+    List.filter (\r -> List.member (nearestCircleid r.nameid) circleids) roles
+
+
+getCoordoRoles : List UserRole -> List UserRole
+getCoordoRoles roles =
+    List.filter (\r -> r.role_type == RoleType.Coordinator) roles
+
+
 guestIdCodec : String -> String -> String
 guestIdCodec rootnameid username =
+    -- Returns the namid of a new Role given an username and a rootnameid
     String.join "#" [ rootnameid, "", "@" ++ username ]
 
 
-{-|
-
-    Returns the namid of a new Circle/Role given the parentid and the nameid fragment.
-
--}
 nodeIdCodec : String -> String -> NodeType.NodeType -> String
 nodeIdCodec parentid targetid nodeType =
+    -- Returns the namid of a new Circle/Role given the parentid and the nameid fragment.
     let
         rootnameid =
-            nid2pid parentid
+            nid2rootid parentid
     in
     case nodeType of
         NodeType.Circle ->

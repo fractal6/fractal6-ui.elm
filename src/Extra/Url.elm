@@ -36,10 +36,6 @@ queryParser url =
         toDict2 : List ( String, String ) -> Dict String String
         toDict2 parameters =
             Dict.fromList parameters
-
-        addParam2 : String -> Maybe (List String) -> Maybe String
-        addParam2 value maybeValues =
-            Just value
     in
     url.query
         |> Maybe.andThen Url.percentDecode

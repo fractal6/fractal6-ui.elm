@@ -1,6 +1,7 @@
 import MiniSearch from 'minisearch'
 import { BulmaDriver, InitBulma, catchEsc } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
+import { sleep } from './custom.js'
 
 
 // On load, listen to Elm!
@@ -50,10 +51,10 @@ const actions = {
     // Utils
     //
     'LOG': (app, session, message) => {
-        console.log(`From Elm:`, message)
+        console.log(`From Elm:`, message);
     },
     'BULMA': (app, session, eltId) => {
-        InitBulma(app, session, eltId)
+        InitBulma(app, session, eltId);
     },
     'TOGGLE_TH': (app, session, message) => {
         var $tt = document.getElementById("themeButton_port");
@@ -189,6 +190,22 @@ const actions = {
     //
     // Popups
     //
+    'INHERIT_WIDTH' : (app, session, target) => {
+        const inheritWidth = () => {
+            var $target = document.getElementById(target);
+            if ($target) {
+                $target.style.width = $target.parentNode.clientWidth + "px";
+                return true
+            }
+            return false
+        }
+        sleep(10).then(() => {
+            if (!inheritWidth()) {
+                setTimeout(inheritWidth, 100);
+            }
+        });
+
+    },
     'OUTSIDE_CLICK_CLOSE' : (app, session, data) => {
         // close if a outiside (of data.target) click occurs
         // or if ESC is pressed. Additionally, an ongoing
@@ -196,26 +213,32 @@ const actions = {
         var msg = data.msg;
         var id = data.target;
 
+        InitBulma(app, session, id);
+
         const closeEvent = () => {
             app.ports[msg].send(null);
             removeClickListener();
         }
 
+        // outside click listener
         const outsideClickListener = event => {
             if (event.target.closest("#"+id) === null) {
                 closeEvent();
             }
         }
 
+        // Escape listener
         const escListener = event => {
             catchEsc(event, closeEvent);
         }
 
+        // Remove the litener on close
         const removeClickListener = () => {
             document.removeEventListener('click', outsideClickListener);
             document.removeEventListener('keydown', escListener);
         }
 
+        // add the listener
         setTimeout(() => {
             document.addEventListener('click', outsideClickListener);
             document.addEventListener('keydown', escListener);

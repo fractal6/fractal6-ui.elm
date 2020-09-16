@@ -253,13 +253,9 @@ getParentFragmentFromRole role =
     Array.get (Array.length l - 2) l |> withDefault ""
 
 
-{-|
-
-    Push a new tension in the model if data is success
-
--}
 hotTensionPush : Tension -> GqlData TensionsData -> TensionsData
 hotTensionPush tension tsData =
+    -- Push a new tension in the model if data is success
     case tsData of
         Success tensions ->
             [ tension ] ++ tensions
@@ -268,13 +264,9 @@ hotTensionPush tension tsData =
             []
 
 
-{-|
-
-    Push a new node in the model if data is success
-
--}
 hotNodePush : List Node -> GqlData NodesData -> NodesData
 hotNodePush nodes odata =
+    -- Push a new node in the model if data is success
     case odata of
         Success data ->
             Dict.union (List.map (\n -> ( n.nameid, n )) nodes |> Dict.fromList) data
@@ -304,7 +296,9 @@ hotNodeUpdateName form odata =
 
 
 
+--
 -- Json Decoders/Encoders
+--
 {-
    User decoder/encoder
 -}
@@ -390,7 +384,16 @@ nodeEncoder node =
     , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
     , ( "type_", JE.string <| NodeType.toString node.type_ )
     , ( "role_type", JEE.maybe JE.string <| Maybe.map (\t -> RoleType.toString t) node.role_type )
-    , ( "first_link", JEE.maybe JE.string <| Maybe.map (\x -> x.username) node.first_link )
+    , ( "first_link"
+      , JEE.maybe JE.object <|
+            Maybe.map
+                (\fs ->
+                    [ ( "username", JE.string fs.username )
+                    , ( "name", JEE.maybe JE.string fs.name )
+                    ]
+                )
+                node.first_link
+      )
     , ( "charac"
       , JE.object
             [ ( "userCanJoin", JE.bool node.charac.userCanJoin )
@@ -417,7 +420,14 @@ nodeDecoder =
         |> JDE.andMap (JD.maybe (JD.map NodeId <| JD.field "parentid" JD.string))
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
-        |> JDE.andMap (JD.maybe (JD.map Username <| JD.field "first_link" JD.string))
+        |> JDE.andMap
+            (JD.maybe
+                (JD.field "first_link" <|
+                    JD.map2 User
+                        (JD.field "username" JD.string)
+                        (JD.maybe (JD.field "name" JD.string))
+                )
+            )
         |> JDE.andMap (JD.field "charac" characDecoder)
         |> JDE.andMap (JD.field "isPrivate" JD.bool)
 

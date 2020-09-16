@@ -24,7 +24,7 @@ import ModelCommon exposing (JoinOrgaForm, TensionForm)
 import ModelCommon.Codecs exposing (guestIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
-import Query.QueryNode exposing (nodeOrgaPayload)
+import Query.QueryNode exposing (nodeOrgaPayload, userPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -133,7 +133,7 @@ type alias Circle =
     , children : Maybe (List Node)
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
-    , first_link : Maybe Username
+    , first_link : Maybe User
     , charac : NodeCharac
     , isPrivate : Bool
     }
@@ -216,7 +216,7 @@ addOneCirclePayload =
         |> with (Fractal.Object.Node.children identity nodeOrgaPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.first_link identity (SelectionSet.map Username Fractal.Object.User.username))
+        |> with (Fractal.Object.Node.first_link identity userPayload)
         |> with
             (Fractal.Object.Node.charac identity <|
                 SelectionSet.map2 NodeCharac
