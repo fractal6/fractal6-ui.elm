@@ -55,7 +55,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (patchComment, patchTitle, publishBlob, pushTensionPatch)
+import Query.PatchTension exposing (patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
 import Query.QueryNode exposing (queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -206,6 +206,8 @@ type Msg
     | DoAssigneesEdit
     | ChangeAssigneePattern String
     | ChangeUserLookup (LookupResult User)
+    | ChangeAssignee String User Bool
+    | AssigneeAck (GqlData IdPayload)
     | DoAssigneesCancel
     | GotOrga (GqlData NodesData) -- GraphQl
       -- JoinOrga Action
@@ -781,8 +783,8 @@ update global msg model =
                 let
                     gcmd =
                         case model.assigneesPanel.users_data of
-                            Success _ ->
-                                Cmd.none
+                            Success users ->
+                                Ports.initUserSearch (Dict.values users |> List.concat)
 
                             _ ->
                                 queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
@@ -808,6 +810,43 @@ update global msg model =
 
                 Err err ->
                     ( model, Cmd.none, Cmd.none )
+
+        ChangeAssignee tid user isNew ->
+            ( { model | assigneesPanel = UserSearchPanel.click user isNew model.assigneesPanel }
+            , setAssignee apis.gql tid user.username isNew AssigneeAck
+            , Cmd.none
+            )
+
+        AssigneeAck result ->
+            let
+                newModel =
+                    { model | assigneesPanel = UserSearchPanel.clickAck result model.assigneesPanel }
+            in
+            case result of
+                Success _ ->
+                    let
+                        th =
+                            withMapData
+                                (\x ->
+                                    let
+                                        assignee =
+                                            model.assigneesPanel.assignee
+
+                                        assignees =
+                                            if model.assigneesPanel.isNew then
+                                                withDefault [] x.assignees ++ [ assignee ]
+
+                                            else
+                                                LE.remove assignee (withDefault [] x.assignees)
+                                    in
+                                    { x | assignees = Just assignees }
+                                )
+                                model.tension_head
+                    in
+                    ( { newModel | tension_head = th }, Cmd.none, Cmd.none )
+
+                other ->
+                    ( newModel, Cmd.none, Cmd.none )
 
         DoAssigneesCancel ->
             ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel }, Cmd.none, Cmd.none )
@@ -1622,8 +1661,10 @@ viewSidePane u t model =
                                     panelData =
                                         { selectedUsers = assignees
                                         , targets = [ t.emitter.nameid, t.receiver.nameid ]
+                                        , tid = t.id
                                         , data = model.assigneesPanel
                                         , onChangePattern = ChangeAssigneePattern
+                                        , onUserClick = ChangeAssignee
                                         }
                                 in
                                 UserSearchPanel.view panelData

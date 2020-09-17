@@ -380,7 +380,7 @@ export const GraphPack = {
                 var textLong = _name;
                 var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase());
                 if (node.data.first_link) {
-                    user = "@"+node.data.first_link;
+                    user = "@"+node.data.first_link.username;
                 }
 
                 // Name

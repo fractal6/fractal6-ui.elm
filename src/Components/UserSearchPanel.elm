@@ -1,6 +1,8 @@
 module Components.UserSearchPanel exposing
     ( UserSearchPanel
     , cancelEdit
+    , click
+    , clickAck
     , create
     , edit
     , refresh
@@ -30,8 +32,13 @@ type alias UserSearchPanel =
     { isEdit : Bool
     , users_data : GqlData (Dict String (List User))
     , user : Maybe User
+
+    -- Form
     , pattern : String
     , lookup : List User
+    , assignee : User -- assignee selected/clickedame
+    , isNew : Bool
+    , click_result : GqlData IdPayload
     }
 
 
@@ -72,8 +79,13 @@ create user nd_d =
     { isEdit = False
     , users_data = ud
     , user = user_m |> withDefault Nothing
+
+    -- Form
     , pattern = ""
     , lookup = []
+    , assignee = User "" Nothing
+    , isNew = False
+    , click_result = NotAsked
     }
 
 
@@ -89,6 +101,16 @@ refresh user nd_d usp =
     }
 
 
+edit : UserSearchPanel -> UserSearchPanel
+edit usp =
+    { usp | isEdit = True }
+
+
+cancelEdit : UserSearchPanel -> UserSearchPanel
+cancelEdit usp =
+    { usp | isEdit = False, click_result = NotAsked, pattern = "", lookup = [] }
+
+
 setPattern : String -> UserSearchPanel -> UserSearchPanel
 setPattern pattern usp =
     { usp | pattern = pattern }
@@ -99,21 +121,23 @@ setLookup lu usp =
     { usp | lookup = lu }
 
 
-edit : UserSearchPanel -> UserSearchPanel
-edit usp =
-    { usp | isEdit = True }
+click : User -> Bool -> UserSearchPanel -> UserSearchPanel
+click user isNew usp =
+    { usp | assignee = user, isNew = isNew }
 
 
-cancelEdit : UserSearchPanel -> UserSearchPanel
-cancelEdit usp =
-    { usp | isEdit = False }
+clickAck : GqlData IdPayload -> UserSearchPanel -> UserSearchPanel
+clickAck result usp =
+    { usp | click_result = result }
 
 
 type alias UserSearchPanelData msg =
     { selectedUsers : List User
     , targets : List String
+    , tid : String
     , data : UserSearchPanel
     , onChangePattern : String -> msg
+    , onUserClick : String -> User -> Bool -> msg
     }
 
 
@@ -158,6 +182,12 @@ view uspd =
                             , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                             ]
                         ]
+                    , case uspd.data.click_result of
+                        Failure err ->
+                            viewGqlErrors err
+
+                        _ ->
+                            div [] []
                     , div [ class "selectors" ] <|
                         (users
                             |> List.map
@@ -169,7 +199,11 @@ view uspd =
                                         faCls =
                                             ternary isActive "fa-check-square" "fa-square"
                                     in
-                                    p [ class "panel-block", classList [ ( "is-active", isActive ) ] ]
+                                    p
+                                        [ class "panel-block"
+                                        , classList [ ( "is-active", isActive ) ]
+                                        , onClick (uspd.onUserClick uspd.tid u (isActive == False))
+                                        ]
                                         [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                                         , viewUser u.username
                                         , case u.name of

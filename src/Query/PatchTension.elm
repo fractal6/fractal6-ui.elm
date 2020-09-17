@@ -3,9 +3,11 @@ module Query.PatchTension exposing
     , patchTitle
     , publishBlob
     , pushTensionPatch
+    , setAssignee
     )
 
 import Dict exposing (Dict)
+import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.CommentOrderable as CommentOrderable
 import Fractal.Enum.TensionAction as TensionAction
@@ -150,6 +152,80 @@ patchTensionInputEncoder f =
                         )
                         |> Present
                 , remove = Absent
+                }
+    in
+    { input =
+        Input.buildUpdateTensionInput patchRequired patchOpts
+    }
+
+
+
+{-
+   set assignee
+-}
+
+
+type alias AssigneePayload =
+    { tension : Maybe (List (Maybe IdPayload)) }
+
+
+assigneeDecoder : Maybe AssigneePayload -> Maybe IdPayload
+assigneeDecoder data =
+    case data of
+        Just d ->
+            d.tension
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+
+        Nothing ->
+            Nothing
+
+
+setAssignee url tid username isNew msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (setAssigneeEncoder tid username isNew)
+            (SelectionSet.map AssigneePayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    SelectionSet.map IdPayload
+                        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse assigneeDecoder >> msg)
+
+
+setAssigneeEncoder : String -> String -> Bool -> Mutation.UpdateTensionRequiredArguments
+setAssigneeEncoder tid username isNew =
+    let
+        patchRequired =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId tid ] }
+                    )
+            }
+
+        userPatch =
+            Input.buildTensionPatch
+                (\s ->
+                    { s
+                        | assignees =
+                            Present
+                                [ Input.buildUserRef
+                                    (\u -> { u | username = Present username })
+                                ]
+                    }
+                )
+                |> Present
+
+        patchOpts =
+            \x ->
+                { set = ternary isNew userPatch Absent
+                , remove = ternary (isNew == False) userPatch Absent
                 }
     in
     { input =
