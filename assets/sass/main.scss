@@ -75,6 +75,12 @@ hr {
 .is-aligned-center {
     text-align: center !important;
 }
+.is-aligned-left {
+    text-align: left !important;
+}
+.is-aligned-right {
+    text-align: right !important;
+}
 
 .is-underline {
     //text-decoration: underline;
@@ -774,7 +780,10 @@ html.has-modal-active, html.has-modal-active2 {
         padding-bottom: 0 !important;
     }
 
-    .table {
+    .table, .table.is-fullwidth {
+        flex-grow: 1;
+        flex-shrink: 1;
+        display: inline-table;
         background-color: #fffffdf2 !important;
         line-height: 1.4 !important;
         font-size: 0.775rem !important;
@@ -782,13 +791,7 @@ html.has-modal-active, html.has-modal-active2 {
         .help {
             border-bottom: 1px solid #22222222;
         }
-    }
 
-    .table.is-fullwidth {
-        flex-grow: 1;
-        flex-shrink: 1;
-        display: inline-table;
-        background-color: #fffffdf2 !important;
     }
 
     thead th,

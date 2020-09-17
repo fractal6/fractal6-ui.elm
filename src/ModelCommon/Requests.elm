@@ -7,7 +7,7 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (userDecoder)
+import ModelCommon exposing (userCtxDecoder)
 import ModelSchema exposing (GqlData, Member, NodeId, Post, RequestResult(..), UserCtx, UserRoleExtended)
 import Query.QueryNode exposing (MemberNode, User)
 import RemoteData exposing (RemoteData)
@@ -140,14 +140,14 @@ login url post msg =
     --, Http.post
     --    { url = "http://localhost:8888/login"
     --    , body = Http.jsonBody <| JE.dict identity JE.string form.post
-    --    , expect = expectJson (RemoteData.fromResult >> GotSignin) userDecoder
+    --    , expect = expectJson (RemoteData.fromResult >> GotSignin) userCtxDecoder
     --    }
     Http.riskyRequest
         { method = "POST"
         , headers = []
         , url = url ++ "/login"
         , body = Http.jsonBody <| JE.dict identity JE.string post
-        , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
+        , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -159,7 +159,7 @@ signup url post msg =
         , headers = []
         , url = url ++ "/signup"
         , body = Http.jsonBody <| JE.dict identity JE.string post
-        , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
+        , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -171,7 +171,7 @@ tokenack url msg =
         , headers = []
         , url = url ++ "/tokenack"
         , body = Http.emptyBody
-        , expect = expectJson (RemoteData.fromResult >> msg) userDecoder
+        , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

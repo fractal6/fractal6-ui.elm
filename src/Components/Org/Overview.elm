@@ -136,7 +136,7 @@ type Msg
     | LookupFocus String (Maybe LocalGraph)
     | LookupBlur
     | ChangePattern String
-    | ChangeLookup Nodes_
+    | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
       -- Node Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
@@ -388,18 +388,14 @@ update global msg model =
                     model.node_quickSearch
 
                 newIdx =
-                    if pattern == "" then
-                        0
-
-                    else
-                        qs.idx
+                    ternary (pattern == "") 0 qs.idx
             in
             ( { model | node_quickSearch = { qs | pattern = pattern, idx = newIdx, visible = True } }
             , Cmd.none
             , Ports.searchNode pattern
             )
 
-        ChangeLookup nodes_ ->
+        ChangeNodeLookup nodes_ ->
             let
                 qs =
                     model.node_quickSearch
@@ -963,7 +959,7 @@ subscriptions _ _ =
         , nodeClickedFromJs NodeClicked
         , nodeFocusedFromJs_ NodeFocused
         , nodeDataFromJs_ DoNodeAction
-        , lookupFromJs_ ChangeLookup
+        , Ports.lookupNodeFromJs ChangeNodeLookup
         ]
 
 
@@ -978,9 +974,6 @@ port nodeFocusedFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port nodeDataFromJs : (JD.Value -> a) -> Sub a
-
-
-port lookupFromJs : (JD.Value -> a) -> Sub a
 
 
 nodeDataFromJs_ : (Node_ -> msg) -> Sub msg
@@ -1012,22 +1005,6 @@ nodeFocusedFromJs_ object =
                             Err (JD.errorToString err)
                )
             << JD.decodeValue localGraphDecoder
-        )
-
-
-lookupFromJs_ : (Nodes_ -> msg) -> Sub msg
-lookupFromJs_ object =
-    lookupFromJs
-        (object
-            << (\x ->
-                    case x of
-                        Ok n ->
-                            Ok n
-
-                        Err err ->
-                            Err (JD.errorToString err)
-               )
-            << JD.decodeValue (JD.list nodeDecoder)
         )
 
 
@@ -1246,10 +1223,10 @@ viewSearchBar odata maybePath qs =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ p [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
 
                                      else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
-                                        [ p [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
 
                                      else
                                         []

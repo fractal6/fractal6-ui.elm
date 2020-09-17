@@ -1,27 +1,32 @@
 port module Ports exposing (..)
 
 import Dict exposing (Dict)
+import Json.Decode as JD
 import Json.Encode as JE
-import ModelCommon exposing (graphPackEncoder, userEncoder)
-import ModelSchema exposing (NodesData, UserCtx)
+import ModelCommon exposing (LookupResult, nodeDecoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder)
+import ModelCommon.Codecs exposing (nearestCircleid)
+import ModelSchema exposing (Node, NodesData, User, UserCtx)
 
 
 
--- Ingoing
---port getBackTimeFrom : (String -> msg) -> Sub msg
--- How to use that ? (dayjs tipically or other use of a general library (updated nested data?)
--- Outgoing
--- Interface
+-- Outgoing Ports
 
 
 port outgoing : { action : String, data : JE.Value } -> Cmd msg
 
 
 
--- Js Util
+-- Ingoing
+--port getBackTimeFrom : (String -> msg) -> Sub msg
 
 
 port closeModalFromJs : (String -> msg) -> Sub msg
+
+
+port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
+
+
+port lookupUserFromJs_ : (JD.Value -> a) -> Sub a
 
 
 
@@ -68,22 +73,6 @@ initGraphPack data focus =
         }
 
 
-focusGraphPack : String -> Cmd msg
-focusGraphPack focusid =
-    outgoing
-        { action = "FOCUS_GRAPHPACK"
-        , data = JE.string focusid
-        }
-
-
-clearTooltip : Cmd msg
-clearTooltip =
-    outgoing
-        { action = "CLEAR_TOOLTIP"
-        , data = JE.string ""
-        }
-
-
 redrawGraphPack : NodesData -> Cmd msg
 redrawGraphPack data =
     outgoing
@@ -108,6 +97,22 @@ drawButtonsGraphPack =
         }
 
 
+focusGraphPack : String -> Cmd msg
+focusGraphPack focusid =
+    outgoing
+        { action = "FOCUS_GRAPHPACK"
+        , data = JE.string focusid
+        }
+
+
+clearTooltip : Cmd msg
+clearTooltip =
+    outgoing
+        { action = "CLEAR_TOOLTIP"
+        , data = JE.string ""
+        }
+
+
 
 --
 -- Session functions
@@ -118,7 +123,7 @@ saveUserCtx : UserCtx -> Cmd msg
 saveUserCtx userCtx =
     let
         -- Stringigy a Dict
-        --dataD = Dict.fromList [ ( "key", "user_ctx" ++ userCtx.username ), ( "data", JE.encode 0 <| userEncoder userCtx ) ]
+        --dataD = Dict.fromList [ ( "key", "user_ctx" ++ userCtx.username ), ( "data", JE.encode 0 <| userCtxEncoder userCtx ) ]
         --datad = JE.dict identity JE.string dataD
         --
         -- Turn the dict into Json string
@@ -126,7 +131,7 @@ saveUserCtx userCtx =
             JE.object
                 --[ ( "key", JE.string <| "user_ctx" ++ userCtx.username )
                 [ ( "key", JE.string "user_ctx" )
-                , ( "data", userEncoder userCtx )
+                , ( "data", userCtxEncoder userCtx )
                 ]
     in
     outgoing
@@ -201,6 +206,22 @@ searchNode pattern =
         }
 
 
+initUserSearch : List User -> Cmd msg
+initUserSearch data =
+    outgoing
+        { action = "INIT_USERSEARCH"
+        , data = usersEncoder data
+        }
+
+
+searchUser : String -> Cmd msg
+searchUser pattern =
+    outgoing
+        { action = "SEARCH_USERS"
+        , data = JE.string pattern
+        }
+
+
 
 --- Popups
 
@@ -223,3 +244,55 @@ outsideClickClose msg target =
                 , ( "target", JE.string target )
                 ]
         }
+
+
+
+--
+-- Encoder
+--
+
+
+graphPackEncoder : NodesData -> String -> JE.Value
+graphPackEncoder data focus =
+    JE.object
+        [ ( "data", nodesEncoder data )
+        , ( "focusid", JE.string focus )
+        ]
+
+
+
+--
+-- Decoder
+--
+
+
+lookupNodeFromJs : (LookupResult Node -> msg) -> Sub msg
+lookupNodeFromJs object =
+    lookupNodeFromJs_
+        (object
+            << (\x ->
+                    case x of
+                        Ok n ->
+                            Ok n
+
+                        Err err ->
+                            Err (JD.errorToString err)
+               )
+            << JD.decodeValue (JD.list nodeDecoder)
+        )
+
+
+lookupUserFromJs : (LookupResult User -> msg) -> Sub msg
+lookupUserFromJs object =
+    lookupUserFromJs_
+        (object
+            << (\x ->
+                    case x of
+                        Ok n ->
+                            Ok n
+
+                        Err err ->
+                            Err (JD.errorToString err)
+               )
+            << JD.decodeValue (JD.list userDecoder)
+        )

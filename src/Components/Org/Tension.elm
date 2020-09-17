@@ -205,6 +205,7 @@ type Msg
       -- Assignees
     | DoAssigneesEdit
     | ChangeAssigneePattern String
+    | ChangeUserLookup (LookupResult User)
     | DoAssigneesCancel
     | GotOrga (GqlData NodesData) -- GraphQl
       -- JoinOrga Action
@@ -795,7 +796,18 @@ update global msg model =
                 ( model, Cmd.none, Cmd.none )
 
         ChangeAssigneePattern pattern ->
-            ( model, Cmd.none, Cmd.none )
+            ( { model | assigneesPanel = UserSearchPanel.setPattern pattern model.assigneesPanel }
+            , Cmd.none
+            , Ports.searchUser pattern
+            )
+
+        ChangeUserLookup users_ ->
+            case users_ of
+                Ok users ->
+                    ( { model | assigneesPanel = UserSearchPanel.setLookup users model.assigneesPanel }, Cmd.none, Cmd.none )
+
+                Err err ->
+                    ( model, Cmd.none, Cmd.none )
 
         DoAssigneesCancel ->
             ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel }, Cmd.none, Cmd.none )
@@ -803,8 +815,15 @@ update global msg model =
         GotOrga result ->
             case result of
                 Success data ->
+                    let
+                        users =
+                            data
+                                |> Dict.toList
+                                |> List.map (\( k, n ) -> Maybe.map (\fs -> { username = fs.username, name = fs.name }) n.first_link)
+                                |> List.filterMap identity
+                    in
                     ( { model | assigneesPanel = UserSearchPanel.refresh global.session.user result model.assigneesPanel }
-                    , Ports.inheritWith "userSearchPanel"
+                    , Cmd.batch [ Ports.inheritWith "userSearchPanel", Ports.initUserSearch users ]
                     , send (UpdateSessionOrga (Just data))
                     )
 
@@ -954,6 +973,7 @@ subscriptions global model =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal
         , doAssigneesCancelFromJs (always DoAssigneesCancel)
+        , Ports.lookupUserFromJs ChangeUserLookup
         ]
 
 
@@ -1603,6 +1623,7 @@ viewSidePane u t model =
                                         { selectedUsers = assignees
                                         , targets = [ t.emitter.nameid, t.receiver.nameid ]
                                         , data = model.assigneesPanel
+                                        , onChangePattern = ChangeAssigneePattern
                                         }
                                 in
                                 UserSearchPanel.view panelData

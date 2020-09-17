@@ -304,8 +304,8 @@ hotNodeUpdateName form odata =
 -}
 
 
-userDecoder : JD.Decoder UserCtx
-userDecoder =
+userCtxDecoder : JD.Decoder UserCtx
+userCtxDecoder =
     JD.map4 UserCtx
         (JD.field "username" JD.string)
         (JD.maybe <| JD.field "name" JD.string)
@@ -328,8 +328,8 @@ userDecoder =
         )
 
 
-userEncoder : UserCtx -> JE.Value
-userEncoder userCtx =
+userCtxEncoder : UserCtx -> JE.Value
+userCtxEncoder userCtx =
     JE.object
         [ ( "username", JE.string userCtx.username )
         , ( "name", JEE.maybe JE.string userCtx.name )
@@ -355,18 +355,29 @@ userEncoder userCtx =
         ]
 
 
+userDecoder : JD.Decoder User
+userDecoder =
+    JD.map2 User
+        (JD.field "username" JD.string)
+        (JD.maybe <| JD.field "name" JD.string)
+
+
+usersEncoder : List User -> JE.Value
+usersEncoder users =
+    JE.list JE.object <|
+        List.map
+            (\u ->
+                [ ( "username", JE.string u.username )
+                , ( "name", JEE.maybe JE.string u.name )
+                ]
+            )
+            users
+
+
 
 {-
    Nodes Encoder/Decoder
 -}
-
-
-graphPackEncoder : NodesData -> String -> JE.Value
-graphPackEncoder data focus =
-    JE.object
-        [ ( "data", nodesEncoder data )
-        , ( "focusid", JE.string focus )
-        ]
 
 
 nodesEncoder : NodesData -> JE.Value
@@ -482,7 +493,7 @@ type alias Node_ =
     Result String Node
 
 
-type alias Nodes_ =
+type alias LookupResult a =
     -- Helper for encoding ActionState / Receiving Node from JS.
     --Result JD.Error Node
-    Result String (List Node)
+    Result String (List a)

@@ -1,4 +1,13 @@
-module Components.UserSearchPanel exposing (UserSearchPanel, cancelEdit, create, edit, refresh, view)
+module Components.UserSearchPanel exposing
+    ( UserSearchPanel
+    , cancelEdit
+    , create
+    , edit
+    , refresh
+    , setLookup
+    , setPattern
+    , view
+    )
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
@@ -21,6 +30,8 @@ type alias UserSearchPanel =
     { isEdit : Bool
     , users_data : GqlData (Dict String (List User))
     , user : Maybe User
+    , pattern : String
+    , lookup : List User
     }
 
 
@@ -61,6 +72,8 @@ create user nd_d =
     { isEdit = False
     , users_data = ud
     , user = user_m |> withDefault Nothing
+    , pattern = ""
+    , lookup = []
     }
 
 
@@ -76,6 +89,16 @@ refresh user nd_d usp =
     }
 
 
+setPattern : String -> UserSearchPanel -> UserSearchPanel
+setPattern pattern usp =
+    { usp | pattern = pattern }
+
+
+setLookup : List User -> UserSearchPanel -> UserSearchPanel
+setLookup lu usp =
+    { usp | lookup = lu }
+
+
 edit : UserSearchPanel -> UserSearchPanel
 edit usp =
     { usp | isEdit = True }
@@ -86,14 +109,15 @@ cancelEdit usp =
     { usp | isEdit = False }
 
 
-type alias UserSearchPanelData =
+type alias UserSearchPanelData msg =
     { selectedUsers : List User
     , targets : List String
     , data : UserSearchPanel
+    , onChangePattern : String -> msg
     }
 
 
-view : UserSearchPanelData -> Html msg
+view : UserSearchPanelData msg -> Html msg
 view uspd =
     nav [ id "userSearchPanel", class "panel" ]
         [ case uspd.data.users_data of
@@ -111,15 +135,26 @@ view uspd =
                             uspd.targets
 
                     users =
-                        user
-                            ++ uspd.selectedUsers
-                            ++ linked_users
-                            |> LE.uniqueBy (\u -> u.username)
+                        if uspd.data.pattern == "" then
+                            user
+                                ++ uspd.selectedUsers
+                                ++ linked_users
+                                |> LE.uniqueBy (\u -> u.username)
+
+                        else
+                            LE.uniqueBy (\u -> u.username) uspd.data.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]
                         [ p [ class "control has-icons-left" ]
-                            [ input [ class "input autofocus", placeholder "Search users", type_ "text" ] []
+                            [ input
+                                [ class "input autofocus"
+                                , type_ "text"
+                                , placeholder "Search users"
+                                , value uspd.data.pattern
+                                , onInput uspd.onChangePattern
+                                ]
+                                []
                             , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                             ]
                         ]
@@ -134,10 +169,7 @@ view uspd =
                                         faCls =
                                             ternary isActive "fa-check-square" "fa-square"
                                     in
-                                    p
-                                        [ class "panel-block"
-                                        , classList [ ( "is-active", isActive ) ]
-                                        ]
+                                    p [ class "panel-block", classList [ ( "is-active", isActive ) ] ]
                                         [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                                         , viewUser u.username
                                         , case u.name of

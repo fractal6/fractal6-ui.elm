@@ -3,6 +3,10 @@ import { BulmaDriver, InitBulma, catchEsc } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
+function initQuickSearch(qs, data) {
+    qs.removeAll();
+    qs.addAll(data);
+}
 
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
@@ -14,7 +18,7 @@ window.addEventListener('load', _ => {
                 document.getElementById("footBar").style.display= "block";
             }, 0.5);
 
-            // Ephemere Objects
+            // Session Object
             var session = {
                 isInit: true,
                 user_ctx: null, // from localstorage
@@ -22,16 +26,24 @@ window.addEventListener('load', _ => {
                 // Graphpack
                 gp: Object.create(GraphPack),
                 // QuickSearch
-                qs: new MiniSearch({
+                qsn: new MiniSearch({
                     idField: 'nameid',
                     storeFields: ['nameid'],
-                    fields: ['name', 'first_link'],
+                    fields: ['nameid', 'name', 'first_link'],
                     searchOptions: {
                         fuzzy: 0.2,
                         boost: { name: 2 },
-                    }
+                    },
+                }),
+                qsu: new MiniSearch({
+                    idField: 'username',
+                    storeFields: ['username'],
+                    fields: ['username', 'name'],
+                    searchOptions: { fuzzy: 0.2, },
                 })
             };
+
+            // Suscribe to Elm outgoing ports
             app.ports.outgoing.subscribe(({ action, data }) => {
                 if (actions[action]) {
                     actions[action](app, session, data)
@@ -89,7 +101,7 @@ const actions = {
     // Quick Search
     //
     'SEARCH_NODES': (app, session, pattern) => {
-        var qs = session.qs;
+        var qs = session.qsn;
         var nodes = session.gp.nodesDict;
         var res = qs.search(pattern, {prefix:true}).slice(0,10).map(n => {
             var d = nodes[n.nameid].data;
@@ -99,28 +111,42 @@ const actions = {
             //    firstLink: (d.first_link)? d.first_link.username : ""
         //}
         });
-        app.ports.lookupFromJs.send(res);
+        app.ports.lookupNodeFromJs_.send(res);
+    },
+    'INIT_USERSEARCH': (app, session, data) => {
+        // Setup User quickSearch
+        initQuickSearch(session.qsu, data);
+    },
+    'SEARCH_USERS': (app, session, pattern) => {
+        var qs = session.qsu;
+        var res = qs.search(pattern, {prefix:true}).slice(0,10);
+        app.ports.lookupUserFromJs_.send(res);
     },
     //
     // GraphPack
     //
     'INIT_GRAPHPACK': (app, session, data) => {
         var gp = session.gp;
+
+        // Loading empty canvas
         if (!data.data || data.data.length == 0 ) {
             gp.isLoading = true;
             gp.init_canvas()
             return
         }
+
+
         setTimeout(() => { // to wait that layout is ready
+
+            // Setup Graphpack
             var ok = gp.init(app, data, session.isInit);
             if (ok) {
                 gp.zoomToNode(data.focusid, 0.5);
                 session.isInit = false;
             }
 
-            var qs = session.qs;
-            qs.removeAll();
-            qs.addAll(data.data);
+            // Setup Node quickSearch
+            initQuickSearch(session.qsn, data.data);
         }, 150);
     },
     'FOCUS_GRAPHPACK': (app, session, focusid) => {

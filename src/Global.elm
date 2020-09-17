@@ -59,7 +59,7 @@ init flags url key =
         userState =
             case flags.uctx of
                 Just userCtxRaw ->
-                    case JD.decodeValue userDecoder userCtxRaw of
+                    case JD.decodeValue userCtxDecoder userCtxRaw of
                         Ok uctx ->
                             LoggedIn uctx
 
