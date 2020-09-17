@@ -116,10 +116,8 @@ const actions = {
     'INIT_USERSEARCH': (app, session, data) => {
         // Setup User quickSearch
         initQuickSearch(session.qsu, data);
-        console.log("init u search")
     },
     'SEARCH_USERS': (app, session, pattern) => {
-        console.log("search user: ", pattern)
         var qs = session.qsu;
         var res = qs.search(pattern, {prefix:true}).slice(0,10);
         app.ports.lookupUserFromJs_.send(res);

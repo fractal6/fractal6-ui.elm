@@ -189,33 +189,36 @@ view uspd =
                         _ ->
                             div [] []
                     , div [ class "selectors" ] <|
-                        (users
-                            |> List.map
-                                (\u ->
-                                    let
-                                        isActive =
-                                            List.member u uspd.selectedUsers
+                        if users == [] then
+                            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
-                                        faCls =
-                                            ternary isActive "fa-check-square" "fa-square"
-                                    in
-                                    p
-                                        [ class "panel-block"
-                                        , classList [ ( "is-active", isActive ) ]
-                                        , onClick (uspd.onUserClick uspd.tid u (isActive == False))
-                                        ]
-                                        [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
-                                        , viewUser u.username
-                                        , case u.name of
-                                            Just name ->
-                                                span [ class "has-text-weight-semibold" ] [ text name ]
+                        else
+                            users
+                                |> List.map
+                                    (\u ->
+                                        let
+                                            isActive =
+                                                List.member u uspd.selectedUsers
 
-                                            Nothing ->
-                                                span [] []
-                                        , span [ class "is-grey-light help" ] [ text u.username ]
-                                        ]
-                                )
-                        )
+                                            faCls =
+                                                ternary isActive "fa-check-square" "fa-square"
+                                        in
+                                        p
+                                            [ class "panel-block"
+                                            , classList [ ( "is-active", isActive ) ]
+                                            , onClick (uspd.onUserClick uspd.tid u (isActive == False))
+                                            ]
+                                            [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
+                                            , viewUser u.username
+                                            , case u.name of
+                                                Just name ->
+                                                    span [ class "has-text-weight-semibold" ] [ text name ]
+
+                                                Nothing ->
+                                                    span [] []
+                                            , span [ class "is-grey-light help" ] [ text u.username ]
+                                            ]
+                                    )
                     ]
 
             Loading ->

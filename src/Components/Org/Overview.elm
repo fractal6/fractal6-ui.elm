@@ -364,7 +364,7 @@ update global msg model =
                                                 |> List.filterMap identity
                                                 |> Array.fromList
                                     in
-                                    ( { model | node_quickSearch = { qs | lookup = newLookup, visible = True } }, Cmd.none, Cmd.none )
+                                    ( { model | node_quickSearch = { qs | lookup = newLookup, visible = True, idx = 0 } }, Cmd.none, Cmd.none )
 
                                 _ ->
                                     ( model, Cmd.none, Cmd.none )
@@ -387,12 +387,16 @@ update global msg model =
                 qs =
                     model.node_quickSearch
 
-                newIdx =
-                    ternary (pattern == "") 0 qs.idx
+                cmd =
+                    if pattern == "" then
+                        LookupFocus pattern model.path_data |> send
+
+                    else
+                        Ports.searchNode pattern
             in
-            ( { model | node_quickSearch = { qs | pattern = pattern, idx = newIdx, visible = True } }
+            ( { model | node_quickSearch = { qs | pattern = pattern, visible = True } }
+            , cmd
             , Cmd.none
-            , Ports.searchNode pattern
             )
 
         ChangeNodeLookup nodes_ ->
@@ -430,7 +434,7 @@ update global msg model =
 
                 27 ->
                     --ESC
-                    ( model, send (ChangePattern ""), Cmd.none )
+                    ( model, Cmd.batch [ send LookupBlur ], Cmd.none )
 
                 40 ->
                     --DOWN
@@ -1156,7 +1160,7 @@ viewSearchBar odata maybePath qs =
                 |> withDefault (Err "No path returned")
 
         isActive =
-            ternary (True && qs.visible && Array.length qs.lookup > 0) " is-active " ""
+            ternary (True && qs.visible) " is-active " ""
 
         sortedLookup =
             qs.lookup
@@ -1196,47 +1200,49 @@ viewSearchBar odata maybePath qs =
                 []
             , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
             , div [ id "searchList", class "dropdown-menu" ]
-                [ sortedLookup
-                    |> List.indexedMap
-                        (\i n ->
-                            let
-                                isSelected =
-                                    ternary (i == qs.idx) " is-active " ""
-                            in
-                            [ tr
-                                [ class ("drpdwn-item" ++ isSelected), onClickPD (NodeClicked n.nameid) ]
-                              <|
-                                [ th [] [ text n.name ] ]
-                                    ++ (case n.type_ of
-                                            NodeType.Circle ->
-                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
-                                                , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
+                [ div [ class "dropdown-content table is-fullwidth" ] <|
+                    if sortedLookup == [] then
+                        [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
 
-                                                --, td [] [ n.first_link |> Maybe.map (\p -> viewUsernameLink p.username) |> withDefault (text "--") ]
-                                                ]
+                    else
+                        sortedLookup
+                            |> List.indexedMap
+                                (\i n ->
+                                    let
+                                        isSelected =
+                                            ternary (i == qs.idx) " is-active " ""
+                                    in
+                                    [ tr [ class ("drpdwn-item" ++ isSelected), onClickPD (NodeClicked n.nameid) ] <|
+                                        [ th [] [ text n.name ] ]
+                                            ++ (case n.type_ of
+                                                    NodeType.Circle ->
+                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
 
-                                            NodeType.Role ->
-                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
-                                                , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
-                                                ]
-                                       )
-                            ]
-                                |> List.append
-                                    (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
+                                                        --, td [] [ n.first_link |> Maybe.map (\p -> viewUsernameLink p.username) |> withDefault (text "--") ]
+                                                        ]
 
-                                     else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
+                                                    NodeType.Role ->
+                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
+                                                        ]
+                                               )
+                                    ]
+                                        |> List.append
+                                            (if i == 0 && n.type_ == NodeType.Circle then
+                                                [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
 
-                                     else
-                                        []
-                                    )
-                        )
-                    |> List.concat
-                    |> tbody []
-                    |> List.singleton
-                    |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.parentH ], th [] [ text T.firstLinkH ] ] ] ]
-                    |> div [ class "dropdown-content table is-fullwidth" ]
+                                             else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
+                                                [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
+
+                                             else
+                                                []
+                                            )
+                                )
+                            |> List.concat
+                            |> tbody []
+                            |> List.singleton
+                            |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.parentH ], th [] [ text T.firstLinkH ] ] ] ]
                 ]
             , case node_ of
                 Ok node ->

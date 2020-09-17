@@ -373,9 +373,7 @@ nodeLinksInputView node changePostMsg firstLink_help =
                                         RoleType.Coordinator
                                 in
                                 div [ class ("select is-" ++ roleColor r) ]
-                                    [ select
-                                        [ class "has-text-dark" --, onInput <| sd.changePostMsg "role_type"
-                                        ]
+                                    [ select [ class "has-text-dark" ]
                                         [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
                                     ]
 

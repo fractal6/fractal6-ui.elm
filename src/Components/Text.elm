@@ -78,6 +78,11 @@ leaveComment =
     "Leave a comment"
 
 
+noResultsFound : String
+noResultsFound =
+    "No results found"
+
+
 
 --Quick Search
 --(header)
