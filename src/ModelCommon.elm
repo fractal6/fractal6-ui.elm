@@ -110,11 +110,6 @@ type ActionState
 -- Tension Form
 
 
-type TypeForm
-    = NewNode
-    | NewTension
-
-
 type alias TensionForm =
     { uctx : UserCtx
     , source : UserRole
@@ -129,7 +124,6 @@ type alias TensionForm =
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
-    , asked : TypeForm
     }
 
 

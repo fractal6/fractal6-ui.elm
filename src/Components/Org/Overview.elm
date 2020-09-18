@@ -14,8 +14,8 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
-import Form.NewCircle
-import Form.NewTension
+import Form.NewCircle as NewCircleForm
+import Form.NewTension as NewTensionForm exposing (NewTensionForm)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -80,45 +80,16 @@ type alias Model =
     , node_data : GqlData NodeData
     , init_tensions : Bool
     , init_data : Bool
-    , subData : SubmitCircleData
+    , node_quickSearch : NodesQuickSearch
+
+    -- Form
+    , newTensionForm : NewTensionForm
 
     -- common
     , node_action : ActionState
     , isModalActive : Bool
     , modalAuth : ModalAuth
-    , node_quickSearch : NodesQuickSearch
     , helperBar : HelperBar
-    }
-
-
-type alias SubmitCircleData =
-    { changePostMsg : String -> String -> Msg
-    , submitMsg : (Time.Posix -> Msg) -> Msg
-    , submitNextMsg : TensionForm -> Bool -> Time.Posix -> Msg
-    , closeModalMsg : String -> Msg
-    , changeInputMsg : InputViewMode -> Msg
-
-    -- data
-    , viewMode : InputViewMode
-    , tensionId : Maybe String
-    , activeButton : Maybe Int
-    }
-
-
-initSubData : SubmitCircleData
-initSubData =
-    { submitNextMsg = SubmitCircle
-    , tensionId = Nothing
-
-    --
-    , changePostMsg = ChangeNodePost
-
-    -- Constant
-    , closeModalMsg = DoCloseModal
-    , changeInputMsg = ChangeInputViewMode
-    , submitMsg = Submit
-    , viewMode = Write
-    , activeButton = Nothing
     }
 
 
@@ -232,7 +203,9 @@ init global flags =
             , init_tensions = True
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
-            , subData = initSubData
+
+            -- Form
+            , newTensionForm = NewTensionForm.create
 
             -- Common
             , node_action = session.node_action |> withDefault NoOp
@@ -494,7 +467,6 @@ update global msg model =
                     , events_type = Nothing
                     , blob_type = Nothing
                     , node = initNodeFragment
-                    , asked = NewTension
                     }
 
                 newStep =
@@ -565,7 +537,7 @@ update global msg model =
 
         TensionAck result ->
             let
-                -- Redirect Success new node* tension to then AddTension pipeline
+                -- Redirect Success new node* tension to the AddTension pipeline
                 -- @Debug: Make the form (and the result) accessible from the model (as for the Tension page,
                 --         in order to avoid doing several "switch/case" to get the form ?
                 node_action =
@@ -668,7 +640,6 @@ update global msg model =
                     , events_type = Nothing
                     , blob_type = Just BlobType.OnNode
                     , node = initNodeFragmentCircle nodeType (ternary (nodeType == NodeType.Role) (Just RoleType.Peer) Nothing)
-                    , asked = NewNode
                     }
 
                 newStep =
@@ -753,18 +724,11 @@ update global msg model =
 
                         other ->
                             other
-
-                subData =
-                    model.subData
-
-                sd =
-                    if doClose then
-                        { subData | activeButton = Just 0 }
-
-                    else
-                        { subData | activeButton = Just 1 }
             in
-            ( { model | node_action = na, subData = sd }, addOneTension apis.gql newForm TensionAck, Cmd.none )
+            ( { model | node_action = na, newTensionForm = NewTensionForm.setActiveButton doClose model.newTensionForm }
+            , addOneTension apis.gql newForm TensionAck
+            , Cmd.none
+            )
 
         NewNodesAck result ->
             case result of
@@ -875,7 +839,7 @@ update global msg model =
                     else
                         Cmd.none
             in
-            ( { model | isModalActive = False, subData = initSubData }, gcmd, Ports.close_modal )
+            ( { model | isModalActive = False, newTensionForm = NewTensionForm.reset model.newTensionForm }, gcmd, Ports.close_modal )
 
         DoCloseAuthModal ->
             case model.node_action of
@@ -943,11 +907,7 @@ update global msg model =
                     ( model, Cmd.none, Cmd.none )
 
         ChangeInputViewMode viewMode ->
-            let
-                subData =
-                    model.subData
-            in
-            ( { model | subData = { subData | viewMode = viewMode } }, Cmd.none, Cmd.none )
+            ( { model | newTensionForm = NewTensionForm.setViewMode viewMode model.newTensionForm }, Cmd.none, Cmd.none )
 
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
@@ -1400,10 +1360,10 @@ viewActionStep model action =
                 ]
 
         AddTension step ->
-            viewTensionStep step model.subData
+            viewTensionStep step model.newTensionForm
 
         AddCircle step ->
-            viewCircleStep step model.subData
+            viewCircleStep step model.newTensionForm
 
         JoinOrga step ->
             viewJoinOrgaStep model.orga_data step
@@ -1418,8 +1378,32 @@ viewActionStep model action =
             viewAuthNeeded DoCloseModal
 
 
-viewTensionStep : TensionStep TensionForm -> SubmitCircleData -> Html Msg
-viewTensionStep step subData =
+makeNewTensionFormData form result ntf =
+    { form = form
+    , result = result
+    , data = ntf
+    , onChangeInputViewMode = ChangeInputViewMode
+    , onChangeNode = ChangeNodePost
+    , onCloseModal = DoCloseModal
+    , onSubmitTension = SubmitTension
+    , onSubmit = Submit
+    }
+
+
+makeNewCircleFormData form result ntf =
+    { form = form
+    , result = result
+    , data = ntf
+    , onChangeInputViewMode = ChangeInputViewMode
+    , onChangeNode = ChangeNodePost
+    , onCloseModal = DoCloseModal
+    , onSubmitTension = SubmitCircle
+    , onSubmit = Submit
+    }
+
+
+viewTensionStep : TensionStep TensionForm -> NewTensionForm -> Html Msg
+viewTensionStep step ntf =
     case step of
         TensionInit form ->
             div [ class "modal-card" ]
@@ -1450,20 +1434,20 @@ viewTensionStep step subData =
                 Just blob_type ->
                     case blob_type of
                         BlobType.OnNode ->
-                            Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
+                            NewCircleForm.view (makeNewCircleFormData form result ntf)
 
                         _ ->
                             div [] [ text "Not implemented" ]
 
                 Nothing ->
-                    Form.NewTension.view form result { subData | submitNextMsg = SubmitTension }
+                    NewTensionForm.view (makeNewTensionFormData form result ntf)
 
         TensionNotAuthorized errMsg ->
             viewWarnings errMsg
 
 
-viewCircleStep : NodeStep TensionForm -> SubmitCircleData -> Html Msg
-viewCircleStep step subData =
+viewCircleStep : NodeStep TensionForm -> NewTensionForm -> Html Msg
+viewCircleStep step ntf =
     case step of
         NodeInit form ->
             -- Node mode selection not implemented yet.
@@ -1473,7 +1457,7 @@ viewCircleStep step subData =
             viewSourceRoles form roles DoCircleFinal
 
         NodeFinal form result ->
-            Form.NewCircle.view form result { subData | submitNextMsg = SubmitCircle }
+            NewCircleForm.view (makeNewCircleFormData form result ntf)
 
         NodeNotAuthorized errMsg ->
             viewWarnings errMsg

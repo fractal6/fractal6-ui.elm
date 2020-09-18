@@ -652,6 +652,10 @@ html.has-modal-active, html.has-modal-active2 {
     min-width: 250px;
     z-index: 90;
 
+    .control {
+        .icon { color: $grey !important; }
+    }
+
     .selectors {
         max-height: 444px;
         overflow-y: auto;

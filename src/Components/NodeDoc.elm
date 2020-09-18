@@ -1,5 +1,6 @@
 module Components.NodeDoc exposing
-    ( NodeDoc
+    ( InputData
+    , NodeDoc
     , cancelEdit
     , create
     , edit
@@ -72,27 +73,44 @@ updateForm field value action form =
     { f | action = oldAction, post = Dict.remove "title" f.post }
 
 
-type alias TensionNodeData msg =
-    { onBlobEdit : BlobType.BlobType -> msg
-    , onChangeNode : String -> String -> msg
-    , onCancelBlob : msg
-    , onSubmitBlob : Bool -> Time.Posix -> msg
-    , onSubmit : (Time.Posix -> msg) -> msg
-    , form : TensionPatchForm
-    , result : GqlData PatchTensionPayloadID
-    , tension : TensionHead
-    , data : NodeDoc
-    }
-
-
 type alias OrgaNodeData msg =
-    { data : GqlData String -- payload
-    , node : NodeFragment
+    { node : NodeFragment
     , isLazy : Bool
     , source : FractalBaseRoute
     , focus : NodeFocus
     , hasBeenPushed : Bool
     , toolbar : Maybe (Html msg)
+    , data : GqlData String
+    }
+
+
+type alias TensionNodeData msg =
+    { form : TensionPatchForm
+    , result : GqlData PatchTensionPayloadID
+    , tension : TensionHead
+    , data : NodeDoc
+    , onBlobEdit : BlobType.BlobType -> msg
+    , onChangeNode : String -> String -> msg
+    , onCancelBlob : msg
+    , onSubmitBlob : Bool -> Time.Posix -> msg
+    , onSubmit : (Time.Posix -> msg) -> msg
+
+    -- Input Logics
+    }
+
+
+type alias InputData msg =
+    { node : NodeFragment
+
+    --, txt : FormText
+    , onChangeNode : String -> String -> msg
+    }
+
+
+getInputData : TensionNodeData msg -> InputData msg
+getInputData e =
+    { node = e.form.node
+    , onChangeNode = e.onChangeNode
     }
 
 
@@ -163,8 +181,8 @@ view_ tid data tdata_m =
                                     |> withDefault True
                         in
                         div []
-                            [ nodeAboutInputView e.form.node isNew e.onChangeNode txt.name_help txt.about_help
-                            , blobButtonsView e isSendable isLoading
+                            [ nodeAboutInputView isNew txt (getInputData e)
+                            , blobButtonsView isSendable isLoading e
                             ]
                     )
                 |> withDefault (div [] [])
@@ -207,8 +225,8 @@ view_ tid data tdata_m =
                                 data.node.first_link /= e.form.node.first_link || data.node.role_type /= e.form.node.role_type
                         in
                         div []
-                            [ nodeLinksInputView e.form.node e.onChangeNode txt.firstLink_help
-                            , blobButtonsView e isSendable isLoading
+                            [ nodeLinksInputView txt (getInputData e)
+                            , blobButtonsView isSendable isLoading e
                             ]
                     )
                 |> withDefault (div [] [])
@@ -245,8 +263,8 @@ view_ tid data tdata_m =
                                 data.node.mandate /= e.form.node.mandate
                         in
                         div [ class "mandateEdit" ]
-                            [ nodeMandateInputView e.form.node e.onChangeNode txt
-                            , blobButtonsView e isSendable isLoading
+                            [ nodeMandateInputView txt (getInputData e)
+                            , blobButtonsView isSendable isLoading e
                             ]
                     )
                 |> withDefault (div [] [])
@@ -292,8 +310,12 @@ viewMandateSection name maybePara =
 -- Input view
 
 
-nodeAboutInputView : NodeFragment -> Bool -> (String -> String -> msg) -> String -> String -> Html msg
-nodeAboutInputView node isNew changePostMsg nameHelpText aboutHelpText =
+nodeAboutInputView : Bool -> FormText -> InputData msg -> Html msg
+nodeAboutInputView isNew txt ipd =
+    let
+        node =
+            ipd.node
+    in
     div [ class "field" ]
         [ div [ class "field " ]
             [ div [ class "control" ]
@@ -303,12 +325,12 @@ nodeAboutInputView node isNew changePostMsg nameHelpText aboutHelpText =
                     , type_ "text"
                     , placeholder "Name*"
                     , value (node.name |> withDefault "")
-                    , onInput <| changePostMsg "name"
+                    , onInput <| ipd.onChangeNode "name"
                     , required True
                     ]
                     []
                 ]
-            , p [ class "help-label" ] [ text nameHelpText ]
+            , p [ class "help-label" ] [ text txt.name_help ]
             ]
         , div [ class "field" ]
             [ div [ class "control" ]
@@ -319,11 +341,11 @@ nodeAboutInputView node isNew changePostMsg nameHelpText aboutHelpText =
                     , type_ "text"
                     , placeholder "About"
                     , value (node.about |> withDefault "")
-                    , onInput <| changePostMsg "about"
+                    , onInput <| ipd.onChangeNode "about"
                     ]
                     []
                 ]
-            , p [ class "help-label" ] [ text aboutHelpText ]
+            , p [ class "help-label" ] [ text txt.about_help ]
             , br [] []
             ]
         , if isNew then
@@ -335,7 +357,7 @@ nodeAboutInputView node isNew changePostMsg nameHelpText aboutHelpText =
                             [ class "input is-small"
                             , type_ "text"
                             , value (node.nameid |> withDefault "")
-                            , onInput <| changePostMsg "nameid"
+                            , onInput <| ipd.onChangeNode "nameid"
                             ]
                             []
                         ]
@@ -349,9 +371,12 @@ nodeAboutInputView node isNew changePostMsg nameHelpText aboutHelpText =
         ]
 
 
-nodeLinksInputView : NodeFragment -> (String -> String -> msg) -> String -> Html msg
-nodeLinksInputView node changePostMsg firstLink_help =
+nodeLinksInputView : FormText -> InputData msg -> Html msg
+nodeLinksInputView txt ipd =
     let
+        node =
+            ipd.node
+
         nodeType =
             node.type_ |> withDefault NodeType.Role
 
@@ -385,7 +410,7 @@ nodeLinksInputView node changePostMsg firstLink_help =
                                             (\r ->
                                                 option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
                                             )
-                                        |> select [ class "has-text-dark", onInput <| changePostMsg "role_type" ]
+                                        |> select [ class "has-text-dark", onInput <| ipd.onChangeNode "role_type" ]
                                     ]
                         ]
                     , div [ class "field-body control" ]
@@ -393,19 +418,23 @@ nodeLinksInputView node changePostMsg firstLink_help =
                             [ class "input is-small"
                             , type_ "text"
                             , value ("@" ++ uname)
-                            , onInput <| changePostMsg "first_link"
+                            , onInput <| ipd.onChangeNode "first_link"
                             ]
                             []
                         ]
                     ]
             )
             firstLinks
-            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text firstLink_help ] ]
+            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
         )
 
 
-nodeMandateInputView : NodeFragment -> (String -> String -> msg) -> FormText -> Html msg
-nodeMandateInputView node changePostMsg txt =
+nodeMandateInputView : FormText -> InputData msg -> Html msg
+nodeMandateInputView txt ipd =
+    let
+        node =
+            ipd.node
+    in
     div [ class "field" ]
         [ div [ class "field" ]
             [ div [ class "label" ] [ text T.purposeH ]
@@ -416,7 +445,7 @@ nodeMandateInputView node changePostMsg txt =
                     , rows 5
                     , placeholder (txt.ph_purpose ++ "*")
                     , value (node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
-                    , onInput <| changePostMsg "purpose"
+                    , onInput <| ipd.onChangeNode "purpose"
                     , required True
                     ]
                     []
@@ -430,7 +459,7 @@ nodeMandateInputView node changePostMsg txt =
                     , rows 5
                     , placeholder txt.ph_responsabilities
                     , value (node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
-                    , onInput <| changePostMsg "responsabilities"
+                    , onInput <| ipd.onChangeNode "responsabilities"
                     ]
                     []
                 ]
@@ -443,7 +472,7 @@ nodeMandateInputView node changePostMsg txt =
                     , rows 5
                     , placeholder txt.ph_domains
                     , value (node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
-                    , onInput <| changePostMsg "domains"
+                    , onInput <| ipd.onChangeNode "domains"
                     ]
                     []
                 ]
@@ -456,7 +485,7 @@ nodeMandateInputView node changePostMsg txt =
                     , rows 5
                     , placeholder txt.ph_policies
                     , value (node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
-                    , onInput <| changePostMsg "policies"
+                    , onInput <| ipd.onChangeNode "policies"
                     ]
                     []
                 ]
@@ -486,8 +515,8 @@ doEditView tdata_m btype =
             span [] []
 
 
-blobButtonsView : TensionNodeData msg -> Bool -> Bool -> Html msg
-blobButtonsView tdata isSendable isLoading =
+blobButtonsView : Bool -> Bool -> TensionNodeData msg -> Html msg
+blobButtonsView isSendable isLoading tdata =
     div []
         [ case tdata.result of
             Failure err ->

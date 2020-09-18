@@ -1,8 +1,9 @@
-module Form.NewTension exposing (view)
+module Form.NewTension exposing (NewTensionForm, NewTensionFormData, create, getInputData, reset, setActiveButton, setViewMode, view)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
+import Components.NodeDoc exposing (InputData)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
@@ -17,29 +18,82 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
 import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
+import Time
 
 
-{-| --view : TensionForm -> GqlData data -> subData -> Html msg
-What should be the signature ?!
--}
-view form result sd =
+type alias NewTensionForm =
+    { activeButton : Maybe Int
+    , viewMode : InputViewMode
+    }
+
+
+create : NewTensionForm
+create =
+    { activeButton = Nothing
+    , viewMode = Write
+    }
+
+
+reset : NewTensionForm -> NewTensionForm
+reset ntf =
+    { ntf | activeButton = Nothing, viewMode = Write }
+
+
+setActiveButton : Bool -> NewTensionForm -> NewTensionForm
+setActiveButton doClose ntf =
+    if doClose then
+        { ntf | activeButton = Just 0 }
+
+    else
+        { ntf | activeButton = Just 1 }
+
+
+setViewMode : InputViewMode -> NewTensionForm -> NewTensionForm
+setViewMode viewMode ntf =
+    { ntf | viewMode = viewMode }
+
+
+type alias NewTensionFormData msg =
+    { form : TensionForm
+    , result : GqlData Tension
+    , data : NewTensionForm
+    , onChangeInputViewMode : InputViewMode -> msg
+    , onChangeNode : String -> String -> msg
+    , onCloseModal : String -> msg
+    , onSubmitTension : TensionForm -> Bool -> Time.Posix -> msg
+    , onSubmit : (Time.Posix -> msg) -> msg
+    }
+
+
+getInputData : NewTensionFormData msg -> InputData msg
+getInputData ntd =
+    { node = ntd.form.node
+    , onChangeNode = ntd.onChangeNode
+    }
+
+
+view : NewTensionFormData msg -> Html msg
+view ntd =
     let
+        form =
+            ntd.form
+
         txt =
             getTensionText
 
         isLoading =
-            result == LoadingSlowly
+            ntd.result == LoadingSlowly
 
         isSendable =
             isPostSendable [ "title" ] form.post
 
         submitTension =
-            ternary isSendable [ onClick (sd.submitMsg <| sd.submitNextMsg form False) ] []
+            ternary isSendable [ onClick (ntd.onSubmit <| ntd.onSubmitTension form False) ] []
 
         message =
             Dict.get "message" form.post |> withDefault ""
     in
-    case result of
+    case ntd.result of
         Success res ->
             let
                 link =
@@ -50,7 +104,7 @@ view form result sd =
                 , text (txt.added ++ " ")
                 , a
                     [ href link
-                    , onClickPD (sd.closeModalMsg link)
+                    , onClickPD (ntd.onCloseModal link)
                     , target "_blank"
                     ]
                     [ text T.checkItOut ]
@@ -75,7 +129,7 @@ view form result sd =
                                 , type_ "text"
                                 , placeholder "Title*"
                                 , required True
-                                , onInput (sd.changePostMsg "title")
+                                , onInput (ntd.onChangeNode "title")
                                 ]
                                 []
                             ]
@@ -86,15 +140,15 @@ view form result sd =
                         [ div [ class "message-header" ]
                             [ div [ class "tabs is-boxed is-small" ]
                                 [ ul []
-                                    [ li [ classList [ ( "is-active", sd.viewMode == Write ) ] ] [ a [ onClickPD2 (sd.changeInputMsg Write), target "_blank" ] [ text "Write" ] ]
-                                    , li [ classList [ ( "is-active", sd.viewMode == Preview ) ] ] [ a [ onClickPD2 (sd.changeInputMsg Preview), target "_blank" ] [ text "Preview" ] ]
+                                    [ li [ classList [ ( "is-active", ntd.data.viewMode == Write ) ] ] [ a [ onClickPD2 (ntd.onChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                                    , li [ classList [ ( "is-active", ntd.data.viewMode == Preview ) ] ] [ a [ onClickPD2 (ntd.onChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
                                     ]
                                 ]
                             ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ case sd.viewMode of
+                                    [ case ntd.data.viewMode of
                                         Write ->
                                             textarea
                                                 [ id "textAreaModal"
@@ -102,7 +156,7 @@ view form result sd =
                                                 , rows 10
                                                 , placeholder "Leave a comment"
                                                 , value message
-                                                , onInput (sd.changePostMsg "message")
+                                                , onInput (ntd.onChangeNode "message")
                                                 ]
                                                 []
 
