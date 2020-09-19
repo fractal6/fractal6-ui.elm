@@ -7,7 +7,7 @@ import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
-import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga, updateNodeForm)
+import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
@@ -115,6 +115,10 @@ type Msg
     | SubmitTension TensionForm Bool Time.Posix -- Send form
     | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | ChangeNodePost String String -- {field value}
+    | ChangeNodeUserPattern Int String
+    | ChangeNodeUserRole Int String
+    | SelectUser Int String
+    | CancelUser Int
       -- New Tension Action
     | DoTensionInit Node -- {target}
     | DoTensionSource TensionType.TensionType -- {type}
@@ -141,7 +145,7 @@ type Msg
     | DoCloseModal String -- ports receive / Close modal
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
-    | SubmitUser UserForm
+    | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
     | ChangeInputViewMode InputViewMode
@@ -464,6 +468,7 @@ update global msg model =
                     , tension_type = TensionType.Governance
                     , action = Nothing
                     , post = Dict.empty
+                    , users = []
                     , events_type = Nothing
                     , blob_type = Nothing
                     , node = initNodeFragment
@@ -636,10 +641,11 @@ update global msg model =
                     , status = TensionStatus.Open
                     , tension_type = TensionType.Governance
                     , post = Dict.empty
+                    , users = []
                     , action = Just action
                     , events_type = Nothing
                     , blob_type = Just BlobType.OnNode
-                    , node = initNodeFragmentCircle nodeType (ternary (nodeType == NodeType.Role) (Just RoleType.Peer) Nothing)
+                    , node = initNodeFragmentCircle nodeType
                     }
 
                 newStep =
@@ -662,7 +668,8 @@ update global msg model =
                                 newForm =
                                     { form
                                         | uctx = uctx
-                                        , node = { node | charac = Just form.target.charac, first_link = Just uctx.username }
+                                        , node = { node | charac = Just form.target.charac }
+                                        , users = [ { username = uctx.username, role_type = ternary (node.type_ == Just NodeType.Circle) RoleType.Coordinator RoleType.Peer, pattern = "" } ]
                                     }
 
                                 newStep =
@@ -688,14 +695,57 @@ update global msg model =
         ChangeNodePost field value ->
             case model.node_action of
                 AddTension (TensionFinal form result) ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | node_action = AddTension <| TensionFinal newForm result }, Cmd.none, Cmd.none )
+                    ( { model | node_action = AddTension <| TensionFinal { form | post = Dict.insert field value form.post } result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
                 AddCircle (NodeFinal form result) ->
-                    ( { model | node_action = AddCircle <| NodeFinal (updateNodeForm field value form) result }
+                    ( { model | node_action = AddCircle <| NodeFinal (NodeDoc.updateNodeForm field value form) result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        ChangeNodeUserPattern pos pattern ->
+            case model.node_action of
+                AddCircle (NodeFinal form result) ->
+                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.updateUserPattern pos pattern form.users } result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        ChangeNodeUserRole pos role ->
+            case model.node_action of
+                AddCircle (NodeFinal form result) ->
+                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.updateUserRole pos role form.users } result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        SelectUser pos username ->
+            case model.node_action of
+                AddCircle (NodeFinal form result) ->
+                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.selectUser pos username form.users } result }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        CancelUser pos ->
+            case model.node_action of
+                AddCircle (NodeFinal form result) ->
+                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.cancelUser pos form.users } result }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -894,7 +944,7 @@ update global msg model =
                                     f
 
                                 Inactive ->
-                                    UserForm Dict.empty RemoteData.NotAsked
+                                    UserAuthForm Dict.empty RemoteData.NotAsked
                     in
                     --ENTER
                     if isPostSendable [ "password" ] form.post then
@@ -1051,7 +1101,7 @@ view_ global model =
                 , NodeDoc.view nodeData Nothing
                 , setupActionModal model
                 ]
-            , div [ class "column is-5" ]
+            , div [ class "column is-6-desktop is-6-widescreen is-5-fullhd" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
                         [ viewActivies model ]
@@ -1384,6 +1434,10 @@ makeNewTensionFormData form result ntf =
     , data = ntf
     , onChangeInputViewMode = ChangeInputViewMode
     , onChangeNode = ChangeNodePost
+    , onChangeUserPattern = ChangeNodeUserPattern
+    , onChangeUserRole = ChangeNodeUserRole
+    , onSelectUser = SelectUser
+    , onCancelUser = CancelUser
     , onCloseModal = DoCloseModal
     , onSubmitTension = SubmitTension
     , onSubmit = Submit
@@ -1391,15 +1445,11 @@ makeNewTensionFormData form result ntf =
 
 
 makeNewCircleFormData form result ntf =
-    { form = form
-    , result = result
-    , data = ntf
-    , onChangeInputViewMode = ChangeInputViewMode
-    , onChangeNode = ChangeNodePost
-    , onCloseModal = DoCloseModal
-    , onSubmitTension = SubmitCircle
-    , onSubmit = Submit
-    }
+    let
+        formData =
+            makeNewTensionFormData form result ntf
+    in
+    { formData | onSubmitTension = SubmitCircle }
 
 
 viewTensionStep : TensionStep TensionForm -> NewTensionForm -> Html Msg

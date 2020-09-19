@@ -1,9 +1,9 @@
-module Form.NewTension exposing (NewTensionForm, NewTensionFormData, create, getInputData, reset, setActiveButton, setViewMode, view)
+module Form.NewTension exposing (NewTensionForm, NewTensionFormData, create, reset, setActiveButton, setViewMode, view)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
-import Components.NodeDoc exposing (InputData)
+import Components.NodeDoc exposing (InputData, getInputData)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
@@ -59,16 +59,13 @@ type alias NewTensionFormData msg =
     , data : NewTensionForm
     , onChangeInputViewMode : InputViewMode -> msg
     , onChangeNode : String -> String -> msg
+    , onChangeUserPattern : Int -> String -> msg
+    , onChangeUserRole : Int -> String -> msg
+    , onSelectUser : Int -> String -> msg
+    , onCancelUser : Int -> msg
     , onCloseModal : String -> msg
     , onSubmitTension : TensionForm -> Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
-    }
-
-
-getInputData : NewTensionFormData msg -> InputData msg
-getInputData ntd =
-    { node = ntd.form.node
-    , onChangeNode = ntd.onChangeNode
     }
 
 

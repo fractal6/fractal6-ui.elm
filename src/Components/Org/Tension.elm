@@ -197,6 +197,10 @@ type Msg
       -- Blob edit
     | DoBlobEdit BlobType.BlobType
     | ChangeBlobNode String String
+    | ChangeNodeUserPattern Int String
+    | ChangeNodeUserRole Int String
+    | SelectUser Int String
+    | CancelUser Int
     | ChangeBlobMD String
     | SubmitBlob Bool Time.Posix
     | CancelBlob
@@ -219,7 +223,7 @@ type Msg
     | DoCloseModal String -- ports receive / Close modal
     | DoCloseAuthModal
     | ChangeAuthPost String String
-    | SubmitUser UserForm
+    | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
     | ChangeInputViewMode InputViewMode
@@ -691,6 +695,34 @@ update global msg model =
             in
             ( { model | tension_form = NodeDoc.updateForm field value action model.tension_form }, Cmd.none, Cmd.none )
 
+        ChangeNodeUserPattern pos pattern ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | users = NodeDoc.updateUserPattern pos pattern form.users } }, Cmd.none, Cmd.none )
+
+        ChangeNodeUserRole pos role ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | users = NodeDoc.updateUserRole pos role form.users } }, Cmd.none, Cmd.none )
+
+        SelectUser pos username ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | users = NodeDoc.selectUser pos username form.users } }, Cmd.none, Cmd.none )
+
+        CancelUser pos ->
+            let
+                form =
+                    model.tension_form
+            in
+            ( { model | tension_form = { form | users = NodeDoc.cancelUser pos form.users } }, Cmd.none, Cmd.none )
+
         ChangeBlobMD value ->
             let
                 form =
@@ -975,7 +1007,7 @@ update global msg model =
                                     f
 
                                 Inactive ->
-                                    UserForm Dict.empty RemoteData.NotAsked
+                                    UserAuthForm Dict.empty RemoteData.NotAsked
                     in
                     --ENTER
                     if isPostSendable [ "password" ] form.post then
@@ -1052,7 +1084,7 @@ view_ global model =
     div [ id "mainPane" ]
         [ HelperBar.view helperData
         , div [ class "columns is-centered" ]
-            [ div [ class "column is-11-desktop is-11-widescreen is-10-fullhd is-offset-1" ]
+            [ div [ class "column is-12-desktop is-12-widescreen is-10-fullhd is-offset-1" ]
                 [ case model.tension_head of
                     Success t ->
                         viewTension global.session.user t model
@@ -1509,15 +1541,19 @@ viewDocument u t b model =
                 DocEdit ->
                     let
                         msgs =
-                            { onBlobEdit = DoBlobEdit
-                            , onChangeNode = ChangeBlobNode
-                            , onCancelBlob = CancelBlob
-                            , onSubmitBlob = SubmitBlob
-                            , onSubmit = Submit
-                            , form = model.tension_form
+                            { form = model.tension_form
                             , result = model.tension_patch
                             , tension = t
                             , data = model.nodeDoc
+                            , onBlobEdit = DoBlobEdit
+                            , onChangeNode = ChangeBlobNode
+                            , onChangeUserPattern = ChangeNodeUserPattern
+                            , onChangeUserRole = ChangeNodeUserRole
+                            , onSelectUser = SelectUser
+                            , onCancelUser = CancelUser
+                            , onCancelBlob = CancelBlob
+                            , onSubmitBlob = SubmitBlob
+                            , onSubmit = Submit
                             }
                     in
                     NodeDoc.view nodeData (Just msgs)
@@ -1797,6 +1833,7 @@ initTensionForm tensionid user =
     , emitter = Nothing
     , receiver = Nothing
     , post = Dict.empty
+    , users = []
     , events_type = Nothing
     , blob_type = Nothing
     , node = initNodeFragment

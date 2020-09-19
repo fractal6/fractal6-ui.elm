@@ -79,7 +79,7 @@ type UserState
 --
 
 
-type alias UserForm =
+type alias UserAuthForm =
     { post : Dict String String
     , result : WebData UserCtx
     }
@@ -87,7 +87,7 @@ type alias UserForm =
 
 type ModalAuth
     = Inactive
-    | Active UserForm
+    | Active UserAuthForm
 
 
 
@@ -120,6 +120,9 @@ type alias TensionForm =
     , action : Maybe TensionAction.TensionAction
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc
 
+    --
+    , users : List UserForm
+
     -- data
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
@@ -137,12 +140,19 @@ type alias TensionPatchForm =
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message...
 
+    --
+    , users : List UserForm
+
     -- data
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     , md : Maybe String
     }
+
+
+type alias UserForm =
+    { username : String, role_type : RoleType.RoleType, pattern : String }
 
 
 type alias CommentPatchForm =

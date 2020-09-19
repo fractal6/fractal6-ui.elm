@@ -37,7 +37,7 @@ type alias UserSearchPanel =
     , pattern : String
     , lookup : List User
     , assignee : User -- assignee selected/clickedame
-    , isNew : Bool
+    , isNew : Bool -- toggle select
     , click_result : GqlData IdPayload
     }
 

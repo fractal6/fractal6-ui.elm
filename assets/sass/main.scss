@@ -360,6 +360,9 @@ html.has-modal-active, html.has-modal-active2 {
 
 
 #explore {
+    .media-content{
+        overflow: unset
+    }
     .media + .media {
         margin-top: 1.5rem !important;
         padding-top: 1.5rem !important;
@@ -675,6 +678,33 @@ html.has-modal-active, html.has-modal-active2 {
 
 }
 
+.tagsinput {
+	height: auto !important;
+    margin-bottom: 0 !important;
+	.control {
+		margin-bottom: 0em !important;
+		margin-top: 0em !important;
+	}
+	input {
+		border: none;
+		margin-bottom: 0em !important;
+		margin-top: 0em !important;
+	}
+    .tag {
+        &.is-active {
+            background-color: $primary;
+            color: findColorInvert($primary);
+        }
+        &.is-delete {
+            &:hover {
+                cursor: pointer;
+                color: $red;
+                background-color: $white-ter;
+            }
+        }
+    }
+}
+
 //
 // Search Bar and QuickSearch
 //
@@ -771,6 +801,32 @@ html.has-modal-active, html.has-modal-active2 {
             border: 1px solid !important;
         }
     }
+
+    .buttons {
+        margin-bottom: 1rem;
+
+        .control:not(:first-child):not(:last-child) {
+            .select select {
+                //border-top-right-radius: 0px !important;
+                //border-bottom-right-radius: 0px !important;
+                border-radius: 0px !important;
+                border-radius: 0px !important;
+            }
+        }
+        .control:first-child {
+            .select select {
+                border-top-right-radius: 0px !important;
+                border-bottom-right-radius: 0px !important;
+            }
+        }
+        .control:last-child {
+            .select select {
+                border-top-left-radius: 0px !important;
+                border-bottom-left-radius: 0px !important;
+            }
+        }
+
+    }
 }
 
 #searchList {
@@ -795,7 +851,6 @@ html.has-modal-active, html.has-modal-active2 {
         .help {
             border-bottom: 1px solid #22222222;
         }
-
     }
 
     thead th,
@@ -822,7 +877,6 @@ html.has-modal-active, html.has-modal-active2 {
      span.is-active {
         background-color: #dfdfdf !important;
     }
-
 }
 
 //
@@ -1205,11 +1259,8 @@ a.actionLink {
 
 .cardForm {
     border-width: 1px !important;
+    border-color: $grey-light !important;
     margin-top: 2rem !important;
-    .field-label.control {
-        padding-top: 0 !important;
-        padding-left: 10px !important;
-    }
     .select.is-orange, .select.is-orange::after,
     .select.is-orange select,
     .select.is-orange select:focus,

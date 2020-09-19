@@ -297,9 +297,9 @@ initNodeFragment =
     NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
-initNodeFragmentCircle : NodeType.NodeType -> Maybe RoleType.RoleType -> NodeFragment
-initNodeFragmentCircle nt rt =
-    NodeFragment Nothing Nothing (Just nt) rt Nothing Nothing Nothing Nothing Nothing Nothing
+initNodeFragmentCircle : NodeType.NodeType -> NodeFragment
+initNodeFragmentCircle nt =
+    NodeFragment Nothing Nothing (Just nt) Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 

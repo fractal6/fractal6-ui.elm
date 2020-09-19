@@ -2,15 +2,20 @@ module Components.NodeDoc exposing
     ( InputData
     , NodeDoc
     , cancelEdit
+    , cancelUser
     , create
     , edit
     , getFirstLinks
+    , getInputData
     , nodeAboutInputView
     , nodeFragmentFromOrga
     , nodeLinksInputView
     , nodeMandateInputView
+    , selectUser
     , updateForm
     , updateNodeForm
+    , updateUserPattern
+    , updateUserRole
     , view
     )
 
@@ -28,8 +33,9 @@ import Fractal.Enum.TensionAction as TensionAction
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionPatchForm)
+import ModelCommon exposing (TensionPatchForm, UserForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
@@ -73,6 +79,27 @@ updateForm field value action form =
     { f | action = oldAction, post = Dict.remove "title" f.post }
 
 
+updateUserPattern : Int -> String -> List UserForm -> List UserForm
+updateUserPattern pos pattern users =
+    LE.updateAt pos (\x -> { x | pattern = pattern }) users
+
+
+updateUserRole : Int -> String -> List UserForm -> List UserForm
+updateUserRole pos r users =
+    LE.updateAt pos (\x -> { x | role_type = RoleType.fromString r |> withDefault RoleType.Peer }) users
+
+
+selectUser : Int -> String -> List UserForm -> List UserForm
+selectUser pos username users =
+    LE.updateAt pos (\x -> { x | username = username }) users
+
+
+cancelUser : Int -> List UserForm -> List UserForm
+cancelUser pos users =
+    --LE.removeAt pos users
+    LE.updateAt pos (\x -> { x | username = "" }) users
+
+
 type alias OrgaNodeData msg =
     { node : NodeFragment
     , isLazy : Bool
@@ -88,29 +115,44 @@ type alias TensionNodeData msg =
     { form : TensionPatchForm
     , result : GqlData PatchTensionPayloadID
     , tension : TensionHead
+
+    --, userLookup : UserLookup
     , data : NodeDoc
     , onBlobEdit : BlobType.BlobType -> msg
     , onChangeNode : String -> String -> msg
+    , onChangeUserPattern : Int -> String -> msg
+    , onChangeUserRole : Int -> String -> msg
+    , onSelectUser : Int -> String -> msg
+    , onCancelUser : Int -> msg
     , onCancelBlob : msg
     , onSubmitBlob : Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
-
-    -- Input Logics
     }
 
 
+{-| Ensure compatibility with TensionForm (user in Form.NewTenion)
+-}
 type alias InputData msg =
     { node : NodeFragment
+    , users : List UserForm
 
     --, txt : FormText
     , onChangeNode : String -> String -> msg
+    , onChangeUserPattern : Int -> String -> msg
+    , onChangeUserRole : Int -> String -> msg
+    , onSelectUser : Int -> String -> msg
+    , onCancelUser : Int -> msg
     }
 
 
-getInputData : TensionNodeData msg -> InputData msg
 getInputData e =
     { node = e.form.node
+    , users = e.form.users
     , onChangeNode = e.onChangeNode
+    , onChangeUserPattern = e.onChangeUserPattern
+    , onChangeUserRole = e.onChangeUserRole
+    , onSelectUser = e.onSelectUser
+    , onCancelUser = e.onCancelUser
     }
 
 
@@ -374,57 +416,71 @@ nodeAboutInputView isNew txt ipd =
 nodeLinksInputView : FormText -> InputData msg -> Html msg
 nodeLinksInputView txt ipd =
     let
-        node =
-            ipd.node
-
         nodeType =
-            node.type_ |> withDefault NodeType.Role
+            ipd.node.type_ |> withDefault NodeType.Role
 
-        roleType =
-            node.role_type |> withDefault RoleType.Peer
-
-        firstLinks =
-            getFirstLinks node
+        --roleType =
+        --    node.role_type |> withDefault RoleType.Peer
+        --firstLinks =
+        --    getFirstLinks node
     in
     div []
         (List.indexedMap
-            (\i uname ->
+            (\i u ->
+                let
+                    rt =
+                        u.role_type
+
+                    rtStr =
+                        RoleType.toString rt
+
+                    userSelected =
+                        u.username /= ""
+                in
                 div [ class "field is-horizontal" ]
                     [ div [ class "field-label is-small has-text-grey-darker control" ]
                         [ case nodeType of
                             NodeType.Circle ->
-                                let
-                                    r =
-                                        RoleType.Coordinator
-                                in
-                                div [ class ("select is-" ++ roleColor r) ]
+                                div [ class ("select is-" ++ roleColor rt) ]
                                     [ select [ class "has-text-dark" ]
-                                        [ option [ selected True, value (RoleType.toString r) ] [ RoleType.toString r |> text ] ]
+                                        [ option [ selected True, value rtStr ] [ text rtStr ] ]
                                     ]
 
                             NodeType.Role ->
-                                div [ class ("select is-" ++ roleColor roleType) ]
+                                div [ class ("select is-" ++ roleColor rt) ]
                                     [ RoleType.list
                                         |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
                                         |> List.map
                                             (\r ->
-                                                option [ selected (roleType == r), value (RoleType.toString r) ] [ RoleType.toString r |> text ]
+                                                option [ selected (r == rt), value (RoleType.toString r) ] [ text (RoleType.toString r) ]
                                             )
-                                        |> select [ class "has-text-dark", onInput <| ipd.onChangeNode "role_type" ]
+                                        |> select [ class "has-text-dark", onInput (ipd.onChangeUserRole i) ]
                                     ]
                         ]
-                    , div [ class "field-body control" ]
-                        [ input
-                            [ class "input is-small"
-                            , type_ "text"
-                            , value ("@" ++ uname)
-                            , onInput <| ipd.onChangeNode "first_link"
+                    , div [ class "field-body" ]
+                        [ div [ class "tagsinput field is-grouped is-grouped-multiline input" ]
+                            [ if userSelected then
+                                div [ class "control" ]
+                                    [ div [ class "tags has-addons" ]
+                                        [ span [ class "tag is-primary" ] [ text u.username ]
+                                        , span [ class "tag is-delete is-light", onClick (ipd.onCancelUser i) ] []
+                                        ]
+                                    ]
+
+                              else
+                                span [] []
+                            , input
+                                [ type_ "text"
+                                , value u.pattern
+                                , onInput (ipd.onChangeUserPattern i)
+                                , disabled userSelected
+                                ]
+                                []
                             ]
-                            []
                         ]
                     ]
             )
-            firstLinks
+            ipd.users
             ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
         )
 
@@ -628,16 +684,8 @@ updateNodeForm field value form =
             node.mandate |> withDefault initMandate
     in
     case field of
-        -- Node data
-        "role_type" ->
-            { form | node = { node | role_type = value |> RoleType.fromString |> withDefault RoleType.Peer |> Just } }
-
         "nameid" ->
             { form | node = { node | nameid = Just value } }
-
-        "first_link" ->
-            -- @DEBUG: Multiple invitations not implemented
-            { form | node = { node | first_link = Just value, children = Nothing } }
 
         "about" ->
             { form | node = { node | about = Just value } }

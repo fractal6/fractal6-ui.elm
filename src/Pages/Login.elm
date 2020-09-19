@@ -39,7 +39,7 @@ page =
 
 
 type alias Model =
-    { form : UserForm }
+    { form : UserAuthForm }
 
 
 
@@ -78,7 +78,7 @@ init global flags =
 
 
 type Msg
-    = SubmitUser UserForm
+    = SubmitUser UserAuthForm
     | ChangeUserPost String String
     | GotSignin (WebData UserCtx) -- use remotedata.
     | SubmitKeyDown Int

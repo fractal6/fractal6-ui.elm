@@ -67,7 +67,7 @@ view hb =
                     ""
     in
     div [ id "helperBar", class "columns is-centered" ]
-        [ nav [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
+        [ nav [ class "column is-11-desktop is-11-widescreen is-9-fullhd" ]
             [ div [ class "columns is-mobile" ]
                 [ div [ class "column is-5" ]
                     [ viewPath OverviewBaseUri hb.path_data ]

@@ -2,13 +2,13 @@ module Form.NewCircle exposing (view)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
-import Components.NodeDoc exposing (getFirstLinks, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
+import Components.NodeDoc exposing (getFirstLinks, getInputData, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
-import Form.NewTension exposing (NewTensionFormData, getInputData)
+import Form.NewTension exposing (NewTensionFormData)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
