@@ -75,6 +75,8 @@ type alias Flags =
 type alias Model =
     { node_focus : NodeFocus
     , path_data : Maybe LocalGraph
+    , users_data : GqlData UsersData
+    , lookup_users : List User
     , orga_data : GqlData NodesData
     , tensions_data : GqlData TensionsData
     , node_data : GqlData NodeData
@@ -83,7 +85,8 @@ type alias Model =
     , node_quickSearch : NodesQuickSearch
 
     -- Form
-    , newTensionForm : NewTensionForm
+    --, joinForm : JoinOrgaForm
+    , tensionForm : NewTensionForm
 
     -- common
     , node_action : ActionState
@@ -115,10 +118,13 @@ type Msg
     | SubmitTension TensionForm Bool Time.Posix -- Send form
     | SubmitCircle TensionForm Bool Time.Posix -- Send form
     | ChangeNodePost String String -- {field value}
+      -- FirstLink input...
     | ChangeNodeUserPattern Int String
     | ChangeNodeUserRole Int String
     | SelectUser Int String
     | CancelUser Int
+    | ShowLookupFs
+    | CancelLookupFs
       -- New Tension Action
     | DoTensionInit Node -- {target}
     | DoTensionSource TensionType.TensionType -- {type}
@@ -151,6 +157,7 @@ type Msg
     | ChangeInputViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
+    | ChangeUserLookup (LookupResult User)
 
 
 
@@ -192,6 +199,11 @@ init global flags =
         model =
             { node_focus = newFocus
             , path_data = ternary fs.orgChange Nothing global.session.path_data -- Loaded from GraphPack
+            , users_data =
+                global.session.users_data
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
+            , lookup_users = []
             , orga_data =
                 session.orga_data
                     |> Maybe.map (\x -> Success x)
@@ -209,7 +221,7 @@ init global flags =
             , node_quickSearch = { qs | pattern = "", idx = 0 }
 
             -- Form
-            , newTensionForm = NewTensionForm.create
+            , tensionForm = NewTensionForm.create newFocus
 
             -- Common
             , node_action = session.node_action |> withDefault NoOp
@@ -295,9 +307,16 @@ update global msg model =
         GotOrga result ->
             case result of
                 Success data ->
+                    let
+                        users =
+                            orgaToUsersData data
+
+                        users_l =
+                            Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
+                    in
                     if Dict.size data > 0 then
-                        ( { model | orga_data = Success data }
-                        , Ports.initGraphPack data model.node_focus.nameid
+                        ( { model | orga_data = Success data, users_data = Success users }
+                        , Cmd.batch [ Ports.initGraphPack data model.node_focus.nameid, Ports.initUserSearch users_l ]
                         , send (UpdateSessionOrga (Just data))
                         )
 
@@ -457,27 +476,16 @@ update global msg model =
             ( { model | node_action = newAction }, send DoOpenModal, Cmd.none )
 
         -- New Tension
-        DoTensionInit node ->
+        DoTensionInit target ->
             let
-                form =
-                    { uctx = UserCtx "" Nothing (UserRights False False) []
-                    , source = UserRole "" "" "" RoleType.Guest
-                    , target = node
-                    , targetData = model.node_data |> withDefaultData initNodeData
-                    , status = TensionStatus.Open
-                    , tension_type = TensionType.Governance
-                    , action = Nothing
-                    , post = Dict.empty
-                    , users = []
-                    , events_type = Nothing
-                    , blob_type = Nothing
-                    , node = initNodeFragment
-                    }
-
-                newStep =
-                    TensionInit form
+                tf =
+                    NewTensionForm.create model.node_focus
+                        |> NewTensionForm.setTarget target (withMaybeData model.node_data)
             in
-            ( { model | node_action = AddTension newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
+            ( { model | node_action = AddTension TensionInit, tensionForm = tf }
+            , Cmd.none
+            , Ports.bulma_driver "actionModal"
+            )
 
         DoTensionSource tensionType ->
             case global.session.user of
@@ -486,93 +494,76 @@ update global msg model =
 
                 LoggedIn uctx ->
                     case model.node_action of
-                        AddTension (TensionInit form) ->
+                        AddTension TensionInit ->
                             let
-                                newForm =
-                                    { form | uctx = uctx, tension_type = tensionType }
+                                form_ =
+                                    model.tensionForm.form
 
-                                orgaRoles =
-                                    getOrgaRoles uctx.roles [ form.target.rootnameid ]
+                                form =
+                                    { form_ | uctx = uctx, tension_type = tensionType }
 
-                                newStep =
-                                    case orgaRoles of
-                                        [] ->
-                                            TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]
-
-                                        [ r ] ->
-                                            TensionFinal { newForm | source = r } NotAsked
-
-                                        roles ->
-                                            TensionSource newForm roles
+                                ( newStep, newForm ) =
+                                    getNewTensionStepAuth form
                             in
-                            ( { model | node_action = AddTension newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
+                            ( { model | node_action = AddTension newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
+                            , Cmd.none
+                            , Ports.bulma_driver "actionModal"
+                            )
 
                         _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         DoTensionFinal source ->
             case model.node_action of
-                AddTension (TensionSource form roles) ->
-                    let
-                        newForm =
-                            { form | source = source }
-                    in
-                    ( { model | node_action = AddTension <| TensionFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
+                AddTension (TensionSource _) ->
+                    ( { model | node_action = AddTension TensionFinal, tensionForm = NewTensionForm.setSource source model.tensionForm }
+                    , Cmd.none
+                    , Ports.bulma_driver "actionModal"
+                    )
 
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         SubmitTension form _ time ->
             let
-                newForm =
-                    { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
-                        , events_type = Just [ TensionEvent.Created ]
-                    }
-
-                na =
-                    case model.node_action of
-                        AddTension step ->
-                            AddTension (TensionFinal newForm LoadingSlowly)
-
-                        other ->
-                            other
+                newTensionForm =
+                    model.tensionForm
+                        |> NewTensionForm.post "createdAt" (fromTime time)
+                        |> NewTensionForm.setEvents [ TensionEvent.Created ]
+                        |> NewTensionForm.setResult LoadingSlowly
             in
-            ( { model | node_action = na }, addOneTension apis.gql newForm TensionAck, Cmd.none )
+            ( { model | tensionForm = newTensionForm }
+            , addOneTension apis.gql newTensionForm.form TensionAck
+            , Cmd.none
+            )
 
         TensionAck result ->
             let
                 -- Redirect Success new node* tension to the AddTension pipeline
                 -- @Debug: Make the form (and the result) accessible from the model (as for the Tension page,
                 --         in order to avoid doing several "switch/case" to get the form ?
-                node_action =
-                    if withMaybeData result /= Nothing then
-                        case model.node_action of
-                            AddCircle (NodeFinal form _) ->
-                                if form.status == TensionStatus.Open then
-                                    AddTension (TensionFinal form result)
+                form =
+                    model.tensionForm.form
 
-                                else
-                                    model.node_action
-
-                            _ ->
-                                model.node_action
+                na =
+                    if withMaybeData result /= Nothing && model.node_action == AddCircle NodeFinal && form.status == TensionStatus.Open then
+                        AddTension TensionFinal
 
                     else
                         model.node_action
+
+                tf =
+                    NewTensionForm.setResult result model.tensionForm
             in
-            case node_action of
-                AddTension (TensionFinal form _) ->
+            case na of
+                AddTension TensionFinal ->
                     case result of
                         Success t ->
                             let
                                 tensions =
                                     hotTensionPush t model.tensions_data
                             in
-                            ( { model
-                                | node_action = AddTension <| TensionFinal form result
-                                , tensions_data = Success tensions
-                              }
+                            ( { model | node_action = na, tensionForm = tf, tensions_data = Success tensions }
                             , Cmd.none
                             , send (UpdateSessionTensions (Just tensions))
                             )
@@ -580,18 +571,18 @@ update global msg model =
                         other ->
                             if doRefreshToken other then
                                 let
-                                    na =
-                                        AddTension (TensionFinal form NotAsked)
+                                    tf2 =
+                                        NewTensionForm.setResult NotAsked model.tensionForm
                                 in
-                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, node_action = na }
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, tensionForm = tf2 }
                                 , Cmd.none
                                 , Ports.open_auth_modal
                                 )
 
                             else
-                                ( { model | node_action = AddTension <| TensionFinal form result }, Cmd.none, Cmd.none )
+                                ( { model | tensionForm = tf }, Cmd.none, Cmd.none )
 
-                AddCircle (NodeFinal form _) ->
+                AddCircle NodeFinal ->
                     case result of
                         Success t ->
                             let
@@ -600,7 +591,7 @@ update global msg model =
                                         |> Maybe.map (\nid -> nodeIdCodec form.target.nameid nid (withDefault NodeType.Role form.node.type_))
                                         |> withDefault ""
                             in
-                            ( { model | node_action = AddCircle <| NodeFinal form result }
+                            ( { model | tensionForm = tf }
                             , queryNodesSub apis.gql nameid NewNodesAck
                             , Cmd.none
                             )
@@ -608,50 +599,27 @@ update global msg model =
                         other ->
                             if doRefreshToken other then
                                 let
-                                    na =
-                                        AddCircle (NodeFinal form NotAsked)
+                                    tf2 =
+                                        NewTensionForm.setResult NotAsked model.tensionForm
                                 in
-                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, node_action = na }
+                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, tensionForm = tf2 }
                                 , Cmd.none
                                 , Ports.open_auth_modal
                                 )
 
                             else
-                                ( { model | node_action = AddCircle <| NodeFinal form result }, Cmd.none, Cmd.none )
+                                ( { model | tensionForm = tf }, Cmd.none, Cmd.none )
 
                 other ->
                     ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
 
         -- New Circle
         DoCircleInit node nodeType ->
-            let
-                action =
-                    case nodeType of
-                        NodeType.Role ->
-                            TensionAction.NewRole
-
-                        NodeType.Circle ->
-                            TensionAction.NewCircle
-
-                form =
-                    { uctx = UserCtx "" Nothing (UserRights False False) []
-                    , source = UserRole "" "" "" RoleType.Guest
-                    , target = node
-                    , targetData = model.node_data |> withDefaultData initNodeData
-                    , status = TensionStatus.Open
-                    , tension_type = TensionType.Governance
-                    , post = Dict.empty
-                    , users = []
-                    , action = Just action
-                    , events_type = Nothing
-                    , blob_type = Just BlobType.OnNode
-                    , node = initNodeFragmentCircle nodeType
-                    }
-
-                newStep =
-                    NodeInit form
-            in
-            ( { model | node_action = AddCircle newStep }, send DoCircleSource, Ports.bulma_driver "actionModal" )
+            -- We do not load users_data here because it assumes GotOrga is called at init.
+            ( { model | node_action = AddCircle NodeInit, tensionForm = NewTensionForm.initCircle node nodeType model.tensionForm }
+            , send DoCircleSource
+            , Ports.bulma_driver "actionModal"
+            )
 
         DoCircleSource ->
             case global.session.user of
@@ -660,123 +628,99 @@ update global msg model =
 
                 LoggedIn uctx ->
                     case model.node_action of
-                        AddCircle (NodeInit form) ->
+                        AddCircle NodeInit ->
                             let
-                                node =
-                                    form.node
+                                form_ =
+                                    model.tensionForm.form
 
-                                newForm =
-                                    { form
+                                form =
+                                    { form_
                                         | uctx = uctx
-                                        , node = { node | charac = Just form.target.charac }
-                                        , users = [ { username = uctx.username, role_type = ternary (node.type_ == Just NodeType.Circle) RoleType.Coordinator RoleType.Peer, pattern = "" } ]
+                                        , users = [ { username = uctx.username, role_type = ternary (form_.node.type_ == Just NodeType.Circle) RoleType.Coordinator RoleType.Peer, pattern = "" } ]
                                     }
 
-                                newStep =
-                                    getNewNodeStepFromAuthForm newForm
+                                ( newStep, newForm ) =
+                                    getNewNodeStepAuth form
                             in
-                            ( { model | node_action = AddCircle newStep }, Cmd.none, Ports.bulma_driver "actionModal" )
+                            ( { model | node_action = AddCircle newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
+                            , Cmd.none
+                            , Ports.bulma_driver "actionModal"
+                            )
 
                         _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         DoCircleFinal source ->
             case model.node_action of
-                AddCircle (NodeSource form roles) ->
-                    let
-                        newForm =
-                            { form | source = source }
-                    in
-                    ( { model | node_action = AddCircle <| NodeFinal newForm NotAsked }, Cmd.none, Ports.bulma_driver "actionModal" )
+                AddCircle (NodeSource _) ->
+                    ( { model | node_action = AddCircle NodeFinal, tensionForm = NewTensionForm.setSource source model.tensionForm }
+                    , Cmd.none
+                    , Ports.bulma_driver "actionModal"
+                    )
 
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeNodePost field value ->
             case model.node_action of
-                AddTension (TensionFinal form result) ->
-                    ( { model | node_action = AddTension <| TensionFinal { form | post = Dict.insert field value form.post } result }
-                    , Cmd.none
-                    , Cmd.none
-                    )
+                AddTension TensionFinal ->
+                    ( { model | tensionForm = NewTensionForm.post field value model.tensionForm }, Cmd.none, Cmd.none )
 
-                AddCircle (NodeFinal form result) ->
-                    ( { model | node_action = AddCircle <| NodeFinal (NodeDoc.updateNodeForm field value form) result }
-                    , Cmd.none
-                    , Cmd.none
-                    )
+                AddCircle NodeFinal ->
+                    ( { model | tensionForm = NewTensionForm.postNode field value model.tensionForm }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
         ChangeNodeUserPattern pos pattern ->
-            case model.node_action of
-                AddCircle (NodeFinal form result) ->
-                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.updateUserPattern pos pattern form.users } result }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+            ( { model | tensionForm = NewTensionForm.updateUserPattern pos pattern model.tensionForm }
+            , Ports.searchUser pattern
+            , Cmd.none
+            )
 
         ChangeNodeUserRole pos role ->
-            case model.node_action of
-                AddCircle (NodeFinal form result) ->
-                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.updateUserRole pos role form.users } result }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+            ( { model | tensionForm = NewTensionForm.updateUserRole pos role model.tensionForm }
+            , Cmd.none
+            , Cmd.none
+            )
 
         SelectUser pos username ->
-            case model.node_action of
-                AddCircle (NodeFinal form result) ->
-                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.selectUser pos username form.users } result }
-                    , Cmd.none
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+            ( { model | tensionForm = NewTensionForm.selectUser pos username model.tensionForm }
+            , Cmd.none
+            , Cmd.none
+            )
 
         CancelUser pos ->
-            case model.node_action of
-                AddCircle (NodeFinal form result) ->
-                    ( { model | node_action = AddCircle <| NodeFinal { form | users = NodeDoc.cancelUser pos form.users } result }
-                    , Cmd.none
-                    , Cmd.none
-                    )
+            ( { model | tensionForm = NewTensionForm.cancelUser pos model.tensionForm }
+            , Cmd.none
+            , Cmd.none
+            )
 
-                _ ->
-                    ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+        ShowLookupFs ->
+            ( { model | tensionForm = NewTensionForm.openLookup model.tensionForm }, Cmd.none, Cmd.none )
+
+        CancelLookupFs ->
+            ( { model | tensionForm = NewTensionForm.closeLookup model.tensionForm }, Cmd.none, Cmd.none )
 
         SubmitCircle form doClose time ->
             let
-                newForm =
-                    { form
-                        | post = Dict.union (Dict.fromList [ ( "createdAt", fromTime time ) ]) form.post
-                        , status = ternary (doClose == True) TensionStatus.Closed TensionStatus.Open
-                        , events_type =
-                            if doClose == True then
-                                Just [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
+                events =
+                    if doClose == True then
+                        [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
 
-                            else
-                                Just [ TensionEvent.Created, TensionEvent.BlobCreated ]
-                    }
+                    else
+                        [ TensionEvent.Created, TensionEvent.BlobCreated ]
 
-                na =
-                    case model.node_action of
-                        AddCircle step ->
-                            AddCircle (NodeFinal newForm LoadingSlowly)
-
-                        other ->
-                            other
+                newTensionForm =
+                    model.tensionForm
+                        |> NewTensionForm.post "createdAt" (fromTime time)
+                        |> NewTensionForm.setEvents events
+                        |> NewTensionForm.setStatus (ternary (doClose == True) TensionStatus.Closed TensionStatus.Open)
+                        |> NewTensionForm.setActiveButton doClose
+                        |> NewTensionForm.setResult LoadingSlowly
             in
-            ( { model | node_action = na, newTensionForm = NewTensionForm.setActiveButton doClose model.newTensionForm }
-            , addOneTension apis.gql newForm TensionAck
+            ( { model | tensionForm = newTensionForm }
+            , addOneTension apis.gql newTensionForm.form TensionAck
             , Cmd.none
             )
 
@@ -889,7 +833,7 @@ update global msg model =
                     else
                         Cmd.none
             in
-            ( { model | isModalActive = False, newTensionForm = NewTensionForm.reset model.newTensionForm }, gcmd, Ports.close_modal )
+            ( { model | isModalActive = False }, gcmd, Ports.close_modal )
 
         DoCloseAuthModal ->
             case model.node_action of
@@ -957,13 +901,21 @@ update global msg model =
                     ( model, Cmd.none, Cmd.none )
 
         ChangeInputViewMode viewMode ->
-            ( { model | newTensionForm = NewTensionForm.setViewMode viewMode model.newTensionForm }, Cmd.none, Cmd.none )
+            ( { model | tensionForm = NewTensionForm.setViewMode viewMode model.tensionForm }, Cmd.none, Cmd.none )
 
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
 
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
+
+        ChangeUserLookup users_ ->
+            case users_ of
+                Ok users ->
+                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
+
+                Err err ->
+                    ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -974,6 +926,7 @@ subscriptions _ _ =
         , nodeFocusedFromJs_ NodeFocused
         , nodeDataFromJs_ DoNodeAction
         , Ports.lookupNodeFromJs ChangeNodeLookup
+        , Ports.lookupUserFromJs ChangeUserLookup
         ]
 
 
@@ -1051,7 +1004,7 @@ view_ global model =
 
         nodeData_ =
             { data = withMapData (\x -> tid) model.node_data
-            , node = initNodeFragment
+            , node = initNodeFragment Nothing
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , focus = model.node_focus
@@ -1128,22 +1081,11 @@ viewLeftPane model =
                 ]
             , li []
                 [ ul [ class "menu-list" ]
-                    [ li []
-                        [ a []
-                            [ Fa.icon "fas fa-scroll fa-xs" "Mandates" ]
-                        ]
+                    [ li [] [ a [] [ Fa.icon "fas fa-scroll fa-xs" "Mandates" ] ]
+                    , li [] [ a [] [ Fa.icon "fas fa-exchange-alt fa-xs" "Tensions" ] ]
+                    , li [] [ a [] [ Fa.icon "fas fa-history fa-xs" "Journal" ] ]
                     , li []
-                        [ a []
-                            --  fa-exclamation-circle
-                            [ Fa.icon "fas fa-exchange-alt fa-xs" "Tensions" ]
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon "fas fa-history fa-xs" "Journal" ]
-                        ]
-                    , li []
-                        [ a []
-                            [ Fa.icon "fas fa-user fa-xs" "Members" ]
+                        [ a [] [ Fa.icon "fas fa-user fa-xs" "Members" ]
                         ]
                     ]
                 ]
@@ -1322,10 +1264,8 @@ viewActivies model =
                 [ text "Recent activities:" ]
             , div [ class "tabs is-right is-small" ]
                 [ ul []
-                    [ li [ class "is-active" ]
-                        [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" T.tensionH ] ]
-                    , li []
-                        [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" T.journalH ] ]
+                    [ li [ class "is-active" ] [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" T.tensionH ] ]
+                    , li [] [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" T.journalH ] ]
                     ]
                 ]
             ]
@@ -1376,8 +1316,7 @@ setupActionModal model =
             ]
             []
         , div [ class "modal-content" ]
-            [ viewActionStep model model.node_action
-            ]
+            [ viewActionStep model model.node_action ]
         , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
         ]
 
@@ -1410,10 +1349,10 @@ viewActionStep model action =
                 ]
 
         AddTension step ->
-            viewTensionStep step model.newTensionForm
+            viewTensionStep step model.tensionForm model
 
         AddCircle step ->
-            viewCircleStep step model.newTensionForm
+            viewCircleStep step model.tensionForm model
 
         JoinOrga step ->
             viewJoinOrgaStep model.orga_data step
@@ -1428,10 +1367,9 @@ viewActionStep model action =
             viewAuthNeeded DoCloseModal
 
 
-makeNewTensionFormData form result ntf =
-    { form = form
-    , result = result
-    , data = ntf
+makeNewTensionFormOp : Model -> NewTensionForm.Op Msg
+makeNewTensionFormOp model =
+    { lookup = model.lookup_users
     , onChangeInputViewMode = ChangeInputViewMode
     , onChangeNode = ChangeNodePost
     , onChangeUserPattern = ChangeNodeUserPattern
@@ -1444,18 +1382,19 @@ makeNewTensionFormData form result ntf =
     }
 
 
-makeNewCircleFormData form result ntf =
+makeNewCircleFormOp : Model -> NewTensionForm.Op Msg
+makeNewCircleFormOp model =
     let
-        formData =
-            makeNewTensionFormData form result ntf
+        op =
+            makeNewTensionFormOp model
     in
-    { formData | onSubmitTension = SubmitCircle }
+    { op | onSubmitTension = SubmitCircle }
 
 
-viewTensionStep : TensionStep TensionForm -> NewTensionForm -> Html Msg
-viewTensionStep step ntf =
+viewTensionStep : TensionStep -> NewTensionForm -> Model -> Html Msg
+viewTensionStep step ntf model =
     case step of
-        TensionInit form ->
+        TensionInit ->
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
                     [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate:" ] ]
@@ -1471,43 +1410,42 @@ viewTensionStep step ntf =
                                         [ TensionType.toString tensionType |> text ]
                                     ]
                             )
-                        <|
                             TensionType.list
                     ]
                 ]
 
-        TensionSource form roles ->
-            viewSourceRoles form roles DoTensionFinal
+        TensionSource roles ->
+            viewSourceRoles ntf.form roles DoTensionFinal
 
-        TensionFinal form result ->
-            case form.blob_type of
+        TensionFinal ->
+            case ntf.form.blob_type of
                 Just blob_type ->
                     case blob_type of
                         BlobType.OnNode ->
-                            NewCircleForm.view (makeNewCircleFormData form result ntf)
+                            NewCircleForm.view ntf (makeNewCircleFormOp model)
 
                         _ ->
                             div [] [ text "Not implemented" ]
 
                 Nothing ->
-                    NewTensionForm.view (makeNewTensionFormData form result ntf)
+                    NewTensionForm.view ntf (makeNewTensionFormOp model)
 
         TensionNotAuthorized errMsg ->
             viewWarnings errMsg
 
 
-viewCircleStep : NodeStep TensionForm -> NewTensionForm -> Html Msg
-viewCircleStep step ntf =
+viewCircleStep : NodeStep -> NewTensionForm -> Model -> Html Msg
+viewCircleStep step ntf model =
     case step of
-        NodeInit form ->
+        NodeInit ->
             -- Node mode selection not implemented yet.
             div [] [ text "" ]
 
-        NodeSource form roles ->
-            viewSourceRoles form roles DoCircleFinal
+        NodeSource roles ->
+            viewSourceRoles ntf.form roles DoCircleFinal
 
-        NodeFinal form result ->
-            NewCircleForm.view (makeNewCircleFormData form result ntf)
+        NodeFinal ->
+            NewCircleForm.view ntf (makeNewCircleFormOp model)
 
         NodeNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1567,17 +1505,36 @@ viewSourceRoles form roles nextStep =
 -- Methods
 
 
-{-| get Auth Step and init form based on user roles
+{-| Get Auth Step and init form based on user roles for new tension
 -}
-getNewNodeStepFromAuthForm : TensionForm -> NodeStep TensionForm
-getNewNodeStepFromAuthForm form =
+getNewTensionStepAuth : TensionForm -> ( TensionStep, TensionForm )
+getNewTensionStepAuth form =
     let
         orgaRoles =
             getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
     in
     case orgaRoles of
         [] ->
-            NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ]
+            ( TensionNotAuthorized [ T.notOrgMember, T.joinForTension ], form )
+
+        [ r ] ->
+            ( TensionFinal, { form | source = r } )
+
+        roles ->
+            ( TensionSource roles, form )
+
+
+{-| Get Auth Step and init form based on user roles for new circle
+-}
+getNewNodeStepAuth : TensionForm -> ( NodeStep, TensionForm )
+getNewNodeStepAuth form =
+    let
+        orgaRoles =
+            getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
+    in
+    case orgaRoles of
+        [] ->
+            ( NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ], form )
 
         roles ->
             let
@@ -1594,21 +1551,17 @@ getNewNodeStepFromAuthForm form =
             in
             case circleRoles of
                 [] ->
-                    NodeNotAuthorized [ T.notCircleMember, T.askCoordo ]
+                    ( NodeNotAuthorized [ T.notCircleMember, T.askCoordo ], form )
 
                 subRoles ->
                     case form.target.charac.mode of
                         NodeMode.Chaos ->
                             case subRoles of
                                 [ r ] ->
-                                    let
-                                        newForm =
-                                            { form | source = r }
-                                    in
-                                    NodeFinal newForm NotAsked
+                                    ( NodeFinal, { form | source = r } )
 
                                 subRoles2 ->
-                                    NodeSource form subRoles2
+                                    ( NodeSource subRoles2, form )
 
                         NodeMode.Coordinated ->
                             let
@@ -1617,14 +1570,10 @@ getNewNodeStepFromAuthForm form =
                             in
                             case coordoRoles of
                                 [] ->
-                                    NodeNotAuthorized [ T.notCircleCoordo, T.askCoordo ]
+                                    ( NodeNotAuthorized [ T.notCircleCoordo, T.askCoordo ], form )
 
                                 [ r ] ->
-                                    let
-                                        newForm =
-                                            { form | source = r }
-                                    in
-                                    NodeFinal newForm NotAsked
+                                    ( NodeFinal, { form | source = r } )
 
                                 subRoles2 ->
-                                    NodeSource form subRoles2
+                                    ( NodeSource subRoles2, form )

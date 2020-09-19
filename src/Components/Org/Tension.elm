@@ -8,12 +8,12 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
-import Components.NodeDoc as NodeDoc exposing (NodeDoc)
+import Components.NodeDoc as NodeDoc exposing (NodeDoc, initTensionPatch)
 import Components.Text as T
 import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, withMapData, withMaybeData)
+import Extra exposing (ternary, toMapOfList, withMapData, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -94,6 +94,8 @@ type alias Model =
     { -- Focus
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
+    , users_data : GqlData UsersData
+    , lookup_users : List User
 
     -- Page
     , tensionid : String
@@ -102,14 +104,20 @@ type alias Model =
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
+
+    -- Form (Title, Status, Comment)
     , tension_form : TensionPatchForm
     , tension_patch : GqlData PatchTensionPayloadID
-    , comment_form : CommentPatchForm
-    , comment_result : GqlData Comment
+
+    -- Title Result
     , isTitleEdit : Bool
     , title_result : GqlData String
 
-    -- Blob Edit Section
+    -- Comment Edit
+    , comment_form : CommentPatchForm
+    , comment_result : GqlData Comment
+
+    -- Blob Edit
     , nodeDoc : NodeDoc
     , publish_result : GqlData BlobFlag
 
@@ -209,7 +217,6 @@ type Msg
       -- Assignees
     | DoAssigneesEdit
     | ChangeAssigneePattern String
-    | ChangeUserLookup (LookupResult User)
     | ChangeAssignee String User Bool
     | AssigneeAck (GqlData IdPayload)
     | DoAssigneesCancel
@@ -230,6 +237,7 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
+    | ChangeUserLookup (LookupResult User)
 
 
 
@@ -266,6 +274,11 @@ init global flags =
 
         model =
             { node_focus = newFocus
+            , users_data =
+                global.session.users_data
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
+            , lookup_users = []
             , tensionid = tensionid
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault "" |> actionViewDecoder
@@ -279,20 +292,26 @@ init global flags =
                     |> withDefault Loading
             , tension_comments = Loading
             , tension_blobs = Loading
-            , tension_form = initTensionForm tensionid global.session.user
+
+            -- Form (Title, Status, Comment)
+            , tension_form = initTensionPatch tensionid global.session.user
             , tension_patch = NotAsked
-            , comment_form = initCommentPatchForm global.session.user
-            , comment_result = NotAsked
+
+            -- Title Result
             , isTitleEdit = False
             , title_result = NotAsked
 
-            -- Blob
+            -- Comment Edit
+            , comment_form = initCommentPatchForm global.session.user
+            , comment_result = NotAsked
+
+            -- Blob Edit
             , nodeDoc = NodeDoc.create
             , publish_result = NotAsked
 
             -- Side Pane
             , isTensionAdmin = getTensionUserAuth global.session.user (global.session.tension_head |> Maybe.map (\x -> Success x) |> withDefault Loading)
-            , assigneesPanel = UserSearchPanel.create global.session.user (global.session.orga_data |> Maybe.map (\x -> Success x) |> withDefault Loading)
+            , assigneesPanel = UserSearchPanel.create global.session.user
 
             -- Common
             , node_action = NoOp
@@ -519,7 +538,7 @@ update global msg model =
                                     other
 
                         resetForm =
-                            initTensionForm model.tensionid global.session.user
+                            initTensionPatch model.tensionid global.session.user
                     in
                     ( { model
                         | tension_head = tension_h
@@ -635,7 +654,7 @@ update global msg model =
             ( { model | isTitleEdit = True }, Cmd.none, Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | isTitleEdit = False, tension_form = initTensionPatch model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitTitle time ->
             let
@@ -663,7 +682,7 @@ update global msg model =
                                     other
 
                         resetForm =
-                            initTensionForm model.tensionid global.session.user
+                            initTensionPatch model.tensionid global.session.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
 
@@ -682,7 +701,7 @@ update global msg model =
                 newForm =
                     { form
                         | blob_type = Just blobType
-                        , node = withMaybeData model.tension_head |> Maybe.map (\th -> nodeFragmentFromTensionHead th) |> withDefault initNodeFragment
+                        , node = withMaybeData model.tension_head |> Maybe.map (\th -> nodeFragmentFromTensionHead th) |> withDefault (initNodeFragment Nothing)
                         , md = withMaybeData model.tension_head |> Maybe.map (\th -> mdFromTensionHead th) |> withDefault Nothing
                     }
             in
@@ -747,7 +766,7 @@ update global msg model =
             ( { model | tension_form = newForm }, send (SubmitTensionPatch time), Cmd.none )
 
         CancelBlob ->
-            ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc, tension_form = initTensionForm model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc, tension_form = initTensionPatch model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         PushBlob bid time ->
             let
@@ -788,7 +807,7 @@ update global msg model =
                                     { th | blobs = blobs }
 
                                 resetForm =
-                                    initTensionForm model.tensionid global.session.user
+                                    initTensionPatch model.tensionid global.session.user
                             in
                             ( { model
                                 | publish_result = result
@@ -814,7 +833,7 @@ update global msg model =
             if model.assigneesPanel.isEdit == False then
                 let
                     gcmd =
-                        case model.assigneesPanel.users_data of
+                        case model.users_data of
                             Success users ->
                                 Ports.initUserSearch (Dict.values users |> List.concat)
 
@@ -829,19 +848,14 @@ update global msg model =
             else
                 ( model, Cmd.none, Cmd.none )
 
+        DoAssigneesCancel ->
+            ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
+
         ChangeAssigneePattern pattern ->
             ( { model | assigneesPanel = UserSearchPanel.setPattern pattern model.assigneesPanel }
             , Cmd.none
             , Ports.searchUser pattern
             )
-
-        ChangeUserLookup users_ ->
-            case users_ of
-                Ok users ->
-                    ( { model | assigneesPanel = UserSearchPanel.setLookup users model.assigneesPanel }, Cmd.none, Cmd.none )
-
-                Err err ->
-                    ( model, Cmd.none, Cmd.none )
 
         ChangeAssignee tid user isNew ->
             ( { model | assigneesPanel = UserSearchPanel.click user isNew model.assigneesPanel }
@@ -880,26 +894,23 @@ update global msg model =
                 other ->
                     ( newModel, Cmd.none, Cmd.none )
 
-        DoAssigneesCancel ->
-            ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel }, Cmd.none, Cmd.none )
-
         GotOrga result ->
             case result of
                 Success data ->
                     let
                         users =
-                            data
-                                |> Dict.toList
-                                |> List.map (\( k, n ) -> Maybe.map (\fs -> { username = fs.username, name = fs.name }) n.first_link)
-                                |> List.filterMap identity
+                            orgaToUsersData data
+
+                        users_l =
+                            Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
                     in
-                    ( { model | assigneesPanel = UserSearchPanel.refresh global.session.user result model.assigneesPanel }
-                    , Cmd.batch [ Ports.inheritWith "userSearchPanel", Ports.initUserSearch users ]
+                    ( { model | users_data = Success users }
+                    , Cmd.batch [ Ports.inheritWith "userSearchPanel", Ports.initUserSearch users_l ]
                     , send (UpdateSessionOrga (Just data))
                     )
 
                 other ->
-                    ( { model | assigneesPanel = UserSearchPanel.refresh global.session.user result model.assigneesPanel }, Cmd.none, Cmd.none )
+                    ( model, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1037,6 +1048,14 @@ update global msg model =
 
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
+
+        ChangeUserLookup users_ ->
+            case users_ of
+                Ok users ->
+                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
+
+                Err err ->
+                    ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1526,7 +1545,7 @@ viewDocument u t b model =
             let
                 nodeData =
                     { data = Success t.id
-                    , node = b.node |> withDefault initNodeFragment
+                    , node = b.node |> withDefault (initNodeFragment Nothing)
                     , isLazy = False
                     , source = TensionBaseUri
                     , focus = model.node_focus
@@ -1544,16 +1563,17 @@ viewDocument u t b model =
                             { form = model.tension_form
                             , result = model.tension_patch
                             , tension = t
+                            , lookup = model.lookup_users
                             , data = model.nodeDoc
                             , onBlobEdit = DoBlobEdit
+                            , onCancelBlob = CancelBlob
+                            , onSubmitBlob = SubmitBlob
+                            , onSubmit = Submit
                             , onChangeNode = ChangeBlobNode
                             , onChangeUserPattern = ChangeNodeUserPattern
                             , onChangeUserRole = ChangeNodeUserRole
                             , onSelectUser = SelectUser
                             , onCancelUser = CancelUser
-                            , onCancelBlob = CancelBlob
-                            , onSubmitBlob = SubmitBlob
-                            , onSubmit = Submit
                             }
                     in
                     NodeDoc.view nodeData (Just msgs)
@@ -1680,7 +1700,11 @@ viewSidePane u t model =
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn uctx ->
-                        [ h2 [ class "subtitle is-w", onClick DoAssigneesEdit ]
+                        [ h2
+                            [ class "subtitle"
+                            , classList [ ( "is-w", model.isTensionAdmin ) ]
+                            , onClick DoAssigneesEdit
+                            ]
                             [ text T.assigneesH
                             , if model.assigneesPanel.isEdit then
                                 Fa.icon0 "fas fa-times is-pulled-right" ""
@@ -1698,6 +1722,8 @@ viewSidePane u t model =
                                         { selectedUsers = assignees
                                         , targets = [ t.emitter.nameid, t.receiver.nameid ]
                                         , tid = t.id
+                                        , users_data = model.users_data
+                                        , lookup = model.lookup_users
                                         , data = model.assigneesPanel
                                         , onChangePattern = ChangeAssigneePattern
                                         , onUserClick = ChangeAssignee
@@ -1817,30 +1843,6 @@ viewJoinOrgaStep step =
 --
 
 
-initTensionForm : String -> UserState -> TensionPatchForm
-initTensionForm tensionid user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
-    , id = tensionid
-    , status = Nothing
-    , tension_type = Nothing
-    , action = Nothing
-    , emitter = Nothing
-    , receiver = Nothing
-    , post = Dict.empty
-    , users = []
-    , events_type = Nothing
-    , blob_type = Nothing
-    , node = initNodeFragment
-    , md = Nothing
-    }
-
-
 initCommentPatchForm : UserState -> CommentPatchForm
 initCommentPatchForm user =
     { uctx =
@@ -1901,7 +1903,7 @@ nodeFragmentFromTensionHead t =
         |> List.head
         |> Maybe.map (\h -> h.node)
         |> withDefault Nothing
-        |> withDefault initNodeFragment
+        |> withDefault (initNodeFragment Nothing)
 
 
 mdFromTensionHead : TensionHead -> Maybe String

@@ -2,13 +2,13 @@ module Form.NewCircle exposing (view)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
-import Components.NodeDoc exposing (getFirstLinks, getInputData, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
+import Components.NodeDoc exposing (getFirstLinks, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
-import Form.NewTension exposing (NewTensionFormData)
+import Form.NewTension exposing (NewTensionForm, Op)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -23,31 +23,31 @@ import ModelSchema exposing (RequestResult(..))
 
 
 
--- see Logics in NewTension.elm
+-- see Op in NewTension.elm
 
 
-view : NewTensionFormData msg -> Html msg
-view ntd =
+view : NewTensionForm -> Op msg -> Html msg
+view data op =
     let
         form =
-            ntd.form
+            data.form
 
         txt =
             getNodeTextFromNodeType (form.node.type_ |> withDefault NodeType.Role)
 
         isLoading =
-            ntd.result == LoadingSlowly
+            data.result == LoadingSlowly
 
         isSendable =
             form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
 
         submitTension =
-            ternary isSendable [ onClickPD2 (ntd.onSubmit <| ntd.onSubmitTension form False) ] []
+            ternary isSendable [ onClickPD2 (op.onSubmit <| op.onSubmitTension form False) ] []
 
         submitCloseTension =
-            ternary isSendable [ onClickPD2 (ntd.onSubmit <| ntd.onSubmitTension form True) ] []
+            ternary isSendable [ onClickPD2 (op.onSubmit <| op.onSubmitTension form True) ] []
     in
-    case ntd.result of
+    case data.result of
         Success res ->
             let
                 link =
@@ -55,14 +55,14 @@ view ntd =
             in
             div [ class "box is-light" ]
                 [ Fa.icon "fas fa-check fa-2x has-text-success" " "
-                , if ntd.data.activeButton == Just 0 then
+                , if data.activeButton == Just 0 then
                     text (txt.added ++ " ")
 
                   else
                     text (txt.tension_added ++ " ")
                 , a
                     [ href link
-                    , onClickPD (ntd.onCloseModal link)
+                    , onClickPD (op.onCloseModal link)
                     , target "_blank"
                     ]
                     [ text T.checkItOut ]
@@ -86,7 +86,7 @@ view ntd =
                         ]
                     ]
                 , div [ class "modal-card-body" ]
-                    [ nodeAboutInputView False txt (getInputData ntd)
+                    [ nodeAboutInputView False txt form.node op
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
@@ -95,7 +95,7 @@ view ntd =
                                     [ class "input is-small"
                                     , type_ "text"
                                     , value title
-                                    , onInput <| ntd.onChangeNode "title"
+                                    , onInput <| op.onChangeNode "title"
                                     ]
                                     []
                                 ]
@@ -107,7 +107,7 @@ view ntd =
                                     [ class "input is-small"
                                     , type_ "text"
                                     , value nameid
-                                    , onInput <| ntd.onChangeNode "nameid"
+                                    , onInput <| op.onChangeNode "nameid"
                                     ]
                                     []
                                 ]
@@ -117,12 +117,12 @@ view ntd =
                     , br [] []
                     , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
-                        , div [ class "card-content" ] [ nodeLinksInputView txt (getInputData ntd) ]
+                        , div [ class "card-content" ] [ nodeLinksInputView txt form.node form.users op ]
                         ]
                     , br [] []
                     , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
-                        , div [ class "card-content" ] [ nodeMandateInputView txt (getInputData ntd) ]
+                        , div [ class "card-content" ] [ nodeMandateInputView txt form.node op ]
                         ]
                     , br [] []
                     , div [ class "field" ]
@@ -131,7 +131,7 @@ view ntd =
                                 [ class "textarea"
                                 , rows 5
                                 , placeholder T.leaveComment
-                                , onInput <| ntd.onChangeNode "message"
+                                , onInput <| op.onChangeNode "message"
                                 ]
                                 []
                             ]
@@ -153,7 +153,7 @@ view ntd =
                                     ([ class "button"
                                      , classList
                                         [ ( "is-warning", isSendable )
-                                        , ( "is-loading", isLoading && ntd.data.activeButton == Just 0 )
+                                        , ( "is-loading", isLoading && data.activeButton == Just 0 )
                                         ]
                                      , disabled (not isSendable || isLoading)
                                      ]
@@ -164,7 +164,7 @@ view ntd =
                                     ([ class "button has-text-weight-semibold"
                                      , classList
                                         [ ( "is-success", isSendable )
-                                        , ( "is-loading", isLoading && ntd.data.activeButton == Just 1 )
+                                        , ( "is-loading", isLoading && data.activeButton == Just 1 )
                                         ]
                                      , disabled (not isSendable || isLoading)
                                      ]

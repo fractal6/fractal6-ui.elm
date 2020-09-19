@@ -3,6 +3,7 @@ module ModelCommon exposing (..)
 import Array exposing (Array)
 import Components.Loading as Loading exposing (ErrorData, WebData)
 import Dict exposing (Dict)
+import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -16,7 +17,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid)
 import ModelSchema exposing (..)
 import QuickSearch as Qsearch
 import Url exposing (Url)
@@ -35,6 +36,7 @@ type alias Session =
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
+    , users_data : Maybe UsersData
     , node_data : Maybe NodeData
     , tensions_data : Maybe TensionsData
     , tension_head : Maybe TensionHead
@@ -60,6 +62,15 @@ type alias NodesQuickSearch =
     --, lut : Qsearch.Table Node
     --, lookup : List Node
     }
+
+
+orgaToUsersData : NodesData -> UsersData
+orgaToUsersData nd =
+    nd
+        |> Dict.toList
+        |> List.map (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
+        |> List.filterMap identity
+        |> toMapOfList
 
 
 
@@ -98,8 +109,8 @@ type ModalAuth
 
 type ActionState
     = ActionChoice Node
-    | AddTension (TensionStep TensionForm)
-    | AddCircle (NodeStep TensionForm)
+    | AddTension TensionStep
+    | AddCircle NodeStep
     | JoinOrga (JoinStep JoinOrgaForm)
     | ActionAuthNeeded
     | AskErr String
@@ -181,19 +192,19 @@ type alias JoinOrgaForm =
 
 {-| Tension Step
 -}
-type TensionStep form
-    = TensionInit form
-    | TensionSource form (List UserRole)
-    | TensionFinal form (GqlData Tension)
+type TensionStep
+    = TensionInit
+    | TensionSource (List UserRole)
+    | TensionFinal
     | TensionNotAuthorized ErrorData
 
 
 {-| Node Step (Role Or Circle, add and edit)
 -}
-type NodeStep form
-    = NodeInit form
-    | NodeSource form (List UserRole)
-    | NodeFinal form (GqlData Tension)
+type NodeStep
+    = NodeInit
+    | NodeSource (List UserRole)
+    | NodeFinal
     | NodeNotAuthorized ErrorData
 
 

@@ -1,12 +1,11 @@
 module Components.NodeDoc exposing
-    ( InputData
-    , NodeDoc
+    ( NodeDoc
     , cancelEdit
     , cancelUser
     , create
     , edit
     , getFirstLinks
-    , getInputData
+    , initTensionPatch
     , nodeAboutInputView
     , nodeFragmentFromOrga
     , nodeLinksInputView
@@ -24,6 +23,7 @@ import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
+import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (ternary, withMaybeData)
 import Fractal.Enum.BlobType as BlobType
@@ -35,7 +35,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionPatchForm, UserForm)
+import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..))
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
@@ -50,6 +50,30 @@ type alias NodeDoc =
 create : NodeDoc
 create =
     { isBlobEdit = False }
+
+
+initTensionPatch : String -> UserState -> TensionPatchForm
+initTensionPatch tensionid user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , id = tensionid
+    , status = Nothing
+    , tension_type = Nothing
+    , action = Nothing
+    , emitter = Nothing
+    , receiver = Nothing
+    , post = Dict.empty
+    , users = []
+    , events_type = Nothing
+    , blob_type = Nothing
+    , node = initNodeFragment Nothing
+    , md = Nothing
+    }
 
 
 edit : NodeDoc -> NodeDoc
@@ -79,27 +103,6 @@ updateForm field value action form =
     { f | action = oldAction, post = Dict.remove "title" f.post }
 
 
-updateUserPattern : Int -> String -> List UserForm -> List UserForm
-updateUserPattern pos pattern users =
-    LE.updateAt pos (\x -> { x | pattern = pattern }) users
-
-
-updateUserRole : Int -> String -> List UserForm -> List UserForm
-updateUserRole pos r users =
-    LE.updateAt pos (\x -> { x | role_type = RoleType.fromString r |> withDefault RoleType.Peer }) users
-
-
-selectUser : Int -> String -> List UserForm -> List UserForm
-selectUser pos username users =
-    LE.updateAt pos (\x -> { x | username = username }) users
-
-
-cancelUser : Int -> List UserForm -> List UserForm
-cancelUser pos users =
-    --LE.removeAt pos users
-    LE.updateAt pos (\x -> { x | username = "" }) users
-
-
 type alias OrgaNodeData msg =
     { node : NodeFragment
     , isLazy : Bool
@@ -111,53 +114,34 @@ type alias OrgaNodeData msg =
     }
 
 
-type alias TensionNodeData msg =
+type alias Op msg =
     { form : TensionPatchForm
     , result : GqlData PatchTensionPayloadID
     , tension : TensionHead
-
-    --, userLookup : UserLookup
+    , lookup : List User
     , data : NodeDoc
+
+    -- blob
     , onBlobEdit : BlobType.BlobType -> msg
-    , onChangeNode : String -> String -> msg
-    , onChangeUserPattern : Int -> String -> msg
-    , onChangeUserRole : Int -> String -> msg
-    , onSelectUser : Int -> String -> msg
-    , onCancelUser : Int -> msg
     , onCancelBlob : msg
     , onSubmitBlob : Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
-    }
 
-
-{-| Ensure compatibility with TensionForm (user in Form.NewTenion)
--}
-type alias InputData msg =
-    { node : NodeFragment
-    , users : List UserForm
-
-    --, txt : FormText
+    -- doc change
     , onChangeNode : String -> String -> msg
+
+    -- user search and change
     , onChangeUserPattern : Int -> String -> msg
     , onChangeUserRole : Int -> String -> msg
     , onSelectUser : Int -> String -> msg
     , onCancelUser : Int -> msg
+    , onShowLookupFs : msg
+    , onCancelLookupFs : msg
     }
 
 
-getInputData e =
-    { node = e.form.node
-    , users = e.form.users
-    , onChangeNode = e.onChangeNode
-    , onChangeUserPattern = e.onChangeUserPattern
-    , onChangeUserRole = e.onChangeUserRole
-    , onSelectUser = e.onSelectUser
-    , onCancelUser = e.onCancelUser
-    }
-
-
-view : OrgaNodeData msg -> Maybe (TensionNodeData msg) -> Html msg
-view data tdata_m =
+view : OrgaNodeData msg -> Maybe (Op msg) -> Html msg
+view data op_m =
     div [ id "DocContainer", class "hero is-small is-light" ]
         [ div [ class "hero-body" ]
             [ case data.data of
@@ -176,7 +160,7 @@ view data tdata_m =
                     div [ class "spinner" ] []
 
                 Success tid ->
-                    view_ tid data tdata_m
+                    view_ tid data op_m
 
                 other ->
                     div [] []
@@ -184,8 +168,8 @@ view data tdata_m =
         ]
 
 
-view_ : String -> OrgaNodeData msg -> Maybe (TensionNodeData msg) -> Html msg
-view_ tid data tdata_m =
+view_ : String -> OrgaNodeData msg -> Maybe (Op msg) -> Html msg
+view_ tid data op_m =
     let
         isLinksHidden =
             if data.node.type_ == Just NodeType.Circle && data.source == TensionBaseUri then
@@ -197,34 +181,34 @@ view_ tid data tdata_m =
         txt =
             getNodeTextFromNodeType (data.node.type_ |> withDefault NodeType.Role)
 
-        -- Function of TensionNodeData
+        -- Function of Op
         blobTypeEdit =
-            tdata_m
-                |> Maybe.map (\e -> ternary e.data.isBlobEdit e.form.blob_type Nothing)
+            op_m
+                |> Maybe.map (\op -> ternary op.data.isBlobEdit op.form.blob_type Nothing)
                 |> withDefault Nothing
 
         isLoading =
-            tdata_m
-                |> Maybe.map (\e -> e.result == LoadingSlowly)
+            op_m
+                |> Maybe.map (\op -> op.result == LoadingSlowly)
                 |> withDefault False
     in
     div [ classList [ ( "is-lazy", data.isLazy ) ] ]
         [ if blobTypeEdit == Just BlobType.OnAbout then
-            tdata_m
+            op_m
                 |> Maybe.map
-                    (\e ->
+                    (\op ->
                         let
                             isSendable =
-                                data.node.name /= e.form.node.name || data.node.about /= e.form.node.about
+                                data.node.name /= op.form.node.name || data.node.about /= op.form.node.about
 
                             isNew =
-                                e.tension.action
+                                op.tension.action
                                     |> Maybe.map (\a -> (getTensionCharac a).action_type == "new")
                                     |> withDefault True
                         in
                         div []
-                            [ nodeAboutInputView isNew txt (getInputData e)
-                            , blobButtonsView isSendable isLoading e
+                            [ nodeAboutInputView isNew txt op.form.node op
+                            , blobButtonsView isSendable isLoading op
                             ]
                     )
                 |> withDefault (div [] [])
@@ -248,7 +232,7 @@ view_ tid data tdata_m =
                                 [ tb ]
 
                         Nothing ->
-                            div [ class "column buttonEdit" ] [ doEditView tdata_m BlobType.OnAbout ]
+                            div [ class "column buttonEdit" ] [ doEditView op_m BlobType.OnAbout ]
                     ]
                 , case data.node.about of
                     Just ab ->
@@ -259,16 +243,16 @@ view_ tid data tdata_m =
                 ]
         , hr [ class "has-background-grey-light" ] []
         , if blobTypeEdit == Just BlobType.OnFirstLink then
-            tdata_m
+            op_m
                 |> Maybe.map
-                    (\e ->
+                    (\op ->
                         let
                             isSendable =
-                                data.node.first_link /= e.form.node.first_link || data.node.role_type /= e.form.node.role_type
+                                data.node.first_link /= op.form.node.first_link || data.node.role_type /= op.form.node.role_type
                         in
                         div []
-                            [ nodeLinksInputView txt (getInputData e)
-                            , blobButtonsView isSendable isLoading e
+                            [ nodeLinksInputView txt op.form.node op.form.users op
+                            , blobButtonsView isSendable isLoading op
                             ]
                     )
                 |> withDefault (div [] [])
@@ -287,7 +271,7 @@ view_ tid data tdata_m =
                     , links
                         |> List.map (\l -> viewUser l)
                         |> span [ attribute "style" "margin-left:20px;" ]
-                    , doEditView tdata_m BlobType.OnFirstLink
+                    , doEditView op_m BlobType.OnFirstLink
                     ]
                 , if List.length links == 0 then
                     span [ class "is-italic" ] [ text T.noFirstLinks ]
@@ -297,16 +281,16 @@ view_ tid data tdata_m =
                 ]
         , ternary isLinksHidden (div [] []) (hr [ class "has-background-grey-light" ] [])
         , if blobTypeEdit == Just BlobType.OnMandate then
-            tdata_m
+            op_m
                 |> Maybe.map
-                    (\e ->
+                    (\op ->
                         let
                             isSendable =
-                                data.node.mandate /= e.form.node.mandate
+                                data.node.mandate /= op.form.node.mandate
                         in
                         div [ class "mandateEdit" ]
-                            [ nodeMandateInputView txt (getInputData e)
-                            , blobButtonsView isSendable isLoading e
+                            [ nodeMandateInputView txt op.form.node op
+                            , blobButtonsView isSendable isLoading op
                             ]
                     )
                 |> withDefault (div [] [])
@@ -316,7 +300,7 @@ view_ tid data tdata_m =
                 Just mandate ->
                     div [ class "mandateDoc" ]
                         [ div [ class "subtitle is-5" ]
-                            [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, doEditView tdata_m BlobType.OnMandate ]
+                            [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, doEditView op_m BlobType.OnMandate ]
                         , viewMandateSection T.purposeH (Just mandate.purpose)
                         , viewMandateSection T.responsabilitiesH mandate.responsabilities
                         , viewMandateSection T.domainsH mandate.domains
@@ -326,13 +310,13 @@ view_ tid data tdata_m =
                 Nothing ->
                     div [ class "is-italic" ]
                         [ text "No mandate for this circle."
-                        , doEditView tdata_m BlobType.OnMandate
+                        , doEditView op_m BlobType.OnMandate
                         ]
         ]
 
 
 
----- Template view
+--- Template view
 
 
 viewMandateSection : String -> Maybe String -> Html msg
@@ -349,15 +333,10 @@ viewMandateSection name maybePara =
 
 
 
--- Input view
+--- Input view
 
 
-nodeAboutInputView : Bool -> FormText -> InputData msg -> Html msg
-nodeAboutInputView isNew txt ipd =
-    let
-        node =
-            ipd.node
-    in
+nodeAboutInputView isNew txt node op =
     div [ class "field" ]
         [ div [ class "field " ]
             [ div [ class "control" ]
@@ -367,7 +346,7 @@ nodeAboutInputView isNew txt ipd =
                     , type_ "text"
                     , placeholder "Name*"
                     , value (node.name |> withDefault "")
-                    , onInput <| ipd.onChangeNode "name"
+                    , onInput <| op.onChangeNode "name"
                     , required True
                     ]
                     []
@@ -383,7 +362,7 @@ nodeAboutInputView isNew txt ipd =
                     , type_ "text"
                     , placeholder "About"
                     , value (node.about |> withDefault "")
-                    , onInput <| ipd.onChangeNode "about"
+                    , onInput <| op.onChangeNode "about"
                     ]
                     []
                 ]
@@ -399,7 +378,7 @@ nodeAboutInputView isNew txt ipd =
                             [ class "input is-small"
                             , type_ "text"
                             , value (node.nameid |> withDefault "")
-                            , onInput <| ipd.onChangeNode "nameid"
+                            , onInput <| op.onChangeNode "nameid"
                             ]
                             []
                         ]
@@ -413,11 +392,10 @@ nodeAboutInputView isNew txt ipd =
         ]
 
 
-nodeLinksInputView : FormText -> InputData msg -> Html msg
-nodeLinksInputView txt ipd =
+nodeLinksInputView txt node users op =
     let
         nodeType =
-            ipd.node.type_ |> withDefault NodeType.Role
+            node.type_ |> withDefault NodeType.Role
 
         --roleType =
         --    node.role_type |> withDefault RoleType.Peer
@@ -436,61 +414,68 @@ nodeLinksInputView txt ipd =
 
                     userSelected =
                         u.username /= ""
+
+                    doLookup =
+                        u.username == ""
                 in
-                div [ class "field is-horizontal" ]
-                    [ div [ class "field-label is-small has-text-grey-darker control" ]
-                        [ case nodeType of
-                            NodeType.Circle ->
-                                div [ class ("select is-" ++ roleColor rt) ]
-                                    [ select [ class "has-text-dark" ]
-                                        [ option [ selected True, value rtStr ] [ text rtStr ] ]
-                                    ]
-
-                            NodeType.Role ->
-                                div [ class ("select is-" ++ roleColor rt) ]
-                                    [ RoleType.list
-                                        |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
-                                        |> List.map
-                                            (\r ->
-                                                option [ selected (r == rt), value (RoleType.toString r) ] [ text (RoleType.toString r) ]
-                                            )
-                                        |> select [ class "has-text-dark", onInput (ipd.onChangeUserRole i) ]
-                                    ]
-                        ]
-                    , div [ class "field-body" ]
-                        [ div [ class "tagsinput field is-grouped is-grouped-multiline input" ]
-                            [ if userSelected then
-                                div [ class "control" ]
-                                    [ div [ class "tags has-addons" ]
-                                        [ span [ class "tag is-primary" ] [ text u.username ]
-                                        , span [ class "tag is-delete is-light", onClick (ipd.onCancelUser i) ] []
+                div []
+                    [ div [ class "field is-horizontal" ]
+                        [ div [ class "field-label is-small has-text-grey-darker control" ]
+                            [ case nodeType of
+                                NodeType.Circle ->
+                                    div [ class ("select is-" ++ roleColor rt) ]
+                                        [ select [ class "has-text-dark" ]
+                                            [ option [ selected True, value rtStr ] [ text rtStr ] ]
                                         ]
-                                    ]
 
-                              else
-                                span [] []
-                            , input
-                                [ type_ "text"
-                                , value u.pattern
-                                , onInput (ipd.onChangeUserPattern i)
-                                , disabled userSelected
+                                NodeType.Role ->
+                                    div [ class ("select is-" ++ roleColor rt) ]
+                                        [ RoleType.list
+                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
+                                            |> List.map
+                                                (\r ->
+                                                    option [ selected (r == rt), value (RoleType.toString r) ] [ text (RoleType.toString r) ]
+                                                )
+                                            |> select [ class "has-text-dark", onInput (op.onChangeUserRole i) ]
+                                        ]
+                            ]
+                        , div [ class "field-body" ]
+                            [ div [ class "tagsinput field is-grouped is-grouped-multiline input" ]
+                                [ if userSelected then
+                                    div [ class "control" ]
+                                        [ div [ class "tags has-addons" ]
+                                            [ span [ class "tag is-primary" ] [ text u.username ]
+                                            , span [ class "tag is-delete is-light", onClick (op.onCancelUser i) ] []
+                                            ]
+                                        ]
+
+                                  else
+                                    span [] []
+                                , input
+                                    [ type_ "text"
+                                    , value u.pattern
+                                    , onInput (op.onChangeUserPattern i)
+                                    , disabled userSelected
+                                    ]
+                                    []
                                 ]
-                                []
                             ]
                         ]
+                    , if doLookup then
+                        div
+                            [ id "userSearchPanel", class "panel in-horizon" ]
+                            [ UserSearchPanel.viewSelectors i op ]
+
+                      else
+                        span [] []
                     ]
             )
-            ipd.users
+            users
             ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
         )
 
 
-nodeMandateInputView : FormText -> InputData msg -> Html msg
-nodeMandateInputView txt ipd =
-    let
-        node =
-            ipd.node
-    in
+nodeMandateInputView txt node op =
     div [ class "field" ]
         [ div [ class "field" ]
             [ div [ class "label" ] [ text T.purposeH ]
@@ -501,7 +486,7 @@ nodeMandateInputView txt ipd =
                     , rows 5
                     , placeholder (txt.ph_purpose ++ "*")
                     , value (node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
-                    , onInput <| ipd.onChangeNode "purpose"
+                    , onInput <| op.onChangeNode "purpose"
                     , required True
                     ]
                     []
@@ -515,7 +500,7 @@ nodeMandateInputView txt ipd =
                     , rows 5
                     , placeholder txt.ph_responsabilities
                     , value (node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
-                    , onInput <| ipd.onChangeNode "responsabilities"
+                    , onInput <| op.onChangeNode "responsabilities"
                     ]
                     []
                 ]
@@ -528,7 +513,7 @@ nodeMandateInputView txt ipd =
                     , rows 5
                     , placeholder txt.ph_domains
                     , value (node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
-                    , onInput <| ipd.onChangeNode "domains"
+                    , onInput <| op.onChangeNode "domains"
                     ]
                     []
                 ]
@@ -541,7 +526,7 @@ nodeMandateInputView txt ipd =
                     , rows 5
                     , placeholder txt.ph_policies
                     , value (node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
-                    , onInput <| ipd.onChangeNode "policies"
+                    , onInput <| op.onChangeNode "policies"
                     ]
                     []
                 ]
@@ -553,17 +538,17 @@ nodeMandateInputView txt ipd =
 ---- Components view
 
 
-doEditView : Maybe (TensionNodeData msg) -> BlobType.BlobType -> Html msg
-doEditView tdata_m btype =
-    case tdata_m of
-        Just e ->
-            if e.data.isBlobEdit && Just btype == e.form.blob_type then
+doEditView : Maybe (Op msg) -> BlobType.BlobType -> Html msg
+doEditView op_m btype =
+    case op_m of
+        Just op ->
+            if op.data.isBlobEdit && Just btype == op.form.blob_type then
                 span [] []
 
             else
                 span
                     [ class "button has-text-weight-normal is-pulled-right is-small"
-                    , onClick (e.onBlobEdit btype)
+                    , onClick (op.onBlobEdit btype)
                     ]
                     [ Fa.icon0 "fas fa-pen" "" ]
 
@@ -571,7 +556,7 @@ doEditView tdata_m btype =
             span [] []
 
 
-blobButtonsView : Bool -> Bool -> TensionNodeData msg -> Html msg
+blobButtonsView : Bool -> Bool -> Op msg -> Html msg
 blobButtonsView isSendable isLoading tdata =
     div []
         [ case tdata.result of
@@ -748,3 +733,28 @@ makeNewNodeId name =
                     c
             )
         |> Just
+
+
+
+-- User Lookup utilities
+
+
+updateUserPattern : Int -> String -> List UserForm -> List UserForm
+updateUserPattern pos pattern users =
+    LE.updateAt pos (\x -> { x | pattern = pattern }) users
+
+
+updateUserRole : Int -> String -> List UserForm -> List UserForm
+updateUserRole pos r users =
+    LE.updateAt pos (\x -> { x | role_type = RoleType.fromString r |> withDefault RoleType.Peer }) users
+
+
+selectUser : Int -> String -> List UserForm -> List UserForm
+selectUser pos username users =
+    LE.updateAt pos (\x -> { x | username = username, pattern = "" }) users
+
+
+cancelUser : Int -> List UserForm -> List UserForm
+cancelUser pos users =
+    --LE.removeAt pos users
+    LE.updateAt pos (\x -> { x | username = "" }) users

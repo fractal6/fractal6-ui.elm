@@ -233,11 +233,8 @@ const actions = {
 
     },
     'OUTSIDE_CLICK_CLOSE' : (app, session, data) => {
-        // close if a outiside (of data.target) click occurs
-        // or if ESC is pressed. Additionally, an ongoing
-        // msg (data.msg) is sent outgoint ports.
-        var msg = data.msg;
-        var id = data.target;
+        var id = data.target; // close the given target if a click occurs outside the div or if ESC is pressed
+        var msg = data.msg; // automatically send the given msg to Elm
 
         InitBulma(app, session, id);
 

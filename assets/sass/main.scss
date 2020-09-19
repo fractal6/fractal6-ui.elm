@@ -676,6 +676,13 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
+    &.in-horizon {
+        margin-top: -10px;
+        @media screen and (min-width: $tablet) {
+            margin-left: 135px;
+        }
+    }
+
 }
 
 .tagsinput {

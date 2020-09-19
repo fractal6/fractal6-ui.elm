@@ -1,12 +1,13 @@
 module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (UserCtx, UserRole)
+import ModelSchema exposing (Node, NodeCharac, UserCtx, UserRole)
 import Url exposing (Url)
 
 
@@ -152,6 +153,22 @@ nameidFromFlags flags =
 {-
    Node Codec
 -}
+
+
+nodeFromFocus : NodeFocus -> Node
+nodeFromFocus focus =
+    { id = ""
+    , createdAt = ""
+    , name = ""
+    , nameid = focus.nameid
+    , rootnameid = focus.rootnameid
+    , parent = Nothing
+    , type_ = focus.type_
+    , role_type = Nothing
+    , first_link = Nothing
+    , charac = NodeCharac False NodeMode.Coordinated
+    , isPrivate = False
+    }
 
 
 focusFromNameid : String -> NodeFocus

@@ -1,4 +1,4 @@
-module Extra exposing (ternary, withDefaultData, withMapData, withMaybeData)
+module Extra exposing (ternary, toMapOfList, withDefaultData, withMapData, withMaybeData)
 
 import Dict exposing (Dict)
 import ModelSchema exposing (RequestResult(..))
@@ -11,6 +11,28 @@ ternary test positive negative =
 
         False ->
             negative
+
+
+
+--- Utils
+
+
+toMapOfList : List ( String, a ) -> Dict String (List a)
+toMapOfList parameters =
+    List.foldl
+        (\( k, v ) dict -> Dict.update k (addParam v) dict)
+        Dict.empty
+        parameters
+
+
+addParam : a -> Maybe (List a) -> Maybe (List a)
+addParam value maybeValues =
+    case maybeValues of
+        Just values ->
+            Just (value :: values)
+
+        Nothing ->
+            Just [ value ]
 
 
 

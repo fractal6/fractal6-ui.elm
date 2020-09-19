@@ -1,42 +1,267 @@
-module Form.NewTension exposing (NewTensionForm, NewTensionFormData, create, reset, setActiveButton, setViewMode, view)
+module Form.NewTension exposing
+    ( NewTensionForm
+    , Op
+    , cancelUser
+    , create
+    , initCircle
+    , post
+    , postNode
+    , selectUser
+    , setActiveButton
+    , setEvents
+    , setForm
+    , setResult
+    , setSource
+    , setStatus
+    , setTarget
+    , setViewMode
+    , updateUserPattern
+    , updateUserRole
+    , view
+    )
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
-import Components.NodeDoc exposing (InputData, getInputData)
+import Components.NodeDoc as NodeDoc
 import Components.Text as T
 import Dict
-import Extra exposing (ternary, withMaybeData)
+import Extra exposing (ternary, withDefaultData, withMaybeData)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
+import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
+import Fractal.Enum.TensionStatus as TensionStatus
+import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (..)
+import ModelCommon exposing (InputViewMode(..), TensionForm)
+import ModelCommon.Codecs exposing (NodeFocus, nodeFromFocus)
 import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
-import ModelSchema exposing (GqlData, RequestResult(..), Tension, UserRole)
+import ModelSchema exposing (..)
 import Time
 
 
 type alias NewTensionForm =
-    { activeButton : Maybe Int
+    { form : TensionForm
+    , result : GqlData Tension
+    , activeButton : Maybe Int
     , viewMode : InputViewMode
+    , isLookupOpen : Bool
     }
 
 
-create : NewTensionForm
-create =
-    { activeButton = Nothing
+create : NodeFocus -> NewTensionForm
+create focus =
+    { form = initTension_ focus
+    , result = NotAsked
+    , activeButton = Nothing
     , viewMode = Write
+    , isLookupOpen = False
     }
 
 
-reset : NewTensionForm -> NewTensionForm
-reset ntf =
-    { ntf | activeButton = Nothing, viewMode = Write }
+{-|
+
+    Create tension a the current focus
+
+-}
+initTension_ : NodeFocus -> TensionForm
+initTension_ focus =
+    { uctx = UserCtx "" Nothing (UserRights False False) []
+    , source = UserRole "" "" "" RoleType.Guest
+    , target = nodeFromFocus focus
+    , targetData = initNodeData
+    , status = TensionStatus.Open
+    , tension_type = TensionType.Operational
+    , action = Nothing
+    , post = Dict.empty
+    , users = []
+    , events_type = Nothing
+    , blob_type = Nothing
+    , node = initNodeFragment Nothing
+    }
+
+
+{-|
+
+    Create New Circle tension
+
+-}
+initCircle : Node -> NodeType.NodeType -> NewTensionForm -> NewTensionForm
+initCircle target type_ ntf =
+    let
+        form =
+            ntf.form
+
+        action =
+            case type_ of
+                NodeType.Role ->
+                    TensionAction.NewRole
+
+                NodeType.Circle ->
+                    TensionAction.NewCircle
+
+        node =
+            initNodeFragment (Just type_)
+
+        newForm =
+            { form
+                | target = target
+                , tension_type = TensionType.Governance
+                , action = Just action
+                , blob_type = Just BlobType.OnNode
+                , node = { node | charac = Just target.charac } -- inherit charac
+            }
+    in
+    { ntf | form = newForm, result = NotAsked }
+
+
+setForm : TensionForm -> NewTensionForm -> NewTensionForm
+setForm form ntf =
+    { ntf | form = form }
+
+
+setResult : GqlData Tension -> NewTensionForm -> NewTensionForm
+setResult result ntf =
+    { ntf | result = result }
+
+
+setSource : UserRole -> NewTensionForm -> NewTensionForm
+setSource source ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | source = source }
+    in
+    { ntf | form = newForm }
+
+
+setTarget : Node -> Maybe NodeData -> NewTensionForm -> NewTensionForm
+setTarget target node_data ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | target = target, targetData = node_data |> withDefault initNodeData }
+    in
+    { ntf | form = newForm }
+
+
+setStatus : TensionStatus.TensionStatus -> NewTensionForm -> NewTensionForm
+setStatus status ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | status = status }
+    in
+    { ntf | form = newForm }
+
+
+setEvents : List TensionEvent.TensionEvent -> NewTensionForm -> NewTensionForm
+setEvents events ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | events_type = Just events }
+    in
+    { ntf | form = newForm }
+
+
+post : String -> String -> NewTensionForm -> NewTensionForm
+post field value ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | post = Dict.insert field value f.post }
+    in
+    { ntf | form = newForm }
+
+
+postNode : String -> String -> NewTensionForm -> NewTensionForm
+postNode field value ntf =
+    { ntf | form = NodeDoc.updateNodeForm field value ntf.form }
+
+
+
+-- User Lookup
+
+
+updateUserPattern : Int -> String -> NewTensionForm -> NewTensionForm
+updateUserPattern pos pattern ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | users = NodeDoc.updateUserPattern pos pattern f.users }
+    in
+    { ntf | form = newForm }
+
+
+updateUserRole : Int -> String -> NewTensionForm -> NewTensionForm
+updateUserRole pos role ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | users = NodeDoc.updateUserRole pos role f.users }
+    in
+    { ntf | form = newForm }
+
+
+selectUser : Int -> String -> NewTensionForm -> NewTensionForm
+selectUser pos username ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | users = NodeDoc.selectUser pos username f.users }
+    in
+    { ntf | form = newForm }
+
+
+cancelUser : Int -> NewTensionForm -> NewTensionForm
+cancelUser pos ntf =
+    let
+        f =
+            ntf.form
+
+        newForm =
+            { f | users = NodeDoc.cancelUser pos f.users }
+    in
+    { ntf | form = newForm }
+
+
+openLookup : NewTensionForm -> NewTensionForm
+openLookup ntf =
+    { ntf | isLookupOpen = True }
+
+
+closeLookup : NewTensionForm -> NewTensionForm
+closeLookup ntf =
+    { ntf | isLookupOpen = False }
+
+
+
+--- Form Buttons
 
 
 setActiveButton : Bool -> NewTensionForm -> NewTensionForm
@@ -53,44 +278,48 @@ setViewMode viewMode ntf =
     { ntf | viewMode = viewMode }
 
 
-type alias NewTensionFormData msg =
-    { form : TensionForm
-    , result : GqlData Tension
-    , data : NewTensionForm
+type alias Op msg =
+    { lookup : List User
+
+    -- modal control
     , onChangeInputViewMode : InputViewMode -> msg
+    , onSubmitTension : TensionForm -> Bool -> Time.Posix -> msg
+    , onSubmit : (Time.Posix -> msg) -> msg
+    , onCloseModal : String -> msg
+
+    -- doc change
     , onChangeNode : String -> String -> msg
+
+    -- user selectors
     , onChangeUserPattern : Int -> String -> msg
     , onChangeUserRole : Int -> String -> msg
     , onSelectUser : Int -> String -> msg
     , onCancelUser : Int -> msg
-    , onCloseModal : String -> msg
-    , onSubmitTension : TensionForm -> Bool -> Time.Posix -> msg
-    , onSubmit : (Time.Posix -> msg) -> msg
     }
 
 
-view : NewTensionFormData msg -> Html msg
-view ntd =
+view : NewTensionForm -> Op msg -> Html msg
+view data op =
     let
         form =
-            ntd.form
+            data.form
 
         txt =
             getTensionText
 
         isLoading =
-            ntd.result == LoadingSlowly
+            data.result == LoadingSlowly
 
         isSendable =
             isPostSendable [ "title" ] form.post
 
         submitTension =
-            ternary isSendable [ onClick (ntd.onSubmit <| ntd.onSubmitTension form False) ] []
+            ternary isSendable [ onClick (op.onSubmit <| op.onSubmitTension form False) ] []
 
         message =
             Dict.get "message" form.post |> withDefault ""
     in
-    case ntd.result of
+    case data.result of
         Success res ->
             let
                 link =
@@ -101,7 +330,7 @@ view ntd =
                 , text (txt.added ++ " ")
                 , a
                     [ href link
-                    , onClickPD (ntd.onCloseModal link)
+                    , onClickPD (op.onCloseModal link)
                     , target "_blank"
                     ]
                     [ text T.checkItOut ]
@@ -126,7 +355,7 @@ view ntd =
                                 , type_ "text"
                                 , placeholder "Title*"
                                 , required True
-                                , onInput (ntd.onChangeNode "title")
+                                , onInput (op.onChangeNode "title")
                                 ]
                                 []
                             ]
@@ -137,15 +366,15 @@ view ntd =
                         [ div [ class "message-header" ]
                             [ div [ class "tabs is-boxed is-small" ]
                                 [ ul []
-                                    [ li [ classList [ ( "is-active", ntd.data.viewMode == Write ) ] ] [ a [ onClickPD2 (ntd.onChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
-                                    , li [ classList [ ( "is-active", ntd.data.viewMode == Preview ) ] ] [ a [ onClickPD2 (ntd.onChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                                    [ li [ classList [ ( "is-active", data.viewMode == Write ) ] ] [ a [ onClickPD2 (op.onChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                                    , li [ classList [ ( "is-active", data.viewMode == Preview ) ] ] [ a [ onClickPD2 (op.onChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
                                     ]
                                 ]
                             ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ case ntd.data.viewMode of
+                                    [ case data.viewMode of
                                         Write ->
                                             textarea
                                                 [ id "textAreaModal"
@@ -153,7 +382,7 @@ view ntd =
                                                 , rows 10
                                                 , placeholder "Leave a comment"
                                                 , value message
-                                                , onInput (ntd.onChangeNode "message")
+                                                , onInput (op.onChangeNode "message")
                                                 ]
                                                 []
 

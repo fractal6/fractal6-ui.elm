@@ -80,6 +80,7 @@ init flags url key =
             , node_focus = Nothing
             , path_data = Nothing
             , orga_data = Nothing
+            , users_data = Nothing
             , node_data = Nothing
             , tensions_data = Nothing
             , tension_head = Nothing
@@ -195,8 +196,12 @@ update msg model =
             let
                 session =
                     model.session
+
+                -- Make a dict of user per circle
+                users =
+                    Maybe.map (\d -> orgaToUsersData d) data
             in
-            ( { model | session = { session | orga_data = data } }, Cmd.none )
+            ( { model | session = { session | orga_data = data, users_data = users } }, Cmd.none )
 
         UpdateSessionData data ->
             let

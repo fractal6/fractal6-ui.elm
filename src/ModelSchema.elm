@@ -31,6 +31,10 @@ type alias TensionsData =
     List Tension
 
 
+type alias UsersData =
+    Dict String (List User)
+
+
 
 --
 -- Remote Data and Sinks
@@ -292,14 +296,9 @@ initMandate =
     Mandate "" Nothing Nothing Nothing
 
 
-initNodeFragment : NodeFragment
-initNodeFragment =
-    NodeFragment Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
-
-
-initNodeFragmentCircle : NodeType.NodeType -> NodeFragment
-initNodeFragmentCircle nt =
-    NodeFragment Nothing Nothing (Just nt) Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+initNodeFragment : Maybe NodeType.NodeType -> NodeFragment
+initNodeFragment nt =
+    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 

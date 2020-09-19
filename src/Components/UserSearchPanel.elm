@@ -5,10 +5,10 @@ module Components.UserSearchPanel exposing
     , clickAck
     , create
     , edit
-    , refresh
-    , setLookup
     , setPattern
     , view
+    , viewAssigneeSelectors
+    , viewSelectors
     )
 
 import Components.Fa as Fa
@@ -30,74 +30,36 @@ import Time
 
 type alias UserSearchPanel =
     { isEdit : Bool
-    , users_data : GqlData (Dict String (List User))
     , user : Maybe User
 
     -- Form
     , pattern : String
-    , lookup : List User
-    , assignee : User -- assignee selected/clickedame
+    , assignee : User -- last one clicked/selected
     , isNew : Bool -- toggle select
     , click_result : GqlData IdPayload
     }
 
 
-create : UserState -> GqlData NodesData -> UserSearchPanel
-create user nd_d =
+create : UserState -> UserSearchPanel
+create user =
     let
-        -- Make a dict of user per circle
-        ud =
-            withMapData
-                (\nd ->
-                    nd
-                        |> Dict.toList
-                        |> List.map (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
-                        |> List.filterMap identity
-                        |> toUserMap
-                )
-                nd_d
-
         -- Get the user requesting
         user_m =
             case user of
                 LoggedIn uctx ->
-                    case ud of
-                        Success uud ->
-                            uud
-                                |> Dict.values
-                                |> List.concat
-                                |> List.filter (\u -> u.username == uctx.username)
-                                |> List.head
-                                |> Just
-
-                        _ ->
-                            Nothing
+                    Just { username = uctx.username, name = uctx.name }
 
                 LoggedOut ->
                     Nothing
     in
     { isEdit = False
-    , users_data = ud
-    , user = user_m |> withDefault Nothing
+    , user = user_m
 
     -- Form
     , pattern = ""
-    , lookup = []
     , assignee = User "" Nothing
     , isNew = False
     , click_result = NotAsked
-    }
-
-
-refresh : UserState -> GqlData NodesData -> UserSearchPanel -> UserSearchPanel
-refresh user nd_d usp =
-    let
-        nd_new =
-            create user nd_d
-    in
-    { usp
-        | users_data = nd_new.users_data
-        , user = nd_new.user
     }
 
 
@@ -108,17 +70,12 @@ edit usp =
 
 cancelEdit : UserSearchPanel -> UserSearchPanel
 cancelEdit usp =
-    { usp | isEdit = False, click_result = NotAsked, pattern = "", lookup = [] }
+    { usp | isEdit = False, click_result = NotAsked, pattern = "" }
 
 
 setPattern : String -> UserSearchPanel -> UserSearchPanel
 setPattern pattern usp =
     { usp | pattern = pattern }
-
-
-setLookup : List User -> UserSearchPanel -> UserSearchPanel
-setLookup lu usp =
-    { usp | lookup = lu }
 
 
 click : User -> Bool -> UserSearchPanel -> UserSearchPanel
@@ -134,6 +91,8 @@ clickAck result usp =
 type alias UserSearchPanelData msg =
     { selectedUsers : List User
     , targets : List String
+    , users_data : GqlData UsersData
+    , lookup : List User
     , tid : String
     , data : UserSearchPanel
     , onChangePattern : String -> msg
@@ -144,7 +103,7 @@ type alias UserSearchPanelData msg =
 view : UserSearchPanelData msg -> Html msg
 view uspd =
     nav [ id "userSearchPanel", class "panel" ]
-        [ case uspd.data.users_data of
+        [ case uspd.users_data of
             Success ud ->
                 let
                     user =
@@ -166,7 +125,7 @@ view uspd =
                                 |> LE.uniqueBy (\u -> u.username)
 
                         else
-                            LE.uniqueBy (\u -> u.username) uspd.data.lookup
+                            LE.uniqueBy (\u -> u.username) uspd.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]
@@ -188,37 +147,7 @@ view uspd =
 
                         _ ->
                             div [] []
-                    , div [ class "selectors" ] <|
-                        if users == [] then
-                            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
-
-                        else
-                            users
-                                |> List.map
-                                    (\u ->
-                                        let
-                                            isActive =
-                                                List.member u uspd.selectedUsers
-
-                                            faCls =
-                                                ternary isActive "fa-check-square" "fa-square"
-                                        in
-                                        p
-                                            [ class "panel-block"
-                                            , classList [ ( "is-active", isActive ) ]
-                                            , onClick (uspd.onUserClick uspd.tid u (isActive == False))
-                                            ]
-                                            [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
-                                            , viewUser u.username
-                                            , case u.name of
-                                                Just name ->
-                                                    span [ class "has-text-weight-semibold" ] [ text name ]
-
-                                                Nothing ->
-                                                    span [] []
-                                            , span [ class "is-grey-light help" ] [ text u.username ]
-                                            ]
-                                    )
+                    , viewAssigneeSelectors users uspd
                     ]
 
             Loading ->
@@ -235,23 +164,62 @@ view uspd =
         ]
 
 
+viewAssigneeSelectors : List User -> UserSearchPanelData msg -> Html msg
+viewAssigneeSelectors users uspd =
+    div [ class "selectors" ] <|
+        if users == [] then
+            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
---- Utils
+        else
+            users
+                |> List.map
+                    (\u ->
+                        let
+                            isActive =
+                                List.member u uspd.selectedUsers
+
+                            faCls =
+                                ternary isActive "fa-check-square" "fa-square"
+                        in
+                        p
+                            [ class "panel-block"
+                            , classList [ ( "is-active", isActive ) ]
+                            , onClick (uspd.onUserClick uspd.tid u (isActive == False))
+                            ]
+                            [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
+                            , viewUser u.username
+                            , case u.name of
+                                Just name ->
+                                    span [ class "has-text-weight-semibold" ] [ text name ]
+
+                                Nothing ->
+                                    span [] []
+                            , span [ class "is-grey-light help" ] [ text u.username ]
+                            ]
+                    )
 
 
-toUserMap : List ( String, User ) -> Dict String (List User)
-toUserMap parameters =
-    List.foldl
-        (\( k, v ) dict -> Dict.update k (addParam v) dict)
-        Dict.empty
-        parameters
+viewSelectors i op =
+    -- op.lookup === List Usedr
+    div [ class "selectors" ] <|
+        if op.lookup == [] then
+            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
+        else
+            op.lookup
+                |> List.map
+                    (\u ->
+                        p
+                            [ class "panel-block"
+                            , onClick (op.onSelectUser i u.username)
+                            ]
+                            [ viewUser u.username
+                            , case u.name of
+                                Just name ->
+                                    span [ class "has-text-weight-semibold" ] [ text name ]
 
-addParam : User -> Maybe (List User) -> Maybe (List User)
-addParam value maybeValues =
-    case maybeValues of
-        Just values ->
-            Just (value :: values)
-
-        Nothing ->
-            Just [ value ]
+                                Nothing ->
+                                    span [] []
+                            , span [ class "is-grey-light help" ] [ text u.username ]
+                            ]
+                    )
