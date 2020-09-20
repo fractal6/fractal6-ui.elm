@@ -1,24 +1,4 @@
-module Form.NewTension exposing
-    ( NewTensionForm
-    , Op
-    , cancelUser
-    , create
-    , initCircle
-    , post
-    , postNode
-    , selectUser
-    , setActiveButton
-    , setEvents
-    , setForm
-    , setResult
-    , setSource
-    , setStatus
-    , setTarget
-    , setViewMode
-    , updateUserPattern
-    , updateUserRole
-    , view
-    )
+module Form.NewTension exposing (..)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
@@ -235,7 +215,7 @@ selectUser pos username ntf =
         newForm =
             { f | users = NodeDoc.selectUser pos username f.users }
     in
-    { ntf | form = newForm }
+    { ntf | form = newForm, isLookupOpen = False }
 
 
 cancelUser : Int -> NewTensionForm -> NewTensionForm
@@ -247,7 +227,7 @@ cancelUser pos ntf =
         newForm =
             { f | users = NodeDoc.cancelUser pos f.users }
     in
-    { ntf | form = newForm }
+    { ntf | form = newForm, isLookupOpen = False }
 
 
 openLookup : NewTensionForm -> NewTensionForm
@@ -280,21 +260,25 @@ setViewMode viewMode ntf =
 
 type alias Op msg =
     { lookup : List User
+    , users_data : GqlData UsersData
+    , targets : List String
 
-    -- modal control
+    -- Modal control
     , onChangeInputViewMode : InputViewMode -> msg
     , onSubmitTension : TensionForm -> Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
     , onCloseModal : String -> msg
 
-    -- doc change
+    -- Doc change
     , onChangeNode : String -> String -> msg
 
-    -- user selectors
+    -- User search and change
     , onChangeUserPattern : Int -> String -> msg
     , onChangeUserRole : Int -> String -> msg
     , onSelectUser : Int -> String -> msg
     , onCancelUser : Int -> msg
+    , onShowLookupFs : msg
+    , onCancelLookupFs : msg
     }
 
 

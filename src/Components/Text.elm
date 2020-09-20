@@ -83,6 +83,11 @@ noResultsFound =
     "No results found"
 
 
+searchUsers : String
+searchUsers =
+    "Search users"
+
+
 
 --Quick Search
 --(header)

@@ -133,7 +133,7 @@ view uspd =
                             [ input
                                 [ class "input autofocus"
                                 , type_ "text"
-                                , placeholder "Search users"
+                                , placeholder T.searchUsers
                                 , value uspd.data.pattern
                                 , onInput uspd.onChangePattern
                                 ]
@@ -199,27 +199,46 @@ viewAssigneeSelectors users uspd =
                     )
 
 
-viewSelectors i op =
-    -- op.lookup === List Usedr
-    div [ class "selectors" ] <|
-        if op.lookup == [] then
-            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+viewSelectors i pattern op =
+    div [ class "selectors", classList [ ( "spinner", op.users_data == Loading ) ] ] <|
+        case op.users_data of
+            Success ud ->
+                let
+                    users =
+                        if pattern == "" then
+                            -- linked users
+                            op.targets
+                                |> List.foldl
+                                    (\a b ->
+                                        List.append (Dict.get a ud |> withDefault []) b
+                                    )
+                                    []
+                                |> LE.uniqueBy (\u -> u.username)
 
-        else
-            op.lookup
-                |> List.map
-                    (\u ->
-                        p
-                            [ class "panel-block"
-                            , onClick (op.onSelectUser i u.username)
-                            ]
-                            [ viewUser u.username
-                            , case u.name of
-                                Just name ->
-                                    span [ class "has-text-weight-semibold" ] [ text name ]
+                        else
+                            op.lookup
+                in
+                if users == [] then
+                    [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
-                                Nothing ->
-                                    span [] []
-                            , span [ class "is-grey-light help" ] [ text u.username ]
-                            ]
-                    )
+                else
+                    users
+                        |> List.map
+                            (\u ->
+                                p
+                                    [ class "panel-block"
+                                    , onClick (op.onSelectUser i u.username)
+                                    ]
+                                    [ viewUser u.username
+                                    , case u.name of
+                                        Just name ->
+                                            span [ class "has-text-weight-semibold" ] [ text name ]
+
+                                        Nothing ->
+                                            span [] []
+                                    , span [ class "is-grey-light help" ] [ text u.username ]
+                                    ]
+                            )
+
+            _ ->
+                []

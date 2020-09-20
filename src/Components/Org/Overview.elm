@@ -697,7 +697,14 @@ update global msg model =
             )
 
         ShowLookupFs ->
-            ( { model | tensionForm = NewTensionForm.openLookup model.tensionForm }, Cmd.none, Cmd.none )
+            ( { model | tensionForm = NewTensionForm.openLookup model.tensionForm }
+            , if model.tensionForm.isLookupOpen == False then
+                Cmd.batch [ Ports.outsideClickClose "doCancelLookupFsFromJs" "userSearchPanel" ]
+
+              else
+                Cmd.none
+            , Cmd.none
+            )
 
         CancelLookupFs ->
             ( { model | tensionForm = NewTensionForm.closeLookup model.tensionForm }, Cmd.none, Cmd.none )
@@ -927,7 +934,11 @@ subscriptions _ _ =
         , nodeDataFromJs_ DoNodeAction
         , Ports.lookupNodeFromJs ChangeNodeLookup
         , Ports.lookupUserFromJs ChangeUserLookup
+        , doCancelLookupFsFromJs (always CancelLookupFs)
         ]
+
+
+port doCancelLookupFsFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -1370,15 +1381,19 @@ viewActionStep model action =
 makeNewTensionFormOp : Model -> NewTensionForm.Op Msg
 makeNewTensionFormOp model =
     { lookup = model.lookup_users
+    , users_data = model.users_data
+    , targets = [ model.tensionForm.form.source.nameid, model.tensionForm.form.target.nameid ]
     , onChangeInputViewMode = ChangeInputViewMode
     , onChangeNode = ChangeNodePost
+    , onCloseModal = DoCloseModal
+    , onSubmitTension = SubmitTension
+    , onSubmit = Submit
     , onChangeUserPattern = ChangeNodeUserPattern
     , onChangeUserRole = ChangeNodeUserRole
     , onSelectUser = SelectUser
     , onCancelUser = CancelUser
-    , onCloseModal = DoCloseModal
-    , onSubmitTension = SubmitTension
-    , onSubmit = Submit
+    , onShowLookupFs = ShowLookupFs
+    , onCancelLookupFs = CancelLookupFs
     }
 
 

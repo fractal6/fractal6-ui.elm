@@ -202,16 +202,21 @@ type Msg
     | SubmitTitle Time.Posix
     | TitleAck (GqlData String)
     | CancelTitle
-      -- Blob edit
+      -- Blob control
     | DoBlobEdit BlobType.BlobType
+    | CancelBlob
+      -- Blob doc edit
     | ChangeBlobNode String String
+    | ChangeBlobMD String
+      -- Fs search and change
     | ChangeNodeUserPattern Int String
     | ChangeNodeUserRole Int String
     | SelectUser Int String
     | CancelUser Int
-    | ChangeBlobMD String
+    | ShowLookupFs
+    | CancelLookupFs
+      -- Blob Submit
     | SubmitBlob Bool Time.Posix
-    | CancelBlob
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
       -- Assignees
@@ -741,6 +746,28 @@ update global msg model =
                     model.tension_form
             in
             ( { model | tension_form = { form | users = NodeDoc.cancelUser pos form.users } }, Cmd.none, Cmd.none )
+
+        ShowLookupFs ->
+            let
+                cmd =
+                    case model.users_data of
+                        Success users ->
+                            Cmd.none
+
+                        _ ->
+                            queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
+            in
+            ( { model | nodeDoc = NodeDoc.openLookup model.nodeDoc }
+            , if model.nodeDoc.isLookupOpen == False then
+                Cmd.batch ([ Ports.outsideClickClose "doCancelLookupFsFromJs" "userSearchPanel" ] ++ [ cmd ])
+
+              else
+                cmd
+            , Cmd.none
+            )
+
+        CancelLookupFs ->
+            ( { model | nodeDoc = NodeDoc.closeLookup model.nodeDoc }, Cmd.none, Cmd.none )
 
         ChangeBlobMD value ->
             let
@@ -1564,6 +1591,8 @@ viewDocument u t b model =
                             , result = model.tension_patch
                             , tension = t
                             , lookup = model.lookup_users
+                            , users_data = model.users_data
+                            , targets = [ t.emitter.nameid, t.receiver.nameid ]
                             , data = model.nodeDoc
                             , onBlobEdit = DoBlobEdit
                             , onCancelBlob = CancelBlob
@@ -1574,6 +1603,8 @@ viewDocument u t b model =
                             , onChangeUserRole = ChangeNodeUserRole
                             , onSelectUser = SelectUser
                             , onCancelUser = CancelUser
+                            , onShowLookupFs = ShowLookupFs
+                            , onCancelLookupFs = CancelLookupFs
                             }
                     in
                     NodeDoc.view nodeData (Just msgs)

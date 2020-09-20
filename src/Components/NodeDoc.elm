@@ -1,22 +1,4 @@
-module Components.NodeDoc exposing
-    ( NodeDoc
-    , cancelEdit
-    , cancelUser
-    , create
-    , edit
-    , getFirstLinks
-    , initTensionPatch
-    , nodeAboutInputView
-    , nodeFragmentFromOrga
-    , nodeLinksInputView
-    , nodeMandateInputView
-    , selectUser
-    , updateForm
-    , updateNodeForm
-    , updateUserPattern
-    , updateUserRole
-    , view
-    )
+module Components.NodeDoc exposing (..)
 
 import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
@@ -44,12 +26,15 @@ import Time
 
 type alias NodeDoc =
     { isBlobEdit : Bool
+    , isLookupOpen : Bool
     }
 
 
 create : NodeDoc
 create =
-    { isBlobEdit = False }
+    { isBlobEdit = False
+    , isLookupOpen = False
+    }
 
 
 initTensionPatch : String -> UserState -> TensionPatchForm
@@ -86,6 +71,16 @@ cancelEdit nd =
     { nd | isBlobEdit = False }
 
 
+openLookup : NodeDoc -> NodeDoc
+openLookup ntf =
+    { ntf | isLookupOpen = True }
+
+
+closeLookup : NodeDoc -> NodeDoc
+closeLookup ntf =
+    { ntf | isLookupOpen = False }
+
+
 {-|
 
     reset action and title (Tension title can't be change in this function)
@@ -119,18 +114,20 @@ type alias Op msg =
     , result : GqlData PatchTensionPayloadID
     , tension : TensionHead
     , lookup : List User
+    , users_data : GqlData UsersData
+    , targets : List String
     , data : NodeDoc
 
-    -- blob
+    -- Blob
     , onBlobEdit : BlobType.BlobType -> msg
     , onCancelBlob : msg
     , onSubmitBlob : Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
 
-    -- doc change
+    -- Doc change
     , onChangeNode : String -> String -> msg
 
-    -- user search and change
+    -- User search and change
     , onChangeUserPattern : Int -> String -> msg
     , onChangeUserRole : Int -> String -> msg
     , onSelectUser : Int -> String -> msg
@@ -251,7 +248,7 @@ view_ tid data op_m =
                                 data.node.first_link /= op.form.node.first_link || data.node.role_type /= op.form.node.role_type
                         in
                         div []
-                            [ nodeLinksInputView txt op.form.node op.form.users op
+                            [ nodeLinksInputView txt op.form op.data op
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
@@ -392,15 +389,17 @@ nodeAboutInputView isNew txt node op =
         ]
 
 
-nodeLinksInputView txt node users op =
+nodeLinksInputView txt form data op =
     let
         nodeType =
-            node.type_ |> withDefault NodeType.Role
+            form.node.type_ |> withDefault NodeType.Role
 
-        --roleType =
-        --    node.role_type |> withDefault RoleType.Peer
-        --firstLinks =
-        --    getFirstLinks node
+        users =
+            if List.length form.users == 0 then
+                [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
+
+            else
+                form.users
     in
     div []
         (List.indexedMap
@@ -414,9 +413,6 @@ nodeLinksInputView txt node users op =
 
                     userSelected =
                         u.username /= ""
-
-                    doLookup =
-                        u.username == ""
                 in
                 div []
                     [ div [ class "field is-horizontal" ]
@@ -440,7 +436,8 @@ nodeLinksInputView txt node users op =
                                         ]
                             ]
                         , div [ class "field-body" ]
-                            [ div [ class "tagsinput field is-grouped is-grouped-multiline input" ]
+                            [ div
+                                [ class "tagsinput field is-grouped is-grouped-multiline input" ]
                                 [ if userSelected then
                                     div [ class "control" ]
                                         [ div [ class "tags has-addons" ]
@@ -453,18 +450,21 @@ nodeLinksInputView txt node users op =
                                     span [] []
                                 , input
                                     [ type_ "text"
+                                    , class "is-expanded"
+                                    , placeholder T.searchUsers
                                     , value u.pattern
                                     , onInput (op.onChangeUserPattern i)
+                                    , onClick op.onShowLookupFs
                                     , disabled userSelected
                                     ]
                                     []
                                 ]
                             ]
                         ]
-                    , if doLookup then
+                    , if data.isLookupOpen then
                         div
                             [ id "userSearchPanel", class "panel in-horizon" ]
-                            [ UserSearchPanel.viewSelectors i op ]
+                            [ UserSearchPanel.viewSelectors i u.pattern op ]
 
                       else
                         span [] []

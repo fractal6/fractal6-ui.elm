@@ -2,7 +2,7 @@ module Form.NewCircle exposing (view)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
-import Components.NodeDoc exposing (getFirstLinks, nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
+import Components.NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Components.Text as T
 import Dict
 import Extra exposing (ternary, withMaybeData)
@@ -117,7 +117,7 @@ view data op =
                     , br [] []
                     , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
-                        , div [ class "card-content" ] [ nodeLinksInputView txt form.node form.users op ]
+                        , div [ class "card-content" ] [ nodeLinksInputView txt form data op ]
                         ]
                     , br [] []
                     , div [ class "card cardForm" ]
