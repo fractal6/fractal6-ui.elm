@@ -112,19 +112,18 @@ type Msg
     | ChangePattern String
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
-      -- Node Actions
-    | DoNodeAction Node_ -- ports receive / tooltip click
-    | Submit (Time.Posix -> Msg) -- Get Current Time
-    | SubmitTension TensionForm Bool Time.Posix -- Send form
-    | SubmitCircle TensionForm Bool Time.Posix -- Send form
-    | ChangeNodePost String String -- {field value}
-      -- FirstLink input...
+      -- User quick search
     | ChangeNodeUserPattern Int String
     | ChangeNodeUserRole Int String
     | SelectUser Int String
     | CancelUser Int
     | ShowLookupFs
     | CancelLookupFs
+      -- Node Actions
+    | DoNodeAction Node_ -- ports receive / tooltip click
+    | Submit (Time.Posix -> Msg) -- Get Current Time
+    | SubmitTension NewTensionForm Bool Time.Posix -- Send form
+    | SubmitCircle NewTensionForm Bool Time.Posix -- Send form
       -- New Tension Action
     | DoTensionInit Node -- {target}
     | DoTensionSource TensionType.TensionType -- {type}
@@ -134,6 +133,7 @@ type Msg
     | DoCircleInit Node NodeType.NodeType -- {target}
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
+    | ChangeNodePost String String -- {field value}
     | NewNodesAck (GqlData (List Node))
       -- CircleAck === TensionAck
       -- JoinOrga Action
@@ -462,6 +462,44 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
+        -- User quick search
+        ChangeNodeUserPattern pos pattern ->
+            ( { model | tensionForm = NewTensionForm.updateUserPattern pos pattern model.tensionForm }
+            , Ports.searchUser pattern
+            , Cmd.none
+            )
+
+        ChangeNodeUserRole pos role ->
+            ( { model | tensionForm = NewTensionForm.updateUserRole pos role model.tensionForm }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        SelectUser pos username ->
+            ( { model | tensionForm = NewTensionForm.selectUser pos username model.tensionForm }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        CancelUser pos ->
+            ( { model | tensionForm = NewTensionForm.cancelUser pos model.tensionForm }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        ShowLookupFs ->
+            ( { model | tensionForm = NewTensionForm.openLookup model.tensionForm }
+            , if model.tensionForm.isLookupOpen == False then
+                Cmd.batch [ Ports.outsideClickClose "doCancelLookupFsFromJs" "userSearchPanel" ]
+
+              else
+                Cmd.none
+            , Cmd.none
+            )
+
+        CancelLookupFs ->
+            ( { model | tensionForm = NewTensionForm.closeLookup model.tensionForm }, Cmd.none, Cmd.none )
+
         -- Action
         DoNodeAction node_ ->
             let
@@ -524,10 +562,10 @@ update global msg model =
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-        SubmitTension form _ time ->
+        SubmitTension data _ time ->
             let
                 newTensionForm =
-                    model.tensionForm
+                    data
                         |> NewTensionForm.post "createdAt" (fromTime time)
                         |> NewTensionForm.setEvents [ TensionEvent.Created ]
                         |> NewTensionForm.setResult LoadingSlowly
@@ -672,44 +710,7 @@ update global msg model =
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
 
-        ChangeNodeUserPattern pos pattern ->
-            ( { model | tensionForm = NewTensionForm.updateUserPattern pos pattern model.tensionForm }
-            , Ports.searchUser pattern
-            , Cmd.none
-            )
-
-        ChangeNodeUserRole pos role ->
-            ( { model | tensionForm = NewTensionForm.updateUserRole pos role model.tensionForm }
-            , Cmd.none
-            , Cmd.none
-            )
-
-        SelectUser pos username ->
-            ( { model | tensionForm = NewTensionForm.selectUser pos username model.tensionForm }
-            , Cmd.none
-            , Cmd.none
-            )
-
-        CancelUser pos ->
-            ( { model | tensionForm = NewTensionForm.cancelUser pos model.tensionForm }
-            , Cmd.none
-            , Cmd.none
-            )
-
-        ShowLookupFs ->
-            ( { model | tensionForm = NewTensionForm.openLookup model.tensionForm }
-            , if model.tensionForm.isLookupOpen == False then
-                Cmd.batch [ Ports.outsideClickClose "doCancelLookupFsFromJs" "userSearchPanel" ]
-
-              else
-                Cmd.none
-            , Cmd.none
-            )
-
-        CancelLookupFs ->
-            ( { model | tensionForm = NewTensionForm.closeLookup model.tensionForm }, Cmd.none, Cmd.none )
-
-        SubmitCircle form doClose time ->
+        SubmitCircle data doClose time ->
             let
                 events =
                     if doClose == True then
@@ -719,7 +720,7 @@ update global msg model =
                         [ TensionEvent.Created, TensionEvent.BlobCreated ]
 
                 newTensionForm =
-                    model.tensionForm
+                    data
                         |> NewTensionForm.post "createdAt" (fromTime time)
                         |> NewTensionForm.setEvents events
                         |> NewTensionForm.setStatus (ternary (doClose == True) TensionStatus.Closed TensionStatus.Open)
@@ -934,11 +935,8 @@ subscriptions _ _ =
         , nodeDataFromJs_ DoNodeAction
         , Ports.lookupNodeFromJs ChangeNodeLookup
         , Ports.lookupUserFromJs ChangeUserLookup
-        , doCancelLookupFsFromJs (always CancelLookupFs)
+        , Ports.doCancelLookupFsFromJs (always CancelLookupFs)
         ]
-
-
-port doCancelLookupFsFromJs : (() -> msg) -> Sub msg
 
 
 

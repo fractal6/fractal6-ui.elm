@@ -281,9 +281,6 @@ getAddCircleOptionals f =
 
         nameid =
             f.node.nameid |> Maybe.map (\nid -> nodeIdCodec f.target.nameid nid type_) |> withDefault ""
-
-        first_links =
-            getFirstLinks f.node
     in
     \n ->
         let
@@ -302,19 +299,15 @@ getAddCircleOptionals f =
         case type_ of
             NodeType.Role ->
                 -- Role
-                let
-                    first_link =
-                        first_links |> List.head
-                in
                 { commonFields
                     | role_type = f.node.role_type |> fromMaybe
                     , first_link =
-                        first_links
+                        f.users
                             |> List.head
                             |> Maybe.map
-                                (\uname ->
+                                (\us ->
                                     Input.buildUserRef
-                                        (\u -> { u | username = uname |> Present })
+                                        (\u -> { u | username = us.username |> Present })
                                 )
                             |> fromMaybe
                 }
@@ -323,9 +316,9 @@ getAddCircleOptionals f =
                 -- Circle
                 { commonFields
                     | children =
-                        first_links
+                        f.users
                             |> List.indexedMap
-                                (\i uname ->
+                                (\i us ->
                                     Input.buildNodeRef
                                         (\c ->
                                             { c
@@ -333,12 +326,12 @@ getAddCircleOptionals f =
                                                 , createdBy =
                                                     Input.buildUserRef (\u -> { u | username = Present f.uctx.username }) |> Present
                                                 , first_link =
-                                                    Input.buildUserRef (\u -> { u | username = uname |> Present }) |> Present
+                                                    Input.buildUserRef (\u -> { u | username = us.username |> Present }) |> Present
                                                 , isRoot = False |> Present
                                                 , isPrivate = f.target.isPrivate |> Present
                                                 , type_ = NodeType.Role |> Present
-                                                , role_type = RoleType.Coordinator |> Present
-                                                , name = "Coordinator" |> Present
+                                                , role_type = us.role_type |> Present
+                                                , name = "NOT IMPLEMENTED !" |> Present
                                                 , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> Present
                                                 , rootnameid = f.target.rootnameid |> Present
                                                 , charac = f.node.charac |> Maybe.map (\ch -> { userCanJoin = Present ch.userCanJoin, mode = Present ch.mode, id = Absent }) |> fromMaybe

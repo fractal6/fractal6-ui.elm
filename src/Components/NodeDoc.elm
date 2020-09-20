@@ -12,90 +12,193 @@ import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromUsername)
+import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import Time
 
 
 type alias NodeDoc =
-    { isBlobEdit : Bool
+    { form : TensionPatchForm
+    , result : GqlData PatchTensionPayloadID
+    , isBlobEdit : Bool
     , isLookupOpen : Bool
     }
 
 
-create : NodeDoc
-create =
-    { isBlobEdit = False
+create : String -> UserState -> NodeDoc
+create tid user =
+    { form = initTensionPatchForm tid user
+    , result = NotAsked
+    , isBlobEdit = False
     , isLookupOpen = False
     }
 
 
-initTensionPatch : String -> UserState -> TensionPatchForm
-initTensionPatch tensionid user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
+initBlob : BlobType.BlobType -> NodeFragment -> NodeDoc -> NodeDoc
+initBlob blobType nf data =
+    let
+        form =
+            data.form
 
-            LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
-    , id = tensionid
-    , status = Nothing
-    , tension_type = Nothing
-    , action = Nothing
-    , emitter = Nothing
-    , receiver = Nothing
-    , post = Dict.empty
-    , users = []
-    , events_type = Nothing
-    , blob_type = Nothing
-    , node = initNodeFragment Nothing
-    , md = Nothing
-    }
+        links =
+            getFirstLinks nf
+
+        users =
+            if List.length links == 0 then
+                [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
+
+            else
+                links
+
+        newForm =
+            { form
+                | blob_type = Just blobType
+                , node = nf
+                , users = users
+            }
+    in
+    { data | form = newForm, result = NotAsked }
+
+
+
+-- State Controls
 
 
 edit : NodeDoc -> NodeDoc
-edit nd =
-    { nd | isBlobEdit = True }
+edit data =
+    { data | isBlobEdit = True }
 
 
 cancelEdit : NodeDoc -> NodeDoc
-cancelEdit nd =
-    { nd | isBlobEdit = False }
+cancelEdit data =
+    { data | isBlobEdit = False }
+
+
+setForm : TensionPatchForm -> NodeDoc -> NodeDoc
+setForm form data =
+    { data | form = form }
+
+
+setResult : GqlData PatchTensionPayloadID -> NodeDoc -> NodeDoc
+setResult result data =
+    { data | result = result }
+
+
+
+-- Updata Form
+
+
+setEvents : List TensionEvent.TensionEvent -> NodeDoc -> NodeDoc
+setEvents events data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | events_type = Just events }
+    in
+    { data | form = newForm }
+
+
+post : String -> String -> NodeDoc -> NodeDoc
+post field value data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | post = Dict.insert field value f.post }
+    in
+    { data | form = newForm }
+
+
+postNode : String -> String -> Maybe TensionAction.TensionAction -> NodeDoc -> NodeDoc
+postNode field value action data =
+    -- reset action and title (Tension title can't be change in this function)
+    let
+        form_ =
+            data.form
+
+        oldAction =
+            form_.action
+
+        form =
+            updateNodeForm field value { form_ | action = action }
+
+        newForm =
+            { form | action = oldAction, post = Dict.remove "title" form.post }
+    in
+    { data | form = newForm }
+
+
+
+-- User Lookup
+
+
+updateUserPattern : Int -> String -> NodeDoc -> NodeDoc
+updateUserPattern pos pattern data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | users = updateUserPattern_ pos pattern f.users }
+    in
+    { data | form = newForm }
+
+
+updateUserRole : Int -> String -> NodeDoc -> NodeDoc
+updateUserRole pos role data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | users = updateUserRole_ pos role f.users }
+    in
+    { data | form = newForm }
+
+
+selectUser : Int -> String -> NodeDoc -> NodeDoc
+selectUser pos username data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | users = selectUser_ pos username f.users }
+    in
+    { data | form = newForm, isLookupOpen = False }
+
+
+cancelUser : Int -> NodeDoc -> NodeDoc
+cancelUser pos data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | users = cancelUser_ pos f.users }
+    in
+    { data | form = newForm, isLookupOpen = False }
 
 
 openLookup : NodeDoc -> NodeDoc
-openLookup ntf =
-    { ntf | isLookupOpen = True }
+openLookup data =
+    { data | isLookupOpen = True }
 
 
 closeLookup : NodeDoc -> NodeDoc
-closeLookup ntf =
-    { ntf | isLookupOpen = False }
-
-
-{-|
-
-    reset action and title (Tension title can't be change in this function)
-
--}
-updateForm : String -> String -> Maybe TensionAction.TensionAction -> TensionPatchForm -> TensionPatchForm
-updateForm field value action form =
-    let
-        oldAction =
-            form.action
-
-        f =
-            updateNodeForm field value { form | action = action }
-    in
-    { f | action = oldAction, post = Dict.remove "title" f.post }
+closeLookup data =
+    { data | isLookupOpen = False }
 
 
 type alias OrgaNodeData msg =
@@ -110,9 +213,7 @@ type alias OrgaNodeData msg =
 
 
 type alias Op msg =
-    { form : TensionPatchForm
-    , result : GqlData PatchTensionPayloadID
-    , tension : TensionHead
+    { tension : TensionHead
     , lookup : List User
     , users_data : GqlData UsersData
     , targets : List String
@@ -121,7 +222,7 @@ type alias Op msg =
     -- Blob
     , onBlobEdit : BlobType.BlobType -> msg
     , onCancelBlob : msg
-    , onSubmitBlob : Bool -> Time.Posix -> msg
+    , onSubmitBlob : NodeDoc -> Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
 
     -- Doc change
@@ -178,15 +279,18 @@ view_ tid data op_m =
         txt =
             getNodeTextFromNodeType (data.node.type_ |> withDefault NodeType.Role)
 
+        links =
+            getFirstLinks data.node
+
         -- Function of Op
         blobTypeEdit =
             op_m
-                |> Maybe.map (\op -> ternary op.data.isBlobEdit op.form.blob_type Nothing)
+                |> Maybe.map (\op -> ternary op.data.isBlobEdit op.data.form.blob_type Nothing)
                 |> withDefault Nothing
 
         isLoading =
             op_m
-                |> Maybe.map (\op -> op.result == LoadingSlowly)
+                |> Maybe.map (\op -> op.data.result == LoadingSlowly)
                 |> withDefault False
     in
     div [ classList [ ( "is-lazy", data.isLazy ) ] ]
@@ -196,15 +300,15 @@ view_ tid data op_m =
                     (\op ->
                         let
                             isSendable =
-                                data.node.name /= op.form.node.name || data.node.about /= op.form.node.about
+                                data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
 
                             isNew =
                                 op.tension.action
-                                    |> Maybe.map (\a -> (getTensionCharac a).action_type == "new")
+                                    |> Maybe.map (\a -> (getTensionCharac a).action_type == NEW)
                                     |> withDefault True
                         in
                         div []
-                            [ nodeAboutInputView isNew txt op.form.node op
+                            [ nodeAboutInputView isNew txt op.data.form.node op
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
@@ -245,10 +349,10 @@ view_ tid data op_m =
                     (\op ->
                         let
                             isSendable =
-                                data.node.first_link /= op.form.node.first_link || data.node.role_type /= op.form.node.role_type
+                                op.data.form.users /= links
                         in
                         div []
-                            [ nodeLinksInputView txt op.form op.data op
+                            [ nodeLinksInputView txt op.data.form op.data op
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
@@ -258,15 +362,11 @@ view_ tid data op_m =
             div [] []
 
           else
-            let
-                links =
-                    getFirstLinks data.node
-            in
             div [ class "linksDoc" ]
                 [ div [ class "subtitle is-5" ]
                     [ Fa.icon "fas fa-users fa-sm" T.linksH
                     , links
-                        |> List.map (\l -> viewUser l)
+                        |> List.map (\l -> viewUser l.username)
                         |> span [ attribute "style" "margin-left:20px;" ]
                     , doEditView op_m BlobType.OnFirstLink
                     ]
@@ -283,10 +383,10 @@ view_ tid data op_m =
                     (\op ->
                         let
                             isSendable =
-                                data.node.mandate /= op.form.node.mandate
+                                data.node.mandate /= op.data.form.node.mandate
                         in
                         div [ class "mandateEdit" ]
-                            [ nodeMandateInputView txt op.form.node op
+                            [ nodeMandateInputView txt op.data.form.node op
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
@@ -393,13 +493,6 @@ nodeLinksInputView txt form data op =
     let
         nodeType =
             form.node.type_ |> withDefault NodeType.Role
-
-        users =
-            if List.length form.users == 0 then
-                [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
-
-            else
-                form.users
     in
     div []
         (List.indexedMap
@@ -451,7 +544,7 @@ nodeLinksInputView txt form data op =
                                 , input
                                     [ type_ "text"
                                     , class "is-expanded"
-                                    , placeholder T.searchUsers
+                                    , placeholder (ternary (u.username == "") T.searchUsers "")
                                     , value u.pattern
                                     , onInput (op.onChangeUserPattern i)
                                     , onClick op.onShowLookupFs
@@ -470,7 +563,7 @@ nodeLinksInputView txt form data op =
                         span [] []
                     ]
             )
-            users
+            form.users
             ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
         )
 
@@ -542,7 +635,7 @@ doEditView : Maybe (Op msg) -> BlobType.BlobType -> Html msg
 doEditView op_m btype =
     case op_m of
         Just op ->
-            if op.data.isBlobEdit && Just btype == op.form.blob_type then
+            if op.data.isBlobEdit && Just btype == op.data.form.blob_type then
                 span [] []
 
             else
@@ -557,9 +650,9 @@ doEditView op_m btype =
 
 
 blobButtonsView : Bool -> Bool -> Op msg -> Html msg
-blobButtonsView isSendable isLoading tdata =
+blobButtonsView isSendable isLoading op =
     div []
-        [ case tdata.result of
+        [ case op.data.result of
             Failure err ->
                 viewGqlErrors err
 
@@ -570,14 +663,14 @@ blobButtonsView isSendable isLoading tdata =
                 [ div [ class "buttons" ]
                     [ button
                         [ class "button has-text-weight-semibold is-danger"
-                        , onClick tdata.onCancelBlob
+                        , onClick op.onCancelBlob
                         ]
                         [ text T.cancel ]
                     , button
                         [ class "button has-text-weight-semibold"
                         , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
-                        , onClick (tdata.onSubmit <| tdata.onSubmitBlob False)
+                        , onClick (op.onSubmit <| op.onSubmitBlob op.data False)
                         ]
                         [ text T.saveChanges ]
                     ]
@@ -590,25 +683,40 @@ blobButtonsView isSendable isLoading tdata =
 --- Utils
 
 
-getFirstLinks : NodeFragment -> List String
+getFirstLinks : NodeFragment -> List UserForm
 getFirstLinks node =
-    let
-        fs =
-            case node.type_ |> withDefault NodeType.Role of
-                NodeType.Role ->
-                    node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
+    case node.type_ |> withDefault NodeType.Role of
+        NodeType.Role ->
+            node.first_link
+                |> Maybe.map
+                    (\uname ->
+                        { username = uname
+                        , role_type = withDefault RoleType.Peer node.role_type
+                        , pattern = ""
+                        }
+                    )
+                |> List.singleton
+                |> List.filterMap identity
 
-                NodeType.Circle ->
-                    case node.children of
-                        Just children ->
-                            children
-                                |> List.map (\c -> c.first_link)
-                                |> List.filterMap identity
-
-                        Nothing ->
-                            node.first_link |> withDefault "" |> String.split "@" |> List.filter (\x -> x /= "")
-    in
-    ternary (fs == []) [ "" ] fs
+        NodeType.Circle ->
+            node.children
+                |> Maybe.map
+                    (\children ->
+                        children
+                            |> List.map
+                                (\c ->
+                                    c.first_link
+                                        |> Maybe.map
+                                            (\uname ->
+                                                { username = uname
+                                                , role_type = withDefault RoleType.Peer node.role_type
+                                                , pattern = ""
+                                                }
+                                            )
+                                )
+                            |> List.filterMap identity
+                    )
+                |> withDefault []
 
 
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List NodeId -> NodesData -> NodeFragment
@@ -739,22 +847,22 @@ makeNewNodeId name =
 -- User Lookup utilities
 
 
-updateUserPattern : Int -> String -> List UserForm -> List UserForm
-updateUserPattern pos pattern users =
+updateUserPattern_ : Int -> String -> List UserForm -> List UserForm
+updateUserPattern_ pos pattern users =
     LE.updateAt pos (\x -> { x | pattern = pattern }) users
 
 
-updateUserRole : Int -> String -> List UserForm -> List UserForm
-updateUserRole pos r users =
+updateUserRole_ : Int -> String -> List UserForm -> List UserForm
+updateUserRole_ pos r users =
     LE.updateAt pos (\x -> { x | role_type = RoleType.fromString r |> withDefault RoleType.Peer }) users
 
 
-selectUser : Int -> String -> List UserForm -> List UserForm
-selectUser pos username users =
+selectUser_ : Int -> String -> List UserForm -> List UserForm
+selectUser_ pos username users =
     LE.updateAt pos (\x -> { x | username = username, pattern = "" }) users
 
 
-cancelUser : Int -> List UserForm -> List UserForm
-cancelUser pos users =
+cancelUser_ : Int -> List UserForm -> List UserForm
+cancelUser_ pos users =
     --LE.removeAt pos users
     LE.updateAt pos (\x -> { x | username = "" }) users

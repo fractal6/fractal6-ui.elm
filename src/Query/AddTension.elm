@@ -7,7 +7,6 @@ module Query.AddTension exposing
     , tensionFromForm
     )
 
-import Components.NodeDoc exposing (getFirstLinks)
 import Dict exposing (Dict)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
@@ -28,7 +27,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionForm)
+import ModelCommon exposing (TensionForm, UserForm)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
@@ -133,7 +132,7 @@ addTensionInputEncoder f =
                 { t
                     | action = f.action |> fromMaybe
                     , comments = buildComment createdAt f.uctx.username (Just message)
-                    , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+                    , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                 }
     in
     { input =
@@ -175,7 +174,7 @@ tensionFromForm f =
             , emitterid = f.source.nameid |> Present
             , receiverid = f.target.nameid |> Present
             , comments = buildComment createdAt f.uctx.username (Just message)
-            , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+            , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
             , history = buildEvent createdAt f.uctx.username f.events_type f.post
         }
 
@@ -201,8 +200,8 @@ buildComment createdAt username message_m =
         |> fromMaybe
 
 
-buildBlob : String -> String -> Maybe BlobType.BlobType -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
-buildBlob createdAt username blob_type_m node post =
+buildBlob : String -> String -> Maybe BlobType.BlobType -> List UserForm -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
+buildBlob createdAt username blob_type_m users node post =
     blob_type_m
         |> Maybe.map
             (\blob_type ->
@@ -215,7 +214,7 @@ buildBlob createdAt username blob_type_m node post =
                                     (\u -> { u | username = Present username })
                                     |> Present
                             , blob_type = Present blob_type
-                            , node = buildNodeFragmentRef node
+                            , node = buildNodeFragmentRef users node
                             , md = Dict.get "md" post |> fromMaybe
                         }
                     )
@@ -268,14 +267,19 @@ buildMandate maybeMandate =
         |> fromMaybe
 
 
-buildNodeFragmentRef : NodeFragment -> OptionalArgument Input.NodeFragmentRef
-buildNodeFragmentRef nf =
+buildNodeFragmentRef : List UserForm -> NodeFragment -> OptionalArgument Input.NodeFragmentRef
+buildNodeFragmentRef users nf =
     let
         type_ =
             nf.type_ |> withDefault NodeType.Role
 
-        first_links =
-            getFirstLinks nf
+        role_type =
+            case type_ of
+                NodeType.Role ->
+                    users |> List.head |> Maybe.map (\us -> us.role_type)
+
+                NodeType.Circle ->
+                    Nothing
     in
     Input.buildNodeFragmentRef
         (\n ->
@@ -285,7 +289,7 @@ buildNodeFragmentRef nf =
                         | name = fromMaybe nf.name
                         , nameid = fromMaybe nf.nameid
                         , type_ = fromMaybe nf.type_
-                        , role_type = fromMaybe nf.role_type
+                        , role_type = fromMaybe role_type
                         , about = fromMaybe nf.about
                         , mandate = buildMandate nf.mandate
                         , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
@@ -294,17 +298,22 @@ buildNodeFragmentRef nf =
             case type_ of
                 NodeType.Role ->
                     -- Role
-                    { commonFields | first_link = fromMaybe nf.first_link }
+                    { commonFields | first_link = users |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe }
 
                 NodeType.Circle ->
                     -- Circle
                     { commonFields
                         | children =
-                            first_links
+                            users
                                 |> List.indexedMap
-                                    (\i uname ->
+                                    (\i us ->
                                         Input.buildNodeFragmentRef
-                                            (\c -> { c | first_link = fromMaybe (Just uname) })
+                                            (\c ->
+                                                { c
+                                                    | first_link = Present us.username
+                                                    , role_type = Present us.role_type
+                                                }
+                                            )
                                     )
                                 |> Present
                     }

@@ -17,7 +17,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid, nodeFromFocus)
 import ModelSchema exposing (..)
 import QuickSearch as Qsearch
 import Url exposing (Url)
@@ -171,6 +171,52 @@ type alias CommentPatchForm =
     , uctx : UserCtx
     , post : Post
     , viewMode : InputViewMode
+    }
+
+
+{-|
+
+    Create tension a the current focus
+
+-}
+initTensionForm : NodeFocus -> TensionForm
+initTensionForm focus =
+    { uctx = UserCtx "" Nothing (UserRights False False) []
+    , source = UserRole "" "" "" RoleType.Guest
+    , target = nodeFromFocus focus
+    , targetData = initNodeData
+    , status = TensionStatus.Open
+    , tension_type = TensionType.Operational
+    , action = Nothing
+    , post = Dict.empty
+    , users = []
+    , events_type = Nothing
+    , blob_type = Nothing
+    , node = initNodeFragment Nothing
+    }
+
+
+initTensionPatchForm : String -> UserState -> TensionPatchForm
+initTensionPatchForm tid user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , id = tid
+    , status = Nothing
+    , tension_type = Nothing
+    , action = Nothing
+    , emitter = Nothing
+    , receiver = Nothing
+    , post = Dict.empty
+    , users = []
+    , events_type = Nothing
+    , blob_type = Nothing
+    , node = initNodeFragment Nothing
+    , md = Nothing
     }
 
 

@@ -42,10 +42,10 @@ view data op =
             form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
 
         submitTension =
-            ternary isSendable [ onClickPD2 (op.onSubmit <| op.onSubmitTension form False) ] []
+            ternary isSendable [ onClickPD2 (op.onSubmit <| op.onSubmitTension data False) ] []
 
         submitCloseTension =
-            ternary isSendable [ onClickPD2 (op.onSubmit <| op.onSubmitTension form True) ] []
+            ternary isSendable [ onClickPD2 (op.onSubmit <| op.onSubmitTension data True) ] []
     in
     case data.result of
         Success res ->

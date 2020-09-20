@@ -289,28 +289,38 @@ nodeIdCodec parentid targetid nodeType =
 
 
 type alias TensionCharac =
-    { action_type : String
-    , doc_type : String
+    { action_type : ActionType
+    , doc_type : DocType
     }
+
+
+type ActionType
+    = EDIT
+    | NEW
+
+
+type DocType
+    = NODE
+    | MD
 
 
 getTensionCharac : TensionAction.TensionAction -> TensionCharac
 getTensionCharac action =
     case action of
         TensionAction.NewRole ->
-            { action_type = "new", doc_type = "node" }
+            { action_type = NEW, doc_type = NODE }
 
         TensionAction.EditRole ->
-            { action_type = "edit", doc_type = "node" }
+            { action_type = EDIT, doc_type = NODE }
 
         TensionAction.NewCircle ->
-            { action_type = "new", doc_type = "node" }
+            { action_type = NEW, doc_type = NODE }
 
         TensionAction.EditCircle ->
-            { action_type = "edit", doc_type = "node" }
+            { action_type = EDIT, doc_type = NODE }
 
         TensionAction.NewMd ->
-            { action_type = "new", doc_type = "doc" }
+            { action_type = NEW, doc_type = MD }
 
         TensionAction.EditMd ->
-            { action_type = "edit", doc_type = "doc" }
+            { action_type = EDIT, doc_type = MD }

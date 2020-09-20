@@ -21,8 +21,8 @@ import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, 
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (InputViewMode(..), TensionForm)
-import ModelCommon.Codecs exposing (NodeFocus, nodeFromFocus)
+import ModelCommon exposing (InputViewMode(..), TensionForm, initTensionForm)
+import ModelCommon.Codecs exposing (NodeFocus)
 import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
 import ModelSchema exposing (..)
 import Time
@@ -39,7 +39,7 @@ type alias NewTensionForm =
 
 create : NodeFocus -> NewTensionForm
 create focus =
-    { form = initTension_ focus
+    { form = initTensionForm focus
     , result = NotAsked
     , activeButton = Nothing
     , viewMode = Write
@@ -47,38 +47,12 @@ create focus =
     }
 
 
-{-|
-
-    Create tension a the current focus
-
--}
-initTension_ : NodeFocus -> TensionForm
-initTension_ focus =
-    { uctx = UserCtx "" Nothing (UserRights False False) []
-    , source = UserRole "" "" "" RoleType.Guest
-    , target = nodeFromFocus focus
-    , targetData = initNodeData
-    , status = TensionStatus.Open
-    , tension_type = TensionType.Operational
-    , action = Nothing
-    , post = Dict.empty
-    , users = []
-    , events_type = Nothing
-    , blob_type = Nothing
-    , node = initNodeFragment Nothing
-    }
-
-
-{-|
-
-    Create New Circle tension
-
--}
 initCircle : Node -> NodeType.NodeType -> NewTensionForm -> NewTensionForm
-initCircle target type_ ntf =
+initCircle target type_ data =
+    -- New Circle Tension
     let
         form =
-            ntf.form
+            data.form
 
         action =
             case type_ of
@@ -100,82 +74,104 @@ initCircle target type_ ntf =
                 , node = { node | charac = Just target.charac } -- inherit charac
             }
     in
-    { ntf | form = newForm, result = NotAsked }
+    { data | form = newForm, result = NotAsked }
+
+
+
+--- State Controls
+
+
+setActiveButton : Bool -> NewTensionForm -> NewTensionForm
+setActiveButton doClose data =
+    if doClose then
+        { data | activeButton = Just 0 }
+
+    else
+        { data | activeButton = Just 1 }
+
+
+setViewMode : InputViewMode -> NewTensionForm -> NewTensionForm
+setViewMode viewMode data =
+    { data | viewMode = viewMode }
 
 
 setForm : TensionForm -> NewTensionForm -> NewTensionForm
-setForm form ntf =
-    { ntf | form = form }
+setForm form data =
+    { data | form = form }
 
 
 setResult : GqlData Tension -> NewTensionForm -> NewTensionForm
-setResult result ntf =
-    { ntf | result = result }
+setResult result data =
+    { data | result = result }
+
+
+
+-- Update Form
 
 
 setSource : UserRole -> NewTensionForm -> NewTensionForm
-setSource source ntf =
+setSource source data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
             { f | source = source }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 setTarget : Node -> Maybe NodeData -> NewTensionForm -> NewTensionForm
-setTarget target node_data ntf =
+setTarget target node_data data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
             { f | target = target, targetData = node_data |> withDefault initNodeData }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 setStatus : TensionStatus.TensionStatus -> NewTensionForm -> NewTensionForm
-setStatus status ntf =
+setStatus status data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
             { f | status = status }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 setEvents : List TensionEvent.TensionEvent -> NewTensionForm -> NewTensionForm
-setEvents events ntf =
+setEvents events data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
             { f | events_type = Just events }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 post : String -> String -> NewTensionForm -> NewTensionForm
-post field value ntf =
+post field value data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
             { f | post = Dict.insert field value f.post }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 postNode : String -> String -> NewTensionForm -> NewTensionForm
-postNode field value ntf =
-    { ntf | form = NodeDoc.updateNodeForm field value ntf.form }
+postNode field value data =
+    { data | form = NodeDoc.updateNodeForm field value data.form }
 
 
 
@@ -183,79 +179,61 @@ postNode field value ntf =
 
 
 updateUserPattern : Int -> String -> NewTensionForm -> NewTensionForm
-updateUserPattern pos pattern ntf =
+updateUserPattern pos pattern data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
-            { f | users = NodeDoc.updateUserPattern pos pattern f.users }
+            { f | users = NodeDoc.updateUserPattern_ pos pattern f.users }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 updateUserRole : Int -> String -> NewTensionForm -> NewTensionForm
-updateUserRole pos role ntf =
+updateUserRole pos role data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
-            { f | users = NodeDoc.updateUserRole pos role f.users }
+            { f | users = NodeDoc.updateUserRole_ pos role f.users }
     in
-    { ntf | form = newForm }
+    { data | form = newForm }
 
 
 selectUser : Int -> String -> NewTensionForm -> NewTensionForm
-selectUser pos username ntf =
+selectUser pos username data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
-            { f | users = NodeDoc.selectUser pos username f.users }
+            { f | users = NodeDoc.selectUser_ pos username f.users }
     in
-    { ntf | form = newForm, isLookupOpen = False }
+    { data | form = newForm, isLookupOpen = False }
 
 
 cancelUser : Int -> NewTensionForm -> NewTensionForm
-cancelUser pos ntf =
+cancelUser pos data =
     let
         f =
-            ntf.form
+            data.form
 
         newForm =
-            { f | users = NodeDoc.cancelUser pos f.users }
+            { f | users = NodeDoc.cancelUser_ pos f.users }
     in
-    { ntf | form = newForm, isLookupOpen = False }
+    { data | form = newForm, isLookupOpen = False }
 
 
 openLookup : NewTensionForm -> NewTensionForm
-openLookup ntf =
-    { ntf | isLookupOpen = True }
+openLookup data =
+    { data | isLookupOpen = True }
 
 
 closeLookup : NewTensionForm -> NewTensionForm
-closeLookup ntf =
-    { ntf | isLookupOpen = False }
-
-
-
---- Form Buttons
-
-
-setActiveButton : Bool -> NewTensionForm -> NewTensionForm
-setActiveButton doClose ntf =
-    if doClose then
-        { ntf | activeButton = Just 0 }
-
-    else
-        { ntf | activeButton = Just 1 }
-
-
-setViewMode : InputViewMode -> NewTensionForm -> NewTensionForm
-setViewMode viewMode ntf =
-    { ntf | viewMode = viewMode }
+closeLookup data =
+    { data | isLookupOpen = False }
 
 
 type alias Op msg =
@@ -265,7 +243,7 @@ type alias Op msg =
 
     -- Modal control
     , onChangeInputViewMode : InputViewMode -> msg
-    , onSubmitTension : TensionForm -> Bool -> Time.Posix -> msg
+    , onSubmitTension : NewTensionForm -> Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
     , onCloseModal : String -> msg
 
@@ -298,7 +276,7 @@ view data op =
             isPostSendable [ "title" ] form.post
 
         submitTension =
-            ternary isSendable [ onClick (op.onSubmit <| op.onSubmitTension form False) ] []
+            ternary isSendable [ onClick (op.onSubmit <| op.onSubmitTension data False) ] []
 
         message =
             Dict.get "message" form.post |> withDefault ""

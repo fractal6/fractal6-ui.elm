@@ -146,7 +146,7 @@ patchTensionInputEncoder f =
                                 , action = fromMaybe f.action
                                 , type_ = fromMaybe f.tension_type
                                 , comments = buildComment createdAt f.uctx.username message
-                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.node f.post
+                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                                 , history = buildEvent createdAt f.uctx.username f.events_type f.post
                             }
                         )
