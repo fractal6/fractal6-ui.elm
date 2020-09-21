@@ -1489,7 +1489,7 @@ viewJoinOrgaStep orga step =
 
 
 
--- Utils View
+---- Common View
 
 
 viewSourceRoles : TensionForm -> List UserRole -> (UserRole -> Msg) -> Html Msg
@@ -1514,7 +1514,7 @@ viewSourceRoles form roles nextStep =
 
 
 
--- Methods
+---- Utils
 
 
 {-| Get Auth Step and init form based on user roles for new tension

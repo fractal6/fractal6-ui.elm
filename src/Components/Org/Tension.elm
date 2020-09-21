@@ -190,9 +190,8 @@ type Msg
     | GotTensionBlobs (GqlData TensionBlobs)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
-    | SubmitTensionPatch Time.Posix
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
-    | TensionPatchAck (GqlData PatchTensionPayloadID)
+    | CommentAck (GqlData PatchTensionPayloadID)
     | DoUpdateComment String
     | ChangeCommentPost String String
     | SubmitCommentPatch Time.Posix
@@ -301,6 +300,8 @@ init global flags =
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionPatchForm tensionid global.session.user
+
+            -- Push Comment / Change status
             , tension_patch = NotAsked
 
             -- Title Result
@@ -470,21 +471,13 @@ update global msg model =
                     model.tension_form
 
                 newForm =
-                    { form | post = Dict.insert field value form.post }
+                    if field == "message" && value == "" then
+                        { form | post = Dict.remove field form.post }
+
+                    else
+                        { form | post = Dict.insert field value form.post }
             in
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
-
-        SubmitTensionPatch time ->
-            let
-                form =
-                    model.tension_form
-
-                newForm =
-                    { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
-                    }
-            in
-            ( { model | tension_patch = LoadingSlowly }, pushTensionPatch apis.gql newForm TensionPatchAck, Cmd.none )
 
         SubmitComment status_m time ->
             let
@@ -512,35 +505,51 @@ update global msg model =
 
                 newForm =
                     { form
-                        | status = status_m
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , status = status_m
                         , events_type = Just (eventComment ++ eventStatus)
                     }
             in
-            ( { model | tension_form = newForm }, send (SubmitTensionPatch time), Cmd.none )
+            ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
+            , pushTensionPatch apis.gql newForm CommentAck
+            , Cmd.none
+            )
 
-        TensionPatchAck result ->
+        CommentAck result ->
             case result of
                 Success tp ->
                     let
+                        events =
+                            model.tension_form.events_type |> withDefault []
+
                         tension_h =
                             case model.tension_head of
                                 Success t ->
                                     Success
                                         { t
-                                            | status = model.tension_form.status |> withDefault t.status
-                                            , action = ternary (model.tension_form.action == Nothing) t.action model.tension_form.action
+                                            | status = withDefault t.status model.tension_form.status
+                                            , history =
+                                                t.history
+                                                    ++ (events
+                                                            |> List.filter (\e -> e /= TensionEvent.CommentPushed)
+                                                            |> List.map (\e -> eventFromForm e model.tension_form)
+                                                       )
                                         }
 
                                 other ->
                                     other
 
                         tension_c =
-                            case model.tension_comments of
-                                Success t ->
-                                    Success { t | comments = Just ((t.comments |> withDefault []) ++ (tp.comments |> withDefault [])) }
+                            if List.member TensionEvent.CommentPushed events then
+                                case model.tension_comments of
+                                    Success t ->
+                                        Success { t | comments = Just ((t.comments |> withDefault []) ++ (tp.comments |> withDefault [])) }
 
-                                other ->
-                                    other
+                                    other ->
+                                        other
+
+                            else
+                                model.tension_comments
 
                         resetForm =
                             initTensionPatchForm model.tensionid global.session.user
@@ -613,7 +622,7 @@ update global msg model =
                 newForm =
                     { form | post = Dict.insert "updatedAt" (fromTime time) form.post }
             in
-            ( model, patchComment apis.gql newForm CommentPatchAck, Cmd.none )
+            ( { model | comment_result = LoadingSlowly }, patchComment apis.gql newForm CommentPatchAck, Cmd.none )
 
         CommentPatchAck result ->
             case result of
@@ -672,7 +681,7 @@ update global msg model =
                         , events_type = Just [ TensionEvent.TitleUpdated ]
                     }
             in
-            ( model, patchTitle apis.gql newForm TitleAck, Cmd.none )
+            ( { model | title_result = LoadingSlowly }, patchTitle apis.gql newForm TitleAck, Cmd.none )
 
         TitleAck result ->
             case result of
@@ -725,7 +734,7 @@ update global msg model =
                                     ( model, Cmd.none, Cmd.none )
 
                         Nothing ->
-                            --No Document attached or Unknown format
+                            -- No Document attached or Unknown format
                             ( model, Cmd.none, Cmd.none )
 
                 _ ->
@@ -778,8 +787,14 @@ update global msg model =
                                 Success t ->
                                     Success
                                         { t
-                                            | action = ternary (model.tension_form.action == Nothing) t.action model.tension_form.action
-                                            , blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs
+                                            | blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs
+                                            , history =
+                                                t.history
+                                                    ++ (model.tension_form.events_type
+                                                            |> withDefault []
+                                                            |> List.filter (\e -> e /= TensionEvent.CommentPushed)
+                                                            |> List.map (\e -> eventFromForm e model.tension_form)
+                                                       )
                                         }
 
                                 other ->
@@ -807,7 +822,10 @@ update global msg model =
                     ( { model | nodeDoc = newDoc }, Cmd.none, Cmd.none )
 
         CancelBlob ->
-            ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc, tension_form = initTensionPatchForm model.tensionid global.session.user, tension_patch = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc }
+            , Cmd.none
+            , Ports.bulma_driver ""
+            )
 
         PushBlob bid time ->
             let
@@ -820,7 +838,10 @@ update global msg model =
                         , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                     }
             in
-            ( { model | tension_form = newForm }, publishBlob apis.gql bid newForm PushBlobAck, Cmd.none )
+            ( { model | tension_form = newForm }
+            , publishBlob apis.gql bid newForm PushBlobAck
+            , Cmd.none
+            )
 
         PushBlobAck result ->
             case result of
@@ -1235,7 +1256,12 @@ viewTension u t model =
                                     ]
                                 , p [ class "control buttons" ]
                                     [ span [ class "button has-text-weight-normal is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
-                                    , span [ class "button has-text-weight-normal is-success is-small", onClick (Submit <| SubmitTitle) ] [ text T.updateTitle ]
+                                    , span
+                                        [ class "button has-text-weight-normal is-success is-small"
+                                        , classList [ ( "is-loading", model.title_result == LoadingSlowly ) ]
+                                        , onClick (Submit <| SubmitTitle)
+                                        ]
+                                        [ text T.updateTitle ]
                                     ]
                                 ]
                             , case model.title_result of
@@ -1354,10 +1380,10 @@ viewComments u t model =
                                                     viewCommentStatus event TensionStatus.Closed
 
                                                 _ ->
-                                                    div [] []
+                                                    text ""
 
                                         Nothing ->
-                                            div [] []
+                                            text ""
 
                                 Nothing ->
                                     case LE.getAt e.i comments of
@@ -1507,14 +1533,14 @@ viewCommentInput uctx tension form result viewMode =
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button has-text-weight-semibold"
-                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading ) ]
+                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
                                      ]
                                         ++ submitCloseOpenTension
                                     )
                                     [ text closeOpenText ]
                                 , button
                                     ([ class "button has-text-weight-semibold"
-                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
                                      ]
                                         ++ submitComment
@@ -1867,7 +1893,7 @@ viewSidePane u t model =
 
 
 
--- Actions
+---- Actions
 
 
 setupActionModal : Bool -> ActionState -> Html Msg
@@ -1930,9 +1956,7 @@ viewJoinOrgaStep step =
 
 
 
---
--- Utils
---
+---- Utils
 
 
 initCommentPatchForm : UserState -> CommentPatchForm
@@ -2005,6 +2029,17 @@ mdFromTensionHead t =
         |> List.head
         |> Maybe.map (\h -> h.md)
         |> withDefault Nothing
+
+
+eventFromForm : TensionEvent.TensionEvent -> TensionPatchForm -> Event
+eventFromForm event_type form =
+    { id = ""
+    , createdAt = Dict.get "createdAt" form.post |> withDefault ""
+    , createdBy = Username form.uctx.username
+    , event_type = event_type
+    , new = Nothing
+    , old = Nothing
+    }
 
 
 getTensionUserAuth : UserState -> GqlData TensionHead -> Bool
