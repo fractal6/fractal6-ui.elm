@@ -425,14 +425,14 @@ userDecoder =
 
 usersEncoder : List User -> JE.Value
 usersEncoder users =
-    JE.list JE.object <|
-        List.map
-            (\u ->
-                [ ( "username", JE.string u.username )
-                , ( "name", JEE.maybe JE.string u.name )
-                ]
-            )
-            users
+    JE.list JE.object <| List.map userEncoder users
+
+
+userEncoder : User -> List ( String, JE.Value )
+userEncoder u =
+    [ ( "username", JE.string u.username )
+    , ( "name", JEE.maybe JE.string u.name )
+    ]
 
 
 

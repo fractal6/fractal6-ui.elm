@@ -272,14 +272,6 @@ buildNodeFragmentRef users nf =
     let
         type_ =
             nf.type_ |> withDefault NodeType.Role
-
-        role_type =
-            case type_ of
-                NodeType.Role ->
-                    users |> List.head |> Maybe.map (\us -> us.role_type)
-
-                NodeType.Circle ->
-                    Nothing
     in
     Input.buildNodeFragmentRef
         (\n ->
@@ -289,7 +281,6 @@ buildNodeFragmentRef users nf =
                         | name = fromMaybe nf.name
                         , nameid = fromMaybe nf.nameid
                         , type_ = fromMaybe nf.type_
-                        , role_type = fromMaybe role_type
                         , about = fromMaybe nf.about
                         , mandate = buildMandate nf.mandate
                         , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
@@ -298,7 +289,10 @@ buildNodeFragmentRef users nf =
             case type_ of
                 NodeType.Role ->
                     -- Role
-                    { commonFields | first_link = users |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe }
+                    { commonFields
+                        | first_link = users |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe
+                        , role_type = users |> List.head |> Maybe.map (\us -> us.role_type) |> fromMaybe
+                    }
 
                 NodeType.Circle ->
                     -- Circle

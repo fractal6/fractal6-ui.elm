@@ -1312,10 +1312,14 @@ viewComments u t model =
     case model.tension_comments of
         Success tension_c ->
             let
-                subComments =
+                comments =
                     tension_c.comments
                         |> withDefault []
-                        |> List.map (\c -> viewComment c model)
+
+                evts =
+                    List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i }) comments
+                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i }) t.history
+                        |> List.sortBy .createdAt
 
                 userInput =
                     case u of
@@ -1335,7 +1339,36 @@ viewComments u t model =
                             viewJoinNeeded model.node_focus
             in
             div [ class "tensionComments" ]
-                [ div [] subComments
+                [ div []
+                    (List.map
+                        (\e ->
+                            case e.type_ of
+                                Just event_type ->
+                                    case LE.getAt e.i t.history of
+                                        Just event ->
+                                            case event.event_type of
+                                                TensionEvent.Reopened ->
+                                                    viewCommentStatus event TensionStatus.Open
+
+                                                TensionEvent.Closed ->
+                                                    viewCommentStatus event TensionStatus.Closed
+
+                                                _ ->
+                                                    div [] []
+
+                                        Nothing ->
+                                            div [] []
+
+                                Nothing ->
+                                    case LE.getAt e.i comments of
+                                        Just c ->
+                                            viewComment c model
+
+                                        Nothing ->
+                                            div [] []
+                        )
+                        evts
+                    )
                 , hr [ class "has-background-grey is-3" ] []
                 , userInput
                 ]
@@ -1352,101 +1385,53 @@ viewComments u t model =
 
 viewComment : Comment -> Model -> Html Msg
 viewComment c model =
-    let
-        msg =
-            if String.left (String.length "$action$") c.message == "$action$" then
-                let
-                    values =
-                        String.split " " c.message
-                in
-                if List.length values == 3 then
-                    if List.member "status" values then
-                        values |> List.reverse |> List.head |> Maybe.map (\s -> TensionStatus.fromString s) |> withDefault Nothing
+    div [ class "media section is-paddingless" ]
+        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri c.createdBy.username) ] [ getAvatar c.createdBy.username ] ]
+        , div [ class "media-content" ]
+            [ if model.comment_form.id == c.id then
+                viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
 
-                    else
-                        Nothing
+              else
+                div [ class "message" ]
+                    [ div [ class "message-header" ]
+                        [ viewTensionDateAndUserC c.createdAt c.createdBy
+                        , case c.updatedAt of
+                            Just updatedAt ->
+                                viewUpdated updatedAt
 
-                else
-                    Nothing
-
-            else
-                Nothing
-
-        username =
-            model.tension_form.uctx.username
-    in
-    case msg of
-        Just status ->
-            let
-                action =
-                    case status of
-                        TensionStatus.Open ->
-                            ( "far fa-circle ", "reopened" )
-
-                        TensionStatus.Closed ->
-                            ( "fas fa-ban ", "closed" )
-
-                actionIcon =
-                    Tuple.first action
-
-                actionText =
-                    Tuple.second action
-            in
-            div [ class "media section is-paddingless actionComment" ]
-                [ div [ class "media-left" ] [ Fa.icon (actionIcon ++ "fa-2x has-text-" ++ statusColor status) "" ]
-                , div [ class "media-content" ]
-                    [ div [ class "is-italic" ] [ viewUsernameLink c.createdBy.username, text " ", text actionText, text " the ", text (formatTime c.createdAt) ]
-                    ]
-                ]
-
-        Nothing ->
-            div [ class "media section is-paddingless" ]
-                [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri c.createdBy.username) ] [ getAvatar c.createdBy.username ] ]
-                , div [ class "media-content" ]
-                    [ if model.comment_form.id == c.id then
-                        viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
-
-                      else
-                        div [ class "message" ]
-                            [ div [ class "message-header" ]
-                                [ viewTensionDateAndUserC c.createdAt c.createdBy
-                                , case c.updatedAt of
-                                    Just updatedAt ->
-                                        viewUpdated updatedAt
-
-                                    Nothing ->
-                                        span [] []
-                                , if c.createdBy.username == username then
-                                    div [ class "dropdown has-dropdown is-right is-pulled-right" ]
-                                        [ div [ class "dropdown-trigger" ]
-                                            [ div
-                                                [ class "ellipsis button-light"
-                                                , attribute "aria-controls" "dropdown-menu_ellipsis"
-                                                , attribute "aria-haspopup" "true"
-                                                ]
-                                                [ Fa.icon0 "fas fa-ellipsis-h" "" ]
-                                            ]
-                                        , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
-                                            [ div [ class "dropdown-content" ]
-                                                [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ text T.edit ] ]
-                                                ]
-                                            ]
+                            Nothing ->
+                                span [] []
+                        , if c.createdBy.username == model.tension_form.uctx.username then
+                            div [ class "dropdown has-dropdown is-right is-pulled-right" ]
+                                [ div [ class "dropdown-trigger" ]
+                                    [ div
+                                        [ class "ellipsis button-light"
+                                        , attribute "aria-controls" "dropdown-menu_ellipsis"
+                                        , attribute "aria-haspopup" "true"
                                         ]
-
-                                  else
-                                    div [] []
+                                        [ Fa.icon0 "fas fa-ellipsis-h" "" ]
+                                    ]
+                                , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
+                                    [ div [ class "dropdown-content" ]
+                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ text T.edit ] ]
+                                        ]
+                                    ]
                                 ]
-                            , div [ class "message-body" ]
-                                [ case c.message of
-                                    "" ->
-                                        div [ class "is-italic" ] [ text "No description provided." ]
 
-                                    message ->
-                                        renderMarkdown message "is-light"
-                                ]
-                            ]
+                          else
+                            div [] []
+                        ]
+                    , div [ class "message-body" ]
+                        [ case c.message of
+                            "" ->
+                                div [ class "is-italic" ] [ text "No description provided." ]
+
+                            message ->
+                                renderMarkdown message "is-light"
+                        ]
                     ]
-                ]
+            ]
+        ]
 
 
 viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html Msg
@@ -1540,6 +1525,25 @@ viewCommentInput uctx tension form result viewMode =
                         ]
                     ]
                 ]
+            ]
+        ]
+
+
+viewCommentStatus : Event -> TensionStatus.TensionStatus -> Html Msg
+viewCommentStatus event status =
+    let
+        ( actionIcon, actionText ) =
+            case status of
+                TensionStatus.Open ->
+                    ( "far fa-circle ", "reopened" )
+
+                TensionStatus.Closed ->
+                    ( "fas fa-ban ", "closed" )
+    in
+    div [ class "media section is-paddingless actionComment" ]
+        [ div [ class "media-left" ] [ Fa.icon (actionIcon ++ "fa-2x has-text-" ++ statusColor status) "" ]
+        , div [ class "media-content" ]
+            [ div [ class "is-italic" ] [ viewUsernameLink event.createdBy.username, text " ", text actionText, text " the ", text (formatTime event.createdAt) ]
             ]
         ]
 

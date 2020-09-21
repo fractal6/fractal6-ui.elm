@@ -3,7 +3,7 @@ port module Ports exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
-import ModelCommon exposing (LookupResult, nodeDecoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, usersEncoder)
+import ModelCommon exposing (LookupResult, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelSchema exposing (Node, NodesData, User, UserCtx)
 
@@ -204,19 +204,35 @@ close_auth_modal =
 --- Quick Search
 
 
-searchNode : String -> Cmd msg
-searchNode pattern =
-    outgoing
-        { action = "SEARCH_NODES"
-        , data = JE.string pattern
-        }
-
-
 initUserSearch : List User -> Cmd msg
 initUserSearch data =
     outgoing
         { action = "INIT_USERSEARCH"
         , data = usersEncoder data
+        }
+
+
+addQuickSearchNodes : List Node -> Cmd msg
+addQuickSearchNodes nodes =
+    outgoing
+        { action = "ADD_QUICKSEARCH_NODES"
+        , data = JE.list JE.object <| List.map nodeEncoder nodes
+        }
+
+
+addQuickSearchUsers : List User -> Cmd msg
+addQuickSearchUsers users =
+    outgoing
+        { action = "ADD_QUICKSEARCH_USERS"
+        , data = usersEncoder users
+        }
+
+
+searchNode : String -> Cmd msg
+searchNode pattern =
+    outgoing
+        { action = "SEARCH_NODES"
+        , data = JE.string pattern
         }
 
 

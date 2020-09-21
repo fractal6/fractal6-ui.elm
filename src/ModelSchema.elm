@@ -191,10 +191,6 @@ type alias TensionBlobs =
     }
 
 
-type alias TensionHistory =
-    { history : List Event }
-
-
 type alias Comment =
     { id : String
     , createdAt : String

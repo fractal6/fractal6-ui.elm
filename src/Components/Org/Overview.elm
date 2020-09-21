@@ -743,8 +743,7 @@ update global msg model =
                             hotNodePush nodes model.orga_data
                     in
                     ( { model | orga_data = Success ndata }
-                      --, send (NodeClicked first_nameid)
-                    , Cmd.none
+                    , Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
                     , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
                     )
 
@@ -787,7 +786,7 @@ update global msg model =
                                     hotNodePush [ n ] model.orga_data
                             in
                             ( { model | node_action = JoinOrga (JoinValidation form result), orga_data = Success ndata }
-                            , Cmd.none
+                            , Cmd.batch [ Ports.addQuickSearchNodes [ n ], Maybe.map (\fs -> Ports.addQuickSearchUsers [ fs ]) n.first_link |> withDefault Cmd.none ]
                             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
                             )
 

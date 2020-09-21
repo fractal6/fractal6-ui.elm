@@ -13,10 +13,10 @@ window.addEventListener('load', _ => {
     window.ports = {
         init: (app) => {
             // Show the footbar
-            document.getElementById("footBar").style.display= "none";
-            setTimeout( function () {
-                document.getElementById("footBar").style.display= "block";
-            }, 0.5);
+            //document.getElementById("footBar").style.display= "none";
+            //setTimeout( function () {
+            //    document.getElementById("footBar").style.display= "block";
+            //}, 0.5);
 
             // Session Object
             var session = {
@@ -100,6 +100,16 @@ const actions = {
     //
     // Quick Search
     //
+    'INIT_USERSEARCH': (app, session, data) => {
+        // Setup User quickSearch
+        initQuickSearch(session.qsu, data);
+    },
+    'ADD_QUICKSEARCH_NODES': (app, session, nodes) => {
+        session.qsn.addAll(nodes);
+    },
+    'ADD_QUICKSEARCH_USERS': (app, session, users) => {
+        session.qsu.addAll(users);
+    },
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qsn;
         var nodes = session.gp.nodesDict;
@@ -112,10 +122,6 @@ const actions = {
         //}
         });
         app.ports.lookupNodeFromJs_.send(res);
-    },
-    'INIT_USERSEARCH': (app, session, data) => {
-        // Setup User quickSearch
-        initQuickSearch(session.qsu, data);
     },
     'SEARCH_USERS': (app, session, pattern) => {
         var qs = session.qsu;
