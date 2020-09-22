@@ -33,7 +33,7 @@ import Json.Decode as JD
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, nameidFromFlags, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, nameidFromFlags, nearestCircleid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
@@ -1018,6 +1018,7 @@ view_ global model =
             , focus = model.node_focus
             , hasBeenPushed = True
             , toolbar = Just (DocToolBar.view model.node_focus tid Nothing)
+            , receiver = nearestCircleid model.node_focus.nameid
             }
 
         nodeData =
@@ -1550,14 +1551,6 @@ getNewNodeStepAuth form =
 
         roles ->
             let
-                nearestNid =
-                    case form.target.type_ of
-                        NodeType.Circle ->
-                            form.target.nameid
-
-                        NodeType.Role ->
-                            form.target.parent |> Maybe.map (\n -> n.nameid) |> withDefault form.target.nameid
-
                 circleRoles =
                     getCircleRoles roles [ form.target.nameid ]
             in

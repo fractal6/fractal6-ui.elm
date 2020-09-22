@@ -8,6 +8,7 @@ module Query.AddTension exposing
     )
 
 import Dict exposing (Dict)
+import Extra exposing (ternary)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
@@ -240,8 +241,8 @@ buildEvent createdAt username events_type_m post =
                                                 (\u -> { u | username = Present username })
                                                 |> Present
                                         , event_type = Present event_type
-                                        , old = Present ""
-                                        , new = Present ""
+                                        , old = Dict.get "old" post |> fromMaybe
+                                        , new = Dict.get "new" post |> fromMaybe
                                     }
                                 )
                         )
@@ -290,7 +291,7 @@ buildNodeFragmentRef users nf =
                 NodeType.Role ->
                     -- Role
                     { commonFields
-                        | first_link = users |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe
+                        | first_link = users |> List.filter (\u -> u.username /= "") |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe
                         , role_type = users |> List.head |> Maybe.map (\us -> us.role_type) |> fromMaybe
                     }
 
@@ -304,7 +305,7 @@ buildNodeFragmentRef users nf =
                                         Input.buildNodeFragmentRef
                                             (\c ->
                                                 { c
-                                                    | first_link = Present us.username
+                                                    | first_link = ternary (us.username /= "") (Present us.username) Absent
                                                     , role_type = Present us.role_type
                                                 }
                                             )

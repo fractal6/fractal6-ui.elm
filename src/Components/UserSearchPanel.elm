@@ -1,27 +1,17 @@
-module Components.UserSearchPanel exposing
-    ( UserSearchPanel
-    , cancelEdit
-    , click
-    , clickAck
-    , create
-    , edit
-    , setPattern
-    , view
-    , viewAssigneeSelectors
-    , viewSelectors
-    )
+module Components.UserSearchPanel exposing (..)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMapData, withMaybeData)
+import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (AssigneeForm, UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
@@ -30,62 +20,82 @@ import Time
 
 type alias UserSearchPanel =
     { isEdit : Bool
-    , user : Maybe User
-
-    -- Form
-    , pattern : String
-    , assignee : User -- last one clicked/selected
-    , isNew : Bool -- toggle select
+    , form : AssigneeForm
     , click_result : GqlData IdPayload
     }
 
 
 create : UserState -> UserSearchPanel
 create user =
-    let
-        -- Get the user requesting
-        user_m =
-            case user of
-                LoggedIn uctx ->
-                    Just { username = uctx.username, name = uctx.name }
-
-                LoggedOut ->
-                    Nothing
-    in
     { isEdit = False
-    , user = user_m
-
-    -- Form
-    , pattern = ""
-    , assignee = User "" Nothing
-    , isNew = False
+    , form = initAssigneeForm user
     , click_result = NotAsked
     }
 
 
 edit : UserSearchPanel -> UserSearchPanel
-edit usp =
-    { usp | isEdit = True }
+edit data =
+    { data | isEdit = True }
 
 
 cancelEdit : UserSearchPanel -> UserSearchPanel
-cancelEdit usp =
-    { usp | isEdit = False, click_result = NotAsked, pattern = "" }
-
-
-setPattern : String -> UserSearchPanel -> UserSearchPanel
-setPattern pattern usp =
-    { usp | pattern = pattern }
+cancelEdit data =
+    let
+        form =
+            data.form
+    in
+    { data | isEdit = False, click_result = NotAsked, form = { form | pattern = "" } }
 
 
 click : User -> Bool -> UserSearchPanel -> UserSearchPanel
-click user isNew usp =
-    { usp | assignee = user, isNew = isNew }
+click user isNew data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | assignee = user, isNew = isNew } }
 
 
-clickAck : GqlData IdPayload -> UserSearchPanel -> UserSearchPanel
-clickAck result usp =
-    { usp | click_result = result }
+setClickResult : GqlData IdPayload -> UserSearchPanel -> UserSearchPanel
+setClickResult result data =
+    { data | click_result = result }
+
+
+
+-- Updata Form
+
+
+setEvents : List TensionEvent.TensionEvent -> UserSearchPanel -> UserSearchPanel
+setEvents events data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | events_type = Just events }
+    in
+    { data | form = newForm }
+
+
+post : String -> String -> UserSearchPanel -> UserSearchPanel
+post field value data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | post = Dict.insert field value f.post }
+    in
+    { data | form = newForm }
+
+
+setPattern : String -> UserSearchPanel -> UserSearchPanel
+setPattern pattern data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | pattern = pattern } }
 
 
 type alias UserSearchPanelData msg =
@@ -96,7 +106,8 @@ type alias UserSearchPanelData msg =
     , tid : String
     , data : UserSearchPanel
     , onChangePattern : String -> msg
-    , onUserClick : String -> User -> Bool -> msg
+    , onUserClick : String -> User -> Bool -> Time.Posix -> msg
+    , onSubmit : (Time.Posix -> msg) -> msg
     }
 
 
@@ -107,7 +118,7 @@ view uspd =
             Success ud ->
                 let
                     user =
-                        Maybe.map (\u -> [ u ]) uspd.data.user |> withDefault []
+                        uspd.data.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
 
                     linked_users =
                         List.foldl
@@ -118,7 +129,7 @@ view uspd =
                             uspd.targets
 
                     users =
-                        if uspd.data.pattern == "" then
+                        if uspd.data.form.pattern == "" then
                             user
                                 ++ uspd.selectedUsers
                                 ++ linked_users
@@ -134,7 +145,7 @@ view uspd =
                                 [ class "input autofocus"
                                 , type_ "text"
                                 , placeholder T.searchUsers
-                                , value uspd.data.pattern
+                                , value uspd.data.form.pattern
                                 , onInput uspd.onChangePattern
                                 ]
                                 []
@@ -184,7 +195,7 @@ viewAssigneeSelectors users uspd =
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (uspd.onUserClick uspd.tid u (isActive == False))
+                            , onClick (uspd.onSubmit <| uspd.onUserClick uspd.tid u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                             , viewUser u.username

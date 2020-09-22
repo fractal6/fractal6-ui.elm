@@ -174,6 +174,33 @@ type alias CommentPatchForm =
     }
 
 
+type alias AssigneeForm =
+    { uctx : UserCtx
+    , pattern : String
+    , assignee : User -- last one clicked/selected
+    , isNew : Bool -- toggle select
+    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , post : Post
+    }
+
+
+initAssigneeForm : UserState -> AssigneeForm
+initAssigneeForm user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , pattern = ""
+    , assignee = User "" Nothing
+    , isNew = False
+    , events_type = Nothing
+    , post = Dict.empty
+    }
+
+
 {-|
 
     Create tension a the current focus

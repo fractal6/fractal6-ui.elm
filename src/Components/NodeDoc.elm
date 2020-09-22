@@ -19,7 +19,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import Time
@@ -208,13 +208,13 @@ type alias OrgaNodeData msg =
     , focus : NodeFocus
     , hasBeenPushed : Bool
     , toolbar : Maybe (Html msg)
+    , receiver : String
     , data : GqlData String
     }
 
 
 type alias Op msg =
-    { tension : TensionHead
-    , lookup : List User
+    { lookup : List User
     , users_data : GqlData UsersData
     , targets : List String
     , data : NodeDoc
@@ -222,7 +222,7 @@ type alias Op msg =
     -- Blob
     , onBlobEdit : BlobType.BlobType -> msg
     , onCancelBlob : msg
-    , onSubmitBlob : NodeDoc -> Bool -> Time.Posix -> msg
+    , onSubmitBlob : NodeDoc -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
 
     -- Doc change
@@ -269,15 +269,18 @@ view data op_m =
 view_ : String -> OrgaNodeData msg -> Maybe (Op msg) -> Html msg
 view_ tid data op_m =
     let
+        type_ =
+            data.node.type_ |> withDefault NodeType.Role
+
         isLinksHidden =
-            if data.node.type_ == Just NodeType.Circle && data.source == TensionBaseUri then
+            if type_ == NodeType.Circle && data.source == TensionBaseUri then
                 data.hasBeenPushed
 
             else
                 False
 
         txt =
-            getNodeTextFromNodeType (data.node.type_ |> withDefault NodeType.Role)
+            getNodeTextFromNodeType type_
 
         links =
             getFirstLinks data.node
@@ -301,14 +304,9 @@ view_ tid data op_m =
                         let
                             isSendable =
                                 data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
-
-                            isNew =
-                                op.tension.action
-                                    |> Maybe.map (\a -> (getTensionCharac a).action_type == NEW)
-                                    |> withDefault True
                         in
                         div []
-                            [ nodeAboutInputView isNew txt op.data.form.node op
+                            [ nodeAboutInputView data.hasBeenPushed txt op.data.form.node op
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
@@ -318,7 +316,19 @@ view_ tid data op_m =
             div [ class "aboutDoc" ]
                 [ div [ class "columns is-variable is-mobile" ]
                     [ div [ class "column is-9 subtitle is-5" ]
-                        [ span []
+                        [ (if data.hasBeenPushed then
+                            let
+                                -- @Debug: too fukin complex !!!
+                                nameid =
+                                    data.node.nameid
+                                        |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
+                                        |> withDefault ""
+                            in
+                            a [ nameid |> uriFromNameid OverviewBaseUri |> href ]
+
+                           else
+                            span []
+                          )
                             [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
                                 [ i [ class "fas fa-info fa-stack-1x" ] []
                                 , i [ class "far fa-circle fa-stack-2x" ] []
@@ -362,15 +372,19 @@ view_ tid data op_m =
             div [] []
 
           else
+            let
+                links_ =
+                    List.filter (\x -> x.username /= "") links
+            in
             div [ class "linksDoc" ]
                 [ div [ class "subtitle is-5" ]
                     [ Fa.icon "fas fa-users fa-sm" T.linksH
-                    , links
+                    , links_
                         |> List.map (\l -> viewUser l.username)
                         |> span [ attribute "style" "margin-left:20px;" ]
                     , doEditView op_m BlobType.OnFirstLink
                     ]
-                , if List.length links == 0 then
+                , if List.length links_ == 0 then
                     span [ class "is-italic" ] [ text T.noFirstLinks ]
 
                   else
@@ -433,7 +447,7 @@ viewMandateSection name maybePara =
 --- Input view
 
 
-nodeAboutInputView isNew txt node op =
+nodeAboutInputView hasBeenPushed txt node op =
     div [ class "field" ]
         [ div [ class "field " ]
             [ div [ class "control" ]
@@ -466,7 +480,7 @@ nodeAboutInputView isNew txt node op =
             , p [ class "help-label" ] [ text txt.about_help ]
             , br [] []
             ]
-        , if isNew then
+        , if hasBeenPushed == False then
             div [ class "box has-background-grey-light is-paddingless" ]
                 [ div [ class "field is-horizontal" ]
                     [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Name ID" ]
@@ -670,7 +684,7 @@ blobButtonsView isSendable isLoading op =
                         [ class "button has-text-weight-semibold"
                         , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
-                        , onClick (op.onSubmit <| op.onSubmitBlob op.data False)
+                        , onClick (op.onSubmit <| op.onSubmitBlob op.data)
                         ]
                         [ text T.saveChanges ]
                     ]
@@ -788,13 +802,13 @@ updateNodeForm field value form =
             { form | node = { node | mandate = Just { mandate | purpose = value } } }
 
         "responsabilities" ->
-            { form | node = { node | mandate = Just { mandate | responsabilities = Just value } } }
+            { form | node = { node | mandate = Just { mandate | responsabilities = ternary (value == "") Nothing (Just value) } } }
 
         "domains" ->
-            { form | node = { node | mandate = Just { mandate | domains = Just value } } }
+            { form | node = { node | mandate = Just { mandate | domains = ternary (value == "") Nothing (Just value) } } }
 
         "policies" ->
-            { form | node = { node | mandate = Just { mandate | policies = Just value } } }
+            { form | node = { node | mandate = Just { mandate | policies = ternary (value == "") Nothing (Just value) } } }
 
         -- Various
         "name" ->

@@ -119,7 +119,7 @@ mediaTension baseUri focus tension navigate =
 edgeArrow : String -> Html msg -> Html msg -> List (Html msg)
 edgeArrow cls source target =
     [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
-    , span [ class <| "right-arrow" ] []
+    , span [ class "right-arrow" ] []
     , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]
     ]
 

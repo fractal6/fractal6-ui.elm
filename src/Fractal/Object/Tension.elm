@@ -59,11 +59,6 @@ emitterid =
     Object.selectionForField "String" "emitterid" [] Decode.string
 
 
-receiverid : SelectionSet String Fractal.Object.Tension
-receiverid =
-    Object.selectionForField "String" "receiverid" [] Decode.string
-
-
 type alias EmitterOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -79,6 +74,11 @@ emitter fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "emitter" optionalArgs object_ identity
+
+
+receiverid : SelectionSet String Fractal.Object.Tension
+receiverid =
+    Object.selectionForField "String" "receiverid" [] Decode.string
 
 
 type alias ReceiverOptionalArguments =

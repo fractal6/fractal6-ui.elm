@@ -13,7 +13,7 @@ import Components.Text as T
 import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList, withMapData, withMaybeData)
+import Extra exposing (ternary, toMapOfList, withMapData, withMaybeData, withMaybeDataMap)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -208,7 +208,7 @@ type Msg
     | ChangeBlobNode String String
     | ChangeBlobMD String
       -- Blob Submit
-    | SubmitBlob NodeDoc Bool Time.Posix --@debuig new type to handle MdDoc
+    | SubmitBlob NodeDoc Time.Posix --@debug new type to handle MdDoc
     | BlobAck (GqlData PatchTensionPayloadID)
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
@@ -222,7 +222,7 @@ type Msg
       -- Assignees
     | DoAssigneesEdit
     | ChangeAssigneePattern String
-    | ChangeAssignee String User Bool
+    | ChangeAssignee String User Bool Time.Posix
     | AssigneeAck (GqlData IdPayload)
     | DoAssigneesCancel
     | GotOrga (GqlData NodesData) -- GraphQl
@@ -677,7 +677,14 @@ update global msg model =
 
                 newForm =
                     { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        | post =
+                            Dict.insert "createdAt" (fromTime time) form.post
+                                |> Dict.union
+                                    (Dict.fromList
+                                        [ ( "old", model.tension_head |> withMaybeDataMap (\x -> x.title) |> withDefault "" )
+                                        , ( "new", Dict.get "title" form.post |> withDefault "" )
+                                        ]
+                                    )
                         , events_type = Just [ TensionEvent.TitleUpdated ]
                     }
             in
@@ -758,18 +765,15 @@ update global msg model =
             in
             ( { model | tension_form = newForm }, Cmd.none, Cmd.none )
 
-        SubmitBlob data doPush time ->
+        SubmitBlob data time ->
             let
-                eventPushed =
-                    ternary doPush [ TensionEvent.BlobPushed ] []
-
                 form =
                     model.tension_form
 
                 newDoc =
                     data
                         |> NodeDoc.post "createdAt" (fromTime time)
-                        |> NodeDoc.setEvents ([ TensionEvent.BlobCommitted ] ++ eventPushed)
+                        |> NodeDoc.setEvents [ TensionEvent.BlobCommitted ]
                         |> NodeDoc.setResult LoadingSlowly
             in
             ( { model | nodeDoc = newDoc }, pushTensionPatch apis.gql newDoc.form BlobAck, Cmd.none )
@@ -835,7 +839,14 @@ update global msg model =
                 newForm =
                     { form
                         | events_type = Just [ TensionEvent.BlobPushed ]
-                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
+                        , post =
+                            Dict.fromList [ ( "createdAt", fromTime time ) ]
+                                |> Dict.union
+                                    (Dict.fromList
+                                        [ ( "old", "" )
+                                        , ( "new", bid )
+                                        ]
+                                    )
                     }
             in
             ( { model | tension_form = newForm }
@@ -966,16 +977,24 @@ update global msg model =
             , Ports.searchUser pattern
             )
 
-        ChangeAssignee tid user isNew ->
-            ( { model | assigneesPanel = UserSearchPanel.click user isNew model.assigneesPanel }
-            , setAssignee apis.gql tid user.username isNew AssigneeAck
+        ChangeAssignee tid user isNew time ->
+            let
+                uPanel =
+                    UserSearchPanel.click user isNew model.assigneesPanel
+                        |> UserSearchPanel.post "createdAt" (fromTime time)
+                        |> UserSearchPanel.post "new" user.username
+                        |> UserSearchPanel.setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
+                        |> UserSearchPanel.setClickResult LoadingSlowly
+            in
+            ( { model | assigneesPanel = uPanel }
+            , setAssignee apis.gql tid uPanel.form AssigneeAck
             , Cmd.none
             )
 
         AssigneeAck result ->
             let
                 newModel =
-                    { model | assigneesPanel = UserSearchPanel.clickAck result model.assigneesPanel }
+                    { model | assigneesPanel = UserSearchPanel.setClickResult result model.assigneesPanel }
             in
             case result of
                 Success _ ->
@@ -985,10 +1004,10 @@ update global msg model =
                                 (\x ->
                                     let
                                         assignee =
-                                            model.assigneesPanel.assignee
+                                            model.assigneesPanel.form.assignee
 
                                         assignees =
-                                            if model.assigneesPanel.isNew then
+                                            if model.assigneesPanel.form.isNew then
                                                 withDefault [] x.assignees ++ [ assignee ]
 
                                             else
@@ -1374,10 +1393,19 @@ viewComments u t model =
                                         Just event ->
                                             case event.event_type of
                                                 TensionEvent.Reopened ->
-                                                    viewCommentStatus event TensionStatus.Open
+                                                    viewEventStatus event TensionStatus.Open
 
                                                 TensionEvent.Closed ->
-                                                    viewCommentStatus event TensionStatus.Closed
+                                                    viewEventStatus event TensionStatus.Closed
+
+                                                TensionEvent.TitleUpdated ->
+                                                    viewEventTitle event
+
+                                                TensionEvent.AssigneeAdded ->
+                                                    viewEventAssignee event True
+
+                                                TensionEvent.AssigneeRemoved ->
+                                                    viewEventAssignee event False
 
                                                 _ ->
                                                     text ""
@@ -1555,21 +1583,66 @@ viewCommentInput uctx tension form result viewMode =
         ]
 
 
-viewCommentStatus : Event -> TensionStatus.TensionStatus -> Html Msg
-viewCommentStatus event status =
+viewEventStatus : Event -> TensionStatus.TensionStatus -> Html Msg
+viewEventStatus event status =
     let
         ( actionIcon, actionText ) =
             case status of
                 TensionStatus.Open ->
-                    ( "far fa-circle ", "reopened" )
+                    ( "far fa-circle", T.reopened )
 
                 TensionStatus.Closed ->
-                    ( "fas fa-ban ", "closed" )
+                    ( "fas fa-ban", T.closed )
     in
-    div [ class "media section is-paddingless actionComment" ]
-        [ div [ class "media-left" ] [ Fa.icon (actionIcon ++ "fa-2x has-text-" ++ statusColor status) "" ]
+    div [ class "media section is-paddingless actionComment is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon (actionIcon ++ " fa-2x has-text-" ++ statusColor status) "" ]
         , div [ class "media-content" ]
-            [ div [ class "is-italic" ] [ viewUsernameLink event.createdBy.username, text " ", text actionText, text " the ", text (formatTime event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
+viewEventTitle : Event -> Html Msg
+viewEventTitle event =
+    let
+        actionIcon =
+            "fas fa-pen"
+
+        actionText =
+            T.updatedTitle
+    in
+    div [ class "media section is-paddingless actionComment is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon actionIcon "" ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
+            , span [ class "section" ]
+                [ span [ class "is-italic" ] [ event.old |> withDefault "" |> text ]
+                , span [ class "right-arrow" ] []
+                , span [ class "is-italic" ] [ event.new |> withDefault "" |> text ]
+                ]
+            ]
+        ]
+
+
+viewEventAssignee : Event -> Bool -> Html Msg
+viewEventAssignee event isNew =
+    let
+        actionIcon =
+            "fas fa-user"
+
+        actionText =
+            if isNew then
+                T.assigned
+
+            else
+                T.unassigned
+    in
+    div [ class "media section is-paddingless actionComment is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon actionIcon "" ]
+        , div [ class "media-content" ]
+            [ span [] <|
+                List.intersperse (text " ")
+                    [ viewUsernameLink event.createdBy.username, text actionText, event.new |> withDefault "" |> viewUsernameLink, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -1667,6 +1740,7 @@ viewDocument u t b model =
                     , focus = model.node_focus
                     , hasBeenPushed = t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
                     , toolbar = Nothing
+                    , receiver = t.receiver.nameid
                     }
             in
             case model.actionView of
@@ -1676,8 +1750,7 @@ viewDocument u t b model =
                 DocEdit ->
                     let
                         msgs =
-                            { tension = t
-                            , lookup = model.lookup_users
+                            { lookup = model.lookup_users
                             , users_data = model.users_data
                             , targets = [ t.emitter.nameid, t.receiver.nameid ]
                             , data = model.nodeDoc
@@ -1845,6 +1918,7 @@ viewSidePane u t model =
                                         , data = model.assigneesPanel
                                         , onChangePattern = ChangeAssigneePattern
                                         , onUserClick = ChangeAssignee
+                                        , onSubmit = Submit
                                         }
                                 in
                                 UserSearchPanel.view panelData
@@ -2037,8 +2111,8 @@ eventFromForm event_type form =
     , createdAt = Dict.get "createdAt" form.post |> withDefault ""
     , createdBy = Username form.uctx.username
     , event_type = event_type
-    , new = Nothing
-    , old = Nothing
+    , old = Dict.get "old" form.post
+    , new = Dict.get "new" form.post
     }
 
 

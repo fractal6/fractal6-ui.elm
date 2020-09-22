@@ -1,4 +1,4 @@
-module Extra exposing (ternary, toMapOfList, withDefaultData, withMapData, withMaybeData)
+module Extra exposing (..)
 
 import Dict exposing (Dict)
 import ModelSchema exposing (RequestResult(..))
@@ -20,13 +20,13 @@ ternary test positive negative =
 toMapOfList : List ( String, a ) -> Dict String (List a)
 toMapOfList parameters =
     List.foldl
-        (\( k, v ) dict -> Dict.update k (addParam v) dict)
+        (\( k, v ) dict -> Dict.update k (addParam_ v) dict)
         Dict.empty
         parameters
 
 
-addParam : a -> Maybe (List a) -> Maybe (List a)
-addParam value maybeValues =
+addParam_ : a -> Maybe (List a) -> Maybe (List a)
+addParam_ value maybeValues =
     case maybeValues of
         Just values ->
             Just (value :: values)
@@ -59,7 +59,17 @@ withMaybeData result =
             Nothing
 
 
-withMapData : (b -> a) -> RequestResult e b -> RequestResult e a
+withMaybeDataMap : (a -> b) -> RequestResult e a -> Maybe b
+withMaybeDataMap resMap result =
+    case result of
+        Success d ->
+            Just (resMap d)
+
+        _ ->
+            Nothing
+
+
+withMapData : (a -> b) -> RequestResult e a -> RequestResult e b
 withMapData resMap result =
     case result of
         Success d ->

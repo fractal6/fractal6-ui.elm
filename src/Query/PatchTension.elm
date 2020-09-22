@@ -29,7 +29,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (CommentPatchForm, TensionPatchForm)
+import ModelCommon exposing (AssigneeForm, CommentPatchForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvent)
 import Query.QueryTension exposing (blobPayload, commentPayload)
@@ -126,7 +126,7 @@ patchTensionInputEncoder f =
             -- new comment
             Dict.get "message" f.post
 
-        patchRequired =
+        inputReq =
             { filter =
                 Input.buildTensionFilter
                     (\ft ->
@@ -134,7 +134,7 @@ patchTensionInputEncoder f =
                     )
             }
 
-        patchOpts =
+        inputOpt =
             \x ->
                 { set =
                     Input.buildTensionPatch
@@ -155,7 +155,7 @@ patchTensionInputEncoder f =
                 }
     in
     { input =
-        Input.buildUpdateTensionInput patchRequired patchOpts
+        Input.buildUpdateTensionInput inputReq inputOpt
     }
 
 
@@ -185,10 +185,10 @@ assigneeDecoder data =
             Nothing
 
 
-setAssignee url tid username isNew msg =
+setAssignee url tid form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (setAssigneeEncoder tid username isNew)
+            (setAssigneeEncoder tid form)
             (SelectionSet.map AssigneePayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map IdPayload
@@ -198,10 +198,16 @@ setAssignee url tid username isNew msg =
         (RemoteData.fromResult >> decodeResponse assigneeDecoder >> msg)
 
 
-setAssigneeEncoder : String -> String -> Bool -> Mutation.UpdateTensionRequiredArguments
-setAssigneeEncoder tid username isNew =
+setAssigneeEncoder : String -> AssigneeForm -> Mutation.UpdateTensionRequiredArguments
+setAssigneeEncoder tid f =
     let
-        patchRequired =
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        events =
+            buildEvent createdAt f.uctx.username f.events_type f.post
+
+        inputReq =
             { filter =
                 Input.buildTensionFilter
                     (\ft ->
@@ -216,20 +222,29 @@ setAssigneeEncoder tid username isNew =
                         | assignees =
                             Present
                                 [ Input.buildUserRef
-                                    (\u -> { u | username = Present username })
+                                    (\u -> { u | username = Present f.assignee.username })
                                 ]
+                        , history =
+                            if f.isNew then
+                                events
+
+                            else
+                                Absent
                     }
                 )
                 |> Present
 
-        patchOpts =
+        historyPatch =
+            Input.buildTensionPatch (\s -> { s | history = events }) |> Present
+
+        inputOpt =
             \x ->
-                { set = ternary isNew userPatch Absent
-                , remove = ternary (isNew == False) userPatch Absent
+                { set = ternary f.isNew userPatch historyPatch
+                , remove = ternary (f.isNew == False) userPatch Absent
                 }
     in
     { input =
-        Input.buildUpdateTensionInput patchRequired patchOpts
+        Input.buildUpdateTensionInput inputReq inputOpt
     }
 
 
@@ -430,7 +445,7 @@ patchCommentInputEncoder form =
         message =
             Dict.get "message" form.post
 
-        patchRequired =
+        inputReq =
             { filter =
                 Input.buildCommentFilter
                     (\f ->
@@ -438,7 +453,7 @@ patchCommentInputEncoder form =
                     )
             }
 
-        patchOpts =
+        inputOpt =
             \x ->
                 { set =
                     Input.buildCommentPatch
@@ -453,5 +468,5 @@ patchCommentInputEncoder form =
                 }
     in
     { input =
-        Input.buildUpdateCommentInput patchRequired patchOpts
+        Input.buildUpdateCommentInput inputReq inputOpt
     }

@@ -88,6 +88,36 @@ searchUsers =
     "Search users"
 
 
+reopened : String
+reopened =
+    "reopened"
+
+
+closed : String
+closed =
+    "closed"
+
+
+assigned : String
+assigned =
+    "assigned"
+
+
+unassigned : String
+unassigned =
+    "unassigned"
+
+
+the : String
+the =
+    "the"
+
+
+updatedTitle : String
+updatedTitle =
+    "updated title"
+
+
 
 --Quick Search
 --(header)
