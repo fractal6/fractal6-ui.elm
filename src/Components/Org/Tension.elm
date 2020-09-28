@@ -1594,9 +1594,9 @@ viewEventStatus event status =
                 TensionStatus.Closed ->
                     ( "fas fa-ban", T.closed )
     in
-    div [ class "media section is-paddingless actionComment is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon (actionIcon ++ " fa-2x has-text-" ++ statusColor status) "" ]
-        , div [ class "media-content" ]
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon0 (actionIcon ++ " fa-1half has-text-" ++ statusColor status) "" ]
+        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
@@ -1611,14 +1611,14 @@ viewEventTitle event =
         actionText =
             T.updatedTitle
     in
-    div [ class "media section is-paddingless actionComment is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon actionIcon "" ]
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon0 actionIcon "" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
             , span [ class "section" ]
-                [ span [ class "is-italic" ] [ event.old |> withDefault "" |> text ]
+                [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
                 , span [ class "right-arrow" ] []
-                , span [ class "is-italic" ] [ event.new |> withDefault "" |> text ]
+                , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
                 ]
             ]
         ]
@@ -1637,8 +1637,8 @@ viewEventAssignee event isNew =
             else
                 T.unassigned
     in
-    div [ class "media section is-paddingless actionComment is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon actionIcon "" ]
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon0 actionIcon "" ]
         , div [ class "media-content" ]
             [ span [] <|
                 List.intersperse (text " ")

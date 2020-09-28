@@ -91,6 +91,14 @@ hr {
     border-bottom: 1px dotted;
 }
 
+.is-crossed {
+    text-decoration: line-through;
+}
+
+.is-strong {
+    font-weight: bold;
+}
+
 .icon {
     color: #11111133 !important;
 }
@@ -612,7 +620,7 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .actionComment {
-            margin-left: 100px !important;
+            margin-left: 5rem !important;
         }
     }
 
@@ -1396,6 +1404,11 @@ a.actionLink {
  * Utils
  *
  */
+
+.fa-1half {
+    font-size: 1.5rem;
+    margin-left: -4px;
+}
 
 .is-w {
     &:hover {
