@@ -316,9 +316,8 @@ view_ tid data op_m =
             div [ class "aboutDoc" ]
                 [ div [ class "columns is-variable is-mobile" ]
                     [ div [ class "column is-9 subtitle is-5" ]
-                        [ (if data.hasBeenPushed then
+                        [ (if data.hasBeenPushed && data.source == TensionBaseUri then
                             let
-                                -- @Debug: too fukin complex !!!
                                 nameid =
                                     data.node.nameid
                                         |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)

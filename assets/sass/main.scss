@@ -433,6 +433,21 @@ html.has-modal-active, html.has-modal-active2 {
     .title {
         //margin-bottom: 1rem !important;
     }
+    .subtitle {
+        a:hover, a:hover .content {
+            color: $blue !important;
+            transition: none;
+            &:after, a:before {
+                transition: none;
+            }
+        }
+        a, a .content {
+            transition: none;
+            &:after, a:before {
+                transition: none;
+            }
+        }
+    }
 
     .hero-body > hr {
         margin-top: 1rem !important;
