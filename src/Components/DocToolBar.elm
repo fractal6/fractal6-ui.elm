@@ -14,7 +14,7 @@ import ModelSchema exposing (..)
 
 view : NodeFocus -> String -> Maybe ActionView -> Html msg
 view focus tid actionView =
-    div [ class "field has-addons" ]
+    div [ class "field has-addons docToolbar" ]
         [ p
             [ class "control tooltip"
             , attribute "data-tooltip" T.view

@@ -314,8 +314,14 @@ view_ tid data op_m =
 
           else
             div [ class "aboutDoc" ]
-                [ div [ class "columns is-variable is-mobile" ]
-                    [ div [ class "column is-9 subtitle is-5" ]
+                [ div [ class "media subtitle" ]
+                    [ div [ class "media-left" ]
+                        [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                            [ i [ class "fas fa-info fa-stack-1x" ] []
+                            , i [ class "far fa-circle fa-stack-2x" ] []
+                            ]
+                        ]
+                    , div [ class "media-content nodeName" ]
                         [ (if data.hasBeenPushed && data.source == TensionBaseUri then
                             let
                                 nameid =
@@ -328,21 +334,16 @@ view_ tid data op_m =
                            else
                             span []
                           )
-                            [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                                [ i [ class "fas fa-info fa-stack-1x" ] []
-                                , i [ class "far fa-circle fa-stack-2x" ] []
-                                ]
-                            , span [ class "content nodeName" ] [ text "\u{00A0}", text " ", text (data.node.name |> withDefault "") ]
-                            ]
+                            [ text "\u{00A0}", text " ", text (data.node.name |> withDefault "") ]
                         ]
                     , case data.toolbar of
                         Just tb ->
                             -- from OverviewBaseUri: show toolbar that is links to the tension id.
-                            div [ class "column is-3 is-paddingless buttonsToolbar" ]
+                            div [ class "media-right is-marginless buttonsToolbar" ]
                                 [ tb ]
 
                         Nothing ->
-                            div [ class "column buttonEdit" ] [ doEditView op_m BlobType.OnAbout ]
+                            div [ class "media-right is-marginless buttonEdit" ] [ doEditView op_m BlobType.OnAbout ]
                     ]
                 , case data.node.about of
                     Just ab ->

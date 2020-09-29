@@ -384,6 +384,9 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #profile {
+    .media-content{
+        overflow: unset
+    }
     .media + .media {
         border-top: none !important;
     }
@@ -415,38 +418,32 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+.docToolbar {
+    .button {
+        &.is-active {
+            color: $blue !important;
+        }
+    }
+}
+
 .buttonsToolbar {
     .field {
-        float: right !important; //is-pulled-right
-        //margin-top:-5px;
-        //margin-right: -5px !important;
+        margin-top: -0.8rem !important;
+        margin-right: -1rem !important;
     }
     .button {
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
         //padding-bottom: 2px !important;
     }
 }
 
 #DocContainer {
     border-radius: 5px;
-
     .title {
-        //margin-bottom: 1rem !important;
+        //
     }
     .subtitle {
-        a:hover, a:hover .content {
-            color: $blue !important;
-            transition: none;
-            &:after, a:before {
-                transition: none;
-            }
-        }
-        a, a .content {
-            transition: none;
-            &:after, a:before {
-                transition: none;
-            }
-        }
+        //
     }
 
     .hero-body > hr {
@@ -472,16 +469,27 @@ html.has-modal-active, html.has-modal-active2 {
 
 .aboutDoc {
     .columns {
-        & > .column {
-            margin-bottom: 0 !important;
-        }
-        & > .column.buttonEdit {
-            padding-right: 12px !important;
-        }
+        & > .column { margin-bottom: 0 !important; }
+        & > .column.buttonEdit { padding-right: 12px !important; }
     }
+    .media { margin-bottom: 1rem !important;}
+    .media-left { margin-right: 0 !important; }
+
     .nodeName {
         font-weight: 600 !important;
         color: $grey !important;
+    }
+
+    .subtitle {
+        a:hover, a:hover .content {
+            color: $blue !important;
+            transition: none;
+            &:after, a:before { transition: none; }
+        }
+        a, a .content {
+            transition: none;
+            &:after, a:before { transition: none; }
+        }
     }
 }
 
