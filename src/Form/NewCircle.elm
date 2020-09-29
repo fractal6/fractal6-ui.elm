@@ -18,6 +18,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..))
 import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeSpan)
 import ModelSchema exposing (RequestResult(..))
 
@@ -86,7 +87,7 @@ view data op =
                         ]
                     ]
                 , div [ class "modal-card-body" ]
-                    [ nodeAboutInputView False txt form.node op
+                    [ nodeAboutInputView False OverviewBaseUri txt form.node op
                     , div [ class "box has-background-grey-lighter subForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]

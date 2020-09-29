@@ -306,7 +306,7 @@ view_ tid data op_m =
                                 data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
                         in
                         div []
-                            [ nodeAboutInputView data.hasBeenPushed txt op.data.form.node op
+                            [ nodeAboutInputView data.hasBeenPushed data.source txt op.data.form.node op
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
@@ -338,7 +338,7 @@ view_ tid data op_m =
                     , case data.toolbar of
                         Just tb ->
                             -- from OverviewBaseUri: show toolbar that is links to the tension id.
-                            div [ class "column is-3 buttonsToolbar" ]
+                            div [ class "column is-3 is-paddingless buttonsToolbar" ]
                                 [ tb ]
 
                         Nothing ->
@@ -446,7 +446,7 @@ viewMandateSection name maybePara =
 --- Input view
 
 
-nodeAboutInputView hasBeenPushed txt node op =
+nodeAboutInputView hasBeenPushed source txt node op =
     div [ class "field" ]
         [ div [ class "field " ]
             [ div [ class "control" ]
@@ -479,7 +479,7 @@ nodeAboutInputView hasBeenPushed txt node op =
             , p [ class "help-label" ] [ text txt.about_help ]
             , br [] []
             ]
-        , if hasBeenPushed == False then
+        , if hasBeenPushed == False && source == TensionBaseUri then
             div [ class "box has-background-grey-light is-paddingless" ]
                 [ div [ class "field is-horizontal" ]
                     [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Name ID" ]

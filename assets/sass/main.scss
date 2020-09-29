@@ -418,8 +418,8 @@ html.has-modal-active, html.has-modal-active2 {
 .buttonsToolbar {
     .field {
         float: right !important; //is-pulled-right
-        margin-top:-9px;
-        margin-right: -9px !important;
+        //margin-top:-5px;
+        //margin-right: -5px !important;
     }
     .button {
         font-size: 0.65rem !important;
@@ -1297,24 +1297,19 @@ a.actionLink {
         padding-top: 0 !important;
         padding-left: 10px !important;
     }
-    .select.is-orange, .select.is-orange::after,
-    .select.is-orange select,
-    .select.is-orange select:focus,
-    .select.is-orange select:active {
-        border-color: $orange-frac6 !important;
-    }
 }
 
 .cardForm {
     border-width: 1px !important;
     border-color: $grey-light !important;
     margin-top: 2rem !important;
-    .select.is-orange, .select.is-orange::after,
-    .select.is-orange select,
-    .select.is-orange select:focus,
-    .select.is-orange select:active {
-        border-color: $orange-frac6 !important;
-    }
+}
+
+.select.is-orange, .select.is-orange::after,
+.select.is-orange select,
+.select.is-orange select:focus,
+.select.is-orange select:active {
+    border-color: $orange-frac6 !important;
 }
 
 //
