@@ -267,9 +267,12 @@ view_ : Global.Model -> Model -> UserCtx -> Html Msg
 view_ global model uctx =
     div [ id "profile", class "section" ]
         [ div [ class "columns" ]
-            [ div [ class "column is-offset-1 is-2 " ]
-                [ viewProfileLeft model uctx ]
-            , div [ class "column is-6 " ]
+            [ div [ class "column is-3" ]
+                [ div [ class "columns is-centered" ]
+                    [ viewProfileLeft model uctx
+                    ]
+                ]
+            , div [ class "column is-7 " ]
                 [ viewProfileRight model ]
             ]
         ]
@@ -327,41 +330,47 @@ viewUserOrgas user_data =
                         div [ class "box media" ]
                             [ div [ class "media-left" ] [ a [ class "image circleBase circle2", href (uriFromNameid OverviewBaseUri root.nameid) ] [ getAvatar root.name ] ]
                             , div [ class "media-content" ]
-                                [ div [ class "" ]
-                                    [ div [ class "" ] [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ] ]
-                                    , case root.about of
-                                        Just about ->
-                                            div [ class "is-italic" ] [ text about ]
+                                [ div [ class "columns" ]
+                                    [ div [ class "column is-8" ]
+                                        [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ]
+                                        , case root.about of
+                                            Just about ->
+                                                div [ class "is-italic" ] [ text about ]
 
-                                        Nothing ->
-                                            div [] []
-                                    , hr [] []
-                                    , div [ class "buttons" ] <|
-                                        (ud.roles
-                                            |> List.filter (\r -> r.role_type /= RoleType.Member)
-                                            |> List.map
-                                                (\r ->
-                                                    a
-                                                        [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
-                                                        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                                                        , href <| uriFromNameid OverviewBaseUri r.nameid
-                                                        ]
-                                                        [ text r.name ]
-                                                )
-                                        )
-                                    ]
-                                ]
-                            , div [ class "media-right" ]
-                                [ div [ class "level levelExplore" ]
-                                    [ div [ class "level-item" ]
-                                        [ span [ class "tags has-addons" ]
-                                            [ span [ class "tag is-light" ] [ text "member" ], span [ class "tag is-white" ] [ text n_member ] ]
+                                            Nothing ->
+                                                div [] []
                                         ]
-                                    , div [ class "level-item" ]
-                                        [ span [ class "tags has-addons" ]
-                                            [ span [ class "tag is-light" ] [ text "guest" ], span [ class "tag is-white" ] [ text n_guest ] ]
+                                    , div [ class "column is-4" ]
+                                        [ div [ class "field is-grouped is-grouped-multiline" ]
+                                            [ div [ class "control" ]
+                                                [ div [ class "tags has-addons" ]
+                                                    [ span [ class "tag is-light" ] [ text "member" ]
+                                                    , span [ class "tag is-white" ] [ text n_member ]
+                                                    ]
+                                                ]
+                                            , div [ class "control" ]
+                                                [ div [ class "tags has-addons" ]
+                                                    [ span [ class "tag is-light" ] [ text "guest" ]
+                                                    , span [ class "tag is-white" ] [ text n_guest ]
+                                                    ]
+                                                ]
+                                            ]
                                         ]
                                     ]
+                                , hr [] []
+                                , div [ class "buttons" ] <|
+                                    (ud.roles
+                                        |> List.filter (\r -> r.role_type /= RoleType.Member)
+                                        |> List.map
+                                            (\r ->
+                                                a
+                                                    [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
+                                                    , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
+                                                    , href <| uriFromNameid OverviewBaseUri r.nameid
+                                                    ]
+                                                    [ text r.name ]
+                                            )
+                                    )
                                 ]
                             ]
 
