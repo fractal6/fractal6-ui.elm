@@ -807,9 +807,9 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .controlButton {
-        display: flex;
-        flex-grow: 1;
-        flex-direction: column;
+        //display: flex;
+        //flex-grow: 1;
+        //flex-direction: column;
         max-width: 50% !important;
 
         .text {
@@ -818,10 +818,22 @@ html.has-modal-active, html.has-modal-active2 {
             overflow: hidden;
             white-space: nowrap;
         }
+
+        padding-right: 0px !important;
+        .ellipsisArt {
+            margin-left: 0px !important;
+            margin-right: 2px !important;
+            .fas, .far {
+                //color: $link !important;
+                color: $green-frac6 !important;
+                font-size: 16px !important;
+            }
+        }
     }
 }
 #searchBarTensions {
     padding-top: 5px;
+
     .input {
         font-weight: 700 !important;
     }
@@ -1023,16 +1035,6 @@ a.actionLink {
     //background-image: linear-gradient(white, black) ;
 }
 
-
-.ellipsisArt {
-    margin-right: -10px;
-    margin-left: 2px;
-    .fas, .far{
-        color: $green-frac6 !important;
-        font-size: 20px !important;
-    }
-}
-
 // Tooltip: http://www.cssarrowplease.com/
 #nodeTooltip {
     position: absolute;
@@ -1040,17 +1042,9 @@ a.actionLink {
     // Content
     color: black;
     background-color: $node-tooltip-background;
-    .ellipsisArt {
-        margin-top: -2px;
-        margin-left: -2px;
-        .fas, .far {
-            color: $green !important;
-        }
-    }
 
     // Box style
-    padding: 2px 6px 2px 6px;
-    //text-align: center;
+    padding: 2px 0px 1px 8px;
     border: 2px solid #333;
     border-style: solid;
     border-radius: 9px;
@@ -1101,6 +1095,15 @@ a.actionLink {
         visibility: hidden;
         opacity: 0;
         //transition: visibility 0s 1s, opacity 1s; // fadOut transition don't works ?
+    }
+
+    .ellipsisArt {
+        margin-left: -4px !important;
+        margin-right: -4px !important;
+        .fas, .far {
+            color: $green !important;
+            font-size: 16px !important;
+        }
     }
 }
 
@@ -1453,11 +1456,11 @@ a.actionLink {
     }
 }
 
-.is-vbar-1 {
+.is-vbar-1 { // next buttons
 	display: inline-block;
 	border-left: 1px solid #ccc;
 	height: 26px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     padding-left: 0.5rem;
 }
 

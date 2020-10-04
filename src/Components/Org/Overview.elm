@@ -1208,17 +1208,14 @@ viewSearchBar odata maybePath qs =
             , case node_ of
                 Ok node ->
                     div
-                        [ class "control controlButton" ]
-                        [ div
-                            [ class "button is-small is-info _modalTrigger_"
-                            , attribute "data-modal" "actionModal"
-                            , onClick (DoNodeAction node_)
-                            ]
-                            [ span [ class "has-text-weight-bold text" ] [ text node.name ]
-                            , span [ class "fa-stack  ellipsisArt" ]
-                                --[ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
-                                [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
-                            ]
+                        [ class "control controlButton button is-small is-info _modalTrigger_"
+                        , attribute "data-modal" "actionModal"
+                        , onClick (DoNodeAction node_)
+                        ]
+                        [ span [ class "has-text-weight-bold text" ] [ text node.name ]
+                        , span [ class "fa-stack ellipsisArt" ]
+                            --[ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                            [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
                         ]
 
                 Err err ->
@@ -1253,7 +1250,7 @@ viewCanvas odata =
             , attribute "data-modal" "actionModal"
             ]
             [ span [] [ text "void" ] -- Node name
-            , span [ class "fa-stack fa-sm ellipsisArt" ]
+            , span [ class "fa-stack ellipsisArt" ]
                 [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
             ]
         ]

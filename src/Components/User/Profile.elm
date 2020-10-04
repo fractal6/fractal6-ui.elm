@@ -375,6 +375,6 @@ viewUserOrgas user_data =
                             ]
 
                     other ->
-                        div [ class "" ] []
+                        div [] []
             )
         |> div []
