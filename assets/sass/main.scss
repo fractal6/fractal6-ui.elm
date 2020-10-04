@@ -15,6 +15,11 @@ html, body {
 
     // For discrete footer.
     min-height: calc(100vh - #{$navbar-height}) !important;
+
+    @include until($desktop) {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
 }
 
 hr {

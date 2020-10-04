@@ -141,7 +141,7 @@ viewPath baseUri maybePath =
 joinButton : msg -> Html msg
 joinButton msg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_  toolti has-tooltip-bottom is-pulled-right"
+        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_ toolti has-tooltip-bottom is-pulled-right"
         , attribute "data-modal" "actionModal" -- JS/Elm confcli, msg is not sent !
 
         --, attribute "data-tooltip" "Join this organisation."
