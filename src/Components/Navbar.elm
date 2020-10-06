@@ -26,7 +26,7 @@ view user =
                     ]
                 , div
                     [ class "navbar-burger burger"
-                    , attribute "data-target" "navMenu"
+                    , attribute "data-target" "userMenu"
                     , attribute "aria-expanded" "false"
                     , attribute "aria-label" "menu"
                     , attribute "role" "button"
@@ -36,7 +36,7 @@ view user =
                     , span [ attribute "aria-hidden" "true" ] []
                     ]
                 ]
-            , div [ id "navMenu", class "navbar-menu" ]
+            , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
                     [ --a [ class "navbar-item", href (toHref Route.Top) ] [ text "Help" ]
                       a [ class "navbar-item", href (toHref Route.Explore) ] [ text "Explore" ]

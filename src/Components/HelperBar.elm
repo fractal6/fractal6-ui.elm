@@ -68,10 +68,21 @@ view hb =
     in
     div [ id "helperBar", class "columns is-centered" ]
         [ nav [ class "column is-11-desktop is-11-widescreen is-9-fullhd" ]
-            [ div [ class "columns is-mobile" ]
-                [ div [ class "column is-5" ]
+            [ div [ class "navbar" ]
+                [ div [ class "navbar-brand" ]
                     [ viewPath OverviewBaseUri hb.path_data ]
-                , div [ class "column is-6 is-offset-1" ]
+                , div
+                    [ class "navbar-burger burger"
+                    , attribute "data-target" "rolesMenu"
+                    , attribute "aria-expanded" "false"
+                    , attribute "aria-label" "menu"
+                    , attribute "role" "button"
+                    ]
+                    [ span [ attribute "aria-hidden" "true" ] []
+                    , span [ attribute "aria-hidden" "true" ] []
+                    , span [ attribute "aria-hidden" "true" ] []
+                    ]
+                , div [ id "rolesMenu", class "navbar-menu" ]
                     [ case hb.user of
                         LoggedIn uctx ->
                             case hb.path_data of
@@ -87,7 +98,7 @@ view hb =
                                         joinButton hb.onJoin
 
                                 Nothing ->
-                                    div [ class "is-pulled-right ph-button-1" ] []
+                                    div [ class "navbar-end ph-button-1" ] []
 
                         LoggedOut ->
                             joinButton hb.onJoin
@@ -141,7 +152,7 @@ viewPath baseUri maybePath =
 joinButton : msg -> Html msg
 joinButton msg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_ toolti has-tooltip-bottom is-pulled-right"
+        [ class "button is-small has-text-weight-semibold is-primary _modalTrigger_ toolti has-tooltip-bottom navbar-end"
         , attribute "data-modal" "actionModal" -- JS/Elm confcli, msg is not sent !
 
         --, attribute "data-tooltip" "Join this organisation."
@@ -221,4 +232,4 @@ memberButtons roles_ hb =
         |> List.reverse
         |> List.append [ lastButton ]
         |> List.reverse
-        |> div [ class "buttons is-pulled-right" ]
+        |> div [ class "buttons navbar-end" ]

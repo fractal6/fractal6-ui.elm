@@ -279,10 +279,34 @@ html.has-modal-active, html.has-modal-active2 {
         padding-bottom: 0 !important;
     }
 
-    .tabs {
+    nav > .navbar {
+        background-color: inherit !important;
+        margin-bottom: 0.75rem !important;
+        z-index: 29 !important;
+        .navbar-brand {
+            max-width: 50% !important;
+        }
+        .navbar-end {
+            max-width: 50% !important;
+            margin-right: -0.5rem !important;
+            @include until($desktop) {
+            max-width: 99% !important;
+            }
+        }
+
+        .navbar-burger {
+            float: right !important;
+            margin-top: -3.5rem !important;
+        }
+
+        .navbar-menu {
+            background-color: inherit !important;
+        }
+    }
+
+    nav > .tabs {
         font-size: 0.85rem;
         overflow-x: hidden;
-
         &.is-boxed a {
             border-radius: 8px 8px 0 0 !important;
         }
@@ -1465,8 +1489,12 @@ a.actionLink {
 	display: inline-block;
 	border-left: 1px solid #ccc;
 	height: 26px;
-    margin-bottom: 8px;
     padding-left: 0.5rem;
+
+    margin-top: 2px !important;
+    @include until($desktop) {
+        margin-bottom: 9px !important;
+    }
 }
 
 .vline {
