@@ -339,8 +339,7 @@ view_ tid data op_m =
                     , case data.toolbar of
                         Just tb ->
                             -- from OverviewBaseUri: show toolbar that is links to the tension id.
-                            div [ class "media-right is-marginless buttonsToolbar" ]
-                                [ tb ]
+                            div [ class "media-right is-marginless buttonsToolbar" ] [ tb ]
 
                         Nothing ->
                             div [ class "media-right is-marginless buttonEdit" ] [ doEditView op_m BlobType.OnAbout ]

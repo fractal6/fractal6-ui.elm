@@ -238,11 +238,18 @@ const actions = {
         });
 
     },
+    'FOCUS_ON' : (app, session, target) => {
+        setTimeout( () => {
+            var $tt = document.getElementById(target);
+            if ($tt) { $tt.focus(); }
+        }, 100);
+    },
     'OUTSIDE_CLICK_CLOSE' : (app, session, data) => {
         var id = data.target; // close the given target if a click occurs outside the div or if ESC is pressed
         var msg = data.msg; // automatically send the given msg to Elm
 
-        InitBulma(app, session, id);
+        // @debug: breaks the "close on click" event of burgers and dropdowns
+        //InitBulma(app, session, id);
 
         const closeEvent = () => {
             app.ports[msg].send(null);

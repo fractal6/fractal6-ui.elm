@@ -35,7 +35,7 @@ export function setpixelated(ctx2d, v) {
 }
 
 
-const toggleTheme = () =>  {
+const toggleTheme = () => {
     var is_dark = document
         .getElementById('cssTheme')
         .classList[0] === 'dark_theme';

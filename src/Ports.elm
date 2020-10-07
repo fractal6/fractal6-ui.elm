@@ -256,6 +256,14 @@ inheritWith target =
         }
 
 
+focusOn : String -> Cmd msg
+focusOn target =
+    outgoing
+        { action = "FOCUS_ON"
+        , data = JE.string target
+        }
+
+
 outsideClickClose : String -> String -> Cmd msg
 outsideClickClose msg target =
     outgoing

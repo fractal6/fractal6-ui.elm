@@ -21,6 +21,8 @@ export function catchEsc(e, fun) {
     }
 }
 
+const closeOnClickBurger = ['userMenu']; // data-target of burger
+
 
 export function BulmaDriver(app, target, handlers) {
     //
@@ -84,7 +86,7 @@ export function BulmaDriver(app, target, handlers) {
     //
 
     const $autofocuses = $doc.querySelectorAll('.autofocus');
-    // * listen for enter to advanced the focus on textarea
+    // * focus on hte element automatically
     //
     if ($autofocuses.length > 0) {
         $autofocuses.forEach( el => {
@@ -107,7 +109,6 @@ export function BulmaDriver(app, target, handlers) {
         }
     }
 
-    // Toggle is-active on click event for each {navbar-burger}
     const $followFocuses = $doc.querySelectorAll('.followFocus');
     // * listen for enter to advanced the focus on textarea
     //
@@ -124,6 +125,7 @@ export function BulmaDriver(app, target, handlers) {
     //
 
     function burgerToggleHandler(e, el) {
+        e.stopPropagation();
         // Get the target from the "data-target" attribute
         const $target_ = document.getElementById(el.dataset.target);
         // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
@@ -140,22 +142,39 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
-    // Toggle is-active on click event for each {navbar-burger}
-    const $navbarBurgers = $doc.querySelectorAll('.navbar-burger');
+    // Close all burger by removing `is-active` class.
+    function closeBurgersClick(e, objs) {
+        objs.forEach(function(el) {
+            if (closeOnClickBurger.includes(el.dataset.target)) {
+                const $target_ = document.getElementById(el.dataset.target);
+                el.classList.remove('is-active');
+                $target_.classList.remove('is-active');
+            }
+        });
+    }
+
+    // Toggle is-active on click event for each {burger}
+    const $burgers = $doc.querySelectorAll('.burger');
     // * toggle active state on click
     // * close on escape
     //
     // Toggle navbars when clicking on burgers
-    if ($navbarBurgers.length > 0) {
-        $navbarBurgers.forEach( el => {
+    if ($burgers.length > 0) {
+
+        // Toggle on click
+        $burgers.forEach( el => {
             // For each dropdown, add event handler to open on click.
             var h1 = e => burgerToggleHandler(e, el);
             setupHandler("click", h1, el);
         });
 
-        // For each dropdown, add event handler to close on esc
-        var h2 = e => catchEsc(e, () => closeBurgers(e, $navbarBurgers));
+        // For each burger, add event handler to close on Esc
+        var h2 = e => catchEsc(e, () => closeBurgers(e, $burgers));
         setupHandler("keydown", h2, document);
+
+        // For each burger, add event handler to close if a click occurs outside.
+        var h3 = e => closeBurgersClick(e, $burgers);
+        setupHandler("click", h3, document);
     }
 
     //
@@ -186,6 +205,8 @@ export function BulmaDriver(app, target, handlers) {
     // * stopeventpropgation (difference witn preventdefault ?)
     //
     if ($dropdowns.length > 0) {
+
+        // Toggle on click
         $dropdowns.forEach(function(el) {
             // For each dropdown, add event handler to open on click.
             var h3 = e => buttonDropdownHandler(e, el, $dropdowns);

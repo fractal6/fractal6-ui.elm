@@ -142,7 +142,8 @@ view uspd =
                     [ div [ class "panel-block" ]
                         [ p [ class "control has-icons-left" ]
                             [ input
-                                [ class "input autofocus"
+                                [ id "userInput"
+                                , class "input autofocus"
                                 , type_ "text"
                                 , placeholder T.searchUsers
                                 , value uspd.data.form.pattern

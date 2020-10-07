@@ -26,7 +26,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -592,7 +592,7 @@ update global msg model =
                 newForm =
                     { form | id = id }
             in
-            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+            ( { model | comment_form = newForm }, Ports.focusOn "updateCommentInput", Cmd.none )
 
         ChangeCommentPost field value ->
             let
@@ -665,7 +665,7 @@ update global msg model =
                         ( { model | comment_result = result }, Cmd.none, Cmd.none )
 
         DoChangeTitle ->
-            ( { model | isTitleEdit = True }, Cmd.none, Cmd.none )
+            ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
             ( { model | isTitleEdit = False, tension_form = initTensionPatchForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
@@ -962,7 +962,11 @@ update global msg model =
                 in
                 ( { model | assigneesPanel = UserSearchPanel.edit model.assigneesPanel }
                 , gcmd
-                , Cmd.batch [ Ports.outsideClickClose "doAssigneesCancelFromJs" "assigneesPanelContent", Ports.inheritWith "userSearchPanel" ]
+                , Cmd.batch
+                    [ Ports.outsideClickClose "doAssigneesCancelFromJs" "assigneesPanelContent"
+                    , Ports.inheritWith "userSearchPanel"
+                    , Ports.focusOn "userInput"
+                    ]
                 )
 
             else
@@ -1261,14 +1265,30 @@ viewTension u t model =
                 [ h1 [ class "title tensionTitle" ] <|
                     case model.isTitleEdit of
                         True ->
+                            let
+                                title =
+                                    Dict.get "title" model.tension_form.post |> withDefault t.title
+
+                                isLoading =
+                                    model.title_result == LoadingSlowly
+
+                                isSendable =
+                                    title /= t.title
+
+                                doSubmit =
+                                    ternary isSendable [ onClick (Submit <| SubmitTitle) ] []
+
+                                h =
+                                    Debug.log "is" isSendable
+                            in
                             [ div [ class "field is-grouped" ]
                                 [ p [ class "control is-expanded" ]
                                     [ input
-                                        [ class "input"
-                                        , autofocus True
+                                        [ id "titleInput"
+                                        , class "input"
                                         , type_ "text"
                                         , placeholder "Title*"
-                                        , value (Dict.get "title" model.tension_form.post |> withDefault t.title)
+                                        , value title
                                         , onInput (ChangeTensionPost "title")
                                         ]
                                         []
@@ -1276,10 +1296,12 @@ viewTension u t model =
                                 , p [ class "control buttons" ]
                                     [ span [ class "button has-text-weight-normal is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
                                     , span
-                                        [ class "button has-text-weight-normal is-success is-small"
-                                        , classList [ ( "is-loading", model.title_result == LoadingSlowly ) ]
-                                        , onClick (Submit <| SubmitTitle)
-                                        ]
+                                        ([ class "button has-text-weight-normal is-small"
+                                         , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                         , disabled (not isSendable)
+                                         ]
+                                            ++ doSubmit
+                                        )
                                         [ text T.updateTitle ]
                                     ]
                                 ]
@@ -1463,7 +1485,7 @@ viewComment c model =
                                         , attribute "aria-controls" "dropdown-menu_ellipsis"
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ Fa.icon0 "fas fa-ellipsis-h" "" ]
+                                        [ Fa.icon0 "fas fa-lg fa-ellipsis-h" "" ]
                                     ]
                                 , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
@@ -1500,7 +1522,7 @@ viewCommentInput uctx tension form result viewMode =
         isSendable =
             isPostSendable [ "message" ] form.post
 
-        submitComment =
+        doSubmit =
             ternary isSendable [ onClick (Submit <| SubmitComment Nothing) ] []
 
         submitCloseOpenTension =
@@ -1537,7 +1559,7 @@ viewCommentInput uctx tension form result viewMode =
                             [ case viewMode of
                                 Write ->
                                     textarea
-                                        [ id "textAreaModal"
+                                        [ id "commentInput"
                                         , class "textarea"
                                         , rows 7
                                         , placeholder "Leave a comment"
@@ -1571,7 +1593,7 @@ viewCommentInput uctx tension form result viewMode =
                                      , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
                                      ]
-                                        ++ submitComment
+                                        ++ doSubmit
                                     )
                                     [ text "Comment" ]
                                 ]
@@ -1677,8 +1699,7 @@ viewUpdateInput uctx comment form result =
                     [ case viewMode of
                         Write ->
                             textarea
-                                [ id "textAreaModal"
-                                , autofocus True
+                                [ id "updateCommentInput"
                                 , class "textarea"
                                 , rows 7
                                 , placeholder "Leave a comment"
