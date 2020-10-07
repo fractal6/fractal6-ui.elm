@@ -206,6 +206,9 @@ type Msg
     | CancelBlob
       -- Blob doc edit
     | ChangeBlobNode String String
+    | AddResponsabilities
+    | AddDomains
+    | AddPolicies
     | ChangeBlobMD String
       -- Blob Submit
     | SubmitBlob NodeDoc Time.Posix --@debug new type to handle MdDoc
@@ -754,6 +757,15 @@ update global msg model =
                     model.tension_head |> withMaybeData |> Maybe.map (\th -> th.action) |> withDefault Nothing
             in
             ( { model | nodeDoc = NodeDoc.postNode field value action model.nodeDoc }, Cmd.none, Cmd.none )
+
+        AddResponsabilities ->
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )
+
+        AddDomains ->
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Cmd.none )
+
+        AddPolicies ->
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
 
         ChangeBlobMD value ->
             let
@@ -1780,6 +1792,9 @@ viewDocument u t b model =
                             , onSubmitBlob = SubmitBlob
                             , onSubmit = Submit
                             , onChangeNode = ChangeBlobNode
+                            , onAddResponsabilities = AddResponsabilities
+                            , onAddDomains = AddDomains
+                            , onAddPolicies = AddPolicies
                             , onChangeUserPattern = ChangeNodeUserPattern
                             , onChangeUserRole = ChangeNodeUserRole
                             , onSelectUser = SelectUser

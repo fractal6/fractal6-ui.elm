@@ -64,7 +64,7 @@ userButton user =
                     --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "fas fa-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
-                        --[ Fa.icon "fas fa-sign-out-alt" "Sign Out" ]
+                        --[ Fa.icon "fas fa-sm fa-sign-out-alt" "Sign Out" ]
                         [ text "Sign Out" ]
                     ]
                 ]

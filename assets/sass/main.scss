@@ -287,6 +287,7 @@ html.has-modal-active, html.has-modal-active2 {
             max-width: 50% !important;
         }
         .navbar-end {
+            justify-content: flex-start !important;
             max-width: 50% !important;
             margin-right: -0.5rem !important;
             @include until($desktop) {
@@ -300,6 +301,7 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .navbar-menu {
+            flex-shrink: none !important;
             background-color: inherit !important;
         }
     }
@@ -938,8 +940,8 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .table, .table.is-fullwidth {
-        flex-grow: 1;
-        flex-shrink: 1;
+        //flex-grow: 1;
+        //flex-shrink: 1;
         display: inline-table;
         background-color: #fffffdf2 !important;
         line-height: 1.4 !important;

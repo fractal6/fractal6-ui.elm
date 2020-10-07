@@ -508,6 +508,21 @@ updateComment =
     "Update comment"
 
 
+addResponsabilities : String
+addResponsabilities =
+    "Add accountabilities"
+
+
+addDomains : String
+addDomains =
+    "Add domains"
+
+
+addPolicies : String
+addPolicies =
+    "Add policies"
+
+
 
 -- Action
 --@Todo

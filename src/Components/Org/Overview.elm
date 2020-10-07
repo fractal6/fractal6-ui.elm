@@ -134,6 +134,9 @@ type Msg
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeNodePost String String -- {field value}
+    | AddResponsabilities
+    | AddDomains
+    | AddPolicies
     | NewNodesAck (GqlData (List Node))
       -- CircleAck === TensionAck
       -- JoinOrga Action
@@ -654,7 +657,7 @@ update global msg model =
         -- New Circle
         DoCircleInit node nodeType ->
             -- We do not load users_data here because it assumes GotOrga is called at init.
-            ( { model | node_action = AddCircle NodeInit, tensionForm = NewTensionForm.initCircle node nodeType model.tensionForm }
+            ( { model | node_action = AddCircle NodeInit, tensionForm = NewTensionForm.create model.node_focus |> NewTensionForm.initCircle node nodeType }
             , send DoCircleSource
             , Ports.bulma_driver "actionModal"
             )
@@ -709,6 +712,15 @@ update global msg model =
 
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        AddResponsabilities ->
+            ( { model | tensionForm = NewTensionForm.addResponsabilities model.tensionForm }, Cmd.none, Cmd.none )
+
+        AddDomains ->
+            ( { model | tensionForm = NewTensionForm.addDomains model.tensionForm }, Cmd.none, Cmd.none )
+
+        AddPolicies ->
+            ( { model | tensionForm = NewTensionForm.addPolicies model.tensionForm }, Cmd.none, Cmd.none )
 
         SubmitCircle data doClose time ->
             let
@@ -1378,8 +1390,12 @@ makeNewTensionFormOp model =
     { lookup = model.lookup_users
     , users_data = model.users_data
     , targets = [ model.tensionForm.form.source.nameid, model.tensionForm.form.target.nameid ]
+    , data = model.tensionForm
     , onChangeInputViewMode = ChangeInputViewMode
     , onChangeNode = ChangeNodePost
+    , onAddResponsabilities = AddResponsabilities
+    , onAddDomains = AddDomains
+    , onAddPolicies = AddPolicies
     , onCloseModal = DoCloseModal
     , onSubmitTension = SubmitTension
     , onSubmit = Submit
@@ -1432,13 +1448,13 @@ viewTensionStep step ntf model =
                 Just blob_type ->
                     case blob_type of
                         BlobType.OnNode ->
-                            NewCircleForm.view ntf (makeNewCircleFormOp model)
+                            NewCircleForm.view (makeNewCircleFormOp model)
 
                         _ ->
                             div [] [ text "Not implemented" ]
 
                 Nothing ->
-                    NewTensionForm.view ntf (makeNewTensionFormOp model)
+                    NewTensionForm.view (makeNewTensionFormOp model)
 
         TensionNotAuthorized errMsg ->
             viewWarnings errMsg
@@ -1455,7 +1471,7 @@ viewCircleStep step ntf model =
             viewSourceRoles ntf.form roles DoCircleFinal
 
         NodeFinal ->
-            NewCircleForm.view ntf (makeNewCircleFormOp model)
+            NewCircleForm.view (makeNewCircleFormOp model)
 
         NodeNotAuthorized errMsg ->
             viewWarnings errMsg

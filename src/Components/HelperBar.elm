@@ -36,6 +36,11 @@ collapse hb =
     Collapsed
 
 
+numberRolesCollapsed : Int
+numberRolesCollapsed =
+    5
+
+
 type alias HelperBarData msg =
     { onJoin : msg
     , onExpand : msg
@@ -170,7 +175,7 @@ memberButtons roles_ hb =
                     roles_
 
                 Collapsed ->
-                    List.take 10 roles_
+                    List.take numberRolesCollapsed roles_
 
         roleMoreLen =
             List.length roles_ - List.length roles

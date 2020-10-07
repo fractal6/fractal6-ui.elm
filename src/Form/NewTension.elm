@@ -34,6 +34,9 @@ type alias NewTensionForm =
     , activeButton : Maybe Int
     , viewMode : InputViewMode
     , isLookupOpen : Bool
+    , doAddResponsabilities : Bool
+    , doAddDomains : Bool
+    , doAddPolicies : Bool
     }
 
 
@@ -44,6 +47,9 @@ create focus =
     , activeButton = Nothing
     , viewMode = Write
     , isLookupOpen = False
+    , doAddResponsabilities = False
+    , doAddDomains = False
+    , doAddPolicies = False
     }
 
 
@@ -103,6 +109,21 @@ setForm form data =
 setResult : GqlData Tension -> NewTensionForm -> NewTensionForm
 setResult result data =
     { data | result = result }
+
+
+addResponsabilities : NewTensionForm -> NewTensionForm
+addResponsabilities data =
+    { data | doAddResponsabilities = True }
+
+
+addDomains : NewTensionForm -> NewTensionForm
+addDomains data =
+    { data | doAddDomains = True }
+
+
+addPolicies : NewTensionForm -> NewTensionForm
+addPolicies data =
+    { data | doAddPolicies = True }
 
 
 
@@ -240,6 +261,7 @@ type alias Op msg =
     { lookup : List User
     , users_data : GqlData UsersData
     , targets : List String
+    , data : NewTensionForm
 
     -- Modal control
     , onChangeInputViewMode : InputViewMode -> msg
@@ -249,6 +271,9 @@ type alias Op msg =
 
     -- Doc change
     , onChangeNode : String -> String -> msg
+    , onAddResponsabilities : msg
+    , onAddDomains : msg
+    , onAddPolicies : msg
 
     -- User search and change
     , onChangeUserPattern : Int -> String -> msg
@@ -260,28 +285,28 @@ type alias Op msg =
     }
 
 
-view : NewTensionForm -> Op msg -> Html msg
-view data op =
+view : Op msg -> Html msg
+view op =
     let
         form =
-            data.form
+            op.data.form
 
         txt =
             getTensionText
 
         isLoading =
-            data.result == LoadingSlowly
+            op.data.result == LoadingSlowly
 
         isSendable =
             isPostSendable [ "title" ] form.post
 
         submitTension =
-            ternary isSendable [ onClick (op.onSubmit <| op.onSubmitTension data False) ] []
+            ternary isSendable [ onClick (op.onSubmit <| op.onSubmitTension op.data False) ] []
 
         message =
             Dict.get "message" form.post |> withDefault ""
     in
-    case data.result of
+    case op.data.result of
         Success res ->
             let
                 link =
@@ -328,15 +353,15 @@ view data op =
                         [ div [ class "message-header" ]
                             [ div [ class "tabs is-boxed is-small" ]
                                 [ ul []
-                                    [ li [ classList [ ( "is-active", data.viewMode == Write ) ] ] [ a [ onClickPD2 (op.onChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
-                                    , li [ classList [ ( "is-active", data.viewMode == Preview ) ] ] [ a [ onClickPD2 (op.onChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                                    [ li [ classList [ ( "is-active", op.data.viewMode == Write ) ] ] [ a [ onClickPD2 (op.onChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                                    , li [ classList [ ( "is-active", op.data.viewMode == Preview ) ] ] [ a [ onClickPD2 (op.onChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
                                     ]
                                 ]
                             ]
                         , div [ class "message-body" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
-                                    [ case data.viewMode of
+                                    [ case op.data.viewMode of
                                         Write ->
                                             textarea
                                                 [ id "textAreaModal"

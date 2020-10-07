@@ -27,9 +27,12 @@ import ModelSchema exposing (RequestResult(..))
 -- see Op in NewTension.elm
 
 
-view : NewTensionForm -> Op msg -> Html msg
-view data op =
+view : Op msg -> Html msg
+view op =
     let
+        data =
+            op.data
+
         form =
             data.form
 
@@ -118,7 +121,7 @@ view data op =
                     , br [] []
                     , div [ class "card cardForm" ]
                         [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
-                        , div [ class "card-content" ] [ nodeLinksInputView txt form data op ]
+                        , div [ class "card-content" ] [ nodeLinksInputView txt form op.data op ]
                         ]
                     , br [] []
                     , div [ class "card cardForm" ]

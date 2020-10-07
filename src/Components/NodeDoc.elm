@@ -30,6 +30,9 @@ type alias NodeDoc =
     , result : GqlData PatchTensionPayloadID
     , isBlobEdit : Bool
     , isLookupOpen : Bool
+    , doAddResponsabilities : Bool
+    , doAddDomains : Bool
+    , doAddPolicies : Bool
     }
 
 
@@ -39,6 +42,9 @@ create tid user =
     , result = NotAsked
     , isBlobEdit = False
     , isLookupOpen = False
+    , doAddResponsabilities = False
+    , doAddDomains = False
+    , doAddPolicies = False
     }
 
 
@@ -90,6 +96,21 @@ setForm form data =
 setResult : GqlData PatchTensionPayloadID -> NodeDoc -> NodeDoc
 setResult result data =
     { data | result = result }
+
+
+addResponsabilities : NodeDoc -> NodeDoc
+addResponsabilities data =
+    { data | doAddResponsabilities = True }
+
+
+addDomains : NodeDoc -> NodeDoc
+addDomains data =
+    { data | doAddDomains = True }
+
+
+addPolicies : NodeDoc -> NodeDoc
+addPolicies data =
+    { data | doAddPolicies = True }
 
 
 
@@ -219,7 +240,7 @@ type alias Op msg =
     , targets : List String
     , data : NodeDoc
 
-    -- Blob
+    -- Blob control
     , onBlobEdit : BlobType.BlobType -> msg
     , onCancelBlob : msg
     , onSubmitBlob : NodeDoc -> Time.Posix -> msg
@@ -227,6 +248,9 @@ type alias Op msg =
 
     -- Doc change
     , onChangeNode : String -> String -> msg
+    , onAddResponsabilities : msg
+    , onAddDomains : msg
+    , onAddPolicies : msg
 
     -- User search and change
     , onChangeUserPattern : Int -> String -> msg
@@ -582,6 +606,19 @@ nodeLinksInputView txt form data op =
 
 
 nodeMandateInputView txt node op =
+    let
+        purpose =
+            node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault ""
+
+        responsabilities =
+            node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault ""
+
+        domains =
+            node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault ""
+
+        policies =
+            node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault ""
+    in
     div [ class "field" ]
         [ div [ class "field" ]
             [ div [ class "label" ] [ text T.purposeH ]
@@ -591,52 +628,73 @@ nodeMandateInputView txt node op =
                     , class "textarea"
                     , rows 5
                     , placeholder (txt.ph_purpose ++ "*")
-                    , value (node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault "")
+                    , value purpose
                     , onInput <| op.onChangeNode "purpose"
                     , required True
                     ]
                     []
                 ]
             ]
-        , div [ class "field" ]
-            [ div [ class "label" ] [ text T.responsabilitiesH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 5
-                    , placeholder txt.ph_responsabilities
-                    , value (node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault "")
-                    , onInput <| op.onChangeNode "responsabilities"
+        , if op.data.doAddResponsabilities || responsabilities /= "" then
+            div [ class "field" ]
+                [ div [ class "label" ] [ text T.responsabilitiesH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ class "textarea"
+                        , rows 5
+                        , placeholder txt.ph_responsabilities
+                        , value responsabilities
+                        , onInput <| op.onChangeNode "responsabilities"
+                        ]
+                        []
                     ]
-                    []
                 ]
-            ]
-        , div [ class "field" ]
-            [ div [ class "label" ] [ text T.domainsH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 5
-                    , placeholder txt.ph_domains
-                    , value (node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault "")
-                    , onInput <| op.onChangeNode "domains"
+
+          else
+            div [ class "field" ]
+                [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
+                    [ Fa.icon "fas fa-plus" "", text T.addResponsabilities ]
+                ]
+        , if op.data.doAddDomains || domains /= "" then
+            div [ class "field" ]
+                [ div [ class "label" ] [ text T.domainsH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ class "textarea"
+                        , rows 5
+                        , placeholder txt.ph_domains
+                        , value domains
+                        , onInput <| op.onChangeNode "domains"
+                        ]
+                        []
                     ]
-                    []
                 ]
-            ]
-        , div [ class "field" ]
-            [ div [ class "label" ] [ text T.policiesH ]
-            , div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 5
-                    , placeholder txt.ph_policies
-                    , value (node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault "")
-                    , onInput <| op.onChangeNode "policies"
+
+          else
+            div [ class "field" ]
+                [ div [ class "button is-small is-success", onClick op.onAddDomains ]
+                    [ Fa.icon "fas fa-plus" "", text T.addDomains ]
+                ]
+        , if op.data.doAddPolicies || policies /= "" then
+            div [ class "field" ]
+                [ div [ class "label" ] [ text T.policiesH ]
+                , div [ class "control" ]
+                    [ textarea
+                        [ class "textarea"
+                        , rows 5
+                        , placeholder txt.ph_policies
+                        , value policies
+                        , onInput <| op.onChangeNode "policies"
+                        ]
+                        []
                     ]
-                    []
                 ]
-            ]
+
+          else
+            div [ class "field" ]
+                [ div [ class "button is-small is-success", onClick op.onAddPolicies ]
+                    [ Fa.icon "fas fa-plus" "", text T.addPolicies ]
+                ]
         ]
 
 
