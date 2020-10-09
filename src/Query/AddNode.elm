@@ -96,6 +96,7 @@ newMemberInputEncoder { uctx, rootnameid, id, post } =
             , isRoot = False
             , charac = { userCanJoin = Present False, mode = Present NodeMode.Coordinated, id = Absent }
             , isPrivate = False
+            , isArchived = False
             }
 
         nodeOptional =
@@ -259,6 +260,7 @@ addCircleInputEncoder f =
             , nameid = nameid
             , rootnameid = f.target.rootnameid
             , isPrivate = f.target.isPrivate
+            , isArchived = False
             , charac = { userCanJoin = Present charac.userCanJoin, mode = Present charac.mode, id = Absent }
             }
 

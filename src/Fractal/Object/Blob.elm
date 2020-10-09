@@ -47,6 +47,11 @@ pushedFlag =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "pushedFlag" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
 
 
+archivedFlag : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Blob
+archivedFlag =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "archivedFlag" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
 type alias NodeOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
 

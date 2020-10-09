@@ -12,12 +12,13 @@ type BlobOrderable
     | UpdatedAt
     | Message
     | PushedFlag
+    | ArchivedFlag
     | Md
 
 
 list : List BlobOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, PushedFlag, Md ]
+    [ CreatedAt, UpdatedAt, Message, PushedFlag, ArchivedFlag, Md ]
 
 
 decoder : Decoder BlobOrderable
@@ -37,6 +38,9 @@ decoder =
 
                     "pushedFlag" ->
                         Decode.succeed PushedFlag
+
+                    "archivedFlag" ->
+                        Decode.succeed ArchivedFlag
 
                     "md" ->
                         Decode.succeed Md
@@ -62,6 +66,9 @@ toString enum =
 
         PushedFlag ->
             "pushedFlag"
+
+        ArchivedFlag ->
+            "archivedFlag"
 
         Md ->
             "md"
@@ -92,6 +99,9 @@ fromString enumString =
 
         "pushedFlag" ->
             Just PushedFlag
+
+        "archivedFlag" ->
+            Just ArchivedFlag
 
         "md" ->
             Just Md

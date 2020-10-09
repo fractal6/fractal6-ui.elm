@@ -946,7 +946,7 @@ subscriptions _ _ =
         , nodeDataFromJs_ DoNodeAction
         , Ports.lookupNodeFromJs ChangeNodeLookup
         , Ports.lookupUserFromJs ChangeUserLookup
-        , Ports.doCancelLookupFsFromJs (always CancelLookupFs)
+        , Ports.cancelLookupFsFromJs (always CancelLookupFs)
         ]
 
 
@@ -1132,9 +1132,6 @@ viewSearchBar odata maybePath qs =
                     )
                 |> withDefault (Err "No path returned")
 
-        isActive =
-            ternary (True && qs.visible) " is-active " ""
-
         sortedLookup =
             qs.lookup
                 |> Array.toList
@@ -1156,7 +1153,7 @@ viewSearchBar odata maybePath qs =
         , class "field has-addons searchBar"
         , onMouseEnter DoClearTooltip
         ]
-        [ div [ class ("control has-icons-left is-expanded dropdown" ++ isActive) ]
+        [ div [ class "control has-icons-left is-expanded" ]
             [ input
                 [ class "input is-small"
                 , type_ "text"
@@ -1172,8 +1169,8 @@ viewSearchBar odata maybePath qs =
                 ]
                 []
             , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
-            , div [ id "searchList", class "dropdown-menu" ]
-                [ div [ class "dropdown-content table is-fullwidth" ] <|
+            , div [ id "searchList", classList [ ( "is-hidden", qs.visible == False ) ] ]
+                [ div [ class "table is-fullwidth" ] <|
                     if sortedLookup == [] then
                         [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
 
@@ -1181,11 +1178,11 @@ viewSearchBar odata maybePath qs =
                         sortedLookup
                             |> List.indexedMap
                                 (\i n ->
-                                    let
-                                        isSelected =
-                                            ternary (i == qs.idx) " is-active " ""
-                                    in
-                                    [ tr [ class ("drpdwn-item" ++ isSelected), onClickPD (NodeClicked n.nameid) ] <|
+                                    [ tr
+                                        [ classList [ ( "is-active", i == qs.idx ) ]
+                                        , onClickPD (NodeClicked n.nameid)
+                                        ]
+                                      <|
                                         [ th [] [ text n.name ] ]
                                             ++ (case n.type_ of
                                                     NodeType.Circle ->

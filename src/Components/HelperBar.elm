@@ -142,7 +142,7 @@ viewPath baseUri maybePath =
                                     ]
 
                             else
-                                li [ class "s-active has-text-weight-semibold" ]
+                                li [ class "is-acti has-text-weight-semibold" ]
                                     [ a [ href (uriFromNameid baseUri p.nameid) ]
                                         [ div [] [ text p.name ] ]
                                     ]

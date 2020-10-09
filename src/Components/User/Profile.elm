@@ -341,7 +341,7 @@ viewUserOrgas user_data =
                                                 div [] []
                                         ]
                                     , div [ class "column is-4" ]
-                                        [ div [ class "field is-grouped is-grouped-multiline" ]
+                                        [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
                                             [ div [ class "control" ]
                                                 [ div [ class "tags has-addons" ]
                                                     [ span [ class "tag is-light" ] [ text "member" ]

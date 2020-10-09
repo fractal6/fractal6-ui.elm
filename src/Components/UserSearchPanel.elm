@@ -25,12 +25,16 @@ type alias UserSearchPanel =
     }
 
 
-create : UserState -> UserSearchPanel
-create user =
+create : UserState -> String -> UserSearchPanel
+create user tid =
     { isEdit = False
-    , form = initAssigneeForm user
+    , form = initAssigneeForm user tid
     , click_result = NotAsked
     }
+
+
+
+-- State control
 
 
 edit : UserSearchPanel -> UserSearchPanel
@@ -62,7 +66,7 @@ setClickResult result data =
 
 
 
--- Updata Form
+-- Update Form
 
 
 setEvents : List TensionEvent.TensionEvent -> UserSearchPanel -> UserSearchPanel
@@ -70,11 +74,8 @@ setEvents events data =
     let
         f =
             data.form
-
-        newForm =
-            { f | events_type = Just events }
     in
-    { data | form = newForm }
+    { data | form = { f | events_type = Just events } }
 
 
 post : String -> String -> UserSearchPanel -> UserSearchPanel
@@ -82,11 +83,8 @@ post field value data =
     let
         f =
             data.form
-
-        newForm =
-            { f | post = Dict.insert field value f.post }
     in
-    { data | form = newForm }
+    { data | form = { f | post = Dict.insert field value f.post } }
 
 
 setPattern : String -> UserSearchPanel -> UserSearchPanel
@@ -103,10 +101,9 @@ type alias UserSearchPanelData msg =
     , targets : List String
     , users_data : GqlData UsersData
     , lookup : List User
-    , tid : String
     , data : UserSearchPanel
     , onChangePattern : String -> msg
-    , onUserClick : String -> User -> Bool -> Time.Posix -> msg
+    , onUserClick : User -> Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
     }
 
@@ -196,7 +193,7 @@ viewAssigneeSelectors users uspd =
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (uspd.onSubmit <| uspd.onUserClick uspd.tid u (isActive == False))
+                            , onClick (uspd.onSubmit <| uspd.onUserClick u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                             , viewUser u.username

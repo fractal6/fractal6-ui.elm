@@ -295,8 +295,9 @@ type alias TensionCharac =
 
 
 type ActionType
-    = EDIT
-    | NEW
+    = NEW
+    | EDIT
+    | ARCHIVE
 
 
 type DocType
@@ -313,14 +314,23 @@ getTensionCharac action =
         TensionAction.EditRole ->
             { action_type = EDIT, doc_type = NODE }
 
+        TensionAction.ArchivedRole ->
+            { action_type = ARCHIVE, doc_type = NODE }
+
         TensionAction.NewCircle ->
             { action_type = NEW, doc_type = NODE }
 
         TensionAction.EditCircle ->
             { action_type = EDIT, doc_type = NODE }
 
+        TensionAction.ArchivedCircle ->
+            { action_type = ARCHIVE, doc_type = NODE }
+
         TensionAction.NewMd ->
             { action_type = NEW, doc_type = MD }
 
         TensionAction.EditMd ->
             { action_type = EDIT, doc_type = MD }
+
+        TensionAction.ArchivedMd ->
+            { action_type = ARCHIVE, doc_type = MD }

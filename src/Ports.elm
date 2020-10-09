@@ -29,10 +29,13 @@ port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
 port lookupUserFromJs_ : (JD.Value -> a) -> Sub a
 
 
-port doAssigneesCancelFromJs : (() -> msg) -> Sub msg
+port cancelAssigneesFromJs : (() -> msg) -> Sub msg
 
 
-port doCancelLookupFsFromJs : (() -> msg) -> Sub msg
+port cancelActionFromJs : (() -> msg) -> Sub msg
+
+
+port cancelLookupFsFromJs : (() -> msg) -> Sub msg
 
 
 

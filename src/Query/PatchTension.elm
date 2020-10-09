@@ -1,11 +1,13 @@
 module Query.PatchTension exposing
-    ( patchComment
+    ( archiveDoc
+    , patchComment
     , patchTitle
     , publishBlob
     , pushTensionPatch
     , setAssignee
     )
 
+import Components.ActionPanel exposing (ActionForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
@@ -161,6 +163,49 @@ patchTensionInputEncoder f =
 
 
 {-
+   Update a tension title
+-}
+
+
+type alias PatchTitlePayload =
+    { tension : Maybe (List (Maybe TensionTitle)) }
+
+
+type alias TensionTitle =
+    { title : String }
+
+
+titlePatchDecoder : Maybe PatchTitlePayload -> Maybe String
+titlePatchDecoder data =
+    case data of
+        Just d ->
+            d.tension
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+                |> Maybe.map (\t -> t.title)
+
+        Nothing ->
+            Nothing
+
+
+patchTitle url form msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (patchTensionInputEncoder form)
+            (SelectionSet.map PatchTitlePayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    SelectionSet.map TensionTitle Fractal.Object.Tension.title
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse titlePatchDecoder >> msg)
+
+
+
+{-
    set assignee
 -}
 
@@ -185,10 +230,10 @@ assigneeDecoder data =
             Nothing
 
 
-setAssignee url tid form msg =
+setAssignee url form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (setAssigneeEncoder tid form)
+            (setAssigneeEncoder form)
             (SelectionSet.map AssigneePayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map IdPayload
@@ -198,8 +243,8 @@ setAssignee url tid form msg =
         (RemoteData.fromResult >> decodeResponse assigneeDecoder >> msg)
 
 
-setAssigneeEncoder : String -> AssigneeForm -> Mutation.UpdateTensionRequiredArguments
-setAssigneeEncoder tid f =
+setAssigneeEncoder : AssigneeForm -> Mutation.UpdateTensionRequiredArguments
+setAssigneeEncoder f =
     let
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
@@ -211,7 +256,7 @@ setAssigneeEncoder tid f =
             { filter =
                 Input.buildTensionFilter
                     (\ft ->
-                        { ft | id = Present [ encodeId tid ] }
+                        { ft | id = Present [ encodeId f.tid ] }
                     )
             }
 
@@ -357,20 +402,16 @@ publishBlobInputEncoder bid f =
 
 
 {-
-   Update a tension title
+   Archive Doc
 -}
 
 
-type alias PatchTitlePayload =
-    { tension : Maybe (List (Maybe TensionTitle)) }
+type alias TensionArchivePayload =
+    { tension : Maybe (List (Maybe ActionResult)) }
 
 
-type alias TensionTitle =
-    { title : String }
-
-
-titlePatchDecoder : Maybe PatchTitlePayload -> Maybe String
-titlePatchDecoder data =
+archiveDocDecoder : Maybe TensionArchivePayload -> Maybe ActionResult
+archiveDocDecoder data =
     case data of
         Just d ->
             d.tension
@@ -380,22 +421,54 @@ titlePatchDecoder data =
                     )
                 |> withDefault []
                 |> List.head
-                |> Maybe.map (\t -> t.title)
 
         Nothing ->
             Nothing
 
 
-patchTitle url form msg =
+archiveDoc url form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (patchTensionInputEncoder form)
-            (SelectionSet.map PatchTitlePayload <|
+            (archiveDocInputEncoder form)
+            (SelectionSet.map TensionArchivePayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map TensionTitle Fractal.Object.Tension.title
+                    SelectionSet.map ActionResult Fractal.Object.Tension.action
             )
         )
-        (RemoteData.fromResult >> decodeResponse titlePatchDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse archiveDocDecoder >> msg)
+
+
+archiveDocInputEncoder : ActionForm -> Mutation.UpdateTensionRequiredArguments
+archiveDocInputEncoder f =
+    let
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        inputReq =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId f.tid ] }
+                    )
+            }
+
+        inputOpt =
+            \x ->
+                { set =
+                    Input.buildTensionPatch
+                        (\s ->
+                            { s
+                                | blobs = [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present
+                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input =
+        Input.buildUpdateTensionInput inputReq inputOpt
+    }
 
 
 

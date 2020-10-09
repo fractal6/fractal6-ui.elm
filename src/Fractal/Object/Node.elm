@@ -238,6 +238,11 @@ isPrivate =
     Object.selectionForField "Bool" "isPrivate" [] Decode.bool
 
 
+isArchived : SelectionSet Bool Fractal.Object.Node
+isArchived =
+    Object.selectionForField "Bool" "isArchived" [] Decode.bool
+
+
 type alias CharacOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
 

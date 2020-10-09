@@ -719,20 +719,13 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.tensionDocument {
-
-    .blobToolBar {
-        margin-bottom: 1rem;
-    }
-}
-
 #userSearchPanel {
     position: absolute;
     background: lighten($body-background-color, 7);
     border: 1px solid $grey-light;
     min-width: 250px;
     max-width: 450px;
-    z-index: 90;
+    z-index: 25;
 
     .control {
         .icon { color: $grey !important; }
@@ -763,6 +756,30 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
 }
+
+#actionPanelContent {
+    .dropdown-content {
+        position: absolute;
+        z-index: 25;
+        padding-right: 8rem;
+        margin-top: -0.3rem;
+    }
+
+}
+
+#actionPanelModal {
+    &.modal.is-active {
+        z-index: 40 !important;
+    }
+}
+
+.tensionDocument {
+
+    .blobToolBar {
+        margin-bottom: 1rem;
+    }
+}
+
 
 .tagsinput {
 	height: auto !important;
@@ -832,6 +849,12 @@ html.has-modal-active, html.has-modal-active2 {
     width: 100.25% !important;
     padding-top: 5px !important;
     margin-bottom: 12px !important;
+
+    & > div {
+        display: inline-flex;
+        position: relative;
+        vertical-align: top;
+    }
 
     .input {
         font-weight: 700 !important;
@@ -929,12 +952,16 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #searchList {
+    position: absolute !important;
+    top: 100% !important;
+    z-index: 20 !important;
     width: 99.9% !important;
     padding: 0 !important;
     padding-bottom: 0 !important;
-    max-height: 425px !important;
+    max-height: 412px !important;
     overflow-y: auto !important;
-    &>div {
+
+    & > div {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
     }
@@ -943,7 +970,7 @@ html.has-modal-active, html.has-modal-active2 {
         //flex-grow: 1;
         //flex-shrink: 1;
         display: inline-table;
-        background-color: #fffffdf2 !important;
+        background-color: #fffffdf6 !important;
         line-height: 1.4 !important;
         font-size: 0.775rem !important;
 
@@ -1355,7 +1382,7 @@ a.actionLink {
 }
 
 //
-// Modal for session refreshing
+// Modal for session refreshing (Modal Auth)
 //
 
 .modal2 {

@@ -572,7 +572,8 @@ export const GraphPack = {
 
         // Determine the node order in the circle packing
         const nodeOrder = (n1, n2) => {
-            return n1.data.createdAt > n2.data.createdAt // node order
+            // node order
+            return n1.data.createdAt > n2.data.createdAt
         }
 
         this.gStats = computeDepth(graph);

@@ -176,6 +176,7 @@ type alias CommentPatchForm =
 
 type alias AssigneeForm =
     { uctx : UserCtx
+    , tid : String
     , pattern : String
     , assignee : User -- last one clicked/selected
     , isNew : Bool -- toggle select
@@ -184,8 +185,8 @@ type alias AssigneeForm =
     }
 
 
-initAssigneeForm : UserState -> AssigneeForm
-initAssigneeForm user =
+initAssigneeForm : UserState -> String -> AssigneeForm
+initAssigneeForm user tid =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -193,6 +194,7 @@ initAssigneeForm user =
 
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
+    , tid = tid
     , pattern = ""
     , assignee = User "" Nothing
     , isNew = False

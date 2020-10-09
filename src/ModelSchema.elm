@@ -135,22 +135,14 @@ type alias Tension =
     }
 
 
+type alias ActionResult =
+    { action : Maybe TensionAction.TensionAction }
+
+
 type alias EmitterOrReceiver =
     { name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
-    }
-
-
-type alias Username =
-    { username : String }
-
-
-type alias User =
-    { username : String
-    , name : Maybe String
-
-    -- logo
     }
 
 
@@ -301,6 +293,18 @@ initNodeFragment nt =
 --
 -- User/Members
 --
+
+
+type alias Username =
+    { username : String }
+
+
+type alias User =
+    { username : String
+    , name : Maybe String
+
+    -- logo
+    }
 
 
 type alias Member =

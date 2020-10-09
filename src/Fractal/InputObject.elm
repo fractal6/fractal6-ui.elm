@@ -43,9 +43,9 @@ buildAddBlobInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { updatedAt = Absent, message = Absent, pushedFlag = Absent, node = Absent, md = Absent }
+                { updatedAt = Absent, message = Absent, pushedFlag = Absent, archivedFlag = Absent, node = Absent, md = Absent }
     in
-    AddBlobInput { createdAt = required.createdAt, updatedAt = optionals.updatedAt, createdBy = required.createdBy, message = optionals.message, tension = required.tension, blob_type = required.blob_type, pushedFlag = optionals.pushedFlag, node = optionals.node, md = optionals.md }
+    AddBlobInput { createdAt = required.createdAt, updatedAt = optionals.updatedAt, createdBy = required.createdBy, message = optionals.message, tension = required.tension, blob_type = required.blob_type, pushedFlag = optionals.pushedFlag, archivedFlag = optionals.archivedFlag, node = optionals.node, md = optionals.md }
 
 
 type alias AddBlobInputRequiredFields =
@@ -60,6 +60,7 @@ type alias AddBlobInputOptionalFields =
     { updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
     , pushedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , archivedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
     , md : OptionalArgument String
     }
@@ -78,6 +79,7 @@ type alias AddBlobInputRaw =
     , tension : TensionRef
     , blob_type : Fractal.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , archivedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
     , md : OptionalArgument String
     }
@@ -94,7 +96,7 @@ type AddBlobInput
 encodeAddBlobInput : AddBlobInput -> Value
 encodeAddBlobInput (AddBlobInput input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef input.tension |> Just ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString input.blob_type |> Just ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef input.tension |> Just ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString input.blob_type |> Just ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
 
 
 buildAddCommentInput : AddCommentInputRequiredFields -> (AddCommentInputOptionalFields -> AddCommentInputOptionalFields) -> AddCommentInput
@@ -278,20 +280,20 @@ encodeAddMandateInput input =
 
 buildAddNodeCharacInput : AddNodeCharacInputRequiredFields -> AddNodeCharacInput
 buildAddNodeCharacInput required =
-    { userCanJoin = required.userCanJoin, mode = required.mode }
+    { mode = required.mode, userCanJoin = required.userCanJoin }
 
 
 type alias AddNodeCharacInputRequiredFields =
-    { userCanJoin : Bool
-    , mode : Fractal.Enum.NodeMode.NodeMode
+    { mode : Fractal.Enum.NodeMode.NodeMode
+    , userCanJoin : Bool
     }
 
 
 {-| Type for the AddNodeCharacInput input object.
 -}
 type alias AddNodeCharacInput =
-    { userCanJoin : Bool
-    , mode : Fractal.Enum.NodeMode.NodeMode
+    { mode : Fractal.Enum.NodeMode.NodeMode
+    , userCanJoin : Bool
     }
 
 
@@ -300,7 +302,7 @@ type alias AddNodeCharacInput =
 encodeAddNodeCharacInput : AddNodeCharacInput -> Value
 encodeAddNodeCharacInput input =
     Encode.maybeObject
-        [ ( "userCanJoin", Encode.bool input.userCanJoin |> Just ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString input.mode |> Just ) ]
+        [ ( "mode", Encode.enum Fractal.Enum.NodeMode.toString input.mode |> Just ), ( "userCanJoin", Encode.bool input.userCanJoin |> Just ) ]
 
 
 buildAddNodeFragmentInput : (AddNodeFragmentInputOptionalFields -> AddNodeFragmentInputOptionalFields) -> AddNodeFragmentInput
@@ -371,7 +373,7 @@ buildAddNodeInput required fillOptionals =
             fillOptionals
                 { parent = Absent, children = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    AddNodeInput { createdAt = required.createdAt, createdBy = required.createdBy, name = required.name, nameid = required.nameid, rootnameid = required.rootnameid, parent = optionals.parent, children = optionals.children, type_ = required.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = required.isRoot, isPrivate = required.isPrivate, charac = required.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    AddNodeInput { createdAt = required.createdAt, createdBy = required.createdBy, name = required.name, nameid = required.nameid, rootnameid = required.rootnameid, parent = optionals.parent, children = optionals.children, type_ = required.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = required.isRoot, isPrivate = required.isPrivate, isArchived = required.isArchived, charac = required.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias AddNodeInputRequiredFields =
@@ -383,6 +385,7 @@ type alias AddNodeInputRequiredFields =
     , type_ : Fractal.Enum.NodeType.NodeType
     , isRoot : Bool
     , isPrivate : Bool
+    , isArchived : Bool
     , charac : NodeCharacRef
     }
 
@@ -433,6 +436,7 @@ type alias AddNodeInputRaw =
     , stats : OptionalArgument NodeStatsRef
     , isRoot : Bool
     , isPrivate : Bool
+    , isArchived : Bool
     , charac : NodeCharacRef
     , first_link : OptionalArgument UserRef
     , second_link : OptionalArgument UserRef
@@ -452,7 +456,7 @@ type AddNodeInput
 encodeAddNodeInput : AddNodeInput -> Value
 encodeAddNodeInput (AddNodeInput input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "name", Encode.string input.name |> Just ), ( "nameid", Encode.string input.nameid |> Just ), ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool input.isRoot |> Just ), ( "isPrivate", Encode.bool input.isPrivate |> Just ), ( "charac", encodeNodeCharacRef input.charac |> Just ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "name", Encode.string input.name |> Just ), ( "nameid", Encode.string input.nameid |> Just ), ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool input.isRoot |> Just ), ( "isPrivate", Encode.bool input.isPrivate |> Just ), ( "isArchived", Encode.bool input.isArchived |> Just ), ( "charac", encodeNodeCharacRef input.charac |> Just ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
 buildAddNodeStatsInput : (AddNodeStatsInputOptionalFields -> AddNodeStatsInputOptionalFields) -> AddNodeStatsInput
@@ -718,9 +722,9 @@ buildBlobFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, message = Absent, blob_type = Absent, pushedFlag = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, message = Absent, blob_type = Absent, pushedFlag = Absent, archivedFlag = Absent, and = Absent, or = Absent, not = Absent }
     in
-    BlobFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, and = optionals.and, or = optionals.or, not = optionals.not }
+    BlobFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, archivedFlag = optionals.archivedFlag, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias BlobFilterOptionalFields =
@@ -729,6 +733,7 @@ type alias BlobFilterOptionalFields =
     , message : OptionalArgument StringFullTextFilter
     , blob_type : OptionalArgument BlobType_hash
     , pushedFlag : OptionalArgument DateTimeFilter
+    , archivedFlag : OptionalArgument DateTimeFilter
     , and : OptionalArgument BlobFilter
     , or : OptionalArgument BlobFilter
     , not : OptionalArgument BlobFilter
@@ -746,6 +751,7 @@ type alias BlobFilterRaw =
     , message : OptionalArgument StringFullTextFilter
     , blob_type : OptionalArgument BlobType_hash
     , pushedFlag : OptionalArgument DateTimeFilter
+    , archivedFlag : OptionalArgument DateTimeFilter
     , and : OptionalArgument BlobFilter
     , or : OptionalArgument BlobFilter
     , not : OptionalArgument BlobFilter
@@ -763,7 +769,7 @@ type BlobFilter
 encodeBlobFilter : BlobFilter -> Value
 encodeBlobFilter (BlobFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "blob_type", encodeBlobType_hash |> Encode.optional input.blob_type ), ( "pushedFlag", encodeDateTimeFilter |> Encode.optional input.pushedFlag ), ( "and", encodeBlobFilter |> Encode.optional input.and ), ( "or", encodeBlobFilter |> Encode.optional input.or ), ( "not", encodeBlobFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "blob_type", encodeBlobType_hash |> Encode.optional input.blob_type ), ( "pushedFlag", encodeDateTimeFilter |> Encode.optional input.pushedFlag ), ( "archivedFlag", encodeDateTimeFilter |> Encode.optional input.archivedFlag ), ( "and", encodeBlobFilter |> Encode.optional input.and ), ( "or", encodeBlobFilter |> Encode.optional input.or ), ( "not", encodeBlobFilter |> Encode.optional input.not ) ]
 
 
 buildBlobOrder : (BlobOrderOptionalFields -> BlobOrderOptionalFields) -> BlobOrder
@@ -814,9 +820,9 @@ buildBlobPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, tension = Absent, blob_type = Absent, pushedFlag = Absent, node = Absent, md = Absent }
+                { createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, tension = Absent, blob_type = Absent, pushedFlag = Absent, archivedFlag = Absent, node = Absent, md = Absent }
     in
-    BlobPatch { createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, tension = optionals.tension, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, node = optionals.node, md = optionals.md }
+    BlobPatch { createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, tension = optionals.tension, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, archivedFlag = optionals.archivedFlag, node = optionals.node, md = optionals.md }
 
 
 type alias BlobPatchOptionalFields =
@@ -827,6 +833,7 @@ type alias BlobPatchOptionalFields =
     , tension : OptionalArgument TensionRef
     , blob_type : OptionalArgument Fractal.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , archivedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
     , md : OptionalArgument String
     }
@@ -845,6 +852,7 @@ type alias BlobPatchRaw =
     , tension : OptionalArgument TensionRef
     , blob_type : OptionalArgument Fractal.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , archivedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
     , md : OptionalArgument String
     }
@@ -861,7 +869,7 @@ type BlobPatch
 encodeBlobPatch : BlobPatch -> Value
 encodeBlobPatch (BlobPatch input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input.blob_type ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input.blob_type ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
 
 
 buildBlobRef : (BlobRefOptionalFields -> BlobRefOptionalFields) -> BlobRef
@@ -869,9 +877,9 @@ buildBlobRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, tension = Absent, blob_type = Absent, pushedFlag = Absent, node = Absent, md = Absent }
+                { id = Absent, createdAt = Absent, updatedAt = Absent, createdBy = Absent, message = Absent, tension = Absent, blob_type = Absent, pushedFlag = Absent, archivedFlag = Absent, node = Absent, md = Absent }
     in
-    BlobRef { id = optionals.id, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, tension = optionals.tension, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, node = optionals.node, md = optionals.md }
+    BlobRef { id = optionals.id, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, createdBy = optionals.createdBy, message = optionals.message, tension = optionals.tension, blob_type = optionals.blob_type, pushedFlag = optionals.pushedFlag, archivedFlag = optionals.archivedFlag, node = optionals.node, md = optionals.md }
 
 
 type alias BlobRefOptionalFields =
@@ -883,6 +891,7 @@ type alias BlobRefOptionalFields =
     , tension : OptionalArgument TensionRef
     , blob_type : OptionalArgument Fractal.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , archivedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
     , md : OptionalArgument String
     }
@@ -902,6 +911,7 @@ type alias BlobRefRaw =
     , tension : OptionalArgument TensionRef
     , blob_type : OptionalArgument Fractal.Enum.BlobType.BlobType
     , pushedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , archivedFlag : OptionalArgument Fractal.ScalarCodecs.DateTime
     , node : OptionalArgument NodeFragmentRef
     , md : OptionalArgument String
     }
@@ -918,7 +928,7 @@ type BlobRef
 encodeBlobRef : BlobRef -> Value
 encodeBlobRef (BlobRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input.blob_type ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input.blob_type ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
 
 
 buildBlobType_hash : BlobType_hashRequiredFields -> BlobType_hash
@@ -1813,15 +1823,15 @@ buildNodeCharacFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, userCanJoin = Absent, mode = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, mode = Absent, userCanJoin = Absent, and = Absent, or = Absent, not = Absent }
     in
-    NodeCharacFilter { id = optionals.id, userCanJoin = optionals.userCanJoin, mode = optionals.mode, and = optionals.and, or = optionals.or, not = optionals.not }
+    NodeCharacFilter { id = optionals.id, mode = optionals.mode, userCanJoin = optionals.userCanJoin, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias NodeCharacFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
-    , userCanJoin : OptionalArgument Bool
     , mode : OptionalArgument NodeMode_hash
+    , userCanJoin : OptionalArgument Bool
     , and : OptionalArgument NodeCharacFilter
     , or : OptionalArgument NodeCharacFilter
     , not : OptionalArgument NodeCharacFilter
@@ -1835,8 +1845,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias NodeCharacFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
-    , userCanJoin : OptionalArgument Bool
     , mode : OptionalArgument NodeMode_hash
+    , userCanJoin : OptionalArgument Bool
     , and : OptionalArgument NodeCharacFilter
     , or : OptionalArgument NodeCharacFilter
     , not : OptionalArgument NodeCharacFilter
@@ -1854,7 +1864,7 @@ type NodeCharacFilter
 encodeNodeCharacFilter : NodeCharacFilter -> Value
 encodeNodeCharacFilter (NodeCharacFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ), ( "mode", encodeNodeMode_hash |> Encode.optional input.mode ), ( "and", encodeNodeCharacFilter |> Encode.optional input.and ), ( "or", encodeNodeCharacFilter |> Encode.optional input.or ), ( "not", encodeNodeCharacFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "mode", encodeNodeMode_hash |> Encode.optional input.mode ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ), ( "and", encodeNodeCharacFilter |> Encode.optional input.and ), ( "or", encodeNodeCharacFilter |> Encode.optional input.or ), ( "not", encodeNodeCharacFilter |> Encode.optional input.not ) ]
 
 
 buildNodeCharacPatch : (NodeCharacPatchOptionalFields -> NodeCharacPatchOptionalFields) -> NodeCharacPatch
@@ -1862,22 +1872,22 @@ buildNodeCharacPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { userCanJoin = Absent, mode = Absent }
+                { mode = Absent, userCanJoin = Absent }
     in
-    { userCanJoin = optionals.userCanJoin, mode = optionals.mode }
+    { mode = optionals.mode, userCanJoin = optionals.userCanJoin }
 
 
 type alias NodeCharacPatchOptionalFields =
-    { userCanJoin : OptionalArgument Bool
-    , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
+    { mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
+    , userCanJoin : OptionalArgument Bool
     }
 
 
 {-| Type for the NodeCharacPatch input object.
 -}
 type alias NodeCharacPatch =
-    { userCanJoin : OptionalArgument Bool
-    , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
+    { mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
+    , userCanJoin : OptionalArgument Bool
     }
 
 
@@ -1886,7 +1896,7 @@ type alias NodeCharacPatch =
 encodeNodeCharacPatch : NodeCharacPatch -> Value
 encodeNodeCharacPatch input =
     Encode.maybeObject
-        [ ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input.mode ) ]
+        [ ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input.mode ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ) ]
 
 
 buildNodeCharacRef : (NodeCharacRefOptionalFields -> NodeCharacRefOptionalFields) -> NodeCharacRef
@@ -1894,15 +1904,15 @@ buildNodeCharacRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, userCanJoin = Absent, mode = Absent }
+                { id = Absent, mode = Absent, userCanJoin = Absent }
     in
-    { id = optionals.id, userCanJoin = optionals.userCanJoin, mode = optionals.mode }
+    { id = optionals.id, mode = optionals.mode, userCanJoin = optionals.userCanJoin }
 
 
 type alias NodeCharacRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , userCanJoin : OptionalArgument Bool
     , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
+    , userCanJoin : OptionalArgument Bool
     }
 
 
@@ -1910,8 +1920,8 @@ type alias NodeCharacRefOptionalFields =
 -}
 type alias NodeCharacRef =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , userCanJoin : OptionalArgument Bool
     , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
+    , userCanJoin : OptionalArgument Bool
     }
 
 
@@ -1920,7 +1930,7 @@ type alias NodeCharacRef =
 encodeNodeCharacRef : NodeCharacRef -> Value
 encodeNodeCharacRef input =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input.mode ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input.mode ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ) ]
 
 
 buildNodeFilter : (NodeFilterOptionalFields -> NodeFilterOptionalFields) -> NodeFilter
@@ -1928,9 +1938,9 @@ buildNodeFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, type_ = Absent, about = Absent, isRoot = Absent, isPrivate = Absent, skills = Absent, role_type = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, type_ = Absent, about = Absent, isRoot = Absent, isPrivate = Absent, isArchived = Absent, skills = Absent, role_type = Absent, and = Absent, or = Absent, not = Absent }
     in
-    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, type_ = optionals.type_, about = optionals.about, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, skills = optionals.skills, role_type = optionals.role_type, and = optionals.and, or = optionals.or, not = optionals.not }
+    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, type_ = optionals.type_, about = optionals.about, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, skills = optionals.skills, role_type = optionals.role_type, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias NodeFilterOptionalFields =
@@ -1943,6 +1953,7 @@ type alias NodeFilterOptionalFields =
     , about : OptionalArgument StringFullTextFilter
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
+    , isArchived : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
     , role_type : OptionalArgument RoleType_hash
     , and : OptionalArgument NodeFilter
@@ -1966,6 +1977,7 @@ type alias NodeFilterRaw =
     , about : OptionalArgument StringFullTextFilter
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
+    , isArchived : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
     , role_type : OptionalArgument RoleType_hash
     , and : OptionalArgument NodeFilter
@@ -1985,7 +1997,7 @@ type NodeFilter
 encodeNodeFilter : NodeFilter -> Value
 encodeNodeFilter (NodeFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.rootnameid ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input.about ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.rootnameid ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input.about ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
 
 
 buildNodeFragmentFilter : (NodeFragmentFilterOptionalFields -> NodeFragmentFilterOptionalFields) -> NodeFragmentFilter
@@ -2267,9 +2279,9 @@ buildNodePatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { createdAt = Absent, createdBy = Absent, name = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPrivate = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
+                { createdAt = Absent, createdBy = Absent, name = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPrivate = Absent, isArchived = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    NodePatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, name = optionals.name, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    NodePatch { createdAt = optionals.createdAt, createdBy = optionals.createdBy, name = optionals.name, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias NodePatchOptionalFields =
@@ -2292,6 +2304,7 @@ type alias NodePatchOptionalFields =
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
+    , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
     , first_link : OptionalArgument UserRef
     , second_link : OptionalArgument UserRef
@@ -2325,6 +2338,7 @@ type alias NodePatchRaw =
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
+    , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
     , first_link : OptionalArgument UserRef
     , second_link : OptionalArgument UserRef
@@ -2344,7 +2358,7 @@ type NodePatch
 encodeNodePatch : NodePatch -> Value
 encodeNodePatch (NodePatch input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "name", Encode.string |> Encode.optional input.name ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "name", Encode.string |> Encode.optional input.name ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
 buildNodeRef : (NodeRefOptionalFields -> NodeRefOptionalFields) -> NodeRef
@@ -2352,9 +2366,9 @@ buildNodeRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, createdBy = Absent, name = Absent, nameid = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPrivate = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
+                { id = Absent, createdAt = Absent, createdBy = Absent, name = Absent, nameid = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPrivate = Absent, isArchived = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    NodeRef { id = optionals.id, createdAt = optionals.createdAt, createdBy = optionals.createdBy, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    NodeRef { id = optionals.id, createdAt = optionals.createdAt, createdBy = optionals.createdBy, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias NodeRefOptionalFields =
@@ -2379,6 +2393,7 @@ type alias NodeRefOptionalFields =
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
+    , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
     , first_link : OptionalArgument UserRef
     , second_link : OptionalArgument UserRef
@@ -2414,6 +2429,7 @@ type alias NodeRefRaw =
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
+    , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
     , first_link : OptionalArgument UserRef
     , second_link : OptionalArgument UserRef
@@ -2433,7 +2449,7 @@ type NodeRef
 encodeNodeRef : NodeRef -> Value
 encodeNodeRef (NodeRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
 buildNodeStatsOrder : (NodeStatsOrderOptionalFields -> NodeStatsOrderOptionalFields) -> NodeStatsOrder

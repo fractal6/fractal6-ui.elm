@@ -2,6 +2,7 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
+import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionPanel)
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
@@ -32,7 +33,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, getTensionCharac, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, getTensionCharac, uriFromUsername)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View
     exposing
@@ -55,7 +56,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
+import Query.PatchTension exposing (archiveDoc, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
 import Query.QueryNode exposing (queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -124,6 +125,7 @@ type alias Model =
     -- Side Pane
     , isTensionAdmin : Bool
     , assigneesPanel : UserSearchPanel
+    , actionPanel : ActionPanel
 
     -- Common
     , node_action : ActionState
@@ -224,15 +226,22 @@ type Msg
     | CancelLookupFs
       -- Assignees
     | DoAssigneesEdit
+    | CancelAssignees
     | ChangeAssigneePattern String
-    | ChangeAssignee String User Bool Time.Posix
+    | ChangeAssignee User Bool Time.Posix
     | AssigneeAck (GqlData IdPayload)
-    | DoAssigneesCancel
     | GotOrga (GqlData NodesData) -- GraphQl
+      -- Action Edit
+    | DoActionEdit String
+    | CancelAction
+    | CloseActionPanelModal String
+    | ArchiveDoc ActionButton Time.Posix
+    | ArchiveDocAck (GqlData ActionResult)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
       -- Common
+    | NoMsg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
@@ -321,7 +330,8 @@ init global flags =
 
             -- Side Pane
             , isTensionAdmin = getTensionUserAuth global.session.user (global.session.tension_head |> Maybe.map (\x -> Success x) |> withDefault Loading)
-            , assigneesPanel = UserSearchPanel.create global.session.user
+            , assigneesPanel = UserSearchPanel.create global.session.user tensionid
+            , actionPanel = ActionPanel.create global.session.user tensionid
 
             -- Common
             , node_action = NoOp
@@ -975,7 +985,7 @@ update global msg model =
                 ( { model | assigneesPanel = UserSearchPanel.edit model.assigneesPanel }
                 , gcmd
                 , Cmd.batch
-                    [ Ports.outsideClickClose "doAssigneesCancelFromJs" "assigneesPanelContent"
+                    [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
                     , Ports.inheritWith "userSearchPanel"
                     , Ports.focusOn "userInput"
                     ]
@@ -984,7 +994,7 @@ update global msg model =
             else
                 ( model, Cmd.none, Cmd.none )
 
-        DoAssigneesCancel ->
+        CancelAssignees ->
             ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
 
         ChangeAssigneePattern pattern ->
@@ -993,7 +1003,7 @@ update global msg model =
             , Ports.searchUser pattern
             )
 
-        ChangeAssignee tid user isNew time ->
+        ChangeAssignee user isNew time ->
             let
                 uPanel =
                     UserSearchPanel.click user isNew model.assigneesPanel
@@ -1003,7 +1013,7 @@ update global msg model =
                         |> UserSearchPanel.setClickResult LoadingSlowly
             in
             ( { model | assigneesPanel = uPanel }
-            , setAssignee apis.gql tid uPanel.form AssigneeAck
+            , setAssignee apis.gql uPanel.form AssigneeAck
             , Cmd.none
             )
 
@@ -1056,6 +1066,64 @@ update global msg model =
                 other ->
                     ( model, Cmd.none, Cmd.none )
 
+        -- Actionn
+        DoActionEdit bid ->
+            if model.actionPanel.isEdit == False then
+                ( { model | actionPanel = ActionPanel.edit bid model.actionPanel }
+                , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
+                , Cmd.none
+                )
+
+            else
+                ( model, Cmd.none, Cmd.none )
+
+        CancelAction ->
+            ( { model | actionPanel = ActionPanel.cancelEdit model.actionPanel }, Cmd.none, Cmd.none )
+
+        CloseActionPanelModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | actionPanel = ActionPanel.closeModal model.actionPanel }, gcmd, Ports.close_modal )
+
+        ArchiveDoc action time ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.post "createdAt" (fromTime time)
+                        |> ActionPanel.setEvents [ ternary (action == ArchiveAction) TensionEvent.BlobArchived TensionEvent.BlobUnarchived ]
+                        |> ActionPanel.setArchiveResult LoadingSlowly
+                        |> ActionPanel.setAction action
+            in
+            ( { model | actionPanel = aPanel }
+            , archiveDoc apis.gql aPanel.form ArchiveDocAck
+            , Cmd.none
+            )
+
+        ArchiveDocAck result ->
+            let
+                aPanel =
+                    ActionPanel.setArchiveResult result model.actionPanel
+
+                gcmd =
+                    ternary aPanel.isModalActive Ports.open_modal Cmd.none
+            in
+            case result of
+                Success t ->
+                    ( { model | actionPanel = aPanel }, Cmd.none, gcmd )
+
+                other ->
+                    if doRefreshToken other then
+                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+
+                    else
+                        ( { model | actionPanel = aPanel }, Cmd.none, gcmd )
+
         -- Join
         DoJoinOrga rootnameid time ->
             case global.session.user of
@@ -1096,7 +1164,10 @@ update global msg model =
                 default ->
                     ( model, Cmd.none, Cmd.none )
 
-        -- Modal
+        -- Common
+        NoMsg ->
+            ( model, Cmd.none, Cmd.none )
+
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
@@ -1206,9 +1277,10 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal
-        , Ports.doAssigneesCancelFromJs (always DoAssigneesCancel)
+        , Ports.cancelAssigneesFromJs (always CancelAssignees)
+        , Ports.cancelActionFromJs (always CancelAction)
         , Ports.lookupUserFromJs ChangeUserLookup
-        , Ports.doCancelLookupFsFromJs (always CancelLookupFs)
+        , Ports.cancelLookupFsFromJs (always CancelLookupFs)
         ]
 
 
@@ -1289,9 +1361,6 @@ viewTension u t model =
 
                                 doSubmit =
                                     ternary isSendable [ onClick (Submit <| SubmitTitle) ] []
-
-                                h =
-                                    Debug.log "is" isSendable
                             in
                             [ div [ class "field is-grouped" ]
                                 [ p [ class "control is-expanded" ]
@@ -1348,6 +1417,7 @@ viewTension u t model =
                     ]
                 ]
             ]
+        , div [ class "block is-hidden-desktop" ] []
         , div [ class "columns is-variable is-4" ]
             [ div [ class "column is-8 " ]
                 [ div [ class "tabs is-md" ]
@@ -1488,9 +1558,9 @@ viewComment c model =
                                 viewUpdated updatedAt
 
                             Nothing ->
-                                span [] []
+                                text ""
                         , if c.createdBy.username == model.tension_form.uctx.username then
-                            div [ class "dropdown has-dropdown is-right is-pulled-right" ]
+                            div [ class "dropdown is-right is-pulled-right" ]
                                 [ div [ class "dropdown-trigger" ]
                                     [ div
                                         [ class "ellipsis button-light"
@@ -1881,7 +1951,7 @@ viewDocVersions blobsData =
                                                     [ Fa.icon0 "fas fa-flag" "" ]
 
                                             Nothing ->
-                                                span [] []
+                                                text ""
                                         ]
                                     ]
                                 ]
@@ -1916,6 +1986,9 @@ viewJoinNeeded focus =
 viewSidePane : UserState -> TensionHead -> Model -> Html Msg
 viewSidePane u t model =
     let
+        tc =
+            Maybe.map (\a -> getTensionCharac a) t.action
+
         assignees =
             t.assignees |> withDefault []
 
@@ -1940,7 +2013,7 @@ viewSidePane u t model =
                                 Fa.icon0 "fas fa-cog is-pulled-right" ""
 
                               else
-                                span [] []
+                                text ""
                             ]
                         , div [ id "assigneesPanelContent" ]
                             [ if model.assigneesPanel.isEdit then
@@ -1948,7 +2021,6 @@ viewSidePane u t model =
                                     panelData =
                                         { selectedUsers = assignees
                                         , targets = [ t.emitter.nameid, t.receiver.nameid ]
-                                        , tid = t.id
                                         , users_data = model.users_data
                                         , lookup = model.lookup_users
                                         , data = model.assigneesPanel
@@ -1987,17 +2059,69 @@ viewSidePane u t model =
                 ]
             ]
         , div [ class "media" ]
-            [ div [ class "media-content" ]
-                [ h2 [ class "subtitle has-text-weight-semibold is-md" ] [ text T.actionH ]
-                , div [ class "" ]
-                    [ case t.action of
-                        Just action ->
-                            viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
+            [ div [ class "media-content" ] <|
+                (case u of
+                    LoggedIn uctx ->
+                        let
+                            actionType_m =
+                                Maybe.map (\c -> c.action_type) tc
 
-                        Nothing ->
-                            div [ class "is-italic" ] [ text T.noAction ]
-                    ]
-                ]
+                            bid_m =
+                                t.blobs |> withDefault [] |> List.head
+
+                            hasConfig =
+                                model.isTensionAdmin && actionType_m /= Just NEW && bid_m /= Nothing
+                        in
+                        [ h2
+                            [ class "subtitle"
+                            , classList [ ( "is-w", hasConfig ) ]
+                            , case bid_m of
+                                Just bid ->
+                                    onClick (DoActionEdit bid.id)
+
+                                Nothing ->
+                                    onClick NoMsg
+                            ]
+                            [ text T.actionH
+                            , if model.actionPanel.isEdit then
+                                Fa.icon0 "fas fa-times is-pulled-right" ""
+
+                              else if model.isTensionAdmin then
+                                Fa.icon0 "fas fa-cog is-pulled-right" ""
+
+                              else
+                                text ""
+                            ]
+                        , div [ id "actionPanelContent" ]
+                            [ if model.actionPanel.isEdit then
+                                let
+                                    panelData =
+                                        { tc = tc
+                                        , data = model.actionPanel
+                                        , onCloseModal = CloseActionPanelModal
+                                        , onArchive = ArchiveDoc
+                                        , onSubmit = Submit
+                                        }
+                                in
+                                ActionPanel.view panelData
+
+                              else
+                                div [] []
+                            ]
+                        ]
+
+                    LoggedOut ->
+                        [ h2 [ class "subtitle" ] [ text T.actionH ] ]
+                )
+                    ++ [ div [ class "" ]
+                            [ case t.action of
+                                Just action ->
+                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
+
+                                Nothing ->
+                                    div [ class "is-italic" ] [ text T.noAction ]
+                            ]
+                       ]
             ]
         ]
 

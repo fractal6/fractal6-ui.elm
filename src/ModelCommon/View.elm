@@ -290,16 +290,25 @@ actionNameStr action =
         TensionAction.EditCircle ->
             T.circleH
 
+        TensionAction.ArchivedCircle ->
+            T.circleH
+
         TensionAction.NewRole ->
             T.roleH
 
         TensionAction.EditRole ->
             T.roleH
 
+        TensionAction.ArchivedRole ->
+            T.roleH
+
         TensionAction.NewMd ->
             T.documentH
 
         TensionAction.EditMd ->
+            T.documentH
+
+        TensionAction.ArchivedMd ->
             T.documentH
 
 
@@ -343,6 +352,13 @@ viewActionIconLink action org tid words =
                         ]
                     ]
 
+                TensionAction.ArchivedCircle ->
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                        , i [ class "far fa-circle fa-stack-2x" ] []
+                        ]
+                    ]
+
                 TensionAction.NewRole ->
                     [ Fa.fa "fas fa-circle" ]
 
@@ -353,10 +369,24 @@ viewActionIconLink action org tid words =
                         ]
                     ]
 
+                TensionAction.ArchivedRole ->
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                        , i [ class "fas fa-circle fa-stack-2x" ] []
+                        ]
+                    ]
+
                 TensionAction.NewMd ->
                     [ Fa.fa "fas fa-markdown" ]
 
                 TensionAction.EditMd ->
+                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-pen fa-stack-1x" ] []
+                        , i [ class "fas fa-markdown fa-stack-2x" ] []
+                        ]
+                    ]
+
+                TensionAction.ArchivedMd ->
                     [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
                         [ i [ class "fas fa-pen fa-stack-1x" ] []
                         , i [ class "fas fa-markdown fa-stack-2x" ] []
@@ -376,22 +406,31 @@ action2SourceStr action_m =
         Just action ->
             case action of
                 TensionAction.NewCircle ->
-                    "create this Circle"
+                    "create this circle"
 
                 TensionAction.EditCircle ->
                     "edit this circle"
 
+                TensionAction.ArchivedCircle ->
+                    "archived this role"
+
                 TensionAction.NewRole ->
-                    "create this Role"
+                    "create this role"
 
                 TensionAction.EditRole ->
                     "edit this role"
 
+                TensionAction.ArchivedRole ->
+                    "archived this role"
+
                 TensionAction.NewMd ->
-                    "create this Document"
+                    "create this document"
 
                 TensionAction.EditMd ->
-                    "edit this Document"
+                    "edit this document"
+
+                TensionAction.ArchivedMd ->
+                    "archived this document"
 
 
 type alias FormText =

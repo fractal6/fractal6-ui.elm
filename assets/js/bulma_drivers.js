@@ -199,7 +199,7 @@ export function BulmaDriver(app, target, handlers) {
     }
 
     // Get all dropdowns on the page that aren't hoverable.
-    const $dropdowns = $doc.querySelectorAll('.has-dropdown:not(.is-hoverable)');
+    const $dropdowns = $doc.querySelectorAll('.dropdown:not(.is-hoverable), .has-dropdown:not(.is-hoverable)');
     // * toggle dropdown state on click
     // * close on Escape
     // * stopeventpropgation (difference witn preventdefault ?)

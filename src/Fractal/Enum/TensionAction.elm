@@ -14,11 +14,14 @@ type TensionAction
     | EditRole
     | EditCircle
     | EditMd
+    | ArchivedRole
+    | ArchivedCircle
+    | ArchivedMd
 
 
 list : List TensionAction
 list =
-    [ NewRole, NewCircle, NewMd, EditRole, EditCircle, EditMd ]
+    [ NewRole, NewCircle, NewMd, EditRole, EditCircle, EditMd, ArchivedRole, ArchivedCircle, ArchivedMd ]
 
 
 decoder : Decoder TensionAction
@@ -44,6 +47,15 @@ decoder =
 
                     "EditMd" ->
                         Decode.succeed EditMd
+
+                    "ArchivedRole" ->
+                        Decode.succeed ArchivedRole
+
+                    "ArchivedCircle" ->
+                        Decode.succeed ArchivedCircle
+
+                    "ArchivedMd" ->
+                        Decode.succeed ArchivedMd
 
                     _ ->
                         Decode.fail ("Invalid TensionAction type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -72,6 +84,15 @@ toString enum =
 
         EditMd ->
             "EditMd"
+
+        ArchivedRole ->
+            "ArchivedRole"
+
+        ArchivedCircle ->
+            "ArchivedCircle"
+
+        ArchivedMd ->
+            "ArchivedMd"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -105,6 +126,15 @@ fromString enumString =
 
         "EditMd" ->
             Just EditMd
+
+        "ArchivedRole" ->
+            Just ArchivedRole
+
+        "ArchivedCircle" ->
+            Just ArchivedCircle
+
+        "ArchivedMd" ->
+            Just ArchivedMd
 
         _ ->
             Nothing
