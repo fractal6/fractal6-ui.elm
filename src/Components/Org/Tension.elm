@@ -14,7 +14,7 @@ import Components.Text as T
 import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList, withMapData, withMaybeData, withMaybeDataMap)
+import Extra exposing (ternary, toMapOfList, toUp1, withMapData, withMaybeData, withMaybeDataMap)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -37,12 +37,14 @@ import ModelCommon.Codecs exposing (ActionType(..), DocType(..), FractalBaseRout
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View
     exposing
-        ( blobTypeStr
+        ( actionNameStr
+        , blobTypeStr
         , byAt
         , getAvatar
         , statusColor
         , tensionTypeColor
         , tensionTypeSpan
+        , viewActionIcon
         , viewActionIconLink
         , viewLabels
         , viewTensionArrowB
@@ -1406,12 +1408,14 @@ viewTension u t model =
                                     [ Fa.icon0 "fas fa-pen" "" ]
 
                               else
-                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ] [ Fa.icon0 "fas fa-pen" "" ]
+                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ]
+                                    [ Fa.icon0 "fas fa-pen" "" ]
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
                         [ t.status |> TensionStatus.toString |> text ]
-                    , span [ class "tag is-rounded is-light" ] [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
+                    , span [ class "tag is-rounded is-light" ]
+                        [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
                     , viewTensionDateAndUser t.createdAt t.createdBy
                     , viewTensionArrowB "is-pulled-right" t.emitter t.receiver
                     ]
@@ -1510,6 +1514,15 @@ viewComments u t model =
 
                                                 TensionEvent.AssigneeRemoved ->
                                                     viewEventAssignee event False
+
+                                                TensionEvent.BlobPushed ->
+                                                    viewEventPushed event t.action
+
+                                                TensionEvent.BlobArchived ->
+                                                    viewEventArchived event t.action True
+
+                                                TensionEvent.BlobUnarchived ->
+                                                    viewEventArchived event t.action False
 
                                                 _ ->
                                                     text ""
@@ -1709,14 +1722,14 @@ viewEventStatus event status =
 viewEventTitle : Event -> Html Msg
 viewEventTitle event =
     let
-        actionIcon =
-            "fas fa-pen"
+        icon =
+            Fa.icon0 "fas fa-pen" ""
 
         actionText =
             T.updatedTitle
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 actionIcon "" ]
+        [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
             , span [ class "section" ]
@@ -1731,8 +1744,8 @@ viewEventTitle event =
 viewEventAssignee : Event -> Bool -> Html Msg
 viewEventAssignee event isNew =
     let
-        actionIcon =
-            "fas fa-user"
+        icon =
+            Fa.icon0 "fas fa-user" ""
 
         actionText =
             if isNew then
@@ -1742,11 +1755,52 @@ viewEventAssignee event isNew =
                 T.unassigned
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 actionIcon "" ]
+        [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
             [ span [] <|
                 List.intersperse (text " ")
                     [ viewUsernameLink event.createdBy.username, text actionText, event.new |> withDefault "" |> viewUsernameLink, text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
+viewEventPushed : Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventPushed event action_m =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
+        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.published, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
+viewEventArchived : Event -> Maybe TensionAction.TensionAction -> Bool -> Html Msg
+viewEventArchived event action_m isArchived =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+
+        ( icon, txt ) =
+            case isArchived of
+                True ->
+                    ( Fa.icon0 "fas fa-archive" "", T.archived )
+
+                False ->
+                    ( span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                        [ i [ class "fas fa-slash fa-stack-2x" ] []
+                        , i [ class "fas fa-archive fa-stack-2x" ] []
+                        ]
+                    , T.unarchived
+                    )
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ icon ]
+        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text txt, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -1904,7 +1958,7 @@ viewBlobToolBar u t b model =
                                     [ class "button is-small is-success has-text-weight-semibold"
                                     , onClick (Submit <| PushBlob b.id)
                                     ]
-                                    [ text T.publish ]
+                                    [ Fa.icon "fas fa-share-square" (toUp1 T.publish) ]
                                 ]
                     ]
 
@@ -2282,17 +2336,16 @@ getTensionUserAuth user th_data =
         LoggedIn uctx ->
             case th_data of
                 Success th ->
-                    if uctx.username == th.createdBy.username then
-                        -- Author
+                    if (getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ] |> getCoordoRoles |> List.length) > 0 then
+                        -- Coordinator of receiver or emitter
                         True
 
                     else if List.member uctx.username (th.assignees |> withDefault [] |> List.map (\u -> u.username)) then
                         -- assignee
                         True
-
-                    else if (getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ] |> getCoordoRoles |> List.length) > 0 then
-                        -- Coordinator of receiver or emitter
-                        True
+                        --else if uctx.username == th.createdBy.username then
+                        --    -- Author
+                        --    True
 
                     else
                         False

@@ -430,7 +430,7 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .stackPen {
-    .fa-stack > i.fa-pen {
+    &.fa-stack > i.fa-pen {
         top: -5px;
         left: 5px;
     }

@@ -127,18 +127,22 @@ edgeArrow cls source target =
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow cls emitter receiver =
     span [ class cls ]
-        [ span [ class "is-small is-light is-inverted is-static" ] [ viewNodeRef OverviewBaseUri emitter ]
+        [ span [ class "is-small is-light is-inverted is-static" ]
+            [ viewNodeRef OverviewBaseUri emitter ]
         , span [ class "right-arrow" ] []
-        , span [ class "is-small is-light is-inverted is-static" ] [ viewNodeRef OverviewBaseUri receiver ]
+        , span [ class "is-small is-light is-inverted is-static" ]
+            [ viewNodeRef OverviewBaseUri receiver ]
         ]
 
 
 viewTensionArrowB : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrowB cls emitter receiver =
     span [ class cls ]
-        [ span [ class "is-small  is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ] [ viewNodeRef OverviewBaseUri emitter ]
+        [ span [ class "is-small is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ]
+            [ viewNodeRef OverviewBaseUri emitter ]
         , span [ class "right-arrow" ] []
-        , span [ class "is-small  is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ] [ viewNodeRef OverviewBaseUri receiver ]
+        , span [ class "is-small is-inverted is-hovered button", attribute "style" "margin-top: -3px !important;" ]
+            [ viewNodeRef OverviewBaseUri receiver ]
         ]
 
 
@@ -334,67 +338,59 @@ blobTypeStr btype =
 viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> Html msg
 viewActionIconLink action org tid words =
     a
-        [ class "actionLink"
+        [ class "actionLink tooltip"
+        , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
         , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
         ]
-        [ span
-            [ class "stackPen icon-padding tooltip"
-            , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
-            ]
-            (case action of
-                TensionAction.NewCircle ->
-                    [ Fa.fa "far fa-circle" ]
-
-                TensionAction.EditCircle ->
-                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "far fa-circle fa-stack-2x" ] []
-                        ]
-                    ]
-
-                TensionAction.ArchivedCircle ->
-                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "far fa-circle fa-stack-2x" ] []
-                        ]
-                    ]
-
-                TensionAction.NewRole ->
-                    [ Fa.fa "fas fa-circle" ]
-
-                TensionAction.EditRole ->
-                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "fas fa-circle fa-stack-2x" ] []
-                        ]
-                    ]
-
-                TensionAction.ArchivedRole ->
-                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "fas fa-circle fa-stack-2x" ] []
-                        ]
-                    ]
-
-                TensionAction.NewMd ->
-                    [ Fa.fa "fas fa-markdown" ]
-
-                TensionAction.EditMd ->
-                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "fas fa-markdown fa-stack-2x" ] []
-                        ]
-                    ]
-
-                TensionAction.ArchivedMd ->
-                    [ span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-pen fa-stack-1x" ] []
-                        , i [ class "fas fa-markdown fa-stack-2x" ] []
-                        ]
-                    ]
-            )
+        [ span [ class "icon-padding" ] [ viewActionIcon action ]
         , text words
         ]
+
+
+viewActionIcon : TensionAction.TensionAction -> Html msg
+viewActionIcon action =
+    case action of
+        TensionAction.NewCircle ->
+            Fa.fa "far fa-circle"
+
+        TensionAction.EditCircle ->
+            span [ class "fa-stack stackPen ", attribute "style" "font-size: 0.5em;" ]
+                [ i [ class "fas fa-pen fa-stack-1x" ] []
+                , i [ class "far fa-circle fa-stack-2x" ] []
+                ]
+
+        TensionAction.ArchivedCircle ->
+            span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                [ i [ class "fas fa-archive fa-stack-2x" ] []
+                ]
+
+        TensionAction.NewRole ->
+            Fa.fa "fas fa-circle"
+
+        TensionAction.EditRole ->
+            span [ class "fa-stack stackPen", attribute "style" "font-size: 0.5em;" ]
+                [ i [ class "fas fa-pen fa-stack-1x" ] []
+                , i [ class "fas fa-circle fa-stack-2x" ] []
+                ]
+
+        TensionAction.ArchivedRole ->
+            span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                [ i [ class "fas fa-archive fa-stack-2x" ] []
+                ]
+
+        TensionAction.NewMd ->
+            Fa.fa "fas fa-markdown"
+
+        TensionAction.EditMd ->
+            span [ class "fa-stack stackPen", attribute "style" "font-size: 0.5em;" ]
+                [ i [ class "fas fa-pen fa-stack-1x" ] []
+                , i [ class "fas fa-markdown fa-stack-2x" ] []
+                ]
+
+        TensionAction.ArchivedMd ->
+            span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
+                [ i [ class "fas fa-archive fa-stack-2x" ] []
+                ]
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String

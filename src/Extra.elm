@@ -2,6 +2,8 @@ module Extra exposing (..)
 
 import Dict exposing (Dict)
 import ModelSchema exposing (RequestResult(..))
+import String
+import String.Extra as SE
 
 
 ternary test positive negative =
@@ -11,6 +13,25 @@ ternary test positive negative =
 
         False ->
             negative
+
+
+
+-- String
+
+
+toUp : String -> String
+toUp s =
+    SE.toTitleCase s
+
+
+toUp1 : String -> String
+toUp1 s =
+    SE.toSentenceCase s
+
+
+toUpAll : String -> String
+toUpAll t =
+    String.toUpper t
 
 
 

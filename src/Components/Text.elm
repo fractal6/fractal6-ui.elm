@@ -55,7 +55,7 @@ cancel =
 
 publish : String
 publish =
-    "Publish"
+    "publish"
 
 
 publishedThe : String
@@ -106,6 +106,21 @@ assigned =
 unassigned : String
 unassigned =
     "unassigned"
+
+
+published : String
+published =
+    "published"
+
+
+archived : String
+archived =
+    "archived"
+
+
+unarchived : String
+unarchived =
+    "unarchived"
 
 
 the : String
