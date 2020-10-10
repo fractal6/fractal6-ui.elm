@@ -243,10 +243,11 @@ nodeOrgaFilter rootid a =
                     { b
                         | rootnameid = Present { eq = Present rootid, regexp = Absent }
                         , not =
+                            Input.buildNodeFilter (\d -> { d | role_type = Present { eq = Present RoleType.Member } })
+                                |> Present
+                        , and =
                             Input.buildNodeFilter
-                                (\d ->
-                                    { d | role_type = Present { eq = Present RoleType.Member } }
-                                )
+                                (\d -> { d | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True }) |> Present })
                                 |> Present
                     }
                 )

@@ -198,40 +198,19 @@ memberButtons roles_ hb =
     roles
         |> List.indexedMap
             (\i r ->
-                if i == 0 then
-                    let
-                        href_ =
-                            if r.role_type == RoleType.Member then
-                                uriFromNameid MembersBaseUri r.rootnameid
-
-                            else
-                                uriFromNameid hb.baseUri r.nameid
-
-                        vBar =
-                            if List.length roles == 1 then
-                                ""
-
-                            else
-                                "is-vbar-1"
-                    in
-                    [ div
-                        -- @DEBUG: tooltip get stucked on click !
-                        [ class ("button buttonRole is-hovered is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
-                        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                        , href href_
-                        ]
-                        [ text r.name ]
-                    ]
-                        ++ [ span [ class vBar ] [] ]
-
-                else
+                if r.role_type /= RoleType.Member then
                     [ a
                         [ class ("button buttonRole is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                         , href <| uriFromNameid hb.baseUri r.nameid
                         ]
                         [ text r.name ]
+
+                    --++ [ span [ class "is-vbar-1" ] [] ]
                     ]
+
+                else
+                    [ text "" ]
             )
         |> List.concat
         |> List.reverse

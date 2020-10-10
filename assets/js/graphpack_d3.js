@@ -12,7 +12,6 @@ import { shadeColor, setpixelated, sleep } from './custom.js'
     window.requestAnimationFrame = requestAnimationFrame;
 })();
 
-
 const d3 = Object.assign(
 	{},
 	{
@@ -25,7 +24,6 @@ const d3 = Object.assign(
 	},
 )
 
-
 const NodeType = {
     Circle: "Circle",
     Role: "Role",
@@ -37,8 +35,6 @@ const RoleType = {
     Peer: "Peer",
     Coordinator: "Coordinator",
 }
-
-
 
 
 // Flat list of nodes (unordered) to nested tree structure
