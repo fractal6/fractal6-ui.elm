@@ -268,7 +268,7 @@ const actions = {
             catchEsc(event, closeEvent);
         }
 
-        // Remove the litener on close
+        // Remove the listener on close
         const removeClickListener = () => {
             document.removeEventListener('click', outsideClickListener);
             document.removeEventListener('keydown', escListener);
@@ -279,5 +279,8 @@ const actions = {
             document.addEventListener('click', outsideClickListener);
             document.addEventListener('keydown', escListener);
         }, 50);
+    },
+    'CLICK': (app, session, target) => {
+        document.getElementById(target).click();
     },
 }

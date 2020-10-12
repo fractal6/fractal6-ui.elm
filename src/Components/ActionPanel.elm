@@ -5,6 +5,7 @@ import Components.Loading as Loading exposing (viewGqlErrors)
 import Components.Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMapData, withMaybeData)
+import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
@@ -30,7 +31,7 @@ type alias ActionForm =
     { uctx : UserCtx
     , tid : String
     , bid : String
-    , action : Maybe ActionButton
+    , action : ActionButton
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -52,7 +53,7 @@ initActionForm user tid =
                 UserCtx "" Nothing (UserRights False False) []
     , tid = tid
     , bid = ""
-    , action = Nothing
+    , action = ArchiveAction
     , events_type = Nothing
     , post = Dict.empty
     }
@@ -108,7 +109,7 @@ closeModal data =
         f =
             data.form
     in
-    { data | isModalActive = False, isEdit = False, form = initActionForm (LoggedIn f.uctx) f.tid }
+    { data | isEdit = False, isModalActive = False, form = initActionForm (LoggedIn f.uctx) f.tid }
 
 
 
@@ -139,7 +140,7 @@ setAction action data =
         f =
             data.form
     in
-    { data | form = { f | action = Just action } }
+    { data | form = { f | action = action } }
 
 
 type alias Op msg =
@@ -158,18 +159,26 @@ view op =
             Maybe.map (\c -> c.action_type) op.tc
     in
     div []
-        [ div
-            [ class "dropdown-content", classList [ ( "is-loading", op.data.archive_result == LoadingSlowly ) ] ]
-            [ if actionType_m == Just EDIT then
-                div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive ArchiveAction) ] [ Fa.icon "fas fa-archive" "Archive" ]
+        [ if op.data.isEdit then
+            div
+                [ class "dropdown-content", classList [ ( "is-loading", op.data.archive_result == LoadingSlowly ) ] ]
+                [ if actionType_m == Just EDIT then
+                    div [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ] [ Fa.icon "fas fa-archive" "Archive" ]
 
-              else if actionType_m == Just ARCHIVE then
-                div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ] [ Fa.icon "fas fa-archive" "Unarchive" ]
+                  else if actionType_m == Just ARCHIVE then
+                    div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ] [ Fa.icon "fas fa-archive" "Unarchive" ]
 
-              else
-                div [] []
-            ]
-        , viewModal op
+                  else
+                    div [] []
+                ]
+
+          else
+            text ""
+        , if op.data.isModalActive then
+            viewModal op
+
+          else
+            text ""
         ]
 
 
@@ -193,14 +202,11 @@ viewModal op =
                         [ class "box is-light" ]
                         [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                         , case op.data.form.action of
-                            Just ArchiveAction ->
+                            ArchiveAction ->
                                 text "Document archived"
 
-                            Just UnarchiveAction ->
+                            UnarchiveAction ->
                                 text "Document unarchived"
-
-                            _ ->
-                                text ""
                         ]
 
                 Failure err ->
@@ -211,3 +217,43 @@ viewModal op =
             ]
         , button [ class "modal-close is-large", onClick (op.onCloseModal "") ] []
         ]
+
+
+
+--- Utils
+
+
+archiveActionToggle : Maybe TensionAction.TensionAction -> Maybe TensionAction.TensionAction
+archiveActionToggle action_m =
+    action_m
+        |> Maybe.map
+            (\action ->
+                case action of
+                    TensionAction.EditCircle ->
+                        Just TensionAction.ArchivedCircle
+
+                    TensionAction.ArchivedCircle ->
+                        Just TensionAction.EditCircle
+
+                    TensionAction.EditRole ->
+                        Just TensionAction.ArchivedRole
+
+                    TensionAction.ArchivedRole ->
+                        Just TensionAction.EditRole
+
+                    TensionAction.EditMd ->
+                        Just TensionAction.ArchivedMd
+
+                    TensionAction.ArchivedMd ->
+                        Just TensionAction.EditMd
+
+                    TensionAction.NewCircle ->
+                        Nothing
+
+                    TensionAction.NewRole ->
+                        Nothing
+
+                    TensionAction.NewMd ->
+                        Nothing
+            )
+        |> withDefault Nothing

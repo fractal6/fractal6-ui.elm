@@ -279,6 +279,14 @@ outsideClickClose msg target =
         }
 
 
+click : String -> Cmd msg
+click target =
+    outgoing
+        { action = "CLICK"
+        , data = JE.string target
+        }
+
+
 
 --
 -- Encoder

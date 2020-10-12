@@ -316,25 +316,6 @@ actionNameStr action =
             T.documentH
 
 
-blobTypeStr : BlobType.BlobType -> String
-blobTypeStr btype =
-    case btype of
-        BlobType.OnNode ->
-            "Document created"
-
-        BlobType.OnAbout ->
-            "Description edited"
-
-        BlobType.OnFirstLink ->
-            "First link edited"
-
-        BlobType.OnMandate ->
-            "Mandate edited"
-
-        BlobType.OnDoc ->
-            "File edited"
-
-
 viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> Html msg
 viewActionIconLink action org tid words =
     a
@@ -427,6 +408,31 @@ action2SourceStr action_m =
 
                 TensionAction.ArchivedMd ->
                     "archived this document"
+
+
+
+{-
+   Blob
+-}
+
+
+blobTypeStr : BlobType.BlobType -> String
+blobTypeStr btype =
+    case btype of
+        BlobType.OnNode ->
+            "Document created"
+
+        BlobType.OnAbout ->
+            "Description edited"
+
+        BlobType.OnFirstLink ->
+            "First link edited"
+
+        BlobType.OnMandate ->
+            "Mandate edited"
+
+        BlobType.OnDoc ->
+            "File edited"
 
 
 type alias FormText =

@@ -2,7 +2,7 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionPanel)
+import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionPanel, archiveActionToggle)
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
@@ -889,7 +889,7 @@ update global msg model =
                                         |> Maybe.map
                                             (\bs ->
                                                 let
-                                                    -- @debug r.pushedFlag is empty
+                                                    -- @debug r.pushedFlag not sync
                                                     pushedFlag =
                                                         Dict.get "createdAt" model.tension_form.post
                                                 in
@@ -1110,21 +1110,32 @@ update global msg model =
         ArchiveDocAck result ->
             let
                 aPanel =
-                    ActionPanel.setArchiveResult result model.actionPanel
+                    model.actionPanel
+                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.setArchiveResult result
 
                 gcmd =
-                    ternary aPanel.isModalActive Ports.open_modal Cmd.none
+                    Cmd.batch [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
             in
             case result of
                 Success t ->
-                    ( { model | actionPanel = aPanel }, Cmd.none, gcmd )
+                    let
+                        newTh =
+                            withMapData
+                                (\th ->
+                                    -- @debug t.action not sync
+                                    { th | action = archiveActionToggle th.action }
+                                )
+                                model.tension_head
+                    in
+                    ( { model | actionPanel = aPanel, tension_head = newTh }, gcmd, Cmd.none )
 
                 other ->
                     if doRefreshToken other then
                         ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
 
                     else
-                        ( { model | actionPanel = aPanel }, Cmd.none, gcmd )
+                        ( { model | actionPanel = aPanel }, gcmd, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -2147,7 +2158,7 @@ viewSidePane u t model =
                                 text ""
                             ]
                         , div [ id "actionPanelContent" ]
-                            [ if model.actionPanel.isEdit then
+                            [ if hasConfig then
                                 let
                                     panelData =
                                         { tc = tc
@@ -2160,7 +2171,7 @@ viewSidePane u t model =
                                 ActionPanel.view panelData
 
                               else
-                                div [] []
+                                text ""
                             ]
                         ]
 

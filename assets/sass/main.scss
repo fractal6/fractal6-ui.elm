@@ -1504,6 +1504,10 @@ a.actionLink {
         -webkit-filter: invert(50%);
         filter: invert(50%);
     }
+
+    &.is-warning {
+        color: $orange;
+    }
 }
 
 .right-arrow {
