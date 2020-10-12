@@ -11,7 +11,7 @@ import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData)
+import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.NewCircle as NewCircleForm
@@ -681,7 +681,7 @@ update global msg model =
                                     }
 
                                 ( newStep, newForm ) =
-                                    getNewNodeStepAuth form
+                                    getNewNodeStepAuth form model.orga_data
                             in
                             ( { model | node_action = AddCircle newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
                             , Cmd.none
@@ -1549,8 +1549,8 @@ getNewTensionStepAuth form =
 
 {-| Get Auth Step and init form based on user roles for new circle
 -}
-getNewNodeStepAuth : TensionForm -> ( NodeStep, TensionForm )
-getNewNodeStepAuth form =
+getNewNodeStepAuth : TensionForm -> GqlData NodesData -> ( NodeStep, TensionForm )
+getNewNodeStepAuth form odata =
     let
         orgaRoles =
             getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
@@ -1563,10 +1563,20 @@ getNewNodeStepAuth form =
             let
                 circleRoles =
                     getCircleRoles roles [ form.target.nameid ]
+
+                circleCoordos =
+                    getChildren form.target odata |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
+
+                allCoordoRoles =
+                    getCoordoRoles roles
             in
             case circleRoles of
                 [] ->
-                    ( NodeNotAuthorized [ T.notCircleMember, T.askCoordo ], form )
+                    if List.length circleCoordos == 0 && List.length allCoordoRoles > 0 then
+                        ( NodeSource allCoordoRoles, form )
+
+                    else
+                        ( NodeNotAuthorized [ T.notCircleMember, T.askCoordo ], form )
 
                 subRoles ->
                     case form.target.charac.mode of
@@ -1585,10 +1595,24 @@ getNewNodeStepAuth form =
                             in
                             case coordoRoles of
                                 [] ->
-                                    ( NodeNotAuthorized [ T.notCircleCoordo, T.askCoordo ], form )
+                                    if List.length circleCoordos == 0 && List.length allCoordoRoles > 0 then
+                                        ( NodeSource allCoordoRoles, form )
+
+                                    else
+                                        ( NodeNotAuthorized [ T.notCircleCoordo, T.askCoordo ], form )
 
                                 [ r ] ->
                                     ( NodeFinal, { form | source = r } )
 
                                 subRoles2 ->
                                     ( NodeSource subRoles2, form )
+
+
+getChildren : Node -> GqlData NodesData -> List Node
+getChildren node odata =
+    odata
+        |> withMaybeDataMap
+            (\x ->
+                x |> Dict.values |> List.filter (\n -> Just (NodeId (nearestCircleid node.nameid)) == n.parent)
+            )
+        |> withDefault []
