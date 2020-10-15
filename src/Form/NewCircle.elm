@@ -1,7 +1,7 @@
 module Form.NewCircle exposing (view)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (viewGqlErrors)
+import Components.Loading as Loading exposing (RequestResult(..), viewGqlErrors)
 import Components.NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Components.Text as T
 import Dict
@@ -20,7 +20,6 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..))
 import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeSpan)
-import ModelSchema exposing (RequestResult(..))
 
 
 

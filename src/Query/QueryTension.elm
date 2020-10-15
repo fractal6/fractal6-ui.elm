@@ -39,7 +39,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (nodeCharacPayload, userPayload)
+import Query.QueryNode exposing (emmiterOrReceiverPayload, nodeCharacPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 
@@ -161,14 +161,6 @@ tensionCommentsPayload =
                 commentPayload
             )
         |> with Fractal.Object.Tension.n_comments
-
-
-emmiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
-emmiterOrReceiverPayload =
-    SelectionSet.succeed EmitterOrReceiver
-        |> with Fractal.Object.Node.name
-        |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.role_type
 
 
 labelPayload : SelectionSet Label Fractal.Object.Label

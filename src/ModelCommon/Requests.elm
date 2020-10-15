@@ -1,6 +1,6 @@
 module ModelCommon.Requests exposing (fetchChildren, fetchMembers, login, signup, tokenack)
 
-import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, expectJson, toErrorData)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Http
@@ -8,7 +8,7 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (userCtxDecoder)
-import ModelSchema exposing (GqlData, Member, NodeId, Post, RequestResult(..), UserCtx, UserRoleExtended)
+import ModelSchema exposing (Member, NodeId, Post, UserCtx, UserRoleExtended)
 import Query.QueryNode exposing (MemberNode, User)
 import RemoteData exposing (RemoteData)
 

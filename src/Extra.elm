@@ -1,7 +1,7 @@
 module Extra exposing (..)
 
+import Components.Loading exposing (RequestResult(..))
 import Dict exposing (Dict)
-import ModelSchema exposing (RequestResult(..))
 import String
 import String.Extra as SE
 

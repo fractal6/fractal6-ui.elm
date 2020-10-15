@@ -2,6 +2,7 @@ module Query.QueryNode exposing
     ( MemberNode
     , NodeExt
     , User
+    , emmiterOrReceiverPayload
     , nodeCharacPayload
     , nodeOrgaPayload
     , queryGraphPack
@@ -296,9 +297,9 @@ nodeCharacPayload =
 type alias LocalNode =
     { name : String
     , nameid : String
-    , charac : NodeCharac
     , type_ : NodeType.NodeType
-    , children : Maybe (List NodeId)
+    , charac : NodeCharac
+    , children : Maybe (List EmitterOrReceiver)
     , parent : Maybe LocalRootNode
     , id : String
     }
@@ -313,6 +314,14 @@ type alias LocalRootNode =
     }
 
 
+emmiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
+emmiterOrReceiverPayload =
+    SelectionSet.succeed EmitterOrReceiver
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> with Fractal.Object.Node.role_type
+
+
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
 lgDecoder data =
     data
@@ -322,7 +331,7 @@ lgDecoder data =
                     Just p ->
                         let
                             focus =
-                                FocusNode n.name n.nameid n.type_ (n.children |> withDefault [])
+                                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
 
                             path =
                                 [ PNode p.name p.nameid, PNode n.name n.nameid ]
@@ -341,7 +350,7 @@ lgDecoder data =
                         -- Assume Root node
                         { root = RootNode n.name n.nameid n.charac n.id |> Just
                         , path = [ PNode n.name n.nameid ]
-                        , focus = FocusNode n.name n.nameid n.type_ (n.children |> withDefault [])
+                        , focus = FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
                         }
             )
 
@@ -365,12 +374,10 @@ lgPayload =
     SelectionSet.succeed LocalNode
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.type_
+        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with
-            (Fractal.Object.Node.children identity
-                (SelectionSet.map NodeId Fractal.Object.Node.nameid)
-            )
+            (Fractal.Object.Node.children identity emmiterOrReceiverPayload)
         |> with
             (Fractal.Object.Node.parent identity lg2Payload)
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)

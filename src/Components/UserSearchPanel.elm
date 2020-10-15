@@ -1,7 +1,7 @@
 module Components.UserSearchPanel exposing (..)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors)
 import Components.Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMapData, withMaybeData)

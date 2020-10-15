@@ -1,18 +1,4 @@
-module Components.Loading exposing
-    ( ErrorData
-    , HttpError
-    , WebData
-    , errorDecoder
-    , errorGraphQLHttpToString
-    , errorHttpToString
-    , expectJson
-    , spinner
-    , toErrorData
-    , viewAuthNeeded
-    , viewGqlErrors
-    , viewHttpErrors
-    , viewWarnings
-    )
+module Components.Loading exposing (..)
 
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
@@ -29,16 +15,34 @@ import RemoteData exposing (RemoteData)
 
 
 --
--- Model
+-- Remote Data
+--
+
+
+type RequestResult errors data
+    = Success data
+    | Failure errors
+    | Loading
+    | LoadingSlowly
+    | NotAsked
+
+
+type alias GqlData a =
+    RequestResult ErrorData a
+
+
+type alias WebData a =
+    RemoteData (HttpError String) a
+
+
+
+--
+-- Remote Errors
 --
 
 
 type alias ErrorData =
     List String
-
-
-type alias WebData a =
-    RemoteData (HttpError String) a
 
 
 type alias ErrorAuth =

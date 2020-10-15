@@ -7,7 +7,7 @@ import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.Text as T
@@ -19,7 +19,9 @@ import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -33,7 +35,19 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), FractalBaseRoute(..), NodeFocus, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, getTensionCharac, uriFromUsername)
+import ModelCommon.Codecs
+    exposing
+        ( ActionType(..)
+        , DocType(..)
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , focusState
+        , getCircleRoles
+        , getCoordoRoles
+        , getOrgaRoles
+        , getTensionCharac
+        , uriFromUsername
+        )
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View
     exposing
@@ -331,7 +345,7 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isTensionAdmin = getTensionUserAuth global.session.user (global.session.tension_head |> Maybe.map (\x -> Success x) |> withDefault Loading)
+            , isTensionAdmin = getTensionRights global.session.user global.session.tension_head global.session.path_data
             , assigneesPanel = UserSearchPanel.create global.session.user tensionid
             , actionPanel = ActionPanel.create global.session.user tensionid
 
@@ -461,7 +475,7 @@ update global msg model =
         GotTensionHead result ->
             let
                 newModel =
-                    { model | tension_head = result, isTensionAdmin = getTensionUserAuth global.session.user result }
+                    { model | tension_head = result, isTensionAdmin = getTensionRights global.session.user (withMaybeData result) global.session.path_data }
             in
             ( newModel, Ports.bulma_driver "", send (UpdateSessionTensionHead (withMaybeData result)) )
 
@@ -2341,12 +2355,12 @@ eventFromForm event_type form =
     }
 
 
-getTensionUserAuth : UserState -> GqlData TensionHead -> Bool
-getTensionUserAuth user th_data =
+getTensionRights : UserState -> Maybe TensionHead -> Maybe LocalGraph -> Bool
+getTensionRights user th_m ldata =
     case user of
         LoggedIn uctx ->
-            case th_data of
-                Success th ->
+            case th_m of
+                Just th ->
                     if (getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ] |> getCoordoRoles |> List.length) > 0 then
                         -- Coordinator of receiver or emitter
                         True
@@ -2359,10 +2373,37 @@ getTensionUserAuth user th_data =
                         --    True
 
                     else
-                        False
+                        let
+                            children =
+                                getChildren th.receiver.nameid ldata
 
-                _ ->
+                            childrenCoordos =
+                                List.filter (\n -> n.role_type == Just RoleType.Coordinator) children
+
+                            allCoordoRoles =
+                                getCoordoRoles uctx.roles
+                        in
+                        case Maybe.map (\l -> l.focus.charac.mode) ldata of
+                            Just NodeMode.Chaos ->
+                                -- No member in this circle
+                                List.length children == 0
+
+                            Just NodeMode.Coordinated ->
+                                -- No coordo in this circe
+                                List.length childrenCoordos == 0 && List.length allCoordoRoles > 0
+
+                            Nothing ->
+                                False
+
+                Nothing ->
                     False
 
         LoggedOut ->
             False
+
+
+getChildren : String -> Maybe LocalGraph -> List EmitterOrReceiver
+getChildren nid odata =
+    odata
+        |> Maybe.map (\x -> x.focus.children)
+        |> withDefault []

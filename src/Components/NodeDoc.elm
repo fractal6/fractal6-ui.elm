@@ -2,7 +2,7 @@ module Components.NodeDoc exposing (..)
 
 import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Components.Text as T
 import Components.UserSearchPanel as UserSearchPanel
@@ -790,7 +790,7 @@ getFirstLinks node =
                 |> withDefault []
 
 
-nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List NodeId -> NodesData -> NodeFragment
+nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesData -> NodeFragment
 nodeFragmentFromOrga node_m nodeData c ndata =
     let
         children =

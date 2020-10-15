@@ -1,7 +1,7 @@
 module ModelCommon exposing (..)
 
 import Array exposing (Array)
-import Components.Loading as Loading exposing (ErrorData, WebData)
+import Components.Loading as Loading exposing (ErrorData, GqlData, RequestResult(..), WebData)
 import Dict exposing (Dict)
 import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
@@ -542,6 +542,7 @@ characDecoder =
 
 localGraphDecoder : JD.Decoder LocalGraph
 localGraphDecoder =
+    -- @Debug: manually update the localGraph type in  nodeFocusedFromJs port
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
@@ -559,11 +560,19 @@ localGraphDecoder =
             )
         )
         (JD.field "focus" <|
-            JD.map4 FocusNode
+            JD.map5 FocusNode
                 (JD.field "name" JD.string)
                 (JD.field "nameid" JD.string)
                 (JD.field "type_" NodeType.decoder)
-                (JD.field "children" (JD.list <| JD.map NodeId (JD.field "nameid" JD.string)))
+                (JD.field "charac" characDecoder)
+                (JD.field "children"
+                    (JD.list <|
+                        JD.map3 EmitterOrReceiver
+                            (JD.field "name" JD.string)
+                            (JD.field "nameid" JD.string)
+                            (JD.maybe (JD.field "role_type" RoleType.decoder))
+                    )
+                )
         )
 
 

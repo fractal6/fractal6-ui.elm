@@ -140,7 +140,7 @@ export const GraphPack = {
     centerY: null,
     diameter: null,
     zoomCtx: null,
-    circlesPadding: 4, // 1.8
+    circlesPadding: 8, // 1.8
     fontsizeCircle_start: 19,
     fontstyleCircle: "Arial",
 
@@ -876,7 +876,14 @@ export const GraphPack = {
             name: node.data.name,
             nameid: node.data.nameid,
             type_: node.data.type_,
-            children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => { return {nameid: n.data.nameid}}) : []
+            charac: node.data.charac,
+            children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
+                return {
+                    name: n.data.name,
+                    nameid: n.data.nameid,
+                    role_type: n.data.role_type
+                }
+            }) : []
         };
         var lg = {
             root: rootNode,

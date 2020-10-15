@@ -1,6 +1,6 @@
 module Auth exposing (doRefreshToken, refreshAuthModal)
 
-import Components.Loading as Loading exposing (WebData, errorDecoder, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Extra.Events exposing (onKeydown)
 import Form
@@ -10,7 +10,7 @@ import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ModalAuth(..))
-import ModelSchema exposing (GqlData, RequestResult(..), UserCtx)
+import ModelSchema exposing (UserCtx)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 import Task

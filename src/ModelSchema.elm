@@ -1,6 +1,6 @@
 module ModelSchema exposing (..)
 
-import Components.Loading exposing (ErrorData, errorGraphQLHttpToString)
+import Components.Loading exposing (ErrorData, RequestResult(..), errorGraphQLHttpToString)
 import Dict exposing (Dict)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -33,24 +33,6 @@ type alias TensionsData =
 
 type alias UsersData =
     Dict String (List User)
-
-
-
---
--- Remote Data and Sinks
---
-
-
-type alias GqlData a =
-    RequestResult ErrorData a
-
-
-type RequestResult errors data
-    = Success data
-    | Failure errors
-    | Loading
-    | LoadingSlowly
-    | NotAsked
 
 
 type alias Post =
@@ -100,7 +82,8 @@ type alias FocusNode =
     { name : String
     , nameid : String
     , type_ : NodeType.NodeType
-    , children : List NodeId
+    , charac : NodeCharac
+    , children : List EmitterOrReceiver
     }
 
 

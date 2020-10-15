@@ -1,13 +1,16 @@
 module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
+import Components.Loading exposing (GqlData)
+import Dict
+import Extra exposing (withMaybeDataMap)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Node, NodeCharac, UserCtx, UserRole)
+import ModelSchema exposing (Node, NodeCharac, NodeId, NodesData, UserCtx, UserRole)
 import Url exposing (Url)
 
 
@@ -265,7 +268,7 @@ guestIdCodec rootnameid username =
 
 nodeIdCodec : String -> String -> NodeType.NodeType -> String
 nodeIdCodec parentid targetid nodeType =
-    -- Returns the namid of a new Circle/Role given the parentid and the nameid fragment.
+    -- Returns the nameid of a new Circle/Role given the parentid and the nameid fragment.
     let
         rootnameid =
             nid2rootid parentid

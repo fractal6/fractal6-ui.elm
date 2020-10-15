@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Components.Text as T
 import Debug
@@ -33,7 +33,22 @@ import Json.Decode as JD
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, focusFromNameid, focusState, getCircleRoles, getCoordoRoles, getOrgaRoles, nameidFromFlags, nearestCircleid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs
+    exposing
+        ( Flags_
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , focusFromNameid
+        , focusState
+        , getCircleRoles
+        , getCoordoRoles
+        , getOrgaRoles
+        , nameidFromFlags
+        , nearestCircleid
+        , nodeIdCodec
+        , uriFromNameid
+        , uriFromUsername
+        )
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
@@ -1179,7 +1194,8 @@ viewSearchBar odata maybePath qs =
                             |> List.indexedMap
                                 (\i n ->
                                     [ tr
-                                        [ classList [ ( "is-active", i == qs.idx ) ]
+                                        [ class "button-light"
+                                        , classList [ ( "is-active", i == qs.idx ) ]
                                         , onClickPD (NodeClicked n.nameid)
                                         ]
                                       <|
@@ -1532,11 +1548,7 @@ viewSourceRoles form roles nextStep =
 -}
 getNewTensionStepAuth : TensionForm -> ( TensionStep, TensionForm )
 getNewTensionStepAuth form =
-    let
-        orgaRoles =
-            getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
-    in
-    case orgaRoles of
+    case getOrgaRoles form.uctx.roles [ form.target.rootnameid ] of
         [] ->
             ( TensionNotAuthorized [ T.notOrgMember, T.joinForTension ], form )
 
@@ -1551,68 +1563,85 @@ getNewTensionStepAuth form =
 -}
 getNewNodeStepAuth : TensionForm -> GqlData NodesData -> ( NodeStep, TensionForm )
 getNewNodeStepAuth form odata =
+    case getNewNodeRights form odata of
+        [] ->
+            ( NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ], form )
+
+        [ r ] ->
+            ( NodeFinal, { form | source = r } )
+
+        roles ->
+            ( NodeSource roles, form )
+
+
+getNewNodeRights : TensionForm -> GqlData NodesData -> List UserRole
+getNewNodeRights form odata =
     let
         orgaRoles =
             getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
     in
     case orgaRoles of
         [] ->
-            ( NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ], form )
+            []
 
         roles ->
             let
+                children =
+                    getChildren form.target.nameid odata
+
+                childrenCoordos =
+                    List.filter (\n -> n.role_type == Just RoleType.Coordinator) children
+
                 circleRoles =
                     getCircleRoles roles [ form.target.nameid ]
-
-                circleCoordos =
-                    getChildren form.target odata |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
 
                 allCoordoRoles =
                     getCoordoRoles roles
             in
             case circleRoles of
                 [] ->
-                    if List.length circleCoordos == 0 && List.length allCoordoRoles > 0 then
-                        ( NodeSource allCoordoRoles, form )
-
-                    else
-                        ( NodeNotAuthorized [ T.notCircleMember, T.askCoordo ], form )
-
-                subRoles ->
                     case form.target.charac.mode of
                         NodeMode.Chaos ->
-                            case subRoles of
-                                [ r ] ->
-                                    ( NodeFinal, { form | source = r } )
+                            if List.length children == 0 then
+                                orgaRoles
 
-                                subRoles2 ->
-                                    ( NodeSource subRoles2, form )
+                            else
+                                []
+
+                        NodeMode.Coordinated ->
+                            if List.length childrenCoordos == 0 && List.length allCoordoRoles > 0 then
+                                allCoordoRoles
+
+                            else
+                                []
+
+                circleRoles_ ->
+                    case form.target.charac.mode of
+                        NodeMode.Chaos ->
+                            circleRoles_
 
                         NodeMode.Coordinated ->
                             let
                                 coordoRoles =
-                                    getCoordoRoles subRoles
+                                    getCoordoRoles circleRoles
                             in
                             case coordoRoles of
                                 [] ->
-                                    if List.length circleCoordos == 0 && List.length allCoordoRoles > 0 then
-                                        ( NodeSource allCoordoRoles, form )
+                                    if List.length childrenCoordos == 0 && List.length allCoordoRoles > 0 then
+                                        allCoordoRoles
 
                                     else
-                                        ( NodeNotAuthorized [ T.notCircleCoordo, T.askCoordo ], form )
+                                        []
 
-                                [ r ] ->
-                                    ( NodeFinal, { form | source = r } )
-
-                                subRoles2 ->
-                                    ( NodeSource subRoles2, form )
+                                coordoRoles_ ->
+                                    coordoRoles_
 
 
-getChildren : Node -> GqlData NodesData -> List Node
-getChildren node odata =
+getChildren : String -> GqlData NodesData -> List Node
+getChildren nid odata =
     odata
         |> withMaybeDataMap
             (\x ->
-                x |> Dict.values |> List.filter (\n -> Just (NodeId (nearestCircleid node.nameid)) == n.parent)
+                x |> Dict.values |> List.filter (\n -> Just (NodeId (nearestCircleid nid)) == n.parent)
             )
         |> withDefault []
