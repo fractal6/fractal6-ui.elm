@@ -17,7 +17,7 @@ import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (attribute, class, classList, href, id)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, UserCtx, Username)
 
 
@@ -318,8 +318,13 @@ actionNameStr action =
 
 viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> Html msg
 viewActionIconLink action org tid words =
+    let
+        charac =
+            getTensionCharac action
+    in
     a
         [ class "actionLink tooltip"
+        , classList [ ( "has-text-warning", charac.action_type == ARCHIVE ) ]
         , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
         , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
         ]

@@ -926,7 +926,7 @@ update global msg model =
                                 , tension_form = resetForm
                               }
                             , Cmd.none
-                            , send (UpdateSessionTensionHead (Just newTh))
+                            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTensionHead (Just newTh)) ]
                             )
 
                         _ ->
@@ -1142,7 +1142,7 @@ update global msg model =
                                 )
                                 model.tension_head
                     in
-                    ( { model | actionPanel = aPanel, tension_head = newTh }, gcmd, Cmd.none )
+                    ( { model | actionPanel = aPanel, tension_head = newTh }, gcmd, send UpdateUserToken )
 
                 other ->
                     if doRefreshToken other then
