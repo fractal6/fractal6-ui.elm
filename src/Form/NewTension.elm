@@ -34,6 +34,7 @@ type alias NewTensionForm =
     , activeButton : Maybe Int
     , viewMode : InputViewMode
     , isLookupOpen : Bool
+    , doAddLinks : Bool
     , doAddResponsabilities : Bool
     , doAddDomains : Bool
     , doAddPolicies : Bool
@@ -47,6 +48,7 @@ create focus =
     , activeButton = Nothing
     , viewMode = Write
     , isLookupOpen = False
+    , doAddLinks = False
     , doAddResponsabilities = False
     , doAddDomains = False
     , doAddPolicies = False
@@ -78,6 +80,7 @@ initCircle target type_ data =
                 , action = Just action
                 , blob_type = Just BlobType.OnNode
                 , node = { node | charac = Just target.charac } -- inherit charac
+                , users = [ { username = "", role_type = ternary (type_ == NodeType.Circle) RoleType.Coordinator RoleType.Peer, pattern = "" } ]
             }
     in
     { data | form = newForm, result = NotAsked }
@@ -109,6 +112,11 @@ setForm form data =
 setResult : GqlData Tension -> NewTensionForm -> NewTensionForm
 setResult result data =
     { data | result = result }
+
+
+addLinks : NewTensionForm -> NewTensionForm
+addLinks data =
+    { data | doAddLinks = True }
 
 
 addResponsabilities : NewTensionForm -> NewTensionForm
@@ -271,6 +279,7 @@ type alias Op msg =
 
     -- Doc change
     , onChangeNode : String -> String -> msg
+    , onAddLinks : msg
     , onAddResponsabilities : msg
     , onAddDomains : msg
     , onAddPolicies : msg

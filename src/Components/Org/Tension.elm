@@ -976,7 +976,7 @@ update global msg model =
             in
             ( { model | nodeDoc = NodeDoc.openLookup model.nodeDoc }
             , if model.nodeDoc.isLookupOpen == False then
-                Cmd.batch ([ Ports.outsideClickClose "doCancelLookupFsFromJs" "userSearchPanel" ] ++ [ cmd ])
+                Cmd.batch [ Ports.outsideClickClose "cancelLookupFsFromJs" "userSearchPanel" ]
 
               else
                 cmd

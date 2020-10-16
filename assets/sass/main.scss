@@ -1356,15 +1356,22 @@ a.actionLink {
 
 .subForm {
     padding: 0.666rem 1rem 0.1rem 0 !important;
-    margin-bottom:0 !important;
+    margin-top: -0.5rem !important;
+    margin-bottom: 0rem !important;
+
+    .field {
+        margin-bottom: 0.5rem !important;
+        .input {
+            font-size: 0.7rem !important;
+        }
+    }
+
+    .field-label {
+        font-size: 0.7rem !important;
+    }
 
     .input {
         background-color: #eee !important;
-    }
-
-    .field-label.control {
-        padding-top: 0 !important;
-        padding-left: 10px !important;
     }
 }
 

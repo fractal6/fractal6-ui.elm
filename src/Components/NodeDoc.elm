@@ -517,8 +517,6 @@ nodeAboutInputView hasBeenPushed source txt node op =
                             []
                         ]
                     ]
-
-                --, p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
                 ]
 
           else
@@ -560,7 +558,8 @@ nodeLinksInputView txt form data op =
                                             |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
                                             |> List.map
                                                 (\r ->
-                                                    option [ selected (r == rt), value (RoleType.toString r) ] [ text (RoleType.toString r) ]
+                                                    option [ selected (r == rt), value (RoleType.toString r) ]
+                                                        [ text (RoleType.toString r) ]
                                                 )
                                             |> select [ class "has-text-dark", onInput (op.onChangeUserRole i) ]
                                         ]
@@ -619,7 +618,7 @@ nodeMandateInputView txt node op =
         policies =
             node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault ""
     in
-    div [ class "field" ]
+    div [ class "" ]
         [ div [ class "field" ]
             [ div [ class "label" ] [ text T.purposeH ]
             , div [ class "control" ]

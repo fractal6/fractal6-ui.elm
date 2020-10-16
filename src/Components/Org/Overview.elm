@@ -149,6 +149,7 @@ type Msg
     | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeNodePost String String -- {field value}
+    | AddLinks
     | AddResponsabilities
     | AddDomains
     | AddPolicies
@@ -508,7 +509,7 @@ update global msg model =
         ShowLookupFs ->
             ( { model | tensionForm = NewTensionForm.openLookup model.tensionForm }
             , if model.tensionForm.isLookupOpen == False then
-                Cmd.batch [ Ports.outsideClickClose "doCancelLookupFsFromJs" "userSearchPanel" ]
+                Cmd.batch [ Ports.outsideClickClose "cancelLookupFsFromJs" "userSearchPanel" ]
 
               else
                 Cmd.none
@@ -690,10 +691,7 @@ update global msg model =
                                     model.tensionForm.form
 
                                 form =
-                                    { form_
-                                        | uctx = uctx
-                                        , users = [ { username = uctx.username, role_type = ternary (form_.node.type_ == Just NodeType.Circle) RoleType.Coordinator RoleType.Peer, pattern = "" } ]
-                                    }
+                                    { form_ | uctx = uctx }
 
                                 ( newStep, newForm ) =
                                     getNewNodeStepAuth form model.orga_data
@@ -727,6 +725,9 @@ update global msg model =
 
                 _ ->
                     ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        AddLinks ->
+            ( { model | tensionForm = NewTensionForm.addLinks model.tensionForm }, Cmd.none, Cmd.none )
 
         AddResponsabilities ->
             ( { model | tensionForm = NewTensionForm.addResponsabilities model.tensionForm }, Cmd.none, Cmd.none )
@@ -1406,6 +1407,7 @@ makeNewTensionFormOp model =
     , data = model.tensionForm
     , onChangeInputViewMode = ChangeInputViewMode
     , onChangeNode = ChangeNodePost
+    , onAddLinks = AddLinks
     , onAddResponsabilities = AddResponsabilities
     , onAddDomains = AddDomains
     , onAddPolicies = AddPolicies
