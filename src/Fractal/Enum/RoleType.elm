@@ -12,11 +12,12 @@ type RoleType
     | Peer
     | Member
     | Guest
+    | Owner
 
 
 list : List RoleType
 list =
-    [ Coordinator, Peer, Member, Guest ]
+    [ Coordinator, Peer, Member, Guest, Owner ]
 
 
 decoder : Decoder RoleType
@@ -36,6 +37,9 @@ decoder =
 
                     "Guest" ->
                         Decode.succeed Guest
+
+                    "Owner" ->
+                        Decode.succeed Owner
 
                     _ ->
                         Decode.fail ("Invalid RoleType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -58,6 +62,9 @@ toString enum =
 
         Guest ->
             "Guest"
+
+        Owner ->
+            "Owner"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -85,6 +92,9 @@ fromString enumString =
 
         "Guest" ->
             Just Guest
+
+        "Owner" ->
+            Just Owner
 
         _ ->
             Nothing

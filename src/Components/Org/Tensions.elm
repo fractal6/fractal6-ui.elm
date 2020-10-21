@@ -35,10 +35,9 @@ import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddNode exposing (addNewMember, addOneCircle)
-import Query.AddTension exposing (addOneTension)
+import Query.AddNode exposing (addNewMember)
 import Query.QueryNode exposing (queryLocalGraph)
-import Query.QueryTension exposing (queryCircleTension, queryExtTension, queryIntTension)
+import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Task
 import Time

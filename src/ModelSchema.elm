@@ -98,6 +98,13 @@ type alias LocalGraph =
     }
 
 
+type alias EmitterOrReceiver =
+    { name : String
+    , nameid : String
+    , role_type : Maybe RoleType.RoleType
+    }
+
+
 
 --
 -- Tension
@@ -120,13 +127,6 @@ type alias Tension =
 
 type alias ActionResult =
     { action : Maybe TensionAction.TensionAction }
-
-
-type alias EmitterOrReceiver =
-    { name : String
-    , nameid : String
-    , role_type : Maybe RoleType.RoleType
-    }
 
 
 type alias Label =

@@ -278,6 +278,9 @@ roleColor rt =
         RoleType.Coordinator ->
             "orange"
 
+        RoleType.Owner ->
+            "orange"
+
 
 
 {-

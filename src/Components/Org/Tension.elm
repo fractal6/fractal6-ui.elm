@@ -46,6 +46,7 @@ import ModelCommon.Codecs
         , getCoordoRoles
         , getOrgaRoles
         , getTensionCharac
+        , nid2rootid
         , uriFromUsername
         )
 import ModelCommon.Requests exposing (login)
@@ -73,7 +74,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (archiveDoc, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
-import Query.QueryNode exposing (queryGraphPack, queryLocalGraph)
+import Query.QueryNode exposing (queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -206,6 +207,7 @@ type Msg
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
+    | SetAdminRights (GqlData FocusNode)
       -- Page Action
     | ChangeTensionPost String String -- {field value}
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
@@ -310,7 +312,7 @@ init global flags =
             , users_data =
                 global.session.users_data
                     |> Maybe.map (\x -> Success x)
-                    |> withDefault Loading
+                    |> withDefault NotAsked
             , lookup_users = []
             , tensionid = tensionid
             , activeTab = tab
@@ -345,7 +347,7 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isTensionAdmin = getTensionRights global.session.user global.session.tension_head global.session.path_data
+            , isTensionAdmin = False
             , assigneesPanel = UserSearchPanel.create global.session.user tensionid
             , actionPanel = ActionPanel.create global.session.user tensionid
 
@@ -474,24 +476,31 @@ update global msg model =
 
         GotTensionHead result ->
             let
-                newModel =
-                    { model | tension_head = result, isTensionAdmin = getTensionRights global.session.user (withMaybeData result) global.session.path_data }
+                cmds =
+                    [ case result of
+                        Success th ->
+                            queryFocusNode apis.gql th.receiver.nameid SetAdminRights
+
+                        _ ->
+                            Cmd.none
+                    ]
             in
-            ( newModel, Ports.bulma_driver "", send (UpdateSessionTensionHead (withMaybeData result)) )
+            ( { model | tension_head = result }
+            , Cmd.batch ([ Ports.bulma_driver "" ] ++ cmds)
+            , send (UpdateSessionTensionHead (withMaybeData result))
+            )
 
         GotTensionComments result ->
-            let
-                newModel =
-                    { model | tension_comments = result }
-            in
-            ( newModel, Cmd.none, Ports.bulma_driver "" )
+            ( { model | tension_comments = result }, Cmd.none, Ports.bulma_driver "" )
 
         GotTensionBlobs result ->
-            let
-                newModel =
-                    { model | tension_blobs = result }
-            in
-            ( newModel, Cmd.none, Ports.bulma_driver "" )
+            ( { model | tension_blobs = result }, Cmd.none, Ports.bulma_driver "" )
+
+        SetAdminRights result ->
+            ( { model | isTensionAdmin = getTensionRights global.session.user model.tension_head result }
+            , Cmd.none
+            , Cmd.none
+            )
 
         -- Page Action
         ChangeTensionPost field value ->
@@ -966,17 +975,17 @@ update global msg model =
 
         ShowLookupFs ->
             let
-                cmd =
+                ( newModel, cmd ) =
                     case model.users_data of
-                        Success users ->
-                            Cmd.none
+                        NotAsked ->
+                            ( { model | users_data = Loading }, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga )
 
                         _ ->
-                            queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
+                            ( model, Cmd.none )
             in
-            ( { model | nodeDoc = NodeDoc.openLookup model.nodeDoc }
+            ( { newModel | nodeDoc = NodeDoc.openLookup model.nodeDoc }
             , if model.nodeDoc.isLookupOpen == False then
-                Cmd.batch [ Ports.outsideClickClose "cancelLookupFsFromJs" "userSearchPanel" ]
+                Cmd.batch ([ Ports.outsideClickClose "cancelLookupFsFromJs" "userSearchPanel" ] ++ [ cmd ])
 
               else
                 cmd
@@ -1176,9 +1185,13 @@ update global msg model =
                 JoinOrga (JoinInit form) ->
                     case result of
                         Success n ->
+                            let
+                                ndata =
+                                    hotNodePush [ n ] (Maybe.map (\o -> Success o) global.session.orga_data |> withDefault NotAsked)
+                            in
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , Cmd.none
-                            , Cmd.batch [ send UpdateUserToken ]
+                            , Maybe.map (\fs -> Ports.addQuickSearchUsers [ fs ]) n.first_link |> withDefault Cmd.none
+                            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
                             )
 
                         other ->
@@ -2355,55 +2368,59 @@ eventFromForm event_type form =
     }
 
 
-getTensionRights : UserState -> Maybe TensionHead -> Maybe LocalGraph -> Bool
-getTensionRights user th_m ldata =
+getTensionRights : UserState -> GqlData TensionHead -> GqlData FocusNode -> Bool
+getTensionRights user th_d focus_d =
     case user of
         LoggedIn uctx ->
-            case th_m of
-                Just th ->
-                    if (getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ] |> getCoordoRoles |> List.length) > 0 then
-                        -- Coordinator of receiver or emitter
-                        True
+            case th_d of
+                Success th ->
+                    case focus_d of
+                        Success focus ->
+                            let
+                                childrenRoles =
+                                    getChildrenLeaf th.receiver.nameid focus
 
-                    else if List.member uctx.username (th.assignees |> withDefault [] |> List.map (\u -> u.username)) then
-                        -- assignee
-                        True
-                        --else if uctx.username == th.createdBy.username then
-                        --    -- Author
-                        --    True
+                                childrenCoordos =
+                                    List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
-                    else
-                        let
-                            children =
-                                getChildren th.receiver.nameid ldata
+                                circleRoles =
+                                    getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ]
 
-                            childrenCoordos =
-                                List.filter (\n -> n.role_type == Just RoleType.Coordinator) children
+                                coordoRoles =
+                                    getCoordoRoles circleRoles
+                            in
+                            if List.member uctx.username (th.assignees |> withDefault [] |> List.map (\u -> u.username)) then
+                                -- assignee
+                                True
+                                --else if uctx.username == th.createdBy.username then
+                                --    -- Author
+                                --    True
 
-                            allCoordoRoles =
-                                getCoordoRoles uctx.roles
-                        in
-                        case Maybe.map (\l -> l.focus.charac.mode) ldata of
-                            Just NodeMode.Chaos ->
-                                -- No member in this circle
-                                List.length children == 0
+                            else
+                                case focus.charac.mode of
+                                    NodeMode.Chaos ->
+                                        -- No member in this circle
+                                        (List.length childrenRoles == 0 && List.length (getOrgaRoles uctx.roles [ nid2rootid focus.nameid ]) > 0)
+                                            -- Or is a  Circle member
+                                            || (List.length circleRoles > 0)
 
-                            Just NodeMode.Coordinated ->
-                                -- No coordo in this circe
-                                List.length childrenCoordos == 0 && List.length allCoordoRoles > 0
+                                    NodeMode.Coordinated ->
+                                        -- No coordo in this circe
+                                        (List.length childrenCoordos == 0 && List.length (getCoordoRoles uctx.roles) > 0)
+                                            -- Or is a circle coordo
+                                            || (List.length coordoRoles > 0)
 
-                            Nothing ->
-                                False
+                        _ ->
+                            False
 
-                Nothing ->
+                _ ->
                     False
 
         LoggedOut ->
             False
 
 
-getChildren : String -> Maybe LocalGraph -> List EmitterOrReceiver
-getChildren nid odata =
-    odata
-        |> Maybe.map (\x -> x.focus.children)
-        |> withDefault []
+getChildrenLeaf : String -> FocusNode -> List EmitterOrReceiver
+getChildrenLeaf nid focus =
+    focus.children
+        |> List.filter (\n -> n.role_type /= Nothing)

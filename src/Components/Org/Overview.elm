@@ -1588,62 +1588,52 @@ getNewNodeRights form odata =
 
         roles ->
             let
-                children =
-                    getChildren form.target.nameid odata
+                childrenRoles =
+                    getChildrenLeaf form.target.nameid odata
 
                 childrenCoordos =
-                    List.filter (\n -> n.role_type == Just RoleType.Coordinator) children
+                    List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
                 circleRoles =
                     getCircleRoles roles [ form.target.nameid ]
 
                 allCoordoRoles =
                     getCoordoRoles roles
+
+                coordoRoles =
+                    getCoordoRoles circleRoles
             in
-            case circleRoles of
-                [] ->
-                    case form.target.charac.mode of
-                        NodeMode.Chaos ->
-                            if List.length children == 0 then
+            case form.target.charac.mode of
+                NodeMode.Chaos ->
+                    case circleRoles of
+                        [] ->
+                            if List.length childrenRoles == 0 then
                                 orgaRoles
 
                             else
                                 []
 
-                        NodeMode.Coordinated ->
+                        circleRoles_ ->
+                            circleRoles_
+
+                NodeMode.Coordinated ->
+                    case coordoRoles of
+                        [] ->
                             if List.length childrenCoordos == 0 && List.length allCoordoRoles > 0 then
                                 allCoordoRoles
 
                             else
                                 []
 
-                circleRoles_ ->
-                    case form.target.charac.mode of
-                        NodeMode.Chaos ->
-                            circleRoles_
-
-                        NodeMode.Coordinated ->
-                            let
-                                coordoRoles =
-                                    getCoordoRoles circleRoles
-                            in
-                            case coordoRoles of
-                                [] ->
-                                    if List.length childrenCoordos == 0 && List.length allCoordoRoles > 0 then
-                                        allCoordoRoles
-
-                                    else
-                                        []
-
-                                coordoRoles_ ->
-                                    coordoRoles_
+                        coordoRoles_ ->
+                            coordoRoles_
 
 
-getChildren : String -> GqlData NodesData -> List Node
-getChildren nid odata =
+getChildrenLeaf : String -> GqlData NodesData -> List Node
+getChildrenLeaf nid odata =
     odata
         |> withMaybeDataMap
             (\x ->
-                x |> Dict.values |> List.filter (\n -> Just (NodeId (nearestCircleid nid)) == n.parent)
+                x |> Dict.values |> List.filter (\n -> n.type_ == NodeType.Role && Just (NodeId (nearestCircleid nid)) == n.parent)
             )
         |> withDefault []

@@ -5,6 +5,7 @@ module Query.QueryNode exposing
     , emmiterOrReceiverPayload
     , nodeCharacPayload
     , nodeOrgaPayload
+    , queryFocusNode
     , queryGraphPack
     , queryLocalGraph
     , queryMembers
@@ -244,12 +245,7 @@ nodeOrgaFilter rootid a =
                     { b
                         | rootnameid = Present { eq = Present rootid, regexp = Absent }
                         , not =
-                            Input.buildNodeFilter (\d -> { d | role_type = Present { eq = Present RoleType.Member } })
-                                |> Present
-                        , and =
-                            Input.buildNodeFilter
-                                (\d -> { d | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True }) |> Present })
-                                |> Present
+                            Input.buildNodeFilter (\sd -> { sd | isArchived = Present True }) |> Present
                     }
                 )
                 |> Present
@@ -377,7 +373,7 @@ lgPayload =
         |> with Fractal.Object.Node.type_
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with
-            (Fractal.Object.Node.children identity emmiterOrReceiverPayload)
+            (Fractal.Object.Node.children nArchivedFilter emmiterOrReceiverPayload)
         |> with
             (Fractal.Object.Node.parent identity lg2Payload)
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
@@ -391,6 +387,40 @@ lg2Payload =
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isRoot
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+
+
+nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nArchivedFilter a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b -> { b | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True }) |> Present })
+                |> Present
+    }
+
+
+
+{-
+   Query FocusNode
+-}
+
+
+focusDecoder : Maybe LocalNode -> Maybe FocusNode
+focusDecoder data =
+    data
+        |> Maybe.map
+            (\n ->
+                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
+            )
+
+
+queryFocusNode url targetid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (lgFilter targetid)
+            lgPayload
+        )
+        (RemoteData.fromResult >> decodeResponse focusDecoder >> msg)
 
 
 
@@ -512,7 +542,7 @@ membersPayload =
             )
         |> hardcoded Nothing
         |> with
-            (Fractal.Object.Node.children identity
+            (Fractal.Object.Node.children nArchivedFilter
                 (SelectionSet.succeed MemberNode
                     |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
                     |> with Fractal.Object.Node.name

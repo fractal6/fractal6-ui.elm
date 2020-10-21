@@ -34,6 +34,7 @@ const RoleType = {
     Member: "Member",
     Peer: "Peer",
     Coordinator: "Coordinator",
+    Owner: "Owner",
 }
 
 
@@ -52,6 +53,12 @@ const formatGraph = dataset =>  {
     });
 
     dataset.forEach( aData => {
+        // Filter Speciale Role nodes
+        if (aData.role_type == RoleType.Member || aData.role_type == RoleType.Owner ) {
+            delete dataDict[aData.nameid]
+            return
+        }
+
         if(aData.parentid) {
             dataDict[aData.parentid].children.push(dataDict[aData.nameid])
         } else {

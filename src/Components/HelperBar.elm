@@ -198,7 +198,7 @@ memberButtons roles_ hb =
     roles
         |> List.indexedMap
             (\i r ->
-                if r.role_type /= RoleType.Member then
+                if (r.role_type /= RoleType.Member && r.role_type /= RoleType.Owner) || (r.role_type == RoleType.Owner && i == 0) then
                     [ a
                         [ class ("button buttonRole is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)

@@ -40,16 +40,6 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Event
-createdAt =
-    Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
-
-
-updatedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Event
-updatedAt =
-    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
-
-
 type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
@@ -65,6 +55,16 @@ createdBy fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+
+
+createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Event
+createdAt =
+    Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
+
+
+updatedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Event
+updatedAt =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
 
 
 message : SelectionSet (Maybe String) Fractal.Object.Event

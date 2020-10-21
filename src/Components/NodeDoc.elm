@@ -555,7 +555,7 @@ nodeLinksInputView txt form data op =
                                 NodeType.Role ->
                                     div [ class ("select is-" ++ roleColor rt) ]
                                         [ RoleType.list
-                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member)
+                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member && r /= RoleType.Owner)
                                             |> List.map
                                                 (\r ->
                                                     option [ selected (r == rt), value (RoleType.toString r) ]
