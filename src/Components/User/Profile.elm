@@ -4,7 +4,7 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.NotFound exposing (viewNotFound)
-import Components.Text as Text exposing (..)
+import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -269,8 +269,7 @@ view_ global model uctx =
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
                 [ div [ class "columns is-centered" ]
-                    [ viewProfileLeft model uctx
-                    ]
+                    [ viewProfileLeft model uctx ]
                 ]
             , div [ class "column is-7 " ]
                 [ viewProfileRight model ]
@@ -297,7 +296,7 @@ viewProfileLeft model uctx =
 viewProfileRight : Model -> Html Msg
 viewProfileRight model =
     div []
-        [ h1 [ class "subtitle" ] [ text "Organisations" ]
+        [ h1 [ class "subtitle" ] [ text T.myOrganisations ]
         , if Dict.isEmpty model.user_data then
             p [ class "section" ] <|
                 List.intersperse (text " ")
@@ -327,8 +326,14 @@ viewUserOrgas user_data =
                             n_guest =
                                 root.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
                         in
-                        div [ class "box media" ]
-                            [ div [ class "media-left" ] [ a [ class "image circleBase circle2", href (uriFromNameid OverviewBaseUri root.nameid) ] [ getAvatar root.name ] ]
+                        div [ class "media box" ]
+                            [ div [ class "media-left" ]
+                                [ a
+                                    [ class "image circleBase circle2"
+                                    , href (uriFromNameid OverviewBaseUri root.nameid)
+                                    ]
+                                    [ getAvatar root.name ]
+                                ]
                             , div [ class "media-content" ]
                                 [ div [ class "columns" ]
                                     [ div [ class "column is-8" ]
@@ -338,7 +343,7 @@ viewUserOrgas user_data =
                                                 div [ class "is-italic" ] [ text about ]
 
                                             Nothing ->
-                                                div [] []
+                                                text ""
                                         ]
                                     , div [ class "column is-4" ]
                                         [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]

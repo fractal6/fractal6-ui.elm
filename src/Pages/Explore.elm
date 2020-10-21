@@ -3,7 +3,7 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Components.Text as Text exposing (..)
+import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -127,17 +127,18 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "explore", class "columns" ]
-        [ div [ class "column is-offset-2 is-6" ]
-            [ div [ class "section" ]
-                [ viewOrgas model ]
+    div [ id "explore", class "section" ]
+        [ div [ class "columns is-centered" ]
+            [ div [ class "column is-7" ]
+                [ viewPublicOrgas model
+                ]
             ]
         ]
 
 
-viewOrgas : Model -> Html Msg
-viewOrgas model =
-    div [ class "section" ] <|
+viewPublicOrgas : Model -> Html Msg
+viewPublicOrgas model =
+    div [ class "" ] <|
         case model.orgas of
             Loading ->
                 [ div [] [] ]
@@ -154,7 +155,7 @@ viewOrgas model =
             Success nodes ->
                 nodes
                     |> List.map (\n -> viewOrgaMedia n)
-                    |> List.append [ div [ class "subtitle" ] [ text "Public Organisation" ], br [] [] ]
+                    |> List.append [ div [ class "subtitle" ] [ text T.exploreOrganisations ], br [] [] ]
 
 
 viewOrgaMedia : Node -> Html Msg
@@ -166,34 +167,41 @@ viewOrgaMedia node =
         n_guest =
             node.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
     in
-    div [ class "media" ]
-        [ div [ class "media-left" ] [ a [ class "image circleBase circle2", href (uriFromNameid OverviewBaseUri node.nameid) ] [ getAvatar node.name ] ]
+    div [ class "media box" ]
+        [ div [ class "media-left" ]
+            [ a
+                [ class "image circleBase circle2"
+                , href (uriFromNameid OverviewBaseUri node.nameid)
+                ]
+                [ getAvatar node.name ]
+            ]
         , div [ class "media-content" ]
             [ div [ class "columns" ]
-                [ div [ class "column is-10" ]
+                [ div [ class "column is-8" ]
                     [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ]
                     , case node.about of
                         Just ab ->
                             div [ class "is-italic" ] [ text ab ]
 
                         Nothing ->
-                            div [ class "is-italic" ] [ text "" ]
+                            text ""
                     ]
-                , span [ class "column is-2" ]
-                    [ div [ class "level levelExplore" ]
-                        [ div [ class "level-item" ]
-                            [ span [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text "member" ], span [ class "tag is-white" ] [ text n_member ] ]
+                , span [ class "column is-4" ]
+                    [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
+                        [ div [ class "control" ]
+                            [ div [ class "tags has-addons" ]
+                                [ span [ class "tag is-light" ] [ text "member" ]
+                                , span [ class "tag is-white" ] [ text n_member ]
+                                ]
                             ]
-                        , div [ class "level-item" ]
-                            [ span [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text "guest" ], span [ class "tag is-white" ] [ text n_guest ] ]
+                        , div [ class "control" ]
+                            [ div [ class "tags has-addons" ]
+                                [ span [ class "tag is-light" ] [ text "guest" ]
+                                , span [ class "tag is-white" ] [ text n_guest ]
+                                ]
                             ]
                         ]
                     ]
                 ]
             ]
-
-        --, div [ class "media-right" ]
-        --    []
         ]

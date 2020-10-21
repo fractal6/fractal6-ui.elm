@@ -23,6 +23,16 @@ checkItOut =
     "Check it out."
 
 
+myOrganisations : String
+myOrganisations =
+    "My organisations"
+
+
+exploreOrganisations : String
+exploreOrganisations =
+    "Explore organisations"
+
+
 view : String
 view =
     "View"
