@@ -16,9 +16,10 @@ type Route
     | Signup
     | Explore
     | Dynamic { param1 : String }
-    | User_Dynamic { param1 : String }
+    | New_Orga
     | T_Dynamic { param1 : String }
     | M_Dynamic { param1 : String }
+    | User_Dynamic { param1 : String }
     | O_Dynamic { param1 : String }
     | T_Dynamic_Dynamic { param1 : String, param2 : String }
     | M_Dynamic_Dynamic { param1 : String, param2 : String }
@@ -47,15 +48,16 @@ routes =
         , (Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map Dynamic
-        , (Parser.s "user" </> Parser.string)
-          |> Parser.map (\param1 -> { param1 = param1 })
-          |> Parser.map User_Dynamic
+        , Parser.map New_Orga (Parser.s "new" </> Parser.s "orga")
         , (Parser.s "t" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map T_Dynamic
         , (Parser.s "m" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map M_Dynamic
+        , (Parser.s "user" </> Parser.string)
+          |> Parser.map (\param1 -> { param1 = param1 })
+          |> Parser.map User_Dynamic
         , (Parser.s "o" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map O_Dynamic
@@ -113,14 +115,17 @@ toHref route =
                 Dynamic { param1 } ->
                     [ param1 ]
                 
-                User_Dynamic { param1 } ->
-                    [ "user", param1 ]
+                New_Orga ->
+                    [ "new", "orga" ]
                 
                 T_Dynamic { param1 } ->
                     [ "t", param1 ]
                 
                 M_Dynamic { param1 } ->
                     [ "m", param1 ]
+                
+                User_Dynamic { param1 } ->
+                    [ "user", param1 ]
                 
                 O_Dynamic { param1 } ->
                     [ "o", param1 ]

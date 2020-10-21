@@ -141,10 +141,10 @@ viewPublicOrgas model =
     div [ class "" ] <|
         case model.orgas of
             Loading ->
-                [ div [] [] ]
+                [ text "" ]
 
             NotAsked ->
-                [ div [] [] ]
+                [ text "" ]
 
             LoadingSlowly ->
                 [ div [ class "spinner" ] [] ]

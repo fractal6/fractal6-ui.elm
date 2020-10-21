@@ -2,8 +2,9 @@ module Components.Navbar exposing (view)
 
 import Components.Fa as Fa
 import Components.Logo as Logo
+import Components.Text as T
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, div, header, hr, i, nav, span, text)
+import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import ModelCommon exposing (UserState(..))
 
@@ -42,10 +43,31 @@ view user =
                       a [ class "navbar-item", href (toHref Route.Explore) ] [ text "Explore" ]
                     ]
                 , div [ class "navbar-end" ]
-                    [ userButton user ]
+                    [ newButton user
+                    , userButton user
+                    ]
                 ]
             ]
         ]
+
+
+newButton : UserState -> Html msg
+newButton user =
+    case user of
+        LoggedIn uctx ->
+            div
+                [ class "navbar-item has-dropdown mx-2"
+                , attribute "style" "align-items: center !important;"
+                ]
+                [ div [ class "navbar-link has-background-info button is-small" ] [ Fa.icon "fas fa-plus" "" ]
+                , div [ class "navbar-dropdown is-right" ]
+                    [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
+                        [ text T.newOrganisation ]
+                    ]
+                ]
+
+        LoggedOut ->
+            text ""
 
 
 userButton : UserState -> Html msg
@@ -56,21 +78,21 @@ userButton user =
                 [ div [ class "navbar-link" ] [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toHref <| Route.User_Dynamic { param1 = uctx.username }) ]
-                        [ Fa.icon "fas fa-user" "Profile" ]
+                        [ Fa.icon "fas fa-user" T.profile ]
                     , a [ class "navbar-item", href "#" ]
-                        [ Fa.icon "fas fa-cog" "Settings" ]
+                        [ Fa.icon "fas fa-cog" T.settings ]
 
                     --, hr [ class "navbar-divider" ] []
                     --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "fas fa-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
                         --[ Fa.icon "fas fa-sm fa-sign-out-alt" "Sign Out" ]
-                        [ text "Sign Out" ]
+                        [ text T.signout ]
                     ]
                 ]
 
         LoggedOut ->
             div [ class "navbar-item" ]
                 [ a [ class "button is-small is-primary has-text-weight-bold", href (toHref Route.Login) ]
-                    [ text "Login" ]
+                    [ text T.signin ]
                 ]

@@ -42,7 +42,7 @@ type alias NodeFocus =
     { rootnameid : String
     , isRoot : Bool
     , nameid : String
-    , type_ : NodeType.NodeType
+    , type_ : NodeType.NodeType -- @obsololete: known from nameid
 
     --, name : Maybe String // get the name when JS/D3 finished the rendering Job
     }

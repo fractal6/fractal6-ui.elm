@@ -397,7 +397,7 @@ view op =
                             viewGqlErrors err
 
                         _ ->
-                            div [] []
+                            text ""
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]

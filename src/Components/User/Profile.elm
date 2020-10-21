@@ -248,10 +248,10 @@ view global model =
                 view_ global model user
 
             NotAsked ->
-                div [] []
+                text ""
 
             Loading ->
-                div [] []
+                text ""
 
             LoadingSlowly ->
                 div [ class "spinner" ] []
@@ -300,11 +300,13 @@ viewProfileRight model =
         , if Dict.isEmpty model.user_data then
             p [ class "section" ] <|
                 List.intersperse (text " ")
-                    [ text "You have no organisation yet."
+                    [ text "You have no organisations yet."
                     , br [] []
                     , text "You can"
                     , a [ href (Route.toHref Route.Explore) ] [ text "Explore" ]
-                    , text "public organisations."
+                    , text "public organisations"
+                    , text ", or create a"
+                    , a [ href (Route.toHref Route.New_Orga) ] [ text T.newOrganisation ]
                     ]
 
           else
@@ -380,6 +382,6 @@ viewUserOrgas user_data =
                             ]
 
                     other ->
-                        div [] []
+                        text ""
             )
         |> div []

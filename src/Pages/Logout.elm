@@ -35,7 +35,7 @@ init global flags =
         gcmd =
             case global.session.user of
                 LoggedOut ->
-                    Global.navigate <| Route.Top
+                    Global.navigate Route.Top
 
                 LoggedIn _ ->
                     send LoggedOutUser

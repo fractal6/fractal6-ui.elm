@@ -17,9 +17,10 @@ import Pages.NotFound
 import Pages.Signup
 import Pages.Explore
 import Pages.Dynamic
-import Pages.User.Dynamic
+import Pages.New.Orga
 import Pages.T.Dynamic
 import Pages.M.Dynamic
+import Pages.User.Dynamic
 import Pages.O.Dynamic
 import Pages.T.Dynamic.Dynamic
 import Pages.M.Dynamic.Dynamic
@@ -43,9 +44,10 @@ type Model
     | Signup_Model Pages.Signup.Model
     | Explore_Model Pages.Explore.Model
     | Dynamic_Model Pages.Dynamic.Model
-    | User_Dynamic_Model Pages.User.Dynamic.Model
+    | New_Orga_Model Pages.New.Orga.Model
     | T_Dynamic_Model Pages.T.Dynamic.Model
     | M_Dynamic_Model Pages.M.Dynamic.Model
+    | User_Dynamic_Model Pages.User.Dynamic.Model
     | O_Dynamic_Model Pages.O.Dynamic.Model
     | T_Dynamic_Dynamic_Model Pages.T.Dynamic.Dynamic.Model
     | M_Dynamic_Dynamic_Model Pages.M.Dynamic.Dynamic.Model
@@ -65,9 +67,10 @@ type Msg
     | Signup_Msg Pages.Signup.Msg
     | Explore_Msg Pages.Explore.Msg
     | Dynamic_Msg Pages.Dynamic.Msg
-    | User_Dynamic_Msg Pages.User.Dynamic.Msg
+    | New_Orga_Msg Pages.New.Orga.Msg
     | T_Dynamic_Msg Pages.T.Dynamic.Msg
     | M_Dynamic_Msg Pages.M.Dynamic.Msg
+    | User_Dynamic_Msg Pages.User.Dynamic.Msg
     | O_Dynamic_Msg Pages.O.Dynamic.Msg
     | T_Dynamic_Dynamic_Msg Pages.T.Dynamic.Dynamic.Msg
     | M_Dynamic_Dynamic_Msg Pages.M.Dynamic.Dynamic.Msg
@@ -98,9 +101,10 @@ type alias UpgradedPages =
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
     , explore : UpgradedPage Pages.Explore.Flags Pages.Explore.Model Pages.Explore.Msg
     , dynamic : UpgradedPage Pages.Dynamic.Flags Pages.Dynamic.Model Pages.Dynamic.Msg
-    , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
+    , new_orga : UpgradedPage Pages.New.Orga.Flags Pages.New.Orga.Model Pages.New.Orga.Msg
     , t_dynamic : UpgradedPage Pages.T.Dynamic.Flags Pages.T.Dynamic.Model Pages.T.Dynamic.Msg
     , m_dynamic : UpgradedPage Pages.M.Dynamic.Flags Pages.M.Dynamic.Model Pages.M.Dynamic.Msg
+    , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
     , o_dynamic : UpgradedPage Pages.O.Dynamic.Flags Pages.O.Dynamic.Model Pages.O.Dynamic.Msg
     , t_dynamic_dynamic : UpgradedPage Pages.T.Dynamic.Dynamic.Flags Pages.T.Dynamic.Dynamic.Model Pages.T.Dynamic.Dynamic.Msg
     , m_dynamic_dynamic : UpgradedPage Pages.M.Dynamic.Dynamic.Flags Pages.M.Dynamic.Dynamic.Model Pages.M.Dynamic.Dynamic.Msg
@@ -122,9 +126,10 @@ pages =
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
     , explore = Pages.Explore.page |> Page.upgrade Explore_Model Explore_Msg
     , dynamic = Pages.Dynamic.page |> Page.upgrade Dynamic_Model Dynamic_Msg
-    , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
+    , new_orga = Pages.New.Orga.page |> Page.upgrade New_Orga_Model New_Orga_Msg
     , t_dynamic = Pages.T.Dynamic.page |> Page.upgrade T_Dynamic_Model T_Dynamic_Msg
     , m_dynamic = Pages.M.Dynamic.page |> Page.upgrade M_Dynamic_Model M_Dynamic_Msg
+    , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
     , o_dynamic = Pages.O.Dynamic.page |> Page.upgrade O_Dynamic_Model O_Dynamic_Msg
     , t_dynamic_dynamic = Pages.T.Dynamic.Dynamic.page |> Page.upgrade T_Dynamic_Dynamic_Model T_Dynamic_Dynamic_Msg
     , m_dynamic_dynamic = Pages.M.Dynamic.Dynamic.page |> Page.upgrade M_Dynamic_Dynamic_Model M_Dynamic_Dynamic_Msg
@@ -165,14 +170,17 @@ init route =
         Route.Dynamic params ->
             pages.dynamic.init params
         
-        Route.User_Dynamic params ->
-            pages.user_dynamic.init params
+        Route.New_Orga ->
+            pages.new_orga.init ()
         
         Route.T_Dynamic params ->
             pages.t_dynamic.init params
         
         Route.M_Dynamic params ->
             pages.m_dynamic.init params
+        
+        Route.User_Dynamic params ->
+            pages.user_dynamic.init params
         
         Route.O_Dynamic params ->
             pages.o_dynamic.init params
@@ -230,14 +238,17 @@ update bigMsg bigModel =
         ( Dynamic_Msg msg, Dynamic_Model model ) ->
             pages.dynamic.update msg model
         
-        ( User_Dynamic_Msg msg, User_Dynamic_Model model ) ->
-            pages.user_dynamic.update msg model
+        ( New_Orga_Msg msg, New_Orga_Model model ) ->
+            pages.new_orga.update msg model
         
         ( T_Dynamic_Msg msg, T_Dynamic_Model model ) ->
             pages.t_dynamic.update msg model
         
         ( M_Dynamic_Msg msg, M_Dynamic_Model model ) ->
             pages.m_dynamic.update msg model
+        
+        ( User_Dynamic_Msg msg, User_Dynamic_Model model ) ->
+            pages.user_dynamic.update msg model
         
         ( O_Dynamic_Msg msg, O_Dynamic_Model model ) ->
             pages.o_dynamic.update msg model
@@ -298,14 +309,17 @@ bundle bigModel =
         Dynamic_Model model ->
             pages.dynamic.bundle model
         
-        User_Dynamic_Model model ->
-            pages.user_dynamic.bundle model
+        New_Orga_Model model ->
+            pages.new_orga.bundle model
         
         T_Dynamic_Model model ->
             pages.t_dynamic.bundle model
         
         M_Dynamic_Model model ->
             pages.m_dynamic.bundle model
+        
+        User_Dynamic_Model model ->
+            pages.user_dynamic.bundle model
         
         O_Dynamic_Model model ->
             pages.o_dynamic.bundle model

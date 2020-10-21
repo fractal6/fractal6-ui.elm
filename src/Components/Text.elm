@@ -3,6 +3,26 @@ module Components.Text exposing (..)
 -- General
 
 
+signin : String
+signin =
+    "Login"
+
+
+signout : String
+signout =
+    "Sign Out"
+
+
+profile : String
+profile =
+    "Profile"
+
+
+settings : String
+settings =
+    "Settings"
+
+
 loading : String
 loading =
     "loading..."
@@ -31,6 +51,11 @@ myOrganisations =
 exploreOrganisations : String
 exploreOrganisations =
     "Explore organisations"
+
+
+newOrganisation : String
+newOrganisation =
+    "New organisation"
 
 
 view : String

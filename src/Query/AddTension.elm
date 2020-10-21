@@ -1,5 +1,6 @@
 module Query.AddTension exposing
-    ( addOneTension
+    ( addOneOrga
+    , addOneTension
     , buildBlob
     , buildComment
     , buildEvent
@@ -10,6 +11,7 @@ module Query.AddTension exposing
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -65,6 +67,23 @@ tensionDecoder a =
             Nothing
 
 
+orgaDecoder : Maybe AddTensionPayload -> Maybe RootNode
+orgaDecoder a =
+    case a of
+        Just b ->
+            b.tension
+                |> Maybe.map (\x -> List.head x)
+                |> Maybe.withDefault Nothing
+                |> Maybe.withDefault Nothing
+                |> Maybe.map
+                    (\x ->
+                        RootNode "" "" { userCanJoin = False, mode = NodeMode.Coordinated } ""
+                    )
+
+        Nothing ->
+            Nothing
+
+
 addOneTension url form msg =
     --@DEBUG: Infered type...
     makeGQLMutation url
@@ -75,6 +94,18 @@ addOneTension url form msg =
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionDecoder >> msg)
+
+
+addOneOrga url form msg =
+    --@DEBUG: Infered type...
+    makeGQLMutation url
+        (Mutation.addTension
+            (addTensionInputEncoder form)
+            (SelectionSet.map AddTensionPayload <|
+                Fractal.Object.AddTensionPayload.tension identity tensionPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse orgaDecoder >> msg)
 
 
 
