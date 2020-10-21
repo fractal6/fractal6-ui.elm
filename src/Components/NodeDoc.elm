@@ -617,6 +617,15 @@ nodeMandateInputView txt node op =
 
         policies =
             node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault ""
+
+        showResponsabilities =
+            op.data.doAddResponsabilities || responsabilities /= ""
+
+        showDomains =
+            op.data.doAddDomains || domains /= ""
+
+        showPolicies =
+            op.data.doAddPolicies || policies /= ""
     in
     div [ class "" ]
         [ div [ class "field" ]
@@ -634,7 +643,7 @@ nodeMandateInputView txt node op =
                     []
                 ]
             ]
-        , if op.data.doAddResponsabilities || responsabilities /= "" then
+        , if showResponsabilities then
             div [ class "field" ]
                 [ div [ class "label" ] [ text T.responsabilitiesH ]
                 , div [ class "control" ]
@@ -650,11 +659,8 @@ nodeMandateInputView txt node op =
                 ]
 
           else
-            div [ class "field" ]
-                [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
-                    [ Fa.icon "fas fa-plus" "", text T.addResponsabilities ]
-                ]
-        , if op.data.doAddDomains || domains /= "" then
+            text ""
+        , if showDomains then
             div [ class "field" ]
                 [ div [ class "label" ] [ text T.domainsH ]
                 , div [ class "control" ]
@@ -670,11 +676,8 @@ nodeMandateInputView txt node op =
                 ]
 
           else
-            div [ class "field" ]
-                [ div [ class "button is-small is-success", onClick op.onAddDomains ]
-                    [ Fa.icon "fas fa-plus" "", text T.addDomains ]
-                ]
-        , if op.data.doAddPolicies || policies /= "" then
+            text ""
+        , if showPolicies then
             div [ class "field" ]
                 [ div [ class "label" ] [ text T.policiesH ]
                 , div [ class "control" ]
@@ -690,10 +693,31 @@ nodeMandateInputView txt node op =
                 ]
 
           else
-            div [ class "field" ]
+            text ""
+        , if showResponsabilities == False then
+            span [ class "pr-2" ]
+                [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
+                    [ Fa.icon "fas fa-plus" "", text T.addResponsabilities ]
+                ]
+
+          else
+            text ""
+        , if showDomains == False then
+            span [ class "pr-2" ]
+                [ div [ class "button is-small is-success", onClick op.onAddDomains ]
+                    [ Fa.icon "fas fa-plus" "", text T.addDomains ]
+                ]
+
+          else
+            text ""
+        , if showPolicies == False then
+            span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddPolicies ]
                     [ Fa.icon "fas fa-plus" "", text T.addPolicies ]
                 ]
+
+          else
+            text ""
         ]
 
 
