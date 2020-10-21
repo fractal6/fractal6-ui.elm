@@ -477,6 +477,10 @@ html.has-modal-active, html.has-modal-active2 {
         //
     }
 
+    .hero-body > a,.hero-body > div > a, .content a {
+        color: $blue;
+    }
+
     .hero-body > hr {
         margin-top: 1rem !important;
         margin-bottom: 1.5rem !important;
@@ -491,11 +495,8 @@ html.has-modal-active, html.has-modal-active2 {
         p {
             font-size: 15px !important;
         }
-
-        a {
-            color: $blue;
-        }
     }
+
 }
 
 .aboutDoc {
@@ -508,10 +509,14 @@ html.has-modal-active, html.has-modal-active2 {
 
     .nodeName {
         font-weight: 600 !important;
-        color: $grey !important;
+        color: $grey-dark !important;
+
     }
 
     .subtitle {
+        .nodeName a {
+            color: $blue-grey !important;
+        }
         a:hover, a:hover .content {
             color: $blue !important;
             transition: none;

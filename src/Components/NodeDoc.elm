@@ -268,15 +268,7 @@ view data op_m =
         [ div [ class "hero-body" ]
             [ case data.data of
                 Failure err ->
-                    if data.node.role_type == Just RoleType.Guest then
-                        let
-                            fs =
-                                data.node.first_link |> withDefault "[Unknown]"
-                        in
-                        div [] [ [ "No mandate for Guest ", fs, "." ] |> String.join "" |> text ]
-
-                    else
-                        viewGqlErrors err
+                    viewGqlErrors err
 
                 LoadingSlowly ->
                     div [ class "spinner" ] []
@@ -285,7 +277,7 @@ view data op_m =
                     view_ tid data op_m
 
                 other ->
-                    div [] []
+                    text ""
             ]
         ]
 
@@ -334,7 +326,7 @@ view_ tid data op_m =
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
-                |> withDefault (div [] [])
+                |> withDefault (text "")
 
           else
             div [ class "aboutDoc" ]
@@ -373,7 +365,7 @@ view_ tid data op_m =
                         p [ class "column is-fullwidth" ] [ text ab ]
 
                     Nothing ->
-                        div [] []
+                        text ""
                 ]
         , hr [ class "has-background-grey-light" ] []
         , if blobTypeEdit == Just BlobType.OnFirstLink then
@@ -389,10 +381,10 @@ view_ tid data op_m =
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
-                |> withDefault (div [] [])
+                |> withDefault (text "")
 
           else if isLinksHidden then
-            div [] []
+            text ""
 
           else
             let
@@ -411,9 +403,9 @@ view_ tid data op_m =
                     span [ class "is-italic" ] [ text T.noFirstLinks ]
 
                   else
-                    div [] []
+                    text ""
                 ]
-        , ternary isLinksHidden (div [] []) (hr [ class "has-background-grey-light" ] [])
+        , ternary isLinksHidden (text "") (hr [ class "has-background-grey-light" ] [])
         , if blobTypeEdit == Just BlobType.OnMandate then
             op_m
                 |> Maybe.map
@@ -427,7 +419,7 @@ view_ tid data op_m =
                             , blobButtonsView isSendable isLoading op
                             ]
                     )
-                |> withDefault (div [] [])
+                |> withDefault (text "")
 
           else
             case data.node.mandate of
@@ -442,10 +434,15 @@ view_ tid data op_m =
                         ]
 
                 Nothing ->
-                    div [ class "is-italic" ]
-                        [ text "No mandate for this circle."
-                        , doEditView op_m BlobType.OnMandate
-                        ]
+                    case data.node.role_type of
+                        Just RoleType.Guest ->
+                            a [ class "is-size-6", href "https://doc.fractale.co/role/coordinator" ] [ text "https://doc.fractale.co/role/coordinator" ]
+
+                        _ ->
+                            div [ class "is-italic" ]
+                                [ text "No mandate for this node."
+                                , doEditView op_m BlobType.OnMandate
+                                ]
         ]
 
 
@@ -463,7 +460,7 @@ viewMandateSection name maybePara =
                 ]
 
         Nothing ->
-            div [] []
+            text ""
 
 
 
@@ -520,7 +517,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                 ]
 
           else
-            div [] []
+            text ""
         ]
 
 
@@ -751,7 +748,7 @@ blobButtonsView isSendable isLoading op =
                 viewGqlErrors err
 
             _ ->
-                div [] []
+                text ""
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
                 [ div [ class "buttons" ]

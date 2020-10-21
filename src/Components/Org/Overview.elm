@@ -1038,6 +1038,9 @@ view_ global model =
         tid =
             model.node_data |> withMaybeData |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
 
+        roletype =
+            getNode model.node_focus.nameid model.orga_data |> Maybe.map (\n -> n.role_type) |> withDefault Nothing
+
         nodeData_ =
             { data = withMapData (\x -> tid) model.node_data
             , node = initNodeFragment Nothing
@@ -1045,7 +1048,7 @@ view_ global model =
             , source = OverviewBaseUri
             , focus = model.node_focus
             , hasBeenPushed = True
-            , toolbar = Just (DocToolBar.view model.node_focus tid Nothing)
+            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view model.node_focus tid Nothing)) Nothing
             , receiver = nearestCircleid model.node_focus.nameid
             }
 
@@ -1086,7 +1089,7 @@ view_ global model =
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
-                , viewCanvas model.orga_data
+                , viewCanvas model.node_focus model.orga_data
                 , br [] []
                 , NodeDoc.view nodeData Nothing
                 , setupActionModal model
@@ -1245,20 +1248,28 @@ viewSearchBar odata maybePath qs =
                         ]
 
                 Err err ->
-                    div [] []
+                    text ""
             ]
         ]
 
 
-viewCanvas : GqlData NodesData -> Html Msg
-viewCanvas odata =
+viewCanvas : NodeFocus -> GqlData NodesData -> Html Msg
+viewCanvas focus odata =
     div [ id "canvasParent", classList [ ( "spinner", odata == LoadingSlowly ) ] ]
         [ case odata of
             Failure err ->
                 viewGqlErrors err
 
-            default ->
-                div [] []
+            Success d ->
+                case Dict.get focus.nameid d of
+                    Just _ ->
+                        text ""
+
+                    Nothing ->
+                        viewGqlErrors [ "Node archived or hidden" ]
+
+            _ ->
+                text ""
         , canvas [ id "canvasOrga", class "is-invisible" ] []
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             -- Hidden class use in graphpack_d3.js
@@ -1324,8 +1335,8 @@ viewActivies model =
                 Failure err ->
                     viewGqlErrors err
 
-                default ->
-                    div [] []
+                _ ->
+                    text ""
             ]
         ]
 

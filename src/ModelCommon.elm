@@ -306,6 +306,16 @@ type InputViewMode
 --
 
 
+getNode : String -> GqlData NodesData -> Maybe Node
+getNode nameid orga =
+    case orga of
+        Success nodes ->
+            Dict.get nameid nodes
+
+        _ ->
+            Nothing
+
+
 getNodeName : String -> GqlData NodesData -> String
 getNodeName nameid orga =
     let
