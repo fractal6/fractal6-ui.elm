@@ -256,6 +256,11 @@ policiesH =
     "Policies"
 
 
+createH : String
+createH =
+    "Create"
+
+
 noResponsabilities : String
 noResponsabilities =
     "no accountabilities provided"
@@ -358,6 +363,16 @@ noLabels =
 noAction : String
 noAction =
     "No action requested"
+
+
+noOpenTensionRole : String
+noOpenTensionRole =
+    "No open tensions for this Role yet."
+
+
+noOpenTensionCircle : String
+noOpenTensionCircle =
+    "No open tensions for this Circle yet."
 
 
 noTensionRole : String

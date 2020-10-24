@@ -4,6 +4,7 @@ module Query.QueryTension exposing
     , getTensionBlobs
     , getTensionComments
     , getTensionHead
+    , queryAllTension
     , queryCircleTension
     , queryExtTension
     , queryIntTension
@@ -301,7 +302,7 @@ subCircleTensionDecoder child =
 
 
 queryCircleTension url targetid msg =
-    --@DEBUG: Infered type...
+    --@DEBUG: Archived Nodes are not filtered
     makeGQLQuery url
         (Query.getNode
             (circleFilter targetid)
@@ -377,7 +378,7 @@ tensionPayload =
 
 
 {-
-   Query Sub Tension (all tension below a Node)
+   Query Regexp Tension
 -}
 
 
@@ -414,6 +415,15 @@ queryExtTension url targetids first offset query_ status_ type_ msg =
     makeGQLQuery url
         (Query.queryTension
             (subTensionExtFilterByDate targetids first offset query_ status_ type_)
+            tensionPayload
+        )
+        (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
+
+
+queryAllTension url targetids first offset query_ status_ type_ msg =
+    makeGQLQuery url
+        (Query.queryTension
+            (subTensionAllFilterByDate targetids first offset query_ status_ type_)
             tensionPayload
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
@@ -533,6 +543,50 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
                                                                 )
                                                                 |> Present
                                                     }
+                                                )
+                                                |> Present
+                                    }
+                                )
+                                |> Present
+                    }
+                )
+                |> Present
+    }
+
+
+subTensionAllFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
+    let
+        nameidsRegxp_ =
+            nameids
+                |> List.map (\n -> "^" ++ n ++ "$")
+                |> String.join "|"
+
+        nameidsRegxp =
+            "/" ++ nameidsRegxp_ ++ "/"
+    in
+    { a
+        | first = Present first
+        , offset = Present offset
+        , order =
+            Input.buildTensionOrder
+                (\b -> { b | desc = Present TensionOrderable.CreatedAt })
+                |> Present
+        , filter =
+            Input.buildTensionFilter
+                (\c ->
+                    { c
+                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
+                        , and =
+                            Input.buildTensionFilter
+                                (\d1 ->
+                                    { d1
+                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                                        , or =
+                                            Input.buildTensionFilter
+                                                (\d2 ->
+                                                    { d2 | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present }
                                                 )
                                                 |> Present
                                     }

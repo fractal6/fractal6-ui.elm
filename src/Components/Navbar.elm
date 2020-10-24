@@ -59,7 +59,7 @@ newButton user =
                 [ class "navbar-item has-dropdown mx-2"
                 , attribute "style" "align-items: center !important;"
                 ]
-                [ div [ class "navbar-link has-background-info button is-small" ] [ Fa.icon "fas fa-plus" "" ]
+                [ div [ class "navbar-link has-background-primary button is-small" ] [ Fa.icon "fas fa-plus" "" ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
                         [ text T.newOrganisation ]

@@ -221,31 +221,29 @@ viewHero model =
 
 viewSignBox : Model -> Html Msg
 viewSignBox model =
-    div [ class "form" ]
-        [ div [ class "card" ]
-            [ div [ class "card-header" ]
-                [ div [ class "card-header-title tabs is-fullwidth" ]
-                    [ ul []
-                        [ li [ classList [ ( "is-active", model.viewMode == Login ) ] ] [ a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ text "Login" ] ]
-                        , li [ classList [ ( "is-active", model.viewMode == Signup ) ] ] [ a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text "Signup" ] ]
-                        ]
+    div [ class "card" ]
+        [ div [ class "card-header" ]
+            [ div [ class "card-header-title tabs is-fullwidth" ]
+                [ ul []
+                    [ li [ classList [ ( "is-active", model.viewMode == Login ) ] ] [ a [ onClickPD (ChangeViewMode Login), target "_blank" ] [ text "Login" ] ]
+                    , li [ classList [ ( "is-active", model.viewMode == Signup ) ] ] [ a [ onClickPD (ChangeViewMode Signup), target "_blank" ] [ text "Signup" ] ]
                     ]
                 ]
-            , div [ class "card-content" ]
-                [ case model.viewMode of
-                    Login ->
-                        viewLogin model
+            ]
+        , div [ class "card-content" ]
+            [ case model.viewMode of
+                Login ->
+                    viewLogin model
 
-                    Signup ->
-                        viewSignup model
-                , div []
-                    [ case model.form.result of
-                        RemoteData.Failure err ->
-                            viewHttpErrors err
+                Signup ->
+                    viewSignup model
+            , div []
+                [ case model.form.result of
+                    RemoteData.Failure err ->
+                        viewHttpErrors err
 
-                        default ->
-                            text ""
-                    ]
+                    default ->
+                        text ""
                 ]
             ]
         ]

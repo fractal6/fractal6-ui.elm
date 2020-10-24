@@ -165,7 +165,7 @@ view_ global model =
 
 viewLogin : Global.Model -> Model -> Html Msg
 viewLogin global model =
-    div [ class "form" ]
+    div []
         [ div [ class "card" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]

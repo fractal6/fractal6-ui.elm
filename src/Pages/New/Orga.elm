@@ -2,7 +2,7 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
-import Components.NodeDoc exposing (updateNodeForm)
+import Components.NodeDoc exposing (makeNewNodeId)
 import Components.Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
@@ -23,11 +23,11 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Requests exposing (login)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
+import ModelCommon.Requests exposing (createOrga, login)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneOrga)
 import RemoteData exposing (RemoteData)
 import Task
 import Time
@@ -50,13 +50,17 @@ page =
 
 
 type alias Model =
-    { form : TensionForm
-    , result : GqlData RootNode
+    { form : OrgaForm
+    , result : WebData NodeId
 
     -- common
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     }
+
+
+type alias OrgaForm =
+    { post : Post }
 
 
 
@@ -72,31 +76,20 @@ type alias Flags =
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     let
-        f_ =
-            initTensionForm
-                { rootnameid = "origin"
-                , nameid = "origin"
-                , isRoot = True
-                , type_ = NodeType.Circle
-                }
+        form =
+            { post = Dict.empty }
 
-        f =
-            { f_
-                | status = TensionStatus.Closed
-                , tension_type = TensionType.Governance
-            }
-
-        ( form, cmd ) =
+        cmd =
             case global.session.user of
                 LoggedOut ->
-                    ( f, send (Navigate "/") )
+                    send (Navigate "/")
 
                 LoggedIn uctx ->
-                    ( { f | uctx = uctx }, Cmd.none )
+                    Cmd.none
 
         model =
             { form = form
-            , result = NotAsked
+            , result = RemoteData.NotAsked
 
             --common
             , isModalActive = True
@@ -115,8 +108,8 @@ init global flags =
 type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
     | ChangeNodePost String String -- {field value}
-    | SubmitTension TensionForm Time.Posix -- Send form
-    | OrgaAck (GqlData RootNode)
+    | SubmitOrga OrgaForm Time.Posix -- Send form
+    | OrgaAck (WebData NodeId)
       -- Common
     | Navigate String
     | DoCloseModal String -- ports receive / Close modal
@@ -137,26 +130,41 @@ update global msg model =
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
-        SubmitTension form time ->
-            let
-                newForm =
-                    { form
-                        | post = Dict.insert "createdAt" (fromTime time) form.post
-                        , events_type = Just [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
-                    }
-            in
-            ( { model | form = newForm, result = LoadingSlowly }
-            , addOneOrga apis.gql form OrgaAck
+        SubmitOrga form time ->
+            ( { model | form = model.form, result = RemoteData.Loading }
+            , createOrga apis.auth form.post OrgaAck
             , Cmd.none
             )
 
         OrgaAck result ->
-            ( { model | result = result }, Cmd.none, Cmd.none )
+            let
+                cmd =
+                    case result of
+                        RemoteData.Success n ->
+                            send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
+
+                        _ ->
+                            Cmd.none
+            in
+            ( { model | result = result }, cmd, Cmd.none )
 
         ChangeNodePost field value ->
             let
+                f =
+                    model.form
+
                 newForm =
-                    updateNodeForm field value model.form
+                    case field of
+                        "name" ->
+                            { f
+                                | post =
+                                    f.post
+                                        |> Dict.insert field value
+                                        |> Dict.insert "nameid" (makeNewNodeId value)
+                            }
+
+                        _ ->
+                            { f | post = Dict.insert field value f.post }
             in
             ( { model | form = newForm }, Cmd.none, Cmd.none )
 
@@ -250,9 +258,9 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ class "columns is-centered section" ]
-        [ div [ class "column is-3" ]
-            [ div [ class "title" ] [ text "Create organisation" ]
+    div [ id "createOrga", class "columns is-centered section" ]
+        [ div [ class "column is-4-fullhd is-5-desktop" ]
+            [ h1 [ class "title " ] [ text "Create your organisation" ]
             , viewOrgaForm global model
             ]
         ]
@@ -261,25 +269,29 @@ view_ global model =
 viewOrgaForm : Global.Model -> Model -> Html Msg
 viewOrgaForm global model =
     let
-        form =
-            model.form
-
-        node =
-            form.node
+        post =
+            model.form.post
 
         isLoading =
-            model.result == LoadingSlowly
+            model.result == RemoteData.Loading
 
         isSendable =
-            form.node.name /= Nothing && (form.node.mandate |> Maybe.map (\x -> x.purpose)) /= Nothing
+            isPostSendable [ "name", "purpose" ] post
 
         submitOrga =
-            ternary isSendable [ onClick (Submit <| SubmitTension form) ] []
+            ternary isSendable [ onClick (Submit <| SubmitOrga model.form) ] []
+
+        --
+        name =
+            Dict.get "name" post |> withDefault ""
+
+        about =
+            Dict.get "about" post |> withDefault ""
 
         purpose =
-            node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault ""
+            Dict.get "purpose" post |> withDefault ""
     in
-    div [ id "newOrga", class "form" ]
+    div []
         [ div [ class "field" ]
             [ div [ class "label" ] [ text T.nameH ]
             , div [ class "control" ]
@@ -288,13 +300,13 @@ viewOrgaForm global model =
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
                     , placeholder "Name*"
-                    , value (node.name |> withDefault "")
+                    , value name
                     , onInput <| ChangeNodePost "name"
                     , required True
                     ]
                     []
                 ]
-            , p [ class "help" ] [ text "Name of your organisation" ]
+            , p [ class "help" ] [ text "Organisation name" ]
             ]
         , div [ class "field" ]
             [ div [ class "label" ] [ text T.aboutH ]
@@ -305,7 +317,7 @@ viewOrgaForm global model =
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
                     , placeholder "About"
-                    , value (node.about |> withDefault "")
+                    , value about
                     , onInput <| ChangeNodePost "about"
                     ]
                     []
@@ -338,16 +350,13 @@ viewOrgaForm global model =
                          ]
                             ++ submitOrga
                         )
-                        [ text "Create organisation" ]
+                        [ text T.createH ]
                     ]
                 ]
             ]
         , case model.result of
-            Success n ->
-                div [] [ text n.nameid ]
-
-            Failure err ->
-                viewGqlErrors err
+            RemoteData.Failure err ->
+                viewHttpErrors err
 
             _ ->
                 text ""

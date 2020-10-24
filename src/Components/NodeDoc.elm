@@ -902,7 +902,7 @@ updateNodeForm field value form =
                             newData =
                                 { node
                                     | name = Just value
-                                    , nameid = makeNewNodeId value
+                                    , nameid = Just (makeNewNodeId value)
                                 }
                         in
                         { form | post = newPost, node = newData }
@@ -915,7 +915,7 @@ updateNodeForm field value form =
             { form | post = Dict.insert field value form.post }
 
 
-makeNewNodeId : String -> Maybe String
+makeNewNodeId : String -> String
 makeNewNodeId name =
     name
         |> String.toLower
@@ -931,7 +931,6 @@ makeNewNodeId name =
                 else
                     c
             )
-        |> Just
 
 
 

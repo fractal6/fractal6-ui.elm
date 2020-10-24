@@ -1,4 +1,4 @@
-module ModelCommon.Requests exposing (fetchChildren, fetchMembers, login, signup, tokenack)
+module ModelCommon.Requests exposing (..)
 
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, expectJson, toErrorData)
 import Dict exposing (Dict)
@@ -172,6 +172,24 @@ tokenack url msg =
         , url = url ++ "/tokenack"
         , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+--
+-- Organisation management
+--
+
+
+createOrga url post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/createorga"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) (JD.map NodeId (JD.field "nameid" JD.string))
         , timeout = Nothing
         , tracker = Nothing
         }

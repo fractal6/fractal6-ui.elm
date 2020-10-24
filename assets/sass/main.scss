@@ -227,7 +227,7 @@ html.has-modal-active, html.has-modal-active2 {
         padding: 1rem !important;
 
         &.is-active {
-            border: solid 2px  $link  !important;
+            border: solid 2px $link !important;
         }
     }
 
@@ -270,6 +270,9 @@ html.has-modal-active, html.has-modal-active2 {
         transition: transform .666s ease-in-out;
     }
 
+    .navbar-dropdown {
+        border: solid 2px $grey-darker;
+    }
 }
 
 #helperBar {
@@ -337,7 +340,7 @@ html.has-modal-active, html.has-modal-active2 {
     //background-color: #24292e;
     filter: invert(5%);
     .title {
-        margin-bottom: 2.9rem !important;
+        margin-bottom: 3rem !important;
         line-height: 1.1 !important;
         font-weight: 600 !important;
         font-size: 3rem !important;
@@ -409,7 +412,7 @@ html.has-modal-active, html.has-modal-active2 {
         overflow: unset
     }
     .media + .media {
-        margin-top: 1.5rem !important;
+        border-top: none !important;
         padding-top: 1.5rem !important;
     }
 }
@@ -423,11 +426,9 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-
-.stackPen {
-    &.fa-stack > i.fa-pen {
-        top: -5px;
-        left: 5px;
+#createOrga {
+    h1.title {
+        margin-bottom: 3rem !important;
     }
 }
 
@@ -1488,6 +1489,11 @@ a.actionLink {
     }
 }
 
+.form {
+    padding: 2rem !important;
+    border: solid 2px $grey-light !important;
+}
+
 /*
  *
  * Utils
@@ -1503,6 +1509,13 @@ a.actionLink {
     &:hover {
         color: $white-ter !important;
         cursor: pointer;
+    }
+}
+
+.stackPen {
+    &.fa-stack > i.fa-pen {
+        top: -5px;
+        left: 5px;
     }
 }
 
@@ -1563,7 +1576,7 @@ a.actionLink {
     padding-bottom: 2px;
     &::before {
         content: ' \25CF'; // draw a circle (use as tag/bullet)
-        font-size: 9px;
+        font-size: 12px;
     }
 }
 

@@ -59,7 +59,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchNode exposing (patchNode)
 import Query.QueryNode exposing (queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
-import Query.QueryTension exposing (queryCircleTension)
+import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Task
 import Time
@@ -109,6 +109,11 @@ type alias Model =
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     }
+
+
+nfirstTensions : Int
+nfirstTensions =
+    10
 
 
 
@@ -253,13 +258,15 @@ init global flags =
             if fs.orgChange || isInit then
                 [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
                 , Ports.initGraphPack Dict.empty "" -- canvas loading effet
-                , queryCircleTension apis.gql newFocus.nameid GotTensions
+
+                --, queryCircleTension apis.gql newFocus.nameid GotTensions
                 , queryNodeData apis.gql newFocus.nameid GotData
                 ]
 
             else if fs.focusChange then
-                [ queryCircleTension apis.gql newFocus.nameid GotTensions
-                , queryNodeData apis.gql newFocus.nameid GotData
+                [ queryNodeData apis.gql newFocus.nameid GotData
+
+                --queryCircleTension apis.gql newFocus.nameid GotTensions
                 ]
                     ++ (if fs.refresh then
                             case session.orga_data of
@@ -279,7 +286,8 @@ init global flags =
             else if fs.refresh then
                 [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
                 , Ports.initGraphPack Dict.empty "" --canvas loading effect
-                , queryCircleTension apis.gql newFocus.nameid GotTensions
+
+                --, queryCircleTension apis.gql newFocus.nameid GotTensions
                 , queryNodeData apis.gql newFocus.nameid GotData
                 ]
 
@@ -838,7 +846,17 @@ update global msg model =
         NodeFocused path_ ->
             case path_ of
                 Ok path ->
-                    ( { model | path_data = Just path }, Ports.drawButtonsGraphPack, send (UpdateSessionPath (Just path)) )
+                    let
+                        nameids =
+                            path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+
+                        cmd =
+                            queryAllTension apis.gql nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                    in
+                    ( { model | path_data = Just path }
+                    , Cmd.batch [ Ports.drawButtonsGraphPack, cmd ]
+                    , send (UpdateSessionPath (Just path))
+                    )
 
                 Err err ->
                     ( model, Cmd.none, Cmd.none )
@@ -1327,10 +1345,10 @@ viewActivies model =
                     else
                         case model.node_focus.type_ of
                             NodeType.Role ->
-                                div [] [ text T.noTensionRole ]
+                                div [] [ text T.noOpenTensionRole ]
 
                             NodeType.Circle ->
-                                div [] [ text T.noTensionCircle ]
+                                div [] [ text T.noOpenTensionCircle ]
 
                 Failure err ->
                     viewGqlErrors err
