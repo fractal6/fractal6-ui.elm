@@ -189,9 +189,21 @@ spinner =
         []
 
 
+viewGqlErrors : ErrorData -> Html msg
+viewGqlErrors errMsg =
+    List.map (\e -> p [] [ text e ]) errMsg
+        |> div [ class "box has-background-danger" ]
+
+
+viewHttpErrors : HttpError String -> Html msg
+viewHttpErrors httpErr =
+    httpErr
+        |> toErrorData
+        |> viewGqlErrors
+
+
 viewAuthNeeded : (String -> msg) -> Html msg
 viewAuthNeeded forward =
-    --div [ class "box has-background-info" ]
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ] [ div [ class "modal-card-title is-size-6" ] [ text "Authentication needed" ] ]
         , div [ class "modal-card-body" ]
@@ -210,20 +222,14 @@ viewAuthNeeded forward =
         ]
 
 
-viewGqlErrors : ErrorData -> Html msg
-viewGqlErrors errMsg =
-    List.map (\e -> p [] [ text e ]) errMsg
-        |> div [ class "box has-background-danger" ]
-
-
-viewWarnings : ErrorData -> Html msg
-viewWarnings errMsg =
-    List.map (\e -> p [] [ text e ]) errMsg
-        |> div [ class "box has-background-info" ]
-
-
-viewHttpErrors : HttpError String -> Html msg
-viewHttpErrors httpErr =
-    httpErr
-        |> toErrorData
-        |> viewGqlErrors
+viewRoleNeeded : ErrorData -> Html msg
+viewRoleNeeded errMsg =
+    div [ class "modal-card" ]
+        [ div [ class "modal-card-head has-background-warning" ] [ div [ class "modal-card-title is-size-6" ] [ text "Authorization needed" ] ]
+        , div [ class "modal-card-body" ] <|
+            List.map
+                (\e ->
+                    p [] [ text e ]
+                )
+                errMsg
+        ]

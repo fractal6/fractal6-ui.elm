@@ -1,7 +1,7 @@
 module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
 import Browser.Navigation as Nav
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors)
 import Components.NodeDoc exposing (makeNewNodeId)
 import Components.Text as T
 import Dict exposing (Dict)
@@ -138,15 +138,17 @@ update global msg model =
 
         OrgaAck result ->
             let
-                cmd =
+                ( cmd, gcmd ) =
                     case result of
                         RemoteData.Success n ->
-                            send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
+                            ( send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
+                            , send UpdateUserToken
+                            )
 
                         _ ->
-                            Cmd.none
+                            ( Cmd.none, Cmd.none )
             in
-            ( { model | result = result }, cmd, Cmd.none )
+            ( { model | result = result }, cmd, gcmd )
 
         ChangeNodePost field value ->
             let

@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewWarnings)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Components.Text as T
 import Debug
@@ -226,20 +226,20 @@ init global flags =
             , path_data = ternary fs.orgChange Nothing global.session.path_data -- Loaded from GraphPack
             , users_data =
                 global.session.users_data
-                    |> Maybe.map (\x -> Success x)
+                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
                     |> withDefault Loading
             , lookup_users = []
             , orga_data =
                 session.orga_data
-                    |> Maybe.map (\x -> Success x)
+                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
                     |> withDefault Loading
             , tensions_data =
                 session.tensions_data
-                    |> Maybe.map (\x -> Success x)
+                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
                     |> withDefault Loading
             , node_data =
                 session.node_data
-                    |> Maybe.map (\x -> Success x)
+                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
                     |> withDefault Loading
             , init_tensions = True
             , init_data = True
@@ -368,7 +368,7 @@ update global msg model =
                     ( { model | node_data = result, init_data = False }, Cmd.none, send (UpdateSessionData (Just data)) )
 
                 other ->
-                    ( { model | node_data = result }, Cmd.none, send (UpdateSessionData Nothing) )
+                    ( { model | node_data = result }, Cmd.none, Cmd.none )
 
         -- Search
         LookupFocus pattern path_m ->
@@ -1280,12 +1280,11 @@ viewCanvas focus odata =
                 viewGqlErrors err
 
             Success d ->
-                case Dict.get focus.nameid d of
-                    Just _ ->
-                        text ""
+                if Dict.get focus.nameid d == Nothing then
+                    viewGqlErrors [ "Node archived or hidden" ]
 
-                    Nothing ->
-                        viewGqlErrors [ "Node archived or hidden" ]
+                else
+                    text ""
 
             _ ->
                 text ""
@@ -1502,7 +1501,7 @@ viewTensionStep step ntf model =
                     NewTensionForm.view (makeNewTensionFormOp model)
 
         TensionNotAuthorized errMsg ->
-            viewWarnings errMsg
+            viewRoleNeeded errMsg
 
 
 viewCircleStep : NodeStep -> NewTensionForm -> Model -> Html Msg
@@ -1519,7 +1518,7 @@ viewCircleStep step ntf model =
             NewCircleForm.view (makeNewCircleFormOp model)
 
         NodeNotAuthorized errMsg ->
-            viewWarnings errMsg
+            viewRoleNeeded errMsg
 
 
 viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
@@ -1597,7 +1596,17 @@ getNewNodeStepAuth : TensionForm -> GqlData NodesData -> ( NodeStep, TensionForm
 getNewNodeStepAuth form odata =
     case getNewNodeRights form odata of
         [] ->
-            ( NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ], form )
+            let
+                isMember =
+                    form.uctx.roles
+                        |> List.map (\r -> r.rootnameid)
+                        |> List.member form.target.rootnameid
+            in
+            if isMember then
+                ( NodeNotAuthorized [ T.askCoordo ], form )
+
+            else
+                ( NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ], form )
 
         [ r ] ->
             ( NodeFinal, { form | source = r } )
