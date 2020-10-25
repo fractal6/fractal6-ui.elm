@@ -38,6 +38,11 @@ welcomIn =
     "Welcome In"
 
 
+joinOrga : String
+joinOrga =
+    "Join this organisation"
+
+
 checkItOut : String
 checkItOut =
     "Check it out."

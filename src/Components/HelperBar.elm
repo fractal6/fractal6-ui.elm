@@ -2,6 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Components.Fa as Fa
+import Components.Text as T
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
@@ -12,7 +13,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import ModelCommon.View exposing (roleColor)
-import ModelSchema exposing (LocalGraph, UserRole)
+import ModelSchema exposing (LocalGraph, NodeCharac, UserRole)
 import Ports
 
 
@@ -55,21 +56,13 @@ type alias HelperBarData msg =
 view : HelperBarData msg -> Html msg
 view hb =
     let
-        rootnameid =
+        ( focusid, rootnameid, charac ) =
             case hb.path_data of
                 Just path ->
-                    path.root |> Maybe.map (\r -> r.nameid) |> withDefault ""
+                    ( path.focus.nameid, path.root |> Maybe.map (\r -> r.nameid) |> withDefault "", Just path.focus.charac )
 
                 Nothing ->
-                    ""
-
-        focusid =
-            case hb.path_data of
-                Just path ->
-                    path.focus.nameid
-
-                Nothing ->
-                    ""
+                    ( "", "", Nothing )
     in
     div [ id "helperBar", class "columns is-centered" ]
         [ nav [ class "column is-11-desktop is-11-widescreen is-9-fullhd" ]
@@ -100,13 +93,31 @@ view hb =
                                         memberButtons roles { hb | baseUri = OverviewBaseUri }
 
                                     else
-                                        joinButton hb.onJoin
+                                        charac
+                                            |> Maybe.map
+                                                (\c ->
+                                                    if c.userCanJoin then
+                                                        joinButton hb.onJoin
+
+                                                    else
+                                                        text ""
+                                                )
+                                            |> withDefault (text "")
 
                                 Nothing ->
                                     div [ class "navbar-end ph-button-1" ] []
 
                         LoggedOut ->
-                            joinButton hb.onJoin
+                            charac
+                                |> Maybe.map
+                                    (\c ->
+                                        if c.userCanJoin then
+                                            joinButton hb.onJoin
+
+                                        else
+                                            text ""
+                                    )
+                                |> withDefault (text "")
                     ]
                 ]
             , div [ class "tabs is-boxed" ]
@@ -163,7 +174,7 @@ joinButton msg =
         --, attribute "data-tooltip" "Join this organisation."
         , onClick msg
         ]
-        [ text "Join this organisation" ]
+        [ text T.joinOrga ]
 
 
 memberButtons : List UserRole -> HelperBarData msg -> Html msg

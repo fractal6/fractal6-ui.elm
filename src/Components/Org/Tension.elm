@@ -46,6 +46,7 @@ import ModelCommon.Codecs
         , getCoordoRoles
         , getOrgaRoles
         , getTensionCharac
+        , isOwner
         , nid2rootid
         , uriFromUsername
         )
@@ -2377,6 +2378,9 @@ getTensionRights user th_d focus_d =
                     case focus_d of
                         Success focus ->
                             let
+                                orgaRoles =
+                                    getOrgaRoles uctx.roles [ nid2rootid focus.nameid ]
+
                                 childrenRoles =
                                     getChildrenLeaf th.receiver.nameid focus
 
@@ -2384,7 +2388,7 @@ getTensionRights user th_d focus_d =
                                     List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
                                 circleRoles =
-                                    getCircleRoles uctx.roles [ th.receiver.nameid, th.emitter.nameid ]
+                                    getCircleRoles orgaRoles [ th.receiver.nameid, th.emitter.nameid ]
 
                                 coordoRoles =
                                     getCoordoRoles circleRoles
@@ -2395,20 +2399,24 @@ getTensionRights user th_d focus_d =
                                 --else if uctx.username == th.createdBy.username then
                                 --    -- Author
                                 --    True
+                                --
+
+                            else if isOwner orgaRoles then
+                                True
 
                             else
                                 case focus.charac.mode of
                                     NodeMode.Chaos ->
-                                        -- No member in this circle
-                                        (List.length childrenRoles == 0 && List.length (getOrgaRoles uctx.roles [ nid2rootid focus.nameid ]) > 0)
-                                            -- Or is a  Circle member
-                                            || (List.length circleRoles > 0)
+                                        -- Is a  Circle member
+                                        (List.length circleRoles > 0)
+                                            || -- Or No member in this circle
+                                               (List.length childrenRoles == 0 && List.length orgaRoles > 0)
 
                                     NodeMode.Coordinated ->
-                                        -- No coordo in this circe
-                                        (List.length childrenCoordos == 0 && List.length (getCoordoRoles uctx.roles) > 0)
-                                            -- Or is a circle coordo
-                                            || (List.length coordoRoles > 0)
+                                        -- Is s a circle coordo
+                                        (List.length coordoRoles > 0)
+                                            || -- Or No coordo in this circe
+                                               (List.length childrenCoordos == 0 && List.length (getCoordoRoles orgaRoles) > 0)
 
                         _ ->
                             False

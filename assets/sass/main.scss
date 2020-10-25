@@ -496,11 +496,12 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .aboutDoc {
-    .columns {
-        & > .column { margin-bottom: 0 !important; }
-        & > .column.buttonEdit { padding-right: 12px !important; }
+    & > .column.is-fullwidth {
+        //padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
-    .media { margin-bottom: 1rem !important;}
+
+    .media { margin-bottom: 1rem !important; }
     .media-left { margin-right: 0 !important; }
 
     .nodeName {

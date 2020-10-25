@@ -215,6 +215,31 @@ focusFromNameid nameid_ =
     NodeFocus rootid isRoot nameid nodeType
 
 
+guestIdCodec : String -> String -> String
+guestIdCodec rootnameid username =
+    -- Returns the namid of a new Role given an username and a rootnameid
+    String.join "#" [ rootnameid, "", "@" ++ username ]
+
+
+nodeIdCodec : String -> String -> NodeType.NodeType -> String
+nodeIdCodec parentid targetid nodeType =
+    -- Returns the nameid of a new Circle/Role given the parentid and the nameid fragment.
+    let
+        rootnameid =
+            nid2rootid parentid
+    in
+    case nodeType of
+        NodeType.Circle ->
+            String.join "#" [ rootnameid, targetid ]
+
+        NodeType.Role ->
+            if rootnameid == parentid then
+                String.join "#" [ rootnameid, "", targetid ]
+
+            else
+                String.join "#" [ parentid, targetid ]
+
+
 nearestCircleid : String -> String
 nearestCircleid nameid =
     let
@@ -260,29 +285,9 @@ getCoordoRoles roles =
     List.filter (\r -> r.role_type == RoleType.Coordinator) roles
 
 
-guestIdCodec : String -> String -> String
-guestIdCodec rootnameid username =
-    -- Returns the namid of a new Role given an username and a rootnameid
-    String.join "#" [ rootnameid, "", "@" ++ username ]
-
-
-nodeIdCodec : String -> String -> NodeType.NodeType -> String
-nodeIdCodec parentid targetid nodeType =
-    -- Returns the nameid of a new Circle/Role given the parentid and the nameid fragment.
-    let
-        rootnameid =
-            nid2rootid parentid
-    in
-    case nodeType of
-        NodeType.Circle ->
-            String.join "#" [ rootnameid, targetid ]
-
-        NodeType.Role ->
-            if rootnameid == parentid then
-                String.join "#" [ rootnameid, "", targetid ]
-
-            else
-                String.join "#" [ parentid, targetid ]
+isOwner : List UserRole -> Bool
+isOwner roles =
+    List.any (\r -> r.role_type == RoleType.Owner) roles
 
 
 
