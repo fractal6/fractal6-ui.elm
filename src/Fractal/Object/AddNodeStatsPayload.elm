@@ -26,7 +26,10 @@ type alias NodeStatsOptionalArguments =
     }
 
 
-nodeStats : (NodeStatsOptionalArguments -> NodeStatsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeStats -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeStatsPayload
+nodeStats :
+    (NodeStatsOptionalArguments -> NodeStatsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeStats
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeStatsPayload
 nodeStats fillInOptionals object_ =
     let
         filledInOptionals =

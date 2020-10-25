@@ -50,7 +50,10 @@ type alias CharacOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
 
 
-charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
+charac :
+    (CharacOptionalArguments -> CharacOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeCharac
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
 charac fillInOptionals object_ =
     let
         filledInOptionals =
@@ -72,7 +75,10 @@ type alias MandateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.MandateFilter }
 
 
-mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
+mandate :
+    (MandateOptionalArguments -> MandateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Mandate
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
 mandate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -93,7 +99,10 @@ type alias ChildrenOptionalArguments =
     }
 
 
-children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.NodeFragment
+children :
+    (ChildrenOptionalArguments -> ChildrenOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeFragment
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.NodeFragment
 children fillInOptionals object_ =
     let
         filledInOptionals =

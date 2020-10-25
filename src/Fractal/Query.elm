@@ -25,7 +25,10 @@ type alias GetNodeOptionalArguments =
     }
 
 
-getNode : (GetNodeOptionalArguments -> GetNodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) RootQuery
+getNode :
+    (GetNodeOptionalArguments -> GetNodeOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getNode fillInOptionals object_ =
     let
         filledInOptionals =
@@ -46,7 +49,10 @@ type alias QueryNodeOptionalArguments =
     }
 
 
-queryNode : (QueryNodeOptionalArguments -> QueryNodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNode :
+    (QueryNodeOptionalArguments -> QueryNodeOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryNode fillInOptionals object_ =
     let
         filledInOptionals =
@@ -63,7 +69,10 @@ type alias GetNodeFragmentRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getNodeFragment : GetNodeFragmentRequiredArguments -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) RootQuery
+getNodeFragment :
+    GetNodeFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.NodeFragment
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getNodeFragment requiredArgs object_ =
     Object.selectionForCompositeField "getNodeFragment" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -76,7 +85,10 @@ type alias QueryNodeFragmentOptionalArguments =
     }
 
 
-queryNodeFragment : (QueryNodeFragmentOptionalArguments -> QueryNodeFragmentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNodeFragment :
+    (QueryNodeFragmentOptionalArguments -> QueryNodeFragmentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeFragment
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryNodeFragment fillInOptionals object_ =
     let
         filledInOptionals =
@@ -93,7 +105,10 @@ type alias GetNodeCharacRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getNodeCharac : GetNodeCharacRequiredArguments -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe decodesTo) RootQuery
+getNodeCharac :
+    GetNodeCharacRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.NodeCharac
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getNodeCharac requiredArgs object_ =
     Object.selectionForCompositeField "getNodeCharac" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -105,7 +120,10 @@ type alias QueryNodeCharacOptionalArguments =
     }
 
 
-queryNodeCharac : (QueryNodeCharacOptionalArguments -> QueryNodeCharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNodeCharac :
+    (QueryNodeCharacOptionalArguments -> QueryNodeCharacOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeCharac
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryNodeCharac fillInOptionals object_ =
     let
         filledInOptionals =
@@ -125,7 +143,10 @@ type alias QueryNodeStatsOptionalArguments =
     }
 
 
-queryNodeStats : (QueryNodeStatsOptionalArguments -> QueryNodeStatsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeStats -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryNodeStats :
+    (QueryNodeStatsOptionalArguments -> QueryNodeStatsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeStats
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryNodeStats fillInOptionals object_ =
     let
         filledInOptionals =
@@ -142,7 +163,10 @@ type alias GetPostRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getPost : GetPostRequiredArguments -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe decodesTo) RootQuery
+getPost :
+    GetPostRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Post
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getPost requiredArgs object_ =
     Object.selectionForCompositeField "getPost" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -155,7 +179,10 @@ type alias QueryPostOptionalArguments =
     }
 
 
-queryPost : (QueryPostOptionalArguments -> QueryPostOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryPost :
+    (QueryPostOptionalArguments -> QueryPostOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Post
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryPost fillInOptionals object_ =
     let
         filledInOptionals =
@@ -172,7 +199,10 @@ type alias GetTensionRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getTension : GetTensionRequiredArguments -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe decodesTo) RootQuery
+getTension :
+    GetTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getTension requiredArgs object_ =
     Object.selectionForCompositeField "getTension" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -185,7 +215,10 @@ type alias QueryTensionOptionalArguments =
     }
 
 
-queryTension : (QueryTensionOptionalArguments -> QueryTensionOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryTension :
+    (QueryTensionOptionalArguments -> QueryTensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryTension fillInOptionals object_ =
     let
         filledInOptionals =
@@ -204,7 +237,10 @@ type alias GetLabelOptionalArguments =
     }
 
 
-getLabel : (GetLabelOptionalArguments -> GetLabelOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Label -> SelectionSet (Maybe decodesTo) RootQuery
+getLabel :
+    (GetLabelOptionalArguments -> GetLabelOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Label
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getLabel fillInOptionals object_ =
     let
         filledInOptionals =
@@ -225,7 +261,10 @@ type alias QueryLabelOptionalArguments =
     }
 
 
-queryLabel : (QueryLabelOptionalArguments -> QueryLabelOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Label -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryLabel :
+    (QueryLabelOptionalArguments -> QueryLabelOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Label
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryLabel fillInOptionals object_ =
     let
         filledInOptionals =
@@ -242,7 +281,10 @@ type alias GetCommentRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getComment : GetCommentRequiredArguments -> SelectionSet decodesTo Fractal.Object.Comment -> SelectionSet (Maybe decodesTo) RootQuery
+getComment :
+    GetCommentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Comment
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getComment requiredArgs object_ =
     Object.selectionForCompositeField "getComment" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -255,7 +297,10 @@ type alias QueryCommentOptionalArguments =
     }
 
 
-queryComment : (QueryCommentOptionalArguments -> QueryCommentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Comment -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryComment :
+    (QueryCommentOptionalArguments -> QueryCommentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Comment
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryComment fillInOptionals object_ =
     let
         filledInOptionals =
@@ -272,7 +317,10 @@ type alias GetBlobRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getBlob : GetBlobRequiredArguments -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe decodesTo) RootQuery
+getBlob :
+    GetBlobRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Blob
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getBlob requiredArgs object_ =
     Object.selectionForCompositeField "getBlob" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -285,7 +333,10 @@ type alias QueryBlobOptionalArguments =
     }
 
 
-queryBlob : (QueryBlobOptionalArguments -> QueryBlobOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryBlob :
+    (QueryBlobOptionalArguments -> QueryBlobOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Blob
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryBlob fillInOptionals object_ =
     let
         filledInOptionals =
@@ -302,7 +353,10 @@ type alias GetEventRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getEvent : GetEventRequiredArguments -> SelectionSet decodesTo Fractal.Object.Event -> SelectionSet (Maybe decodesTo) RootQuery
+getEvent :
+    GetEventRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getEvent requiredArgs object_ =
     Object.selectionForCompositeField "getEvent" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -315,7 +369,10 @@ type alias QueryEventOptionalArguments =
     }
 
 
-queryEvent : (QueryEventOptionalArguments -> QueryEventOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Event -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryEvent :
+    (QueryEventOptionalArguments -> QueryEventOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryEvent fillInOptionals object_ =
     let
         filledInOptionals =
@@ -332,7 +389,10 @@ type alias GetMandateRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
 
-getMandate : GetMandateRequiredArguments -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) RootQuery
+getMandate :
+    GetMandateRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Mandate
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getMandate requiredArgs object_ =
     Object.selectionForCompositeField "getMandate" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
@@ -345,7 +405,10 @@ type alias QueryMandateOptionalArguments =
     }
 
 
-queryMandate : (QueryMandateOptionalArguments -> QueryMandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryMandate :
+    (QueryMandateOptionalArguments -> QueryMandateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Mandate
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryMandate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -364,7 +427,10 @@ type alias GetUserOptionalArguments =
     }
 
 
-getUser : (GetUserOptionalArguments -> GetUserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) RootQuery
+getUser :
+    (GetUserOptionalArguments -> GetUserOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe decodesTo) RootQuery
 getUser fillInOptionals object_ =
     let
         filledInOptionals =
@@ -385,7 +451,10 @@ type alias QueryUserOptionalArguments =
     }
 
 
-queryUser : (QueryUserOptionalArguments -> QueryUserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryUser :
+    (QueryUserOptionalArguments -> QueryUserOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryUser fillInOptionals object_ =
     let
         filledInOptionals =
@@ -404,7 +473,10 @@ type alias QueryUserRightsOptionalArguments =
     }
 
 
-queryUserRights : (QueryUserRightsOptionalArguments -> QueryUserRightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryUserRights :
+    (QueryUserRightsOptionalArguments -> QueryUserRightsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserRights
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
 queryUserRights fillInOptionals object_ =
     let
         filledInOptionals =

@@ -27,7 +27,10 @@ type alias PostOptionalArguments =
     }
 
 
-post : (PostOptionalArguments -> PostOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Post -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdatePostPayload
+post :
+    (PostOptionalArguments -> PostOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Post
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdatePostPayload
 post fillInOptionals object_ =
     let
         filledInOptionals =

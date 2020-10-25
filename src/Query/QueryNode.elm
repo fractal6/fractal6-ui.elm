@@ -97,8 +97,9 @@ publicOrgaFilter a =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | isPrivate = Present False
-                        , isRoot = Present True
+                        | isRoot = Present True
+                        , isPrivate = Present False
+                        , not = Input.buildNodeFilter (\c -> { c | isPersonal = Present True }) |> Present
                     }
                 )
                 |> Present

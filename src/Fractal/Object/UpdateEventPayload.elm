@@ -27,7 +27,10 @@ type alias EventOptionalArguments =
     }
 
 
-event : (EventOptionalArguments -> EventOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Event -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateEventPayload
+event :
+    (EventOptionalArguments -> EventOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateEventPayload
 event fillInOptionals object_ =
     let
         filledInOptionals =

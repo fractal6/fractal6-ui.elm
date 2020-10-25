@@ -408,9 +408,6 @@ html.has-modal-active, html.has-modal-active2 {
 
 
 #explore {
-    .media-content{
-        overflow: unset
-    }
     .media + .media {
         border-top: none !important;
         padding-top: 1.5rem !important;
@@ -418,11 +415,21 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #profile {
-    .media-content{
-        overflow: unset
-    }
     .media + .media {
         border-top: none !important;
+    }
+}
+
+.nodesList {
+    .media-content{
+        overflow: unset
+
+    }
+    hr {
+        margin-top: 0.5rem !important;
+    }
+    #icons {
+        margin-bottom: 0.5rem !important;
     }
 }
 

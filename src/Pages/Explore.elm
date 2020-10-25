@@ -167,7 +167,7 @@ viewOrgaMedia node =
         n_guest =
             node.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
     in
-    div [ class "media box" ]
+    div [ class "media box nodesList" ]
         [ div [ class "media-left" ]
             [ a
                 [ class "image circleBase circle2"
@@ -181,7 +181,7 @@ viewOrgaMedia node =
                     [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ]
                     , case node.about of
                         Just ab ->
-                            div [ class "is-italic" ] [ text ab ]
+                            p [ class "is-italic pt-1" ] [ text ab ]
 
                         Nothing ->
                             text ""

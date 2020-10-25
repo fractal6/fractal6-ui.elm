@@ -27,7 +27,10 @@ type alias MandateOptionalArguments =
     }
 
 
-mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddMandatePayload
+mandate :
+    (MandateOptionalArguments -> MandateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Mandate
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddMandatePayload
 mandate fillInOptionals object_ =
     let
         filledInOptionals =

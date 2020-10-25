@@ -27,7 +27,10 @@ type alias TensionOptionalArguments =
     }
 
 
-tension : (TensionOptionalArguments -> TensionOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddTensionPayload
+tension :
+    (TensionOptionalArguments -> TensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddTensionPayload
 tension fillInOptionals object_ =
     let
         filledInOptionals =

@@ -26,7 +26,10 @@ type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Tension
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Tension
 createdBy fillInOptionals object_ =
     let
         filledInOptionals =
@@ -63,7 +66,10 @@ type alias EmitterOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
 
-emitter : (EmitterOptionalArguments -> EmitterOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet decodesTo Fractal.Object.Tension
+emitter :
+    (EmitterOptionalArguments -> EmitterOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet decodesTo Fractal.Object.Tension
 emitter fillInOptionals object_ =
     let
         filledInOptionals =
@@ -85,7 +91,10 @@ type alias ReceiverOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
 
-receiver : (ReceiverOptionalArguments -> ReceiverOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet decodesTo Fractal.Object.Tension
+receiver :
+    (ReceiverOptionalArguments -> ReceiverOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet decodesTo Fractal.Object.Tension
 receiver fillInOptionals object_ =
     let
         filledInOptionals =
@@ -111,7 +120,10 @@ type alias LabelsOptionalArguments =
     }
 
 
-labels : (LabelsOptionalArguments -> LabelsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Label -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+labels :
+    (LabelsOptionalArguments -> LabelsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Label
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
 labels fillInOptionals object_ =
     let
         filledInOptionals =
@@ -132,7 +144,10 @@ type alias AssigneesOptionalArguments =
     }
 
 
-assignees : (AssigneesOptionalArguments -> AssigneesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+assignees :
+    (AssigneesOptionalArguments -> AssigneesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
 assignees fillInOptionals object_ =
     let
         filledInOptionals =
@@ -158,7 +173,10 @@ type alias CommentsOptionalArguments =
     }
 
 
-comments : (CommentsOptionalArguments -> CommentsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Comment -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+comments :
+    (CommentsOptionalArguments -> CommentsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Comment
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
 comments fillInOptionals object_ =
     let
         filledInOptionals =
@@ -179,7 +197,10 @@ type alias BlobsOptionalArguments =
     }
 
 
-blobs : (BlobsOptionalArguments -> BlobsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+blobs :
+    (BlobsOptionalArguments -> BlobsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Blob
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
 blobs fillInOptionals object_ =
     let
         filledInOptionals =
@@ -200,7 +221,10 @@ type alias HistoryOptionalArguments =
     }
 
 
-history : (HistoryOptionalArguments -> HistoryOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Event -> SelectionSet (List decodesTo) Fractal.Object.Tension
+history :
+    (HistoryOptionalArguments -> HistoryOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet (List decodesTo) Fractal.Object.Tension
 history fillInOptionals object_ =
     let
         filledInOptionals =

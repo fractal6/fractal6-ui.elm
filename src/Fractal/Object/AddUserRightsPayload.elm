@@ -25,7 +25,10 @@ type alias UserRightsOptionalArguments =
     }
 
 
-userRights : (UserRightsOptionalArguments -> UserRightsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserRightsPayload
+userRights :
+    (UserRightsOptionalArguments -> UserRightsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserRights
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddUserRightsPayload
 userRights fillInOptionals object_ =
     let
         filledInOptionals =

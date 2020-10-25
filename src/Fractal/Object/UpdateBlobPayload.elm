@@ -27,7 +27,10 @@ type alias BlobOptionalArguments =
     }
 
 
-blob : (BlobOptionalArguments -> BlobOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Blob -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateBlobPayload
+blob :
+    (BlobOptionalArguments -> BlobOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Blob
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateBlobPayload
 blob fillInOptionals object_ =
     let
         filledInOptionals =

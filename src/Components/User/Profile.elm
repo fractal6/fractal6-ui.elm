@@ -342,7 +342,7 @@ viewUserOrgas user_data =
                                         [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ]
                                         , case root.about of
                                             Just about ->
-                                                div [ class "is-italic" ] [ text about ]
+                                                p [ class "is-italic pt-1" ] [ text about ]
 
                                             Nothing ->
                                                 text ""
@@ -362,6 +362,15 @@ viewUserOrgas user_data =
                                                     ]
                                                 ]
                                             ]
+                                        ]
+                                    ]
+                                , div [ id "icons", class "level is-mobile" ]
+                                    [ div [ class "level-left" ]
+                                        [ if root.isPrivate then
+                                            span [ class "level-item" ] [ Fa.icon "fas fa-lock" "" ]
+
+                                          else
+                                            text ""
                                         ]
                                     ]
                                 , hr [] []
@@ -384,4 +393,4 @@ viewUserOrgas user_data =
                     other ->
                         text ""
             )
-        |> div []
+        |> div [ class "nodesList" ]

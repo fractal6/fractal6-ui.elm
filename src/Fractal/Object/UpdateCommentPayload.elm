@@ -27,7 +27,10 @@ type alias CommentOptionalArguments =
     }
 
 
-comment : (CommentOptionalArguments -> CommentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Comment -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateCommentPayload
+comment :
+    (CommentOptionalArguments -> CommentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Comment
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateCommentPayload
 comment fillInOptionals object_ =
     let
         filledInOptionals =

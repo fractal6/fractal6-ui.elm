@@ -27,7 +27,10 @@ type alias UserOptionalArguments =
     }
 
 
-user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateUserPayload
+user :
+    (UserOptionalArguments -> UserOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateUserPayload
 user fillInOptionals object_ =
     let
         filledInOptionals =

@@ -33,7 +33,10 @@ type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Comment
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Comment
 createdBy fillInOptionals object_ =
     let
         filledInOptionals =

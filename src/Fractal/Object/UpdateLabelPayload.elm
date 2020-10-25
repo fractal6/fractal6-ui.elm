@@ -27,7 +27,10 @@ type alias LabelOptionalArguments =
     }
 
 
-label : (LabelOptionalArguments -> LabelOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Label -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateLabelPayload
+label :
+    (LabelOptionalArguments -> LabelOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Label
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateLabelPayload
 label fillInOptionals object_ =
     let
         filledInOptionals =

@@ -453,6 +453,21 @@ roleNameHelp =
     "Name of the role."
 
 
+orgaNameHelp : String
+orgaNameHelp =
+    "Organisation name"
+
+
+aboutHelp : String
+aboutHelp =
+    "Short description"
+
+
+purposeHelpOrga : String
+purposeHelpOrga =
+    "Purpose of this organisation"
+
+
 roleAboutHelp : String
 roleAboutHelp =
     "Short description of this role."

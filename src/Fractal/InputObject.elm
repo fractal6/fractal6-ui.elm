@@ -38,7 +38,10 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-buildAddBlobInput : AddBlobInputRequiredFields -> (AddBlobInputOptionalFields -> AddBlobInputOptionalFields) -> AddBlobInput
+buildAddBlobInput :
+    AddBlobInputRequiredFields
+    -> (AddBlobInputOptionalFields -> AddBlobInputOptionalFields)
+    -> AddBlobInput
 buildAddBlobInput required fillOptionals =
     let
         optionals =
@@ -99,7 +102,10 @@ encodeAddBlobInput (AddBlobInput input) =
         [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef input.tension |> Just ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString input.blob_type |> Just ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
 
 
-buildAddCommentInput : AddCommentInputRequiredFields -> (AddCommentInputOptionalFields -> AddCommentInputOptionalFields) -> AddCommentInput
+buildAddCommentInput :
+    AddCommentInputRequiredFields
+    -> (AddCommentInputOptionalFields -> AddCommentInputOptionalFields)
+    -> AddCommentInput
 buildAddCommentInput required fillOptionals =
     let
         optionals =
@@ -150,7 +156,10 @@ encodeAddCommentInput (AddCommentInput input) =
         [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "_VOID", Encode.string |> Encode.optional input.void_ ) ]
 
 
-buildAddEventInput : AddEventInputRequiredFields -> (AddEventInputOptionalFields -> AddEventInputOptionalFields) -> AddEventInput
+buildAddEventInput :
+    AddEventInputRequiredFields
+    -> (AddEventInputOptionalFields -> AddEventInputOptionalFields)
+    -> AddEventInput
 buildAddEventInput required fillOptionals =
     let
         optionals =
@@ -205,7 +214,10 @@ encodeAddEventInput (AddEventInput input) =
         [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "event_type", Encode.enum Fractal.Enum.TensionEvent.toString input.event_type |> Just ), ( "old", Encode.string |> Encode.optional input.old ), ( "new", Encode.string |> Encode.optional input.new ) ]
 
 
-buildAddLabelInput : AddLabelInputRequiredFields -> (AddLabelInputOptionalFields -> AddLabelInputOptionalFields) -> AddLabelInput
+buildAddLabelInput :
+    AddLabelInputRequiredFields
+    -> (AddLabelInputOptionalFields -> AddLabelInputOptionalFields)
+    -> AddLabelInput
 buildAddLabelInput required fillOptionals =
     let
         optionals =
@@ -239,7 +251,10 @@ encodeAddLabelInput input =
         [ ( "name", Encode.string input.name |> Just ), ( "color", Encode.string |> Encode.optional input.color ) ]
 
 
-buildAddMandateInput : AddMandateInputRequiredFields -> (AddMandateInputOptionalFields -> AddMandateInputOptionalFields) -> AddMandateInput
+buildAddMandateInput :
+    AddMandateInputRequiredFields
+    -> (AddMandateInputOptionalFields -> AddMandateInputOptionalFields)
+    -> AddMandateInput
 buildAddMandateInput required fillOptionals =
     let
         optionals =
@@ -278,7 +293,9 @@ encodeAddMandateInput input =
         [ ( "purpose", Encode.string input.purpose |> Just ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
-buildAddNodeCharacInput : AddNodeCharacInputRequiredFields -> AddNodeCharacInput
+buildAddNodeCharacInput :
+    AddNodeCharacInputRequiredFields
+    -> AddNodeCharacInput
 buildAddNodeCharacInput required =
     { mode = required.mode, userCanJoin = required.userCanJoin }
 
@@ -305,7 +322,9 @@ encodeAddNodeCharacInput input =
         [ ( "mode", Encode.enum Fractal.Enum.NodeMode.toString input.mode |> Just ), ( "userCanJoin", Encode.bool input.userCanJoin |> Just ) ]
 
 
-buildAddNodeFragmentInput : (AddNodeFragmentInputOptionalFields -> AddNodeFragmentInputOptionalFields) -> AddNodeFragmentInput
+buildAddNodeFragmentInput :
+    (AddNodeFragmentInputOptionalFields -> AddNodeFragmentInputOptionalFields)
+    -> AddNodeFragmentInput
 buildAddNodeFragmentInput fillOptionals =
     let
         optionals =
@@ -366,14 +385,17 @@ encodeAddNodeFragmentInput (AddNodeFragmentInput input) =
         [ ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "children", (encodeNodeFragmentRef |> Encode.list) |> Encode.optional input.children ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
-buildAddNodeInput : AddNodeInputRequiredFields -> (AddNodeInputOptionalFields -> AddNodeInputOptionalFields) -> AddNodeInput
+buildAddNodeInput :
+    AddNodeInputRequiredFields
+    -> (AddNodeInputOptionalFields -> AddNodeInputOptionalFields)
+    -> AddNodeInput
 buildAddNodeInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { updatedAt = Absent, parent = Absent, children = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
+                { updatedAt = Absent, parent = Absent, children = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isPersonal = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    AddNodeInput { createdBy = required.createdBy, createdAt = required.createdAt, updatedAt = optionals.updatedAt, name = required.name, nameid = required.nameid, rootnameid = required.rootnameid, parent = optionals.parent, children = optionals.children, type_ = required.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = required.isRoot, isPrivate = required.isPrivate, isArchived = required.isArchived, charac = required.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    AddNodeInput { createdBy = required.createdBy, createdAt = required.createdAt, updatedAt = optionals.updatedAt, name = required.name, nameid = required.nameid, rootnameid = required.rootnameid, parent = optionals.parent, children = optionals.children, type_ = required.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = required.isRoot, isPersonal = optionals.isPersonal, isPrivate = required.isPrivate, isArchived = required.isArchived, charac = required.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias AddNodeInputRequiredFields =
@@ -404,6 +426,7 @@ type alias AddNodeInputOptionalFields =
     , n_tensions_in : OptionalArgument Int
     , n_children : OptionalArgument Int
     , stats : OptionalArgument NodeStatsRef
+    , isPersonal : OptionalArgument Bool
     , first_link : OptionalArgument UserRef
     , second_link : OptionalArgument UserRef
     , skills : OptionalArgument (List String)
@@ -437,6 +460,7 @@ type alias AddNodeInputRaw =
     , n_children : OptionalArgument Int
     , stats : OptionalArgument NodeStatsRef
     , isRoot : Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : Bool
     , isArchived : Bool
     , charac : NodeCharacRef
@@ -458,10 +482,12 @@ type AddNodeInput
 encodeAddNodeInput : AddNodeInput -> Value
 encodeAddNodeInput (AddNodeInput input) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "name", Encode.string input.name |> Just ), ( "nameid", Encode.string input.nameid |> Just ), ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool input.isRoot |> Just ), ( "isPrivate", Encode.bool input.isPrivate |> Just ), ( "isArchived", Encode.bool input.isArchived |> Just ), ( "charac", encodeNodeCharacRef input.charac |> Just ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "name", Encode.string input.name |> Just ), ( "nameid", Encode.string input.nameid |> Just ), ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool input.isRoot |> Just ), ( "isPersonal", Encode.bool |> Encode.optional input.isPersonal ), ( "isPrivate", Encode.bool input.isPrivate |> Just ), ( "isArchived", Encode.bool input.isArchived |> Just ), ( "charac", encodeNodeCharacRef input.charac |> Just ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
-buildAddNodeStatsInput : (AddNodeStatsInputOptionalFields -> AddNodeStatsInputOptionalFields) -> AddNodeStatsInput
+buildAddNodeStatsInput :
+    (AddNodeStatsInputOptionalFields -> AddNodeStatsInputOptionalFields)
+    -> AddNodeStatsInput
 buildAddNodeStatsInput fillOptionals =
     let
         optionals =
@@ -497,7 +523,10 @@ encodeAddNodeStatsInput input =
         [ ( "n_member", Encode.int |> Encode.optional input.n_member ), ( "n_guest", Encode.int |> Encode.optional input.n_guest ), ( "n_circle", Encode.int |> Encode.optional input.n_circle ), ( "n_role", Encode.int |> Encode.optional input.n_role ) ]
 
 
-buildAddTensionInput : AddTensionInputRequiredFields -> (AddTensionInputOptionalFields -> AddTensionInputOptionalFields) -> AddTensionInput
+buildAddTensionInput :
+    AddTensionInputRequiredFields
+    -> (AddTensionInputOptionalFields -> AddTensionInputOptionalFields)
+    -> AddTensionInput
 buildAddTensionInput required fillOptionals =
     let
         optionals =
@@ -578,7 +607,10 @@ encodeAddTensionInput (AddTensionInput input) =
         [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string input.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input.type_ |> Just ), ( "emitterid", Encode.string input.emitterid |> Just ), ( "emitter", encodeNodeRef input.emitter |> Just ), ( "receiverid", Encode.string input.receiverid |> Just ), ( "receiver", encodeNodeRef input.receiver |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input.status |> Just ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input.assignees ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) input.history |> Just ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
 
 
-buildAddUserInput : AddUserInputRequiredFields -> (AddUserInputOptionalFields -> AddUserInputOptionalFields) -> AddUserInput
+buildAddUserInput :
+    AddUserInputRequiredFields
+    -> (AddUserInputOptionalFields -> AddUserInputOptionalFields)
+    -> AddUserInput
 buildAddUserInput required fillOptionals =
     let
         optionals =
@@ -647,7 +679,9 @@ encodeAddUserInput (AddUserInput input) =
         [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "username", Encode.string input.username |> Just ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string input.password |> Just ), ( "email", Encode.string input.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool input.emailValidated |> Just ), ( "rights", encodeUserRightsRef input.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
-buildAddUserRightsInput : AddUserRightsInputRequiredFields -> AddUserRightsInput
+buildAddUserRightsInput :
+    AddUserRightsInputRequiredFields
+    -> AddUserRightsInput
 buildAddUserRightsInput required =
     { canLogin = required.canLogin, canCreateRoot = required.canCreateRoot }
 
@@ -674,7 +708,9 @@ encodeAddUserRightsInput input =
         [ ( "canLogin", Encode.bool input.canLogin |> Just ), ( "canCreateRoot", Encode.bool input.canCreateRoot |> Just ) ]
 
 
-buildAuthRule : (AuthRuleOptionalFields -> AuthRuleOptionalFields) -> AuthRule
+buildAuthRule :
+    (AuthRuleOptionalFields -> AuthRuleOptionalFields)
+    -> AuthRule
 buildAuthRule fillOptionals =
     let
         optionals =
@@ -719,7 +755,9 @@ encodeAuthRule (AuthRule input) =
         [ ( "and", (encodeAuthRule |> Encode.maybe |> Encode.list) |> Encode.optional input.and ), ( "or", (encodeAuthRule |> Encode.maybe |> Encode.list) |> Encode.optional input.or ), ( "not", encodeAuthRule |> Encode.optional input.not ), ( "rule", Encode.string |> Encode.optional input.rule ) ]
 
 
-buildBlobFilter : (BlobFilterOptionalFields -> BlobFilterOptionalFields) -> BlobFilter
+buildBlobFilter :
+    (BlobFilterOptionalFields -> BlobFilterOptionalFields)
+    -> BlobFilter
 buildBlobFilter fillOptionals =
     let
         optionals =
@@ -774,7 +812,9 @@ encodeBlobFilter (BlobFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "blob_type", encodeBlobType_hash |> Encode.optional input.blob_type ), ( "pushedFlag", encodeDateTimeFilter |> Encode.optional input.pushedFlag ), ( "archivedFlag", encodeDateTimeFilter |> Encode.optional input.archivedFlag ), ( "and", encodeBlobFilter |> Encode.optional input.and ), ( "or", encodeBlobFilter |> Encode.optional input.or ), ( "not", encodeBlobFilter |> Encode.optional input.not ) ]
 
 
-buildBlobOrder : (BlobOrderOptionalFields -> BlobOrderOptionalFields) -> BlobOrder
+buildBlobOrder :
+    (BlobOrderOptionalFields -> BlobOrderOptionalFields)
+    -> BlobOrder
 buildBlobOrder fillOptionals =
     let
         optionals =
@@ -817,7 +857,9 @@ encodeBlobOrder (BlobOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.BlobOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.BlobOrderable.toString |> Encode.optional input.desc ), ( "then", encodeBlobOrder |> Encode.optional input.then_ ) ]
 
 
-buildBlobPatch : (BlobPatchOptionalFields -> BlobPatchOptionalFields) -> BlobPatch
+buildBlobPatch :
+    (BlobPatchOptionalFields -> BlobPatchOptionalFields)
+    -> BlobPatch
 buildBlobPatch fillOptionals =
     let
         optionals =
@@ -874,7 +916,9 @@ encodeBlobPatch (BlobPatch input) =
         [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input.blob_type ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
 
 
-buildBlobRef : (BlobRefOptionalFields -> BlobRefOptionalFields) -> BlobRef
+buildBlobRef :
+    (BlobRefOptionalFields -> BlobRefOptionalFields)
+    -> BlobRef
 buildBlobRef fillOptionals =
     let
         optionals =
@@ -933,7 +977,9 @@ encodeBlobRef (BlobRef input) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "blob_type", Encode.enum Fractal.Enum.BlobType.toString |> Encode.optional input.blob_type ), ( "pushedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.pushedFlag ), ( "archivedFlag", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.archivedFlag ), ( "node", encodeNodeFragmentRef |> Encode.optional input.node ), ( "md", Encode.string |> Encode.optional input.md ) ]
 
 
-buildBlobType_hash : BlobType_hashRequiredFields -> BlobType_hash
+buildBlobType_hash :
+    BlobType_hashRequiredFields
+    -> BlobType_hash
 buildBlobType_hash required =
     { eq = required.eq }
 
@@ -956,7 +1002,9 @@ encodeBlobType_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.BlobType.toString input.eq |> Just ) ]
 
 
-buildCommentFilter : (CommentFilterOptionalFields -> CommentFilterOptionalFields) -> CommentFilter
+buildCommentFilter :
+    (CommentFilterOptionalFields -> CommentFilterOptionalFields)
+    -> CommentFilter
 buildCommentFilter fillOptionals =
     let
         optionals =
@@ -1005,7 +1053,9 @@ encodeCommentFilter (CommentFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "and", encodeCommentFilter |> Encode.optional input.and ), ( "or", encodeCommentFilter |> Encode.optional input.or ), ( "not", encodeCommentFilter |> Encode.optional input.not ) ]
 
 
-buildCommentOrder : (CommentOrderOptionalFields -> CommentOrderOptionalFields) -> CommentOrder
+buildCommentOrder :
+    (CommentOrderOptionalFields -> CommentOrderOptionalFields)
+    -> CommentOrder
 buildCommentOrder fillOptionals =
     let
         optionals =
@@ -1048,7 +1098,9 @@ encodeCommentOrder (CommentOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.CommentOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.CommentOrderable.toString |> Encode.optional input.desc ), ( "then", encodeCommentOrder |> Encode.optional input.then_ ) ]
 
 
-buildCommentPatch : (CommentPatchOptionalFields -> CommentPatchOptionalFields) -> CommentPatch
+buildCommentPatch :
+    (CommentPatchOptionalFields -> CommentPatchOptionalFields)
+    -> CommentPatch
 buildCommentPatch fillOptionals =
     let
         optionals =
@@ -1095,7 +1147,9 @@ encodeCommentPatch (CommentPatch input) =
         [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "_VOID", Encode.string |> Encode.optional input.void_ ) ]
 
 
-buildCommentRef : (CommentRefOptionalFields -> CommentRefOptionalFields) -> CommentRef
+buildCommentRef :
+    (CommentRefOptionalFields -> CommentRefOptionalFields)
+    -> CommentRef
 buildCommentRef fillOptionals =
     let
         optionals =
@@ -1144,7 +1198,10 @@ encodeCommentRef (CommentRef input) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "_VOID", Encode.string |> Encode.optional input.void_ ) ]
 
 
-buildCustomHTTP : CustomHTTPRequiredFields -> (CustomHTTPOptionalFields -> CustomHTTPOptionalFields) -> CustomHTTP
+buildCustomHTTP :
+    CustomHTTPRequiredFields
+    -> (CustomHTTPOptionalFields -> CustomHTTPOptionalFields)
+    -> CustomHTTP
 buildCustomHTTP required fillOptionals =
     let
         optionals =
@@ -1192,7 +1249,9 @@ encodeCustomHTTP input =
         [ ( "url", Encode.string input.url |> Just ), ( "method", Encode.enum Fractal.Enum.HTTPMethod.toString input.method |> Just ), ( "body", Encode.string |> Encode.optional input.body ), ( "graphql", Encode.string |> Encode.optional input.graphql ), ( "mode", Encode.enum Fractal.Enum.Mode.toString |> Encode.optional input.mode ), ( "forwardHeaders", (Encode.string |> Encode.list) |> Encode.optional input.forwardHeaders ), ( "secretHeaders", (Encode.string |> Encode.list) |> Encode.optional input.secretHeaders ), ( "skipIntrospection", Encode.bool |> Encode.optional input.skipIntrospection ) ]
 
 
-buildDateTimeFilter : (DateTimeFilterOptionalFields -> DateTimeFilterOptionalFields) -> DateTimeFilter
+buildDateTimeFilter :
+    (DateTimeFilterOptionalFields -> DateTimeFilterOptionalFields)
+    -> DateTimeFilter
 buildDateTimeFilter fillOptionals =
     let
         optionals =
@@ -1230,7 +1289,9 @@ encodeDateTimeFilter input =
         [ ( "eq", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.eq ), ( "le", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.le ), ( "lt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.lt ), ( "ge", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.ge ), ( "gt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.gt ) ]
 
 
-buildEventFilter : (EventFilterOptionalFields -> EventFilterOptionalFields) -> EventFilter
+buildEventFilter :
+    (EventFilterOptionalFields -> EventFilterOptionalFields)
+    -> EventFilter
 buildEventFilter fillOptionals =
     let
         optionals =
@@ -1281,7 +1342,9 @@ encodeEventFilter (EventFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "event_type", encodeTensionEvent_hash |> Encode.optional input.event_type ), ( "and", encodeEventFilter |> Encode.optional input.and ), ( "or", encodeEventFilter |> Encode.optional input.or ), ( "not", encodeEventFilter |> Encode.optional input.not ) ]
 
 
-buildEventOrder : (EventOrderOptionalFields -> EventOrderOptionalFields) -> EventOrder
+buildEventOrder :
+    (EventOrderOptionalFields -> EventOrderOptionalFields)
+    -> EventOrder
 buildEventOrder fillOptionals =
     let
         optionals =
@@ -1324,7 +1387,9 @@ encodeEventOrder (EventOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.EventOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.EventOrderable.toString |> Encode.optional input.desc ), ( "then", encodeEventOrder |> Encode.optional input.then_ ) ]
 
 
-buildEventPatch : (EventPatchOptionalFields -> EventPatchOptionalFields) -> EventPatch
+buildEventPatch :
+    (EventPatchOptionalFields -> EventPatchOptionalFields)
+    -> EventPatch
 buildEventPatch fillOptionals =
     let
         optionals =
@@ -1375,7 +1440,9 @@ encodeEventPatch (EventPatch input) =
         [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "event_type", Encode.enum Fractal.Enum.TensionEvent.toString |> Encode.optional input.event_type ), ( "old", Encode.string |> Encode.optional input.old ), ( "new", Encode.string |> Encode.optional input.new ) ]
 
 
-buildEventRef : (EventRefOptionalFields -> EventRefOptionalFields) -> EventRef
+buildEventRef :
+    (EventRefOptionalFields -> EventRefOptionalFields)
+    -> EventRef
 buildEventRef fillOptionals =
     let
         optionals =
@@ -1428,7 +1495,9 @@ encodeEventRef (EventRef input) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "event_type", Encode.enum Fractal.Enum.TensionEvent.toString |> Encode.optional input.event_type ), ( "old", Encode.string |> Encode.optional input.old ), ( "new", Encode.string |> Encode.optional input.new ) ]
 
 
-buildFloatFilter : (FloatFilterOptionalFields -> FloatFilterOptionalFields) -> FloatFilter
+buildFloatFilter :
+    (FloatFilterOptionalFields -> FloatFilterOptionalFields)
+    -> FloatFilter
 buildFloatFilter fillOptionals =
     let
         optionals =
@@ -1466,7 +1535,9 @@ encodeFloatFilter input =
         [ ( "eq", Encode.float |> Encode.optional input.eq ), ( "le", Encode.float |> Encode.optional input.le ), ( "lt", Encode.float |> Encode.optional input.lt ), ( "ge", Encode.float |> Encode.optional input.ge ), ( "gt", Encode.float |> Encode.optional input.gt ) ]
 
 
-buildIntFilter : (IntFilterOptionalFields -> IntFilterOptionalFields) -> IntFilter
+buildIntFilter :
+    (IntFilterOptionalFields -> IntFilterOptionalFields)
+    -> IntFilter
 buildIntFilter fillOptionals =
     let
         optionals =
@@ -1504,7 +1575,9 @@ encodeIntFilter input =
         [ ( "eq", Encode.int |> Encode.optional input.eq ), ( "le", Encode.int |> Encode.optional input.le ), ( "lt", Encode.int |> Encode.optional input.lt ), ( "ge", Encode.int |> Encode.optional input.ge ), ( "gt", Encode.int |> Encode.optional input.gt ) ]
 
 
-buildLabelFilter : (LabelFilterOptionalFields -> LabelFilterOptionalFields) -> LabelFilter
+buildLabelFilter :
+    (LabelFilterOptionalFields -> LabelFilterOptionalFields)
+    -> LabelFilter
 buildLabelFilter fillOptionals =
     let
         optionals =
@@ -1551,7 +1624,9 @@ encodeLabelFilter (LabelFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "name", encodeStringHashFilter |> Encode.optional input.name ), ( "and", encodeLabelFilter |> Encode.optional input.and ), ( "or", encodeLabelFilter |> Encode.optional input.or ), ( "not", encodeLabelFilter |> Encode.optional input.not ) ]
 
 
-buildLabelOrder : (LabelOrderOptionalFields -> LabelOrderOptionalFields) -> LabelOrder
+buildLabelOrder :
+    (LabelOrderOptionalFields -> LabelOrderOptionalFields)
+    -> LabelOrder
 buildLabelOrder fillOptionals =
     let
         optionals =
@@ -1594,7 +1669,9 @@ encodeLabelOrder (LabelOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.LabelOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.LabelOrderable.toString |> Encode.optional input.desc ), ( "then", encodeLabelOrder |> Encode.optional input.then_ ) ]
 
 
-buildLabelPatch : (LabelPatchOptionalFields -> LabelPatchOptionalFields) -> LabelPatch
+buildLabelPatch :
+    (LabelPatchOptionalFields -> LabelPatchOptionalFields)
+    -> LabelPatch
 buildLabelPatch fillOptionals =
     let
         optionals =
@@ -1622,7 +1699,9 @@ encodeLabelPatch input =
         [ ( "color", Encode.string |> Encode.optional input.color ) ]
 
 
-buildLabelRef : (LabelRefOptionalFields -> LabelRefOptionalFields) -> LabelRef
+buildLabelRef :
+    (LabelRefOptionalFields -> LabelRefOptionalFields)
+    -> LabelRef
 buildLabelRef fillOptionals =
     let
         optionals =
@@ -1656,7 +1735,9 @@ encodeLabelRef input =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "name", Encode.string |> Encode.optional input.name ), ( "color", Encode.string |> Encode.optional input.color ) ]
 
 
-buildMandateFilter : (MandateFilterOptionalFields -> MandateFilterOptionalFields) -> MandateFilter
+buildMandateFilter :
+    (MandateFilterOptionalFields -> MandateFilterOptionalFields)
+    -> MandateFilter
 buildMandateFilter fillOptionals =
     let
         optionals =
@@ -1703,7 +1784,9 @@ encodeMandateFilter (MandateFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "purpose", encodeStringFullTextFilter |> Encode.optional input.purpose ), ( "and", encodeMandateFilter |> Encode.optional input.and ), ( "or", encodeMandateFilter |> Encode.optional input.or ), ( "not", encodeMandateFilter |> Encode.optional input.not ) ]
 
 
-buildMandateOrder : (MandateOrderOptionalFields -> MandateOrderOptionalFields) -> MandateOrder
+buildMandateOrder :
+    (MandateOrderOptionalFields -> MandateOrderOptionalFields)
+    -> MandateOrder
 buildMandateOrder fillOptionals =
     let
         optionals =
@@ -1746,7 +1829,9 @@ encodeMandateOrder (MandateOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.MandateOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.MandateOrderable.toString |> Encode.optional input.desc ), ( "then", encodeMandateOrder |> Encode.optional input.then_ ) ]
 
 
-buildMandatePatch : (MandatePatchOptionalFields -> MandatePatchOptionalFields) -> MandatePatch
+buildMandatePatch :
+    (MandatePatchOptionalFields -> MandatePatchOptionalFields)
+    -> MandatePatch
 buildMandatePatch fillOptionals =
     let
         optionals =
@@ -1782,7 +1867,9 @@ encodeMandatePatch input =
         [ ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
-buildMandateRef : (MandateRefOptionalFields -> MandateRefOptionalFields) -> MandateRef
+buildMandateRef :
+    (MandateRefOptionalFields -> MandateRefOptionalFields)
+    -> MandateRef
 buildMandateRef fillOptionals =
     let
         optionals =
@@ -1820,7 +1907,9 @@ encodeMandateRef input =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "purpose", Encode.string |> Encode.optional input.purpose ), ( "responsabilities", Encode.string |> Encode.optional input.responsabilities ), ( "domains", Encode.string |> Encode.optional input.domains ), ( "policies", Encode.string |> Encode.optional input.policies ) ]
 
 
-buildNodeCharacFilter : (NodeCharacFilterOptionalFields -> NodeCharacFilterOptionalFields) -> NodeCharacFilter
+buildNodeCharacFilter :
+    (NodeCharacFilterOptionalFields -> NodeCharacFilterOptionalFields)
+    -> NodeCharacFilter
 buildNodeCharacFilter fillOptionals =
     let
         optionals =
@@ -1869,7 +1958,9 @@ encodeNodeCharacFilter (NodeCharacFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "mode", encodeNodeMode_hash |> Encode.optional input.mode ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ), ( "and", encodeNodeCharacFilter |> Encode.optional input.and ), ( "or", encodeNodeCharacFilter |> Encode.optional input.or ), ( "not", encodeNodeCharacFilter |> Encode.optional input.not ) ]
 
 
-buildNodeCharacPatch : (NodeCharacPatchOptionalFields -> NodeCharacPatchOptionalFields) -> NodeCharacPatch
+buildNodeCharacPatch :
+    (NodeCharacPatchOptionalFields -> NodeCharacPatchOptionalFields)
+    -> NodeCharacPatch
 buildNodeCharacPatch fillOptionals =
     let
         optionals =
@@ -1901,7 +1992,9 @@ encodeNodeCharacPatch input =
         [ ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input.mode ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ) ]
 
 
-buildNodeCharacRef : (NodeCharacRefOptionalFields -> NodeCharacRefOptionalFields) -> NodeCharacRef
+buildNodeCharacRef :
+    (NodeCharacRefOptionalFields -> NodeCharacRefOptionalFields)
+    -> NodeCharacRef
 buildNodeCharacRef fillOptionals =
     let
         optionals =
@@ -1935,14 +2028,16 @@ encodeNodeCharacRef input =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input.mode ), ( "userCanJoin", Encode.bool |> Encode.optional input.userCanJoin ) ]
 
 
-buildNodeFilter : (NodeFilterOptionalFields -> NodeFilterOptionalFields) -> NodeFilter
+buildNodeFilter :
+    (NodeFilterOptionalFields -> NodeFilterOptionalFields)
+    -> NodeFilter
 buildNodeFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, type_ = Absent, about = Absent, isRoot = Absent, isPrivate = Absent, isArchived = Absent, skills = Absent, role_type = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, type_ = Absent, about = Absent, isRoot = Absent, isPersonal = Absent, isPrivate = Absent, isArchived = Absent, skills = Absent, role_type = Absent, and = Absent, or = Absent, not = Absent }
     in
-    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, type_ = optionals.type_, about = optionals.about, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, skills = optionals.skills, role_type = optionals.role_type, and = optionals.and, or = optionals.or, not = optionals.not }
+    NodeFilter { id = optionals.id, createdAt = optionals.createdAt, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, type_ = optionals.type_, about = optionals.about, isRoot = optionals.isRoot, isPersonal = optionals.isPersonal, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, skills = optionals.skills, role_type = optionals.role_type, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias NodeFilterOptionalFields =
@@ -1954,6 +2049,7 @@ type alias NodeFilterOptionalFields =
     , type_ : OptionalArgument NodeType_hash
     , about : OptionalArgument StringFullTextFilter
     , isRoot : OptionalArgument Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , isArchived : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
@@ -1978,6 +2074,7 @@ type alias NodeFilterRaw =
     , type_ : OptionalArgument NodeType_hash
     , about : OptionalArgument StringFullTextFilter
     , isRoot : OptionalArgument Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , isArchived : OptionalArgument Bool
     , skills : OptionalArgument StringTermFilter
@@ -1999,10 +2096,12 @@ type NodeFilter
 encodeNodeFilter : NodeFilter -> Value
 encodeNodeFilter (NodeFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.rootnameid ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input.about ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.rootnameid ), ( "type_", encodeNodeType_hash |> Encode.optional input.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input.about ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPersonal", Encode.bool |> Encode.optional input.isPersonal ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "skills", encodeStringTermFilter |> Encode.optional input.skills ), ( "role_type", encodeRoleType_hash |> Encode.optional input.role_type ), ( "and", encodeNodeFilter |> Encode.optional input.and ), ( "or", encodeNodeFilter |> Encode.optional input.or ), ( "not", encodeNodeFilter |> Encode.optional input.not ) ]
 
 
-buildNodeFragmentFilter : (NodeFragmentFilterOptionalFields -> NodeFragmentFilterOptionalFields) -> NodeFragmentFilter
+buildNodeFragmentFilter :
+    (NodeFragmentFilterOptionalFields -> NodeFragmentFilterOptionalFields)
+    -> NodeFragmentFilter
 buildNodeFragmentFilter fillOptionals =
     let
         optionals =
@@ -2043,7 +2142,9 @@ encodeNodeFragmentFilter (NodeFragmentFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "not", encodeNodeFragmentFilter |> Encode.optional input.not ) ]
 
 
-buildNodeFragmentOrder : (NodeFragmentOrderOptionalFields -> NodeFragmentOrderOptionalFields) -> NodeFragmentOrder
+buildNodeFragmentOrder :
+    (NodeFragmentOrderOptionalFields -> NodeFragmentOrderOptionalFields)
+    -> NodeFragmentOrder
 buildNodeFragmentOrder fillOptionals =
     let
         optionals =
@@ -2086,7 +2187,9 @@ encodeNodeFragmentOrder (NodeFragmentOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.NodeFragmentOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.NodeFragmentOrderable.toString |> Encode.optional input.desc ), ( "then", encodeNodeFragmentOrder |> Encode.optional input.then_ ) ]
 
 
-buildNodeFragmentPatch : (NodeFragmentPatchOptionalFields -> NodeFragmentPatchOptionalFields) -> NodeFragmentPatch
+buildNodeFragmentPatch :
+    (NodeFragmentPatchOptionalFields -> NodeFragmentPatchOptionalFields)
+    -> NodeFragmentPatch
 buildNodeFragmentPatch fillOptionals =
     let
         optionals =
@@ -2147,7 +2250,9 @@ encodeNodeFragmentPatch (NodeFragmentPatch input) =
         [ ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "children", (encodeNodeFragmentRef |> Encode.list) |> Encode.optional input.children ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
-buildNodeFragmentRef : (NodeFragmentRefOptionalFields -> NodeFragmentRefOptionalFields) -> NodeFragmentRef
+buildNodeFragmentRef :
+    (NodeFragmentRefOptionalFields -> NodeFragmentRefOptionalFields)
+    -> NodeFragmentRef
 buildNodeFragmentRef fillOptionals =
     let
         optionals =
@@ -2210,7 +2315,9 @@ encodeNodeFragmentRef (NodeFragmentRef input) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "children", (encodeNodeFragmentRef |> Encode.list) |> Encode.optional input.children ), ( "first_link", Encode.string |> Encode.optional input.first_link ), ( "second_link", Encode.string |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
-buildNodeMode_hash : NodeMode_hashRequiredFields -> NodeMode_hash
+buildNodeMode_hash :
+    NodeMode_hashRequiredFields
+    -> NodeMode_hash
 buildNodeMode_hash required =
     { eq = required.eq }
 
@@ -2233,7 +2340,9 @@ encodeNodeMode_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.NodeMode.toString input.eq |> Just ) ]
 
 
-buildNodeOrder : (NodeOrderOptionalFields -> NodeOrderOptionalFields) -> NodeOrder
+buildNodeOrder :
+    (NodeOrderOptionalFields -> NodeOrderOptionalFields)
+    -> NodeOrder
 buildNodeOrder fillOptionals =
     let
         optionals =
@@ -2276,14 +2385,16 @@ encodeNodeOrder (NodeOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.NodeOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.NodeOrderable.toString |> Encode.optional input.desc ), ( "then", encodeNodeOrder |> Encode.optional input.then_ ) ]
 
 
-buildNodePatch : (NodePatchOptionalFields -> NodePatchOptionalFields) -> NodePatch
+buildNodePatch :
+    (NodePatchOptionalFields -> NodePatchOptionalFields)
+    -> NodePatch
 buildNodePatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPrivate = Absent, isArchived = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPersonal = Absent, isPrivate = Absent, isArchived = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    NodePatch { createdBy = optionals.createdBy, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, name = optionals.name, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    NodePatch { createdBy = optionals.createdBy, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, name = optionals.name, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPersonal = optionals.isPersonal, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias NodePatchOptionalFields =
@@ -2306,6 +2417,7 @@ type alias NodePatchOptionalFields =
     , n_children : OptionalArgument Int
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
@@ -2341,6 +2453,7 @@ type alias NodePatchRaw =
     , n_children : OptionalArgument Int
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
@@ -2362,17 +2475,19 @@ type NodePatch
 encodeNodePatch : NodePatch -> Value
 encodeNodePatch (NodePatch input) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPersonal", Encode.bool |> Encode.optional input.isPersonal ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
-buildNodeRef : (NodeRefOptionalFields -> NodeRefOptionalFields) -> NodeRef
+buildNodeRef :
+    (NodeRefOptionalFields -> NodeRefOptionalFields)
+    -> NodeRef
 buildNodeRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPrivate = Absent, isArchived = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, parent = Absent, children = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, docs = Absent, source = Absent, n_tensions_out = Absent, n_tensions_in = Absent, n_children = Absent, stats = Absent, isRoot = Absent, isPersonal = Absent, isPrivate = Absent, isArchived = Absent, charac = Absent, first_link = Absent, second_link = Absent, skills = Absent, role_type = Absent }
     in
-    NodeRef { id = optionals.id, createdBy = optionals.createdBy, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
+    NodeRef { id = optionals.id, createdBy = optionals.createdBy, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, name = optionals.name, nameid = optionals.nameid, rootnameid = optionals.rootnameid, parent = optionals.parent, children = optionals.children, type_ = optionals.type_, tensions_out = optionals.tensions_out, tensions_in = optionals.tensions_in, about = optionals.about, mandate = optionals.mandate, docs = optionals.docs, source = optionals.source, n_tensions_out = optionals.n_tensions_out, n_tensions_in = optionals.n_tensions_in, n_children = optionals.n_children, stats = optionals.stats, isRoot = optionals.isRoot, isPersonal = optionals.isPersonal, isPrivate = optionals.isPrivate, isArchived = optionals.isArchived, charac = optionals.charac, first_link = optionals.first_link, second_link = optionals.second_link, skills = optionals.skills, role_type = optionals.role_type }
 
 
 type alias NodeRefOptionalFields =
@@ -2397,6 +2512,7 @@ type alias NodeRefOptionalFields =
     , n_children : OptionalArgument Int
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
@@ -2434,6 +2550,7 @@ type alias NodeRefRaw =
     , n_children : OptionalArgument Int
     , stats : OptionalArgument NodeStatsRef
     , isRoot : OptionalArgument Bool
+    , isPersonal : OptionalArgument Bool
     , isPrivate : OptionalArgument Bool
     , isArchived : OptionalArgument Bool
     , charac : OptionalArgument NodeCharacRef
@@ -2455,10 +2572,12 @@ type NodeRef
 encodeNodeRef : NodeRef -> Value
 encodeNodeRef (NodeRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input.parent ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input.children ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_in ), ( "about", Encode.string |> Encode.optional input.about ), ( "mandate", encodeMandateRef |> Encode.optional input.mandate ), ( "docs", (encodeTensionRef |> Encode.maybe |> Encode.list) |> Encode.optional input.docs ), ( "source", encodeTensionRef |> Encode.optional input.source ), ( "n_tensions_out", Encode.int |> Encode.optional input.n_tensions_out ), ( "n_tensions_in", Encode.int |> Encode.optional input.n_tensions_in ), ( "n_children", Encode.int |> Encode.optional input.n_children ), ( "stats", encodeNodeStatsRef |> Encode.optional input.stats ), ( "isRoot", Encode.bool |> Encode.optional input.isRoot ), ( "isPersonal", Encode.bool |> Encode.optional input.isPersonal ), ( "isPrivate", Encode.bool |> Encode.optional input.isPrivate ), ( "isArchived", Encode.bool |> Encode.optional input.isArchived ), ( "charac", encodeNodeCharacRef |> Encode.optional input.charac ), ( "first_link", encodeUserRef |> Encode.optional input.first_link ), ( "second_link", encodeUserRef |> Encode.optional input.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input.skills ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.role_type ) ]
 
 
-buildNodeStatsOrder : (NodeStatsOrderOptionalFields -> NodeStatsOrderOptionalFields) -> NodeStatsOrder
+buildNodeStatsOrder :
+    (NodeStatsOrderOptionalFields -> NodeStatsOrderOptionalFields)
+    -> NodeStatsOrder
 buildNodeStatsOrder fillOptionals =
     let
         optionals =
@@ -2501,7 +2620,9 @@ encodeNodeStatsOrder (NodeStatsOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.NodeStatsOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.NodeStatsOrderable.toString |> Encode.optional input.desc ), ( "then", encodeNodeStatsOrder |> Encode.optional input.then_ ) ]
 
 
-buildNodeStatsRef : (NodeStatsRefOptionalFields -> NodeStatsRefOptionalFields) -> NodeStatsRef
+buildNodeStatsRef :
+    (NodeStatsRefOptionalFields -> NodeStatsRefOptionalFields)
+    -> NodeStatsRef
 buildNodeStatsRef fillOptionals =
     let
         optionals =
@@ -2537,7 +2658,9 @@ encodeNodeStatsRef input =
         [ ( "n_member", Encode.int |> Encode.optional input.n_member ), ( "n_guest", Encode.int |> Encode.optional input.n_guest ), ( "n_circle", Encode.int |> Encode.optional input.n_circle ), ( "n_role", Encode.int |> Encode.optional input.n_role ) ]
 
 
-buildNodeType_hash : NodeType_hashRequiredFields -> NodeType_hash
+buildNodeType_hash :
+    NodeType_hashRequiredFields
+    -> NodeType_hash
 buildNodeType_hash required =
     { eq = required.eq }
 
@@ -2560,7 +2683,9 @@ encodeNodeType_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.NodeType.toString input.eq |> Just ) ]
 
 
-buildPostFilter : (PostFilterOptionalFields -> PostFilterOptionalFields) -> PostFilter
+buildPostFilter :
+    (PostFilterOptionalFields -> PostFilterOptionalFields)
+    -> PostFilter
 buildPostFilter fillOptionals =
     let
         optionals =
@@ -2609,7 +2734,9 @@ encodePostFilter (PostFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "and", encodePostFilter |> Encode.optional input.and ), ( "or", encodePostFilter |> Encode.optional input.or ), ( "not", encodePostFilter |> Encode.optional input.not ) ]
 
 
-buildPostOrder : (PostOrderOptionalFields -> PostOrderOptionalFields) -> PostOrder
+buildPostOrder :
+    (PostOrderOptionalFields -> PostOrderOptionalFields)
+    -> PostOrder
 buildPostOrder fillOptionals =
     let
         optionals =
@@ -2652,7 +2779,9 @@ encodePostOrder (PostOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.PostOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.PostOrderable.toString |> Encode.optional input.desc ), ( "then", encodePostOrder |> Encode.optional input.then_ ) ]
 
 
-buildPostPatch : (PostPatchOptionalFields -> PostPatchOptionalFields) -> PostPatch
+buildPostPatch :
+    (PostPatchOptionalFields -> PostPatchOptionalFields)
+    -> PostPatch
 buildPostPatch fillOptionals =
     let
         optionals =
@@ -2697,7 +2826,9 @@ encodePostPatch (PostPatch input) =
         [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ) ]
 
 
-buildPostRef : PostRefRequiredFields -> PostRef
+buildPostRef :
+    PostRefRequiredFields
+    -> PostRef
 buildPostRef required =
     { id = required.id }
 
@@ -2720,7 +2851,9 @@ encodePostRef input =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) input.id |> Just ) ]
 
 
-buildRoleType_hash : (RoleType_hashOptionalFields -> RoleType_hashOptionalFields) -> RoleType_hash
+buildRoleType_hash :
+    (RoleType_hashOptionalFields -> RoleType_hashOptionalFields)
+    -> RoleType_hash
 buildRoleType_hash fillOptionals =
     let
         optionals =
@@ -2748,7 +2881,9 @@ encodeRoleType_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input.eq ) ]
 
 
-buildStringExactFilter : (StringExactFilterOptionalFields -> StringExactFilterOptionalFields) -> StringExactFilter
+buildStringExactFilter :
+    (StringExactFilterOptionalFields -> StringExactFilterOptionalFields)
+    -> StringExactFilter
 buildStringExactFilter fillOptionals =
     let
         optionals =
@@ -2786,7 +2921,9 @@ encodeStringExactFilter input =
         [ ( "eq", Encode.string |> Encode.optional input.eq ), ( "le", Encode.string |> Encode.optional input.le ), ( "lt", Encode.string |> Encode.optional input.lt ), ( "ge", Encode.string |> Encode.optional input.ge ), ( "gt", Encode.string |> Encode.optional input.gt ) ]
 
 
-buildStringFullTextFilter : (StringFullTextFilterOptionalFields -> StringFullTextFilterOptionalFields) -> StringFullTextFilter
+buildStringFullTextFilter :
+    (StringFullTextFilterOptionalFields -> StringFullTextFilterOptionalFields)
+    -> StringFullTextFilter
 buildStringFullTextFilter fillOptionals =
     let
         optionals =
@@ -2818,7 +2955,9 @@ encodeStringFullTextFilter input =
         [ ( "alloftext", Encode.string |> Encode.optional input.alloftext ), ( "anyoftext", Encode.string |> Encode.optional input.anyoftext ) ]
 
 
-buildStringHashFilter : (StringHashFilterOptionalFields -> StringHashFilterOptionalFields) -> StringHashFilter
+buildStringHashFilter :
+    (StringHashFilterOptionalFields -> StringHashFilterOptionalFields)
+    -> StringHashFilter
 buildStringHashFilter fillOptionals =
     let
         optionals =
@@ -2846,7 +2985,9 @@ encodeStringHashFilter input =
         [ ( "eq", Encode.string |> Encode.optional input.eq ) ]
 
 
-buildStringHashFilter_StringRegExpFilter : (StringHashFilter_StringRegExpFilterOptionalFields -> StringHashFilter_StringRegExpFilterOptionalFields) -> StringHashFilter_StringRegExpFilter
+buildStringHashFilter_StringRegExpFilter :
+    (StringHashFilter_StringRegExpFilterOptionalFields -> StringHashFilter_StringRegExpFilterOptionalFields)
+    -> StringHashFilter_StringRegExpFilter
 buildStringHashFilter_StringRegExpFilter fillOptionals =
     let
         optionals =
@@ -2878,7 +3019,9 @@ encodeStringHashFilter_StringRegExpFilter input =
         [ ( "eq", Encode.string |> Encode.optional input.eq ), ( "regexp", Encode.string |> Encode.optional input.regexp ) ]
 
 
-buildStringRegExpFilter : (StringRegExpFilterOptionalFields -> StringRegExpFilterOptionalFields) -> StringRegExpFilter
+buildStringRegExpFilter :
+    (StringRegExpFilterOptionalFields -> StringRegExpFilterOptionalFields)
+    -> StringRegExpFilter
 buildStringRegExpFilter fillOptionals =
     let
         optionals =
@@ -2906,7 +3049,9 @@ encodeStringRegExpFilter input =
         [ ( "regexp", Encode.string |> Encode.optional input.regexp ) ]
 
 
-buildStringTermFilter : (StringTermFilterOptionalFields -> StringTermFilterOptionalFields) -> StringTermFilter
+buildStringTermFilter :
+    (StringTermFilterOptionalFields -> StringTermFilterOptionalFields)
+    -> StringTermFilter
 buildStringTermFilter fillOptionals =
     let
         optionals =
@@ -2938,7 +3083,9 @@ encodeStringTermFilter input =
         [ ( "allofterms", Encode.string |> Encode.optional input.allofterms ), ( "anyofterms", Encode.string |> Encode.optional input.anyofterms ) ]
 
 
-buildTensionEvent_hash : TensionEvent_hashRequiredFields -> TensionEvent_hash
+buildTensionEvent_hash :
+    TensionEvent_hashRequiredFields
+    -> TensionEvent_hash
 buildTensionEvent_hash required =
     { eq = required.eq }
 
@@ -2961,7 +3108,9 @@ encodeTensionEvent_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.TensionEvent.toString input.eq |> Just ) ]
 
 
-buildTensionFilter : (TensionFilterOptionalFields -> TensionFilterOptionalFields) -> TensionFilter
+buildTensionFilter :
+    (TensionFilterOptionalFields -> TensionFilterOptionalFields)
+    -> TensionFilter
 buildTensionFilter fillOptionals =
     let
         optionals =
@@ -3022,7 +3171,9 @@ encodeTensionFilter (TensionFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "nth", encodeStringTermFilter |> Encode.optional input.nth ), ( "title", encodeStringFullTextFilter |> Encode.optional input.title ), ( "type_", encodeTensionType_hash |> Encode.optional input.type_ ), ( "emitterid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.emitterid ), ( "receiverid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.receiverid ), ( "status", encodeTensionStatus_hash |> Encode.optional input.status ), ( "and", encodeTensionFilter |> Encode.optional input.and ), ( "or", encodeTensionFilter |> Encode.optional input.or ), ( "not", encodeTensionFilter |> Encode.optional input.not ) ]
 
 
-buildTensionOrder : (TensionOrderOptionalFields -> TensionOrderOptionalFields) -> TensionOrder
+buildTensionOrder :
+    (TensionOrderOptionalFields -> TensionOrderOptionalFields)
+    -> TensionOrder
 buildTensionOrder fillOptionals =
     let
         optionals =
@@ -3065,7 +3216,9 @@ encodeTensionOrder (TensionOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.TensionOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.TensionOrderable.toString |> Encode.optional input.desc ), ( "then", encodeTensionOrder |> Encode.optional input.then_ ) ]
 
 
-buildTensionPatch : (TensionPatchOptionalFields -> TensionPatchOptionalFields) -> TensionPatch
+buildTensionPatch :
+    (TensionPatchOptionalFields -> TensionPatchOptionalFields)
+    -> TensionPatch
 buildTensionPatch fillOptionals =
     let
         optionals =
@@ -3142,7 +3295,9 @@ encodeTensionPatch (TensionPatch input) =
         [ ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitterid", Encode.string |> Encode.optional input.emitterid ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receiverid", Encode.string |> Encode.optional input.receiverid ), ( "receiver", encodeNodeRef |> Encode.optional input.receiver ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString |> Encode.optional input.status ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input.assignees ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
 
 
-buildTensionRef : (TensionRefOptionalFields -> TensionRefOptionalFields) -> TensionRef
+buildTensionRef :
+    (TensionRefOptionalFields -> TensionRefOptionalFields)
+    -> TensionRef
 buildTensionRef fillOptionals =
     let
         optionals =
@@ -3221,7 +3376,9 @@ encodeTensionRef (TensionRef input) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "nth", Encode.string |> Encode.optional input.nth ), ( "title", Encode.string |> Encode.optional input.title ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString |> Encode.optional input.type_ ), ( "emitterid", Encode.string |> Encode.optional input.emitterid ), ( "emitter", encodeNodeRef |> Encode.optional input.emitter ), ( "receiverid", Encode.string |> Encode.optional input.receiverid ), ( "receiver", encodeNodeRef |> Encode.optional input.receiver ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString |> Encode.optional input.status ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input.labels ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input.assignees ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input.history ), ( "n_comments", Encode.int |> Encode.optional input.n_comments ), ( "n_blobs", Encode.int |> Encode.optional input.n_blobs ) ]
 
 
-buildTensionStatus_hash : TensionStatus_hashRequiredFields -> TensionStatus_hash
+buildTensionStatus_hash :
+    TensionStatus_hashRequiredFields
+    -> TensionStatus_hash
 buildTensionStatus_hash required =
     { eq = required.eq }
 
@@ -3244,7 +3401,9 @@ encodeTensionStatus_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.TensionStatus.toString input.eq |> Just ) ]
 
 
-buildTensionType_hash : TensionType_hashRequiredFields -> TensionType_hash
+buildTensionType_hash :
+    TensionType_hashRequiredFields
+    -> TensionType_hash
 buildTensionType_hash required =
     { eq = required.eq }
 
@@ -3267,7 +3426,10 @@ encodeTensionType_hash input =
         [ ( "eq", Encode.enum Fractal.Enum.TensionType.toString input.eq |> Just ) ]
 
 
-buildUpdateBlobInput : UpdateBlobInputRequiredFields -> (UpdateBlobInputOptionalFields -> UpdateBlobInputOptionalFields) -> UpdateBlobInput
+buildUpdateBlobInput :
+    UpdateBlobInputRequiredFields
+    -> (UpdateBlobInputOptionalFields -> UpdateBlobInputOptionalFields)
+    -> UpdateBlobInput
 buildUpdateBlobInput required fillOptionals =
     let
         optionals =
@@ -3313,7 +3475,10 @@ encodeUpdateBlobInput (UpdateBlobInput input) =
         [ ( "filter", encodeBlobFilter input.filter |> Just ), ( "set", encodeBlobPatch |> Encode.optional input.set ), ( "remove", encodeBlobPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateCommentInput : UpdateCommentInputRequiredFields -> (UpdateCommentInputOptionalFields -> UpdateCommentInputOptionalFields) -> UpdateCommentInput
+buildUpdateCommentInput :
+    UpdateCommentInputRequiredFields
+    -> (UpdateCommentInputOptionalFields -> UpdateCommentInputOptionalFields)
+    -> UpdateCommentInput
 buildUpdateCommentInput required fillOptionals =
     let
         optionals =
@@ -3359,7 +3524,10 @@ encodeUpdateCommentInput (UpdateCommentInput input) =
         [ ( "filter", encodeCommentFilter input.filter |> Just ), ( "set", encodeCommentPatch |> Encode.optional input.set ), ( "remove", encodeCommentPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateEventInput : UpdateEventInputRequiredFields -> (UpdateEventInputOptionalFields -> UpdateEventInputOptionalFields) -> UpdateEventInput
+buildUpdateEventInput :
+    UpdateEventInputRequiredFields
+    -> (UpdateEventInputOptionalFields -> UpdateEventInputOptionalFields)
+    -> UpdateEventInput
 buildUpdateEventInput required fillOptionals =
     let
         optionals =
@@ -3405,7 +3573,10 @@ encodeUpdateEventInput (UpdateEventInput input) =
         [ ( "filter", encodeEventFilter input.filter |> Just ), ( "set", encodeEventPatch |> Encode.optional input.set ), ( "remove", encodeEventPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateLabelInput : UpdateLabelInputRequiredFields -> (UpdateLabelInputOptionalFields -> UpdateLabelInputOptionalFields) -> UpdateLabelInput
+buildUpdateLabelInput :
+    UpdateLabelInputRequiredFields
+    -> (UpdateLabelInputOptionalFields -> UpdateLabelInputOptionalFields)
+    -> UpdateLabelInput
 buildUpdateLabelInput required fillOptionals =
     let
         optionals =
@@ -3451,7 +3622,10 @@ encodeUpdateLabelInput (UpdateLabelInput input) =
         [ ( "filter", encodeLabelFilter input.filter |> Just ), ( "set", encodeLabelPatch |> Encode.optional input.set ), ( "remove", encodeLabelPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateMandateInput : UpdateMandateInputRequiredFields -> (UpdateMandateInputOptionalFields -> UpdateMandateInputOptionalFields) -> UpdateMandateInput
+buildUpdateMandateInput :
+    UpdateMandateInputRequiredFields
+    -> (UpdateMandateInputOptionalFields -> UpdateMandateInputOptionalFields)
+    -> UpdateMandateInput
 buildUpdateMandateInput required fillOptionals =
     let
         optionals =
@@ -3497,7 +3671,10 @@ encodeUpdateMandateInput (UpdateMandateInput input) =
         [ ( "filter", encodeMandateFilter input.filter |> Just ), ( "set", encodeMandatePatch |> Encode.optional input.set ), ( "remove", encodeMandatePatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateNodeCharacInput : UpdateNodeCharacInputRequiredFields -> (UpdateNodeCharacInputOptionalFields -> UpdateNodeCharacInputOptionalFields) -> UpdateNodeCharacInput
+buildUpdateNodeCharacInput :
+    UpdateNodeCharacInputRequiredFields
+    -> (UpdateNodeCharacInputOptionalFields -> UpdateNodeCharacInputOptionalFields)
+    -> UpdateNodeCharacInput
 buildUpdateNodeCharacInput required fillOptionals =
     let
         optionals =
@@ -3543,7 +3720,10 @@ encodeUpdateNodeCharacInput (UpdateNodeCharacInput input) =
         [ ( "filter", encodeNodeCharacFilter input.filter |> Just ), ( "set", encodeNodeCharacPatch |> Encode.optional input.set ), ( "remove", encodeNodeCharacPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateNodeFragmentInput : UpdateNodeFragmentInputRequiredFields -> (UpdateNodeFragmentInputOptionalFields -> UpdateNodeFragmentInputOptionalFields) -> UpdateNodeFragmentInput
+buildUpdateNodeFragmentInput :
+    UpdateNodeFragmentInputRequiredFields
+    -> (UpdateNodeFragmentInputOptionalFields -> UpdateNodeFragmentInputOptionalFields)
+    -> UpdateNodeFragmentInput
 buildUpdateNodeFragmentInput required fillOptionals =
     let
         optionals =
@@ -3589,7 +3769,10 @@ encodeUpdateNodeFragmentInput (UpdateNodeFragmentInput input) =
         [ ( "filter", encodeNodeFragmentFilter input.filter |> Just ), ( "set", encodeNodeFragmentPatch |> Encode.optional input.set ), ( "remove", encodeNodeFragmentPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateNodeInput : UpdateNodeInputRequiredFields -> (UpdateNodeInputOptionalFields -> UpdateNodeInputOptionalFields) -> UpdateNodeInput
+buildUpdateNodeInput :
+    UpdateNodeInputRequiredFields
+    -> (UpdateNodeInputOptionalFields -> UpdateNodeInputOptionalFields)
+    -> UpdateNodeInput
 buildUpdateNodeInput required fillOptionals =
     let
         optionals =
@@ -3635,7 +3818,10 @@ encodeUpdateNodeInput (UpdateNodeInput input) =
         [ ( "filter", encodeNodeFilter input.filter |> Just ), ( "set", encodeNodePatch |> Encode.optional input.set ), ( "remove", encodeNodePatch |> Encode.optional input.remove ) ]
 
 
-buildUpdatePostInput : UpdatePostInputRequiredFields -> (UpdatePostInputOptionalFields -> UpdatePostInputOptionalFields) -> UpdatePostInput
+buildUpdatePostInput :
+    UpdatePostInputRequiredFields
+    -> (UpdatePostInputOptionalFields -> UpdatePostInputOptionalFields)
+    -> UpdatePostInput
 buildUpdatePostInput required fillOptionals =
     let
         optionals =
@@ -3681,7 +3867,10 @@ encodeUpdatePostInput (UpdatePostInput input) =
         [ ( "filter", encodePostFilter input.filter |> Just ), ( "set", encodePostPatch |> Encode.optional input.set ), ( "remove", encodePostPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateTensionInput : UpdateTensionInputRequiredFields -> (UpdateTensionInputOptionalFields -> UpdateTensionInputOptionalFields) -> UpdateTensionInput
+buildUpdateTensionInput :
+    UpdateTensionInputRequiredFields
+    -> (UpdateTensionInputOptionalFields -> UpdateTensionInputOptionalFields)
+    -> UpdateTensionInput
 buildUpdateTensionInput required fillOptionals =
     let
         optionals =
@@ -3727,7 +3916,10 @@ encodeUpdateTensionInput (UpdateTensionInput input) =
         [ ( "filter", encodeTensionFilter input.filter |> Just ), ( "set", encodeTensionPatch |> Encode.optional input.set ), ( "remove", encodeTensionPatch |> Encode.optional input.remove ) ]
 
 
-buildUpdateUserInput : UpdateUserInputRequiredFields -> (UpdateUserInputOptionalFields -> UpdateUserInputOptionalFields) -> UpdateUserInput
+buildUpdateUserInput :
+    UpdateUserInputRequiredFields
+    -> (UpdateUserInputOptionalFields -> UpdateUserInputOptionalFields)
+    -> UpdateUserInput
 buildUpdateUserInput required fillOptionals =
     let
         optionals =
@@ -3773,7 +3965,9 @@ encodeUpdateUserInput (UpdateUserInput input) =
         [ ( "filter", encodeUserFilter input.filter |> Just ), ( "set", encodeUserPatch |> Encode.optional input.set ), ( "remove", encodeUserPatch |> Encode.optional input.remove ) ]
 
 
-buildUserFilter : (UserFilterOptionalFields -> UserFilterOptionalFields) -> UserFilter
+buildUserFilter :
+    (UserFilterOptionalFields -> UserFilterOptionalFields)
+    -> UserFilter
 buildUserFilter fillOptionals =
     let
         optionals =
@@ -3822,7 +4016,9 @@ encodeUserFilter (UserFilter input) =
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "username", encodeStringHashFilter |> Encode.optional input.username ), ( "email", encodeStringHashFilter |> Encode.optional input.email ), ( "and", encodeUserFilter |> Encode.optional input.and ), ( "or", encodeUserFilter |> Encode.optional input.or ), ( "not", encodeUserFilter |> Encode.optional input.not ) ]
 
 
-buildUserOrder : (UserOrderOptionalFields -> UserOrderOptionalFields) -> UserOrder
+buildUserOrder :
+    (UserOrderOptionalFields -> UserOrderOptionalFields)
+    -> UserOrder
 buildUserOrder fillOptionals =
     let
         optionals =
@@ -3865,7 +4061,9 @@ encodeUserOrder (UserOrder input) =
         [ ( "asc", Encode.enum Fractal.Enum.UserOrderable.toString |> Encode.optional input.asc ), ( "desc", Encode.enum Fractal.Enum.UserOrderable.toString |> Encode.optional input.desc ), ( "then", encodeUserOrder |> Encode.optional input.then_ ) ]
 
 
-buildUserPatch : (UserPatchOptionalFields -> UserPatchOptionalFields) -> UserPatch
+buildUserPatch :
+    (UserPatchOptionalFields -> UserPatchOptionalFields)
+    -> UserPatch
 buildUserPatch fillOptionals =
     let
         optionals =
@@ -3928,7 +4126,9 @@ encodeUserPatch (UserPatch input) =
         [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
-buildUserRef : (UserRefOptionalFields -> UserRefOptionalFields) -> UserRef
+buildUserRef :
+    (UserRefOptionalFields -> UserRefOptionalFields)
+    -> UserRef
 buildUserRef fillOptionals =
     let
         optionals =
@@ -3995,7 +4195,9 @@ encodeUserRef (UserRef input) =
         [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "username", Encode.string |> Encode.optional input.username ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
-buildUserRightsRef : (UserRightsRefOptionalFields -> UserRightsRefOptionalFields) -> UserRightsRef
+buildUserRightsRef :
+    (UserRightsRefOptionalFields -> UserRightsRefOptionalFields)
+    -> UserRightsRef
 buildUserRightsRef fillOptionals =
     let
         optionals =

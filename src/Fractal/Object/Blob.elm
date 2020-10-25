@@ -24,7 +24,10 @@ type alias TensionOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 
 
-tension : (TensionOptionalArguments -> TensionOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet decodesTo Fractal.Object.Blob
+tension :
+    (TensionOptionalArguments -> TensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet decodesTo Fractal.Object.Blob
 tension fillInOptionals object_ =
     let
         filledInOptionals =
@@ -56,7 +59,10 @@ type alias NodeOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
 
 
-node : (NodeOptionalArguments -> NodeOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeFragment -> SelectionSet (Maybe decodesTo) Fractal.Object.Blob
+node :
+    (NodeOptionalArguments -> NodeOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeFragment
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Blob
 node fillInOptionals object_ =
     let
         filledInOptionals =
@@ -83,7 +89,10 @@ type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Blob
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Blob
 createdBy fillInOptionals object_ =
     let
         filledInOptionals =

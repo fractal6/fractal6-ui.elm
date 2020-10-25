@@ -30,7 +30,10 @@ type alias CreatedByOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-createdBy : (CreatedByOptionalArguments -> CreatedByOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet decodesTo Fractal.Object.Node
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Node
 createdBy fillInOptionals object_ =
     let
         filledInOptionals =
@@ -72,7 +75,10 @@ type alias ParentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
 
-parent : (ParentOptionalArguments -> ParentOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+parent :
+    (ParentOptionalArguments -> ParentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 parent fillInOptionals object_ =
     let
         filledInOptionals =
@@ -93,7 +99,10 @@ type alias ChildrenOptionalArguments =
     }
 
 
-children : (ChildrenOptionalArguments -> ChildrenOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
+children :
+    (ChildrenOptionalArguments -> ChildrenOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
 children fillInOptionals object_ =
     let
         filledInOptionals =
@@ -119,7 +128,10 @@ type alias TensionsOutOptionalArguments =
     }
 
 
-tensions_out : (TensionsOutOptionalArguments -> TensionsOutOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
+tensions_out :
+    (TensionsOutOptionalArguments -> TensionsOutOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
 tensions_out fillInOptionals object_ =
     let
         filledInOptionals =
@@ -140,7 +152,10 @@ type alias TensionsInOptionalArguments =
     }
 
 
-tensions_in : (TensionsInOptionalArguments -> TensionsInOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
+tensions_in :
+    (TensionsInOptionalArguments -> TensionsInOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
 tensions_in fillInOptionals object_ =
     let
         filledInOptionals =
@@ -162,7 +177,10 @@ type alias MandateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.MandateFilter }
 
 
-mandate : (MandateOptionalArguments -> MandateOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Mandate -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+mandate :
+    (MandateOptionalArguments -> MandateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Mandate
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 mandate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -183,7 +201,10 @@ type alias DocsOptionalArguments =
     }
 
 
-docs : (DocsOptionalArguments -> DocsOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.Node
+docs :
+    (DocsOptionalArguments -> DocsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.Node
 docs fillInOptionals object_ =
     let
         filledInOptionals =
@@ -200,7 +221,10 @@ type alias SourceOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 
 
-source : (SourceOptionalArguments -> SourceOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+source :
+    (SourceOptionalArguments -> SourceOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 source fillInOptionals object_ =
     let
         filledInOptionals =
@@ -228,7 +252,9 @@ n_children =
     Object.selectionForField "(Maybe Int)" "n_children" [] (Decode.int |> Decode.nullable)
 
 
-stats : SelectionSet decodesTo Fractal.Object.NodeStats -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+stats :
+    SelectionSet decodesTo Fractal.Object.NodeStats
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 stats object_ =
     Object.selectionForCompositeField "stats" [] object_ (identity >> Decode.nullable)
 
@@ -236,6 +262,11 @@ stats object_ =
 isRoot : SelectionSet Bool Fractal.Object.Node
 isRoot =
     Object.selectionForField "Bool" "isRoot" [] Decode.bool
+
+
+isPersonal : SelectionSet (Maybe Bool) Fractal.Object.Node
+isPersonal =
+    Object.selectionForField "(Maybe Bool)" "isPersonal" [] (Decode.bool |> Decode.nullable)
 
 
 isPrivate : SelectionSet Bool Fractal.Object.Node
@@ -252,7 +283,10 @@ type alias CharacOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
 
 
-charac : (CharacOptionalArguments -> CharacOptionalArguments) -> SelectionSet decodesTo Fractal.Object.NodeCharac -> SelectionSet decodesTo Fractal.Object.Node
+charac :
+    (CharacOptionalArguments -> CharacOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeCharac
+    -> SelectionSet decodesTo Fractal.Object.Node
 charac fillInOptionals object_ =
     let
         filledInOptionals =
@@ -269,7 +303,10 @@ type alias FirstLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-first_link : (FirstLinkOptionalArguments -> FirstLinkOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+first_link :
+    (FirstLinkOptionalArguments -> FirstLinkOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 first_link fillInOptionals object_ =
     let
         filledInOptionals =
@@ -286,7 +323,10 @@ type alias SecondLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
 
-second_link : (SecondLinkOptionalArguments -> SecondLinkOptionalArguments) -> SelectionSet decodesTo Fractal.Object.User -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+second_link :
+    (SecondLinkOptionalArguments -> SecondLinkOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 second_link fillInOptionals object_ =
     let
         filledInOptionals =

@@ -59,7 +59,9 @@ emailValidated =
     Object.selectionForField "Bool" "emailValidated" [] Decode.bool
 
 
-rights : SelectionSet decodesTo Fractal.Object.UserRights -> SelectionSet decodesTo Fractal.Object.User
+rights :
+    SelectionSet decodesTo Fractal.Object.UserRights
+    -> SelectionSet decodesTo Fractal.Object.User
 rights object_ =
     Object.selectionForCompositeField "rights" [] object_ identity
 
@@ -72,7 +74,10 @@ type alias RolesOptionalArguments =
     }
 
 
-roles : (RolesOptionalArguments -> RolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+roles :
+    (RolesOptionalArguments -> RolesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 roles fillInOptionals object_ =
     let
         filledInOptionals =
@@ -93,7 +98,10 @@ type alias BackedRolesOptionalArguments =
     }
 
 
-backed_roles : (BackedRolesOptionalArguments -> BackedRolesOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Node -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+backed_roles :
+    (BackedRolesOptionalArguments -> BackedRolesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 backed_roles fillInOptionals object_ =
     let
         filledInOptionals =
@@ -114,7 +122,10 @@ type alias TensionsCreatedOptionalArguments =
     }
 
 
-tensions_created : (TensionsCreatedOptionalArguments -> TensionsCreatedOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+tensions_created :
+    (TensionsCreatedOptionalArguments -> TensionsCreatedOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 tensions_created fillInOptionals object_ =
     let
         filledInOptionals =
@@ -135,7 +146,10 @@ type alias TensionsAssignedOptionalArguments =
     }
 
 
-tensions_assigned : (TensionsAssignedOptionalArguments -> TensionsAssignedOptionalArguments) -> SelectionSet decodesTo Fractal.Object.Tension -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+tensions_assigned :
+    (TensionsAssignedOptionalArguments -> TensionsAssignedOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
 tensions_assigned fillInOptionals object_ =
     let
         filledInOptionals =
