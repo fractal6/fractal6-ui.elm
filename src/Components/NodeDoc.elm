@@ -436,7 +436,7 @@ view_ tid data op_m =
                 Nothing ->
                     case data.node.role_type of
                         Just RoleType.Guest ->
-                            a [ class "is-size-6", href "https://doc.fractale.co/role/coordinator" ] [ text "https://doc.fractale.co/role/coordinator" ]
+                            a [ class "is-size-6", href "https://doc.fractale.co/role/guest" ] [ text "https://doc.fractale.co/role/guest" ]
 
                         _ ->
                             div [ class "is-italic" ]

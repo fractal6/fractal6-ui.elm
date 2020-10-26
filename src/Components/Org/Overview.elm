@@ -1314,19 +1314,29 @@ viewCanvas focus odata =
 viewActivies : Model -> Html Msg
 viewActivies model =
     div
-        [ class "box is-flex-grow"
-        , attribute "style" "padding-top: 0px;"
-        ]
+        [ id "activities", class "box is-flex-grow" ]
         [ div [ class "title" ]
-            [ span
-                [ class "help has-text-weight-semibold"
-                , attribute "style" "top: 20px; position: relative;" -- @DEBUG: How to Jump line when flex overflow occurs?
-                ]
-                [ text "Recent activities:" ]
-            , div [ class "tabs is-right is-small" ]
-                [ ul []
-                    [ li [ class "is-active" ] [ a [] [ Fa.icon "fas fa-exchange-alt fa-sm" T.tensionH ] ]
-                    , li [] [ a [ class "has-text-grey" ] [ Fa.icon "fas fa-history fa-sm" T.journalH ] ]
+            [ div
+                [ class "level" ]
+                [ div [ class "level-left" ]
+                    [ div
+                        [ class "tooltip"
+                        , case model.path_data of
+                            Just p ->
+                                attribute "data-tooltip" ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")
+
+                            Nothing ->
+                                class ""
+                        ]
+                        [ span [ class "help" ] [ text "Recent activities:" ] ]
+                    ]
+                , div [ class "level-right" ]
+                    [ div [ class "tabs is-small" ]
+                        [ ul []
+                            [ li [ class "is-active" ] [ a [ href "#" ] [ Fa.icon "fas fa-exchange-alt fa-sm" T.tensionH ] ]
+                            , li [] [ a [ class "has-text-grey", href "#" ] [ Fa.icon "fas fa-history fa-sm" T.journalH ] ]
+                            ]
+                        ]
                     ]
                 ]
             ]
@@ -1392,7 +1402,7 @@ viewActionStep model action =
                         List.intersperse (text "\u{00A0}")
                             [ span [ class "has-text-weight-medium" ] [ text "What action do you want to do with the" ]
                             , span [ class "has-text-weight-bold is-underline-dotted" ] [ text node.name ]
-                            , span [ class "is-lowercase has-text-weight-semibold" ] [ text <| NodeType.toString node.type_ ]
+                            , span [ class "is-lowercase has-text-weight-semibold" ] [ text (NodeType.toString node.type_) ]
                             , text "?"
                             ]
                     ]

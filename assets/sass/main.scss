@@ -168,15 +168,6 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-// Breadcrumb
-.breadcrumb {
-    a {
-        color: $green-frac6-lighter;
-        padding-right:0.4rem;
-        padding-left:0.4rem;
-    }
-}
-
 .dropdown-menu {
     min-width: 7rem !important;
 }
@@ -281,6 +272,17 @@ html.has-modal-active, html.has-modal-active2 {
         padding-top: 1.5rem !important;
         padding-bottom: 0 !important;
     }
+
+    // Breadcrumb
+    .breadcrumb {
+        font-size: 1.1rem;
+        a {
+            color: $green-frac6-lighter;
+            padding-right:0.4rem;
+            padding-left:0.4rem;
+        }
+    }
+
 
     nav > .navbar {
         background-color: inherit !important;
@@ -468,6 +470,13 @@ html.has-modal-active, html.has-modal-active2 {
     .button {
         font-size: 0.6rem !important;
         //padding-bottom: 2px !important;
+    }
+}
+
+#activities {
+    padding-top: 0.5rem;
+    & > .title {
+        margin-bottom: 1rem !important;
     }
 }
 
