@@ -257,6 +257,11 @@ type alias Mandate =
     }
 
 
+initUserctx : UserCtx
+initUserctx =
+    UserCtx "" Nothing (UserRights False False) []
+
+
 initNodeData : NodeData
 initNodeData =
     NodeData "" Nothing Nothing Nothing

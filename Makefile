@@ -20,9 +20,9 @@ prod:
 	npm run prod
 
 deploy: prod
-	rm -r ../build/static
-	cp -r dist/* ../build/
 	cd ../build
+	rm -r static
+	cp -r ../fractal6-ui.elm/dist/* .
 	git add *
 	git commit -m all
 	git push origin master

@@ -1,5 +1,6 @@
 module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
+import Auth exposing (doRefreshToken2, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors)
 import Components.NodeDoc exposing (makeNewNodeId)
@@ -60,7 +61,9 @@ type alias Model =
 
 
 type alias OrgaForm =
-    { post : Post }
+    { uctx : UserCtx
+    , post : Post
+    }
 
 
 
@@ -75,28 +78,32 @@ type alias Flags =
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
-    let
-        form =
-            { post = Dict.empty }
+    case global.session.user of
+        LoggedOut ->
+            let
+                form =
+                    { post = Dict.empty, uctx = initUserctx }
+            in
+            ( { form = form, result = RemoteData.NotAsked, isModalActive = False, modalAuth = Inactive }
+            , send (Navigate "/")
+            , Cmd.none
+            )
 
-        cmd =
-            case global.session.user of
-                LoggedOut ->
-                    send (Navigate "/")
+        LoggedIn uctx ->
+            let
+                form =
+                    { post = Dict.empty, uctx = uctx }
+            in
+            ( { form = form
+              , result = RemoteData.NotAsked
 
-                LoggedIn uctx ->
-                    Cmd.none
-
-        model =
-            { form = form
-            , result = RemoteData.NotAsked
-
-            --common
-            , isModalActive = True
-            , modalAuth = Inactive
-            }
-    in
-    ( model, cmd, Cmd.none )
+              --common
+              , isModalActive = False
+              , modalAuth = Inactive
+              }
+            , Cmd.none
+            , Cmd.none
+            )
 
 
 
@@ -137,18 +144,25 @@ update global msg model =
             )
 
         OrgaAck result ->
-            let
-                ( cmd, gcmd ) =
-                    case result of
-                        RemoteData.Success n ->
-                            ( send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
-                            , send UpdateUserToken
-                            )
+            case result of
+                RemoteData.Success n ->
+                    ( { model | result = result }
+                    , send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
+                    , send UpdateUserToken
+                    )
 
-                        _ ->
-                            ( Cmd.none, Cmd.none )
-            in
-            ( { model | result = result }, cmd, gcmd )
+                other ->
+                    if doRefreshToken2 other then
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", model.form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , result = RemoteData.NotAsked
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
+
+                    else
+                        ( { model | result = result }, Cmd.none, Cmd.none )
 
         ChangeNodePost field value ->
             let
@@ -265,6 +279,7 @@ view_ global model =
             [ h1 [ class "title " ] [ text "Create your organisation" ]
             , viewOrgaForm global model
             ]
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 
 

@@ -612,7 +612,10 @@ update global msg model =
                             { form | status = Nothing }
                     in
                     if doRefreshToken result then
-                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, tension_patch = NotAsked }
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , tension_patch = NotAsked
+                          }
                         , Cmd.none
                         , Ports.open_auth_modal
                         )
@@ -698,7 +701,13 @@ update global msg model =
 
                 other ->
                     if doRefreshToken other then
-                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.comment_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", model.comment_form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , comment_result = NotAsked
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
 
                     else
                         ( { model | comment_result = result }, Cmd.none, Cmd.none )
@@ -748,7 +757,13 @@ update global msg model =
 
                 other ->
                     if doRefreshToken other then
-                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , title_result = NotAsked
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
 
                     else
                         ( { model | title_result = result }, Cmd.none, Cmd.none )
@@ -944,7 +959,13 @@ update global msg model =
 
                 other ->
                     if doRefreshToken other then
-                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , publish_result = NotAsked
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
 
                     else
                         ( { model | publish_result = result }, Cmd.none, Cmd.none )
@@ -1156,7 +1177,13 @@ update global msg model =
 
                 other ->
                     if doRefreshToken other then
-                        ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , actionPanel = ActionPanel.setArchiveResult NotAsked model.actionPanel
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
 
                     else
                         ( { model | actionPanel = aPanel }, gcmd, Cmd.none )

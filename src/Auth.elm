@@ -1,6 +1,6 @@
-module Auth exposing (doRefreshToken, refreshAuthModal)
+module Auth exposing (doRefreshToken, doRefreshToken2, refreshAuthModal)
 
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, toErrorData, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Extra.Events exposing (onKeydown)
 import Form
@@ -16,10 +16,65 @@ import String.Extra as SE
 import Task
 
 
+{-|
+
+    For GQL Response
+
+-}
 doRefreshToken : GqlData a -> Bool
 doRefreshToken data =
     case data of
         Failure err ->
+            if List.length err == 1 then
+                case List.head err of
+                    Just err_ ->
+                        let
+                            gqlErr =
+                                err_
+                                    |> String.replace "\n" ""
+                                    |> SE.rightOf "{"
+                                    |> SE.insertAt "{" 0
+                                    |> JD.decodeString errorDecoder
+                        in
+                        case gqlErr of
+                            Ok errGql ->
+                                case List.head errGql.errors of
+                                    Just e ->
+                                        if e.message == "token is expired" then
+                                            True
+
+                                        else
+                                            False
+
+                                    Nothing ->
+                                        False
+
+                            Err errJD ->
+                                False
+
+                    Nothing ->
+                        False
+
+            else
+                False
+
+        _ ->
+            False
+
+
+{-|
+
+    For HTTP response
+
+-}
+doRefreshToken2 : WebData a -> Bool
+doRefreshToken2 data =
+    case data of
+        RemoteData.Failure error ->
+            let
+                err =
+                    toErrorData error
+            in
             if List.length err == 1 then
                 case List.head err of
                     Just err_ ->

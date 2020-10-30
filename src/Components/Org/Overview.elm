@@ -636,11 +636,10 @@ update global msg model =
 
                         other ->
                             if doRefreshToken other then
-                                let
-                                    tf2 =
-                                        NewTensionForm.setResult NotAsked model.tensionForm
-                                in
-                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, tensionForm = tf2 }
+                                ( { model
+                                    | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }
+                                    , tensionForm = NewTensionForm.setResult NotAsked model.tensionForm
+                                  }
                                 , Cmd.none
                                 , Ports.open_auth_modal
                                 )
@@ -664,11 +663,10 @@ update global msg model =
 
                         other ->
                             if doRefreshToken other then
-                                let
-                                    tf2 =
-                                        NewTensionForm.setResult NotAsked model.tensionForm
-                                in
-                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }, tensionForm = tf2 }
+                                ( { model
+                                    | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }
+                                    , tensionForm = NewTensionForm.setResult NotAsked model.tensionForm
+                                  }
                                 , Cmd.none
                                 , Ports.open_auth_modal
                                 )

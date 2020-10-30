@@ -399,12 +399,13 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #mainPane {
-  /********** Bulma FIX ***********/
-  /* Adjust left offet is too large */
-  //margin-left: 5%;
+    // when Helpbar is active
+    /********** Bulma FIX ***********/
+    /* Adjust left offet is too large */
+    //margin-left: 5%;
 
-  /* is-paddingless compatibility */
-  padding-top: 1.25rem;
+    /* is-paddingless compatibility */
+    padding-top: 1.25rem;
 
 }
 

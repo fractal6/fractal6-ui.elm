@@ -7,7 +7,7 @@ import Components.NotFound exposing (viewNotFound)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (ternary, toUp1)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
@@ -272,7 +272,7 @@ view_ global model uctx =
                     [ viewProfileLeft model uctx ]
                 ]
             , div [ class "column is-7 " ]
-                [ viewProfileRight model ]
+                [ viewProfileRight model uctx ]
             ]
         ]
 
@@ -293,10 +293,10 @@ viewProfileLeft model uctx =
         ]
 
 
-viewProfileRight : Model -> Html Msg
-viewProfileRight model =
+viewProfileRight : Model -> UserCtx -> Html Msg
+viewProfileRight model uctx =
     div []
-        [ h1 [ class "subtitle" ] [ text T.myOrganisations ]
+        [ h1 [ class "subtitle" ] [ text (toUp1 T.organisations) ]
         , if Dict.isEmpty model.user_data then
             p [ class "section" ] <|
                 List.intersperse (text " ")
