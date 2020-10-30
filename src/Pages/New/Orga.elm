@@ -310,13 +310,13 @@ viewOrgaForm global model =
     in
     div []
         [ div [ class "field" ]
-            [ div [ class "label" ] [ text T.nameH ]
+            [ div [ class "label" ] [ text (T.nameH ++ " *") ]
             , div [ class "control" ]
                 [ input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
-                    , placeholder "Name*"
+                    , placeholder "Name"
                     , value name
                     , onInput <| ChangeNodePost "name"
                     , required True
@@ -342,13 +342,13 @@ viewOrgaForm global model =
             , p [ class "help" ] [ text T.aboutHelp ]
             ]
         , div [ class "field" ]
-            [ div [ class "label" ] [ text T.purposeH ]
+            [ div [ class "label" ] [ text (T.purposeH ++ " *") ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
                     , rows 5
-                    , placeholder (T.purposeH ++ "*")
+                    , placeholder T.purposeH
                     , value purpose
                     , onInput <| ChangeNodePost "purpose"
                     , required True

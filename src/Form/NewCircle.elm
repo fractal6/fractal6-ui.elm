@@ -91,19 +91,19 @@ view op =
                 , div [ class "modal-card-body" ]
                     [ nodeAboutInputView False OverviewBaseUri txt form.node op
                     , div [ class "box has-background-grey-lighter subForm" ]
-                        [ div [ class "field is-horizontal" ]
-                            [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
-                            , div [ class "field-body control" ]
-                                [ input
-                                    [ class "input is-small"
-                                    , type_ "text"
-                                    , value title
-                                    , onInput <| op.onChangeNode "title"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        , div [ class "field is-horizontal" ]
+                        [ --div [ class "field is-horizontal" ]
+                          --  [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
+                          --  , div [ class "field-body control" ]
+                          --      [ input
+                          --          [ class "input is-small"
+                          --          , type_ "text"
+                          --          , value title
+                          --          , onInput <| op.onChangeNode "title"
+                          --          ]
+                          --          []
+                          --      ]
+                          --  ],
+                          div [ class "field is-horizontal" ]
                             [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Identifier" ]
                             , div [ class "field-body control" ]
                                 [ input
@@ -119,7 +119,7 @@ view op =
                         ]
                     , br [] []
                     , div [ class "card cardForm" ]
-                        [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
+                        [ div [ class "has-text-black is-aligned-center" ] [ text T.mandateH ]
                         , div [ class "card-content" ] [ nodeMandateInputView txt form.node op ]
                         ]
                     , if op.data.doAddLinks || (form.users |> List.filter (\u -> u.username /= "")) /= [] then

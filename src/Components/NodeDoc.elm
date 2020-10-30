@@ -626,13 +626,14 @@ nodeMandateInputView txt node op =
     in
     div [ class "" ]
         [ div [ class "field" ]
-            [ div [ class "label" ] [ text T.purposeH ]
+            [ div [ class "label" ]
+                [ text (T.purposeH ++ " *") ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
                     , rows 5
-                    , placeholder (txt.ph_purpose ++ "*")
+                    , placeholder txt.ph_purpose
                     , value purpose
                     , onInput <| op.onChangeNode "purpose"
                     , required True
