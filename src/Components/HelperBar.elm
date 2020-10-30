@@ -161,7 +161,7 @@ viewPath baseUri maybePath =
                     |> ul [ attribute "style" "display: inline-flex;" ]
 
             Nothing ->
-                div [ class "ph-line-1" ] []
+                div [ class "ph-line is-1" ] []
         ]
 
 

@@ -112,6 +112,7 @@ page =
 type alias Model =
     { -- Focus
       node_focus : NodeFocus
+    , focus : GqlData FocusNode
     , path_data : GqlData LocalGraph
     , users_data : GqlData UsersData
     , lookup_users : List User
@@ -310,6 +311,10 @@ init global flags =
 
         model =
             { node_focus = newFocus
+            , focus =
+                global.session.focus
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault Loading
             , users_data =
                 global.session.users_data
                     |> Maybe.map (\x -> Success x)
@@ -360,6 +365,9 @@ init global flags =
             , helperBar = HelperBar.create
             }
 
+        model2 =
+            { model | isTensionAdmin = getTensionRights global.session.user model.tension_head model.focus }
+
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
             , if tensionChanged global.session.referer global.url || model.tension_head == Loading then
@@ -387,7 +395,7 @@ init global flags =
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
-    ( model
+    ( model2
     , Cmd.batch cmds
     , if fs.focusChange || fs.refresh then
         send (UpdateSessionFocus (Just newFocus))
@@ -500,7 +508,7 @@ update global msg model =
         SetAdminRights result ->
             ( { model | isTensionAdmin = getTensionRights global.session.user model.tension_head result }
             , Cmd.none
-            , Cmd.none
+            , send (UpdateSessionFocus2 (withMaybeData result))
             )
 
         -- Page Action

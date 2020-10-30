@@ -8,7 +8,14 @@ uglifyjs := node_modules/uglify-js/bin/uglifyjs
 default: run
 
 run:
+	# Run dev
 	npm run webdev
+
+run_localprod:
+	npm run localprod
+
+run_prod:
+	npm run webprod
 
 run_old:
 	npm run start
@@ -27,10 +34,6 @@ deploy: prod
 	git commit -m all
 	git push origin master
 	cd -
-
-
-dev:
-	npm run webdev
 
 gen:
 	npm run graphql_build

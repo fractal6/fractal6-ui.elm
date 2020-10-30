@@ -76,8 +76,7 @@ init global flags =
             global.session.apis
 
         model =
-            { orgas = Loading
-            }
+            { orgas = Loading }
 
         cmds =
             [ queryPublicOrga apis.gql GotOrga

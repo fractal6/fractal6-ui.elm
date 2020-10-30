@@ -78,6 +78,7 @@ init flags url key =
             , user = userState
             , token_data = RemoteData.NotAsked
             , node_focus = Nothing
+            , focus = Nothing
             , path_data = Nothing
             , orga_data = Nothing
             , users_data = Nothing
@@ -112,6 +113,7 @@ type Msg
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
     | UpdateSessionFocus (Maybe NodeFocus)
+    | UpdateSessionFocus2 (Maybe FocusNode)
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionOrga (Maybe NodesData)
     | UpdateSessionData (Maybe NodeData)
@@ -184,6 +186,14 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | node_focus = data, tension_head = Nothing } }, Cmd.none )
+
+        UpdateSessionFocus2 data ->
+            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | focus = data } }, Cmd.none )
 
         UpdateSessionPath data ->
             let

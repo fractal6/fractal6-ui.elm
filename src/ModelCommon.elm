@@ -34,6 +34,7 @@ type alias Session =
     , referer : Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
+    , focus : Maybe FocusNode
     , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
     , users_data : Maybe UsersData

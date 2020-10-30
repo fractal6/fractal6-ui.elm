@@ -1715,7 +1715,7 @@ a.actionLink {
         background-position: 460px 0
     }
 }
-.ph-line-1 {
+.ph-line {
     animation-duration: 2s;
     animation-fill-mode: forwards;
     animation-iteration-count: infinite;
@@ -1726,9 +1726,15 @@ a.actionLink {
     height: 1.5rem;
     overflow: hidden;
 	border-radius: 20px;
-    width: 460px;
     position: relative;
     top: 5px;
+
+    &.is-0 {
+        width: 225px;
+    }
+    &.is-1 {
+        width: 460px;
+    }
 }
 
 @keyframes placeHolderButton{

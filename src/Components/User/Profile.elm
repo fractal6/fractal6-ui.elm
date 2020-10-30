@@ -390,7 +390,19 @@ viewUserOrgas user_data =
                                 ]
                             ]
 
-                    other ->
-                        text ""
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        div [ class "media box" ]
+                            [ div [ class "media-content" ]
+                                [ div [ class "columns" ]
+                                    [ div [ class "column is-8" ]
+                                        [ div [ class "ph-line is-0" ] []
+                                        , div [ class "ph-line is-1" ] []
+                                        ]
+                                    ]
+                                ]
+                            ]
             )
         |> div [ class "nodesList" ]
