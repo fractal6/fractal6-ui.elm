@@ -253,8 +253,9 @@ module.exports = (env, argv) => {
                                 unsafe_comps: true,
                                 unsafe: true,
                                 pure_funcs: [ 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
+                                //keep_fnames: true,
                             },
-                            mangle: true,
+                            mangle: true, //{ keep_fnames: true, }
                         },
                         // Use multi-process parallel running to improve the build speed
                         // Default number of concurrent runs: os.cpus().length - 1
