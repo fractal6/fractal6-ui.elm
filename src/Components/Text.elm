@@ -321,9 +321,14 @@ phRolePolicies =
     "Define the role policies"
 
 
-noFirstLinks : String
-noFirstLinks =
+noFirstLinksRole : String
+noFirstLinksRole =
     "No member is linked to this role yet."
+
+
+noFirstLinksCircle : String
+noFirstLinksCircle =
+    "No member is linked to this circle yet."
 
 
 

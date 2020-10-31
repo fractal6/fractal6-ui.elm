@@ -400,7 +400,7 @@ view_ tid data op_m =
                     , doEditView op_m BlobType.OnFirstLink
                     ]
                 , if List.length links_ == 0 then
-                    span [ class "is-italic" ] [ text T.noFirstLinks ]
+                    span [ class "is-italic" ] [ text txt.noFirstLinks ]
 
                   else
                     text ""
