@@ -1104,14 +1104,14 @@ view_ global model =
     div [ id "mainPane" ]
         [ HelperBar.view helperData
         , div [ class "columns is-centered is-variable is-4" ]
-            [ div [ class "column is-5-desktop is-5-widescreen is-4-fullhd" ]
+            [ div [ class "column is-6-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas model.node_focus model.orga_data
                 , br [] []
                 , NodeDoc.view nodeData Nothing
                 , setupActionModal model
                 ]
-            , div [ class "column is-6-desktop is-6-widescreen is-5-fullhd" ]
+            , div [ class "column is-5-desktop is-6-widescreen is-5-fullhd" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
                         [ viewActivies model ]
