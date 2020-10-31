@@ -456,8 +456,12 @@ export const GraphPack = {
             var maybeFocus = this.nodesDict[unescape(focus)];
             if (!maybeFocus) {
                 console.warn("Unknown node:", focus);
-                this.app.ports.nodeFocusedFromJs.send([]);
-                return
+                console.warn("Redirecting to root");
+
+                maybeFocus = this.rootNode;
+                this.focusedNode = this.rootNode;
+                //this.app.ports.nodeFocusedFromJs.send([]);
+                //return
             }
             focus = maybeFocus;
         } else { // assume node
@@ -1126,7 +1130,6 @@ export const GraphPack = {
             if (isUpdated) {
                 //this.clearNodeTooltip();
                 this.clearNodeHover(node);
-                //this.zoomToNode(node); @DEBUG: change behaviour, zoom from elm init
                 this.nodeClickedFromJs(node);
             }
 
