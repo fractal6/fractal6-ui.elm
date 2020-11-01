@@ -272,9 +272,8 @@ init global flags =
                     ++ (if fs.refresh then
                             case session.orga_data of
                                 Just ndata ->
-                                    --[ Ports.initGraphPack ndata model.node_focus.nameid ]
                                     [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
-                                    , Ports.initGraphPack Dict.empty ""
+                                    , Ports.initGraphPack Dict.empty "" --canvas loading effect
                                     ]
 
                                 Nothing ->
@@ -1183,6 +1182,9 @@ viewSearchBar odata maybePath qs =
                             _ ->
                                 compare n1.name n2.name
                     )
+
+        isHidden =
+            (qs.visible == False) || (qs.pattern == "" && sortedLookup == [])
     in
     div
         [ id "searchBarOverview"
@@ -1205,7 +1207,7 @@ viewSearchBar odata maybePath qs =
                 ]
                 []
             , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
-            , div [ id "searchList", classList [ ( "is-hidden", qs.visible == False ) ] ]
+            , div [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]
                 [ div [ class "table is-fullwidth" ] <|
                     if sortedLookup == [] then
                         [ tbody [] [ td [] [ text T.noResultsFound ] ] ]

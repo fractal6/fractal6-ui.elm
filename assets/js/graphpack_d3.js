@@ -458,8 +458,8 @@ export const GraphPack = {
                 console.warn("Unknown node:", focus);
                 console.warn("Redirecting to root");
 
+                delay = 0.5;
                 maybeFocus = this.rootNode;
-                this.focusedNode = this.rootNode;
                 //this.app.ports.nodeFocusedFromJs.send([]);
                 //return
             }
@@ -496,7 +496,7 @@ export const GraphPack = {
 
         //Perform the interpolation and continuously change the zoomCtx while the "transition" occurs.
         var interpolateZoom = (dt) => {
-            if (interpolator) {
+            if (interpolator && duration) {
                 timeElapsed += dt;
                 var t = this.ease(timeElapsed / duration);
 

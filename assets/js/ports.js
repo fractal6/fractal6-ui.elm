@@ -114,14 +114,17 @@ const actions = {
         var qs = session.qsn;
         var nodes = session.gp.nodesDict;
         var res = qs.search(pattern, {prefix:true}).slice(0,10).map(n => {
-            var d = nodes[n.nameid].data;
-            return d
-            //return {
-            //    ...d,
-            //    firstLink: (d.first_link)? d.first_link.username : ""
-        //}
+            // Ignore Filtered Node (Owner, Member, etc)
+            if (nodes[n.nameid]) {
+                return nodes[n.nameid].data;
+                //return {
+                //    ...data,
+                //    firstLink: (d.first_link)? data.first_link.username : "" }
+            } else {
+                return undefined
+            }
         });
-        app.ports.lookupNodeFromJs_.send(res);
+        app.ports.lookupNodeFromJs_.send(res.filter(x => x));
     },
     'SEARCH_USERS': (app, session, pattern) => {
         var qs = session.qsu;
@@ -140,7 +143,6 @@ const actions = {
             gp.init_canvas()
             return
         }
-
 
         setTimeout(() => { // to wait that layout is ready
 
