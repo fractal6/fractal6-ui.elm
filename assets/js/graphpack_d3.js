@@ -121,7 +121,18 @@ export const GraphPack = {
 
     // Graph Colors
     //colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],
-    colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
+    //colorCircleRange: ['#bfbfbf','#838383','#4c4c4c','#1c1c1c', '#000000'],
+    colorCircleRange: [
+        '#e0e0e0',
+        '#b0b0b0',
+        '#808080',
+        '#505050',
+        '#404040',
+        '#303030',
+        '#202020',
+        '#101010',
+        '#000000',
+    ],
     usernameColor: "#8282cc",
     coordinatorRoleColor: "#ffdaa1", // ~orange
     peerRoleColor: "#edf5ff",// "#f0fff0", // "#FFFFF9"
@@ -247,7 +258,6 @@ export const GraphPack = {
 
     // Size the canvas
     computeGeometry() {
-
         this.computedWidth = this.$canvasParent.offsetWidth; //var computedWidth = parseInt(window.getComputedStyle($canvasParent).width, 10);
         this.computedHeight = (window.innerHeight)/2;
 
@@ -289,20 +299,24 @@ export const GraphPack = {
         } else {
             ctx2d = this.ctx2d;
         }
-
         this.clearCanvas(ctx2d);
 
         //Select our dummy nodes and draw the data to canvas.
-        var depth = this.focusedNode.depth;
+        var focus = this.focusedNode;
         var node;
         // It's slightly faster than nodes.forEach()
         for (var i = 0; i < this.nodes.length; i++) {
             node = this.nodes[i];
-            let d = node.depth - depth
-            if (node == this.focusedNode.parent || node.depth == 0 || d>= 0 && d < 4) {
+            let d = node.depth - focus.depth
+            if (node == focus.parent || node.depth == 0 || d>= 0 && d < 4) {
                 this.drawNode(isHidden, ctx2d, node);
             }
         }
+
+        if (!isHidden) {
+            this.drawCircleNames(focus)
+        }
+
     },
 
     drawNode(isHidden, ctx2d, node) {
@@ -365,32 +379,33 @@ export const GraphPack = {
 
         if (!isHidden) {
             if (node === this.focusedNode) {
+                // Draw focused border
                 var hoverWidth = this.focusCircleWidth;
                 var hoverColor = this.focusCircleColor;
                 // Draw border
                 ctx2d.beginPath();
-                ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-                    node.ctx.rayon+0.1+hoverWidth*0.5, 0, 2 * Math.PI, true);
+                ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon+0.1+hoverWidth*0.5,
+                    0, 2 * Math.PI, true);
                 ctx2d.lineWidth   = hoverWidth;
                 ctx2d.strokeStyle = hoverColor;
                 ctx2d.stroke();
             }
 
+            var text = null;
+            var user = null;
+            var fontSize = this.fontsizeCircle_start;
             if (type_ === NodeType.Role && opac === "") {
-                var text = null;
-                var user = null;
-
+                // Show Role name
                 var textLong = _name;
-                var textShort = _name.substring(0,3).replace(/./,x=>x.toUpperCase());
+                var textShort = _name.substring(0, 3);
+                //var textShort = _name.substring(0, 3).replace(/./,x=>x.toUpperCase());
                 if (node.data.first_link) {
                     user = "@"+node.data.first_link.username;
                 }
 
                 // Name
-                var fontSize = this.fontsizeCircle_start;
                 ctx2d.font = fontSize + "px " + this.fontstyleCircle;
-                var textMeas = ctx2d.measureText(textLong);
-                var textWidth = textMeas.width;
+                var textWidth = ctx2d.measureText(textLong).width;
                 var textHeight = fontSize/3;
                 var paddingBelow = 0;
                 if (textWidth+textHeight < node.ctx.rayon*2) {
@@ -429,7 +444,7 @@ export const GraphPack = {
                     }
                 }
             } else {
-                //if (focusedNode.depth == node.depth || focusedNode.depth == node.depth-1 ) {
+                //if (this.focusedNode.depth == node.depth || this.focusedNode.depth == node.depth-1 ) {
                 //    ctx2d.beginPath();
                 //    ctx2d.fillStyle = "white";
                 //    ctx2d.fillCircleText(_name,
@@ -540,17 +555,43 @@ export const GraphPack = {
 
     // Determine the node size in the circle packing
     // Returns: int f(n.depth, n.neigbor, n.cumchild)
+    nodeSizeTopDown3(n, stats) {
+        var t = 0;
+        var rt = 0;
+        if (n.type_ == "Circle") {
+            t = 1;
+        } else if (n.type_ == "Role") {
+            t = 2;
+        } else {
+            t = 1;
+        }
+
+        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
+        var v = t+rt;
+        return Math.log(1/n.depth**v+1) / dvd
+    },
     nodeSizeTopDown(n, stats) {
         var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
-        var size = 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
-        return size
+        var t = 0;
+        if (n.type_ == "Circle") {
+            t = 4;
+        } else if (n.type_ == "Role") {
+            t = 2;
+        } else {
+            t = 1;
+        }
+        var v = t;
+        return v*100000 / (n.depth+1)**(3) / dvd
+    },
+    nodeSizeTopDown_orig(n, stats) {
+        var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
+        return 10000/(stats.maxdepth)**(Math.max(1.5, n.depth)) / dvd
     },
 
     nodeSizeBottomUp(n, stats) {
         var dvd = (n.role_type == RoleType.Guest) ? this.guestSizeDivider : 1;
         var sizeDefault = 4;
-        var size = 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
-        return size
+        return 10000/(stats.maxdepth)**(Math.max(0, sizeDefault - n.depth)) / dvd
     },
 
     // Mapping function from a node depth to color.
@@ -583,7 +624,10 @@ export const GraphPack = {
             return n1.data.createdAt > n2.data.createdAt
         }
 
+        // Compute global statistics
         this.gStats = computeDepth(graph);
+
+        // Compute circle packing
         this.gPack = d3.pack()
             .padding(this.circlesPadding)
             .size([this.diameter, this.diameter])
@@ -666,7 +710,8 @@ export const GraphPack = {
             // Circle
             rayon = node.r;
         }
-        rayon *= zoomCtx.scale;
+        rayon *= (zoomCtx.scale);
+        //rayon *= (zoomCtx.scale + node.depth*0.1);
         node.ctx = {centerX, centerY, rayon};
         return
     },
@@ -687,6 +732,47 @@ export const GraphPack = {
             this.addNodeCtx(node);
         }
         return node;
+    },
+
+    drawCircleNames(node) {
+        var ctx2d = this.ctx2d
+        var n;
+        for (var i=0; i < node.data.children.length; i++) {
+            n = node.children[i];
+            if (!n.ctx) continue
+            var fontSize = this.fontsizeCircle_start;
+            var text, textWidth , textHeight;
+
+            if (n.data.type_ === NodeType.Circle && node.depth == n.depth-1 ) {
+                // Show Circle name
+                text = n.data.name;
+                textWidth = ctx2d.measureText(text).width;
+                textHeight = fontSize/3;
+                if (textWidth-textHeight > (n.ctx.rayon)*2.5) {
+                    text = text.split(" ").map(s => s.substring(0, 3)).join("·")
+                    textWidth = ctx2d.measureText(text).width;
+                    if (textWidth-textHeight > n.ctx.rayon*2.5) {
+                        text = text.split("·").map(s => s.substring(0, 1)).join("·")
+                    }
+                } else {
+                    //text = text
+                }
+
+                fontSize = this.fontsizeCircle_start;
+                ctx2d.font = "bold " + (fontSize) + "px " + this.fontstyleCircle;
+                //ctx2d.font = "bold " + fontSize + "px " + "Courier New"; // serif, sans-serif, Verdana, Georgia
+                ctx2d.beginPath();
+                ctx2d.textAlign = "center";
+                ctx2d.fillStyle = "#172335ff";
+                ctx2d.fillText(text, n.ctx.centerX, n.ctx.centerY-n.ctx.rayon/2+textHeight);
+                //ctx2d.lineWidth = 0.2;
+                //ctx2d.strokeStyle = "black";
+                //ctx2d.strokeText(text, n.ctx.centerX, n.ctx.centerY-n.ctx.rayon/2+textHeight);
+                //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+                ctx2d.fill();
+                ctx2d.stroke();
+            }
+        }
     },
 
     // Draw node border
@@ -735,6 +821,9 @@ export const GraphPack = {
 
         // Update global context
         this.hoveredNode = node; //@debug: use globCtx
+
+        // rewrite circle child name
+        this.drawCircleNames(this.focusedNode);
         return
     },
 
