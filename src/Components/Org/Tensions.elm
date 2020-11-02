@@ -23,7 +23,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -731,11 +731,12 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
                 [ input
                     [ class "input is-small autofocus"
                     , type_ "search"
+                    , autocomplete False
+                    , autofocus True
                     , placeholder "Search tensions"
                     , value (pattern |> withDefault "")
                     , onInput ChangePattern
                     , onKeydown SearchKeyDown
-                    , autofocus True
                     ]
                     []
                 , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]

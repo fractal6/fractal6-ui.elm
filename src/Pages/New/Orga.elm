@@ -16,7 +16,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
@@ -316,6 +316,7 @@ viewOrgaForm global model =
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
+                    , autocomplete False
                     , placeholder "Name"
                     , value name
                     , onInput <| ChangeNodePost "name"
@@ -333,6 +334,7 @@ viewOrgaForm global model =
                     , class "input followFocus"
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
+                    , autocomplete False
                     , placeholder "About"
                     , value about
                     , onInput <| ChangeNodePost "about"

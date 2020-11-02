@@ -26,7 +26,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
@@ -1224,6 +1224,7 @@ viewSearchBar odata maybePath qs =
             [ input
                 [ class "input is-small"
                 , type_ "search"
+                , autocomplete False
                 , placeholder "Find a Role or Circle"
                 , value qs.pattern
                 , onInput ChangePattern
