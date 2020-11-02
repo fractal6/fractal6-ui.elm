@@ -26,13 +26,45 @@ import RemoteData exposing (RemoteData)
 -}
 
 
+type alias UserCtxX =
+    { username : String
+    , name : Maybe String
+    , rights : UserRights
+    , roles : List UserRoleX
+    }
+
+
+type alias UserRoleX =
+    { name : String
+    , nameid : String
+    , rootnameid : String
+    , role_type : RoleType.RoleType
+    , isPrivate : Bool
+    }
+
+
+uctxXDecoder : Maybe UserCtxX -> Maybe UserCtx
+uctxXDecoder data =
+    data
+        |> Maybe.map
+            (\u ->
+                UserCtx u.username
+                    u.name
+                    u.rights
+                    (List.map
+                        (\r -> UserRole r.name r.nameid r.rootnameid r.role_type)
+                        u.roles
+                    )
+            )
+
+
 queryUctx url username msg =
     makeGQLQuery url
         (Query.getUser
             (uctxFilter username)
             uctxPayload
         )
-        (RemoteData.fromResult >> decodeResponse identity >> msg)
+        (RemoteData.fromResult >> decodeResponse uctxXDecoder >> msg)
 
 
 uctxFilter : String -> Query.GetUserOptionalArguments -> Query.GetUserOptionalArguments
@@ -40,9 +72,9 @@ uctxFilter username a =
     { a | username = Present username }
 
 
-uctxPayload : SelectionSet UserCtx Fractal.Object.User
+uctxPayload : SelectionSet UserCtxX Fractal.Object.User
 uctxPayload =
-    SelectionSet.succeed UserCtx
+    SelectionSet.succeed UserCtxX
         |> with Fractal.Object.User.username
         |> with Fractal.Object.User.name
         |> with
@@ -52,12 +84,23 @@ uctxPayload =
                     Fractal.Object.UserRights.canCreateRoot
             )
         |> with
-            (Fractal.Object.User.roles identity
-                (SelectionSet.map4 UserRole
+            (Fractal.Object.User.roles pubFilter
+                (SelectionSet.map5 UserRoleX
                     Fractal.Object.Node.name
                     Fractal.Object.Node.nameid
                     Fractal.Object.Node.rootnameid
                     (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
+                    Fractal.Object.Node.isPrivate
                 )
                 |> SelectionSet.map (\x -> withDefault [] x)
             )
+
+
+pubFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+pubFilter a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b -> { b | isPrivate = Present False })
+                |> Present
+    }
