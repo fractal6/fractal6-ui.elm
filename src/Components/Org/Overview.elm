@@ -1223,7 +1223,7 @@ viewSearchBar odata maybePath qs =
         [ div [ class "control has-icons-left is-expanded" ]
             [ input
                 [ class "input is-small"
-                , type_ "text"
+                , type_ "search"
                 , placeholder "Find a Role or Circle"
                 , value qs.pattern
                 , onInput ChangePattern

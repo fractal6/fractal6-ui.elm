@@ -730,7 +730,7 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
             [ div [ class "control has-icons-left is-expanded dropdown" ]
                 [ input
                     [ class "input is-small autofocus"
-                    , type_ "text"
+                    , type_ "search"
                     , placeholder "Search tensions"
                     , value (pattern |> withDefault "")
                     , onInput ChangePattern
