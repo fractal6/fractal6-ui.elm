@@ -59,8 +59,8 @@ const formatGraph = dataset =>  {
             return
         }
 
-        if(aData.parentid) {
-            dataDict[aData.parentid].children.push(dataDict[aData.nameid])
+        if(aData.parent) {
+            dataDict[aData.parent.nameid].children.push(dataDict[aData.nameid])
         } else {
             dataTree.push(dataDict[aData.nameid])
         }
@@ -642,6 +642,7 @@ export const GraphPack = {
             return {
                 nameid: n.data.nameid,
                 name: n.data.name,
+                isPrivate: n.data.isPrivate,
             };
         });
         return path
@@ -656,10 +657,10 @@ export const GraphPack = {
         centerY = ((node.y - zoomCtx.centerY) * zoomCtx.scale) + this.centerY + this.nodeOffsetY;
         if (node.data.type_ === NodeType.Role) {
             if (node.data.role_type === RoleType.Guest) {
-                rayon = node.r * this.rayonFactorGuest ;
+                rayon = node.r * this.rayonFactorGuest;
             } else {
                 // Regular member
-                rayon = node.r * this.rayonFactorRole ;
+                rayon = node.r * this.rayonFactorRole;
             }
         } else {
             // Circle
@@ -882,6 +883,7 @@ export const GraphPack = {
             nameid: this.rootNode.data.nameid,
             charac: this.rootNode.data.charac,
             id: this.rootNode.data.id,
+            isPrivate: this.rootNode.data.isPrivate,
         };
         var focusNode = {
             name: node.data.name,
@@ -892,9 +894,11 @@ export const GraphPack = {
                 return {
                     name: n.data.name,
                     nameid: n.data.nameid,
-                    role_type: n.data.role_type
+                    role_type: n.data.role_type,
+                    isPrivate: n.data.isPrivate
                 }
-            }) : []
+            }) : [],
+            isPrivate: node.data.isPrivate
         };
         var lg = {
             root: rootNode,

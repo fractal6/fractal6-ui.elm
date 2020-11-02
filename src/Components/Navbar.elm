@@ -40,7 +40,7 @@ view user =
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
                     [ --a [ class "navbar-item", href (toHref Route.Top) ] [ text "Help" ]
-                      a [ class "navbar-item", href (toHref Route.Explore) ] [ text "Explore" ]
+                      a [ class "navbar-item", href (toHref Route.Explore) ] [ text T.explore ]
                     ]
                 , div [ class "navbar-end" ]
                     [ newButton user

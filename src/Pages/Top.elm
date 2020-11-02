@@ -139,7 +139,7 @@ update global msg model =
                     model.form
 
                 formUpdated =
-                    { form | result = result }
+                    { form | result = result, post = Dict.remove "password" form.post }
             in
             ( { model | form = formUpdated }
             , Cmd.none

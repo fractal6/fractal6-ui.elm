@@ -2,8 +2,9 @@ module Query.QueryNode exposing
     ( MemberNode
     , NodeExt
     , User
-    , emmiterOrReceiverPayload
+    , emiterOrReceiverPayload
     , nodeCharacPayload
+    , nodeIdPayload
     , nodeOrgaPayload
     , queryFocusNode
     , queryGraphPack
@@ -114,8 +115,7 @@ nodeOrgaExtPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.rootnameid
-        |> with
-            (Fractal.Object.Node.parent identity <| SelectionSet.map NodeId Fractal.Object.Node.nameid)
+        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
@@ -261,13 +261,19 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.rootnameid
-        |> with
-            (Fractal.Object.Node.parent identity <| SelectionSet.map NodeId Fractal.Object.Node.nameid)
+        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity userPayload)
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
+
+
+nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
+nodeIdPayload =
+    SelectionSet.map2 NodeId
+        Fractal.Object.Node.nameid
+        Fractal.Object.Node.isPrivate
 
 
 userPayload : SelectionSet User Fractal.Object.User
@@ -299,6 +305,7 @@ type alias LocalNode =
     , children : Maybe (List EmitterOrReceiver)
     , parent : Maybe LocalRootNode
     , id : String
+    , isPrivate : Bool
     }
 
 
@@ -308,15 +315,17 @@ type alias LocalRootNode =
     , charac : NodeCharac
     , isRoot : Bool
     , id : String
+    , isPrivate : Bool
     }
 
 
-emmiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
-emmiterOrReceiverPayload =
+emiterOrReceiverPayload : SelectionSet EmitterOrReceiver Fractal.Object.Node
+emiterOrReceiverPayload =
     SelectionSet.succeed EmitterOrReceiver
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.isPrivate
 
 
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
@@ -328,13 +337,13 @@ lgDecoder data =
                     Just p ->
                         let
                             focus =
-                                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
+                                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
 
                             path =
-                                [ PNode p.name p.nameid, PNode n.name n.nameid ]
+                                [ PNode p.name p.nameid p.isPrivate, PNode n.name n.nameid n.isPrivate ]
                         in
                         if p.isRoot then
-                            { root = RootNode p.name p.nameid p.charac p.id |> Just
+                            { root = RootNode p.name p.nameid p.charac p.id p.isPrivate |> Just
                             , path = path
                             , focus = focus
                             }
@@ -345,9 +354,9 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RootNode n.name n.nameid n.charac n.id |> Just
-                        , path = [ PNode n.name n.nameid ]
-                        , focus = FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
+                        { root = RootNode n.name n.nameid n.charac n.id n.isPrivate |> Just
+                        , path = [ PNode n.name n.nameid n.isPrivate ]
+                        , focus = FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
                         }
             )
 
@@ -374,10 +383,11 @@ lgPayload =
         |> with Fractal.Object.Node.type_
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with
-            (Fractal.Object.Node.children nArchivedFilter emmiterOrReceiverPayload)
+            (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
         |> with
             (Fractal.Object.Node.parent identity lg2Payload)
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Node.isPrivate
 
 
 lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node
@@ -388,6 +398,7 @@ lg2Payload =
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isRoot
         |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Node.isPrivate
 
 
 nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
@@ -411,7 +422,7 @@ focusDecoder data =
     data
         |> Maybe.map
             (\n ->
-                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
+                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
             )
 
 
@@ -440,6 +451,7 @@ type alias TopMemberNode =
     , first_link : Maybe User
     , parent : Maybe NodeId
     , children : Maybe (List MemberNode)
+    , isPrivate : Bool
     }
 
 
@@ -451,6 +463,7 @@ type alias MemberNode =
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe User
     , parent : Maybe NodeId
+    , isPrivate : Bool
     }
 
 
@@ -464,7 +477,7 @@ membersDecoder : Maybe TopMemberNode -> Maybe (List Member)
 membersDecoder data =
     let
         n2r n =
-            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent
+            UserRoleExtended n.name n.nameid n.rootnameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent n.isPrivate
     in
     data
         |> Maybe.map
@@ -557,5 +570,7 @@ membersPayload =
                                 Fractal.Object.User.name
                         )
                     |> hardcoded Nothing
+                    |> with Fractal.Object.Node.isPrivate
                 )
             )
+        |> with Fractal.Object.Node.isPrivate

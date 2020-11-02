@@ -53,6 +53,11 @@ checkItOut =
     "Check it out."
 
 
+explore : String
+explore =
+    "Explore"
+
+
 exploreOrganisations : String
 exploreOrganisations =
     "Explore organisations"

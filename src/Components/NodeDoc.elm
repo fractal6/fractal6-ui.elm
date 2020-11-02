@@ -440,7 +440,7 @@ view_ tid data op_m =
 
                         _ ->
                             div [ class "is-italic" ]
-                                [ text "No mandate for this node."
+                                [ text "No description for this node."
                                 , doEditView op_m BlobType.OnMandate
                                 ]
         ]

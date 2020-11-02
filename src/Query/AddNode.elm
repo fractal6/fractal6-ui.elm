@@ -24,7 +24,7 @@ import ModelCommon exposing (JoinOrgaForm, TensionForm)
 import ModelCommon.Codecs exposing (guestIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
-import Query.QueryNode exposing (nodeOrgaPayload, userPayload)
+import Query.QueryNode exposing (nodeIdPayload, nodeOrgaPayload, userPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -212,8 +212,7 @@ addOneCirclePayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.rootnameid
-        |> with
-            (Fractal.Object.Node.parent identity (SelectionSet.map NodeId Fractal.Object.Node.nameid))
+        |> with (Fractal.Object.Node.parent identity nodeIdPayload)
         |> with (Fractal.Object.Node.children identity nodeOrgaPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type

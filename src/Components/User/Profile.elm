@@ -1,13 +1,15 @@
 module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Auth exposing (doRefreshToken, refreshAuthModal)
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.NotFound exposing (viewNotFound)
 import Components.Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, toUp1)
+import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
@@ -19,6 +21,7 @@ import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid)
+import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (getAvatar, roleColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -26,6 +29,7 @@ import Ports
 import Query.AddNode exposing (addNewMember)
 import Query.QueryNode exposing (NodeExt, queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
+import RemoteData exposing (RemoteData)
 import Task
 import Time
 
@@ -56,6 +60,10 @@ type alias Model =
     { username : String
     , user : GqlData UserCtx
     , user_data : UserDict
+    , uctx_m : Maybe UserCtx
+
+    -- Common
+    , modalAuth : ModalAuth
     }
 
 
@@ -107,6 +115,12 @@ type Msg
     = PassedSlowLoadTreshold -- timer
     | GotNodes (GqlData (List NodeExt))
     | GotUctx (GqlData UserCtx)
+      -- Token refresh
+    | DoCloseAuthModal -- ports receive / Close modal
+    | ChangeAuthPost String String
+    | SubmitUser UserAuthForm
+    | GotSignin (WebData UserCtx)
+    | SubmitKeyDown Int -- Detect Enter (for form sending)
 
 
 
@@ -152,6 +166,10 @@ init global flags =
 
                     _ ->
                         Dict.empty
+            , uctx_m = uctx_m
+
+            -- common
+            , modalAuth = Inactive
             }
 
         cmds =
@@ -215,7 +233,20 @@ update global msg model =
                     ( { model | user_data = newUD }, Cmd.none, Cmd.none )
 
                 other ->
-                    ( model, Cmd.none, Cmd.none )
+                    if doRefreshToken other then
+                        let
+                            uctx =
+                                model.uctx_m |> withDefault initUserctx
+                        in
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ], result = RemoteData.NotAsked }
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
+
+                    else
+                        ( model, Cmd.none, Cmd.none )
 
         GotUctx result ->
             case result of
@@ -228,6 +259,62 @@ update global msg model =
 
                 _ ->
                     ( { model | user = result }, Cmd.none, Cmd.none )
+
+        DoCloseAuthModal ->
+            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+
+        ChangeAuthPost field value ->
+            case model.modalAuth of
+                Active form ->
+                    let
+                        newForm =
+                            { form | post = Dict.insert field value form.post }
+                    in
+                    ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        SubmitUser form ->
+            ( model, login apis.auth form.post GotSignin, Cmd.none )
+
+        GotSignin result ->
+            case result of
+                RemoteData.Success uctx ->
+                    ( { model | modalAuth = Inactive }
+                    , Cmd.batch [ send DoCloseAuthModal, queryNodeExt apis.gql (Dict.keys model.user_data) GotNodes ]
+                    , send (UpdateUserSession uctx)
+                    )
+
+                other ->
+                    case model.modalAuth of
+                        Active form ->
+                            ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
+
+                        Inactive ->
+                            ( model, Cmd.none, Cmd.none )
+
+        SubmitKeyDown key ->
+            case key of
+                13 ->
+                    let
+                        form =
+                            case model.modalAuth of
+                                Active f ->
+                                    f
+
+                                Inactive ->
+                                    UserAuthForm Dict.empty RemoteData.NotAsked
+                    in
+                    --ENTER
+                    if isPostSendable [ "password" ] form.post then
+                        ( model, send (SubmitUser form), Cmd.none )
+
+                    else
+                        ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -274,6 +361,7 @@ view_ global model uctx =
             , div [ class "column is-7 " ]
                 [ viewProfileRight model uctx ]
             ]
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 
 

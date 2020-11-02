@@ -493,19 +493,19 @@ nodeEncoder node =
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
     , ( "rootnameid", JE.string node.rootnameid )
-    , ( "parentid", JEE.maybe JE.string <| Maybe.map (\x -> x.nameid) node.parent )
-    , ( "type_", JE.string <| NodeType.toString node.type_ )
-    , ( "role_type", JEE.maybe JE.string <| Maybe.map (\t -> RoleType.toString t) node.role_type )
-    , ( "first_link"
+    , ( "parent"
       , JEE.maybe JE.object <|
             Maybe.map
-                (\fs ->
-                    [ ( "username", JE.string fs.username )
-                    , ( "name", JEE.maybe JE.string fs.name )
+                (\p ->
+                    [ ( "nameid", JE.string p.nameid )
+                    , ( "isPrivate", JE.bool p.isPrivate )
                     ]
                 )
-                node.first_link
+                node.parent
       )
+    , ( "type_", JE.string <| NodeType.toString node.type_ )
+    , ( "role_type", JEE.maybe JE.string <| Maybe.map (\t -> RoleType.toString t) node.role_type )
+    , ( "first_link", JEE.maybe JE.object <| Maybe.map (\fs -> userEncoder fs) node.first_link )
     , ( "charac"
       , JE.object
             [ ( "userCanJoin", JE.bool node.charac.userCanJoin )
@@ -529,19 +529,19 @@ nodeDecoder =
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "nameid" JD.string)
         |> JDE.andMap (JD.field "rootnameid" JD.string)
-        |> JDE.andMap (JD.maybe (JD.map NodeId <| JD.field "parentid" JD.string))
+        |> JDE.andMap (JD.maybe (JD.field "parent" nodeIdDecoder))
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
-        |> JDE.andMap
-            (JD.maybe
-                (JD.field "first_link" <|
-                    JD.map2 User
-                        (JD.field "username" JD.string)
-                        (JD.maybe (JD.field "name" JD.string))
-                )
-            )
+        |> JDE.andMap (JD.maybe (JD.field "first_link" userDecoder))
         |> JDE.andMap (JD.field "charac" characDecoder)
         |> JDE.andMap (JD.field "isPrivate" JD.bool)
+
+
+nodeIdDecoder : JD.Decoder NodeId
+nodeIdDecoder =
+    JD.map2 NodeId
+        (JD.field "nameid" JD.string)
+        (JD.field "isPrivate" JD.bool)
 
 
 characDecoder : JD.Decoder NodeCharac
@@ -557,33 +557,37 @@ localGraphDecoder =
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
-                JD.map4 RootNode
+                JD.map5 RootNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "charac" characDecoder)
                     (JD.field "id" JD.string)
+                    (JD.field "isPrivate" JD.bool)
         )
         (JD.field "path"
             (JD.list <|
-                JD.map2 PNode
+                JD.map3 PNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
+                    (JD.field "isPrivate" JD.bool)
             )
         )
         (JD.field "focus" <|
-            JD.map5 FocusNode
+            JD.map6 FocusNode
                 (JD.field "name" JD.string)
                 (JD.field "nameid" JD.string)
                 (JD.field "type_" NodeType.decoder)
                 (JD.field "charac" characDecoder)
                 (JD.field "children"
                     (JD.list <|
-                        JD.map3 EmitterOrReceiver
+                        JD.map4 EmitterOrReceiver
                             (JD.field "name" JD.string)
                             (JD.field "nameid" JD.string)
                             (JD.maybe (JD.field "role_type" RoleType.decoder))
+                            (JD.field "isPrivate" JD.bool)
                     )
                 )
+                (JD.field "isPrivate" JD.bool)
         )
 
 

@@ -7,7 +7,7 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (userCtxDecoder)
+import ModelCommon exposing (nodeIdDecoder, userCtxDecoder, userDecoder)
 import ModelSchema exposing (Member, NodeId, Post, UserCtx, UserRoleExtended)
 import Query.QueryNode exposing (MemberNode, User)
 import RemoteData exposing (RemoteData)
@@ -38,8 +38,7 @@ fetchChildren url targetid msg =
 
 childrenDecoder : JD.Decoder (List NodeId)
 childrenDecoder =
-    JD.list <|
-        JD.map NodeId (JD.field "nameid" JD.string)
+    JD.list nodeIdDecoder
 
 
 {-|
@@ -62,30 +61,22 @@ fetchMembers url targetid msg =
 membersDecoder : JD.Decoder (List MemberNode)
 membersDecoder =
     JD.list <|
-        JD.map7 MemberNode
+        JD.map8 MemberNode
             (JD.field "createdAt" JD.string)
             (JD.field "name" JD.string)
             (JD.field "nameid" JD.string)
             (JD.field "rootnameid" JD.string)
             (JD.field "role_type" RoleType.decoder |> JD.maybe)
-            (JD.field "first_link"
-                (JD.map2 User
-                    (JD.field "username" JD.string)
-                    (JD.field "name" JD.string |> JD.maybe)
-                )
-                |> JD.maybe
-            )
-            (JD.field "parent"
-                (JD.map NodeId (JD.field "nameid" JD.string))
-                |> JD.maybe
-            )
+            (JD.field "first_link" userDecoder |> JD.maybe)
+            (JD.field "parent" nodeIdDecoder |> JD.maybe)
+            (JD.field "isPrivate" JD.bool)
 
 
 membersDecoder2 : WebData (List MemberNode) -> GqlData (List Member)
 membersDecoder2 input =
     let
         n2r n =
-            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent
+            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent n.isPrivate
     in
     case input of
         RemoteData.Success children ->
@@ -189,7 +180,7 @@ createOrga url post msg =
         , headers = []
         , url = url ++ "/createorga"
         , body = Http.jsonBody <| JE.dict identity JE.string post
-        , expect = expectJson (RemoteData.fromResult >> msg) (JD.map NodeId (JD.field "nameid" JD.string))
+        , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

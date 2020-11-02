@@ -67,7 +67,7 @@ type alias NodeCharac =
 
 
 type alias NodeId =
-    { nameid : String }
+    { nameid : String, isPrivate : Bool }
 
 
 type alias RootNode =
@@ -75,7 +75,12 @@ type alias RootNode =
     , nameid : String
     , charac : NodeCharac
     , id : String
+    , isPrivate : Bool
     }
+
+
+type alias PNode =
+    { name : String, nameid : String, isPrivate : Bool }
 
 
 type alias FocusNode =
@@ -84,11 +89,8 @@ type alias FocusNode =
     , type_ : NodeType.NodeType
     , charac : NodeCharac
     , children : List EmitterOrReceiver
+    , isPrivate : Bool
     }
-
-
-type alias PNode =
-    { name : String, nameid : String }
 
 
 type alias LocalGraph =
@@ -102,6 +104,7 @@ type alias EmitterOrReceiver =
     { name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
+    , isPrivate : Bool
     }
 
 
@@ -244,6 +247,7 @@ type alias NodeData =
     , about : Maybe String
     , mandate : Maybe Mandate
     , source : Maybe IdPayload
+    , isPrivate : Bool
     }
 
 
@@ -264,7 +268,7 @@ initUserctx =
 
 initNodeData : NodeData
 initNodeData =
-    NodeData "" Nothing Nothing Nothing
+    NodeData "" Nothing Nothing Nothing False
 
 
 initMandate : Mandate
@@ -344,6 +348,7 @@ type alias UserRoleExtended =
     --
     , createdAt : String
     , parent : Maybe NodeId
+    , isPrivate : Bool
     }
 
 

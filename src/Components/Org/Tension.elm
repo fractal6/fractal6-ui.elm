@@ -260,16 +260,17 @@ type Msg
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
+      -- Token refresh
+    | DoCloseAuthModal -- ports receive / Close modal
+    | ChangeAuthPost String String
+    | SubmitUser UserAuthForm
+    | GotSignin (WebData UserCtx)
+    | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
-    | DoCloseAuthModal
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
@@ -1290,11 +1291,7 @@ update global msg model =
                 other ->
                     case model.modalAuth of
                         Active form ->
-                            let
-                                newForm =
-                                    { form | result = result }
-                            in
-                            ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+                            ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
 
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )

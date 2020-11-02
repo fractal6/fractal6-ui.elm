@@ -170,15 +170,16 @@ type Msg
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
     | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
-      -- Common
-    | Navigate String
-    | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal String -- ports receive / Close modal
+      -- Token refresh
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
+      -- Common
+    | Navigate String
+    | DoOpenModal -- ports receive / Open  modal
+    | DoCloseModal String -- ports receive / Close modal
     | ChangeInputViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
@@ -351,7 +352,25 @@ update global msg model =
                         ( { model | orga_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
 
                 other ->
-                    ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
+                    if doRefreshToken other then
+                        let
+                            uctx =
+                                case global.session.user of
+                                    LoggedIn u ->
+                                        u
+
+                                    LoggedOut ->
+                                        initUserctx
+                        in
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ), ( "msg", "GotOrga" ) ], result = RemoteData.NotAsked }
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
+
+                    else
+                        ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
 
         GotTensions result ->
             case result of
@@ -912,19 +931,29 @@ update global msg model =
         GotSignin result ->
             case result of
                 RemoteData.Success uctx ->
+                    let
+                        cmd =
+                            case model.modalAuth of
+                                Active f ->
+                                    case Dict.get "msg" f.post of
+                                        Just "GotOrga" ->
+                                            sendSleep (Navigate (uriFromNameid OverviewBaseUri model.node_focus.rootnameid)) 300
+
+                                        _ ->
+                                            Cmd.none
+
+                                _ ->
+                                    Cmd.none
+                    in
                     ( { model | modalAuth = Inactive }
-                    , send DoCloseAuthModal
+                    , Cmd.batch [ send DoCloseAuthModal, cmd ]
                     , send (UpdateUserSession uctx)
                     )
 
                 other ->
                     case model.modalAuth of
                         Active form ->
-                            let
-                                newForm =
-                                    { form | result = result }
-                            in
-                            ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+                            ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
 
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )
@@ -1685,6 +1714,6 @@ getChildrenLeaf nid odata =
     odata
         |> withMaybeDataMap
             (\x ->
-                x |> Dict.values |> List.filter (\n -> n.type_ == NodeType.Role && Just (NodeId (nearestCircleid nid)) == n.parent)
+                x |> Dict.values |> List.filter (\n -> n.type_ == NodeType.Role && Just (nearestCircleid nid) == Maybe.map (\m -> m.nameid) n.parent)
             )
         |> withDefault []

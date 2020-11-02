@@ -59,6 +59,7 @@ nodeDataPayload =
                     |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
                 )
             )
+        |> with Fractal.Object.Node.isPrivate
 
 
 mandatePayload : SelectionSet Mandate Fractal.Object.Mandate

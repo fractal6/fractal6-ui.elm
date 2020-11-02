@@ -40,7 +40,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emmiterOrReceiverPayload, nodeCharacPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, nodeCharacPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 
@@ -99,8 +99,8 @@ tensionHeadPayload =
                 labelPayload
             )
         |> with (Fractal.Object.Tension.assignees identity userPayload)
-        |> with (Fractal.Object.Tension.emitter identity emmiterOrReceiverPayload)
-        |> with (Fractal.Object.Tension.receiver identity emmiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
         |> with
@@ -356,22 +356,8 @@ tensionPayload =
                 (\args -> { args | first = Present nLabelPerTension })
                 (SelectionSet.map Label Fractal.Object.Label.name)
             )
-        |> with
-            (Fractal.Object.Tension.emitter identity
-                (SelectionSet.succeed EmitterOrReceiver
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.role_type
-                )
-            )
-        |> with
-            (Fractal.Object.Tension.receiver identity
-                (SelectionSet.succeed EmitterOrReceiver
-                    |> with Fractal.Object.Node.name
-                    |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.role_type
-                )
-            )
+        |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.n_comments
 
