@@ -505,7 +505,7 @@ roleMessageHelp =
 
 autoFieldMessageHelp : String
 autoFieldMessageHelp =
-    "These fields are use for ressource identification."
+    "URL unique identifier"
 
 
 firstLinkRoleMessageHelp : String

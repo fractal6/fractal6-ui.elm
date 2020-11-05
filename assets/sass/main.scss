@@ -607,6 +607,10 @@ html.has-modal-active, html.has-modal-active2 {
             border: 0 !important;
         }
 
+        .media-content {
+            overflow-x: auto !important;
+        }
+
         .message {
             background-color: $body-background-color !important;
             border: 1px solid  $grey-darker  !important;
