@@ -294,7 +294,7 @@ init global flags =
 
         -- Focus
         rootnameid =
-            flags.param1
+            flags.param1 |> Url.percentDecode |> withDefault ""
 
         tensionid =
             flags.param2

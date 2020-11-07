@@ -32,6 +32,7 @@ import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)
 import Task
 import Time
+import Url exposing (Url)
 
 
 
@@ -134,7 +135,7 @@ init global flags =
             global.session.apis
 
         username =
-            flags.param1
+            flags.param1 |> Url.percentDecode |> withDefault ""
 
         uctx_m =
             case global.session.user of

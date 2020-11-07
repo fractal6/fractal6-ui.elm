@@ -136,20 +136,16 @@ nameidFromFlags flags =
     let
         rootnameid =
             flags.param1
-                |> Url.percentDecode
-                |> withDefault ""
 
         focusFragment =
             String.join "#"
-                [ flags.param2
-                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
-                    |> withDefault ""
-                , flags.param3
-                    |> Maybe.map (\p -> p |> Url.percentDecode |> withDefault "")
-                    |> withDefault ""
+                [ flags.param2 |> withDefault ""
+                , flags.param3 |> withDefault ""
                 ]
     in
     String.join "#" [ rootnameid, focusFragment ]
+        |> Url.percentDecode
+        |> withDefault ""
 
 
 
