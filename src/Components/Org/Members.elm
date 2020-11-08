@@ -435,12 +435,17 @@ memberRolesFilter focus roles =
     roles
         |> List.map
             (\r ->
-                if r.role_type == RoleType.Guest || r.role_type == RoleType.Member then
+                if r.role_type == RoleType.Guest then
+                    -- Filter Guest roles
+                    []
+
+                else if r.role_type == RoleType.Member && List.length roles > 1 then
+                    -- Filter Member with roles
                     []
 
                 else if focus.nameid == (r.parent |> Maybe.map (\p -> p.nameid) |> withDefault "") then
                     -- Dont include top level member for sub circle member (which contains all member)
-                    -- Note: .parentis not defined in the top member query
+                    -- Note: .parentid not defined in the top member query
                     []
 
                 else
@@ -459,7 +464,19 @@ viewMemberRoles baseUri roles =
                     , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatTime r.createdAt ] |> String.join " ")
                     , href <| uriFromNameid baseUri r.nameid
                     ]
-                    [ text r.name ]
+                    [ if r.role_type == RoleType.Guest then
+                        text "Guest"
+
+                      else if r.role_type == RoleType.Member then
+                        text "Member"
+
+                      else if r.role_type == RoleType.Owner then
+                        text "Owner"
+
+                      else
+                        -- Peer
+                        text r.name
+                    ]
             )
             roles
 
