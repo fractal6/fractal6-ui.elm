@@ -368,44 +368,6 @@ view_ tid data op_m =
                         text ""
                 ]
         , hr [ class "has-background-grey-light" ] []
-        , if blobTypeEdit == Just BlobType.OnFirstLink then
-            op_m
-                |> Maybe.map
-                    (\op ->
-                        let
-                            isSendable =
-                                op.data.form.users /= links
-                        in
-                        div []
-                            [ nodeLinksInputView txt op.data.form op.data op
-                            , blobButtonsView isSendable isLoading op
-                            ]
-                    )
-                |> withDefault (text "")
-
-          else if isLinksHidden then
-            text ""
-
-          else
-            let
-                links_ =
-                    List.filter (\x -> x.username /= "") links
-            in
-            div [ class "linksDoc" ]
-                [ div [ class "subtitle is-5" ]
-                    [ Fa.icon "fas fa-users fa-sm" T.linksH
-                    , links_
-                        |> List.map (\l -> viewUser l.username)
-                        |> span [ attribute "style" "margin-left:20px;" ]
-                    , doEditView op_m BlobType.OnFirstLink
-                    ]
-                , if List.length links_ == 0 then
-                    span [ class "is-italic" ] [ text txt.noFirstLinks ]
-
-                  else
-                    text ""
-                ]
-        , ternary isLinksHidden (text "") (hr [ class "has-background-grey-light" ] [])
         , if blobTypeEdit == Just BlobType.OnMandate then
             op_m
                 |> Maybe.map
@@ -443,6 +405,44 @@ view_ tid data op_m =
                                 [ text "No description for this node."
                                 , doEditView op_m BlobType.OnMandate
                                 ]
+        , ternary isLinksHidden (text "") (hr [ class "has-background-grey-light" ] [])
+        , if blobTypeEdit == Just BlobType.OnFirstLink then
+            op_m
+                |> Maybe.map
+                    (\op ->
+                        let
+                            isSendable =
+                                op.data.form.users /= links
+                        in
+                        div []
+                            [ nodeLinksInputView txt op.data.form op.data op
+                            , blobButtonsView isSendable isLoading op
+                            ]
+                    )
+                |> withDefault (text "")
+
+          else if isLinksHidden then
+            text ""
+
+          else
+            let
+                links_ =
+                    List.filter (\x -> x.username /= "") links
+            in
+            div [ class "linksDoc" ]
+                [ div [ class "subtitle is-5" ]
+                    [ Fa.icon "fas fa-users fa-sm" T.linksH
+                    , links_
+                        |> List.map (\l -> viewUser l.username)
+                        |> span [ attribute "style" "margin-left:20px;" ]
+                    , doEditView op_m BlobType.OnFirstLink
+                    ]
+                , if List.length links_ == 0 then
+                    span [ class "is-italic" ] [ text txt.noFirstLinks ]
+
+                  else
+                    text ""
+                ]
         ]
 
 

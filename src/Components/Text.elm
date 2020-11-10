@@ -470,7 +470,7 @@ orgaNameHelp =
 
 aboutHelp : String
 aboutHelp =
-    "Short description"
+    "Short description for this organisation"
 
 
 purposeHelpOrga : String
@@ -480,12 +480,12 @@ purposeHelpOrga =
 
 roleAboutHelp : String
 roleAboutHelp =
-    "Short description of this role."
+    "Short description for this role."
 
 
 circleAboutHelp : String
 circleAboutHelp =
-    "Short description of this circle."
+    "Short description for this circle."
 
 
 tensionMessageHelp : String
