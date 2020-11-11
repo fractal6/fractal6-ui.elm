@@ -13,12 +13,11 @@ type NodeFragmentOrderable
     | About
     | First_link
     | Second_link
-    | Skills
 
 
 list : List NodeFragmentOrderable
 list =
-    [ Name, Nameid, About, First_link, Second_link, Skills ]
+    [ Name, Nameid, About, First_link, Second_link ]
 
 
 decoder : Decoder NodeFragmentOrderable
@@ -41,9 +40,6 @@ decoder =
 
                     "second_link" ->
                         Decode.succeed Second_link
-
-                    "skills" ->
-                        Decode.succeed Skills
 
                     _ ->
                         Decode.fail ("Invalid NodeFragmentOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -69,9 +65,6 @@ toString enum =
 
         Second_link ->
             "second_link"
-
-        Skills ->
-            "skills"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -102,9 +95,6 @@ fromString enumString =
 
         "second_link" ->
             Just Second_link
-
-        "skills" ->
-            Just Skills
 
         _ ->
             Nothing

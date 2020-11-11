@@ -617,11 +617,12 @@ buildAddUserInput required fillOptionals =
             fillOptionals
                 { name = Absent, emailHash = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
     in
-    AddUserInput { createdAt = required.createdAt, username = required.username, name = optionals.name, password = required.password, email = required.email, emailHash = optionals.emailHash, emailValidated = required.emailValidated, rights = required.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
+    AddUserInput { createdAt = required.createdAt, lastAck = required.lastAck, username = required.username, name = optionals.name, password = required.password, email = required.email, emailHash = optionals.emailHash, emailValidated = required.emailValidated, rights = required.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
 
 
 type alias AddUserInputRequiredFields =
     { createdAt : Fractal.ScalarCodecs.DateTime
+    , lastAck : Fractal.ScalarCodecs.DateTime
     , username : String
     , password : String
     , email : String
@@ -649,6 +650,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias AddUserInputRaw =
     { createdAt : Fractal.ScalarCodecs.DateTime
+    , lastAck : Fractal.ScalarCodecs.DateTime
     , username : String
     , name : OptionalArgument String
     , password : String
@@ -676,7 +678,7 @@ type AddUserInput
 encodeAddUserInput : AddUserInput -> Value
 encodeAddUserInput (AddUserInput input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "username", Encode.string input.username |> Just ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string input.password |> Just ), ( "email", Encode.string input.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool input.emailValidated |> Just ), ( "rights", encodeUserRightsRef input.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.lastAck |> Just ), ( "username", Encode.string input.username |> Just ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string input.password |> Just ), ( "email", Encode.string input.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool input.emailValidated |> Just ), ( "rights", encodeUserRightsRef input.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
 buildAddUserRightsInput :
@@ -1206,9 +1208,9 @@ buildCustomHTTP required fillOptionals =
     let
         optionals =
             fillOptionals
-                { body = Absent, graphql = Absent, mode = Absent, forwardHeaders = Absent, secretHeaders = Absent, skipIntrospection = Absent }
+                { body = Absent, graphql = Absent, mode = Absent, forwardHeaders = Absent, secretHeaders = Absent, introspectionHeaders = Absent, skipIntrospection = Absent }
     in
-    { url = required.url, method = required.method, body = optionals.body, graphql = optionals.graphql, mode = optionals.mode, forwardHeaders = optionals.forwardHeaders, secretHeaders = optionals.secretHeaders, skipIntrospection = optionals.skipIntrospection }
+    { url = required.url, method = required.method, body = optionals.body, graphql = optionals.graphql, mode = optionals.mode, forwardHeaders = optionals.forwardHeaders, secretHeaders = optionals.secretHeaders, introspectionHeaders = optionals.introspectionHeaders, skipIntrospection = optionals.skipIntrospection }
 
 
 type alias CustomHTTPRequiredFields =
@@ -1223,6 +1225,7 @@ type alias CustomHTTPOptionalFields =
     , mode : OptionalArgument Fractal.Enum.Mode.Mode
     , forwardHeaders : OptionalArgument (List String)
     , secretHeaders : OptionalArgument (List String)
+    , introspectionHeaders : OptionalArgument (List String)
     , skipIntrospection : OptionalArgument Bool
     }
 
@@ -1237,6 +1240,7 @@ type alias CustomHTTP =
     , mode : OptionalArgument Fractal.Enum.Mode.Mode
     , forwardHeaders : OptionalArgument (List String)
     , secretHeaders : OptionalArgument (List String)
+    , introspectionHeaders : OptionalArgument (List String)
     , skipIntrospection : OptionalArgument Bool
     }
 
@@ -1246,7 +1250,7 @@ type alias CustomHTTP =
 encodeCustomHTTP : CustomHTTP -> Value
 encodeCustomHTTP input =
     Encode.maybeObject
-        [ ( "url", Encode.string input.url |> Just ), ( "method", Encode.enum Fractal.Enum.HTTPMethod.toString input.method |> Just ), ( "body", Encode.string |> Encode.optional input.body ), ( "graphql", Encode.string |> Encode.optional input.graphql ), ( "mode", Encode.enum Fractal.Enum.Mode.toString |> Encode.optional input.mode ), ( "forwardHeaders", (Encode.string |> Encode.list) |> Encode.optional input.forwardHeaders ), ( "secretHeaders", (Encode.string |> Encode.list) |> Encode.optional input.secretHeaders ), ( "skipIntrospection", Encode.bool |> Encode.optional input.skipIntrospection ) ]
+        [ ( "url", Encode.string input.url |> Just ), ( "method", Encode.enum Fractal.Enum.HTTPMethod.toString input.method |> Just ), ( "body", Encode.string |> Encode.optional input.body ), ( "graphql", Encode.string |> Encode.optional input.graphql ), ( "mode", Encode.enum Fractal.Enum.Mode.toString |> Encode.optional input.mode ), ( "forwardHeaders", (Encode.string |> Encode.list) |> Encode.optional input.forwardHeaders ), ( "secretHeaders", (Encode.string |> Encode.list) |> Encode.optional input.secretHeaders ), ( "introspectionHeaders", (Encode.string |> Encode.list) |> Encode.optional input.introspectionHeaders ), ( "skipIntrospection", Encode.bool |> Encode.optional input.skipIntrospection ) ]
 
 
 buildDateTimeFilter :
@@ -4068,13 +4072,14 @@ buildUserPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { createdAt = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
+                { createdAt = Absent, lastAck = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
     in
-    UserPatch { createdAt = optionals.createdAt, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
+    UserPatch { createdAt = optionals.createdAt, lastAck = optionals.lastAck, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
 
 
 type alias UserPatchOptionalFields =
     { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , lastAck : OptionalArgument Fractal.ScalarCodecs.DateTime
     , name : OptionalArgument String
     , password : OptionalArgument String
     , email : OptionalArgument String
@@ -4097,6 +4102,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias UserPatchRaw =
     { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , lastAck : OptionalArgument Fractal.ScalarCodecs.DateTime
     , name : OptionalArgument String
     , password : OptionalArgument String
     , email : OptionalArgument String
@@ -4123,7 +4129,7 @@ type UserPatch
 encodeUserPatch : UserPatch -> Value
 encodeUserPatch (UserPatch input) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.lastAck ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
 buildUserRef :
@@ -4133,14 +4139,15 @@ buildUserRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
+                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, bio = Absent, utc = Absent }
     in
-    UserRef { id = optionals.id, createdAt = optionals.createdAt, username = optionals.username, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
+    UserRef { id = optionals.id, createdAt = optionals.createdAt, lastAck = optionals.lastAck, username = optionals.username, name = optionals.name, password = optionals.password, email = optionals.email, emailHash = optionals.emailHash, emailValidated = optionals.emailValidated, rights = optionals.rights, roles = optionals.roles, backed_roles = optionals.backed_roles, tensions_created = optionals.tensions_created, tensions_assigned = optionals.tensions_assigned, bio = optionals.bio, utc = optionals.utc }
 
 
 type alias UserRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , lastAck : OptionalArgument Fractal.ScalarCodecs.DateTime
     , username : OptionalArgument String
     , name : OptionalArgument String
     , password : OptionalArgument String
@@ -4165,6 +4172,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias UserRefRaw =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , lastAck : OptionalArgument Fractal.ScalarCodecs.DateTime
     , username : OptionalArgument String
     , name : OptionalArgument String
     , password : OptionalArgument String
@@ -4192,7 +4200,7 @@ type UserRef
 encodeUserRef : UserRef -> Value
 encodeUserRef (UserRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "username", Encode.string |> Encode.optional input.username ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.lastAck ), ( "username", Encode.string |> Encode.optional input.username ), ( "name", Encode.string |> Encode.optional input.name ), ( "password", Encode.string |> Encode.optional input.password ), ( "email", Encode.string |> Encode.optional input.email ), ( "emailHash", Encode.string |> Encode.optional input.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input.emailValidated ), ( "rights", encodeUserRightsRef |> Encode.optional input.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions_assigned ), ( "bio", Encode.string |> Encode.optional input.bio ), ( "utc", Encode.string |> Encode.optional input.utc ) ]
 
 
 buildUserRightsRef :

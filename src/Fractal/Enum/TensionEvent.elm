@@ -20,11 +20,12 @@ type TensionEvent
     | BlobPushed
     | BlobArchived
     | BlobUnarchived
+    | UserLeft
 
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived ]
+    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserLeft ]
 
 
 decoder : Decoder TensionEvent
@@ -68,6 +69,9 @@ decoder =
 
                     "BlobUnarchived" ->
                         Decode.succeed BlobUnarchived
+
+                    "UserLeft" ->
+                        Decode.succeed UserLeft
 
                     _ ->
                         Decode.fail ("Invalid TensionEvent type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -114,6 +118,9 @@ toString enum =
 
         BlobUnarchived ->
             "BlobUnarchived"
+
+        UserLeft ->
+            "UserLeft"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -165,6 +172,9 @@ fromString enumString =
 
         "BlobUnarchived" ->
             Just BlobUnarchived
+
+        "UserLeft" ->
+            Just UserLeft
 
         _ ->
             Nothing

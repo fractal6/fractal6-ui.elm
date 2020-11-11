@@ -29,6 +29,11 @@ createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
 
 
+lastAck : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.User
+lastAck =
+    Object.selectionForField "ScalarCodecs.DateTime" "lastAck" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
+
+
 username : SelectionSet String Fractal.Object.User
 username =
     Object.selectionForField "String" "username" [] Decode.string

@@ -883,11 +883,24 @@ html.has-modal-active, html.has-modal-active2 {
         font-weight: 700 !important;
     }
 
-    .controlButton {
+    .controlButtons {
         //display: flex;
         //flex-grow: 1;
         //flex-direction: column;
         max-width: 50% !important;
+
+        & > .button:first-child {
+            padding-right: 0 !important;
+        }
+
+        .button {
+            border: none !important;
+            margin-right: -1px !important;
+        }
+
+        .dropdown-menu {
+            min-width: 9rem !important;
+        }
 
         .text {
             max-width: 100%;
@@ -1556,6 +1569,9 @@ a.actionLink {
 
     &.is-warning {
         color: $orange;
+    }
+    &.is-danger {
+        color: $red;
     }
 }
 

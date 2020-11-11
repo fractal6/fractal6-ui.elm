@@ -19,6 +19,30 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+type alias CommentOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CommentFilter
+    , order : OptionalArgument Fractal.InputObject.CommentOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+comment :
+    (CommentOptionalArguments -> CommentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Comment
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.DeleteCommentPayload
+comment fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCommentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeCommentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "comment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
 msg : SelectionSet (Maybe String) Fractal.Object.DeleteCommentPayload
 msg =
     Object.selectionForField "(Maybe String)" "msg" [] (Decode.string |> Decode.nullable)

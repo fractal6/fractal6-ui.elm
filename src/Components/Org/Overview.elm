@@ -1133,7 +1133,7 @@ view_ global model =
         [ HelperBar.view helperData
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-6-desktop is-5-widescreen is-4-fullhd" ]
-                [ viewSearchBar model.orga_data model.path_data model.node_quickSearch
+                [ viewSearchBar global.session.user model.orga_data model.path_data model.node_quickSearch
                 , viewCanvas model.node_focus model.orga_data
                 , br [] []
                 , NodeDoc.view nodeData Nothing
@@ -1178,8 +1178,8 @@ viewLeftPane model =
         ]
 
 
-viewSearchBar : GqlData NodesData -> Maybe LocalGraph -> NodesQuickSearch -> Html Msg
-viewSearchBar odata maybePath qs =
+viewSearchBar : UserState -> GqlData NodesData -> Maybe LocalGraph -> NodesQuickSearch -> Html Msg
+viewSearchBar us odata maybePath qs =
     let
         node_ =
             maybePath
@@ -1285,15 +1285,62 @@ viewSearchBar odata maybePath qs =
                 ]
             , case node_ of
                 Ok node ->
-                    div
-                        [ class "control controlButton button is-small is-info _modalTrigger_"
-                        , attribute "data-modal" "actionModal"
-                        , onClick (DoNodeAction node_)
-                        ]
-                        [ span [ class "has-text-weight-bold text" ] [ text node.name ]
-                        , span [ class "fa-stack ellipsisArt" ]
-                            --[ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
-                            [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+                    div [ class "controlButtons field has-addons" ]
+                        [ span
+                            [ class "control button is-small is-info _modalTrigger_"
+                            , attribute "data-modal" "actionModal"
+                            , onClick (DoNodeAction node_)
+                            ]
+                            [ span [ class "has-text-weight-bold text" ] [ text node.name ]
+                            , span [ class "fa-stack ellipsisArt" ]
+                                --[ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
+                                [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+                            ]
+                        , case us of
+                            LoggedIn uctx ->
+                                let
+                                    hasRole =
+                                        Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+
+                                    isAdmin =
+                                        List.length (getNewNodeRights uctx node odata) > 0
+                                in
+                                if isAdmin then
+                                    span
+                                        [ class "dropdown is-right"
+                                        ]
+                                        [ div [ class "dropdown-trigger" ]
+                                            [ div
+                                                [ attribute "aria-controls" "dropdown-menu_config"
+                                                , attribute "aria-haspopup" "true"
+                                                ]
+                                                [ span
+                                                    [ class "control button is-small is-primary"
+                                                    ]
+                                                    [ i [ class "fas fa-ellipsis-v" ] []
+                                                    ]
+                                                ]
+                                            , div [ class "dropdown-menu", id "dropdown-menu_config", attribute "role" "menu" ]
+                                                [ div [ class "dropdown-content" ]
+                                                    [ div [ class "dropdown-item button-light is-warning" ]
+                                                        [ p [] [ Fa.icon "fas fa-trash" T.archive ]
+                                                        ]
+                                                    , if hasRole then
+                                                        div [ class "dropdown-item button-light is-danger" ]
+                                                            [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ] ]
+
+                                                      else
+                                                        text ""
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+
+                                else
+                                    text ""
+
+                            LoggedOut ->
+                                text ""
                         ]
 
                 Err err ->
@@ -1634,7 +1681,7 @@ getNewTensionStepAuth form =
 -}
 getNewNodeStepAuth : TensionForm -> GqlData NodesData -> ( NodeStep, TensionForm )
 getNewNodeStepAuth form odata =
-    case getNewNodeRights form odata of
+    case getNewNodeRights form.uctx form.target odata of
         [] ->
             let
                 isMember =
@@ -1655,11 +1702,11 @@ getNewNodeStepAuth form odata =
             ( NodeSource roles, form )
 
 
-getNewNodeRights : TensionForm -> GqlData NodesData -> List UserRole
-getNewNodeRights form odata =
+getNewNodeRights : UserCtx -> Node -> GqlData NodesData -> List UserRole
+getNewNodeRights uctx target odata =
     let
         orgaRoles =
-            getOrgaRoles form.uctx.roles [ form.target.rootnameid ]
+            getOrgaRoles uctx.roles [ target.rootnameid ]
     in
     if List.length orgaRoles == 0 then
         []
@@ -1670,13 +1717,13 @@ getNewNodeRights form odata =
     else
         let
             childrenRoles =
-                getChildrenLeaf form.target.nameid odata
+                getChildrenLeaf target.nameid odata
 
             childrenCoordos =
                 List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
             circleRoles =
-                getCircleRoles orgaRoles [ form.target.nameid ]
+                getCircleRoles orgaRoles [ target.nameid ]
 
             allCoordoRoles =
                 getCoordoRoles orgaRoles
@@ -1684,7 +1731,7 @@ getNewNodeRights form odata =
             coordoRoles =
                 getCoordoRoles circleRoles
         in
-        case form.target.charac.mode of
+        case target.charac.mode of
             NodeMode.Chaos ->
                 case circleRoles of
                     [] ->

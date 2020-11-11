@@ -16,7 +16,7 @@
     "js_build:watch": "chokidar assets/js -c \"npm run js_build\"",
     "css_build": "for k in dark; do node-sass --omit-source-map-url assets/sass/$k.scss public/$k.css; done",
     "js_build": "cp -v assets/js/*.js public/",
-    "graphql_build": "./node_modules/.bin/elm-graphql --schema-file ../schema/gen2/schema.graphql --base Fractal --output ./src",
+    "graphql_build": "./node_modules/.bin/elm-graphql --schema-file ../schema/gen/schema.graphql --base Fractal --output ./src",
     "webdev": "webpack-dev-server --hot --port 8000 --mode development",
     "webprod": "webpack-dev-server --hot --port 8000 --mode production",
     "localprod": "webpack-dev-server --hot --port 8000 --mode production",

@@ -48,6 +48,11 @@ joinOrga =
     "Join this organisation"
 
 
+leaveRole : String
+leaveRole =
+    "Leave role"
+
+
 checkItOut : String
 checkItOut =
     "Check it out."
@@ -161,6 +166,11 @@ published =
 archived : String
 archived =
     "archived"
+
+
+archive : String
+archive =
+    "Archive"
 
 
 unarchived : String
