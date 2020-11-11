@@ -36,9 +36,7 @@ import Url exposing (Url)
 
 
 type alias Flags =
-    { uctx : Maybe JD.Value
-    , apis : Apis
-    }
+    SessionFlags
 
 
 
@@ -74,23 +72,9 @@ init flags url key =
                     LoggedOut
 
         session =
-            { referer = url
-            , user = userState
-            , token_data = RemoteData.NotAsked
-            , node_focus = Nothing
-            , focus = Nothing
-            , path_data = Nothing
-            , orga_data = Nothing
-            , users_data = Nothing
-            , node_data = Nothing
-            , tensions_data = Nothing
-            , tension_head = Nothing
-            , node_action = Nothing
-            , node_quickSearch = Nothing
-            , apis = flags.apis
-            }
+            initSession flags
     in
-    ( Model flags url key session
+    ( Model flags url key { session | user = userState }
     , Cmd.batch
         [ Ports.log "Hello!"
         , Ports.toggle_theme
@@ -142,7 +126,7 @@ update msg model =
                             session.referer
 
                         _ ->
-                            url
+                            Just url
             in
             ( { model | session = { session | referer = referer } }, Cmd.none )
 
@@ -151,10 +135,19 @@ update msg model =
                 cmd =
                     case model.session.user of
                         LoggedIn uctx ->
-                            model.session.referer
-                                |> Route.fromUrl
-                                |> Maybe.withDefault (Route.User_Dynamic { param1 = uctx.username })
-                                |> navigate
+                            let
+                                home =
+                                    Route.User_Dynamic { param1 = uctx.username }
+                            in
+                            case model.session.referer of
+                                Just referer ->
+                                    referer
+                                        |> Route.fromUrl
+                                        |> Maybe.withDefault home
+                                        |> navigate
+
+                                Nothing ->
+                                    navigate home
 
                         LoggedOut ->
                             sendSleep RedirectOnLoggedIn 300
@@ -166,23 +159,9 @@ update msg model =
                 LoggedIn uctx ->
                     let
                         session =
-                            { referer = model.url
-                            , user = LoggedOut
-                            , token_data = RemoteData.NotAsked
-                            , node_focus = Nothing
-                            , focus = Nothing
-                            , path_data = Nothing
-                            , orga_data = Nothing
-                            , users_data = Nothing
-                            , node_data = Nothing
-                            , tensions_data = Nothing
-                            , tension_head = Nothing
-                            , node_action = Nothing
-                            , node_quickSearch = Nothing
-                            , apis = model.flags.apis
-                            }
+                            initSession model.flags
                     in
-                    ( { model | session = session }, Ports.removeUserCtx uctx )
+                    ( { model | session = { session | user = LoggedOut } }, Ports.removeUserCtx uctx )
 
                 LoggedOut ->
                     ( model, Cmd.none )

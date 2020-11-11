@@ -20,6 +20,7 @@ import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid, nodeFromFocus)
 import ModelSchema exposing (..)
 import QuickSearch as Qsearch
+import RemoteData
 import Url exposing (Url)
 
 
@@ -29,9 +30,15 @@ import Url exposing (Url)
 --
 
 
+type alias SessionFlags =
+    { uctx : Maybe JD.Value
+    , apis : Apis
+    }
+
+
 type alias Session =
     { user : UserState
-    , referer : Url
+    , referer : Maybe Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
     , focus : Maybe FocusNode
@@ -62,6 +69,25 @@ type alias NodesQuickSearch =
 
     --, lut : Qsearch.Table Node
     --, lookup : List Node
+    }
+
+
+initSession : SessionFlags -> Session
+initSession flags =
+    { referer = Nothing
+    , user = LoggedOut
+    , token_data = RemoteData.NotAsked
+    , node_focus = Nothing
+    , focus = Nothing
+    , path_data = Nothing
+    , orga_data = Nothing
+    , users_data = Nothing
+    , node_data = Nothing
+    , tensions_data = Nothing
+    , tension_head = Nothing
+    , node_action = Nothing
+    , node_quickSearch = Nothing
+    , apis = flags.apis
     }
 
 

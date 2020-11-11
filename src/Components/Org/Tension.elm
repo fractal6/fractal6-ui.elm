@@ -2333,24 +2333,29 @@ initCommentPatchForm user =
     }
 
 
-tensionChanged : Url -> Url -> Bool
-tensionChanged from to =
+tensionChanged : Maybe Url -> Url -> Bool
+tensionChanged from_m to =
     let
         id1 =
-            case Route.fromUrl from of
-                Just r ->
-                    case r of
-                        Route.Tension_Dynamic_Dynamic params ->
-                            params.param2
+            Maybe.map
+                (\from ->
+                    case Route.fromUrl from of
+                        Just r ->
+                            case r of
+                                Route.Tension_Dynamic_Dynamic params ->
+                                    params.param2
 
-                        Route.Tension_Dynamic_Dynamic_Action params ->
-                            params.param2
+                                Route.Tension_Dynamic_Dynamic_Action params ->
+                                    params.param2
 
-                        _ ->
+                                _ ->
+                                    ""
+
+                        Nothing ->
                             ""
-
-                Nothing ->
-                    ""
+                )
+                from_m
+                |> withDefault ""
 
         id2 =
             case Route.fromUrl to of
