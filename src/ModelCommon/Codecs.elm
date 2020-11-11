@@ -167,6 +167,7 @@ nodeFromFocus focus =
     , first_link = Nothing
     , charac = NodeCharac False NodeMode.Coordinated
     , isPrivate = False
+    , source = Nothing
     }
 
 

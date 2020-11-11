@@ -57,6 +57,7 @@ type alias Node =
     , first_link : Maybe User
     , charac : NodeCharac
     , isPrivate : Bool
+    , source : Maybe IdPayload
     }
 
 
@@ -246,7 +247,6 @@ type alias NodeData =
     { nameid : String -- needed for @isPrivate test
     , about : Maybe String
     , mandate : Maybe Mandate
-    , source : Maybe IdPayload
     , isPrivate : Bool
     }
 
@@ -268,7 +268,7 @@ initUserctx =
 
 initNodeData : NodeData
 initNodeData =
-    NodeData "" Nothing Nothing Nothing False
+    NodeData "" Nothing Nothing False
 
 
 initMandate : Mandate

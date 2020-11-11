@@ -116,15 +116,6 @@ closeModal data =
 -- Update form
 
 
-setEvents : List TensionEvent.TensionEvent -> ActionPanel -> ActionPanel
-setEvents events data =
-    let
-        f =
-            data.form
-    in
-    { data | form = { f | events_type = Just events } }
-
-
 post : String -> String -> ActionPanel -> ActionPanel
 post field value data =
     let
@@ -132,6 +123,24 @@ post field value data =
             data.form
     in
     { data | form = { f | post = Dict.insert field value f.post } }
+
+
+setTid : String -> ActionPanel -> ActionPanel
+setTid tid data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | tid = tid } }
+
+
+setEvents : List TensionEvent.TensionEvent -> ActionPanel -> ActionPanel
+setEvents events data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | events_type = Just events } }
 
 
 setAction : ActionButton -> ActionPanel -> ActionPanel

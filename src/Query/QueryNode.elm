@@ -24,6 +24,7 @@ import Fractal.Object
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
 import Fractal.Object.NodeStats
+import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
@@ -267,6 +268,12 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.first_link identity userPayload)
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
+        |> with
+            (Fractal.Object.Node.source identity
+                (SelectionSet.succeed IdPayload
+                    |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                )
+            )
 
 
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node

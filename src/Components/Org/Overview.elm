@@ -3,6 +3,7 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
+import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionPanel)
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -58,6 +59,7 @@ import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchNode exposing (patchNode)
+import Query.PatchTension exposing (archiveDoc)
 import Query.QueryNode exposing (queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryAllTension)
@@ -103,6 +105,9 @@ type alias Model =
     -- Form
     --, joinForm : JoinOrgaForm
     , tensionForm : NewTensionForm
+
+    -- Node Action
+    , actionPanel : ActionPanel
 
     -- common
     , node_action : ActionState
@@ -161,6 +166,10 @@ type Msg
     | AddPolicies
     | NewNodesAck (GqlData (List Node))
       -- CircleAck === TensionAck
+      --
+      -- Node Settings
+    | ArchiveDoc Node Time.Posix
+    | ArchiveDocAck (GqlData ActionResult)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -248,6 +257,9 @@ init global flags =
 
             -- Form
             , tensionForm = NewTensionForm.create newFocus
+
+            -- Node Action
+            , actionPanel = ActionPanel.create global.session.user ""
 
             -- Common
             , node_action = session.node_action |> withDefault NoOp
@@ -803,6 +815,49 @@ update global msg model =
                 other ->
                     ( model, Cmd.none, Cmd.none )
 
+        -- Node Action
+        ArchiveDoc node time ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.setTid (node.source |> Maybe.map (\s -> s.id) |> withDefault "")
+                        |> ActionPanel.post "createdAt" (fromTime time)
+                        |> ActionPanel.setEvents [ TensionEvent.BlobArchived ]
+                        |> ActionPanel.setArchiveResult LoadingSlowly
+                        |> ActionPanel.setAction ArchiveAction
+            in
+            ( { model | actionPanel = aPanel }
+            , archiveDoc apis.gql aPanel.form ArchiveDocAck
+            , Cmd.none
+            )
+
+        ArchiveDocAck result ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.setArchiveResult result
+
+                gcmd =
+                    Cmd.batch [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
+            in
+            case result of
+                Success t ->
+                    ( { model | actionPanel = aPanel }, gcmd, send UpdateUserToken )
+
+                other ->
+                    if doRefreshToken other then
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", aPanel.form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , actionPanel = ActionPanel.setArchiveResult NotAsked model.actionPanel
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
+
+                    else
+                        ( { model | actionPanel = aPanel }, gcmd, Cmd.none )
+
         -- Join
         DoJoinOrga rootnameid time ->
             case global.session.user of
@@ -1080,11 +1135,14 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
+        focus_m =
+            getNode model.node_focus.nameid model.orga_data
+
         tid =
-            model.node_data |> withMaybeData |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
+            focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
 
         roletype =
-            getNode model.node_focus.nameid model.orga_data |> Maybe.map (\n -> n.role_type) |> withDefault Nothing
+            focus_m |> Maybe.map (\n -> n.role_type) |> withDefault Nothing
 
         nodeData_ =
             { data = withMapData (\x -> tid) model.node_data
@@ -1322,7 +1380,10 @@ viewSearchBar us odata maybePath qs =
                                                 ]
                                             , div [ class "dropdown-menu", id "dropdown-menu_config", attribute "role" "menu" ]
                                                 [ div [ class "dropdown-content" ]
-                                                    [ div [ class "dropdown-item button-light is-warning" ]
+                                                    [ div
+                                                        [ class "dropdown-item button-light is-warning"
+                                                        , onClick (Submit <| ArchiveDoc node)
+                                                        ]
                                                         [ p [] [ Fa.icon "fas fa-trash" T.archive ]
                                                         ]
                                                     , if hasRole then

@@ -513,6 +513,14 @@ nodeEncoder node =
             ]
       )
     , ( "isPrivate", JE.bool node.isPrivate )
+    , ( "source"
+      , JEE.maybe JE.object <|
+            Maybe.map
+                (\p ->
+                    [ ( "id", JE.string p.id ) ]
+                )
+                node.source
+      )
     ]
 
 
@@ -535,6 +543,12 @@ nodeDecoder =
         |> JDE.andMap (JD.maybe (JD.field "first_link" userDecoder))
         |> JDE.andMap (JD.field "charac" characDecoder)
         |> JDE.andMap (JD.field "isPrivate" JD.bool)
+        |> JDE.andMap (JD.maybe (JD.field "source" idDecoder))
+
+
+idDecoder : JD.Decoder IdPayload
+idDecoder =
+    JD.map IdPayload (JD.field "id" JD.string)
 
 
 nodeIdDecoder : JD.Decoder NodeId

@@ -53,12 +53,6 @@ nodeDataPayload =
         |> with Fractal.Object.Node.about
         |> with
             (Fractal.Object.Node.mandate identity mandatePayload)
-        |> with
-            (Fractal.Object.Node.source identity
-                (SelectionSet.succeed IdPayload
-                    |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                )
-            )
         |> with Fractal.Object.Node.isPrivate
 
 

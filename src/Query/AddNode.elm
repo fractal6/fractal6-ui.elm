@@ -14,6 +14,7 @@ import Fractal.Object
 import Fractal.Object.AddNodePayload
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
+import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Scalar
 import GqlClient exposing (..)
@@ -137,6 +138,7 @@ type alias Circle =
     , first_link : Maybe User
     , charac : NodeCharac
     , isPrivate : Bool
+    , source : Maybe IdPayload
     }
 
 
@@ -173,6 +175,7 @@ circleDecoder a =
                                         , first_link = .first_link n
                                         , charac = .charac n
                                         , isPrivate = .isPrivate n
+                                        , source = .source n
                                         }
                                 in
                                 [ node ]
@@ -224,6 +227,12 @@ addOneCirclePayload =
                     Fractal.Object.NodeCharac.mode
             )
         |> with Fractal.Object.Node.isPrivate
+        |> with
+            (Fractal.Object.Node.source identity
+                (SelectionSet.succeed IdPayload
+                    |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                )
+            )
 
 
 
