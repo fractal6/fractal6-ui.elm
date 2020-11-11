@@ -6,7 +6,7 @@ import Components.Asset as Asset
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
-import Html exposing (Html, a, button, div, img, p, text)
+import Html exposing (Html, a, button, div, img, p, span, text)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Http
 import Json.Decode as JD
@@ -182,11 +182,20 @@ spinner : Html msg
 spinner =
     img
         [ src Asset.loading
-        , width 64
-        , height 64
+        , width 26
+        , height 26
         , alt "Loading..."
         ]
         []
+
+
+loadingSpin : Bool -> Html msg
+loadingSpin isLoading =
+    if isLoading then
+        span [ class "spinner2 is-small" ] []
+
+    else
+        text ""
 
 
 viewGqlErrors : ErrorData -> Html msg

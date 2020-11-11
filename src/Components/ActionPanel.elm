@@ -1,7 +1,7 @@
 module Components.ActionPanel exposing (..)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors)
 import Components.Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary, withMapData, withMaybeData)
@@ -154,6 +154,9 @@ setAction action data =
 
 type alias Op msg =
     { tc : Maybe TensionCharac
+    , isAdmin : Bool
+    , hasRole : Bool
+    , isRight : Bool
     , data : ActionPanel
     , onCloseModal : String -> msg
     , onArchive : ActionButton -> Time.Posix -> msg
@@ -170,15 +173,34 @@ view op =
     div []
         [ if op.data.isEdit then
             div
-                [ class "dropdown-content", classList [ ( "is-loading", op.data.archive_result == LoadingSlowly ) ] ]
-                [ if actionType_m == Just EDIT then
-                    div [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ] [ Fa.icon "fas fa-archive" "Archive" ]
+                [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ]
+                [ case actionType_m of
+                    Just EDIT ->
+                        div
+                            [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ]
+                            [ Fa.icon "fas fa-archive" "Archive", loadingSpin (op.data.archive_result == LoadingSlowly) ]
 
-                  else if actionType_m == Just ARCHIVE then
-                    div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ] [ Fa.icon "fas fa-archive" "Unarchive" ]
+                    Just ARCHIVE ->
+                        div
+                            [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ]
+                            [ Fa.icon "fas fa-archive" "Unarchive", loadingSpin (op.data.archive_result == LoadingSlowly) ]
+
+                    Just NEW ->
+                        text ""
+
+                    Nothing ->
+                        div [] [ text "not implemented" ]
+                , if op.hasRole then
+                    hr [ class "dropdown-divider" ] []
 
                   else
-                    div [] []
+                    text ""
+                , if op.hasRole then
+                    div [ class "dropdown-item button-light is-danger" ]
+                        [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ] ]
+
+                  else
+                    text ""
                 ]
 
           else
@@ -221,8 +243,8 @@ viewModal op =
                 Failure err ->
                     viewGqlErrors err
 
-                other ->
-                    div [] [ text "not implemented." ]
+                _ ->
+                    viewGqlErrors [ "not implemented." ]
             ]
         , button [ class "modal-close is-large", onClick (op.onCloseModal "") ] []
         ]

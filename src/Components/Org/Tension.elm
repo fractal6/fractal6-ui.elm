@@ -254,9 +254,9 @@ type Msg
       -- Action Edit
     | DoActionEdit String
     | CancelAction
-    | CloseActionPanelModal String
     | ArchiveDoc ActionButton Time.Posix
     | ArchiveDocAck (GqlData ActionResult)
+    | CloseActionPanelModal String
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -2196,6 +2196,20 @@ viewSidePane u t model =
 
                             hasConfig =
                                 model.isTensionAdmin && actionType_m /= Just NEW && bid_m /= Nothing
+
+                            hasRole =
+                                case t.blobs of
+                                    Just [ b ] ->
+                                        let
+                                            fs =
+                                                b.node
+                                                    |> Maybe.map (\n -> n.first_link)
+                                                    |> withDefault Nothing
+                                        in
+                                        Just uctx.username == fs
+
+                                    _ ->
+                                        False
                         in
                         [ h2
                             [ class "subtitle"
@@ -2217,11 +2231,15 @@ viewSidePane u t model =
                               else
                                 text ""
                             ]
-                        , div [ id "actionPanelContent" ]
+                        , div
+                            [ id "actionPanelContent" ]
                             [ if hasConfig then
                                 let
                                     panelData =
                                         { tc = tc
+                                        , isAdmin = hasConfig
+                                        , hasRole = hasRole
+                                        , isRight = False
                                         , data = model.actionPanel
                                         , onCloseModal = CloseActionPanelModal
                                         , onArchive = ArchiveDoc

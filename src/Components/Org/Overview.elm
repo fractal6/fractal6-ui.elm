@@ -36,9 +36,12 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs
     exposing
-        ( Flags_
+        ( ActionType(..)
+        , DocType(..)
+        , Flags_
         , FractalBaseRoute(..)
         , NodeFocus
+        , TensionCharac
         , focusFromNameid
         , focusState
         , getCircleRoles
@@ -168,7 +171,10 @@ type Msg
       -- CircleAck === TensionAck
       --
       -- Node Settings
-    | ArchiveDoc Node Time.Posix
+    | DoActionEdit Node
+    | CancelAction
+    | CloseActionPanelModal String
+    | ArchiveDoc ActionButton Time.Posix
     | ArchiveDocAck (GqlData ActionResult)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
@@ -816,11 +822,40 @@ update global msg model =
                     ( model, Cmd.none, Cmd.none )
 
         -- Node Action
+        DoActionEdit node ->
+            if model.actionPanel.isEdit == False then
+                let
+                    aPanel =
+                        model.actionPanel
+                            |> ActionPanel.setTid (node.source |> Maybe.map (\s -> s.id) |> withDefault "")
+                            |> ActionPanel.edit ""
+                in
+                ( { model | actionPanel = aPanel }
+                , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
+                , Cmd.none
+                )
+
+            else
+                ( model, send CancelAction, Cmd.none )
+
+        CancelAction ->
+            ( { model | actionPanel = ActionPanel.cancelEdit model.actionPanel }, Cmd.none, Cmd.none )
+
+        CloseActionPanelModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | actionPanel = ActionPanel.closeModal model.actionPanel }, gcmd, Ports.close_modal )
+
         ArchiveDoc node time ->
             let
                 aPanel =
                     model.actionPanel
-                        |> ActionPanel.setTid (node.source |> Maybe.map (\s -> s.id) |> withDefault "")
                         |> ActionPanel.post "createdAt" (fromTime time)
                         |> ActionPanel.setEvents [ TensionEvent.BlobArchived ]
                         |> ActionPanel.setArchiveResult LoadingSlowly
@@ -1063,6 +1098,7 @@ subscriptions _ _ =
         , Ports.lookupNodeFromJs ChangeNodeLookup
         , Ports.lookupUserFromJs ChangeUserLookup
         , Ports.cancelLookupFsFromJs (always CancelLookupFs)
+        , Ports.cancelActionFromJs (always CancelAction)
         ]
 
 
@@ -1191,7 +1227,7 @@ view_ global model =
         [ HelperBar.view helperData
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-6-desktop is-5-widescreen is-4-fullhd" ]
-                [ viewSearchBar global.session.user model.orga_data model.path_data model.node_quickSearch
+                [ viewSearchBar global.session.user model
                 , viewCanvas model.node_focus model.orga_data
                 , br [] []
                 , NodeDoc.view nodeData Nothing
@@ -1236,14 +1272,14 @@ viewLeftPane model =
         ]
 
 
-viewSearchBar : UserState -> GqlData NodesData -> Maybe LocalGraph -> NodesQuickSearch -> Html Msg
-viewSearchBar us odata maybePath qs =
+viewSearchBar : UserState -> Model -> Html Msg
+viewSearchBar us model =
     let
         node_ =
-            maybePath
+            model.path_data
                 |> Maybe.map
                     (\p ->
-                        case odata of
+                        case model.orga_data of
                             Success d ->
                                 Dict.get p.focus.nameid d
                                     |> Maybe.map (\n -> Ok n)
@@ -1253,6 +1289,9 @@ viewSearchBar us odata maybePath qs =
                                 Err "No nodes data"
                     )
                 |> withDefault (Err "No path returned")
+
+        qs =
+            model.node_quickSearch
 
         sortedLookup =
             qs.lookup
@@ -1286,8 +1325,8 @@ viewSearchBar us odata maybePath qs =
                 , placeholder "Find a Role or Circle"
                 , value qs.pattern
                 , onInput ChangePattern
-                , onFocus (LookupFocus qs.pattern maybePath)
-                , onClick (LookupFocus qs.pattern maybePath)
+                , onFocus (LookupFocus qs.pattern model.path_data)
+                , onClick (LookupFocus qs.pattern model.path_data)
                 , onBlur LookupBlur
                 , onKeydown SearchKeyDown
 
@@ -1350,51 +1389,36 @@ viewSearchBar us odata maybePath qs =
                             , onClick (DoNodeAction node_)
                             ]
                             [ span [ class "has-text-weight-bold text" ] [ text node.name ]
-                            , span [ class "fa-stack ellipsisArt" ]
-                                --[ i [ class "fas fa-ellipsis-h fa-stack-1x" ] [] ]
-                                [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+                            , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
                             ]
                         , case us of
                             LoggedIn uctx ->
                                 let
+                                    isAdmin =
+                                        List.length (getNewNodeRights uctx node model.orga_data) > 0
+
                                     hasRole =
                                         Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
-
-                                    isAdmin =
-                                        List.length (getNewNodeRights uctx node odata) > 0
                                 in
                                 if isAdmin then
-                                    span
-                                        [ class "dropdown is-right"
+                                    let
+                                        panelData =
+                                            { tc = Just { action_type = EDIT, doc_type = NODE }
+                                            , isAdmin = isAdmin
+                                            , hasRole = hasRole
+                                            , isRight = True
+                                            , data = model.actionPanel
+                                            , onCloseModal = CloseActionPanelModal
+                                            , onArchive = ArchiveDoc
+                                            , onSubmit = Submit
+                                            }
+                                    in
+                                    div
+                                        [ id "actionPanelContent"
+                                        , onClick (DoActionEdit node)
                                         ]
-                                        [ div [ class "dropdown-trigger" ]
-                                            [ div
-                                                [ attribute "aria-controls" "dropdown-menu_config"
-                                                , attribute "aria-haspopup" "true"
-                                                ]
-                                                [ span
-                                                    [ class "control button is-small is-primary"
-                                                    ]
-                                                    [ i [ class "fas fa-ellipsis-v" ] []
-                                                    ]
-                                                ]
-                                            , div [ class "dropdown-menu", id "dropdown-menu_config", attribute "role" "menu" ]
-                                                [ div [ class "dropdown-content" ]
-                                                    [ div
-                                                        [ class "dropdown-item button-light is-warning"
-                                                        , onClick (Submit <| ArchiveDoc node)
-                                                        ]
-                                                        [ p [] [ Fa.icon "fas fa-trash" T.archive ]
-                                                        ]
-                                                    , if hasRole then
-                                                        div [ class "dropdown-item button-light is-danger" ]
-                                                            [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ] ]
-
-                                                      else
-                                                        text ""
-                                                    ]
-                                                ]
-                                            ]
+                                        [ span [ class "control button is-small is-primary" ] [ i [ class "fas fa-ellipsis-v" ] [] ]
+                                        , ActionPanel.view panelData
                                         ]
 
                                 else
@@ -1443,8 +1467,7 @@ viewCanvas focus odata =
             , attribute "data-modal" "actionModal"
             ]
             [ span [] [ text "void" ] -- Node name
-            , span [ class "fa-stack ellipsisArt" ]
-                [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+            , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
             ]
         ]
 

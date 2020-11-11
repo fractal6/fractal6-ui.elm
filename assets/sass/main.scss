@@ -784,8 +784,13 @@ html.has-modal-active, html.has-modal-active2 {
     .dropdown-content {
         position: absolute;
         z-index: 25;
-        padding-right: 8rem;
-        margin-top: -0.3rem;
+        //padding-right: 8rem;
+        min-width: 8rem;
+        &.is-right {
+            left: auto;
+            right: 0;
+        }
+
     }
 
 }
@@ -1706,7 +1711,40 @@ a.actionLink {
 		width: 40px;
 		will-change: transform;
 	}
+    &.is-small::before {
+        height: 20px !important;
+        width: 20px !important;
+    }
 }
+
+.spinner2 { // @todo fix
+    // The height here is just for demo purposes
+    height: 25vh;
+    opacity: 1;
+    //position: relative;
+    transition: opacity linear 0.1s;
+	&::before {
+		animation: 1.3s linear infinite spinner;
+		border: solid 3px #eee;
+		border-bottom-color: #6588EF;
+		border-radius: 50%;
+		content: "";
+		height: 40px;
+		left: 100%;
+		opacity: inherit;
+		position: absolute;
+		top: 50%;
+		transform: translate3d(-50%, -50%, 0);
+		transform-origin: center;
+		width: 40px;
+		will-change: transform;
+	}
+    &.is-small::before {
+        height: 20px !important;
+        width: 20px !important;
+    }
+}
+
 @keyframes spinner {
     0% {
         transform: translate3d(-50%, -50%, 0) rotate(0deg);
