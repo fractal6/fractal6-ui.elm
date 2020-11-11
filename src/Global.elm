@@ -166,9 +166,23 @@ update msg model =
                 LoggedIn uctx ->
                     let
                         session =
-                            model.session
+                            { referer = model.url
+                            , user = LoggedOut
+                            , token_data = RemoteData.NotAsked
+                            , node_focus = Nothing
+                            , focus = Nothing
+                            , path_data = Nothing
+                            , orga_data = Nothing
+                            , users_data = Nothing
+                            , node_data = Nothing
+                            , tensions_data = Nothing
+                            , tension_head = Nothing
+                            , node_action = Nothing
+                            , node_quickSearch = Nothing
+                            , apis = model.flags.apis
+                            }
                     in
-                    ( { model | session = { session | user = LoggedOut } }, Ports.removeUserCtx uctx )
+                    ( { model | session = session }, Ports.removeUserCtx uctx )
 
                 LoggedOut ->
                     ( model, Cmd.none )
