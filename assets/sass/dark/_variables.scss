@@ -3,7 +3,11 @@
 ////////////////////////////////////////////////
 $primary: #375a7f !default;
 
-$text: #fff;
+$white-1: #f2f2f3; // black 900
+$white-2: #e7e8eb; // black 800
+
+//$text: #fff;
+$text: $white-1;
 $text-light: lighten($text, 10);
 $text-strong: darken($text, 5);
 
@@ -20,7 +24,7 @@ $footer-background-color: $background;
 $button-background-color: $background;
 $button-border-color: lighten($button-background-color, 15);
 
-$title-color: #fff;
+$title-color: $white-1;
 $subtitle-color: $grey-light2;
 $subtitle-strong-color: $grey-light2;
 
@@ -67,7 +71,7 @@ $navbar-item-color: $text;
 $navbar-item-hover-color: $link;
 $navbar-item-hover-background-color: $grey-darker;
 $navbar-item-active-color: $link;
-$navbar-dropdown-arrow: #fff;
+$navbar-dropdown-arrow: $white-1;
 $navbar-divider-background-color: rgba(0, 0, 0, 0.2);
 $navbar-dropdown-border-top: 1px solid $navbar-divider-background-color;
 $navbar-dropdown-background-color: $primary;

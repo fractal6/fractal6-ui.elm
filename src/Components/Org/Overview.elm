@@ -1292,6 +1292,97 @@ viewSearchBar us model =
 
         qs =
             model.node_quickSearch
+    in
+    div
+        [ id "searchBarOverview" ]
+        [ div
+            [ class "field has-addons searchBar"
+            , onMouseEnter DoClearTooltip
+            ]
+            ([ div [ class "control has-icons-left is-expanded" ]
+                [ input
+                    [ class "input is-small"
+                    , type_ "search"
+                    , autocomplete False
+                    , placeholder "Find a Role or Circle"
+                    , value qs.pattern
+                    , onInput ChangePattern
+                    , onFocus (LookupFocus qs.pattern model.path_data)
+                    , onClick (LookupFocus qs.pattern model.path_data)
+                    , onBlur LookupBlur
+                    , onKeydown SearchKeyDown
+
+                    --, list "searchList" -- impossible interaction !
+                    ]
+                    []
+                , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+                ]
+             ]
+                ++ (case node_ of
+                        Ok node ->
+                            [ div [ class "control controlButtons" ]
+                                [ span
+                                    [ class "button is-small is-info is-ellipsis"
+                                    , attribute "data-modal" "actionModal"
+                                    , onClick (DoNodeAction node_)
+                                    ]
+                                    [ span [ class "has-text-weight-bold is-ellipsis" ] [ text node.name ]
+                                    , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+                                    ]
+                                ]
+                            , case us of
+                                LoggedIn uctx ->
+                                    let
+                                        isAdmin =
+                                            List.length (getNewNodeRights uctx node model.orga_data) > 0
+
+                                        hasRole =
+                                            Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+                                    in
+                                    if isAdmin then
+                                        let
+                                            panelData =
+                                                { tc = Just { action_type = EDIT, doc_type = NODE }
+                                                , isAdmin = isAdmin
+                                                , hasRole = hasRole
+                                                , isRight = True
+                                                , data = model.actionPanel
+                                                , onCloseModal = CloseActionPanelModal
+                                                , onArchive = ArchiveDoc
+                                                , onSubmit = Submit
+                                                }
+                                        in
+                                        div [ id "actionPanelContent", class "control" ]
+                                            [ span
+                                                [ class "button is-small is-info"
+                                                , onClick (DoActionEdit node)
+                                                ]
+                                                [ i [ class "fas fa-ellipsis-v" ] [] ]
+                                            , ActionPanel.view panelData
+                                            ]
+
+                                    else
+                                        text ""
+
+                                LoggedOut ->
+                                    text ""
+                            ]
+
+                        Err err ->
+                            []
+                   )
+            )
+        , div [ class "control" ]
+            [ viewSearchList us model
+            ]
+        ]
+
+
+viewSearchList : UserState -> Model -> Html Msg
+viewSearchList us model =
+    let
+        qs =
+            model.node_quickSearch
 
         sortedLookup =
             qs.lookup
@@ -1313,124 +1404,51 @@ viewSearchBar us model =
             (qs.visible == False) || (qs.pattern == "" && sortedLookup == [])
     in
     div
-        [ id "searchBarOverview"
-        , class "field has-addons searchBar"
-        , onMouseEnter DoClearTooltip
-        ]
-        [ div [ class "control has-icons-left is-expanded" ]
-            [ input
-                [ class "input is-small"
-                , type_ "search"
-                , autocomplete False
-                , placeholder "Find a Role or Circle"
-                , value qs.pattern
-                , onInput ChangePattern
-                , onFocus (LookupFocus qs.pattern model.path_data)
-                , onClick (LookupFocus qs.pattern model.path_data)
-                , onBlur LookupBlur
-                , onKeydown SearchKeyDown
+        [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]
+        [ div [ class "table is-fullwidth" ] <|
+            if sortedLookup == [] then
+                [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
 
-                --, list "searchList" -- impossible interaction !
-                ]
-                []
-            , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
-            , div [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]
-                [ div [ class "table is-fullwidth" ] <|
-                    if sortedLookup == [] then
-                        [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
+            else
+                sortedLookup
+                    |> List.indexedMap
+                        (\i n ->
+                            [ tr
+                                [ class "button-light"
+                                , classList [ ( "is-active", i == qs.idx ) ]
+                                , onClickPD (NodeClicked n.nameid)
+                                ]
+                              <|
+                                [ th [] [ text n.name ] ]
+                                    ++ (case n.type_ of
+                                            NodeType.Circle ->
+                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
 
-                    else
-                        sortedLookup
-                            |> List.indexedMap
-                                (\i n ->
-                                    [ tr
-                                        [ class "button-light"
-                                        , classList [ ( "is-active", i == qs.idx ) ]
-                                        , onClickPD (NodeClicked n.nameid)
-                                        ]
-                                      <|
-                                        [ th [] [ text n.name ] ]
-                                            ++ (case n.type_ of
-                                                    NodeType.Circle ->
-                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
-                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
+                                                --, td [] [ n.first_link |> Maybe.map (\p -> viewUsernameLink p.username) |> withDefault (text "--") ]
+                                                ]
 
-                                                        --, td [] [ n.first_link |> Maybe.map (\p -> viewUsernameLink p.username) |> withDefault (text "--") ]
-                                                        ]
-
-                                                    NodeType.Role ->
-                                                        [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
-                                                        , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
-                                                        ]
-                                               )
-                                    ]
-                                        |> List.append
-                                            (if i == 0 && n.type_ == NodeType.Circle then
-                                                [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
-
-                                             else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
-                                                [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
-
-                                             else
-                                                []
-                                            )
-                                )
-                            |> List.concat
-                            |> tbody []
-                            |> List.singleton
-                            |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.parentH ], th [] [ text T.firstLinkH ] ] ] ]
-                ]
-            , case node_ of
-                Ok node ->
-                    div [ class "controlButtons field has-addons" ]
-                        [ span
-                            [ class "control button is-small is-info _modalTrigger_"
-                            , attribute "data-modal" "actionModal"
-                            , onClick (DoNodeAction node_)
+                                            NodeType.Role ->
+                                                [ td [] [ n.parent |> Maybe.map (\p -> p.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "") |> withDefault "" |> text ]
+                                                , td [] [ n.first_link |> Maybe.map (\p -> "@" ++ p.username) |> withDefault "--" |> text ]
+                                                ]
+                                       )
                             ]
-                            [ span [ class "has-text-weight-bold text" ] [ text node.name ]
-                            , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
-                            ]
-                        , case us of
-                            LoggedIn uctx ->
-                                let
-                                    isAdmin =
-                                        List.length (getNewNodeRights uctx node model.orga_data) > 0
+                                |> List.append
+                                    (if i == 0 && n.type_ == NodeType.Circle then
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
 
-                                    hasRole =
-                                        Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
-                                in
-                                if isAdmin then
-                                    let
-                                        panelData =
-                                            { tc = Just { action_type = EDIT, doc_type = NODE }
-                                            , isAdmin = isAdmin
-                                            , hasRole = hasRole
-                                            , isRight = True
-                                            , data = model.actionPanel
-                                            , onCloseModal = CloseActionPanelModal
-                                            , onArchive = ArchiveDoc
-                                            , onSubmit = Submit
-                                            }
-                                    in
-                                    div
-                                        [ id "actionPanelContent"
-                                        , onClick (DoActionEdit node)
-                                        ]
-                                        [ span [ class "control button is-small is-primary" ] [ i [ class "fas fa-ellipsis-v" ] [] ]
-                                        , ActionPanel.view panelData
-                                        ]
+                                     else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
 
-                                else
-                                    text ""
-
-                            LoggedOut ->
-                                text ""
-                        ]
-
-                Err err ->
-                    text ""
-            ]
+                                     else
+                                        []
+                                    )
+                        )
+                    |> List.concat
+                    |> tbody []
+                    |> List.singleton
+                    |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.parentH ], th [] [ text T.firstLinkH ] ] ] ]
         ]
 
 
@@ -1463,7 +1481,7 @@ viewCanvas focus odata =
             ]
         , div
             [ id "nodeTooltip"
-            , class "_modalTrigger_ is-invisible"
+            , class "is-invisible"
             , attribute "data-modal" "actionModal"
             ]
             [ span [] [ text "void" ] -- Node name

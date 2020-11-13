@@ -227,7 +227,7 @@ export function BulmaDriver(app, target, handlers) {
     // Modal logics
     //
     const $modal_esc = $doc.querySelectorAll('.modal-escape');
-    const $modal_triggers = $doc.querySelectorAll('.modalTrigger'); // app specific
+    const $modal_triggers = $doc.querySelectorAll('.modal-trigger'); // app specific
     // * toggle active modal when clicking *trigger* elements.
     // * fix scroll blocking by activating/deactivating has-modal-active on <html>.
     // * close when pressing ESC

@@ -613,6 +613,7 @@ html.has-modal-active, html.has-modal-active2 {
 
         .message {
             background-color: $body-background-color !important;
+            //background-color: #404953 !important;
             border: 1px solid  $grey-darker  !important;
 
             .tabs a {
@@ -652,6 +653,7 @@ html.has-modal-active, html.has-modal-active2 {
 
             .message-body {
                 padding: 1rem 0.9rem !important;
+                font-size: 0.95rem;
             }
         }
 
@@ -725,7 +727,7 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tensionTitle, .tensionComments, .tensionSidePane {
         textarea, input {
-            color: #fff !important;
+            color: $white-1 !important;
             background-color: #33383ed9 !important;
             &::placeholder {
                 color: $white-ter !important;
@@ -785,7 +787,7 @@ html.has-modal-active, html.has-modal-active2 {
         position: absolute;
         z-index: 25;
         //padding-right: 8rem;
-        min-width: 8rem;
+        min-width: 9rem;
         &.is-right {
             left: auto;
             right: 0;
@@ -878,7 +880,11 @@ html.has-modal-active, html.has-modal-active2 {
     padding-top: 5px !important;
     margin-bottom: 12px !important;
 
-    & > div {
+    #searchList {
+        margin-top: -12px !important;
+    }
+
+    .searchBar > div:first-child {
         display: inline-flex;
         position: relative;
         vertical-align: top;
@@ -892,29 +898,12 @@ html.has-modal-active, html.has-modal-active2 {
         //display: flex;
         //flex-grow: 1;
         //flex-direction: column;
-        max-width: 50% !important;
-
+        max-width: 55% !important;
         & > .button:first-child {
             padding-right: 0 !important;
+            &:hover { border-color: $grey; }
         }
 
-        .button {
-            border: none !important;
-            margin-right: -1px !important;
-        }
-
-        .dropdown-menu {
-            min-width: 9rem !important;
-        }
-
-        .text {
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        padding-right: 0px !important;
         .ellipsisArt {
             margin-left: 0px !important;
             margin-right: 2px !important;
@@ -924,6 +913,13 @@ html.has-modal-active, html.has-modal-active2 {
                 font-size: 16px !important;
             }
         }
+    }
+
+    #actionPanelContent > .button {
+            border-left-color: $grey !important;
+            border-left-width: 1px !important;
+            border-left-style: solid;
+            &:hover { border-color: $grey; }
     }
 }
 #searchBarTensions {
@@ -993,19 +989,18 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #searchList {
+    //top: 100% !important;
     position: absolute !important;
-    top: 100% !important;
     z-index: 20 !important;
     width: 99.9% !important;
-    padding: 0 !important;
-    padding-bottom: 0 !important;
-    max-height: 412px !important;
+    height: 412px;
+    max-height: 400px !important;
     overflow-y: auto !important;
 
-    & > div {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
+    //& > div {
+    //    padding-top: 0 !important;
+    //    padding-bottom: 0 !important;
+    //}
 
     .table, .table.is-fullwidth {
         //flex-grow: 1;
@@ -1019,6 +1014,12 @@ html.has-modal-active, html.has-modal-active2 {
             border-bottom: 1px solid #22222222;
         }
     }
+
+    // @debug don't work !
+    //tbody {
+    //    max-height: 400px !important;
+    //    overflow-y: auto !important;
+    //}
 
     thead th,
     thead td {
@@ -1242,7 +1243,7 @@ a.actionLink {
     }
 
     .modal-card-body {
-        background-color: #fff !important;
+        background-color: $white-1 !important;
         color: #111;
     }
 
@@ -1617,6 +1618,13 @@ a.actionLink {
         flex: 1;
         background-color: $grey;
     }
+}
+
+.is-ellipsis {
+    max-width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .Circle {
