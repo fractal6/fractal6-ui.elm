@@ -123,7 +123,10 @@ view op =
                         , div [ class "card-content" ] [ nodeMandateInputView txt form.node op ]
                         ]
                     , if op.data.doAddLinks || (form.users |> List.filter (\u -> u.username /= "")) /= [] then
-                        div [ class "card cardForm" ]
+                        div
+                            [ class "card cardForm"
+                            , attribute "style" "overflow: unset;"
+                            ]
                             [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
                             , div [ class "card-content" ] [ nodeLinksInputView txt form op.data op ]
                             , br [] []

@@ -426,7 +426,6 @@ html.has-modal-active, html.has-modal-active2 {
 .nodesList {
     .media-content{
         overflow: unset
-
     }
     hr {
         margin-top: 0.5rem !important;
@@ -757,7 +756,7 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .selectors {
-        max-height: 444px;
+        max-height: 280px;
         overflow-y: auto;
     }
 
@@ -997,10 +996,6 @@ html.has-modal-active, html.has-modal-active2 {
     max-height: 400px !important;
     overflow-y: auto !important;
 
-    //& > div {
-    //    padding-top: 0 !important;
-    //    padding-bottom: 0 !important;
-    //}
 
     .table, .table.is-fullwidth {
         //flex-grow: 1;
