@@ -7,13 +7,14 @@ import Dict exposing (Dict)
 import Extra exposing (ternary, withMapData, withMaybeData)
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
+import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nearestCircleid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Time
@@ -157,10 +158,12 @@ type alias Op msg =
     , isAdmin : Bool
     , hasRole : Bool
     , isRight : Bool
+    , node : NodeFocus
     , data : ActionPanel
     , onCloseModal : String -> msg
     , onArchive : ActionButton -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
+    , onNavigate : String -> msg
     }
 
 
@@ -174,34 +177,38 @@ view op =
         [ if op.data.isEdit then
             div
                 [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ]
-                [ case actionType_m of
-                    Just EDIT ->
-                        div
-                            [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ]
-                            [ Fa.icon "fas fa-archive" "Archive", loadingSpin (op.data.archive_result == LoadingSlowly) ]
-
-                    Just ARCHIVE ->
-                        div
-                            [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ]
-                            [ Fa.icon "fas fa-archive" "Unarchive", loadingSpin (op.data.archive_result == LoadingSlowly) ]
-
-                    Just NEW ->
-                        text ""
-
-                    Nothing ->
-                        div [] [ text "not implemented" ]
-                , if op.hasRole then
-                    hr [ class "dropdown-divider" ] []
-
-                  else
-                    text ""
-                , if op.hasRole then
-                    div [ class "dropdown-item button-light is-danger" ]
-                        [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ] ]
-
-                  else
-                    text ""
+            <|
+                [ div
+                    [ class "dropdown-item button-light"
+                    , onClick (op.onNavigate ((Route.Tension_Dynamic_Dynamic_Action { param1 = op.node.rootnameid, param2 = op.data.form.tid } |> toHref) ++ "?v=edit"))
+                    ]
+                    [ Fa.icon "fas fa-pen" T.edit ]
+                , hr [ class "dropdown-divider" ] []
                 ]
+                    ++ [ case actionType_m of
+                            Just EDIT ->
+                                div [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ]
+                                    [ Fa.icon "fas fa-archive" T.archive, loadingSpin (op.data.archive_result == LoadingSlowly) ]
+
+                            Just ARCHIVE ->
+                                div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ]
+                                    [ Fa.icon "fas fa-archive" T.unarchive, loadingSpin (op.data.archive_result == LoadingSlowly) ]
+
+                            Just NEW ->
+                                text ""
+
+                            Nothing ->
+                                div [] [ text "not implemented" ]
+                       ]
+                    ++ (if op.hasRole then
+                            [ hr [ class "dropdown-divider" ] []
+                            , div [ class "dropdown-item button-light is-danger" ]
+                                [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ] ]
+                            ]
+
+                        else
+                            []
+                       )
 
           else
             text ""

@@ -2240,10 +2240,12 @@ viewSidePane u t model =
                                         , isAdmin = hasConfig
                                         , hasRole = hasRole
                                         , isRight = False
+                                        , node = model.node_focus
                                         , data = model.actionPanel
                                         , onCloseModal = CloseActionPanelModal
                                         , onArchive = ArchiveDoc
                                         , onSubmit = Submit
+                                        , onNavigate = Navigate
                                         }
                                 in
                                 ActionPanel.view panelData

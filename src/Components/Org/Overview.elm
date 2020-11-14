@@ -1346,10 +1346,12 @@ viewSearchBar us model =
                                                 , isAdmin = isAdmin
                                                 , hasRole = hasRole
                                                 , isRight = True
+                                                , node = model.node_focus
                                                 , data = model.actionPanel
                                                 , onCloseModal = CloseActionPanelModal
                                                 , onArchive = ArchiveDoc
                                                 , onSubmit = Submit
+                                                , onNavigate = Navigate
                                                 }
                                         in
                                         div [ id "actionPanelContent", class "control" ]

@@ -281,6 +281,7 @@ const actions = {
             document.addEventListener('click', outsideClickListener);
             document.addEventListener('keydown', escListener);
         }, 50);
+
     },
     'CLICK': (app, session, target) => {
         document.getElementById(target).click();

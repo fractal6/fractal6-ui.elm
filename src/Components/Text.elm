@@ -163,14 +163,19 @@ published =
     "published"
 
 
-archived : String
-archived =
-    "archived"
-
-
 archive : String
 archive =
     "Archive"
+
+
+unarchive : String
+unarchive =
+    "Unarchive"
+
+
+archived : String
+archived =
+    "archived"
 
 
 unarchived : String
