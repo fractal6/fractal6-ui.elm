@@ -52,6 +52,14 @@ log message =
         }
 
 
+logErr : String -> Cmd msg
+logErr message =
+    outgoing
+        { action = "LOGERR"
+        , data = JE.string message
+        }
+
+
 bulma_driver : String -> Cmd msg
 bulma_driver eltId =
     outgoing

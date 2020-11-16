@@ -148,8 +148,8 @@ patchTensionInputEncoder f =
                                 , action = fromMaybe f.action
                                 , type_ = fromMaybe f.tension_type
                                 , comments = buildComment createdAt f.uctx.username message
-                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                                 , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                             }
                         )
                         |> Present
@@ -458,8 +458,14 @@ archiveDocInputEncoder f =
                     Input.buildTensionPatch
                         (\s ->
                             { s
-                                | blobs = [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present
-                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                | history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                , blobs =
+                                    if f.bid /= "" then
+                                        [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present
+
+                                    else
+                                        -- @debug: Get the last blob by default
+                                        Absent
                             }
                         )
                         |> Present

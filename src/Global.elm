@@ -25,7 +25,6 @@ import ModelCommon.Requests exposing (tokenack)
 import ModelSchema exposing (..)
 import Ports
 import Process
-import QuickSearch as Qsearch
 import RemoteData exposing (RemoteData)
 import Task
 import Url exposing (Url)
@@ -54,22 +53,18 @@ type alias Model =
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        userState =
+        ( userState, cmd ) =
             case flags.uctx of
                 Just userCtxRaw ->
                     case JD.decodeValue userCtxDecoder userCtxRaw of
                         Ok uctx ->
-                            LoggedIn uctx
+                            ( LoggedIn uctx, Cmd.none )
 
                         Err err ->
-                            --let
-                            --    d =
-                            --        Debug.log "error" err
-                            --in
-                            LoggedOut
+                            ( LoggedOut, Ports.logErr (JD.errorToString err) )
 
                 Nothing ->
-                    LoggedOut
+                    ( LoggedOut, Cmd.none )
 
         session =
             initSession flags
@@ -79,6 +74,7 @@ init flags url key =
         [ Ports.log "Hello!"
         , Ports.toggle_theme
         , Ports.bulma_driver ""
+        , cmd
         ]
     )
 

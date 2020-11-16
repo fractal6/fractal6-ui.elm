@@ -7,14 +7,14 @@ import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.Text as T
 import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList, toUp1, withMapData, withMaybeData, withMaybeDataMap)
+import Extra exposing (ternary, toMapOfList, toUp1)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -304,7 +304,7 @@ init global flags =
 
         -- Focus
         newFocus =
-            NodeFocus rootnameid True rootnameid NodeType.Circle
+            NodeFocus rootnameid rootnameid NodeType.Circle
 
         -- What has changed
         fs =
@@ -1125,7 +1125,12 @@ update global msg model =
         -- Actionn
         DoActionEdit bid ->
             if model.actionPanel.isEdit == False then
-                ( { model | actionPanel = ActionPanel.edit bid model.actionPanel }
+                let
+                    aPanel =
+                        model.actionPanel
+                            |> ActionPanel.edit bid
+                in
+                ( { model | actionPanel = aPanel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
                 , Cmd.none
                 )
@@ -1168,8 +1173,8 @@ update global msg model =
                         |> ActionPanel.cancelEdit
                         |> ActionPanel.setArchiveResult result
 
-                gcmd =
-                    Cmd.batch [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
+                gcmds =
+                    [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
             in
             case result of
                 Success t ->
@@ -1182,7 +1187,10 @@ update global msg model =
                                 )
                                 model.tension_head
                     in
-                    ( { model | actionPanel = aPanel, tension_head = newTh }, gcmd, send UpdateUserToken )
+                    ( { model | actionPanel = aPanel, tension_head = newTh }
+                    , Cmd.batch gcmds
+                    , send UpdateUserToken
+                    )
 
                 other ->
                     if doRefreshToken other then
@@ -1195,7 +1203,7 @@ update global msg model =
                         )
 
                     else
-                        ( { model | actionPanel = aPanel }, gcmd, Cmd.none )
+                        ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1343,7 +1351,7 @@ update global msg model =
                     ( { model | lookup_users = users }, Cmd.none, Cmd.none )
 
                 Err err ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( model, Ports.logErr err, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg

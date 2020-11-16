@@ -27,3 +27,8 @@ canLogin =
 canCreateRoot : SelectionSet Bool Fractal.Object.UserRights
 canCreateRoot =
     Object.selectionForField "Bool" "canCreateRoot" [] Decode.bool
+
+
+maxPublicOrga : SelectionSet Int Fractal.Object.UserRights
+maxPublicOrga =
+    Object.selectionForField "Int" "maxPublicOrga" [] Decode.int

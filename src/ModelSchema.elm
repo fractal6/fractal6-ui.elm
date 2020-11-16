@@ -57,7 +57,7 @@ type alias Node =
     , first_link : Maybe User
     , charac : NodeCharac
     , isPrivate : Bool
-    , source : Maybe IdPayload
+    , source : Maybe BlobId
     }
 
 
@@ -356,6 +356,12 @@ type alias UserRoleExtended =
 --
 -- Response Data for Mutations
 --
+
+
+type alias BlobId =
+    { id : String
+    , tension : IdPayload
+    }
 
 
 type alias IdPayload =

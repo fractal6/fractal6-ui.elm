@@ -7,12 +7,12 @@ import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionP
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Components.Text as T
 import Debug
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.NewCircle as NewCircleForm
@@ -43,6 +43,7 @@ import ModelCommon.Codecs
         , NodeFocus
         , TensionCharac
         , focusFromNameid
+        , focusFromPath
         , focusState
         , getCircleRoles
         , getCoordoRoles
@@ -179,12 +180,14 @@ type Msg
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
+      -- Graphpack
+    | AddNodes (List Node)
+    | DelNodes (List String)
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
-    | ToggleTooltips -- ports send / Not implemented @DEBUG multiple tooltip/ see name of circle
       -- Token refresh
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
@@ -484,10 +487,7 @@ update global msg model =
                     --ENTER
                     case Array.get model.node_quickSearch.idx model.node_quickSearch.lookup of
                         Just n ->
-                            ( model
-                            , Cmd.none
-                            , Nav.replaceUrl global.key (uriFromNameid OverviewBaseUri n.nameid)
-                            )
+                            ( model, send (NodeClicked n.nameid), Cmd.none )
 
                         Nothing ->
                             ( model, Cmd.none, Cmd.none )
@@ -694,6 +694,7 @@ update global msg model =
                             in
                             ( { model | tensionForm = tf }
                             , queryNodesSub apis.gql nameid NewNodesAck
+                              -- get the nodes just added
                             , Cmd.none
                             )
 
@@ -806,29 +807,26 @@ update global msg model =
         NewNodesAck result ->
             case result of
                 Success nodes ->
-                    let
-                        first_nameid =
-                            List.head nodes |> Maybe.map (\n -> n.nameid) |> withDefault ""
+                    ( model, send (AddNodes nodes), Cmd.none )
 
-                        ndata =
-                            hotNodePush nodes model.orga_data
-                    in
-                    ( { model | orga_data = Success ndata }
-                    , Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
-                    )
-
-                other ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         -- Node Action
         DoActionEdit node ->
             if model.actionPanel.isEdit == False then
                 let
+                    ( tid, bid ) =
+                        node.source
+                            |> Maybe.map
+                                (\b -> ( b.tension.id, b.id ))
+                            |> withDefault ( "", "" )
+
                     aPanel =
                         model.actionPanel
-                            |> ActionPanel.setTid (node.source |> Maybe.map (\s -> s.id) |> withDefault "")
-                            |> ActionPanel.edit ""
+                            |> ActionPanel.edit bid
+                            |> ActionPanel.setTid tid
+                            |> ActionPanel.setNid node.nameid
                 in
                 ( { model | actionPanel = aPanel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
@@ -852,7 +850,7 @@ update global msg model =
             in
             ( { model | actionPanel = ActionPanel.closeModal model.actionPanel }, gcmd, Ports.close_modal )
 
-        ArchiveDoc node time ->
+        ArchiveDoc _ time ->
             let
                 aPanel =
                     model.actionPanel
@@ -873,12 +871,15 @@ update global msg model =
                         |> ActionPanel.cancelEdit
                         |> ActionPanel.setArchiveResult result
 
-                gcmd =
-                    Cmd.batch [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
+                gcmds =
+                    [ Ports.click "body" ]
             in
             case result of
                 Success t ->
-                    ( { model | actionPanel = aPanel }, gcmd, send UpdateUserToken )
+                    ( { model | actionPanel = aPanel }
+                    , Cmd.batch (gcmds ++ [ send (DelNodes [ aPanel.form.nid ]) ])
+                    , Cmd.none
+                    )
 
                 other ->
                     if doRefreshToken other then
@@ -891,7 +892,7 @@ update global msg model =
                         )
 
                     else
-                        ( { model | actionPanel = aPanel }, gcmd, Cmd.none )
+                        ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -924,13 +925,9 @@ update global msg model =
                 JoinOrga (JoinInit form) ->
                     case result of
                         Success n ->
-                            let
-                                ndata =
-                                    hotNodePush [ n ] model.orga_data
-                            in
-                            ( { model | node_action = JoinOrga (JoinValidation form result), orga_data = Success ndata }
-                            , Cmd.batch [ Ports.addQuickSearchNodes [ n ], Maybe.map (\fs -> Ports.addQuickSearchUsers [ fs ]) n.first_link |> withDefault Cmd.none ]
-                            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+                            ( { model | node_action = JoinOrga (JoinValidation form result) }
+                            , send (AddNodes [ n ])
+                            , Cmd.none
                             )
 
                         other ->
@@ -943,6 +940,34 @@ update global msg model =
                 default ->
                     ( model, Cmd.none, Cmd.none )
 
+        AddNodes nodes ->
+            let
+                ndata =
+                    hotNodePush nodes model.orga_data
+            in
+            ( { model | orga_data = Success ndata }
+            , Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
+            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            )
+
+        DelNodes nameids ->
+            let
+                ndata =
+                    hotNodePull nameids model.orga_data
+
+                newFocus =
+                    nameids
+                        |> List.head
+                        |> Maybe.map (\nid -> getParentId nid model.orga_data)
+                        |> withDefault Nothing
+                        |> withDefault model.node_focus.rootnameid
+            in
+            ( { model | orga_data = Success ndata }
+              --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
+            , Cmd.batch [ send (NodeClicked newFocus) ]
+            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            )
+
         -- JS interop
         NodeClicked nameid ->
             ( model
@@ -953,6 +978,7 @@ update global msg model =
         NodeFocused path_ ->
             case path_ of
                 Ok path ->
+                    -- May change the node_focus var
                     let
                         nameids =
                             path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
@@ -966,13 +992,10 @@ update global msg model =
                     )
 
                 Err err ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( model, Ports.logErr err, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
-
-        ToggleTooltips ->
-            ( model, () |> sendToggleTooltips, Cmd.none )
 
         DoClearTooltip ->
             ( model, Cmd.none, Ports.clearTooltip )
@@ -1085,7 +1108,7 @@ update global msg model =
                     ( { model | lookup_users = users }, Cmd.none, Cmd.none )
 
                 Err err ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( model, Ports.logErr err, Cmd.none )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1154,9 +1177,6 @@ nodeFocusedFromJs_ object =
 port sendToggleGraphReverse : () -> Cmd msg
 
 
-port sendToggleTooltips : () -> Cmd msg
-
-
 
 ---- VIEW ----
 
@@ -1175,7 +1195,7 @@ view_ global model =
             getNode model.node_focus.nameid model.orga_data
 
         tid =
-            focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\t -> t.id)) |> withDefault Nothing |> withDefault ""
+            focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\b -> b.tension.id)) |> withDefault Nothing |> withDefault ""
 
         roletype =
             focus_m |> Maybe.map (\n -> n.role_type) |> withDefault Nothing

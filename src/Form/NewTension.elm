@@ -1,12 +1,12 @@
 module Form.NewTension exposing (..)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc
 import Components.Text as T
 import Dict
-import Extra exposing (ternary, withDefaultData, withMaybeData)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Fractal.Enum.BlobType as BlobType

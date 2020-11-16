@@ -343,12 +343,12 @@ phRolePolicies =
 
 noFirstLinksRole : String
 noFirstLinksRole =
-    "No member is linked to this role yet."
+    "No members are linked to this role yet."
 
 
 noFirstLinksCircle : String
 noFirstLinksCircle =
-    "No member is linked to this circle yet."
+    "No members are linked to this circle yet."
 
 
 

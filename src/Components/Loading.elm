@@ -3,6 +3,7 @@ module Components.Loading exposing (..)
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
+import Extra exposing (toUp1)
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
@@ -10,6 +11,7 @@ import Html exposing (Html, a, button, div, img, p, span, text)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Http
 import Json.Decode as JD
+import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
 
 
@@ -130,8 +132,11 @@ errorHttpToString httpError =
                 in
                 "Unauthaurized: " ++ errMsg
 
+            else if body == "" then
+                "Request failed with status code: " ++ String.fromInt statusCode
+
             else
-                "Request failed with status code: " ++ String.fromInt statusCode ++ "!!!" ++ body
+                body
 
         BadBody message ->
             message
@@ -162,8 +167,11 @@ errorGraphQLHttpToString httpError =
                 in
                 "Unauthaurized: " ++ errMsg
 
+            else if body == "" then
+                "Request failed with status code: " ++ String.fromInt metadata.statusCode
+
             else
-                "Request failed with status code: " ++ String.fromInt metadata.statusCode ++ "!!!" ++ body
+                body
 
         GqlHttp.BadPayload body ->
             "Graphql Http JSON decoder unexpected error."
@@ -200,7 +208,23 @@ loadingSpin isLoading =
 
 viewGqlErrors : ErrorData -> Html msg
 viewGqlErrors errMsg =
-    List.map (\e -> p [] [ text e ]) errMsg
+    errMsg
+        |> List.map
+            (\e ->
+                let
+                    err =
+                        case JD.decodeString errorDecoder e of
+                            Ok err_ ->
+                                err_.errors
+                                    |> List.head
+                                    |> Maybe.map (\x -> toUp1 x.message)
+                                    |> withDefault e
+
+                            Err err_ ->
+                                e
+                in
+                p [] [ text err ]
+            )
         |> div [ class "box has-background-danger" ]
 
 
@@ -242,3 +266,56 @@ viewRoleNeeded errMsg =
                 )
                 errMsg
         ]
+
+
+
+-- RequestResult / Data methods
+
+
+withDefaultData : a -> RequestResult e a -> a
+withDefaultData default result =
+    case result of
+        Success d ->
+            d
+
+        _ ->
+            default
+
+
+withMaybeData : RequestResult e a -> Maybe a
+withMaybeData result =
+    case result of
+        Success d ->
+            Just d
+
+        _ ->
+            Nothing
+
+
+withMaybeDataMap : (a -> b) -> RequestResult e a -> Maybe b
+withMaybeDataMap resMap result =
+    case result of
+        Success d ->
+            Just (resMap d)
+
+        _ ->
+            Nothing
+
+
+withMapData : (a -> b) -> RequestResult e a -> RequestResult e b
+withMapData resMap result =
+    case result of
+        Success d ->
+            Success (resMap d)
+
+        Failure err ->
+            Failure err
+
+        Loading ->
+            Loading
+
+        LoadingSlowly ->
+            LoadingSlowly
+
+        NotAsked ->
+            NotAsked

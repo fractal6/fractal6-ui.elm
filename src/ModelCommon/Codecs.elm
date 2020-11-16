@@ -1,16 +1,16 @@
 module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
-import Components.Loading exposing (GqlData)
+import Components.Loading exposing (GqlData, withMaybeData)
 import Dict
-import Extra exposing (withMaybeDataMap)
+import Extra exposing (ternary)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Node, NodeCharac, NodeId, NodesData, UserCtx, UserRole)
+import ModelSchema exposing (LocalGraph, Node, NodeCharac, NodeId, NodesData, UserCtx, UserRole)
 import Url exposing (Url)
 
 
@@ -40,11 +40,8 @@ type FractalBaseRoute
 
 type alias NodeFocus =
     { rootnameid : String
-    , isRoot : Bool
     , nameid : String
     , type_ : NodeType.NodeType -- @obsololete: known from nameid
-
-    --, name : Maybe String // get the name when JS/D3 finished the rendering Job
     }
 
 
@@ -174,6 +171,14 @@ nodeFromFocus focus =
     }
 
 
+focusFromPath : LocalGraph -> NodeFocus
+focusFromPath path =
+    { rootnameid = nid2rootid path.focus.nameid
+    , nameid = path.focus.nameid
+    , type_ = path.focus.type_
+    }
+
+
 focusFromNameid : String -> NodeFocus
 focusFromNameid nameid_ =
     let
@@ -190,16 +195,11 @@ focusFromNameid nameid_ =
         role =
             Array.get 2 path |> withDefault ""
 
-        -- extra attribute
+        nodeType =
+            ternary (role == "") NodeType.Circle NodeType.Role
+
         isRoot =
             lastNode == "" && role == ""
-
-        nodeType =
-            if role == "" then
-                NodeType.Circle
-
-            else
-                NodeType.Role
 
         -- build the node name ID
         nameid =
@@ -212,7 +212,7 @@ focusFromNameid nameid_ =
             else
                 String.join "#" [ rootid, lastNode, role ]
     in
-    NodeFocus rootid isRoot nameid nodeType
+    NodeFocus rootid nameid nodeType
 
 
 guestIdCodec : String -> String -> String
@@ -240,6 +240,11 @@ nodeIdCodec parentid targetid nodeType =
                 String.join "#" [ parentid, targetid ]
 
 
+nid2rootid : String -> String
+nid2rootid nameid =
+    nameid |> String.split "#" |> List.head |> withDefault ""
+
+
 nearestCircleid : String -> String
 nearestCircleid nameid =
     let
@@ -253,11 +258,6 @@ nearestCircleid nameid =
 
         _ ->
             nameid
-
-
-nid2rootid : String -> String
-nid2rootid nameid =
-    nameid |> String.split "#" |> List.head |> withDefault ""
 
 
 getOrgaRoles : List UserRole -> List String -> List UserRole

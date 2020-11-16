@@ -187,7 +187,7 @@ export const GraphPack = {
     ease: d3.easePolyInOut.exponent(4),
     //ease: d3.easePolyOut.exponent(4),
     isZooming: false,
-    vOld: null,
+    vpOld: null,
 
     // Resizing
     rtime: null,
@@ -473,10 +473,8 @@ export const GraphPack = {
                 console.warn("Unknown node:", focus);
                 console.warn("Redirecting to root");
 
-                delay = 0.5;
-                maybeFocus = this.rootNode;
-                //this.app.ports.nodeFocusedFromJs.send([]);
-                //return
+                maybeFocus = this.setFocus(this.rootNode);
+                //delay = 0.5;
             }
             focus = maybeFocus;
         } else { // assume node
@@ -492,22 +490,26 @@ export const GraphPack = {
         this.focusedNode = focus;
         this.drawNodeHover(this.focusedNode, false);
 
-        var zoomFactor = this.zoomFactorCircle;
+        var zoomFactor;
         if (this.focusedNode.data.type_ === NodeType.Role) {
             if (this.focusedNode.data.role_type == "Guest") {
                 zoomFactor = this.zoomFactorGuest;
             } else {
                 zoomFactor = this.zoomFactorRole;
             }
+        } else {
+            zoomFactor = this.zoomFactorCircle;
         }
-        var v = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * zoomFactor]; //The center and width of the new "viewport"
-        var maxDuration = this.minZoomDuration*2;
-        delay = (delay === undefined ? 0 : delay*this.minZoomDuration);
 
-        var interpolator = d3.interpolateZoom(this.vOld, v); //Create interpolation between current and new "viewport"
+        // Configre interpolator
+        var vp = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * zoomFactor]; //The center and width of the new "viewport"
+        delay = (delay === undefined ? 0 : delay*this.minZoomDuration);
+        var maxDuration = this.minZoomDuration*2;
+        var interpolator = d3.interpolateZoom(this.vpOld, vp); //Create interpolation between current and new "viewport"
         var duration = Math.min(interpolator.duration, maxDuration) || delay; //Interpolation gives back a suggested duration
         var timeElapsed = 0+delay; //Set the time elapsed for the interpolateZoom function to 0
-        this.vOld = v; //Save the "viewport" of the next state as the next "old" state
+        //console.log("old", this.vpOld, "new", vp, "delay", delay)
+        this.vpOld = vp; //Save the "viewport" of the next state as the next "old" state
 
         //Perform the interpolation and continuously change the zoomCtx while the "transition" occurs.
         var interpolateZoom = (dt) => {
@@ -527,6 +529,9 @@ export const GraphPack = {
                     return false;
                 }
             }
+
+            // do no stay lock here
+            return true
         };
 
         var	dt = 0;
@@ -639,17 +644,30 @@ export const GraphPack = {
         this.nodes = this.gPack.descendants(graph);
         this.rootNode = this.nodes[0];
         this.hoveredNode = null;
-        this.nodes.forEach( n => this.nodesDict[n.data.nameid] = n);
-        if (focusid) {
-            // Whit it doesnt works ?
-            //this.focusedNode = this.nodes.find(n => {n.data.nameid === focusid });
-            this.focusedNode = this.nodesDict[focusid];
-        } else {
-            this.focusedNode = this.rootNode;
-        }
-        this.vOld = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * this.zoomFactorCircle];
-
+        this.nodes.forEach(n => this.nodesDict[n.data.nameid] = n);
         this.graph = graph;
+        this.setFocus(focusid, true);
+    },
+
+    setFocus(n, setViewport) {
+        if (!n) {
+            // focus on root node by default
+            this.focusedNode = this.rootNode;
+        } else if (typeof(n) === 'string') {
+            // Whit it doesnt works ?
+            //this.focusedNode = this.nodes.find(n => {n.data.nameid === n });
+            this.focusedNode = this.nodesDict[n];
+        } else {
+            // assume node
+            this.focusedNode = n;
+        }
+
+        if (setViewport) {
+            this.vpOld = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * this.zoomFactorCircle];
+        }
+
+        return this.focusedNode
+
     },
 
     //
@@ -965,7 +983,7 @@ export const GraphPack = {
 
     nodeFocusedFromJs(node) {
         // @DEBUG: why / where would node be undefined ?
-        if (!node ) return
+        if (!node) return
 
         var rootNode = {
             name: this.rootNode.data.name,
@@ -1349,6 +1367,8 @@ export const GraphPack = {
         //
 
         if (isInit) {
+
+            // ToggleGrahReverse button
             app.ports.sendToggleGraphReverse.subscribe(e => {
                 if (this.nodeSize.name == "nodeSizeTopDown") {
                     this.nodeSize = this.nodeSizeBottomUp;
@@ -1359,16 +1379,12 @@ export const GraphPack = {
                 if (this.hoveredNode) this.clearNodeHover(this.hoveredNode);
 
                 this.resetGraphPack(this.graph, false);
-
                 this.clearCanvas(this.ctx2d);
                 this.clearCanvas(this.hiddenCtx2d);
                 this.zoomToNode(this.rootNode, 0.9);
 
             });
 
-            app.ports.sendToggleTooltips.subscribe(e => {
-                //DEBUG: TODO
-            });
         }
 
         //

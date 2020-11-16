@@ -1,6 +1,5 @@
 module Extra exposing (..)
 
-import Components.Loading exposing (RequestResult(..))
 import Dict exposing (Dict)
 import String
 import String.Extra as SE
@@ -54,56 +53,3 @@ addParam_ value maybeValues =
 
         Nothing ->
             Just [ value ]
-
-
-
--- RequestResult / Data methods
-
-
-withDefaultData : a -> RequestResult e a -> a
-withDefaultData default result =
-    case result of
-        Success d ->
-            d
-
-        _ ->
-            default
-
-
-withMaybeData : RequestResult e a -> Maybe a
-withMaybeData result =
-    case result of
-        Success d ->
-            Just d
-
-        _ ->
-            Nothing
-
-
-withMaybeDataMap : (a -> b) -> RequestResult e a -> Maybe b
-withMaybeDataMap resMap result =
-    case result of
-        Success d ->
-            Just (resMap d)
-
-        _ ->
-            Nothing
-
-
-withMapData : (a -> b) -> RequestResult e a -> RequestResult e b
-withMapData resMap result =
-    case result of
-        Success d ->
-            Success (resMap d)
-
-        Failure err ->
-            Failure err
-
-        Loading ->
-            Loading
-
-        LoadingSlowly ->
-            LoadingSlowly
-
-        NotAsked ->
-            NotAsked

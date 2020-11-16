@@ -468,7 +468,8 @@ queryUser fillInOptionals object_ =
 
 
 type alias QueryUserRightsOptionalArguments =
-    { first : OptionalArgument Int
+    { order : OptionalArgument Fractal.InputObject.UserRightsOrder
+    , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
@@ -480,10 +481,10 @@ queryUserRights :
 queryUserRights fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { first = Absent, offset = Absent }
+            fillInOptionals { order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeUserRightsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryUserRights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)

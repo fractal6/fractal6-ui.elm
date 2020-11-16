@@ -1,10 +1,10 @@
 module Components.ActionPanel exposing (..)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Components.Text as T
 import Dict exposing (Dict)
-import Extra exposing (ternary, withMapData, withMaybeData)
+import Extra exposing (ternary)
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
@@ -31,6 +31,7 @@ type alias ActionPanel =
 type alias ActionForm =
     { uctx : UserCtx
     , tid : String
+    , nid : String
     , bid : String
     , action : ActionButton
     , events_type : Maybe (List TensionEvent.TensionEvent)
@@ -53,6 +54,7 @@ initActionForm user tid =
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
     , tid = tid
+    , nid = ""
     , bid = ""
     , action = ArchiveAction
     , events_type = Nothing
@@ -133,6 +135,15 @@ setTid tid data =
             data.form
     in
     { data | form = { f | tid = tid } }
+
+
+setNid : String -> ActionPanel -> ActionPanel
+setNid nid data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | nid = nid } }
 
 
 setEvents : List TensionEvent.TensionEvent -> ActionPanel -> ActionPanel

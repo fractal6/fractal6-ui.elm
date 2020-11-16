@@ -2,11 +2,11 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
 import Auth exposing (doRefreshToken2, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (makeNewNodeId)
 import Components.Text as T
 import Dict exposing (Dict)
-import Extra exposing (ternary, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Extra exposing (ternary)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable, isPostSendable)
 import Fractal.Enum.NodeType as NodeType

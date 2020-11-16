@@ -1,10 +1,10 @@
 module Components.UserSearchPanel exposing (..)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMapData, withMaybeData)
 import Components.Text as T
 import Dict exposing (Dict)
-import Extra exposing (ternary, withMapData, withMaybeData)
+import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)

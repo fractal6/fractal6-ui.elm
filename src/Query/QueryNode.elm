@@ -2,6 +2,7 @@ module Query.QueryNode exposing
     ( MemberNode
     , NodeExt
     , User
+    , blobIdPayload
     , emiterOrReceiverPayload
     , nodeCharacPayload
     , nodeIdPayload
@@ -21,6 +22,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
+import Fractal.Object.Blob
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
 import Fractal.Object.NodeStats
@@ -269,11 +271,7 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
         |> with
-            (Fractal.Object.Node.source identity
-                (SelectionSet.succeed IdPayload
-                    |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                )
-            )
+            (Fractal.Object.Node.source identity blobIdPayload)
 
 
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
@@ -281,6 +279,13 @@ nodeIdPayload =
     SelectionSet.map2 NodeId
         Fractal.Object.Node.nameid
         Fractal.Object.Node.isPrivate
+
+
+blobIdPayload : SelectionSet BlobId Fractal.Object.Blob
+blobIdPayload =
+    SelectionSet.succeed BlobId
+        |> with (Fractal.Object.Blob.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Blob.tension identity (SelectionSet.succeed IdPayload |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)))
 
 
 userPayload : SelectionSet User Fractal.Object.User

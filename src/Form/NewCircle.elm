@@ -1,11 +1,11 @@
 module Form.NewCircle exposing (view)
 
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (RequestResult(..), viewGqlErrors)
+import Components.Loading as Loading exposing (RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Components.Text as T
 import Dict
-import Extra exposing (ternary, withMaybeData)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Form.NewTension exposing (NewTensionForm, Op)
@@ -119,7 +119,8 @@ view op =
                         ]
                     , br [] []
                     , div [ class "card cardForm" ]
-                        [ div [ class "has-text-black is-aligned-center" ] [ text T.mandateH ]
+                        --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
+                        [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ text T.mandateH ]
                         , div [ class "card-content" ] [ nodeMandateInputView txt form.node op ]
                         ]
                     , if op.data.doAddLinks || (form.users |> List.filter (\u -> u.username /= "")) /= [] then
@@ -127,7 +128,8 @@ view op =
                             [ class "card cardForm"
                             , attribute "style" "overflow: unset;"
                             ]
-                            [ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
+                            --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
+                            [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ text T.firstLinkH ]
                             , div [ class "card-content" ] [ nodeLinksInputView txt form op.data op ]
                             , br [] []
                             ]
@@ -164,7 +166,7 @@ view op =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button"
+                                    ([ class "button has-text-weight-semibold"
                                      , classList
                                         [ ( "is-warning", isSendable )
                                         , ( "is-loading", isLoading && data.activeButton == Just 0 )

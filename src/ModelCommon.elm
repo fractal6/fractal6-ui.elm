@@ -3,6 +3,7 @@ module ModelCommon exposing (..)
 import Array exposing (Array)
 import Components.Loading as Loading exposing (ErrorData, GqlData, RequestResult(..), WebData)
 import Dict exposing (Dict)
+import Dict.Extra as DE
 import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -19,8 +20,8 @@ import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid, nodeFromFocus)
 import ModelSchema exposing (..)
-import QuickSearch as Qsearch
 import RemoteData
+import Set
 import Url exposing (Url)
 
 
@@ -66,9 +67,6 @@ type alias NodesQuickSearch =
     , lookup : Array Node
     , idx : Int
     , visible : Bool
-
-    --, lut : Qsearch.Table Node
-    --, lookup : List Node
     }
 
 
@@ -380,15 +378,18 @@ getParentFragmentFromRole role =
     Array.get (Array.length l - 2) l |> withDefault ""
 
 
-hotTensionPush : Tension -> GqlData TensionsData -> TensionsData
-hotTensionPush tension tsData =
-    -- Push a new tension in the model if data is success
-    case tsData of
-        Success tensions ->
-            [ tension ] ++ tensions
+getParentId : String -> GqlData NodesData -> Maybe String
+getParentId nameid odata =
+    case odata of
+        Success data ->
+            data
+                |> Dict.get nameid
+                |> Maybe.map (\n -> n.parent)
+                |> withDefault Nothing
+                |> Maybe.map (\p -> p.nameid)
 
-        other ->
-            []
+        _ ->
+            Nothing
 
 
 hotNodePush : List Node -> GqlData NodesData -> NodesData
@@ -398,8 +399,30 @@ hotNodePush nodes odata =
         Success data ->
             Dict.union (List.map (\n -> ( n.nameid, n )) nodes |> Dict.fromList) data
 
+        _ ->
+            Dict.empty
+
+
+hotNodePull : List String -> GqlData NodesData -> NodesData
+hotNodePull nameids odata =
+    -- Push a new node in the model if data is success
+    case odata of
+        Success data ->
+            data |> DE.removeMany (Set.fromList nameids)
+
         other ->
             Dict.empty
+
+
+hotTensionPush : Tension -> GqlData TensionsData -> TensionsData
+hotTensionPush tension tsData =
+    -- Push a new tension in the model if data is success
+    case tsData of
+        Success tensions ->
+            [ tension ] ++ tensions
+
+        _ ->
+            []
 
 
 hotNodeUpdateName : TensionForm -> GqlData NodesData -> NodesData
@@ -569,12 +592,19 @@ nodeDecoder =
         |> JDE.andMap (JD.maybe (JD.field "first_link" userDecoder))
         |> JDE.andMap (JD.field "charac" characDecoder)
         |> JDE.andMap (JD.field "isPrivate" JD.bool)
-        |> JDE.andMap (JD.maybe (JD.field "source" idDecoder))
+        |> JDE.andMap (JD.maybe (JD.field "source" blobIdDecoder))
 
 
 idDecoder : JD.Decoder IdPayload
 idDecoder =
     JD.map IdPayload (JD.field "id" JD.string)
+
+
+blobIdDecoder : JD.Decoder BlobId
+blobIdDecoder =
+    JD.map2 BlobId
+        (JD.field "id" JD.string)
+        (JD.field "tension" idDecoder)
 
 
 nodeIdDecoder : JD.Decoder NodeId

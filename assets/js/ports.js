@@ -65,6 +65,9 @@ const actions = {
     'LOG': (app, session, message) => {
         console.log(`From Elm:`, message);
     },
+    'LOGERR': (app, session, message) => {
+        console.warn(`Error from Elm:`, message);
+    },
     'BULMA': (app, session, eltId) => {
         InitBulma(app, session, eltId);
     },
@@ -110,6 +113,12 @@ const actions = {
     'ADD_QUICKSEARCH_USERS': (app, session, users) => {
         session.qsu.addAll(users);
     },
+    'REMOVE_QUICKSEARCH_NODES': (app, session, nodes) => {
+        session.qsn.removeAll(nodes);
+    },
+    'REMOVE_QUICKSEARCH_USERS': (app, session, users) => {
+        session.qsu.removeAll(users);
+    },
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qsn;
         var nodes = session.gp.nodesDict;
@@ -145,12 +154,11 @@ const actions = {
         }
 
         setTimeout(() => { // to wait that layout is ready
-
             // Setup Graphpack
             var ok = gp.init(app, data, session.isInit);
             if (ok) {
-                gp.zoomToNode(data.focusid, 0.5);
                 session.isInit = false;
+                gp.zoomToNode(data.focusid, 0.5);
             }
 
             // Setup Node quickSearch
@@ -280,6 +288,12 @@ const actions = {
         setTimeout(() => {
             document.addEventListener('click', outsideClickListener);
             document.addEventListener('keydown', escListener);
+
+            // add listenner to global handlers LUT to clean it on navigation
+            var handlers = session.bulmaHandlers;
+            handlers.push(["click", outsideClickListener, document, outsideClickListener])
+            handlers.push(["keydown", escListener, document, escListener])
+
         }, 50);
 
     },

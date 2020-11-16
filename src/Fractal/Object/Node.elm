@@ -194,8 +194,8 @@ mandate fillInOptionals object_ =
 
 
 type alias DocsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.TensionFilter
-    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    { filter : OptionalArgument Fractal.InputObject.BlobFilter
+    , order : OptionalArgument Fractal.InputObject.BlobOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -203,7 +203,7 @@ type alias DocsOptionalArguments =
 
 docs :
     (DocsOptionalArguments -> DocsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet decodesTo Fractal.Object.Blob
     -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.Node
 docs fillInOptionals object_ =
     let
@@ -211,19 +211,19 @@ docs fillInOptionals object_ =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeBlobFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeBlobOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "docs" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 type alias SourceOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+    { filter : OptionalArgument Fractal.InputObject.BlobFilter }
 
 
 source :
     (SourceOptionalArguments -> SourceOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet decodesTo Fractal.Object.Blob
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
 source fillInOptionals object_ =
     let
@@ -231,7 +231,7 @@ source fillInOptionals object_ =
             fillInOptionals { filter = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeBlobFilter ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "source" optionalArgs object_ (identity >> Decode.nullable)
