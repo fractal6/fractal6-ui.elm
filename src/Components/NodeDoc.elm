@@ -541,7 +541,7 @@ nodeLinksInputView txt form data op =
                 in
                 div []
                     [ div [ class "field is-horizontal" ]
-                        [ div [ class "field-label is-small has-text-grey-darker control" ]
+                        [ div [ class "field-label is-md has-text-grey-darker control" ]
                             [ case nodeType of
                                 NodeType.Circle ->
                                     div [ class ("select is-" ++ roleColor rt) ]

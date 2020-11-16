@@ -24,7 +24,8 @@ type alias ActionPanel =
     { isEdit : Bool
     , isModalActive : Bool
     , form : ActionForm
-    , archive_result : GqlData ActionResult
+    , state : ActionPanelState
+    , action_result : GqlData ActionResult
     }
 
 
@@ -33,15 +34,16 @@ type alias ActionForm =
     , tid : String
     , nid : String
     , bid : String
-    , action : ActionButton
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
 
 
-type ActionButton
+type ActionPanelState
     = ArchiveAction
     | UnarchiveAction
+    | LeaveAction
+    | NoAction
 
 
 initActionForm : UserState -> String -> ActionForm
@@ -56,7 +58,6 @@ initActionForm user tid =
     , tid = tid
     , nid = ""
     , bid = ""
-    , action = ArchiveAction
     , events_type = Nothing
     , post = Dict.empty
     }
@@ -67,7 +68,8 @@ create user tid =
     { isEdit = False
     , isModalActive = False
     , form = initActionForm user tid
-    , archive_result = NotAsked
+    , state = NoAction
+    , action_result = NotAsked
     }
 
 
@@ -89,8 +91,8 @@ cancelEdit data =
     { data | isEdit = False }
 
 
-setArchiveResult : GqlData ActionResult -> ActionPanel -> ActionPanel
-setArchiveResult result data =
+setActionResult : GqlData ActionResult -> ActionPanel -> ActionPanel
+setActionResult result data =
     let
         isModalActive =
             case result of
@@ -103,7 +105,12 @@ setArchiveResult result data =
                 _ ->
                     False
     in
-    { data | archive_result = result, isModalActive = isModalActive }
+    { data | action_result = result, isModalActive = isModalActive }
+
+
+disactiveModal : ActionPanel -> ActionPanel
+disactiveModal data =
+    { data | isModalActive = False }
 
 
 closeModal : ActionPanel -> ActionPanel
@@ -155,13 +162,9 @@ setEvents events data =
     { data | form = { f | events_type = Just events } }
 
 
-setAction : ActionButton -> ActionPanel -> ActionPanel
+setAction : ActionPanelState -> ActionPanel -> ActionPanel
 setAction action data =
-    let
-        f =
-            data.form
-    in
-    { data | form = { f | action = action } }
+    { data | state = action }
 
 
 type alias Op msg =
@@ -172,9 +175,10 @@ type alias Op msg =
     , node : NodeFocus
     , data : ActionPanel
     , onCloseModal : String -> msg
-    , onArchive : ActionButton -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
     , onNavigate : String -> msg
+    , onArchive : ActionPanelState -> Time.Posix -> msg
+    , onLeave : ActionPanelState -> Time.Posix -> msg
     }
 
 
@@ -199,11 +203,11 @@ view op =
                     ++ [ case actionType_m of
                             Just EDIT ->
                                 div [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ]
-                                    [ Fa.icon "fas fa-archive" T.archive, loadingSpin (op.data.archive_result == LoadingSlowly) ]
+                                    [ Fa.icon "fas fa-archive" T.archive, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == ArchiveAction) ]
 
                             Just ARCHIVE ->
                                 div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ]
-                                    [ Fa.icon "fas fa-archive" T.unarchive, loadingSpin (op.data.archive_result == LoadingSlowly) ]
+                                    [ Fa.icon "fas fa-archive" T.unarchive, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == UnarchiveAction) ]
 
                             Just NEW ->
                                 text ""
@@ -213,8 +217,8 @@ view op =
                        ]
                     ++ (if op.hasRole then
                             [ hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light is-danger" ]
-                                [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ] ]
+                            , div [ class "dropdown-item button-light is-danger", onClick (op.onSubmit <| op.onLeave LeaveAction) ]
+                                [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == LeaveAction) ] ]
                             ]
 
                         else
@@ -245,17 +249,23 @@ viewModal op =
             ]
             []
         , div [ class "modal-content" ]
-            [ case op.data.archive_result of
+            [ case op.data.action_result of
                 Success t ->
                     div
                         [ class "box is-light" ]
                         [ Fa.icon "fas fa-check fa-2x has-text-success" " "
-                        , case op.data.form.action of
+                        , case op.data.state of
                             ArchiveAction ->
                                 text "Document archived"
 
                             UnarchiveAction ->
                                 text "Document unarchived"
+
+                            LeaveAction ->
+                                text "Role left"
+
+                            NoAction ->
+                                text "error: No action requested"
                         ]
 
                 Failure err ->

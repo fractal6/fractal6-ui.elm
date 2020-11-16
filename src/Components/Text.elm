@@ -118,6 +118,11 @@ by =
     "by"
 
 
+left : String
+left =
+    "left"
+
+
 saveChanges : String
 saveChanges =
     "Save changes"

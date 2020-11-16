@@ -1,5 +1,5 @@
 module Query.PatchTension exposing
-    ( archiveDoc
+    ( actionRequest
     , patchComment
     , patchTitle
     , publishBlob
@@ -206,6 +206,80 @@ patchTitle url form msg =
 
 
 {-
+   Update a comment
+-}
+
+
+type alias PatchCommentPayload =
+    { comment : Maybe (List (Maybe Comment)) }
+
+
+commentPatchDecoder : Maybe PatchCommentPayload -> Maybe Comment
+commentPatchDecoder data =
+    case data of
+        Just d ->
+            d.comment
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+
+        Nothing ->
+            Nothing
+
+
+patchComment url form msg =
+    makeGQLMutation url
+        (Mutation.updateComment
+            (patchCommentInputEncoder form)
+            (SelectionSet.map PatchCommentPayload <|
+                Fractal.Object.UpdateCommentPayload.comment identity commentPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse commentPatchDecoder >> msg)
+
+
+patchCommentInputEncoder : CommentPatchForm -> Mutation.UpdateCommentRequiredArguments
+patchCommentInputEncoder form =
+    let
+        -- new comment
+        updatedAt =
+            Dict.get "updatedAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
+
+        message =
+            Dict.get "message" form.post
+
+        inputReq =
+            { filter =
+                Input.buildCommentFilter
+                    (\f ->
+                        { f | id = Present [ encodeId form.id ] }
+                    )
+            }
+
+        inputOpt =
+            \x ->
+                { set =
+                    Input.buildCommentPatch
+                        (\s ->
+                            { s
+                                | updatedAt = fromMaybe updatedAt
+                                , message = fromMaybe message
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input =
+        Input.buildUpdateCommentInput inputReq inputOpt
+    }
+
+
+
+{-
    set assignee
 -}
 
@@ -402,16 +476,18 @@ publishBlobInputEncoder bid f =
 
 
 {-
-   Archive Doc
+   Doc Action request (see also ActionPanel)
+   * archive doc
+   * leave role
 -}
 
 
-type alias TensionArchivePayload =
+type alias TensionActionPayload =
     { tension : Maybe (List (Maybe ActionResult)) }
 
 
-archiveDocDecoder : Maybe TensionArchivePayload -> Maybe ActionResult
-archiveDocDecoder data =
+actionDecoder : Maybe TensionActionPayload -> Maybe ActionResult
+actionDecoder data =
     case data of
         Just d ->
             d.tension
@@ -426,20 +502,20 @@ archiveDocDecoder data =
             Nothing
 
 
-archiveDoc url form msg =
+actionRequest url form msg =
     makeGQLMutation url
         (Mutation.updateTension
-            (archiveDocInputEncoder form)
-            (SelectionSet.map TensionArchivePayload <|
+            (actionInputEncoder form)
+            (SelectionSet.map TensionActionPayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map ActionResult Fractal.Object.Tension.action
             )
         )
-        (RemoteData.fromResult >> decodeResponse archiveDocDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse actionDecoder >> msg)
 
 
-archiveDocInputEncoder : ActionForm -> Mutation.UpdateTensionRequiredArguments
-archiveDocInputEncoder f =
+actionInputEncoder : ActionForm -> Mutation.UpdateTensionRequiredArguments
+actionInputEncoder f =
     let
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
@@ -474,78 +550,4 @@ archiveDocInputEncoder f =
     in
     { input =
         Input.buildUpdateTensionInput inputReq inputOpt
-    }
-
-
-
-{-
-   Update a comment
--}
-
-
-type alias PatchCommentPayload =
-    { comment : Maybe (List (Maybe Comment)) }
-
-
-commentPatchDecoder : Maybe PatchCommentPayload -> Maybe Comment
-commentPatchDecoder data =
-    case data of
-        Just d ->
-            d.comment
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-
-        Nothing ->
-            Nothing
-
-
-patchComment url form msg =
-    makeGQLMutation url
-        (Mutation.updateComment
-            (patchCommentInputEncoder form)
-            (SelectionSet.map PatchCommentPayload <|
-                Fractal.Object.UpdateCommentPayload.comment identity commentPayload
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse commentPatchDecoder >> msg)
-
-
-patchCommentInputEncoder : CommentPatchForm -> Mutation.UpdateCommentRequiredArguments
-patchCommentInputEncoder form =
-    let
-        -- new comment
-        updatedAt =
-            Dict.get "updatedAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
-
-        message =
-            Dict.get "message" form.post
-
-        inputReq =
-            { filter =
-                Input.buildCommentFilter
-                    (\f ->
-                        { f | id = Present [ encodeId form.id ] }
-                    )
-            }
-
-        inputOpt =
-            \x ->
-                { set =
-                    Input.buildCommentPatch
-                        (\s ->
-                            { s
-                                | updatedAt = fromMaybe updatedAt
-                                , message = fromMaybe message
-                            }
-                        )
-                        |> Present
-                , remove = Absent
-                }
-    in
-    { input =
-        Input.buildUpdateCommentInput inputReq inputOpt
     }

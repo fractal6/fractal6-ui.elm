@@ -272,6 +272,16 @@ viewRoleNeeded errMsg =
 -- RequestResult / Data methods
 
 
+isFailure : RequestResult e a -> Bool
+isFailure data =
+    case data of
+        Failure _ ->
+            True
+
+        _ ->
+            False
+
+
 withDefaultData : a -> RequestResult e a -> a
 withDefaultData default result =
     case result of

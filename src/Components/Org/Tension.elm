@@ -2,7 +2,7 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionPanel, archiveActionToggle)
+import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), archiveActionToggle)
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
@@ -74,7 +74,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddNode exposing (addNewMember)
-import Query.PatchTension exposing (archiveDoc, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
+import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
 import Query.QueryNode exposing (queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -254,9 +254,11 @@ type Msg
       -- Action Edit
     | DoActionEdit String
     | CancelAction
-    | ArchiveDoc ActionButton Time.Posix
-    | ArchiveDocAck (GqlData ActionResult)
     | CloseActionPanelModal String
+    | ArchiveDoc ActionPanelState Time.Posix
+    | ArchiveDocAck (GqlData ActionResult)
+    | LeaveRole ActionPanelState Time.Posix
+    | LeaveRoleAck (GqlData ActionResult)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -1158,11 +1160,11 @@ update global msg model =
                     model.actionPanel
                         |> ActionPanel.post "createdAt" (fromTime time)
                         |> ActionPanel.setEvents [ ternary (action == ArchiveAction) TensionEvent.BlobArchived TensionEvent.BlobUnarchived ]
-                        |> ActionPanel.setArchiveResult LoadingSlowly
+                        |> ActionPanel.setActionResult LoadingSlowly
                         |> ActionPanel.setAction action
             in
             ( { model | actionPanel = aPanel }
-            , archiveDoc apis.gql aPanel.form ArchiveDocAck
+            , actionRequest apis.gql aPanel.form ArchiveDocAck
             , Cmd.none
             )
 
@@ -1171,7 +1173,7 @@ update global msg model =
                 aPanel =
                     model.actionPanel
                         |> ActionPanel.cancelEdit
-                        |> ActionPanel.setArchiveResult result
+                        |> ActionPanel.setActionResult result
 
                 gcmds =
                     [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
@@ -1196,7 +1198,51 @@ update global msg model =
                     if doRefreshToken other then
                         ( { model
                             | modalAuth = Active { post = Dict.fromList [ ( "username", model.tension_form.uctx.username ) ], result = RemoteData.NotAsked }
-                            , actionPanel = ActionPanel.setArchiveResult NotAsked model.actionPanel
+                            , actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
+
+                    else
+                        ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
+
+        LeaveRole action time ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.post "createdAt" (fromTime time)
+                        |> ActionPanel.setEvents [ TensionEvent.UserLeft ]
+                        |> ActionPanel.setActionResult LoadingSlowly
+                        |> ActionPanel.setAction action
+            in
+            ( { model | actionPanel = aPanel }
+            , actionRequest apis.gql aPanel.form LeaveRoleAck
+            , Cmd.none
+            )
+
+        LeaveRoleAck result ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.setActionResult result
+
+                gcmds =
+                    [ ternary aPanel.isModalActive Ports.open_modal Cmd.none, Ports.click "body" ]
+            in
+            case result of
+                Success t ->
+                    ( { model | actionPanel = aPanel }
+                    , Cmd.batch gcmds
+                    , send UpdateUserToken
+                    )
+
+                other ->
+                    if doRefreshToken other then
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", aPanel.form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel
                           }
                         , Cmd.none
                         , Ports.open_auth_modal
@@ -1603,6 +1649,9 @@ viewComments u t model =
                                                 TensionEvent.BlobUnarchived ->
                                                     viewEventArchived event t.action False
 
+                                                TensionEvent.UserLeft ->
+                                                    viewEventUserLeft event t.action
+
                                                 _ ->
                                                     text ""
 
@@ -1615,7 +1664,7 @@ viewComments u t model =
                                             viewComment c model
 
                                         Nothing ->
-                                            div [] []
+                                            text ""
                         )
                         evts
                     )
@@ -1880,6 +1929,20 @@ viewEventArchived event action_m isArchived =
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text txt, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
+viewEventUserLeft : Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventUserLeft event action_m =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
+        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.left, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2251,9 +2314,10 @@ viewSidePane u t model =
                                         , node = model.node_focus
                                         , data = model.actionPanel
                                         , onCloseModal = CloseActionPanelModal
-                                        , onArchive = ArchiveDoc
                                         , onSubmit = Submit
                                         , onNavigate = Navigate
+                                        , onArchive = ArchiveDoc
+                                        , onLeave = LeaveRole
                                         }
                                 in
                                 ActionPanel.view panelData

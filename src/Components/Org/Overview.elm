@@ -3,11 +3,11 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionButton(..), ActionPanel)
+import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Components.Text as T
 import Debug
@@ -63,7 +63,7 @@ import Ports
 import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchNode exposing (patchNode)
-import Query.PatchTension exposing (archiveDoc)
+import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryAllTension)
@@ -175,8 +175,10 @@ type Msg
     | DoActionEdit Node
     | CancelAction
     | CloseActionPanelModal String
-    | ArchiveDoc ActionButton Time.Posix
+    | ArchiveDoc ActionPanelState Time.Posix
     | ArchiveDocAck (GqlData ActionResult)
+    | LeaveRole ActionPanelState Time.Posix
+    | LeaveRoleAck (GqlData ActionResult)
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -850,17 +852,17 @@ update global msg model =
             in
             ( { model | actionPanel = ActionPanel.closeModal model.actionPanel }, gcmd, Ports.close_modal )
 
-        ArchiveDoc _ time ->
+        ArchiveDoc action time ->
             let
                 aPanel =
                     model.actionPanel
                         |> ActionPanel.post "createdAt" (fromTime time)
                         |> ActionPanel.setEvents [ TensionEvent.BlobArchived ]
-                        |> ActionPanel.setArchiveResult LoadingSlowly
-                        |> ActionPanel.setAction ArchiveAction
+                        |> ActionPanel.setActionResult LoadingSlowly
+                        |> ActionPanel.setAction action
             in
             ( { model | actionPanel = aPanel }
-            , archiveDoc apis.gql aPanel.form ArchiveDocAck
+            , actionRequest apis.gql aPanel.form ArchiveDocAck
             , Cmd.none
             )
 
@@ -869,14 +871,14 @@ update global msg model =
                 aPanel =
                     model.actionPanel
                         |> ActionPanel.cancelEdit
-                        |> ActionPanel.setArchiveResult result
+                        |> ActionPanel.setActionResult result
 
                 gcmds =
                     [ Ports.click "body" ]
             in
             case result of
                 Success t ->
-                    ( { model | actionPanel = aPanel }
+                    ( { model | actionPanel = ActionPanel.disactiveModal aPanel }
                     , Cmd.batch (gcmds ++ [ send (DelNodes [ aPanel.form.nid ]) ])
                     , Cmd.none
                     )
@@ -885,7 +887,51 @@ update global msg model =
                     if doRefreshToken other then
                         ( { model
                             | modalAuth = Active { post = Dict.fromList [ ( "username", aPanel.form.uctx.username ) ], result = RemoteData.NotAsked }
-                            , actionPanel = ActionPanel.setArchiveResult NotAsked model.actionPanel
+                            , actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel
+                          }
+                        , Cmd.none
+                        , Ports.open_auth_modal
+                        )
+
+                    else
+                        ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
+
+        LeaveRole action time ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.post "createdAt" (fromTime time)
+                        |> ActionPanel.setEvents [ TensionEvent.UserLeft ]
+                        |> ActionPanel.setActionResult LoadingSlowly
+                        |> ActionPanel.setAction action
+            in
+            ( { model | actionPanel = aPanel }
+            , actionRequest apis.gql aPanel.form LeaveRoleAck
+            , Cmd.none
+            )
+
+        LeaveRoleAck result ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.setActionResult result
+
+                gcmds =
+                    [ Ports.click "body" ]
+            in
+            case result of
+                Success t ->
+                    ( { model | actionPanel = ActionPanel.disactiveModal aPanel }
+                    , Cmd.batch gcmds
+                    , send UpdateUserToken
+                    )
+
+                other ->
+                    if doRefreshToken other then
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", aPanel.form.uctx.username ) ], result = RemoteData.NotAsked }
+                            , actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel
                           }
                         , Cmd.none
                         , Ports.open_auth_modal
@@ -1369,9 +1415,10 @@ viewSearchBar us model =
                                                 , node = model.node_focus
                                                 , data = model.actionPanel
                                                 , onCloseModal = CloseActionPanelModal
-                                                , onArchive = ArchiveDoc
                                                 , onSubmit = Submit
                                                 , onNavigate = Navigate
+                                                , onArchive = ArchiveDoc
+                                                , onLeave = LeaveRole
                                                 }
                                         in
                                         div [ id "actionPanelContent", class "control" ]
