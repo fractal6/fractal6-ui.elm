@@ -185,6 +185,7 @@ type Msg
       -- Graphpack
     | AddNodes (List Node)
     | DelNodes (List String)
+    | UpdateNode (Maybe Node)
       -- JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
@@ -922,9 +923,14 @@ update global msg model =
             in
             case result of
                 Success t ->
+                    let
+                        newNode =
+                            getNode aPanel.form.nid model.orga_data
+                                |> Maybe.map (\n -> { n | first_link = Nothing })
+                    in
                     ( { model | actionPanel = ActionPanel.disactiveModal aPanel }
-                    , Cmd.batch gcmds
-                    , send UpdateUserToken
+                    , Cmd.batch (gcmds ++ [ send (UpdateNode newNode) ])
+                    , Cmd.none
                     )
 
                 other ->
@@ -1013,6 +1019,21 @@ update global msg model =
             , Cmd.batch [ send (NodeClicked newFocus) ]
             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
             )
+
+        UpdateNode node_m ->
+            case node_m of
+                Just n ->
+                    let
+                        ndata =
+                            hotNodeInsert n model.orga_data
+                    in
+                    ( { model | orga_data = Success ndata }
+                    , Cmd.none
+                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- JS interop
         NodeClicked nameid ->

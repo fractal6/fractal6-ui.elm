@@ -392,6 +392,17 @@ getParentId nameid odata =
             Nothing
 
 
+hotNodeInsert : Node -> GqlData NodesData -> NodesData
+hotNodeInsert node odata =
+    -- Push a new node in the model if data is success
+    case odata of
+        Success data ->
+            Dict.insert node.nameid node data
+
+        _ ->
+            Dict.empty
+
+
 hotNodePush : List Node -> GqlData NodesData -> NodesData
 hotNodePush nodes odata =
     -- Push a new node in the model if data is success
