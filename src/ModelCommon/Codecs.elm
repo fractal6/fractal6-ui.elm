@@ -215,6 +215,19 @@ focusFromNameid nameid_ =
     NodeFocus rootid nameid nodeType
 
 
+typeFromNameid : String -> NodeType.NodeType
+typeFromNameid nameid =
+    let
+        path =
+            String.split "#" nameid
+    in
+    if List.length path == 3 then
+        NodeType.Role
+
+    else
+        NodeType.Circle
+
+
 guestIdCodec : String -> String -> String
 guestIdCodec rootnameid username =
     -- Returns the namid of a new Role given an username and a rootnameid

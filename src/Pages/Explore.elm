@@ -3,7 +3,7 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Components.Text as T
+import Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

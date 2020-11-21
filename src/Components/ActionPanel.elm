@@ -2,9 +2,9 @@ module Components.ActionPanel exposing (..)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
-import Components.Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
@@ -14,9 +14,11 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, typeFromNameid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
+import String.Format as Format
+import Text as T
 import Time
 
 
@@ -25,6 +27,7 @@ type alias ActionPanel =
     , isModalActive : Bool
     , form : ActionForm
     , state : ActionPanelState
+    , step : ActionStep
     , action_result : GqlData ActionResult
     }
 
@@ -32,8 +35,9 @@ type alias ActionPanel =
 type alias ActionForm =
     { uctx : UserCtx
     , tid : String
-    , nid : String
     , bid : String
+    , nid : String
+    , name : String -- Name of the node
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -46,6 +50,27 @@ type ActionPanelState
     | NoAction
 
 
+type ActionStep
+    = StepOne
+    | StepAck
+
+
+action2str : ActionPanelState -> Maybe String
+action2str action =
+    case action of
+        ArchiveAction ->
+            Just T.archive
+
+        UnarchiveAction ->
+            Just T.unarchive
+
+        LeaveAction ->
+            Just T.leave
+
+        NoAction ->
+            Nothing
+
+
 initActionForm : UserState -> String -> ActionForm
 initActionForm user tid =
     { uctx =
@@ -56,8 +81,9 @@ initActionForm user tid =
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
     , tid = tid
-    , nid = ""
     , bid = ""
+    , nid = ""
+    , name = ""
     , events_type = Nothing
     , post = Dict.empty
     }
@@ -69,6 +95,7 @@ create user tid =
     , isModalActive = False
     , form = initActionForm user tid
     , state = NoAction
+    , step = StepOne
     , action_result = NotAsked
     }
 
@@ -94,32 +121,63 @@ cancelEdit data =
 setActionResult : GqlData ActionResult -> ActionPanel -> ActionPanel
 setActionResult result data =
     let
-        isModalActive =
+        ( isModalActive, step ) =
             case result of
                 Success _ ->
-                    True
+                    ( data.isModalActive, StepAck )
 
                 Failure _ ->
-                    True
+                    ( data.isModalActive, data.step )
 
                 _ ->
-                    False
+                    ( data.isModalActive, data.step )
     in
-    { data | action_result = result, isModalActive = isModalActive }
+    { data | action_result = result, isModalActive = isModalActive, step = step }
 
 
-disactiveModal : ActionPanel -> ActionPanel
-disactiveModal data =
+activateModal : ActionPanel -> ActionPanel
+activateModal data =
+    { data | isModalActive = True }
+
+
+deactivateModal : ActionPanel -> ActionPanel
+deactivateModal data =
     { data | isModalActive = False }
 
 
-closeModal : ActionPanel -> ActionPanel
-closeModal data =
+terminate : ActionPanel -> ActionPanel
+terminate data =
     let
         f =
             data.form
     in
-    { data | isEdit = False, isModalActive = False, form = initActionForm (LoggedIn f.uctx) f.tid }
+    { data | isEdit = False, isModalActive = False, form = initActionForm (LoggedIn f.uctx) f.tid, action_result = NotAsked }
+
+
+setStep : ActionStep -> ActionPanel -> ActionPanel
+setStep step data =
+    { data | step = step }
+
+
+setAction : ActionPanelState -> ActionPanel -> ActionPanel
+setAction action data =
+    let
+        events =
+            case action of
+                ArchiveAction ->
+                    [ TensionEvent.BlobArchived ]
+
+                UnarchiveAction ->
+                    [ TensionEvent.BlobUnarchived ]
+
+                LeaveAction ->
+                    [ TensionEvent.UserLeft ]
+
+                NoAction ->
+                    []
+    in
+    { data | state = action }
+        |> setEvents events
 
 
 
@@ -153,6 +211,15 @@ setNid nid data =
     { data | form = { f | nid = nid } }
 
 
+setName : String -> ActionPanel -> ActionPanel
+setName name data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | name = name } }
+
+
 setEvents : List TensionEvent.TensionEvent -> ActionPanel -> ActionPanel
 setEvents events data =
     let
@@ -162,23 +229,18 @@ setEvents events data =
     { data | form = { f | events_type = Just events } }
 
 
-setAction : ActionPanelState -> ActionPanel -> ActionPanel
-setAction action data =
-    { data | state = action }
-
-
 type alias Op msg =
     { tc : Maybe TensionCharac
     , isAdmin : Bool
     , hasRole : Bool
     , isRight : Bool
-    , node : NodeFocus
     , data : ActionPanel
-    , onCloseModal : String -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
+    , onOpenModal : ActionPanelState -> msg
+    , onCloseModal : String -> msg
     , onNavigate : String -> msg
-    , onArchive : ActionPanelState -> Time.Posix -> msg
-    , onLeave : ActionPanelState -> Time.Posix -> msg
+    , onActionSubmit : Time.Posix -> msg
+    , onUpdatePost : String -> String -> msg
     }
 
 
@@ -195,18 +257,18 @@ view op =
             <|
                 [ div
                     [ class "dropdown-item button-light"
-                    , onClick (op.onNavigate ((Route.Tension_Dynamic_Dynamic_Action { param1 = op.node.rootnameid, param2 = op.data.form.tid } |> toHref) ++ "?v=edit"))
+                    , onClick (op.onNavigate ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid op.data.form.nid, param2 = op.data.form.tid } |> toHref) ++ "?v=edit"))
                     ]
                     [ Fa.icon "fas fa-pen" T.edit ]
                 , hr [ class "dropdown-divider" ] []
                 ]
                     ++ [ case actionType_m of
                             Just EDIT ->
-                                div [ class "dropdown-item button-light is-warning", onClick (op.onSubmit <| op.onArchive ArchiveAction) ]
+                                div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
                                     [ Fa.icon "fas fa-archive" T.archive, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == ArchiveAction) ]
 
                             Just ARCHIVE ->
-                                div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onArchive UnarchiveAction) ]
+                                div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
                                     [ Fa.icon "fas fa-archive" T.unarchive, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == UnarchiveAction) ]
 
                             Just NEW ->
@@ -217,7 +279,7 @@ view op =
                        ]
                     ++ (if op.hasRole then
                             [ hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light is-danger", onClick (op.onSubmit <| op.onLeave LeaveAction) ]
+                            , div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
                                 [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == LeaveAction) ] ]
                             ]
 
@@ -248,8 +310,55 @@ viewModal op =
             , onClick (op.onCloseModal "")
             ]
             []
-        , div [ class "modal-content" ]
-            [ case op.data.action_result of
+        , div [ class "modal-content" ] [ viewModalContent op ]
+        , button [ class "modal-close is-large", onClick (op.onCloseModal "") ] []
+        ]
+
+
+viewModalContent : Op msg -> Html msg
+viewModalContent op =
+    let
+        form =
+            op.data.form
+
+        name =
+            form.name
+
+        type_ =
+            typeFromNameid form.nid |> NodeType.toString
+
+        isLoading =
+            op.data.action_result == LoadingSlowly
+    in
+    case op.data.step of
+        StepOne ->
+            case op.data.state of
+                ArchiveAction ->
+                    let
+                        header =
+                            "Archive {{type}}: {{name}}"
+                    in
+                    viewStep1 ArchiveAction header "warning" op
+
+                UnarchiveAction ->
+                    let
+                        header =
+                            "Unarchive {{type}}: {{name}}"
+                    in
+                    viewStep1 UnarchiveAction header "warning" op
+
+                LeaveAction ->
+                    let
+                        header =
+                            "Leave {{type}}: {{name}}"
+                    in
+                    viewStep1 LeaveAction header "danger" op
+
+                NoAction ->
+                    text "no implemented"
+
+        StepAck ->
+            case op.data.action_result of
                 Success t ->
                     div
                         [ class "box is-light" ]
@@ -273,8 +382,76 @@ viewModal op =
 
                 _ ->
                     viewGqlErrors [ "not implemented." ]
+
+
+
+--- Viewer
+
+
+viewStep1 : ActionPanelState -> String -> String -> Op msg -> Html msg
+viewStep1 action header color op =
+    let
+        form =
+            op.data.form
+
+        name =
+            form.name
+
+        type_ =
+            typeFromNameid form.nid |> NodeType.toString
+
+        isLoading =
+            op.data.action_result == LoadingSlowly
+    in
+    div [ class "modal-card" ]
+        [ div [ class ("modal-card-head has-background-" ++ color) ]
+            [ header
+                |> Format.namedValue "type" type_
+                |> Format.namedValue "name" name
+                |> text
+                |> List.singleton
+                |> div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
             ]
-        , button [ class "modal-close is-large", onClick (op.onCloseModal "") ] []
+        , div [ class "modal-card-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ]
+                    [ textarea
+                        [ class "textarea in-modal"
+                        , rows 3
+                        , placeholder T.leaveComment
+                        , onInput <| op.onUpdatePost "message"
+                        ]
+                        []
+                    ]
+                , p [ class "help-label" ] [ text T.actionMessageHelp ]
+                ]
+            ]
+        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+            [ case op.data.action_result of
+                Failure err ->
+                    div [ class "field" ] [ viewGqlErrors err ]
+
+                _ ->
+                    text ""
+            , div [ class "field is-grouped is-grouped-right" ]
+                [ div [ class "control" ]
+                    [ button
+                        ([ class "button has-text-weight-semibold is-danger" ]
+                            ++ [ onClick (op.onCloseModal "") ]
+                        )
+                        [ text T.cancel ]
+                    ]
+                , div [ class "control" ]
+                    [ button
+                        ([ class ("button has-text-weight-semibold is-light is-" ++ color)
+                         , classList [ ( "is-loading", isLoading ) ]
+                         ]
+                            ++ [ onClick (op.onSubmit <| op.onActionSubmit) ]
+                        )
+                        [ action |> action2str |> withDefault "no action" |> text ]
+                    ]
+                ]
+            ]
         ]
 
 

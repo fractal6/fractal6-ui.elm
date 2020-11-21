@@ -4,7 +4,7 @@ import Auth exposing (doRefreshToken2, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (makeNewNodeId)
-import Components.Text as T
+import Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onKeydown)

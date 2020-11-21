@@ -238,7 +238,10 @@ viewHttpErrors httpErr =
 viewAuthNeeded : (String -> msg) -> Html msg
 viewAuthNeeded forward =
     div [ class "modal-card" ]
-        [ div [ class "modal-card-head" ] [ div [ class "modal-card-title is-size-6" ] [ text "Authentication needed" ] ]
+        [ div [ class "modal-card-head" ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+                [ text "Authentication needed" ]
+            ]
         , div [ class "modal-card-body" ]
             [ p []
                 [ text "Please "
@@ -258,7 +261,10 @@ viewAuthNeeded forward =
 viewRoleNeeded : ErrorData -> Html msg
 viewRoleNeeded errMsg =
     div [ class "modal-card" ]
-        [ div [ class "modal-card-head has-background-warning" ] [ div [ class "modal-card-title is-size-6" ] [ text "Authorization needed" ] ]
+        [ div [ class "modal-card-head has-background-warning" ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+                [ text "Authorization needed" ]
+            ]
         , div [ class "modal-card-body" ] <|
             List.map
                 (\e ->

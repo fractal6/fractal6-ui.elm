@@ -4,7 +4,7 @@ import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
-import Components.Text as T
+import Text as T
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (ternary)

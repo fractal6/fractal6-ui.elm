@@ -2,7 +2,7 @@ module Components.UserSearchPanel exposing (..)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMapData, withMaybeData)
-import Components.Text as T
+import Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent

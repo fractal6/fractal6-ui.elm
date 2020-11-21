@@ -1,4 +1,4 @@
-module Components.Text exposing (..)
+module Text exposing (..)
 
 -- General
 
@@ -186,6 +186,11 @@ archived =
 unarchived : String
 unarchived =
     "unarchived"
+
+
+leave : String
+leave =
+    "Leave"
 
 
 the : String
@@ -510,17 +515,22 @@ circleAboutHelp =
 
 tensionMessageHelp : String
 tensionMessageHelp =
-    "Add a description to help others understand your issue."
+    "Add a comment to help others understand your issue."
+
+
+actionMessageHelp : String
+actionMessageHelp =
+    "Add a comment to help others understand this action."
 
 
 circleMessageHelp : String
 circleMessageHelp =
-    "Add a description to help others understand why a new circle should be created."
+    "Add a comment to help others understand why a new circle should be created."
 
 
 roleMessageHelp : String
 roleMessageHelp =
-    "Add a description to help others understand why a new role should be created."
+    "Add a comment to help others understand why a new role should be created."
 
 
 autoFieldMessageHelp : String

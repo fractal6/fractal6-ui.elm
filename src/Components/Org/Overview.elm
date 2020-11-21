@@ -3,13 +3,12 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Auth exposing (doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..))
+import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
-import Components.Text as T
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -69,6 +68,7 @@ import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Task
+import Text as T
 import Time
 
 
@@ -174,11 +174,13 @@ type Msg
       -- Node Settings
     | DoActionEdit Node
     | CancelAction
+    | OpenActionPanelModal ActionPanelState
     | CloseActionPanelModal String
-    | ArchiveDoc ActionPanelState Time.Posix
+      --| ActionStep1 XXX
+    | ActionSubmit Time.Posix
     | ArchiveDocAck (GqlData ActionResult)
-    | LeaveRole ActionPanelState Time.Posix
     | LeaveRoleAck (GqlData ActionResult)
+    | UpdateActionPost String String
       -- JoinOrga Action
     | DoJoinOrga String Time.Posix
     | JoinAck (GqlData Node)
@@ -198,6 +200,7 @@ type Msg
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
+    | NoMsg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
@@ -830,6 +833,7 @@ update global msg model =
                             |> ActionPanel.edit bid
                             |> ActionPanel.setTid tid
                             |> ActionPanel.setNid node.nameid
+                            |> ActionPanel.setName node.name
                 in
                 ( { model | actionPanel = aPanel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
@@ -851,19 +855,44 @@ update global msg model =
                     else
                         Cmd.none
             in
-            ( { model | actionPanel = ActionPanel.closeModal model.actionPanel }, gcmd, Ports.close_modal )
+            ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, gcmd, Ports.close_modal )
 
-        ArchiveDoc action time ->
+        OpenActionPanelModal action ->
+            let
+                aPanel =
+                    model.actionPanel
+                        |> ActionPanel.activateModal
+                        |> ActionPanel.setAction action
+                        |> ActionPanel.setStep StepOne
+            in
+            ( { model | actionPanel = aPanel }
+            , Ports.open_modal
+            , Cmd.none
+            )
+
+        ActionSubmit time ->
             let
                 aPanel =
                     model.actionPanel
                         |> ActionPanel.post "createdAt" (fromTime time)
-                        |> ActionPanel.setEvents [ TensionEvent.BlobArchived ]
                         |> ActionPanel.setActionResult LoadingSlowly
-                        |> ActionPanel.setAction action
+
+                ackMsg =
+                    case aPanel.state of
+                        ArchiveAction ->
+                            ArchiveDocAck
+
+                        UnarchiveAction ->
+                            ArchiveDocAck
+
+                        LeaveAction ->
+                            LeaveRoleAck
+
+                        NoAction ->
+                            \x -> NoMsg
             in
             ( { model | actionPanel = aPanel }
-            , actionRequest apis.gql aPanel.form ArchiveDocAck
+            , actionRequest apis.gql aPanel.form ackMsg
             , Cmd.none
             )
 
@@ -875,11 +904,11 @@ update global msg model =
                         |> ActionPanel.setActionResult result
 
                 gcmds =
-                    [ Ports.click "body" ]
+                    []
             in
             case result of
                 Success t ->
-                    ( { model | actionPanel = ActionPanel.disactiveModal aPanel }
+                    ( { model | actionPanel = aPanel }
                     , Cmd.batch (gcmds ++ [ send (DelNodes [ aPanel.form.nid ]) ])
                     , Cmd.none
                     )
@@ -896,20 +925,6 @@ update global msg model =
 
                     else
                         ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
-
-        LeaveRole action time ->
-            let
-                aPanel =
-                    model.actionPanel
-                        |> ActionPanel.post "createdAt" (fromTime time)
-                        |> ActionPanel.setEvents [ TensionEvent.UserLeft ]
-                        |> ActionPanel.setActionResult LoadingSlowly
-                        |> ActionPanel.setAction action
-            in
-            ( { model | actionPanel = aPanel }
-            , actionRequest apis.gql aPanel.form LeaveRoleAck
-            , Cmd.none
-            )
 
         LeaveRoleAck result ->
             let
@@ -928,7 +943,7 @@ update global msg model =
                             getNode aPanel.form.nid model.orga_data
                                 |> Maybe.map (\n -> { n | first_link = Nothing })
                     in
-                    ( { model | actionPanel = ActionPanel.disactiveModal aPanel }
+                    ( { model | actionPanel = aPanel }
                     , Cmd.batch (gcmds ++ [ send (UpdateNode newNode) ])
                     , Cmd.none
                     )
@@ -945,6 +960,9 @@ update global msg model =
 
                     else
                         ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
+
+        UpdateActionPost field value ->
+            ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid time ->
@@ -1068,6 +1086,9 @@ update global msg model =
             ( model, Cmd.none, Ports.clearTooltip )
 
         -- Common
+        NoMsg ->
+            ( model, Cmd.none, Cmd.none )
+
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
@@ -1315,7 +1336,7 @@ view_ global model =
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-6-desktop is-5-widescreen is-4-fullhd" ]
                 [ viewSearchBar global.session.user model
-                , viewCanvas model.node_focus model.orga_data
+                , viewCanvas global.session.user model
                 , br [] []
                 , NodeDoc.view nodeData Nothing
                 , setupActionModal model
@@ -1433,13 +1454,13 @@ viewSearchBar us model =
                                                 , isAdmin = isAdmin
                                                 , hasRole = hasRole
                                                 , isRight = True
-                                                , node = model.node_focus
                                                 , data = model.actionPanel
-                                                , onCloseModal = CloseActionPanelModal
                                                 , onSubmit = Submit
+                                                , onOpenModal = OpenActionPanelModal
+                                                , onCloseModal = CloseActionPanelModal
                                                 , onNavigate = Navigate
-                                                , onArchive = ArchiveDoc
-                                                , onLeave = LeaveRole
+                                                , onActionSubmit = ActionSubmit
+                                                , onUpdatePost = UpdateActionPost
                                                 }
                                         in
                                         div [ id "actionPanelContent", class "control" ]
@@ -1542,15 +1563,15 @@ viewSearchList us model =
         ]
 
 
-viewCanvas : NodeFocus -> GqlData NodesData -> Html Msg
-viewCanvas focus odata =
-    div [ id "canvasParent", classList [ ( "spinner", odata == LoadingSlowly ) ] ]
-        [ case odata of
+viewCanvas : UserState -> Model -> Html Msg
+viewCanvas us model =
+    div [ id "canvasParent", classList [ ( "spinner", model.orga_data == LoadingSlowly ) ] ]
+        [ case model.orga_data of
             Failure err ->
                 viewGqlErrors err
 
             Success d ->
-                if Dict.get focus.nameid d == Nothing then
+                if Dict.get model.node_focus.nameid d == Nothing then
                     viewGqlErrors [ "Node archived or hidden" ]
 
                 else
@@ -1576,6 +1597,12 @@ viewCanvas focus odata =
             ]
             [ span [] [ text "void" ] -- Node name
             , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+
+            --, div [ id "actionPanelContent", class "control" ]
+            --    [ span
+            --        [ class "button is-small is-info" ]
+            --        [ i [ class "fas fa-ellipsis-v" ] [] ]
+            --    ]
             ]
         ]
 

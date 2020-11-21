@@ -2,7 +2,7 @@ module Components.DocToolBar exposing (view)
 
 import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
-import Components.Text as T
+import Text as T
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)

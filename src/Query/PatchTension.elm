@@ -520,6 +520,10 @@ actionInputEncoder f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
+        message =
+            -- new comment
+            Dict.get "message" f.post
+
         inputReq =
             { filter =
                 Input.buildTensionFilter
@@ -534,7 +538,8 @@ actionInputEncoder f =
                     Input.buildTensionPatch
                         (\s ->
                             { s
-                                | history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                | comments = buildComment createdAt f.uctx.username message
+                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
                                 , blobs =
                                     if f.bid /= "" then
                                         [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present

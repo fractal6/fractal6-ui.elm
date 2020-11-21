@@ -3,7 +3,6 @@ module Form.NewCircle exposing (view)
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
-import Components.Text as T
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
@@ -20,6 +19,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..))
 import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeSpan)
+import Text as T
 
 
 
@@ -145,7 +145,7 @@ view op =
                         [ div [ class "control" ]
                             [ textarea
                                 [ class "textarea"
-                                , rows 5
+                                , rows 3
                                 , placeholder T.leaveComment
                                 , onInput <| op.onChangeNode "message"
                                 ]

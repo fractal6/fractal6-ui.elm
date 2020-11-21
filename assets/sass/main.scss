@@ -560,8 +560,7 @@ html.has-modal-active, html.has-modal-active2 {
 //
 // Tension/Blob Page
 //
-
-#tensionPage {
+#tensionPage  {
 
     .tensionTitle {
         font-size: 1.9rem !important;
@@ -724,12 +723,14 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
-    .tensionTitle, .tensionComments, .tensionSidePane {
+    .tensionTitle, .tensionComments, .tensionSidePane  {
         textarea, input {
-            color: $white-1 !important;
-            background-color: #33383ed9 !important;
-            &::placeholder {
-                color: $white-ter !important;
+            &:not(.in-modal) {
+                color: $white-1 !important;
+                background-color: #33383ed9 !important;
+                &::placeholder {
+                    color: $white-ter !important;
+                }
             }
         }
     }
@@ -1248,10 +1249,10 @@ a.actionLink {
         background-color: #e5e5e5;
         border-color: #ccc !important;
         color: #111;
-        //div {
-        //    color: inherit;
-        //    background-color: inherit;
-        //}
+        div {
+            color: inherit;
+            background-color: inherit;
+        }
     }
 
     .card-header-title, .label {
@@ -1262,6 +1263,7 @@ a.actionLink {
         visibility: visible;
         .modal-background {
             opacity: 1;
+            transition: all $modal-in-duration;
         }
     }
 
@@ -1270,7 +1272,7 @@ a.actionLink {
             .modal-content {
                 //transform: scale(0.7);
                 opacity: 0;
-                transition: all $modal-transition-duration;
+                transition: all $modal-out-duration;
             }
 
             &.is-active .modal-content {
@@ -1283,7 +1285,7 @@ a.actionLink {
             .modal-content {
                 transform: translateY(-50%);
                 opacity: 0;
-                transition: all $modal-transition-duration;
+                transition: all $modal-out-duration;
             }
 
             &.is-active .modal-content {
@@ -1294,9 +1296,8 @@ a.actionLink {
     }
 
     .modal-background {
-        background-color: $modal-bg-color;
         opacity: 0;
-        transition: all $modal-transition-duration;
+        transition: all $modal-out-duration;
     }
 
     .modal-content {
@@ -1444,6 +1445,7 @@ a.actionLink {
         visibility: visible;
         .modal-background {
             opacity: 1;
+            transition: all $modal-in-duration;
         }
     }
 
@@ -1452,7 +1454,7 @@ a.actionLink {
             .modal-content {
                 //transform: scale(0.7);
                 opacity: 0;
-                transition: all $modal-transition-duration;
+                transition: all $modal-out-duration;
             }
 
             &.is-active .modal-content {
@@ -1466,7 +1468,7 @@ a.actionLink {
     .modal-background {
         background-color: $grey-light;
         opacity: 0;
-        transition: all $modal-transition-duration;
+        transition: all $modal-out-duration;
     }
 
     .modal-content {

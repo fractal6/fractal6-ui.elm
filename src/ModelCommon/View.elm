@@ -1,7 +1,7 @@
 module ModelCommon.View exposing (..)
 
 import Components.Fa as Fa
-import Components.Text as T
+import Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
