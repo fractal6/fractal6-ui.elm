@@ -99,6 +99,7 @@ type Msg
     | UpdateSessionData (Maybe NodeData)
     | UpdateSessionTensions (Maybe TensionsData)
     | UpdateSessionTensionHead (Maybe TensionHead)
+    | UpdateSessionAdmin (Maybe Bool)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -215,6 +216,13 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | tension_head = data } }, Cmd.none )
+
+        UpdateSessionAdmin data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | isAdmin = data } }, Cmd.none )
 
         UpdateSessionTensions data ->
             let

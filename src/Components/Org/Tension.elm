@@ -354,7 +354,8 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isTensionAdmin = False
+            , isTensionAdmin =
+                global.session.isAdmin |> withDefault False
             , assigneesPanel = UserSearchPanel.create global.session.user tensionid
             , actionPanel = ActionPanel.create global.session.user tensionid
 
@@ -504,9 +505,13 @@ update global msg model =
             ( { model | tension_blobs = result }, Cmd.none, Ports.bulma_driver "" )
 
         SetAdminRights result ->
-            ( { model | isTensionAdmin = getTensionRights global.session.user model.tension_head result }
+            let
+                isAdmin =
+                    getTensionRights global.session.user model.tension_head result
+            in
+            ( { model | isTensionAdmin = isAdmin }
             , Cmd.none
-            , send (UpdateSessionFocus2 (withMaybeData result))
+            , Cmd.batch [ send (UpdateSessionFocus2 (withMaybeData result)), send (UpdateSessionAdmin (Just isAdmin)) ]
             )
 
         -- Page Action

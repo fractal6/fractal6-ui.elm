@@ -49,6 +49,7 @@ type alias Session =
     , node_data : Maybe NodeData
     , tensions_data : Maybe TensionsData
     , tension_head : Maybe TensionHead
+    , isAdmin : Maybe Bool
     , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
@@ -83,6 +84,7 @@ initSession flags =
     , node_data = Nothing
     , tensions_data = Nothing
     , tension_head = Nothing
+    , isAdmin = Nothing
     , node_action = Nothing
     , node_quickSearch = Nothing
     , apis = flags.apis
