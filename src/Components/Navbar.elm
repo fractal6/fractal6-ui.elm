@@ -2,11 +2,11 @@ module Components.Navbar exposing (view)
 
 import Components.Fa as Fa
 import Components.Logo as Logo
-import Text as T
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import ModelCommon exposing (UserState(..))
+import Text as T
 
 
 view : UserState -> Html msg
@@ -39,8 +39,11 @@ view user =
                 ]
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ --a [ class "navbar-item", href (toHref Route.Top) ] [ text "Help" ]
-                      a [ class "navbar-item", href (toHref Route.Explore) ] [ text T.explore ]
+                    [ a [ class "navbar-item", href (toHref Route.Top) ]
+                        [ text T.yourOrg ]
+                    , a
+                        [ class "navbar-item", href (toHref Route.Explore) ]
+                        [ text T.explore ]
                     ]
                 , div [ class "navbar-end" ]
                     [ newButton user

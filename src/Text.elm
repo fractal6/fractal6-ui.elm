@@ -23,6 +23,11 @@ settings =
     "Settings"
 
 
+yourOrg : String
+yourOrg =
+    "Organisations"
+
+
 loading : String
 loading =
     "loading..."
