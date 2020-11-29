@@ -6,7 +6,6 @@ import Browser.Navigation as Nav
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
-import Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -38,6 +37,7 @@ import Query.AddNode exposing (addNewMember)
 import Query.QueryNode exposing (queryLocalGraph, queryMembers)
 import RemoteData exposing (RemoteData)
 import Task
+import Text as T
 import Time
 
 
@@ -250,7 +250,6 @@ update global msg model =
                         form =
                             { uctx = uctx
                             , rootnameid = rootnameid
-                            , id = model.path_data |> withMaybeData |> Maybe.map (\pd -> pd.root |> Maybe.map (\r -> r.id) |> withDefault "")
                             , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
 

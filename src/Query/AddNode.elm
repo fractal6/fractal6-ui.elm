@@ -80,7 +80,7 @@ addNewMember url form msg =
 
 
 newMemberInputEncoder : JoinOrgaForm -> Mutation.AddNodeRequiredArguments
-newMemberInputEncoder { uctx, rootnameid, id, post } =
+newMemberInputEncoder { uctx, rootnameid, post } =
     let
         createdAt =
             Dict.get "createdAt" post |> withDefault ""
@@ -126,8 +126,7 @@ newMemberInputEncoder { uctx, rootnameid, id, post } =
 
 
 type alias Circle =
-    { id : String
-    , createdAt : String
+    { createdAt : String
     , name : String
     , nameid : String
     , rootnameid : String
@@ -164,8 +163,7 @@ circleDecoder a =
                                         n.children |> withDefault []
 
                                     node =
-                                        { id = .id n
-                                        , createdAt = .createdAt n
+                                        { createdAt = .createdAt n
                                         , name = .name n
                                         , nameid = .nameid n
                                         , rootnameid = .rootnameid n
@@ -210,7 +208,6 @@ addOneCircle url form msg =
 addOneCirclePayload : SelectionSet Circle Fractal.Object.Node
 addOneCirclePayload =
     SelectionSet.succeed Circle
-        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid

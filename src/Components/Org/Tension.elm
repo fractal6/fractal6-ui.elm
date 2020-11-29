@@ -47,7 +47,7 @@ import ModelCommon.Codecs
         , getTensionCharac
         , isOwner
         , nid2rootid
-        , nodeIdCodec
+        , nodeFromFragment
         , uriFromUsername
         )
 import ModelCommon.Requests exposing (login)
@@ -1134,8 +1134,7 @@ update global msg model =
                     aPanel =
                         model.actionPanel
                             |> ActionPanel.edit blob.id
-                            |> ActionPanel.setNid (blob.node |> Maybe.map (\n -> nodeIdCodec parentid (withDefault "" n.nameid) (withDefault NodeType.Circle n.type_)) |> withDefault "")
-                            |> ActionPanel.setName (blob.node |> Maybe.map (\n -> n.name) |> withDefault Nothing |> withDefault "unknown")
+                            |> ActionPanel.setNode (blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid)
                 in
                 ( { model | actionPanel = aPanel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
@@ -1283,7 +1282,6 @@ update global msg model =
                         form =
                             { uctx = uctx
                             , rootnameid = rootnameid
-                            , id = model.path_data |> withMaybeData |> Maybe.map (\pd -> pd.root |> Maybe.map (\r -> r.id) |> withDefault "")
                             , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
 
@@ -2257,7 +2255,7 @@ viewSidePane u t model =
                         [ h2 [ class "subtitle" ] [ text T.assigneesH ] ]
                 )
                     ++ [ if List.length assignees > 0 then
-                            assignees |> List.map (\a -> viewUser a.username) |> span []
+                            assignees |> List.map (\a -> viewUser True a.username) |> span []
 
                          else
                             div [ class "is-italic" ] [ text T.noAssignees ]
@@ -2286,7 +2284,7 @@ viewSidePane u t model =
                             blob_m =
                                 t.blobs |> withDefault [] |> List.head
 
-                            hasConfig =
+                            isAdmin =
                                 model.isTensionAdmin && actionType_m /= Just NEW && blob_m /= Nothing
 
                             hasRole =
@@ -2302,6 +2300,9 @@ viewSidePane u t model =
 
                                     _ ->
                                         False
+
+                            hasConfig =
+                                isAdmin || hasRole
                         in
                         [ h2
                             [ class "subtitle"
@@ -2329,7 +2330,7 @@ viewSidePane u t model =
                                 let
                                     panelData =
                                         { tc = tc
-                                        , isAdmin = hasConfig
+                                        , isAdmin = isAdmin
                                         , hasRole = hasRole
                                         , isRight = False
                                         , data = model.actionPanel

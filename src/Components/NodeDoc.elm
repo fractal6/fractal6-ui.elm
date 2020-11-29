@@ -4,7 +4,6 @@ import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
-import Text as T
 import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (ternary)
@@ -22,6 +21,7 @@ import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTens
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
+import Text as T
 import Time
 
 
@@ -433,7 +433,7 @@ view_ tid data op_m =
                 [ div [ class "subtitle is-5" ]
                     [ Fa.icon "fas fa-users fa-sm" T.linksH
                     , links_
-                        |> List.map (\l -> viewUser l.username)
+                        |> List.map (\l -> viewUser True l.username)
                         |> span [ attribute "style" "margin-left:20px;" ]
                     , doEditView op_m BlobType.OnFirstLink
                     ]

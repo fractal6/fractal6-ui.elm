@@ -46,8 +46,7 @@ type alias Post =
 
 
 type alias Node =
-    { id : String
-    , createdAt : String
+    { createdAt : String
     , name : String
     , nameid : String
     , rootnameid : String
@@ -75,7 +74,6 @@ type alias RootNode =
     { name : String
     , nameid : String
     , charac : NodeCharac
-    , id : String
     , isPrivate : Bool
     }
 
@@ -271,6 +269,22 @@ initNodeData =
     NodeData "" Nothing Nothing False
 
 
+initNode : Node
+initNode =
+    { createdAt = ""
+    , name = ""
+    , nameid = ""
+    , rootnameid = ""
+    , parent = Nothing
+    , type_ = NodeType.Circle
+    , role_type = Nothing
+    , first_link = Nothing
+    , charac = initCharac
+    , isPrivate = False
+    , source = Nothing
+    }
+
+
 initMandate : Mandate
 initMandate =
     Mandate "" Nothing Nothing Nothing
@@ -279,6 +293,11 @@ initMandate =
 initNodeFragment : Maybe NodeType.NodeType -> NodeFragment
 initNodeFragment nt =
     NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+
+initCharac : NodeCharac
+initCharac =
+    { userCanJoin = False, mode = NodeMode.Coordinated }
 
 
 

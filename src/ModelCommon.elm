@@ -283,7 +283,6 @@ initTensionPatchForm tid user =
 type alias JoinOrgaForm =
     { uctx : UserCtx
     , rootnameid : String
-    , id : Maybe String
     , post : Post
     }
 
@@ -550,8 +549,7 @@ nodesEncoder nodes =
 
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
-    [ ( "id", JE.string node.id )
-    , ( "createdAt", JE.string node.createdAt )
+    [ ( "createdAt", JE.string node.createdAt )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
     , ( "rootnameid", JE.string node.rootnameid )
@@ -594,7 +592,6 @@ nodeDecoder : JD.Decoder Node
 nodeDecoder =
     --JD.map9 Node
     JD.succeed Node
-        |> JDE.andMap (JD.field "id" JD.string)
         |> JDE.andMap (JD.field "createdAt" JD.string)
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "nameid" JD.string)
@@ -640,11 +637,10 @@ localGraphDecoder =
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
-                JD.map5 RootNode
+                JD.map4 RootNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "charac" characDecoder)
-                    (JD.field "id" JD.string)
                     (JD.field "isPrivate" JD.bool)
         )
         (JD.field "path"

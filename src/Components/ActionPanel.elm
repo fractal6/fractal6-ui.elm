@@ -5,6 +5,7 @@ import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadi
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
@@ -36,8 +37,7 @@ type alias ActionForm =
     { uctx : UserCtx
     , tid : String
     , bid : String
-    , nid : String
-    , name : String -- Name of the node
+    , node : Node
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -82,8 +82,7 @@ initActionForm user tid =
                 UserCtx "" Nothing (UserRights False False) []
     , tid = tid
     , bid = ""
-    , nid = ""
-    , name = ""
+    , node = initNode
     , events_type = Nothing
     , post = Dict.empty
     }
@@ -175,8 +174,22 @@ setAction action data =
 
                 NoAction ->
                     []
+
+        newData =
+            case events of
+                [ TensionEvent.UserLeft ] ->
+                    data
+                        |> post "old"
+                            (data.form.node.role_type
+                                |> Maybe.map (\rt -> RoleType.toString rt)
+                                |> withDefault ""
+                            )
+                        |> post "new" data.form.node.nameid
+
+                _ ->
+                    data
     in
-    { data | state = action }
+    { newData | state = action }
         |> setEvents events
 
 
@@ -202,22 +215,13 @@ setTid tid data =
     { data | form = { f | tid = tid } }
 
 
-setNid : String -> ActionPanel -> ActionPanel
-setNid nid data =
+setNode : Node -> ActionPanel -> ActionPanel
+setNode n data =
     let
         f =
             data.form
     in
-    { data | form = { f | nid = nid } }
-
-
-setName : String -> ActionPanel -> ActionPanel
-setName name data =
-    let
-        f =
-            data.form
-    in
-    { data | form = { f | name = name } }
+    { data | form = { f | node = n } }
 
 
 setEvents : List TensionEvent.TensionEvent -> ActionPanel -> ActionPanel
@@ -249,39 +253,61 @@ view op =
     let
         actionType_m =
             Maybe.map (\c -> c.action_type) op.tc
+
+        form =
+            op.data.form
     in
     div []
         [ if op.data.isEdit then
-            div
-                [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ]
-            <|
-                [ div
-                    [ class "dropdown-item button-light"
-                    , onClick (op.onNavigate ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid op.data.form.nid, param2 = op.data.form.tid } |> toHref) ++ "?v=edit"))
+            div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] <|
+                (if form.node.role_type /= Just RoleType.Guest then
+                    [ div
+                        [ class "dropdown-item button-light"
+                        , onClick
+                            (op.onNavigate
+                                ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid op.data.form.node.nameid, param2 = op.data.form.tid } |> toHref)
+                                    ++ "?v=edit"
+                                )
+                            )
+                        ]
+                        [ Fa.icon "fas fa-pen" T.edit ]
+                    , hr [ class "dropdown-divider" ] []
                     ]
-                    [ Fa.icon "fas fa-pen" T.edit ]
-                , hr [ class "dropdown-divider" ] []
-                ]
-                    ++ [ case actionType_m of
-                            Just EDIT ->
-                                div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
-                                    [ Fa.icon "fas fa-archive" T.archive, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == ArchiveAction) ]
 
-                            Just ARCHIVE ->
-                                div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
-                                    [ Fa.icon "fas fa-archive" T.unarchive, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == UnarchiveAction) ]
+                 else
+                    []
+                )
+                    ++ (if op.isAdmin then
+                            case actionType_m of
+                                Just EDIT ->
+                                    [ div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
+                                        [ Fa.icon "fas fa-archive" T.archive
+                                        , loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == ArchiveAction)
+                                        ]
+                                    ]
 
-                            Just NEW ->
-                                text ""
+                                Just ARCHIVE ->
+                                    [ div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
+                                        [ Fa.icon "fas fa-archive" T.unarchive
+                                        , loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == UnarchiveAction)
+                                        ]
+                                    ]
 
-                            Nothing ->
-                                div [] [ text "not implemented" ]
-                       ]
+                                _ ->
+                                    [ div [] [ text "not implemented" ] ]
+
+                        else
+                            []
+                       )
                     ++ (if op.hasRole then
-                            [ hr [ class "dropdown-divider" ] []
-                            , div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
-                                [ p [] [ Fa.icon "fas fa-sign-out-alt" T.leaveRole, loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == LeaveAction) ] ]
+                            [ div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
+                                [ p []
+                                    [ Fa.icon "fas fa-sign-out-alt" T.leaveRole
+                                    , loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == LeaveAction)
+                                    ]
+                                ]
                             ]
+                                |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
                         else
                             []
@@ -322,10 +348,10 @@ viewModalContent op =
             op.data.form
 
         name =
-            form.name
+            form.node.name
 
         type_ =
-            typeFromNameid form.nid |> NodeType.toString
+            form.node.type_
 
         isLoading =
             op.data.action_result == LoadingSlowly
@@ -395,10 +421,11 @@ viewStep1 action header color op =
             op.data.form
 
         name =
-            form.name
+            form.node.name
 
         type_ =
-            typeFromNameid form.nid |> NodeType.toString
+            form.node.type_
+                |> NodeType.toString
 
         isLoading =
             op.data.action_result == LoadingSlowly

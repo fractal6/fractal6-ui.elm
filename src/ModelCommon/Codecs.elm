@@ -10,7 +10,20 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
-import ModelSchema exposing (LocalGraph, Node, NodeCharac, NodeId, NodesData, UserCtx, UserRole)
+import ModelSchema
+    exposing
+        ( FocusNode
+        , LocalGraph
+        , Node
+        , NodeCharac
+        , NodeFragment
+        , NodeId
+        , NodesData
+        , User
+        , UserCtx
+        , UserRole
+        , initCharac
+        )
 import Url exposing (Url)
 
 
@@ -156,8 +169,7 @@ nameidFromFlags flags =
 
 nodeFromFocus : NodeFocus -> Node
 nodeFromFocus focus =
-    { id = ""
-    , createdAt = ""
+    { createdAt = ""
     , name = ""
     , nameid = focus.nameid
     , rootnameid = focus.rootnameid
@@ -355,3 +367,19 @@ getTensionCharac action =
 
         TensionAction.ArchivedMd ->
             { action_type = ARCHIVE, doc_type = MD }
+
+
+nodeFromFragment : String -> NodeFragment -> Node
+nodeFromFragment parentid f =
+    { createdAt = ""
+    , name = withDefault "" f.name
+    , nameid = nodeIdCodec parentid (withDefault "" f.nameid) (withDefault NodeType.Circle f.type_)
+    , rootnameid = nid2rootid parentid
+    , parent = Nothing
+    , type_ = withDefault NodeType.Circle f.type_
+    , role_type = f.role_type
+    , charac = withDefault initCharac f.charac
+    , first_link = Maybe.map (\fs -> User fs Nothing) f.first_link
+    , isPrivate = withDefault False f.isPrivate
+    , source = Nothing
+    }

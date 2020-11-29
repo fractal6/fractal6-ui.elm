@@ -50,6 +50,7 @@ import ModelCommon.Codecs
         , isOwner
         , nameidFromFlags
         , nearestCircleid
+        , nid2rootid
         , nodeIdCodec
         , uriFromNameid
         , uriFromUsername
@@ -822,18 +823,25 @@ update global msg model =
         DoActionEdit node ->
             if model.actionPanel.isEdit == False then
                 let
+                    rootSource =
+                        getNode node.rootnameid model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
+
                     ( tid, bid ) =
                         node.source
                             |> Maybe.map
                                 (\b -> ( b.tension.id, b.id ))
-                            |> withDefault ( "", "" )
+                            |> withDefault
+                                (rootSource
+                                    |> Maybe.map
+                                        (\b -> ( b.tension.id, b.id ))
+                                    |> withDefault ( "", "" )
+                                )
 
                     aPanel =
                         model.actionPanel
                             |> ActionPanel.edit bid
                             |> ActionPanel.setTid tid
-                            |> ActionPanel.setNid node.nameid
-                            |> ActionPanel.setName node.name
+                            |> ActionPanel.setNode node
                 in
                 ( { model | actionPanel = aPanel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
@@ -909,7 +917,7 @@ update global msg model =
             case result of
                 Success t ->
                     ( { model | actionPanel = aPanel }
-                    , Cmd.batch (gcmds ++ [ send (DelNodes [ aPanel.form.nid ]) ])
+                    , Cmd.batch (gcmds ++ [ send (DelNodes [ aPanel.form.node.nameid ]) ])
                     , Cmd.none
                     )
 
@@ -940,7 +948,7 @@ update global msg model =
                 Success t ->
                     let
                         newNode =
-                            getNode aPanel.form.nid model.orga_data
+                            getNode aPanel.form.node.nameid model.orga_data
                                 |> Maybe.map (\n -> { n | first_link = Nothing })
                     in
                     ( { model | actionPanel = aPanel }
@@ -978,7 +986,6 @@ update global msg model =
                         form =
                             { uctx = uctx
                             , rootnameid = rootnameid
-                            , id = model.path_data |> Maybe.map (\pd -> pd.root |> Maybe.map (\r -> r.id) |> withDefault "")
                             , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                             }
 
@@ -1446,8 +1453,11 @@ viewSearchBar us model =
 
                                         hasRole =
                                             Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+
+                                        hasConfig =
+                                            isAdmin || hasRole
                                     in
-                                    if isAdmin then
+                                    if hasConfig then
                                         let
                                             panelData =
                                                 { tc = Just { action_type = EDIT, doc_type = NODE }

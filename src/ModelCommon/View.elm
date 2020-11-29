@@ -1,7 +1,6 @@
 module ModelCommon.View exposing (..)
 
 import Components.Fa as Fa
-import Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -13,12 +12,13 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global
-import Html exposing (Html, a, br, div, i, span, text)
-import Html.Attributes exposing (attribute, class, classList, href, id)
+import Html exposing (Html, a, br, button, div, i, span, text)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, UserCtx, Username)
+import Text as T
 
 
 
@@ -162,9 +162,13 @@ viewUsernameLink username =
     a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
 
 
-viewUser : String -> Html msg
-viewUser username =
-    span [] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ] [ getAvatar username ] ]
+viewUser : Bool -> String -> Html msg
+viewUser isLinked username =
+    if isLinked then
+        span [] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ] [ getAvatar username ] ]
+
+    else
+        span [] [ div [ class "image circleBaseInline circle0" ] [ getAvatar username ] ]
 
 
 viewOpenedDate : String -> Html msg

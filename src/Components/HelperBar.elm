@@ -2,7 +2,6 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Components.Fa as Fa
-import Text as T
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
@@ -15,6 +14,7 @@ import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (LocalGraph, NodeCharac, UserRole)
 import Ports
+import Text as T
 
 
 type HelperBar

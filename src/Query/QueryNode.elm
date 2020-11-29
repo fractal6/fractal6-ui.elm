@@ -259,7 +259,6 @@ nodeOrgaFilter rootid a =
 nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
 nodeOrgaPayload =
     SelectionSet.succeed Node
-        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
@@ -316,7 +315,6 @@ type alias LocalNode =
     , charac : NodeCharac
     , children : Maybe (List EmitterOrReceiver)
     , parent : Maybe LocalRootNode
-    , id : String
     , isPrivate : Bool
     }
 
@@ -326,7 +324,6 @@ type alias LocalRootNode =
     , nameid : String
     , charac : NodeCharac
     , isRoot : Bool
-    , id : String
     , isPrivate : Bool
     }
 
@@ -355,7 +352,7 @@ lgDecoder data =
                                 [ PNode p.name p.nameid p.isPrivate, PNode n.name n.nameid n.isPrivate ]
                         in
                         if p.isRoot then
-                            { root = RootNode p.name p.nameid p.charac p.id p.isPrivate |> Just
+                            { root = RootNode p.name p.nameid p.charac p.isPrivate |> Just
                             , path = path
                             , focus = focus
                             }
@@ -366,7 +363,7 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RootNode n.name n.nameid n.charac n.id n.isPrivate |> Just
+                        { root = RootNode n.name n.nameid n.charac n.isPrivate |> Just
                         , path = [ PNode n.name n.nameid n.isPrivate ]
                         , focus = FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
                         }
@@ -398,7 +395,6 @@ lgPayload =
             (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
         |> with
             (Fractal.Object.Node.parent identity lg2Payload)
-        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Node.isPrivate
 
 
@@ -409,7 +405,6 @@ lg2Payload =
         |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isRoot
-        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.Node.isPrivate
 
 

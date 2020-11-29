@@ -164,7 +164,7 @@ export const GraphPack = {
 
     // Graph fx settings
     isLoading: true,
-    minZoomDuration: 500, // 1250
+    minZoomDuration: 350, // 1250
     zoomFactorCircle: 2.02,
     zoomFactorRole: 3,
     zoomFactorGuest: 5,
@@ -487,6 +487,7 @@ export const GraphPack = {
             this.nodeFocusedFromJs(focus);
             elmHasBeenUpdated = true;
         }
+        var oldFocus = this.focusedNode;
         this.focusedNode = focus;
         this.drawNodeHover(this.focusedNode, false);
 
@@ -513,7 +514,7 @@ export const GraphPack = {
 
         //Perform the interpolation and continuously change the zoomCtx while the "transition" occurs.
         var interpolateZoom = (dt) => {
-            if (interpolator && duration) {
+            if (duration) {
                 timeElapsed += dt;
                 var t = this.ease(timeElapsed / duration);
 
@@ -521,15 +522,12 @@ export const GraphPack = {
                 this.zoomCtx.centerY = interpolator(t)[1];
                 this.zoomCtx.scale = this.diameter / interpolator(t)[2];
 
-                if (timeElapsed >= duration)
-                {
-                    interpolator = null;
-                    return true;
+                if (timeElapsed >= duration) {
+                    return true
                 } else {
-                    return false;
+                    return false
                 }
             }
-
             // do no stay lock here
             return true
         };
@@ -989,7 +987,6 @@ export const GraphPack = {
             name: this.rootNode.data.name,
             nameid: this.rootNode.data.nameid,
             charac: this.rootNode.data.charac,
-            id: this.rootNode.data.id,
             isPrivate: this.rootNode.data.isPrivate,
         };
         var focusNode = {
@@ -1007,6 +1004,7 @@ export const GraphPack = {
             }) : [],
             isPrivate: node.data.isPrivate
         };
+        console.log(rootNode)
         var lg = {
             root: rootNode,
             path: this.getNodePath(node),

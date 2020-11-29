@@ -2,7 +2,6 @@ module Components.UserSearchPanel exposing (..)
 
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMapData, withMaybeData)
-import Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -15,6 +14,7 @@ import ModelCommon exposing (AssigneeForm, UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
+import Text as T
 import Time
 
 
@@ -196,7 +196,7 @@ viewAssigneeSelectors users uspd =
                             , onClick (uspd.onSubmit <| uspd.onUserClick u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
-                            , viewUser u.username
+                            , viewUser False u.username
                             , case u.name of
                                 Just name ->
                                     span [ class "has-text-weight-semibold" ] [ text name ]
@@ -238,7 +238,7 @@ viewSelectors i pattern op =
                                     [ class "panel-block"
                                     , onClick (op.onSelectUser i u.username)
                                     ]
-                                    [ viewUser u.username
+                                    [ viewUser False u.username
                                     , case u.name of
                                         Just name ->
                                             span [ class "has-text-weight-semibold" ] [ text name ]
