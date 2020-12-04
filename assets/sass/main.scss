@@ -1224,6 +1224,14 @@ a.actionLink {
     display: flex;
     visibility: hidden;
 
+    &.is-active {
+        visibility: visible;
+        .modal-background {
+            opacity: 1;
+            transition: all $modal-in-duration;
+        }
+    }
+
     .modal-content, .modal-card {
         @media (min-width: 680px){
             min-width: 680px !important;
@@ -1257,14 +1265,6 @@ a.actionLink {
 
     .card-header-title, .label {
         color: #363636
-    }
-
-    &.is-active {
-        visibility: visible;
-        .modal-background {
-            opacity: 1;
-            transition: all $modal-in-duration;
-        }
     }
 
     &.modal-fx {

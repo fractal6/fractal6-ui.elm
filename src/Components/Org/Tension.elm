@@ -1957,11 +1957,24 @@ viewEventUserLeft event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
+
+        action_txt =
+            case event.old of
+                Just type_ ->
+                    case RoleType.fromString type_ of
+                        Just RoleType.Guest ->
+                            "Organisation"
+
+                        _ ->
+                            "Unknonw role type: " ++ type_
+
+                Nothing ->
+                    actionNameStr action
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.left, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.left, text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 

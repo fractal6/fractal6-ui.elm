@@ -125,7 +125,7 @@ refreshAuthModal modalAuth msgs =
                 Active f ->
                     Just f
 
-                _ ->
+                Inactive ->
                     Nothing
     in
     div
@@ -134,7 +134,7 @@ refreshAuthModal modalAuth msgs =
         , classList [ ( "is-active", form_m /= Nothing ) ]
         ]
         [ div [ class "modal-background", onClick msgs.closeModal ] []
-        , div [ class "modal-content" ]
+        , div [ class "modal-content", classList [] ]
             [ div [ class "box" ]
                 [ p [] [ text "Your session expired. Please, confirm your password:" ]
                 , div [ class "field is-horizntl" ]

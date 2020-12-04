@@ -1346,7 +1346,6 @@ view_ global model =
                 , viewCanvas global.session.user model
                 , br [] []
                 , NodeDoc.view nodeData Nothing
-                , setupActionModal model
                 ]
             , div [ class "column is-5-desktop is-6-widescreen is-5-fullhd" ]
                 [ div [ class "columns is-gapless" ]
@@ -1355,6 +1354,7 @@ view_ global model =
                     ]
                 ]
             ]
+        , setupActionModal model
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 

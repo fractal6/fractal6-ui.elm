@@ -5,7 +5,6 @@ import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.NotFound exposing (viewNotFound)
-import Text as T
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, toUp1)
@@ -31,6 +30,7 @@ import Query.QueryNode exposing (NodeExt, queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)
 import Task
+import Text as T
 import Time
 import Url exposing (Url)
 
@@ -362,7 +362,13 @@ view_ global model uctx =
             , div [ class "column is-7 " ]
                 [ viewProfileRight model uctx ]
             ]
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , case model.modalAuth of
+            -- @debug: should not be necessary...
+            Active _ ->
+                refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+
+            Inactive ->
+                text ""
         ]
 
 

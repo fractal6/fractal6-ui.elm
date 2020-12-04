@@ -1004,7 +1004,6 @@ export const GraphPack = {
             }) : [],
             isPrivate: node.data.isPrivate
         };
-        console.log(rootNode)
         var lg = {
             root: rootNode,
             path: this.getNodePath(node),
@@ -1135,7 +1134,6 @@ export const GraphPack = {
 			ctx.stroke();
 			r--;
             // @Debug, can't we stopt it !?
-            //console.log(r)
             if (r <= 0) {
                 r = canvas.height/2.1;
             }
