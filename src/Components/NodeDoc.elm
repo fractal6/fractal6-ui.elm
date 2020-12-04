@@ -13,7 +13,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -481,6 +481,25 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     , required True
                     ]
                     []
+                , if hasBeenPushed == False then
+                    div [ class "subForm" ]
+                        [ div [ class "field is-horizontal" ]
+                            [ div [ class "field-body control" ]
+                                [ div [] [ text "URL" ]
+                                , input [ class "input", size 13, disabled True, value "https://fractale.co/o/" ] []
+                                , input
+                                    [ class "input"
+                                    , type_ "text"
+                                    , value (node.nameid |> withDefault "")
+                                    , onInput <| op.onChangeNode "nameid"
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+
+                  else
+                    text ""
                 ]
             , p [ class "help-label" ] [ text txt.name_help ]
             ]
@@ -500,24 +519,6 @@ nodeAboutInputView hasBeenPushed source txt node op =
             , p [ class "help-label" ] [ text txt.about_help ]
             , br [] []
             ]
-        , if hasBeenPushed == False && source == TensionBaseUri then
-            div [ class "box has-background-grey-light is-paddingless" ]
-                [ div [ class "field is-horizontal" ]
-                    [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Name ID" ]
-                    , div [ class "field-body control" ]
-                        [ input
-                            [ class "input is-small"
-                            , type_ "text"
-                            , value (node.nameid |> withDefault "")
-                            , onInput <| op.onChangeNode "nameid"
-                            ]
-                            []
-                        ]
-                    ]
-                ]
-
-          else
-            text ""
         ]
 
 

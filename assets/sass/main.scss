@@ -205,6 +205,9 @@ html.has-modal-active, html.has-modal-active2 {
 .has-background-turquoise {
     background-color: $turquoise !important;
 }
+.has-background-grey-light2 {
+    background-color: $grey-light2 !important;
+}
 .has-text-turquoise {
     color: $turquoise !important;
 }
@@ -1400,30 +1403,37 @@ a.actionLink {
 
 
 .subForm {
-    padding: 0.666rem 1rem 0.1rem 0 !important;
-    margin-top: -0.5rem !important;
-    margin-bottom: 0rem !important;
+    height: 1.8rem !important;
+    .field .input, .field-label {
+        font-size: 0.8rem !important;
+        height: 1.8rem !important;
+    }
 
-    .field {
-        margin-bottom: 0.5rem !important;
-        .input {
-            font-size: 0.7rem !important;
+    .field-body {
+        div:nth-child(1) {
+            //background-clip: padding-box !important;
+            background: $grey-lighter !important;
+            padding: 0.35rem 1.5rem 0 1.5rem;
+            font-size: 0.8rem;
         }
-    }
-
-    .field-label {
-        font-size: 0.7rem !important;
-    }
-
-    .input {
-        background-color: #eee !important;
+        .input:nth-child(2) {
+            width: unset;
+            padding-right: 5px !important;
+            border-radius: unset !important;
+            border: 1px solid $grey-light2;
+        }
+        .input:nth-child(3) {
+            background: #f6f6f6 !important;
+            border-radius: unset !important;
+        }
     }
 }
 
 .cardForm {
+    &>div:nth-child(1) { padding: 0.25rem 0 0.25rem 0;}
     border-width: 1px !important;
     border-color: $grey-light !important;
-    margin-top: 2rem !important;
+    margin-bottom: 2rem !important;
 }
 
 .select.is-orange, .select.is-orange::after,

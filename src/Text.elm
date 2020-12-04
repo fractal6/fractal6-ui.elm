@@ -593,19 +593,14 @@ tensionSubmit =
     "Submit tension"
 
 
-editAndClose : String
-editAndClose =
-    "Edit and close tension."
-
-
 tensionCircleCloseSubmit : String
 tensionCircleCloseSubmit =
-    "Create Circle and close tension"
+    "Create Circle"
 
 
 tensionRoleCloseSubmit : String
 tensionRoleCloseSubmit =
-    "Create Role and close tension"
+    "Create Role"
 
 
 openedThe : String

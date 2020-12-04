@@ -90,36 +90,7 @@ view op =
                     ]
                 , div [ class "modal-card-body" ]
                     [ nodeAboutInputView False OverviewBaseUri txt form.node op
-                    , div [ class "box has-background-grey-lighter subForm" ]
-                        [ --div [ class "field is-horizontal" ]
-                          --  [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Tension title" ]
-                          --  , div [ class "field-body control" ]
-                          --      [ input
-                          --          [ class "input is-small"
-                          --          , type_ "text"
-                          --          , value title
-                          --          , onInput <| op.onChangeNode "title"
-                          --          ]
-                          --          []
-                          --      ]
-                          --  ],
-                          div [ class "field is-horizontal" ]
-                            [ div [ class "field-label is-small has-text-grey-darker" ] [ text "Identifier" ]
-                            , div [ class "field-body control" ]
-                                [ input
-                                    [ class "input is-small"
-                                    , type_ "text"
-                                    , value nameid
-                                    , onInput <| op.onChangeNode "nameid"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        , p [ class "help-label is-pulled-left", attribute "style" "margin-top: 4px !important;" ] [ text T.autoFieldMessageHelp ]
-                        ]
-                    , br [] []
                     , div [ class "card cardForm" ]
-                        --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.mandateH ] ]
                         [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ text T.mandateH ]
                         , div [ class "card-content" ] [ nodeMandateInputView txt form.node op ]
                         ]
@@ -131,13 +102,11 @@ view op =
                             --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
                             [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ text T.firstLinkH ]
                             , div [ class "card-content" ] [ nodeLinksInputView txt form op.data op ]
-                            , br [] []
                             ]
 
                       else
                         div [ class "field" ]
-                            [ br [] []
-                            , div [ class "button is-info", onClick op.onAddLinks ]
+                            [ div [ class "button is-info", onClick op.onAddLinks ]
                                 [ Fa.icon "fas fa-plus" "", text "Add first link" ]
                             ]
                     , br [] []
@@ -169,17 +138,6 @@ view op =
                                     ([ class "button has-text-weight-semibold"
                                      , classList
                                         [ ( "is-warning", isSendable )
-                                        , ( "is-loading", isLoading && data.activeButton == Just 0 )
-                                        ]
-                                     , disabled (not isSendable || isLoading)
-                                     ]
-                                        ++ submitCloseTension
-                                    )
-                                    [ text txt.close_submit ]
-                                , button
-                                    ([ class "button has-text-weight-semibold"
-                                     , classList
-                                        [ ( "is-success", isSendable )
                                         , ( "is-loading", isLoading && data.activeButton == Just 1 )
                                         ]
                                      , disabled (not isSendable || isLoading)
@@ -187,6 +145,17 @@ view op =
                                         ++ submitTension
                                     )
                                     [ text txt.submit ]
+                                , button
+                                    ([ class "button has-text-weight-semibold"
+                                     , classList
+                                        [ ( "is-success", isSendable )
+                                        , ( "is-loading", isLoading && data.activeButton == Just 0 )
+                                        ]
+                                     , disabled (not isSendable || isLoading)
+                                     ]
+                                        ++ submitCloseTension
+                                    )
+                                    [ text txt.close_submit ]
                                 ]
                             ]
                         ]
