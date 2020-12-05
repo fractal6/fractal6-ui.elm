@@ -1,4 +1,4 @@
-module Auth exposing (doRefreshToken, doRefreshToken2, refreshAuthModal)
+module Auth exposing (AuthState(..), doRefreshToken, doRefreshToken2, refreshAuthModal)
 
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, toErrorData, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
@@ -16,14 +16,24 @@ import String.Extra as SE
 import Task
 
 
+type AuthState a
+    = Authenticate
+    | RefreshToken Int
+    | OkAuth a
+    | NoAuth
+
+
 {-|
 
     For GQL Response
 
 -}
-doRefreshToken : GqlData a -> Bool
-doRefreshToken data =
+doRefreshToken : GqlData a -> Int -> AuthState a
+doRefreshToken data trial =
     case data of
+        Success d ->
+            OkAuth d
+
         Failure err ->
             if List.length err == 1 then
                 case List.head err of
@@ -41,25 +51,32 @@ doRefreshToken data =
                                 case List.head errGql.errors of
                                     Just e ->
                                         if e.message == "token is expired" then
-                                            True
+                                            Authenticate
+
+                                        else if e.message == "Access denied" then
+                                            if trial == 0 then
+                                                RefreshToken (trial + 1)
+
+                                            else
+                                                NoAuth
 
                                         else
-                                            False
+                                            NoAuth
 
                                     Nothing ->
-                                        False
+                                        NoAuth
 
                             Err errJD ->
-                                False
+                                NoAuth
 
                     Nothing ->
-                        False
+                        NoAuth
 
             else
-                False
+                NoAuth
 
         _ ->
-            False
+            NoAuth
 
 
 {-|
@@ -67,9 +84,12 @@ doRefreshToken data =
     For HTTP response
 
 -}
-doRefreshToken2 : WebData a -> Bool
-doRefreshToken2 data =
+doRefreshToken2 : WebData a -> Int -> AuthState a
+doRefreshToken2 data trial =
     case data of
+        RemoteData.Success d ->
+            OkAuth d
+
         RemoteData.Failure error ->
             let
                 err =
@@ -91,25 +111,32 @@ doRefreshToken2 data =
                                 case List.head errGql.errors of
                                     Just e ->
                                         if e.message == "token is expired" then
-                                            True
+                                            Authenticate
+
+                                        else if e.message == "Access denied" then
+                                            if trial == 0 then
+                                                RefreshToken (trial + 1)
+
+                                            else
+                                                NoAuth
 
                                         else
-                                            False
+                                            NoAuth
 
                                     Nothing ->
-                                        False
+                                        NoAuth
 
                             Err errJD ->
-                                False
+                                NoAuth
 
                     Nothing ->
-                        False
+                        NoAuth
 
             else
-                False
+                NoAuth
 
         _ ->
-            False
+            NoAuth
 
 
 

@@ -39,19 +39,37 @@ view user =
                 ]
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ a [ class "navbar-item", href (toHref Route.Top) ]
-                        [ text T.yourOrg ]
+                    [ case user of
+                        LoggedIn _ ->
+                            a [ class "navbar-item", href (toHref Route.Top) ]
+                                [ text T.yourOrg ]
+
+                        LoggedOut ->
+                            text ""
                     , a
                         [ class "navbar-item", href (toHref Route.Explore) ]
                         [ text T.explore ]
                     ]
                 , div [ class "navbar-end" ]
-                    [ newButton user
+                    [ helpButton user
+                    , newButton user
                     , userButton user
                     ]
                 ]
             ]
         ]
+
+
+helpButton : UserState -> Html msg
+helpButton user =
+    case user of
+        LoggedIn uctx ->
+            div
+                [ class "navbar-item" ]
+                [ div [ class "navbar-link is-arrowless has-background-primary button is-rounded is-small" ] [ Fa.icon "fas fa-question" "" ] ]
+
+        LoggedOut ->
+            text ""
 
 
 newButton : UserState -> Html msg

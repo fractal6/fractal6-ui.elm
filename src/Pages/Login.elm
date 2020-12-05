@@ -159,7 +159,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered section" ]
-        [ div [ class "column is-3" ]
+        [ div [ class "column is-4" ]
             [ viewLogin global model ]
         ]
 
@@ -215,6 +215,7 @@ viewLogin global model =
                         ]
                     ]
                 , br [] []
+                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Signup) ] [ text "or create an account" ]
                 , div [ class "field is-grouped is-grouped-right" ]
                     [ div [ class "control" ]
                         [ if isLoginSendable model.form.post then

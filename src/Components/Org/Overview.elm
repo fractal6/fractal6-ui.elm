@@ -1,9 +1,9 @@
 port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
-import Auth exposing (doRefreshToken, refreshAuthModal)
+import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
+import Components.ActionPanel as ActionPanel exposing (ActionForm, ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -119,6 +119,7 @@ type alias Model =
     , isModalActive : Bool
     , modalAuth : ModalAuth
     , helperBar : HelperBar
+    , refresh_trial : Int
     }
 
 
@@ -133,6 +134,10 @@ nfirstTensions =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+    | LoadOrga
+    | PushTension TensionForm
+    | PushAction ActionForm ActionPanelState
+    | PushGuest JoinOrgaForm
       -- Gql Data Queries
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
@@ -195,6 +200,7 @@ type Msg
     | DoClearTooltip -- ports send
     | ToggleGraphReverse -- ports send
       -- Token refresh
+    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
@@ -282,11 +288,12 @@ init global flags =
             , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
+            , refresh_trial = 0
             }
 
         cmds =
             if fs.orgChange || isInit then
-                [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                [ send LoadOrga
                 , Ports.initGraphPack Dict.empty "" -- canvas loading effet
 
                 --, queryCircleTension apis.gql newFocus.nameid GotTensions
@@ -301,7 +308,7 @@ init global flags =
                     ++ (if fs.refresh then
                             case session.orga_data of
                                 Just ndata ->
-                                    [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                                    [ send LoadOrga
                                     , Ports.initGraphPack Dict.empty "" --canvas loading effect
                                     ]
 
@@ -313,7 +320,7 @@ init global flags =
                        )
 
             else if fs.refresh then
-                [ queryGraphPack apis.gql newFocus.rootnameid GotOrga
+                [ send LoadOrga
                 , Ports.initGraphPack Dict.empty "" --canvas loading effect
 
                 --, queryCircleTension apis.gql newFocus.nameid GotTensions
@@ -343,6 +350,33 @@ update global msg model =
             global.session.apis
     in
     case msg of
+        LoadOrga ->
+            ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
+
+        PushTension form ->
+            ( model, addOneTension apis.gql form TensionAck, Cmd.none )
+
+        PushAction form state ->
+            let
+                ackMsg =
+                    case state of
+                        ArchiveAction ->
+                            ArchiveDocAck
+
+                        UnarchiveAction ->
+                            ArchiveDocAck
+
+                        LeaveAction ->
+                            LeaveRoleAck
+
+                        NoAction ->
+                            \x -> NoMsg
+            in
+            ( model, actionRequest apis.gql form ackMsg, Cmd.none )
+
+        PushGuest form ->
+            ( model, addNewMember apis.gql form JoinAck, Cmd.none )
+
         PassedSlowLoadTreshold ->
             let
                 orga_data =
@@ -361,8 +395,23 @@ update global msg model =
 
         -- Gql queries
         GotOrga result ->
-            case result of
-                Success data ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    let
+                        uctx =
+                            case global.session.user of
+                                LoggedIn u ->
+                                    u
+
+                                LoggedOut ->
+                                    initUserctx
+                    in
+                    ( model, send (DoOpenAuthModal uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
+
+                OkAuth data ->
                     let
                         users =
                             orgaToUsersData data
@@ -379,26 +428,8 @@ update global msg model =
                     else
                         ( { model | orga_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
 
-                other ->
-                    if doRefreshToken other then
-                        let
-                            uctx =
-                                case global.session.user of
-                                    LoggedIn u ->
-                                        u
-
-                                    LoggedOut ->
-                                        initUserctx
-                        in
-                        ( { model
-                            | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ), ( "msg", "GotOrga" ) ], result = RemoteData.NotAsked }
-                          }
-                        , Cmd.none
-                        , Ports.open_auth_modal
-                        )
-
-                    else
-                        ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
+                NoAuth ->
+                    ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
 
         GotTensions result ->
             case result of
@@ -642,14 +673,14 @@ update global msg model =
                         |> NewTensionForm.setResult LoadingSlowly
             in
             ( { model | tensionForm = newTensionForm }
-            , addOneTension apis.gql newTensionForm.form TensionAck
+            , send (PushTension newTensionForm.form)
             , Cmd.none
             )
 
         TensionAck result ->
             let
                 -- Redirect Success new node* tension to the AddTension pipeline
-                -- @Debug: Make the form (and the result) accessible from the model (as for the Tension page,
+                -- @Debug: Make the form (and the result) accessible from the model (like in the Tension page,
                 --         in order to avoid doing several "switch/case" to get the form ?
                 form =
                     model.tensionForm.form
@@ -664,35 +695,26 @@ update global msg model =
                 tf =
                     NewTensionForm.setResult result model.tensionForm
             in
-            case na of
-                AddTension TensionFinal ->
-                    case result of
-                        Success t ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | tensionForm = NewTensionForm.setResult NotAsked model.tensionForm }, send (DoOpenAuthModal form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushTension form) 500, send UpdateUserToken )
+
+                OkAuth tension ->
+                    case na of
+                        AddTension TensionFinal ->
                             let
                                 tensions =
-                                    hotTensionPush t model.tensions_data
+                                    hotTensionPush tension model.tensions_data
                             in
                             ( { model | node_action = na, tensionForm = tf, tensions_data = Success tensions }
                             , Cmd.none
                             , send (UpdateSessionTensions (Just tensions))
                             )
 
-                        other ->
-                            if doRefreshToken other then
-                                ( { model
-                                    | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }
-                                    , tensionForm = NewTensionForm.setResult NotAsked model.tensionForm
-                                  }
-                                , Cmd.none
-                                , Ports.open_auth_modal
-                                )
-
-                            else
-                                ( { model | tensionForm = tf }, Cmd.none, Cmd.none )
-
-                AddCircle NodeFinal ->
-                    case result of
-                        Success t ->
+                        AddCircle NodeFinal ->
                             let
                                 nameid =
                                     form.node.nameid
@@ -701,25 +723,14 @@ update global msg model =
                             in
                             ( { model | tensionForm = tf }
                             , queryNodesSub apis.gql nameid NewNodesAck
-                              -- get the nodes just added
                             , Cmd.none
                             )
 
                         other ->
-                            if doRefreshToken other then
-                                ( { model
-                                    | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked }
-                                    , tensionForm = NewTensionForm.setResult NotAsked model.tensionForm
-                                  }
-                                , Cmd.none
-                                , Ports.open_auth_modal
-                                )
+                            ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
 
-                            else
-                                ( { model | tensionForm = tf }, Cmd.none, Cmd.none )
-
-                other ->
-                    ( { model | node_action = AskErr "Query method implemented from TensionAck" }, Cmd.none, Cmd.none )
+                NoAuth ->
+                    ( { model | tensionForm = tf }, Cmd.none, Cmd.none )
 
         -- New Circle
         DoCircleInit node nodeType ->
@@ -807,7 +818,7 @@ update global msg model =
                         |> NewTensionForm.setResult LoadingSlowly
             in
             ( { model | tensionForm = newTensionForm }
-            , addOneTension apis.gql newTensionForm.form TensionAck
+            , send (PushTension newTensionForm.form)
             , Cmd.none
             )
 
@@ -884,23 +895,9 @@ update global msg model =
                     model.actionPanel
                         |> ActionPanel.post "createdAt" (fromTime time)
                         |> ActionPanel.setActionResult LoadingSlowly
-
-                ackMsg =
-                    case aPanel.state of
-                        ArchiveAction ->
-                            ArchiveDocAck
-
-                        UnarchiveAction ->
-                            ArchiveDocAck
-
-                        LeaveAction ->
-                            LeaveRoleAck
-
-                        NoAction ->
-                            \x -> NoMsg
             in
             ( { model | actionPanel = aPanel }
-            , actionRequest apis.gql aPanel.form ackMsg
+            , send (PushAction aPanel.form aPanel.state)
             , Cmd.none
             )
 
@@ -910,29 +907,22 @@ update global msg model =
                     model.actionPanel
                         |> ActionPanel.cancelEdit
                         |> ActionPanel.setActionResult result
-
-                gcmds =
-                    []
             in
-            case result of
-                Success t ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal aPanel.form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
+
+                OkAuth t ->
                     ( { model | actionPanel = aPanel }
-                    , Cmd.batch (gcmds ++ [ send (DelNodes [ aPanel.form.node.nameid ]) ])
+                    , Cmd.batch [ send (DelNodes [ aPanel.form.node.nameid ]) ]
                     , Cmd.none
                     )
 
-                other ->
-                    if doRefreshToken other then
-                        ( { model
-                            | modalAuth = Active { post = Dict.fromList [ ( "username", aPanel.form.uctx.username ) ], result = RemoteData.NotAsked }
-                            , actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel
-                          }
-                        , Cmd.none
-                        , Ports.open_auth_modal
-                        )
-
-                    else
-                        ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
+                NoAuth ->
+                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
 
         LeaveRoleAck result ->
             let
@@ -944,8 +934,14 @@ update global msg model =
                 gcmds =
                     [ Ports.click "body" ]
             in
-            case result of
-                Success t ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal aPanel.form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
+
+                OkAuth t ->
                     let
                         newNode =
                             getNode aPanel.form.node.nameid model.orga_data
@@ -956,18 +952,8 @@ update global msg model =
                     , Cmd.none
                     )
 
-                other ->
-                    if doRefreshToken other then
-                        ( { model
-                            | modalAuth = Active { post = Dict.fromList [ ( "username", aPanel.form.uctx.username ) ], result = RemoteData.NotAsked }
-                            , actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel
-                          }
-                        , Cmd.none
-                        , Ports.open_auth_modal
-                        )
-
-                    else
-                        ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
+                NoAuth ->
+                    ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
 
         UpdateActionPost field value ->
             ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
@@ -993,26 +979,28 @@ update global msg model =
                             { model | node_action = JoinOrga (JoinInit form) }
                     in
                     ( newModel
-                    , Cmd.batch [ addNewMember apis.gql form JoinAck, send DoOpenModal ]
+                    , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
                     , Cmd.none
                     )
 
         JoinAck result ->
             case model.node_action of
                 JoinOrga (JoinInit form) ->
-                    case result of
-                        Success n ->
+                    case doRefreshToken result model.refresh_trial of
+                        Authenticate ->
+                            ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
+
+                        RefreshToken i ->
+                            ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
+
+                        OkAuth n ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , send (AddNodes [ n ])
                             , Cmd.none
                             )
 
-                        other ->
-                            if doRefreshToken other then
-                                ( { model | modalAuth = Active { post = Dict.fromList [ ( "username", form.uctx.username ) ], result = RemoteData.NotAsked } }, Cmd.none, Ports.open_auth_modal )
-
-                            else
-                                ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
+                        NoAuth ->
+                            ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->
                     ( model, Cmd.none, Cmd.none )
@@ -1113,6 +1101,18 @@ update global msg model =
             in
             ( { model | isModalActive = False }, gcmd, Ports.close_modal )
 
+        DoOpenAuthModal uctx ->
+            ( { model
+                | modalAuth =
+                    Active
+                        { post = Dict.fromList [ ( "username", uctx.username ) ]
+                        , result = RemoteData.NotAsked
+                        }
+              }
+            , Cmd.none
+            , Ports.open_auth_modal
+            )
+
         DoCloseAuthModal ->
             case model.node_action of
                 JoinOrga _ ->
@@ -1145,7 +1145,7 @@ update global msg model =
                                 Active f ->
                                     case Dict.get "msg" f.post of
                                         Just "GotOrga" ->
-                                            sendSleep (Navigate (uriFromNameid OverviewBaseUri model.node_focus.rootnameid)) 300
+                                            sendSleep (Navigate (uriFromNameid OverviewBaseUri model.node_focus.rootnameid)) 500
 
                                         _ ->
                                             Cmd.none

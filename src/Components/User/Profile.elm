@@ -1,6 +1,6 @@
 module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Auth exposing (doRefreshToken, refreshAuthModal)
+import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
@@ -62,6 +62,7 @@ type alias Model =
     , user : GqlData UserCtx
     , user_data : UserDict
     , uctx_m : Maybe UserCtx
+    , refresh_trial : Int
 
     -- Common
     , modalAuth : ModalAuth
@@ -114,9 +115,11 @@ buildUserDict uctx =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+    | LoadNodes
     | GotNodes (GqlData (List NodeExt))
     | GotUctx (GqlData UserCtx)
       -- Token refresh
+    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
@@ -171,12 +174,13 @@ init global flags =
 
             -- common
             , modalAuth = Inactive
+            , refresh_trial = 0
             }
 
         cmds =
             [ case uctx_data of
                 Success uctx ->
-                    queryNodeExt apis.gql (Dict.keys model.user_data) GotNodes
+                    send LoadNodes
 
                 _ ->
                     queryUctx apis.gql username GotUctx
@@ -200,6 +204,9 @@ update global msg model =
             global.session.apis
     in
     case msg of
+        LoadNodes ->
+            ( model, queryNodeExt apis.gql (Dict.keys model.user_data) GotNodes, Cmd.none )
+
         PassedSlowLoadTreshold ->
             let
                 user =
@@ -208,8 +215,14 @@ update global msg model =
             ( { model | user = user }, Cmd.none, Cmd.none )
 
         GotNodes result ->
-            case result of
-                Success data ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( model, send (DoOpenAuthModal (withDefault initUserctx model.uctx_m)), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep LoadNodes 500, send UpdateUserToken )
+
+                OkAuth data ->
                     let
                         resDict =
                             data
@@ -233,21 +246,8 @@ update global msg model =
                     in
                     ( { model | user_data = newUD }, Cmd.none, Cmd.none )
 
-                other ->
-                    if doRefreshToken other then
-                        let
-                            uctx =
-                                model.uctx_m |> withDefault initUserctx
-                        in
-                        ( { model
-                            | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ], result = RemoteData.NotAsked }
-                          }
-                        , Cmd.none
-                        , Ports.open_auth_modal
-                        )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
+                NoAuth ->
+                    ( model, Cmd.none, Cmd.none )
 
         GotUctx result ->
             case result of
@@ -256,10 +256,22 @@ update global msg model =
                         user_data =
                             buildUserDict uctx
                     in
-                    ( { model | user = result, user_data = user_data }, queryNodeExt apis.gql (Dict.keys user_data) GotNodes, Cmd.none )
+                    ( { model | user = result, user_data = user_data }, send LoadNodes, Cmd.none )
 
                 _ ->
                     ( { model | user = result }, Cmd.none, Cmd.none )
+
+        DoOpenAuthModal uctx ->
+            ( { model
+                | modalAuth =
+                    Active
+                        { post = Dict.fromList [ ( "username", uctx.username ) ]
+                        , result = RemoteData.NotAsked
+                        }
+              }
+            , Cmd.none
+            , Ports.open_auth_modal
+            )
 
         DoCloseAuthModal ->
             ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
@@ -283,7 +295,7 @@ update global msg model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send DoCloseAuthModal, queryNodeExt apis.gql (Dict.keys model.user_data) GotNodes ]
+                    , Cmd.batch [ send DoCloseAuthModal, send LoadNodes ]
                     , send (UpdateUserSession uctx)
                     )
 

@@ -1,10 +1,9 @@
 module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
-import Auth exposing (doRefreshToken2, refreshAuthModal)
+import Auth exposing (AuthState(..), doRefreshToken2, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (makeNewNodeId)
-import Text as T
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onKeydown)
@@ -31,6 +30,7 @@ import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
 import Task
+import Text as T
 import Time
 
 
@@ -57,6 +57,7 @@ type alias Model =
     -- common
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
+    , refresh_trial : Int
     }
 
 
@@ -84,7 +85,7 @@ init global flags =
                 form =
                     { post = Dict.empty, uctx = initUserctx }
             in
-            ( { form = form, result = RemoteData.NotAsked, isModalActive = False, modalAuth = Inactive }
+            ( { form = form, result = RemoteData.NotAsked, isModalActive = False, modalAuth = Inactive, refresh_trial = 0 }
             , send (Navigate "/")
             , Cmd.none
             )
@@ -100,6 +101,7 @@ init global flags =
               --common
               , isModalActive = False
               , modalAuth = Inactive
+              , refresh_trial = 0
               }
             , Cmd.none
             , Cmd.none
@@ -114,12 +116,14 @@ init global flags =
 
 type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
+    | PushOrga OrgaForm
     | ChangeNodePost String String -- {field value}
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (WebData NodeId)
       -- Common
     | Navigate String
     | DoCloseModal String -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
     | DoCloseAuthModal -- ports receive / Close modal
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
@@ -134,35 +138,34 @@ update global msg model =
             global.session.apis
     in
     case msg of
+        PushOrga form ->
+            ( model, createOrga apis.auth form.post OrgaAck, Cmd.none )
+
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         SubmitOrga form time ->
             ( { model | form = model.form, result = RemoteData.Loading }
-            , createOrga apis.auth form.post OrgaAck
+            , send (PushOrga form)
             , Cmd.none
             )
 
         OrgaAck result ->
-            case result of
-                RemoteData.Success n ->
+            case doRefreshToken2 result model.refresh_trial of
+                Authenticate ->
+                    ( { model | result = RemoteData.NotAsked }, send (DoOpenAuthModal model.form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushOrga model.form) 500, send UpdateUserToken )
+
+                OkAuth n ->
                     ( { model | result = result }
                     , send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
                     , send UpdateUserToken
                     )
 
-                other ->
-                    if doRefreshToken2 other then
-                        ( { model
-                            | modalAuth = Active { post = Dict.fromList [ ( "username", model.form.uctx.username ) ], result = RemoteData.NotAsked }
-                            , result = RemoteData.NotAsked
-                          }
-                        , Cmd.none
-                        , Ports.open_auth_modal
-                        )
-
-                    else
-                        ( { model | result = result }, Cmd.none, Cmd.none )
+                NoAuth ->
+                    ( { model | result = result }, Cmd.none, Cmd.none )
 
         ChangeNodePost field value ->
             let
@@ -198,6 +201,18 @@ update global msg model =
                         Cmd.none
             in
             ( { model | isModalActive = False }, gcmd, Ports.close_modal )
+
+        DoOpenAuthModal uctx ->
+            ( { model
+                | modalAuth =
+                    Active
+                        { post = Dict.fromList [ ( "username", uctx.username ) ]
+                        , result = RemoteData.NotAsked
+                        }
+              }
+            , Cmd.none
+            , Ports.open_auth_modal
+            )
 
         DoCloseAuthModal ->
             ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
@@ -315,8 +330,8 @@ viewOrgaForm global model =
                 [ input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
-                    , type_ "text"
                     , autocomplete False
+                    , type_ "search"
                     , placeholder "Name"
                     , value name
                     , onInput <| ChangeNodePost "name"
@@ -333,8 +348,8 @@ viewOrgaForm global model =
                     [ id "aboutField"
                     , class "input followFocus"
                     , attribute "data-nextfocus" "textAreaModal"
-                    , type_ "text"
                     , autocomplete False
+                    , type_ "search"
                     , placeholder "About"
                     , value about
                     , onInput <| ChangeNodePost "about"
