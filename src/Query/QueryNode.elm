@@ -4,6 +4,7 @@ module Query.QueryNode exposing
     , User
     , blobIdPayload
     , emiterOrReceiverPayload
+    , fetchNode
     , nodeCharacPayload
     , nodeIdPayload
     , nodeOrgaPayload
@@ -43,7 +44,6 @@ import RemoteData exposing (RemoteData)
    Query Public Orga / Explore
 -}
 --- Response decoder
---
 
 
 type alias NodeExt =
@@ -248,12 +248,28 @@ nodeOrgaFilter rootid a =
                 (\b ->
                     { b
                         | rootnameid = Present { eq = Present rootid, regexp = Absent }
-                        , not =
-                            Input.buildNodeFilter (\sd -> { sd | isArchived = Present True }) |> Present
+                        , not = matchAnyRoleType [ RoleType.Retired ]
                     }
                 )
                 |> Present
     }
+
+
+matchAnyRoleType : List RoleType.RoleType -> OptionalArgument Input.NodeFilter
+matchAnyRoleType alls =
+    List.foldl
+        (\x filter ->
+            Input.buildNodeFilter
+                (\d ->
+                    { d
+                        | role_type = Present { eq = Present x }
+                        , or = filter
+                    }
+                )
+                |> Present
+        )
+        Absent
+        alls
 
 
 nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
@@ -299,6 +315,45 @@ nodeCharacPayload =
     SelectionSet.map2 NodeCharac
         Fractal.Object.NodeCharac.userCanJoin
         Fractal.Object.NodeCharac.mode
+
+
+
+{-
+   Get Node
+-}
+
+
+fetchNode url targetid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter targetid)
+            nodeOrgaPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+
+{-
+   Query FocusNode
+-}
+
+
+focusDecoder : Maybe LocalNode -> Maybe FocusNode
+focusDecoder data =
+    data
+        |> Maybe.map
+            (\n ->
+                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
+            )
+
+
+queryFocusNode url targetid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter targetid)
+            lgPayload
+        )
+        (RemoteData.fromResult >> decodeResponse focusDecoder >> msg)
 
 
 
@@ -373,14 +428,14 @@ lgDecoder data =
 queryLocalGraph url targetid msg =
     makeGQLQuery url
         (Query.getNode
-            (lgFilter targetid)
+            (nidFilter targetid)
             lgPayload
         )
         (RemoteData.fromResult >> decodeResponse lgDecoder >> msg)
 
 
-lgFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-lgFilter nid a =
+nidFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
+nidFilter nid a =
     { a | nameid = Present nid }
 
 
@@ -416,30 +471,6 @@ nArchivedFilter a =
                 (\b -> { b | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True }) |> Present })
                 |> Present
     }
-
-
-
-{-
-   Query FocusNode
--}
-
-
-focusDecoder : Maybe LocalNode -> Maybe FocusNode
-focusDecoder data =
-    data
-        |> Maybe.map
-            (\n ->
-                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
-            )
-
-
-queryFocusNode url targetid msg =
-    makeGQLQuery url
-        (Query.getNode
-            (lgFilter targetid)
-            lgPayload
-        )
-        (RemoteData.fromResult >> decodeResponse focusDecoder >> msg)
 
 
 

@@ -270,20 +270,23 @@ getAvatar username =
 roleColor : RoleType.RoleType -> String
 roleColor rt =
     case rt of
-        RoleType.Guest ->
-            "primary"
+        RoleType.Owner ->
+            "orange"
 
         RoleType.Member ->
             "primary"
 
-        RoleType.Peer ->
+        RoleType.Guest ->
+            "primary"
+
+        RoleType.Retired ->
             "primary"
 
         RoleType.Coordinator ->
             "orange"
 
-        RoleType.Owner ->
-            "orange"
+        RoleType.Peer ->
+            "primary"
 
 
 

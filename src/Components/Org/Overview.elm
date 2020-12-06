@@ -3,7 +3,7 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionForm, ActionPanel, ActionPanelState(..), ActionStep(..))
+import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -47,6 +47,7 @@ import ModelCommon.Codecs
         , getCircleRoles
         , getCoordoRoles
         , getOrgaRoles
+        , guestIdCodec
         , isOwner
         , nameidFromFlags
         , nearestCircleid
@@ -60,11 +61,10 @@ import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, rol
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddNode exposing (addNewMember, addOneCircle)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchNode exposing (patchNode)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (queryGraphPack, queryNodesSub)
+import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
@@ -108,7 +108,6 @@ type alias Model =
     , node_quickSearch : NodesQuickSearch
 
     -- Form
-    --, joinForm : JoinOrgaForm
     , tensionForm : NewTensionForm
 
     -- Node Action
@@ -137,7 +136,7 @@ type Msg
     | LoadOrga
     | PushTension TensionForm
     | PushAction ActionForm ActionPanelState
-    | PushGuest JoinOrgaForm
+    | PushGuest ActionForm
       -- Gql Data Queries
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
@@ -188,8 +187,10 @@ type Msg
     | LeaveRoleAck (GqlData ActionResult)
     | UpdateActionPost String String
       -- JoinOrga Action
-    | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData Node)
+    | DoJoinOrga String
+    | DoJoinOrga2 (GqlData Node)
+    | DoJoinOrga3 Node Time.Posix
+    | JoinAck (GqlData ActionResult)
       -- Graphpack
     | AddNodes (List Node)
     | DelNodes (List String)
@@ -375,7 +376,7 @@ update global msg model =
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
         PushGuest form ->
-            ( model, addNewMember apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -839,12 +840,10 @@ update global msg model =
 
                     ( tid, bid ) =
                         node.source
-                            |> Maybe.map
-                                (\b -> ( b.tension.id, b.id ))
+                            |> Maybe.map (\b -> ( b.tension.id, b.id ))
                             |> withDefault
                                 (rootSource
-                                    |> Maybe.map
-                                        (\b -> ( b.tension.id, b.id ))
+                                    |> Maybe.map (\b -> ( b.tension.id, b.id ))
                                     |> withDefault ( "", "" )
                                 )
 
@@ -959,7 +958,7 @@ update global msg model =
             ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
 
         -- Join
-        DoJoinOrga rootnameid time ->
+        DoJoinOrga rootnameid ->
             case global.session.user of
                 LoggedOut ->
                     ( { model | node_action = ActionAuthNeeded }
@@ -968,24 +967,53 @@ update global msg model =
                     )
 
                 LoggedIn uctx ->
-                    let
-                        form =
-                            { uctx = uctx
-                            , rootnameid = rootnameid
-                            , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
-                            }
-
-                        newModel =
-                            { model | node_action = JoinOrga (JoinInit form) }
-                    in
-                    ( newModel
-                    , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
+                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
+                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
                     )
 
+        DoJoinOrga2 result ->
+            case result of
+                Success n ->
+                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
+                    , send (Submit <| DoJoinOrga3 n)
+                    , Cmd.none
+                    )
+
+                other ->
+                    ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
+
+        DoJoinOrga3 node time ->
+            let
+                ( tid, bid ) =
+                    node.source
+                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                        |> withDefault ( "", "" )
+
+                f =
+                    initActionForm global.session.user tid
+
+                form =
+                    { f
+                        | bid = "" -- do no set bid to pass the backend
+                        , events_type = Just [ TensionEvent.UserJoin ]
+                        , post =
+                            Dict.fromList
+                                [ ( "createdAt", fromTime time )
+                                , ( "old", f.uctx.username )
+                                , ( "new", node.nameid )
+                                ]
+                        , node = node
+                    }
+            in
+            ( { model | node_action = JoinOrga (JoinValidation form LoadingSlowly) }
+            , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
+            , Cmd.none
+            )
+
         JoinAck result ->
             case model.node_action of
-                JoinOrga (JoinInit form) ->
+                JoinOrga (JoinValidation form _) ->
                     case doRefreshToken result model.refresh_trial of
                         Authenticate ->
                             ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
@@ -995,7 +1023,7 @@ update global msg model =
 
                         OkAuth n ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , send (AddNodes [ n ])
+                            , queryNodesSub apis.gql (guestIdCodec form.node.nameid form.uctx.username) NewNodesAck
                             , Cmd.none
                             )
 
@@ -1328,7 +1356,7 @@ view_ global model =
                     nodeData_
 
         helperData =
-            { onJoin = Submit <| DoJoinOrga model.node_focus.rootnameid
+            { onJoin = DoJoinOrga model.node_focus.rootnameid
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
             , user = global.session.user
@@ -1837,11 +1865,11 @@ viewCircleStep step ntf model =
             viewRoleNeeded errMsg
 
 
-viewJoinOrgaStep : GqlData NodesData -> JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep : GqlData NodesData -> JoinStep ActionForm -> Html Msg
 viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text T.loading ]
+            div [ class "box spinner" ] [ text "" ]
 
         JoinValidation form result ->
             case result of
@@ -1849,14 +1877,14 @@ viewJoinOrgaStep orga step =
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
-                        , span [ class "has-font-weight-semibold" ] [ getNodeName form.rootnameid orga |> text ]
+                        , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 
                 Failure err ->
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text T.loading ]
+                    div [ class "box  spinner" ] [ text "" ]
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg

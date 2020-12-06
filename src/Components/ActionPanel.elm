@@ -14,7 +14,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (ActionForm, UserState(..), initActionForm)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, typeFromNameid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
@@ -30,16 +30,6 @@ type alias ActionPanel =
     , state : ActionPanelState
     , step : ActionStep
     , action_result : GqlData ActionResult
-    }
-
-
-type alias ActionForm =
-    { uctx : UserCtx
-    , tid : String
-    , bid : String
-    , node : Node
-    , events_type : Maybe (List TensionEvent.TensionEvent)
-    , post : Post
     }
 
 
@@ -69,23 +59,6 @@ action2str action =
 
         NoAction ->
             Nothing
-
-
-initActionForm : UserState -> String -> ActionForm
-initActionForm user tid =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
-    , tid = tid
-    , bid = ""
-    , node = initNode
-    , events_type = Nothing
-    , post = Dict.empty
-    }
 
 
 create : UserState -> String -> ActionPanel

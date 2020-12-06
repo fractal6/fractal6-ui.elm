@@ -8,16 +8,17 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type RoleType
-    = Coordinator
-    | Peer
+    = Owner
     | Member
     | Guest
-    | Owner
+    | Retired
+    | Coordinator
+    | Peer
 
 
 list : List RoleType
 list =
-    [ Coordinator, Peer, Member, Guest, Owner ]
+    [ Owner, Member, Guest, Retired, Coordinator, Peer ]
 
 
 decoder : Decoder RoleType
@@ -26,11 +27,8 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "Coordinator" ->
-                        Decode.succeed Coordinator
-
-                    "Peer" ->
-                        Decode.succeed Peer
+                    "Owner" ->
+                        Decode.succeed Owner
 
                     "Member" ->
                         Decode.succeed Member
@@ -38,8 +36,14 @@ decoder =
                     "Guest" ->
                         Decode.succeed Guest
 
-                    "Owner" ->
-                        Decode.succeed Owner
+                    "Retired" ->
+                        Decode.succeed Retired
+
+                    "Coordinator" ->
+                        Decode.succeed Coordinator
+
+                    "Peer" ->
+                        Decode.succeed Peer
 
                     _ ->
                         Decode.fail ("Invalid RoleType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -51,11 +55,8 @@ decoder =
 toString : RoleType -> String
 toString enum =
     case enum of
-        Coordinator ->
-            "Coordinator"
-
-        Peer ->
-            "Peer"
+        Owner ->
+            "Owner"
 
         Member ->
             "Member"
@@ -63,8 +64,14 @@ toString enum =
         Guest ->
             "Guest"
 
-        Owner ->
-            "Owner"
+        Retired ->
+            "Retired"
+
+        Coordinator ->
+            "Coordinator"
+
+        Peer ->
+            "Peer"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -81,11 +88,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe RoleType
 fromString enumString =
     case enumString of
-        "Coordinator" ->
-            Just Coordinator
-
-        "Peer" ->
-            Just Peer
+        "Owner" ->
+            Just Owner
 
         "Member" ->
             Just Member
@@ -93,8 +97,14 @@ fromString enumString =
         "Guest" ->
             Just Guest
 
-        "Owner" ->
-            Just Owner
+        "Retired" ->
+            Just Retired
+
+        "Coordinator" ->
+            Just Coordinator
+
+        "Peer" ->
+            Just Peer
 
         _ ->
             Nothing

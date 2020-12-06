@@ -138,7 +138,7 @@ type ActionState
     = ActionChoice Node
     | AddTension TensionStep
     | AddCircle NodeStep
-    | JoinOrga (JoinStep JoinOrgaForm)
+    | JoinOrga (JoinStep ActionForm)
     | ActionAuthNeeded
     | AskErr String
     | NoOp
@@ -278,12 +278,33 @@ initTensionPatchForm tid user =
 
 
 -- Join Form
+-- @debug: ActionForm is defined twice here and in ActionPanel
 
 
-type alias JoinOrgaForm =
+type alias ActionForm =
     { uctx : UserCtx
-    , rootnameid : String
+    , tid : String
+    , bid : String
+    , node : Node
+    , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
+    }
+
+
+initActionForm : UserState -> String -> ActionForm
+initActionForm user tid =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , tid = tid
+    , bid = ""
+    , node = initNode
+    , events_type = Nothing
+    , post = Dict.empty
     }
 
 
@@ -312,8 +333,8 @@ type NodeStep
 {-| Join Step
 -}
 type JoinStep form
-    = JoinInit form
-    | JoinValidation form (GqlData Node)
+    = JoinInit (GqlData Node)
+    | JoinValidation form (GqlData ActionResult)
     | JoinNotAuthorized ErrorData
 
 

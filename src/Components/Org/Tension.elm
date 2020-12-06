@@ -2,7 +2,7 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.ActionPanel as ActionPanel exposing (ActionForm, ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
+import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
@@ -73,9 +73,8 @@ import ModelCommon.View
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddNode exposing (addNewMember)
 import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
-import Query.QueryNode exposing (queryFocusNode, queryGraphPack, queryLocalGraph)
+import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -210,7 +209,7 @@ type Msg
     | PushBlob_ TensionPatchForm
     | PublishBlob
     | PushAction ActionForm ActionPanelState
-    | PushGuest JoinOrgaForm
+    | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph) -- GraphQL
@@ -271,8 +270,10 @@ type Msg
     | LeaveRoleAck (GqlData ActionResult)
     | UpdateActionPost String String
       -- JoinOrga Action
-    | DoJoinOrga String Time.Posix
-    | JoinAck (GqlData Node)
+    | DoJoinOrga String
+    | DoJoinOrga2 (GqlData Node)
+    | DoJoinOrga3 Node Time.Posix
+    | JoinAck (GqlData ActionResult)
       -- Token refresh
     | DoOpenAuthModal UserCtx -- ports receive / Open  modal
     | DoCloseAuthModal -- ports receive / Close modal
@@ -470,7 +471,7 @@ update global msg model =
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
         PushGuest form ->
-            ( model, addNewMember apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -1282,30 +1283,62 @@ update global msg model =
             ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
 
         -- Join
-        DoJoinOrga rootnameid time ->
+        DoJoinOrga rootnameid ->
             case global.session.user of
                 LoggedOut ->
-                    ( { model | node_action = ActionAuthNeeded }, send DoOpenModal, Cmd.none )
-
-                LoggedIn uctx ->
-                    let
-                        form =
-                            { uctx = uctx
-                            , rootnameid = rootnameid
-                            , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
-                            }
-
-                        newModel =
-                            { model | node_action = JoinOrga (JoinInit form) }
-                    in
-                    ( newModel
-                    , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
+                    ( { model | node_action = ActionAuthNeeded }
+                    , send DoOpenModal
                     , Cmd.none
                     )
 
+                LoggedIn uctx ->
+                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
+                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
+                    , Cmd.none
+                    )
+
+        DoJoinOrga2 result ->
+            case result of
+                Success n ->
+                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
+                    , send (Submit <| DoJoinOrga3 n)
+                    , Cmd.none
+                    )
+
+                other ->
+                    ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
+
+        DoJoinOrga3 node time ->
+            let
+                ( tid, bid ) =
+                    node.source
+                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                        |> withDefault ( "", "" )
+
+                f =
+                    initActionForm global.session.user tid
+
+                form =
+                    { f
+                        | bid = "" -- do no set bid to pass the backend
+                        , events_type = Just [ TensionEvent.UserJoin ]
+                        , post =
+                            Dict.fromList
+                                [ ( "createdAt", fromTime time )
+                                , ( "old", f.uctx.username )
+                                , ( "new", node.nameid )
+                                ]
+                        , node = node
+                    }
+            in
+            ( { model | node_action = JoinOrga (JoinValidation form LoadingSlowly) }
+            , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
+            , Cmd.none
+            )
+
         JoinAck result ->
             case model.node_action of
-                JoinOrga (JoinInit form) ->
+                JoinOrga (JoinValidation form _) ->
                     case doRefreshToken result model.refresh_trial of
                         Authenticate ->
                             ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
@@ -1314,13 +1347,9 @@ update global msg model =
                             ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
 
                         OkAuth n ->
-                            let
-                                ndata =
-                                    hotNodePush [ n ] (Maybe.map (\o -> Success o) global.session.orga_data |> withDefault NotAsked)
-                            in
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , Maybe.map (\fs -> Ports.addQuickSearchUsers [ fs ]) n.first_link |> withDefault Cmd.none
-                            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+                            , Cmd.none
+                            , Cmd.none
                             )
 
                         NoAuth ->
@@ -1478,7 +1507,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         helperData =
-            { onJoin = Submit <| DoJoinOrga model.node_focus.rootnameid
+            { onJoin = DoJoinOrga model.node_focus.rootnameid
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
             , user = global.session.user
@@ -1694,6 +1723,9 @@ viewComments u t model =
 
                                                 TensionEvent.BlobUnarchived ->
                                                     viewEventArchived event t.action False
+
+                                                TensionEvent.UserJoin ->
+                                                    viewEventUserJoin event t.action
 
                                                 TensionEvent.UserLeft ->
                                                     viewEventUserLeft event t.action
@@ -1979,6 +2011,33 @@ viewEventArchived event action_m isArchived =
         ]
 
 
+viewEventUserJoin : Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventUserJoin event action_m =
+    let
+        action =
+            withDefault TensionAction.NewRole action_m
+
+        action_txt =
+            case event.old of
+                Just type_ ->
+                    case RoleType.fromString type_ of
+                        Just RoleType.Guest ->
+                            " the organisation"
+
+                        _ ->
+                            "Unknonw role type: " ++ type_
+
+                Nothing ->
+                    actionNameStr action
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
+        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.join, text action_txt, text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
 viewEventUserLeft : Event -> Maybe TensionAction.TensionAction -> Html Msg
 viewEventUserLeft event action_m =
     let
@@ -1990,7 +2049,7 @@ viewEventUserLeft event action_m =
                 Just type_ ->
                     case RoleType.fromString type_ of
                         Just RoleType.Guest ->
-                            "Organisation"
+                            " the Organisation"
 
                         _ ->
                             "Unknonw role type: " ++ type_
@@ -2230,7 +2289,7 @@ viewJoinNeeded focus =
         [ p []
             [ button
                 [ class "button is-small"
-                , onClick (Submit <| DoJoinOrga focus.rootnameid)
+                , onClick (DoJoinOrga focus.rootnameid)
                 ]
                 [ text "Join" ]
             , text " this organisation to participate to this conversation."
@@ -2443,11 +2502,11 @@ setupActionModal isModalActive action =
         ]
 
 
-viewJoinOrgaStep : JoinStep JoinOrgaForm -> Html Msg
+viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
 viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text T.loading ]
+            div [ class "box spinner" ] [ text "" ]
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -2458,14 +2517,14 @@ viewJoinOrgaStep step =
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ Fa.icon "fas fa-check fa-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
-                        , span [ class "has-font-weight-semibold" ] [ (form.rootnameid |> String.split "#" |> List.head |> withDefault "Unknonwn") |> text ]
+                        , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 
                 Failure err ->
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text T.loading ]
+                    div [ class "box spinner" ] [ text "" ]
 
 
 

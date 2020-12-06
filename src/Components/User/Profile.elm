@@ -25,7 +25,6 @@ import ModelCommon.View exposing (getAvatar, roleColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddNode exposing (addNewMember)
 import Query.QueryNode exposing (NodeExt, queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)

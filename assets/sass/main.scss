@@ -212,6 +212,10 @@ html.has-modal-active, html.has-modal-active2 {
     color: $turquoise !important;
 }
 
+.input.has-background-grey {
+    background-color: $grey-light2 !important;
+}
+
 .boxShrinked {
     &.box {
         padding:0 !important;

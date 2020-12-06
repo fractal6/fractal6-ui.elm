@@ -2,10 +2,11 @@ module Auth exposing (AuthState(..), doRefreshToken, doRefreshToken2, refreshAut
 
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, toErrorData, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
+import Dict
 import Extra.Events exposing (onKeydown)
 import Form
 import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
@@ -162,34 +163,47 @@ refreshAuthModal modalAuth msgs =
         ]
         [ div [ class "modal-background", onClick msgs.closeModal ] []
         , div [ class "modal-content", classList [] ]
-            [ div [ class "box" ]
-                [ p [] [ text "Your session expired. Please, confirm your password:" ]
-                , div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
-                    , div [ class "field-body" ]
-                        [ div [ class "field" ]
-                            [ div [ class "control" ]
-                                [ input
-                                    [ id "passwordInput"
-                                    , class "input"
-                                    , type_ "password"
-                                    , placeholder "password"
-                                    , name "password"
-                                    , attribute "autocomplete" "password"
-                                    , required True
-                                    , onInput (msgs.changePost "password")
-                                    , onKeydown msgs.submitEnter
+            [ div [ class "box" ] <|
+                case modalAuth of
+                    Active form ->
+                        let
+                            username =
+                                Dict.get "username" form.post |> withDefault ""
+                        in
+                        [ p [ class "field" ] [ text "Your session expired. Please, confirm your password:" ]
+                        , div [ class "field" ]
+                            [ div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ input
+                                        [ class "input has-background-grey"
+                                        , type_ "username"
+                                        , name "username"
+                                        , value username
+                                        , disabled True
+                                        ]
+                                        []
                                     ]
-                                    []
+                                ]
+                            , div [ class "field" ]
+                                [ div [ class "control" ]
+                                    [ input
+                                        [ id "passwordInput"
+                                        , class "input"
+                                        , type_ "password"
+                                        , placeholder "password"
+                                        , name "password"
+                                        , attribute "autocomplete" "password"
+                                        , required True
+                                        , onInput (msgs.changePost "password")
+                                        , onKeydown msgs.submitEnter
+                                        ]
+                                        []
+                                    ]
                                 ]
                             ]
-                        ]
-                    ]
-                , div [ class "field is-grouped is-grouped-right" ]
-                    [ div [ class "control" ]
-                        [ case form_m of
-                            Just form ->
-                                if Form.isPostSendable [ "password" ] form.post then
+                        , div [ class "field is-grouped is-grouped-right" ]
+                            [ div [ class "control" ]
+                                [ if Form.isPostSendable [ "password" ] form.post then
                                     button
                                         [ id "submitButton"
                                         , class "button is-success has-text-weight-semibold"
@@ -197,23 +211,23 @@ refreshAuthModal modalAuth msgs =
                                         ]
                                         [ text "Refresh" ]
 
-                                else
+                                  else
                                     button [ class "button has-text-weight-semibold", disabled True ]
                                         [ text "Refresh" ]
+                                ]
+                            ]
+                        , div []
+                            [ case form_m |> Maybe.map (\f -> f.result) |> withDefault RemoteData.NotAsked of
+                                RemoteData.Failure err ->
+                                    viewHttpErrors err
 
-                            Nothing ->
-                                div [] []
+                                default ->
+                                    text ""
+                            ]
                         ]
-                    ]
-                , div []
-                    [ case form_m |> Maybe.map (\f -> f.result) |> withDefault RemoteData.NotAsked of
-                        RemoteData.Failure err ->
-                            viewHttpErrors err
 
-                        default ->
-                            text ""
-                    ]
-                ]
+                    Inactive ->
+                        []
             ]
         , button [ class "modal-close is-large", onClick msgs.closeModal ] []
         ]

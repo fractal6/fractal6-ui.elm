@@ -7,7 +7,6 @@ module Query.PatchTension exposing
     , setAssignee
     )
 
-import Components.ActionPanel exposing (ActionForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
@@ -31,7 +30,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (AssigneeForm, CommentPatchForm, TensionPatchForm)
+import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvent)
 import Query.QueryTension exposing (blobPayload, commentPayload)

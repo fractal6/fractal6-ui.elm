@@ -30,11 +30,12 @@ const NodeType = {
 }
 
 const RoleType = {
-    Guest: "Guest",
-    Member: "Member",
-    Peer: "Peer",
-    Coordinator: "Coordinator",
     Owner: "Owner",
+    Member: "Member",
+    Guest: "Guest",
+    Retired: "Retired",
+    Coordinator: "Coordinator",
+    Peer: "Peer",
 }
 
 

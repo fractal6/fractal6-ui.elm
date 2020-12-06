@@ -1,7 +1,4 @@
-module Query.AddNode exposing
-    ( addNewMember
-    , addOneCircle
-    )
+module Query.AddNode exposing (addOneCircle)
 
 import Components.NodeDoc exposing (getFirstLinks)
 import Dict exposing (Dict)
@@ -21,102 +18,12 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (JoinOrgaForm, TensionForm)
+import ModelCommon exposing (ActionForm, TensionForm)
 import ModelCommon.Codecs exposing (guestIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
 import Query.QueryNode exposing (blobIdPayload, nodeIdPayload, nodeOrgaPayload, userPayload)
 import RemoteData exposing (RemoteData)
-
-
-
-{-
-   Add a New member
--}
-
-
-type alias AddNodePayload =
-    { node : Maybe (List (Maybe Node)) }
-
-
-
---- Response Decoder
-
-
-nodeDecoder : Maybe AddNodePayload -> Maybe Node
-nodeDecoder a =
-    case a of
-        Just b ->
-            b.node
-                |> Maybe.map
-                    (\x ->
-                        List.head x
-                    )
-                |> Maybe.withDefault Nothing
-                |> Maybe.withDefault Nothing
-
-        Nothing ->
-            Nothing
-
-
-
---- Query
-
-
-addNewMember url form msg =
-    --@DEBUG: Infered type...
-    makeGQLMutation url
-        (Mutation.addNode
-            (newMemberInputEncoder form)
-            (SelectionSet.map AddNodePayload
-                (Fractal.Object.AddNodePayload.node identity nodeOrgaPayload)
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse nodeDecoder >> msg)
-
-
-
--- Input Encoder
-
-
-newMemberInputEncoder : JoinOrgaForm -> Mutation.AddNodeRequiredArguments
-newMemberInputEncoder { uctx, rootnameid, post } =
-    let
-        createdAt =
-            Dict.get "createdAt" post |> withDefault ""
-
-        nodeRequired =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
-            , createdBy =
-                Input.buildUserRef
-                    (\u -> { u | username = Present uctx.username })
-            , type_ = NodeType.Role
-            , nameid = guestIdCodec rootnameid uctx.username
-            , name = "Guest"
-            , rootnameid = rootnameid
-            , isRoot = False
-            , charac = { userCanJoin = Present False, mode = Present NodeMode.Coordinated, id = Absent }
-            , isPrivate = False
-            , isArchived = False
-            }
-
-        nodeOptional =
-            \n ->
-                { n
-                    | role_type = Present RoleType.Guest
-                    , parent =
-                        Input.buildNodeRef
-                            (\p -> { p | nameid = Present rootnameid })
-                            |> Present
-                    , first_link =
-                        Input.buildUserRef
-                            (\u -> { u | username = Present uctx.username })
-                            |> Present
-                }
-    in
-    { input =
-        [ Input.buildAddNodeInput nodeRequired nodeOptional ]
-    }
 
 
 

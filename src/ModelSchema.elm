@@ -285,6 +285,15 @@ initNode =
     }
 
 
+initRootNode : RootNode
+initRootNode =
+    { name = ""
+    , nameid = ""
+    , charac = initCharac
+    , isPrivate = False
+    }
+
+
 initMandate : Mandate
 initMandate =
     Mandate "" Nothing Nothing Nothing
