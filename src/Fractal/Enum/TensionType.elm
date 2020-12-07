@@ -8,15 +8,15 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type TensionType
-    = Governance
-    | Operational
-    | Personal
+    = Operational
+    | Governance
     | Help
+    | Personal
 
 
 list : List TensionType
 list =
-    [ Governance, Operational, Personal, Help ]
+    [ Operational, Governance, Help, Personal ]
 
 
 decoder : Decoder TensionType
@@ -25,17 +25,17 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "Governance" ->
-                        Decode.succeed Governance
-
                     "Operational" ->
                         Decode.succeed Operational
 
-                    "Personal" ->
-                        Decode.succeed Personal
+                    "Governance" ->
+                        Decode.succeed Governance
 
                     "Help" ->
                         Decode.succeed Help
+
+                    "Personal" ->
+                        Decode.succeed Personal
 
                     _ ->
                         Decode.fail ("Invalid TensionType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -47,17 +47,17 @@ decoder =
 toString : TensionType -> String
 toString enum =
     case enum of
-        Governance ->
-            "Governance"
-
         Operational ->
             "Operational"
 
-        Personal ->
-            "Personal"
+        Governance ->
+            "Governance"
 
         Help ->
             "Help"
+
+        Personal ->
+            "Personal"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -74,17 +74,17 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe TensionType
 fromString enumString =
     case enumString of
-        "Governance" ->
-            Just Governance
-
         "Operational" ->
             Just Operational
 
-        "Personal" ->
-            Just Personal
+        "Governance" ->
+            Just Governance
 
         "Help" ->
             Just Help
+
+        "Personal" ->
+            Just Personal
 
         _ ->
             Nothing

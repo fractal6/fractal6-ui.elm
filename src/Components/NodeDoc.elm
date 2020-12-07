@@ -18,7 +18,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import Text as T
@@ -553,7 +553,7 @@ nodeLinksInputView txt form data op =
                                 NodeType.Role ->
                                     div [ class ("select is-" ++ roleColor rt) ]
                                         [ RoleType.list
-                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member && r /= RoleType.Owner)
+                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member && r /= RoleType.Owner && r /= RoleType.Retired)
                                             |> List.map
                                                 (\r ->
                                                     option [ selected (r == rt), value (RoleType.toString r) ]

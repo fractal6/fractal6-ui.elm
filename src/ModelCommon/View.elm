@@ -41,16 +41,16 @@ statusColor s =
 tensionTypeColor : String -> TensionType.TensionType -> String
 tensionTypeColor elt tt =
     case tt of
-        TensionType.Governance ->
-            "has-" ++ elt ++ "-info"
-
         TensionType.Operational ->
             "has-" ++ elt ++ "-success"
 
-        TensionType.Personal ->
-            "has-" ++ elt ++ "-warning"
+        TensionType.Governance ->
+            "has-" ++ elt ++ "-info"
 
         TensionType.Help ->
+            "has-" ++ elt ++ "-warning"
+
+        TensionType.Personal ->
             "has-" ++ elt ++ "-link"
 
 

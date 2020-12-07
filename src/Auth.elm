@@ -13,6 +13,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (ModalAuth(..))
 import ModelSchema exposing (UserCtx)
 import RemoteData exposing (RemoteData)
+import String exposing (startsWith)
 import String.Extra as SE
 import Task
 
@@ -22,6 +23,22 @@ type AuthState a
     | RefreshToken Int
     | OkAuth a
     | NoAuth
+
+
+messageToAuthState : String -> Int -> AuthState a
+messageToAuthState message trial =
+    if startsWith "token is expired" message then
+        Authenticate
+
+    else if startsWith "Access denied" message then
+        if trial == 0 then
+            RefreshToken (trial + 1)
+
+        else
+            NoAuth
+
+    else
+        NoAuth
 
 
 {-|
@@ -51,24 +68,13 @@ doRefreshToken data trial =
                             Ok errGql ->
                                 case List.head errGql.errors of
                                     Just e ->
-                                        if e.message == "token is expired" then
-                                            Authenticate
-
-                                        else if e.message == "Access denied" then
-                                            if trial == 0 then
-                                                RefreshToken (trial + 1)
-
-                                            else
-                                                NoAuth
-
-                                        else
-                                            NoAuth
+                                        messageToAuthState e.message trial
 
                                     Nothing ->
                                         NoAuth
 
                             Err errJD ->
-                                NoAuth
+                                messageToAuthState err_ trial
 
                     Nothing ->
                         NoAuth
@@ -111,24 +117,13 @@ doRefreshToken2 data trial =
                             Ok errGql ->
                                 case List.head errGql.errors of
                                     Just e ->
-                                        if e.message == "token is expired" then
-                                            Authenticate
-
-                                        else if e.message == "Access denied" then
-                                            if trial == 0 then
-                                                RefreshToken (trial + 1)
-
-                                            else
-                                                NoAuth
-
-                                        else
-                                            NoAuth
+                                        messageToAuthState e.message trial
 
                                     Nothing ->
                                         NoAuth
 
                             Err errJD ->
-                                NoAuth
+                                messageToAuthState err_ trial
 
                     Nothing ->
                         NoAuth

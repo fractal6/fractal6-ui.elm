@@ -62,7 +62,6 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
-import Query.PatchNode exposing (patchNode)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
@@ -646,10 +645,14 @@ update global msg model =
                                 ( newStep, newForm ) =
                                     getNewTensionStepAuth form
                             in
-                            ( { model | node_action = AddTension newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
-                            , Cmd.none
-                            , Ports.bulma_driver "actionModal"
-                            )
+                            if notAuthorizedTension newStep && model.refresh_trial == 0 then
+                                ( { model | refresh_trial = 1 }, sendSleep (DoTensionSource tensionType) 500, send UpdateUserToken )
+
+                            else
+                                ( { model | node_action = AddTension newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
+                                , Cmd.none
+                                , Ports.bulma_driver "actionModal"
+                                )
 
                         _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
@@ -736,6 +739,7 @@ update global msg model =
         -- New Circle
         DoCircleInit node nodeType ->
             -- We do not load users_data here because it assumes GotOrga is called at init.
+            -- inherit node charac by default
             ( { model | node_action = AddCircle NodeInit, tensionForm = NewTensionForm.create model.node_focus |> NewTensionForm.initCircle node nodeType }
             , send DoCircleSource
             , Ports.bulma_driver "actionModal"
@@ -759,10 +763,14 @@ update global msg model =
                                 ( newStep, newForm ) =
                                     getNewNodeStepAuth form model.orga_data
                             in
-                            ( { model | node_action = AddCircle newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
-                            , Cmd.none
-                            , Ports.bulma_driver "actionModal"
-                            )
+                            if notAuthorizedNode newStep && model.refresh_trial == 0 then
+                                ( { model | refresh_trial = 1 }, sendSleep DoCircleSource 500, send UpdateUserToken )
+
+                            else
+                                ( { model | node_action = AddCircle newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
+                                , Cmd.none
+                                , Ports.bulma_driver "actionModal"
+                                )
 
                         _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
@@ -1000,7 +1008,7 @@ update global msg model =
                         , post =
                             Dict.fromList
                                 [ ( "createdAt", fromTime time )
-                                , ( "old", f.uctx.username )
+                                , ( "old", "" )
                                 , ( "new", node.nameid )
                                 ]
                         , node = node
@@ -1957,6 +1965,26 @@ getNewNodeStepAuth form odata =
 
         roles ->
             ( NodeSource roles, form )
+
+
+notAuthorizedNode : NodeStep -> Bool
+notAuthorizedNode step =
+    case step of
+        NodeNotAuthorized _ ->
+            True
+
+        _ ->
+            False
+
+
+notAuthorizedTension : TensionStep -> Bool
+notAuthorizedTension step =
+    case step of
+        TensionNotAuthorized _ ->
+            True
+
+        _ ->
+            False
 
 
 getNewNodeRights : UserCtx -> Node -> GqlData NodesData -> List UserRole

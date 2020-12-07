@@ -1782,7 +1782,7 @@ viewComment c model =
                             div [ class "dropdown is-right is-pulled-right" ]
                                 [ div [ class "dropdown-trigger" ]
                                     [ div
-                                        [ class "ellipsis button-light"
+                                        [ class "ellipsis  button-light"
                                         , attribute "aria-controls" "dropdown-menu_ellipsis"
                                         , attribute "aria-haspopup" "true"
                                         ]
@@ -2018,17 +2018,7 @@ viewEventUserJoin event action_m =
             withDefault TensionAction.NewRole action_m
 
         action_txt =
-            case event.old of
-                Just type_ ->
-                    case RoleType.fromString type_ of
-                        Just RoleType.Guest ->
-                            " the organisation"
-
-                        _ ->
-                            "Unknonw role type: " ++ type_
-
-                Nothing ->
-                    actionNameStr action
+            " the organisation"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
