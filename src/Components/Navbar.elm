@@ -5,12 +5,17 @@ import Components.Logo as Logo
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
+import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import ModelCommon exposing (UserState(..))
 import Text as T
 
 
-view : UserState -> Html msg
-view user =
+type alias Op =
+    { user : UserState }
+
+
+view : Op -> Html msg
+view op =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar has-shadow is-fixed-top"
@@ -39,7 +44,7 @@ view user =
                 ]
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ]
-                    [ case user of
+                    [ case op.user of
                         LoggedIn _ ->
                             a [ class "navbar-item", href (toHref Route.Top) ]
                                 [ text T.yourOrg ]
@@ -51,30 +56,33 @@ view user =
                         [ text T.explore ]
                     ]
                 , div [ class "navbar-end" ]
-                    [ helpButton user
-                    , newButton user
-                    , userButton user
+                    [ helpButton op
+                    , newButton op
+                    , userButton op
                     ]
                 ]
             ]
         ]
 
 
-helpButton : UserState -> Html msg
-helpButton user =
-    case user of
+helpButton : Op -> Html msg
+helpButton op =
+    case op.user of
         LoggedIn uctx ->
             div
                 [ class "navbar-item" ]
-                [ div [ class "navbar-link is-arrowless has-background-primary button is-rounded is-small" ] [ Fa.icon "fas fa-question" "" ] ]
+                [ div
+                    [ class "navbar-link is-arrowless has-background-info button is-rounded is-small helpTrigger" ]
+                    [ Fa.icon "fas fa-question" "" ]
+                ]
 
         LoggedOut ->
             text ""
 
 
-newButton : UserState -> Html msg
-newButton user =
-    case user of
+newButton : Op -> Html msg
+newButton op =
+    case op.user of
         LoggedIn uctx ->
             div
                 [ class "navbar-item has-dropdown mx-2"
@@ -95,9 +103,9 @@ newButton user =
             text ""
 
 
-userButton : UserState -> Html msg
-userButton user =
-    case user of
+userButton : Op -> Html msg
+userButton op =
+    case op.user of
         LoggedIn uctx ->
             div [ class "navbar-item has-dropdown" ]
                 [ div [ class "navbar-link" ] [ text uctx.username ]

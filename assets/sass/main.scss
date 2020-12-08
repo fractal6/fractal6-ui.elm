@@ -810,6 +810,36 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+#helpModal {
+    .modal-card-head {
+        display: block;
+        padding: 10px 10px 0px 10px;
+    }
+
+    .tabs  {
+        li {
+            a, span {
+                color: $grey;
+                align-items: center;
+                display: flex;
+                justify-content: center;
+                padding: 0.2em 1em;
+                cursor: pointer;
+            }
+            &.is-active {
+                a, span {
+                    color: $grey-darker;
+                    border-bottom-color: orange !important;
+                    border-bottom-style: solid;
+                    border-bottom-width: 3px;
+                    margin-bottom: -2px;
+                }
+            }
+
+        }
+    }
+}
+
 .tensionDocument {
 
     .blobToolBar {
@@ -1231,47 +1261,23 @@ a.actionLink {
     display: flex;
     visibility: hidden;
 
+    .modal-background {
+        opacity: 0;
+        transition: all $modal-out-duration;
+    }
+
+    .modal-close {
+        background-color: #952222b8 !important;
+        &:hover { background-color: #952222 !important;}
+    }
+
+
     &.is-active {
         visibility: visible;
         .modal-background {
             opacity: 1;
             transition: all $modal-in-duration;
         }
-    }
-
-    .modal-content, .modal-card {
-        @media (min-width: 680px){
-            min-width: 680px !important;
-        }
-        @media (max-width: 768px){
-            width: 96% !important;
-            margin: 2% 2% !important;
-        }
-    }
-
-    .card {
-        background-color: #eee;
-    }
-
-    .modal-card-body {
-        background-color: $white-1 !important;
-        color: #111;
-    }
-
-    .modal-card-title,
-    .modal-card-head,
-    .modal-card-foot, {
-        background-color: #e5e5e5;
-        border-color: #ccc !important;
-        color: #111;
-        div {
-            color: inherit;
-            background-color: inherit;
-        }
-    }
-
-    .card-header-title, .label {
-        color: #363636
     }
 
     &.modal-fx {
@@ -1302,13 +1308,18 @@ a.actionLink {
         }
     }
 
-    .modal-background {
-        opacity: 0;
-        transition: all $modal-out-duration;
-    }
-
-    .modal-content {
+    .modal-content, .modal-card {
         // size
+        @media (min-width: $modal-width){
+            min-width: $modal-width !important;
+            .modal-card-body { padding: 30px; }
+        }
+        @media (max-width: 768px){
+            width: 96% !important;
+            margin: 2% 2% !important;
+            max-height: calc(100vh - 20px);
+            .tabs { font-size: 1rem; }
+        }
         &.is-huge {
             width: 100%;
             margin: 0px 20px;
@@ -1338,10 +1349,6 @@ a.actionLink {
         }
     }
 
-    .modal-close {
-        background-color: #952222b8 !important;
-    }
-
     // Positioning, center is default
     // .modal-pos-top
     &.modal-pos {
@@ -1357,6 +1364,33 @@ a.actionLink {
                 margin-bottom: 1rem;
             }
         }
+    }
+
+    // Colors
+
+    .card {
+        background-color: #eee;
+    }
+
+    .modal-card-body {
+        background-color: $white-1 !important;
+        color: #111;
+    }
+
+    .modal-card-title,
+    .modal-card-head,
+    .modal-card-foot, {
+        background-color: #e5e5e5;
+        border-color: #ccc !important;
+        color: #111;
+        div {
+            color: inherit;
+            background-color: inherit;
+        }
+    }
+
+    .card-header-title, .label {
+        color: #363636
     }
 
     .box.is-light {
@@ -1447,108 +1481,12 @@ a.actionLink {
     border-color: $orange-frac6 !important;
 }
 
-//
-// Modal for session refreshing (Modal Auth)
-//
-
-.modal2 {
-    display: flex;
-    visibility: hidden;
-
-    &.is-active {
-        visibility: visible;
-        .modal-background {
-            opacity: 1;
-            transition: all $modal-in-duration;
-        }
-    }
-
-    &.modal-fx {
-        &-fadeIn {
-            .modal-content {
-                //transform: scale(0.7);
-                opacity: 0;
-                transition: all $modal-out-duration;
-            }
-
-            &.is-active .modal-content {
-                //transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-    }
-
+#refreshAuthModal {
     .modal-background {
         background-color: $grey-light;
-        opacity: 0;
-        transition: all $modal-out-duration;
-    }
-
-    .modal-content {
-        @media (min-width: 680px){
-            min-width: 680px !important;
-        }
-        @media (max-width: 768px){
-            width: 96% !important;
-            margin: 2% 2% !important;
-        }
-
-        // size
-        &.is-huge {
-            width: 100%;
-            margin: 0px 20px;
-            max-height: calc(100vh - 40px);
-        }
-        @include from($tablet) {
-            &.is-huge {
-                width: 100%;
-                margin: 0px 20px;
-                max-height: calc(100vh - 40px);
-            }
-        }
-        &.is-tiny {
-            max-width: 400px;
-        }
-
-        // type
-        &.is-image {
-            text-align: center;
-            &.is-huge {
-                width:auto;
-            }
-
-            img {
-                max-height: calc(100vh - 50px);
-            }
-        }
-    }
-
-    .modal-close {
-        background-color: #952222b8 !important;
-    }
-
-    // Positioning, center is default
-    &.modal-pos {
-        &-top {
-            align-items: flex-start;
-            .modal-content {
-                margin-top: 1rem;
-            }
-        }
-        &-bottom {
-            align-items: flex-end;
-            .modal-content {
-                margin-bottom: 1rem;
-            }
-        }
     }
 }
 
-.form {
-    padding: 2rem !important;
-    border: solid 2px $grey-light !important;
-}
 
 /*
  *

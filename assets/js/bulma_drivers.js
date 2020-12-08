@@ -109,6 +109,15 @@ export function BulmaDriver(app, target, handlers) {
 
     //////////////////// Setup Bulma Components ////////////////////
 
+    // Special Elm function
+
+    const $helpTrigger = $doc.querySelectorAll('.helpTrigger');
+    if ($helpTrigger.length > 0) {
+        $helpTrigger.forEach( el => {
+            setupHandler("click", triggerHelp, el, el, app);
+        });
+    }
+
     //
     // Activate autofocus
     //
@@ -368,4 +377,8 @@ function closeModal(e, modal, app) {
         document.documentElement.classList.remove('has-modal-active');
         document.getElementById("navbarTop").classList.remove('has-modal-active');
     }
+}
+
+function triggerHelp(e, el, app) {
+    app.ports.triggerHelpFromJs.send("")
 }

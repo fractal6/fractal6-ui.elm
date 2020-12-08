@@ -6,6 +6,7 @@ import Browser.Navigation as Nav
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
+import Components.Help as Help exposing (Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
@@ -118,6 +119,7 @@ type alias Model =
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     , refresh_trial : Int
+    , help : Help
     }
 
 
@@ -215,6 +217,10 @@ type Msg
     | ExpandRoles
     | CollapseRoles
     | ChangeUserLookup (LookupResult User)
+      -- Help
+    | TriggerHelp String
+    | ChangeHelpTab HelpTab
+    | DoCloseHelpModal
 
 
 
@@ -288,6 +294,7 @@ init global flags =
             , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
+            , help = Help.create
             , refresh_trial = 0
             }
 
@@ -891,10 +898,7 @@ update global msg model =
                         |> ActionPanel.setAction action
                         |> ActionPanel.setStep StepOne
             in
-            ( { model | actionPanel = aPanel }
-            , Ports.open_modal
-            , Cmd.none
-            )
+            ( { model | actionPanel = aPanel }, Ports.open_modal, Cmd.none )
 
         ActionSubmit time ->
             let
@@ -1241,11 +1245,21 @@ update global msg model =
                 Err err ->
                     ( model, Ports.logErr err, Cmd.none )
 
+        TriggerHelp _ ->
+            ( { model | help = Help.open model.help }, Ports.open_modal, Cmd.none )
+
+        ChangeHelpTab tab ->
+            ( { model | help = Help.changeTab tab model.help }, Cmd.none, Cmd.none )
+
+        DoCloseHelpModal ->
+            ( { model | help = Help.close model.help }, Ports.close_modal, Cmd.none )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal
+        , Ports.triggerHelpFromJs TriggerHelp
         , nodeClickedFromJs NodeClicked
         , nodeFocusedFromJs_ NodeFocused
         , nodeDataFromJs_ DoNodeAction
@@ -1315,7 +1329,16 @@ port sendToggleGraphReverse : () -> Cmd msg
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
-    , body = [ view_ global model ]
+    , body =
+        [ view_ global model
+        , Help.view
+            { data = model.help
+            , onSubmit = Submit
+            , onCloseModal = DoCloseHelpModal
+            , onNavigate = Navigate
+            , onChangeTab = ChangeHelpTab
+            }
+        ]
     }
 
 

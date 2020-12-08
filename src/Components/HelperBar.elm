@@ -42,18 +42,18 @@ numberRolesCollapsed =
     5
 
 
-type alias HelperBarData msg =
-    { onJoin : msg
-    , onExpand : msg
-    , onCollapse : msg
-    , baseUri : FractalBaseRoute
+type alias Op msg =
+    { baseUri : FractalBaseRoute
     , user : UserState
     , path_data : Maybe LocalGraph
     , data : HelperBar
+    , onJoin : msg
+    , onExpand : msg
+    , onCollapse : msg
     }
 
 
-view : HelperBarData msg -> Html msg
+view : Op msg -> Html msg
 view hb =
     let
         ( focusid, rootnameid, charac ) =
@@ -177,7 +177,7 @@ joinButton msg =
         [ text T.joinOrga ]
 
 
-memberButtons : List UserRole -> HelperBarData msg -> Html msg
+memberButtons : List UserRole -> Op msg -> Html msg
 memberButtons roles_ hb =
     let
         roles =

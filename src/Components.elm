@@ -13,7 +13,7 @@ layout { page, session } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Navbar.view session.user -- page.route / current route ?
+            [ Navbar.view { user = session.user }
             , div [ id "body" ] <|
                 --[ div [ class "notification is-info" ] [ div [ class "delete" ] [] , text session.referer.path ] ] ++
                 page.body

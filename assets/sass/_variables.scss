@@ -16,9 +16,10 @@ $node-tooltip-shadow: rgba(42, 70, 205, 0.5);
 $tooltip-transition-duration: 0.10s;
 
 // Modal
-$modal-background-background-color: rgba(black, 0.7);
+$modal-background-background-color: rgba(black, 0.6);
 $modal-in-duration: 0.2s;
 $modal-out-duration: 0.1s;
+$modal-width: 700px;
 
 //$fa-font-path: "fonts";
 $fa-font-path: '~@fortawesome/fontawesome-free/webfonts';

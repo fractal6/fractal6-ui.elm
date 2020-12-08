@@ -248,7 +248,7 @@ nodeOrgaFilter rootid a =
                 (\b ->
                     { b
                         | rootnameid = Present { eq = Present rootid, regexp = Absent }
-                        , not = matchAnyRoleType [ RoleType.Retired ]
+                        , not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired ] }) |> Present
                     }
                 )
                 |> Present

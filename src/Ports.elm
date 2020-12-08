@@ -38,6 +38,9 @@ port cancelActionFromJs : (() -> msg) -> Sub msg
 port cancelLookupFsFromJs : (() -> msg) -> Sub msg
 
 
+port triggerHelpFromJs : (String -> msg) -> Sub msg
+
+
 
 --
 -- Utils drivers
