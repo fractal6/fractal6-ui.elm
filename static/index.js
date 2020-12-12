@@ -13,15 +13,21 @@ var App = require( '../src/Main' );
 //      node: document.getElementById("main")
 //});
 window.addEventListener('load', _ => {
+
+    // Local session
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
+    var window_pos = JSON.parse(localStorage.getItem("window_pos"));
+
     window.ports.init(App.Elm.Main.init({
         node: document.getElementById('main'),
         flags: {
             uctx: uctx,
+            window_pos: window_pos,
             apis: {
+                auth: AUTH_API,
                 gql: GRAPHQL_API,
                 rest: REST_API,
-                auth: AUTH_API
+                data: DATA_API
             }
         }
     }));

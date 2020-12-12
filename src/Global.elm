@@ -13,6 +13,7 @@ port module Global exposing
 
 import Browser exposing (Document)
 import Browser.Navigation as Nav
+import Codecs exposing (WindowPos)
 import Components
 import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
 import Dict
@@ -53,29 +54,17 @@ type alias Model =
 init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
-        ( userState, cmd ) =
-            case flags.uctx of
-                Just userCtxRaw ->
-                    case JD.decodeValue userCtxDecoder userCtxRaw of
-                        Ok uctx ->
-                            ( LoggedIn uctx, Cmd.none )
-
-                        Err err ->
-                            ( LoggedOut, Ports.logErr (JD.errorToString err) )
-
-                Nothing ->
-                    ( LoggedOut, Cmd.none )
-
-        session =
-            initSession flags
+        ( session, cmds ) =
+            fromLocalSession flags
     in
-    ( Model flags url key { session | user = userState }
+    ( Model flags url key session
     , Cmd.batch
-        [ Ports.log "Hello!"
-        , Ports.toggle_theme
-        , Ports.bulma_driver ""
-        , cmd
-        ]
+        ([ Ports.log "Hello!"
+         , Ports.toggle_theme
+         , Ports.bulma_driver ""
+         ]
+            ++ cmds
+        )
     )
 
 
@@ -100,6 +89,7 @@ type Msg
     | UpdateSessionTensions (Maybe TensionsData)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
+    | UpdateSessionWindow (Maybe WindowPos)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -126,110 +116,6 @@ update msg model =
                             Just url
             in
             ( { model | session = { session | referer = referer } }, Cmd.none )
-
-        RedirectOnLoggedIn ->
-            let
-                cmd =
-                    case model.session.user of
-                        LoggedIn uctx ->
-                            let
-                                home =
-                                    Route.User_Dynamic { param1 = uctx.username }
-                            in
-                            case model.session.referer of
-                                Just referer ->
-                                    referer
-                                        |> Route.fromUrl
-                                        |> Maybe.withDefault home
-                                        |> navigate
-
-                                Nothing ->
-                                    navigate home
-
-                        LoggedOut ->
-                            sendSleep RedirectOnLoggedIn 300
-            in
-            ( model, cmd )
-
-        LoggedOutUser ->
-            case model.session.user of
-                LoggedIn uctx ->
-                    let
-                        session =
-                            initSession model.flags
-                    in
-                    ( { model | session = { session | user = LoggedOut } }, Ports.removeUserCtx uctx )
-
-                LoggedOut ->
-                    ( model, Cmd.none )
-
-        LoggedOutUserOk ->
-            ( model, navigate Route.Top )
-
-        --
-        -- Update Session Data
-        --
-        UpdateSessionFocus data ->
-            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | node_focus = data, tension_head = Nothing } }, Cmd.none )
-
-        UpdateSessionFocus2 data ->
-            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | focus = data } }, Cmd.none )
-
-        UpdateSessionPath data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | path_data = data } }, Cmd.none )
-
-        UpdateSessionOrga data ->
-            let
-                session =
-                    model.session
-
-                -- Make a dict of user per circle
-                users =
-                    Maybe.map (\d -> orgaToUsersData d) data
-            in
-            ( { model | session = { session | orga_data = data, users_data = users } }, Cmd.none )
-
-        UpdateSessionData data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | node_data = data } }, Cmd.none )
-
-        UpdateSessionTensionHead data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | tension_head = data } }, Cmd.none )
-
-        UpdateSessionAdmin data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | isAdmin = data } }, Cmd.none )
-
-        UpdateSessionTensions data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | tensions_data = data } }, Cmd.none )
 
         UpdateUserSession uctx ->
             let
@@ -294,6 +180,115 @@ update msg model =
 
                 default ->
                     ( newModel, Cmd.none )
+
+        RedirectOnLoggedIn ->
+            let
+                cmd =
+                    case model.session.user of
+                        LoggedIn uctx ->
+                            let
+                                home =
+                                    Route.User_Dynamic { param1 = uctx.username }
+                            in
+                            case model.session.referer of
+                                Just referer ->
+                                    referer
+                                        |> Route.fromUrl
+                                        |> Maybe.withDefault home
+                                        |> navigate
+
+                                Nothing ->
+                                    navigate home
+
+                        LoggedOut ->
+                            sendSleep RedirectOnLoggedIn 300
+            in
+            ( model, cmd )
+
+        LoggedOutUser ->
+            case model.session.user of
+                LoggedIn uctx ->
+                    ( { model | session = resetSession model.flags }, Ports.removeUserCtx uctx )
+
+                LoggedOut ->
+                    ( model, Cmd.none )
+
+        LoggedOutUserOk ->
+            ( model, navigate Route.Top )
+
+        --
+        -- Update Session Data
+        --
+        UpdateSessionFocus data ->
+            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | node_focus = data, tension_head = Nothing } }, Cmd.none )
+
+        UpdateSessionFocus2 data ->
+            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | focus = data } }, Cmd.none )
+
+        UpdateSessionPath data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | path_data = data } }, Cmd.none )
+
+        UpdateSessionOrga data ->
+            let
+                session =
+                    model.session
+
+                -- Make a dict of user per circle
+                users =
+                    Maybe.map (\d -> orgaToUsersData d) data
+            in
+            ( { model | session = { session | orga_data = data, users_data = users } }, Cmd.none )
+
+        UpdateSessionData data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | node_data = data } }, Cmd.none )
+
+        UpdateSessionTensionHead data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tension_head = data } }, Cmd.none )
+
+        UpdateSessionTensions data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tensions_data = data } }, Cmd.none )
+
+        UpdateSessionAdmin data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | isAdmin = data } }, Cmd.none )
+
+        UpdateSessionWindow data ->
+            let
+                session =
+                    model.session
+
+                -- @debug: Save window_pos in localStorage ?
+            in
+            ( { model | session = { session | window_pos = data } }, Cmd.none )
 
 
 

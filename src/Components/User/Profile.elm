@@ -7,7 +7,7 @@ import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebDa
 import Components.NotFound exposing (viewNotFound)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toUp1)
+import Extra exposing (ternary, up0)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -402,7 +402,7 @@ viewProfileLeft model uctx =
 viewProfileRight : Model -> UserCtx -> Html Msg
 viewProfileRight model uctx =
     div []
-        [ h1 [ class "subtitle" ] [ text (toUp1 T.organisations) ]
+        [ h1 [ class "subtitle" ] [ text (up0 T.organisations) ]
         , if Dict.isEmpty model.user_data then
             p [ class "section" ] <|
                 List.intersperse (text " ")

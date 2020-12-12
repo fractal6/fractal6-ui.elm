@@ -456,7 +456,7 @@ viewMandateSection name maybePara =
         Just para ->
             div [ class "message" ]
                 [ div [ class "message-header" ] [ text name ]
-                , p [ class "message-body" ] [ renderMarkdown para "is-dark" ]
+                , p [ class "message-body" ] [ renderMarkdown "is-dark" para ]
                 ]
 
         Nothing ->

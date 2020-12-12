@@ -28,16 +28,18 @@ module.exports = (env, argv) => {
     var API_URL;
     if (isDev || CMD == "localprod") {
         API_URL = {
+            auth: "http://localhost:8888/auth",
             graphql: "http://localhost:8888/api",
             rest: "http://localhost:8888/q",
-            auth: "http://localhost:8888/auth"
+            data: "http://localhost:8888/data"
         }
     }
     else if (isProd) {
         API_URL = {
+            auth: "https://api.fractale.co/auth",
             graphql: "https://api.fractale.co/api",
             rest: "https://api.fractale.co/q",
-            auth: "https://api.fractale.co/auth"
+            data: "https://api.fractale.co/data"
         }
     }
 
@@ -66,9 +68,10 @@ module.exports = (env, argv) => {
         },
         plugins: [
             new webpack.DefinePlugin({
+                'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
                 'REST_API': JSON.stringify(API_URL.rest),
-                'AUTH_API': JSON.stringify(API_URL.auth)
+                'DATA_API': JSON.stringify(API_URL.data)
             }),
             new webpack.LoaderOptionsPlugin({
                 options: {

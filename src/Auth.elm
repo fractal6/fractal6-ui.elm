@@ -216,7 +216,7 @@ refreshAuthModal modalAuth msgs =
                                 RemoteData.Failure err ->
                                     viewHttpErrors err
 
-                                default ->
+                                _ ->
                                     text ""
                             ]
                         ]

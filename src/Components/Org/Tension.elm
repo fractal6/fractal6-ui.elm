@@ -2,6 +2,7 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
+import Codecs exposing (LookupResult)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
@@ -13,7 +14,7 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList, toUp1)
+import Extra exposing (ternary, toMapOfList, up0)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -27,7 +28,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -1779,16 +1780,16 @@ viewComment c model =
                             Nothing ->
                                 text ""
                         , if c.createdBy.username == model.tension_form.uctx.username then
-                            div [ class "dropdown is-right is-pulled-right" ]
+                            div [ class "dropdown is-right is-pulled-right " ]
                                 [ div [ class "dropdown-trigger" ]
                                     [ div
-                                        [ class "ellipsis  button-light"
-                                        , attribute "aria-controls" "dropdown-menu_ellipsis"
+                                        [ class "ellipsis"
+                                        , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ Fa.icon0 "fas fa-lg fa-ellipsis-h" "" ]
+                                        [ Fa.icon0 "fas fa-ellipsis-v" "" ]
                                     ]
-                                , div [ class "dropdown-menu", id "dropdown-menu_ellipsis", attribute "role" "menu" ]
+                                , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
                                         [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ text T.edit ] ]
                                         ]
@@ -1804,7 +1805,7 @@ viewComment c model =
                                 div [ class "is-italic" ] [ text "No description provided." ]
 
                             message ->
-                                renderMarkdown message "is-light"
+                                renderMarkdown "is-light" message
                         ]
                     ]
             ]
@@ -1870,7 +1871,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown message "is-light", hr [] [] ]
+                                    div [] [ renderMarkdown "is-light" message, hr [] [] ]
                             ]
                         ]
                     , case result of
@@ -1920,7 +1921,7 @@ viewEventStatus event status =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ Fa.icon0 (actionIcon ++ " fa-1half has-text-" ++ statusColor status) "" ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -1965,7 +1966,7 @@ viewEventAssignee event isNew =
         , div [ class "media-content" ]
             [ span [] <|
                 List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username, text actionText, event.new |> withDefault "" |> viewUsernameLink, text T.the, text (formatTime event.createdAt) ]
+                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], event.new |> withDefault "" |> viewUsernameLink, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -1978,8 +1979,8 @@ viewEventPushed event action_m =
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
-        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.published, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2005,8 +2006,8 @@ viewEventArchived event action_m isArchived =
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text txt, text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2018,12 +2019,12 @@ viewEventUserJoin event action_m =
             withDefault TensionAction.NewRole action_m
 
         action_txt =
-            " the organisation"
+            "the organisation"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
-        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.join, text action_txt, text T.the, text (formatTime event.createdAt) ]
+        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-sign-in-alt" "" ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.join ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2039,18 +2040,18 @@ viewEventUserLeft event action_m =
                 Just type_ ->
                     case RoleType.fromString type_ of
                         Just RoleType.Guest ->
-                            " the Organisation"
+                            "the Organisation"
 
                         _ ->
-                            "Unknonw role type: " ++ type_
+                            T.roleH
 
                 Nothing ->
                     actionNameStr action
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
-        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.left, text action_txt, text T.the, text (formatTime event.createdAt) ]
+        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-sign-out-alt" "" ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2095,7 +2096,7 @@ viewUpdateInput uctx comment form result =
                                 []
 
                         Preview ->
-                            div [] [ renderMarkdown message "is-light", hr [] [] ]
+                            div [] [ renderMarkdown "is-light" message, hr [] [] ]
                     ]
                 ]
             , case result of
@@ -2208,7 +2209,7 @@ viewBlobToolBar u t b model =
                                     [ class "button is-small is-success has-text-weight-semibold"
                                     , onClick (Submit <| PushBlob b.id)
                                     ]
-                                    [ Fa.icon "fas fa-share-square" (toUp1 T.publish) ]
+                                    [ Fa.icon "fas fa-share-square" (up0 T.publish) ]
                                 ]
                     ]
 

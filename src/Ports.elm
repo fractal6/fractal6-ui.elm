@@ -1,9 +1,9 @@
 port module Ports exposing (..)
 
+import Codecs exposing (LookupResult, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
-import ModelCommon exposing (LookupResult, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelSchema exposing (Node, NodesData, User, UserCtx)
 

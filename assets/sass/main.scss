@@ -416,6 +416,15 @@ html.has-modal-active, html.has-modal-active2 {
 
 }
 
+.divider {
+    opacity: 0.15;
+    &:hover {
+        opacity: 1;
+        transition: opacity 0.1s;
+        cursor: pointer;
+    }
+}
+
 
 #explore {
     .media + .media {
@@ -612,10 +621,6 @@ html.has-modal-active, html.has-modal-active2 {
             border: 0 !important;
         }
 
-        .media-content {
-            overflow-x: auto !important;
-        }
-
         .message {
             background-color: $body-background-color !important;
             //background-color: #404953 !important;
@@ -628,12 +633,27 @@ html.has-modal-active, html.has-modal-active2 {
                 display: inherit !important;
                 background-color: $comment-header-background-color !important;
                 border-bottom: solid 1px $grey-darker !important;
+
+                .dropdown-trigger {
+                    position: relative;
+                    bottom: $size-small2;
+                    left: $size-small;
+                    padding: $size-small2 $size-small $size-small2 $size-small ;
+                    border-left: 1px solid $grey-darker;
+                    &:hover { cursor: pointer !important; }
+                    &:active { color: $grey; }
+                }
+                .dropdown-menu {
+                    margin-top: -$size-small;
+                    margin-right: -$size-small !important;
+                }
+
                 .ellipsis {
                     opacity: 0.75 !important;
                 }
             }
-			// CSS arrow please !
-			.message-header:after, .message-header:before {
+            // CSS arrow please !
+            .message-header:after, .message-header:before {
 				right: 100%;
 				top: 50%;
 				border: solid transparent;
@@ -811,9 +831,19 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #helpModal {
+    .modal-content, .modal-card {
+        height: 90% !important;
+        max-height: 100%;
+        min-width: $modal-width-large !important;
+    }
+
     .modal-card-head {
         display: block;
         padding: 10px 10px 0px 10px;
+    }
+
+    .modal-card-body {
+        background-color: $white-light !important;
     }
 
     .tabs  {
@@ -831,8 +861,9 @@ html.has-modal-active, html.has-modal-active2 {
                     color: $grey-darker;
                     border-bottom-color: orange !important;
                     border-bottom-style: solid;
-                    border-bottom-width: 3px;
-                    margin-bottom: -2px;
+                    border-bottom-width: 2px;
+                    padding-bottom: 0.15em;
+                    margin-bottom: -1px;
                 }
             }
 
@@ -1861,6 +1892,111 @@ a.actionLink {
 @-moz-keyframes busyIcon { 100% { -moz-transform: rotate(360deg); } }
 @-webkit-keyframes busyIcon { 100% { -webkit-transform: rotate(360deg); } }
 @keyframes busyIcon { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
+
+/*
+ *
+ * Accordion
+ *
+ */
+.accordion {
+	//margin: auto;
+	//width: 400px;
+}
+.accordion input {
+	display: none;
+}
+.acc {
+	position: relative;
+	height: $acc-height-subtitle;
+	transition: all .15s ease-in-out;
+}
+.acc::before {
+	content: '';
+	position: absolute;
+	display: block;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	pointer-events: none;
+	//box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+}
+header.acc {
+	background: $grey-lighter;
+	z-index: 100;
+	cursor: initial;
+	height: $acc-height-title !important;
+	//box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
+}
+header .acc-title {
+	margin: 0;
+	font-weight: 600;
+	font-size: 12pt;
+	color: $darker;
+	cursor: initial;
+	height: $acc-height-title !important;
+	line-height: $acc-height-title !important;
+}
+.acc-title {
+	//width: calc(100% - 40px);
+    width: 100%;
+	height: $acc-height;
+	line-height: $acc-height;
+	padding: 0 20px;
+	color: $grey-darker;
+	display: inline-block;
+	cursor: pointer;
+	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
+}
+.acc-content {
+	width: calc(100% - 20px);
+	padding: 20px 10px 20px 20px;
+	font-size: 11pt;
+	color: $grey-dark;
+	display: none;
+}
+.acc-close {
+	position: absolute;
+	height: $acc-height-subtitle;
+	width: 100%;
+	top: 0;
+	left: 0;
+	cursor: pointer;
+	display: none;
+}
+section.acc > .acc-title {
+	border-top: 1px solid rgba(0,0,0,.18);
+}
+input:checked + .acc {
+	height: auto;
+	//margin: 16px 0;
+	//box-shadow: 0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32);
+}
+input:checked + section.acc .acc-title {
+    background-color: $blue-light;
+}
+input:checked + .acc .acc-content,
+input:checked + .acc .acc-close {
+	display: inline-block;
+}
+.arrows section .acc-title {
+	padding-left: 44px;
+	width: calc(100% - $acc-height-subtitle);
+}
+.arrows section .acc-title:before {
+	position: absolute;
+	display: block;
+	content: '\203a';
+	font-size: 18pt;
+	left: 20px;
+	top: -2px;
+	transition: transform .15s ease-in-out;
+	color: rgba(0,0,0,.54);
+}
+input:checked + section.acc .acc-title:before {
+	transform: rotate(90deg);
+}
 
 
 /*

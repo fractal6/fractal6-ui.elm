@@ -3,7 +3,7 @@ module Components.Loading exposing (..)
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
-import Extra exposing (toUp1)
+import Extra exposing (up1)
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
@@ -197,6 +197,11 @@ spinner =
         []
 
 
+loadingDiv : Html msg
+loadingDiv =
+    div [ class "spinner" ] []
+
+
 loadingSpin : Bool -> Html msg
 loadingSpin isLoading =
     if isLoading then
@@ -217,7 +222,7 @@ viewGqlErrors errMsg =
                             Ok err_ ->
                                 err_.errors
                                     |> List.head
-                                    |> Maybe.map (\x -> toUp1 x.message)
+                                    |> Maybe.map (\x -> up1 x.message)
                                     |> withDefault e
 
                             Err err_ ->

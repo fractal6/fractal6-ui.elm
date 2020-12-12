@@ -50,9 +50,6 @@ tensionTypeColor elt tt =
         TensionType.Help ->
             "has-" ++ elt ++ "-warning"
 
-        TensionType.Personal ->
-            "has-" ++ elt ++ "-link"
-
 
 tensionTypeSpan : String -> String -> TensionType.TensionType -> Html msg
 tensionTypeSpan cls elt type_ =

@@ -20,6 +20,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
 import Task
+import Text as T
 
 
 page : Page Flags Model Msg
@@ -215,7 +216,7 @@ viewLogin global model =
                         ]
                     ]
                 , br [] []
-                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Signup) ] [ text "or create an account" ]
+                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Signup) ] [ text T.createAccount ]
                 , div [ class "field is-grouped is-grouped-right" ]
                     [ div [ class "control" ]
                         [ if isLoginSendable model.form.post then

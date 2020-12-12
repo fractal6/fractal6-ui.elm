@@ -1,5 +1,6 @@
 module ModelCommon.Requests exposing (..)
 
+import Codecs exposing (nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, expectJson, toErrorData)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
@@ -7,7 +8,6 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (nodeIdDecoder, userCtxDecoder, userDecoder)
 import ModelSchema exposing (Member, NodeId, Post, UserCtx, UserRoleExtended)
 import Query.QueryNode exposing (MemberNode, User)
 import RemoteData exposing (RemoteData)
@@ -181,6 +181,24 @@ createOrga url post msg =
         , url = url ++ "/createorga"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+--
+-- Get Doc
+--
+
+
+getQuickDoc url lang msg =
+    Http.riskyRequest
+        { method = "GET"
+        , headers = []
+        , url = url ++ ("/quickdoc." ++ lang ++ ".json")
+        , body = Http.emptyBody
+        , expect = expectJson (RemoteData.fromResult >> msg) quickDocDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

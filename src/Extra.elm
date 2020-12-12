@@ -18,18 +18,18 @@ ternary test positive negative =
 -- String
 
 
-toUp : String -> String
-toUp s =
-    SE.toTitleCase s
-
-
-toUp1 : String -> String
-toUp1 s =
+up0 : String -> String
+up0 s =
     SE.toSentenceCase s
 
 
-toUpAll : String -> String
-toUpAll t =
+up1 : String -> String
+up1 s =
+    SE.toTitleCase s
+
+
+upAll : String -> String
+upAll t =
     String.toUpper t
 
 

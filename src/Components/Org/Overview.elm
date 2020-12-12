@@ -3,6 +3,7 @@ port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, sub
 import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
+import Codecs exposing (LocalGraph_, LookupResult, Node_, QuickDoc, WindowPos, localGraphDecoder, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
@@ -57,7 +58,7 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.Requests exposing (login)
+import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -106,6 +107,7 @@ type alias Model =
     , init_tensions : Bool
     , init_data : Bool
     , node_quickSearch : NodesQuickSearch
+    , window_pos : WindowPos
 
     -- Form
     , tensionForm : NewTensionForm
@@ -138,6 +140,8 @@ type Msg
     | PushTension TensionForm
     | PushAction ActionForm ActionPanelState
     | PushGuest ActionForm
+      -- Page
+    | SwitchWindow
       -- Gql Data Queries
     | GotOrga (GqlData NodesData) -- graphql
     | GotTensions (GqlData TensionsData) -- graphql
@@ -196,7 +200,7 @@ type Msg
     | AddNodes (List Node)
     | DelNodes (List String)
     | UpdateNode (Maybe Node)
-      -- JS Interop
+      -- GP JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
     | DoClearTooltip -- ports send
@@ -219,6 +223,7 @@ type Msg
     | ChangeUserLookup (LookupResult User)
       -- Help
     | TriggerHelp String
+    | GotQuickDoc (WebData QuickDoc)
     | ChangeHelpTab HelpTab
     | DoCloseHelpModal
 
@@ -282,6 +287,9 @@ init global flags =
             , init_tensions = True
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
+            , window_pos =
+                global.session.window_pos
+                    |> withDefault { two = "doc", three = "activities" }
 
             -- Form
             , tensionForm = NewTensionForm.create newFocus
@@ -399,6 +407,17 @@ update global msg model =
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
+
+        --  Page
+        SwitchWindow ->
+            let
+                win =
+                    model.window_pos
+
+                newWin =
+                    { win | two = win.three, three = win.two }
+            in
+            ( { model | window_pos = newWin }, Cmd.none, send (UpdateSessionWindow (Just newWin)) )
 
         -- Gql queries
         GotOrga result ->
@@ -1246,7 +1265,13 @@ update global msg model =
                     ( model, Ports.logErr err, Cmd.none )
 
         TriggerHelp _ ->
-            ( { model | help = Help.open model.help }, Ports.open_modal, Cmd.none )
+            ( { model | help = Help.open model.help }
+            , Cmd.batch [ Ports.open_modal, getQuickDoc apis.data "en" GotQuickDoc ]
+            , Ports.bulma_driver "helpModal"
+            )
+
+        GotQuickDoc result ->
+            ( { model | help = Help.setDocResult result model.help }, Cmd.none, Cmd.none )
 
         ChangeHelpTab tab ->
             ( { model | help = Help.changeTab tab model.help }, Cmd.none, Cmd.none )
@@ -1338,6 +1363,7 @@ view global model =
             , onNavigate = Navigate
             , onChangeTab = ChangeHelpTab
             }
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
     }
 
@@ -1395,6 +1421,18 @@ view_ global model =
             , baseUri = OverviewBaseUri
             , data = model.helperBar
             }
+
+        viewFromPos : String -> Html Msg
+        viewFromPos pos =
+            case pos of
+                "doc" ->
+                    NodeDoc.view nodeData Nothing
+
+                "activities" ->
+                    viewActivies model
+
+                _ ->
+                    text "Wrong position"
     in
     -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
@@ -1404,17 +1442,18 @@ view_ global model =
                 [ viewSearchBar global.session.user model
                 , viewCanvas global.session.user model
                 , br [] []
-                , NodeDoc.view nodeData Nothing
+                , viewFromPos model.window_pos.two
                 ]
-            , div [ class "column is-5-desktop is-6-widescreen is-5-fullhd" ]
+            , div [ class "divider is-vertical", onClick SwitchWindow ] [ text "⇋" ]
+            , div
+                [ class "column is-5-desktop is-6-widescreen is-5-fullhd" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
-                        [ viewActivies model ]
+                        [ viewFromPos model.window_pos.three ]
                     ]
                 ]
             ]
         , setupActionModal model
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 
 

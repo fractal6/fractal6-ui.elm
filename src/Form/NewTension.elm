@@ -4,7 +4,6 @@ import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc
-import Text as T
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
@@ -25,6 +24,7 @@ import ModelCommon exposing (InputViewMode(..), TensionForm, initTensionForm)
 import ModelCommon.Codecs exposing (NodeFocus)
 import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
 import ModelSchema exposing (..)
+import Text as T
 import Time
 
 
@@ -383,7 +383,7 @@ view op =
                                                 []
 
                                         Preview ->
-                                            div [] [ renderMarkdown message "is-dark", hr [] [] ]
+                                            div [] [ renderMarkdown "is-dark" message, hr [] [] ]
                                     ]
                                 , p [ class "help-label" ] [ text txt.message_help ]
                                 , br [] []

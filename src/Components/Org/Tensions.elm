@@ -187,7 +187,6 @@ type TypeFilter
     = AllTypes
     | GovernanceType
     | OperationalType
-    | PersonalType
     | HelpType
 
 
@@ -199,9 +198,6 @@ typeFilterEncoder x =
 
         OperationalType ->
             "operational"
-
-        PersonalType ->
-            "personal"
 
         HelpType ->
             "help"
@@ -218,9 +214,6 @@ typeFilterDecoder x =
 
         "operational" ->
             OperationalType
-
-        "personal" ->
-            PersonalType
 
         "help" ->
             HelpType
@@ -518,9 +511,6 @@ update global msg model =
 
                         OperationalType ->
                             Just TensionType.Operational
-
-                        PersonalType ->
-                            Just TensionType.Personal
 
                         HelpType ->
                             Just TensionType.Help
@@ -904,7 +894,6 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
                             [ option [ class "dropdown-item", value (typeFilterEncoder AllTypes), selected (typeFilter == AllTypes) ] [ text "All types" ]
                             , option [ class "dropdown-item", value (typeFilterEncoder GovernanceType), selected (typeFilter == GovernanceType) ] [ text "Governance" ]
                             , option [ class "dropdown-item", value (typeFilterEncoder OperationalType), selected (typeFilter == OperationalType) ] [ text "Operational" ]
-                            , option [ class "dropdown-item", value (typeFilterEncoder PersonalType), selected (typeFilter == PersonalType) ] [ text "Personal" ]
                             , option [ class "dropdown-item", value (typeFilterEncoder HelpType), selected (typeFilter == HelpType) ] [ text "Help" ]
                             ]
                         ]

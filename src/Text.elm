@@ -13,6 +13,11 @@ signout =
     "Sign Out"
 
 
+createAccount : String
+createAccount =
+    "create a new account"
+
+
 profile : String
 profile =
     "Profile"

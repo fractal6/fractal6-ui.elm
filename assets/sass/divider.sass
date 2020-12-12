@@ -1,0 +1,74 @@
+@charset "utf-8"
+
+$divider-color: $grey-light !default
+$divider-font-size: $size-5 !default
+$divider-margin-inner-size: 10px !default
+$divider-margin-size: -9px !default
+$divider-width: 5px !default
+
+.divider
+    position: relative
+    display: flex
+    align-items: center
+    text-transform: uppercase
+    color: $divider-color
+    font-size: $divider-font-size
+    font-weight: $weight-semibold
+    letter-spacing: .5px
+    margin: $divider-margin-size $size-small
+
+    &::after,
+    &::before
+        content: ''
+        display: block
+        flex: 1
+        height: 1px
+        background-color: $divider-color
+
+    &:not(.is-right)
+        &::after
+            margin-left: $divider-margin-inner-size
+
+    &:not(.is-left)
+        &::before
+            margin-right: $divider-margin-inner-size
+
+    &.is-left
+        &::before
+           display: none
+
+    &.is-right
+        &::after
+           display: none
+
+    &.is-vertical
+        flex-direction: column
+        margin: $size-small $divider-margin-size
+
+        &::after,
+        &::before
+            height: auto
+            width: $divider-width
+
+        &::after
+            margin-left: 0
+            margin-top: $divider-margin-inner-size
+
+        &::before
+            margin-right: 0
+            margin-bottom: $divider-margin-inner-size
+
+    @each $name, $pair in $colors
+        $color: nth($pair, 1)
+        &.is-#{$name}
+            &::after,
+            &::before
+                background-color: $color
+
+            // If light and dark colors are provided
+            @if length($pair) >= 4
+                $color-light: nth($pair, 3)
+                &.is-light
+                    &::after,
+                    &::before
+                        background-color: $color-light

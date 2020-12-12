@@ -7,7 +7,7 @@ import Markdown.Renderer
 
 
 renderMarkdown : String -> String -> Html msg
-renderMarkdown message style =
+renderMarkdown style message =
     case
         message
             |> Markdown.parse

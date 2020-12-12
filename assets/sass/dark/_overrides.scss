@@ -17,11 +17,11 @@ h6 {
 }
 
 a {
-  transition: all 200ms ease;
+  transition: all 100ms ease;
 }
 
 .button {
-  transition: all 200ms ease;
+  transition: all 100ms ease;
   border-width: $border-width;
   color: $white;
   //background-color: #888;
@@ -84,7 +84,7 @@ a {
 
 .input,
 .textarea {
-  transition: all 200ms ease;
+  transition: all 100ms ease;
   box-shadow: none;
   border-width: $border-width;
   padding-right: 1em;

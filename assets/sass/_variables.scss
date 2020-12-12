@@ -1,5 +1,8 @@
 @charset "utf-8";
 
+// size
+$size-small2: 0.65rem;
+
 // Navbar
 $navbar-height: 2.75rem;
 $navbar-item-img-max-height: 1.5rem;
@@ -20,6 +23,15 @@ $modal-background-background-color: rgba(black, 0.6);
 $modal-in-duration: 0.2s;
 $modal-out-duration: 0.1s;
 $modal-width: 700px;
+$modal-width-large: 790px;
+
+// divider
+$divider-color: $grey-light;
+
+// quick help
+$acc-height-title: 42px;
+$acc-height-subtitle: 48px;
+$acc-height: 48px;
 
 //$fa-font-path: "fonts";
 $fa-font-path: '~@fortawesome/fontawesome-free/webfonts';

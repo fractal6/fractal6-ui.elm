@@ -166,8 +166,9 @@ export const GraphPack = {
     // Graph fx settings
     isLoading: true,
     minZoomDuration: 350, // 1250
-    zoomFactorCircle: 2.02,
-    zoomFactorRole: 3,
+    zoomFactorRoot: 2.02,
+    zoomFactorCircle: 2.4,
+    zoomFactorRole: 4,
     zoomFactorGuest: 5,
     // rayon size of the node in the canvas
     rayonFactorRole: 0.95,
@@ -492,16 +493,7 @@ export const GraphPack = {
         this.focusedNode = focus;
         this.drawNodeHover(this.focusedNode, false);
 
-        var zoomFactor;
-        if (this.focusedNode.data.type_ === NodeType.Role) {
-            if (this.focusedNode.data.role_type == "Guest") {
-                zoomFactor = this.zoomFactorGuest;
-            } else {
-                zoomFactor = this.zoomFactorRole;
-            }
-        } else {
-            zoomFactor = this.zoomFactorCircle;
-        }
+        var zoomFactor = this.getZoomFactor(this.focusedNode);
 
         // Configre interpolator
         var vp = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * zoomFactor]; //The center and width of the new "viewport"
@@ -509,6 +501,7 @@ export const GraphPack = {
         var maxDuration = this.minZoomDuration*2;
         var interpolator = d3.interpolateZoom(this.vpOld, vp); //Create interpolation between current and new "viewport"
         var duration = Math.min(interpolator.duration, maxDuration) || delay; //Interpolation gives back a suggested duration
+        duration = (duration < 0) ?  maxDuration : duration;
         var timeElapsed = 0+delay; //Set the time elapsed for the interpolateZoom function to 0
         //console.log("old", this.vpOld, "new", vp, "delay", delay)
         this.vpOld = vp; //Save the "viewport" of the next state as the next "old" state
@@ -607,6 +600,24 @@ export const GraphPack = {
         return this.colorCircleRange[k%this.colorCircleRange.length]
     },
 
+    getZoomFactor(node) {
+        var zoomFactor;
+        if (node.data.type_ === NodeType.Role) {
+            if (node.data.role_type == "Guest") {
+                zoomFactor = this.zoomFactorGuest;
+            } else {
+                zoomFactor = this.zoomFactorRole;
+            }
+        } else if (node.data.parent == undefined ) {
+            zoomFactor = this.zoomFactorRoot;
+        } else if (node.children && node.children.length >= 10 ) {
+            zoomFactor = this.zoomFactorRoot;
+        } else {
+            zoomFactor = this.zoomFactorCircle;
+        }
+        return zoomFactor
+    },
+
     // Init and create the GraphPack data structure
     resetGraphPack(dataNodes, doFormat, focusid) {
         var graph;
@@ -662,7 +673,7 @@ export const GraphPack = {
         }
 
         if (setViewport) {
-            this.vpOld = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * this.zoomFactorCircle];
+            this.vpOld = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * this.getZoomFactor(this.focusedNode)];
         }
 
         return this.focusedNode

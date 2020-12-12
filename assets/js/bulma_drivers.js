@@ -179,7 +179,7 @@ export function BulmaDriver(app, target, handlers) {
         // Toggle on click
         $dropdowns.forEach(function(el) {
             // For each dropdown, add event handler to toggle on click.
-            setupHandler("click", buttonGroupedToggleHandler, el, el, $dropdowns);
+            setupHandler("click", dropdownToggleHandler, el, el, $dropdowns);
         });
 
         // For each dropdown, add event handler to close on Esc.
@@ -313,7 +313,8 @@ function closeBurgersClick(e, objs) {
 // Dropdown metdods
 //
 
-function buttonGroupedToggleHandler(e, btn, all) {
+function dropdownToggleHandler(e, btn, all) {
+    // @debug: if bulma is not reset the $all object will changed !
     e.stopPropagation();
     all.forEach(function(el) {
         if (el !== btn) {
