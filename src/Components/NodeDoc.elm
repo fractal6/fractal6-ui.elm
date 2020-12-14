@@ -552,8 +552,8 @@ nodeLinksInputView txt form data op =
 
                                 NodeType.Role ->
                                     div [ class ("select is-" ++ roleColor rt) ]
-                                        [ RoleType.list
-                                            |> List.filter (\r -> r /= RoleType.Guest && r /= RoleType.Member && r /= RoleType.Owner && r /= RoleType.Retired)
+                                        [ [ RoleType.Coordinator, RoleType.Peer ]
+                                            -- @debug: separate concerns in role type ?
                                             |> List.map
                                                 (\r ->
                                                     option [ selected (r == rt), value (RoleType.toString r) ]
@@ -760,8 +760,8 @@ blobButtonsView isSendable isLoading op =
                         ]
                         [ text T.cancel ]
                     , button
-                        [ class "button has-text-weight-semibold"
-                        , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                        [ class "button is-success has-text-weight-semibold"
+                        , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
                         , onClick (op.onSubmit <| op.onSubmitBlob op.data)
                         ]

@@ -45,10 +45,6 @@ type alias AddTensionPayload =
     { tension : Maybe (List (Maybe Tension)) }
 
 
-type alias AddLabelPayload =
-    { label : Maybe (List (Maybe IdPayload)) }
-
-
 
 -- Response Decoder
 
@@ -135,6 +131,7 @@ addTensionInputEncoder f =
                     | action = f.action |> fromMaybe
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
+                    , labels = buildLabels f.labels
                 }
     in
     { input =
@@ -179,6 +176,19 @@ tensionFromForm f =
             , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
             , history = buildEvent createdAt f.uctx.username f.events_type f.post
         }
+
+
+buildLabels : List String -> OptionalArgument (List Input.LabelRef)
+buildLabels labels =
+    labels
+        |> List.map
+            (\label ->
+                Input.buildLabelRef
+                    (\x ->
+                        { x | name = Present label }
+                    )
+            )
+        |> Present
 
 
 buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
@@ -251,24 +261,6 @@ buildEvent createdAt username events_type_m post =
         |> fromMaybe
 
 
-buildMandate : Maybe Mandate -> OptionalArgument Input.MandateRef
-buildMandate maybeMandate =
-    maybeMandate
-        |> Maybe.map
-            (\mandate ->
-                Input.buildMandateRef
-                    (\m ->
-                        { m
-                            | purpose = mandate.purpose |> Present
-                            , responsabilities = mandate.responsabilities |> fromMaybe
-                            , domains = mandate.domains |> fromMaybe
-                            , policies = mandate.policies |> fromMaybe
-                        }
-                    )
-            )
-        |> fromMaybe
-
-
 buildNodeFragmentRef : List UserForm -> NodeFragment -> OptionalArgument Input.NodeFragmentRef
 buildNodeFragmentRef users nf =
     let
@@ -315,3 +307,21 @@ buildNodeFragmentRef users nf =
                     }
         )
         |> Present
+
+
+buildMandate : Maybe Mandate -> OptionalArgument Input.MandateRef
+buildMandate maybeMandate =
+    maybeMandate
+        |> Maybe.map
+            (\mandate ->
+                Input.buildMandateRef
+                    (\m ->
+                        { m
+                            | purpose = mandate.purpose |> Present
+                            , responsabilities = mandate.responsabilities |> fromMaybe
+                            , domains = mandate.domains |> fromMaybe
+                            , policies = mandate.policies |> fromMaybe
+                        }
+                    )
+            )
+        |> fromMaybe

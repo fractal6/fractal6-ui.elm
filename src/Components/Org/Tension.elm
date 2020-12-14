@@ -2,11 +2,12 @@ module Components.Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init,
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Codecs exposing (LookupResult)
+import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
+import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
@@ -51,7 +52,7 @@ import ModelCommon.Codecs
         , nodeFromFragment
         , uriFromUsername
         )
-import ModelCommon.Requests exposing (login)
+import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View
     exposing
         ( actionNameStr
@@ -74,6 +75,7 @@ import ModelCommon.View
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
@@ -152,6 +154,7 @@ type alias Model =
     , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
     , helperBar : HelperBar
+    , help : Help
     , refresh_trial : Int
     }
 
@@ -203,6 +206,7 @@ actionViewDecoder x =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+    | PushTension TensionForm (GqlData Tension -> Msg)
     | LoadTensionHead
     | LoadTensionComments
     | PushCommentPatch
@@ -292,6 +296,18 @@ type Msg
     | ExpandRoles
     | CollapseRoles
     | ChangeUserLookup (LookupResult User)
+      -- Help
+    | TriggerHelp String
+    | GotQuickDoc (WebData QuickDoc)
+    | ChangeHelpTab HelpTab
+    | ChangePostAsk String String
+    | ChangePostFeedback String String
+    | ChangeFeedbackLabel FeedbackType
+    | SubmitAsk Time.Posix
+    | SubmitFeedback Time.Posix
+    | AskAck (GqlData Tension)
+    | AskFeedback (GqlData Tension)
+    | DoCloseHelpModal String
 
 
 
@@ -377,6 +393,7 @@ init global flags =
             , modalAuth = Inactive
             , inputViewMode = Write
             , helperBar = HelperBar.create
+            , help = Help.create global.session.user
             , refresh_trial = 0
             }
 
@@ -428,6 +445,12 @@ update global msg model =
             global.session.apis
     in
     case msg of
+        PushTension form ack ->
+            ( model, addOneTension apis.gql form ack, Cmd.none )
+
+        PushGuest form ->
+            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
+
         LoadTensionHead ->
             ( model, getTensionHead apis.gql model.tensionid GotTensionHead, Cmd.none )
 
@@ -470,9 +493,6 @@ update global msg model =
                             \x -> NoMsg
             in
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
-
-        PushGuest form ->
-            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -1475,11 +1495,106 @@ update global msg model =
                 Err err ->
                     ( model, Ports.logErr err, Cmd.none )
 
+        -- Help
+        TriggerHelp _ ->
+            ( { model | help = Help.open model.help }
+            , Cmd.batch [ Ports.open_modal, getQuickDoc apis.data "en" GotQuickDoc ]
+            , Cmd.none
+            )
+
+        GotQuickDoc result ->
+            ( { model | help = Help.setDocResult result model.help }, Cmd.none, Cmd.none )
+
+        ChangeHelpTab tab ->
+            ( { model | help = Help.changeTab tab model.help }, Cmd.none, Cmd.none )
+
+        ChangePostAsk field value ->
+            ( { model | help = Help.postAsk field value model.help }, Cmd.none, Cmd.none )
+
+        ChangePostFeedback field value ->
+            ( { model | help = Help.postFeedback field value model.help }, Cmd.none, Cmd.none )
+
+        ChangeFeedbackLabel type_ ->
+            ( { model | help = Help.changeLabel type_ model.help }, Cmd.none, Cmd.none )
+
+        SubmitAsk time ->
+            let
+                help =
+                    model.help
+                        |> Help.postAsk "createdAt" (fromTime time)
+                        |> Help.setResultAsk LoadingSlowly
+            in
+            ( { model | help = help }
+            , send (PushTension help.formAsk AskAck)
+            , Cmd.none
+            )
+
+        SubmitFeedback time ->
+            let
+                help =
+                    model.help
+                        |> Help.postFeedback "createdAt" (fromTime time)
+                        |> Help.setLabelsFeedback
+                        |> Help.setResultFeedback LoadingSlowly
+            in
+            ( { model | help = help }
+            , send (PushTension help.formFeedback AskFeedback)
+            , Cmd.none
+            )
+
+        AskAck result ->
+            let
+                form =
+                    model.help.formAsk
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | help = Help.setResultAsk NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskAck) 500, send UpdateUserToken )
+
+                OkAuth tension ->
+                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
+
+                NoAuth ->
+                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
+
+        AskFeedback result ->
+            let
+                form =
+                    model.help.formFeedback
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | help = Help.setResultFeedback NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskFeedback) 500, send UpdateUserToken )
+
+                OkAuth tension ->
+                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
+
+                NoAuth ->
+                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
+
+        DoCloseHelpModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | help = Help.close model.help }, gcmd, Ports.close_modal )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal
+        , Ports.triggerHelpFromJs TriggerHelp
         , Ports.cancelAssigneesFromJs (always CancelAssignees)
         , Ports.cancelActionFromJs (always CancelAction)
         , Ports.lookupUserFromJs ChangeUserLookup
@@ -1500,7 +1615,22 @@ view global model =
 
             _ ->
                 "Loading tension..."
-    , body = [ view_ global model ]
+    , body =
+        [ view_ global model
+        , Help.view
+            { data = model.help
+            , onSubmit = Submit
+            , onCloseModal = DoCloseHelpModal
+            , onNavigate = Navigate
+            , onChangeTab = ChangeHelpTab
+            , onChangePostAsk = ChangePostAsk
+            , onChangePostFeedback = ChangePostFeedback
+            , onChangeLabel = ChangeFeedbackLabel
+            , onSubmitAsk = SubmitAsk
+            , onSubmitFeedback = SubmitFeedback
+            }
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        ]
     }
 
 
@@ -1536,7 +1666,6 @@ view_ global model =
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 
 
@@ -1578,10 +1707,10 @@ viewTension u t model =
                                         []
                                     ]
                                 , p [ class "control buttons" ]
-                                    [ span [ class "button has-text-weight-normal is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
-                                    , span
-                                        ([ class "button has-text-weight-normal is-small"
-                                         , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                    [ button [ class "button is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
+                                    , button
+                                        ([ class "button is-success is-small"
+                                         , classList [ ( "is-loading", isLoading ) ]
                                          , disabled (not isSendable)
                                          ]
                                             ++ doSubmit
@@ -1891,8 +2020,8 @@ viewCommentInput uctx tension form result viewMode =
                                     )
                                     [ text closeOpenText ]
                                 , button
-                                    ([ class "button has-text-weight-semibold"
-                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading && form.status == Nothing ) ]
+                                    ([ class "button is-success has-text-weight-semibold"
+                                     , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
                                      ]
                                         ++ doSubmit
@@ -2114,8 +2243,8 @@ viewUpdateInput uctx comment form result =
                             ]
                             [ text T.cancel ]
                         , button
-                            [ class "button has-text-weight-semibold"
-                            , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                            [ class "button is-success has-text-weight-semibold"
+                            , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (Submit <| SubmitCommentPatch)
                             ]
@@ -2647,7 +2776,7 @@ getTensionRights user th_d focus_d =
 
                             else
                                 case focus.charac.mode of
-                                    NodeMode.Chaos ->
+                                    NodeMode.Agile ->
                                         -- Is a  Circle member
                                         (List.length circleRoles > 0)
                                             || -- Or No member in this circle

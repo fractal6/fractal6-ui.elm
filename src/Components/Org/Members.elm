@@ -4,7 +4,9 @@ import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
+import Codecs exposing (QuickDoc)
 import Components.Fa as Fa
+import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Date exposing (formatTime)
@@ -30,11 +32,12 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchMembers, login)
+import ModelCommon.Requests exposing (fetchMembers, getQuickDoc, login)
 import ModelCommon.View exposing (mediaTension, roleColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembers)
 import RemoteData exposing (RemoteData)
@@ -74,6 +77,7 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
+    , help : Help
     , refresh_trial : Int
     }
 
@@ -86,6 +90,7 @@ type alias Model =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+    | PushTension TensionForm (GqlData Tension -> Msg)
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
@@ -111,6 +116,18 @@ type Msg
     | DoCloseModal String -- ports receive / Close modal
     | ExpandRoles
     | CollapseRoles
+      -- Help
+    | TriggerHelp String
+    | GotQuickDoc (WebData QuickDoc)
+    | ChangeHelpTab HelpTab
+    | ChangePostAsk String String
+    | ChangePostFeedback String String
+    | ChangeFeedbackLabel FeedbackType
+    | SubmitAsk Time.Posix
+    | SubmitFeedback Time.Posix
+    | AskAck (GqlData Tension)
+    | AskFeedback (GqlData Tension)
+    | DoCloseHelpModal String
 
 
 
@@ -154,6 +171,7 @@ init global flags =
             , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
+            , help = Help.create global.session.user
             , refresh_trial = 0
             }
 
@@ -177,6 +195,9 @@ update global msg model =
             global.session.apis
     in
     case msg of
+        PushTension form ack ->
+            ( model, addOneTension apis.gql form ack, Cmd.none )
+
         PushGuest form ->
             ( model, actionRequest apis.gql form JoinAck, Cmd.none )
 
@@ -446,11 +467,107 @@ update global msg model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
+        -- Help
+        TriggerHelp _ ->
+            ( { model | help = Help.open model.help }
+            , Cmd.batch [ Ports.open_modal, getQuickDoc apis.data "en" GotQuickDoc ]
+            , Cmd.none
+            )
+
+        GotQuickDoc result ->
+            ( { model | help = Help.setDocResult result model.help }, Cmd.none, Cmd.none )
+
+        ChangeHelpTab tab ->
+            ( { model | help = Help.changeTab tab model.help }, Cmd.none, Cmd.none )
+
+        ChangePostAsk field value ->
+            ( { model | help = Help.postAsk field value model.help }, Cmd.none, Cmd.none )
+
+        ChangePostFeedback field value ->
+            ( { model | help = Help.postFeedback field value model.help }, Cmd.none, Cmd.none )
+
+        ChangeFeedbackLabel type_ ->
+            ( { model | help = Help.changeLabel type_ model.help }, Cmd.none, Cmd.none )
+
+        SubmitAsk time ->
+            let
+                help =
+                    model.help
+                        |> Help.postAsk "createdAt" (fromTime time)
+                        |> Help.setResultAsk LoadingSlowly
+            in
+            ( { model | help = help }
+            , send (PushTension help.formAsk AskAck)
+            , Cmd.none
+            )
+
+        SubmitFeedback time ->
+            let
+                help =
+                    model.help
+                        |> Help.postFeedback "createdAt" (fromTime time)
+                        |> Help.setLabelsFeedback
+                        |> Help.setResultFeedback LoadingSlowly
+            in
+            ( { model | help = help }
+            , send (PushTension help.formFeedback AskFeedback)
+            , Cmd.none
+            )
+
+        AskAck result ->
+            let
+                form =
+                    model.help.formAsk
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | help = Help.setResultAsk NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskAck) 500, send UpdateUserToken )
+
+                OkAuth tension ->
+                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
+
+                NoAuth ->
+                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
+
+        AskFeedback result ->
+            let
+                form =
+                    model.help.formFeedback
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | help = Help.setResultFeedback NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskFeedback) 500, send UpdateUserToken )
+
+                OkAuth tension ->
+                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
+
+                NoAuth ->
+                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
+
+        DoCloseHelpModal link ->
+            let
+                gcmd =
+                    if link /= "" then
+                        send (Navigate link)
+
+                    else
+                        Cmd.none
+            in
+            ( { model | help = Help.close model.help }, gcmd, Ports.close_modal )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.batch
-        [ Ports.closeModalFromJs DoCloseModal ]
+        [ Ports.closeModalFromJs DoCloseModal
+        , Ports.triggerHelpFromJs TriggerHelp
+        ]
 
 
 
@@ -460,7 +577,22 @@ subscriptions global model =
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Members · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
-    , body = [ view_ global model ]
+    , body =
+        [ view_ global model
+        , Help.view
+            { data = model.help
+            , onSubmit = Submit
+            , onCloseModal = DoCloseHelpModal
+            , onNavigate = Navigate
+            , onChangeTab = ChangeHelpTab
+            , onChangePostAsk = ChangePostAsk
+            , onChangePostFeedback = ChangePostFeedback
+            , onChangeLabel = ChangeFeedbackLabel
+            , onSubmitAsk = SubmitAsk
+            , onSubmitFeedback = SubmitFeedback
+            }
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        ]
     }
 
 

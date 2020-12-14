@@ -135,22 +135,18 @@ view op =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button has-text-weight-semibold"
+                                    ([ class "button is-warning has-text-weight-semibold"
                                      , classList
-                                        [ ( "is-warning", isSendable )
-                                        , ( "is-loading", isLoading && data.activeButton == Just 1 )
-                                        ]
+                                        [ ( "is-loading", isLoading && data.activeButton == Just 1 ) ]
                                      , disabled (not isSendable || isLoading)
                                      ]
                                         ++ submitTension
                                     )
                                     [ text txt.submit ]
                                 , button
-                                    ([ class "button has-text-weight-semibold"
+                                    ([ class "button is-success has-text-weight-semibold"
                                      , classList
-                                        [ ( "is-success", isSendable )
-                                        , ( "is-loading", isLoading && data.activeButton == Just 0 )
-                                        ]
+                                        [ ( "is-loading", isLoading && data.activeButton == Just 0 ) ]
                                      , disabled (not isSendable || isLoading)
                                      ]
                                         ++ submitCloseTension

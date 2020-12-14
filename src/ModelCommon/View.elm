@@ -83,6 +83,12 @@ mediaTension baseUri focus tension navigate =
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
+                , case labels_m of
+                    Just labels ->
+                        viewLabels labels
+
+                    Nothing ->
+                        span [] []
                 , if n_comments > 1 then
                     span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments") ]
                         [ Fa.icon "fas fa-comment" (String.fromInt (n_comments - 1)) ]
@@ -90,12 +96,6 @@ mediaTension baseUri focus tension navigate =
                   else
                     span [] []
                 ]
-            , case labels_m of
-                Just labels ->
-                    viewLabels labels
-
-                Nothing ->
-                    span [] []
             , br [ class "is-block" ] []
             , span [ class "columns is-variable is-mobile" ]
                 [ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
@@ -284,6 +284,9 @@ roleColor rt =
 
         RoleType.Peer ->
             "primary"
+
+        RoleType.Bot ->
+            "link"
 
 
 

@@ -6,17 +6,20 @@ import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebDa
 import Components.Markdown exposing (renderMarkdown)
 import Dict exposing (Dict)
 import Extra exposing (ternary, up0, up1)
+import Extra.Events exposing (onClickPD)
+import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
+import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, header, hr, i, input, label, li, nav, option, p, section, select, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, type_, value)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, header, hr, i, input, label, li, nav, option, p, pre, section, select, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, UserState(..), initActionForm)
+import ModelCommon exposing (TensionForm, UserState(..), initTensionForm)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, typeFromNameid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
@@ -30,6 +33,11 @@ type alias Help =
     { isModalActive : Bool
     , activeTab : HelpTab
     , doc : WebData QuickDoc
+    , type_ : FeedbackType
+    , formAsk : TensionForm
+    , formFeedback : TensionForm
+    , resultAsk : GqlData Tension
+    , resultFeedback : GqlData Tension
     }
 
 
@@ -39,15 +47,74 @@ type HelpTab
     | Feedback
 
 
+type FeedbackType
+    = BugReport
+    | FeatureRequest
+    | Praise
+
+
+labelToString : FeedbackType -> String
+labelToString type_ =
+    case type_ of
+        BugReport ->
+            "bug"
+
+        FeatureRequest ->
+            "feature request"
+
+        Praise ->
+            "Praise"
+
+
 
 -- State Controls
 
 
-create : Help
-create =
+create : UserState -> Help
+create user =
+    let
+        uctx =
+            case user of
+                LoggedIn u ->
+                    u
+
+                LoggedOut ->
+                    UserCtx "" Nothing (UserRights False False) []
+
+        f =
+            initTensionForm { rootnameid = "f6", nameid = "f6#feedback", type_ = NodeType.Circle }
+
+        form =
+            { f
+                | uctx = uctx
+                , source =
+                    { rootnameid = "f6"
+                    , nameid = "f6#feedback#help-bot"
+                    , name = "Help Bot"
+                    , role_type = RoleType.Bot
+                    }
+            }
+
+        formAsk =
+            { form
+                | tension_type = TensionType.Help
+                , events_type = Just [ TensionEvent.Created ]
+            }
+
+        formFeedback =
+            { form
+                | tension_type = TensionType.Operational
+                , events_type = Just [ TensionEvent.Created ]
+            }
+    in
     { isModalActive = False
     , activeTab = QuickHelp
     , doc = RemoteData.NotAsked
+    , type_ = BugReport
+    , formAsk = formAsk
+    , formFeedback = formFeedback
+    , resultAsk = NotAsked
+    , resultFeedback = NotAsked
     }
 
 
@@ -61,9 +128,14 @@ changeTab tab data =
     { data | activeTab = tab }
 
 
+changeLabel : FeedbackType -> Help -> Help
+changeLabel type_ data =
+    { data | type_ = type_ }
+
+
 close : Help -> Help
 close data =
-    { data | isModalActive = False, activeTab = QuickHelp, doc = RemoteData.NotAsked }
+    create (LoggedIn data.formAsk.uctx)
 
 
 setDocResult : WebData QuickDoc -> Help -> Help
@@ -71,12 +143,64 @@ setDocResult result data =
     { data | doc = result }
 
 
+setResultAsk : GqlData Tension -> Help -> Help
+setResultAsk result data =
+    { data | resultAsk = result }
+
+
+setResultFeedback : GqlData Tension -> Help -> Help
+setResultFeedback result data =
+    { data | resultFeedback = result }
+
+
+
+-- Update Form
+
+
+postAsk : String -> String -> Help -> Help
+postAsk field value data =
+    let
+        f =
+            data.formAsk
+
+        newForm =
+            { f | post = Dict.insert field value f.post }
+    in
+    { data | formAsk = newForm }
+
+
+postFeedback : String -> String -> Help -> Help
+postFeedback field value data =
+    let
+        f =
+            data.formFeedback
+
+        newForm =
+            { f | post = Dict.insert field value f.post }
+    in
+    { data | formFeedback = newForm }
+
+
+setLabelsFeedback : Help -> Help
+setLabelsFeedback data =
+    let
+        form =
+            data.formFeedback
+    in
+    { data | formFeedback = { form | labels = [ labelToString data.type_ ] } }
+
+
 type alias Op msg =
     { data : Help
     , onSubmit : (Time.Posix -> msg) -> msg
-    , onCloseModal : msg
+    , onCloseModal : String -> msg
     , onNavigate : String -> msg
     , onChangeTab : HelpTab -> msg
+    , onChangePostAsk : String -> String -> msg
+    , onChangePostFeedback : String -> String -> msg
+    , onChangeLabel : FeedbackType -> msg
+    , onSubmitAsk : Time.Posix -> msg
+    , onSubmitFeedback : Time.Posix -> msg
     }
 
 
@@ -99,11 +223,11 @@ viewModal op =
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "helpModal"
-            , onClick op.onCloseModal
+            , onClick (op.onCloseModal "")
             ]
             []
         , div [ class "modal-content" ] [ viewModalContent op ]
-        , button [ class "modal-close is-large", onClick op.onCloseModal ] []
+        , button [ class "modal-close is-large", onClick (op.onCloseModal "") ] []
         ]
 
 
@@ -137,10 +261,10 @@ viewModalContent op =
                     viewQuickHelp op
 
                 AskQuestion ->
-                    text "Work in progress..."
+                    viewAskQuestion op
 
                 Feedback ->
-                    text "Work in progress..."
+                    viewFeedback op
             ]
         ]
 
@@ -183,3 +307,232 @@ viewQuickHelp op =
 
         RemoteData.NotAsked ->
             text ""
+
+
+viewAskQuestion : Op msg -> Html msg
+viewAskQuestion op =
+    let
+        form =
+            op.data.formAsk
+
+        title =
+            Dict.get "title" form.post |> withDefault ""
+
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
+        isLoading =
+            op.data.resultAsk == LoadingSlowly
+
+        isSendable =
+            isPostSendable [ "title", "message" ] form.post
+    in
+    case op.data.resultAsk of
+        Success res ->
+            let
+                link =
+                    Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
+            in
+            div [ class "box is-light" ]
+                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                , text (T.messageSent ++ ". ")
+                , a
+                    [ href link
+                    , onClickPD (op.onCloseModal link)
+                    , target "_blank"
+                    ]
+                    [ text T.checkItOut ]
+                ]
+
+        other ->
+            div [ class "section pt-0" ]
+                [ p [ class "field" ]
+                    [ text "Have you checked if your question is answered in the "
+                    , span [ class "button-light has-text-info has-text-weight-semibold", onClick (op.onChangeTab QuickHelp) ] [ text "Quick help?" ]
+                    ]
+                , div [ class "field is-horizontal pt-2" ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Subject" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control is-expanded" ]
+                                [ input
+                                    [ class "input autofocus"
+                                    , type_ "text"
+                                    , placeholder "Subject of your question."
+                                    , required True
+                                    , value title
+                                    , onInput (op.onChangePostAsk "title")
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+                    ]
+                , div [ class "field is-horizontal" ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Question" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control is-expanded" ]
+                                [ textarea
+                                    [ class "textarea"
+                                    , rows 5
+                                    , placeholder "Write your question here..."
+                                    , required True
+                                    , value message
+                                    , onInput (op.onChangePostAsk "message")
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+                    ]
+                , case other of
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        text ""
+                , div [ class "field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ button
+                            [ class "button is-success"
+                            , classList [ ( "is-loading", isLoading ) ]
+                            , disabled (not isSendable)
+                            , onClick (op.onSubmit <| op.onSubmitAsk)
+                            ]
+                            [ text "Send question" ]
+                        ]
+                    ]
+                ]
+
+
+viewFeedback : Op msg -> Html msg
+viewFeedback op =
+    let
+        form =
+            op.data.formFeedback
+
+        title =
+            Dict.get "title" form.post |> withDefault ""
+
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
+        isLoading =
+            op.data.resultFeedback == LoadingSlowly
+
+        isSendable =
+            isPostSendable [ "title", "message" ] form.post
+    in
+    case op.data.resultFeedback of
+        Success res ->
+            let
+                link =
+                    Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
+            in
+            div [ class "box is-light" ]
+                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                , text (T.messageSent ++ ". ")
+                , a
+                    [ href link
+                    , onClickPD (op.onCloseModal link)
+                    , target "_blank"
+                    ]
+                    [ text T.checkItOut ]
+                ]
+
+        other ->
+            div [ class "section pt-0" ]
+                [ div [ class "field is-horizontal" ]
+                    [ div [ class "field-label is-norma" ] [ label [ class "label" ] [ text "Type" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field is-narrow" ]
+                            [ div [ class "control" ]
+                                [ label [ class "radio mr-3" ]
+                                    [ input
+                                        [ type_ "radio"
+                                        , name "type"
+                                        , onClick (op.onChangeLabel BugReport)
+                                        , checked (op.data.type_ == BugReport)
+                                        ]
+                                        []
+                                    , text " Bug report"
+                                    ]
+                                , label [ class "radio mr-3" ]
+                                    [ input
+                                        [ type_ "radio"
+                                        , name "type"
+                                        , onClick (op.onChangeLabel FeatureRequest)
+                                        , checked (op.data.type_ == FeatureRequest)
+                                        ]
+                                        []
+                                    , text " Feature request"
+                                    ]
+                                , label [ class "radio" ]
+                                    [ input
+                                        [ type_ "radio"
+                                        , name "type"
+                                        , onClick (op.onChangeLabel Praise)
+                                        , checked (op.data.type_ == Praise)
+                                        ]
+                                        []
+                                    , text " Praise"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                , div [ class "field is-horizontal pt-2" ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Subject" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control is-expanded" ]
+                                [ input
+                                    [ class "input autofocus"
+                                    , type_ "text"
+                                    , placeholder "Subject of your feedback."
+                                    , required True
+                                    , value title
+                                    , onInput (op.onChangePostFeedback "title")
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+                    ]
+                , div [ class "field is-horizontal" ]
+                    [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Feedback" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control is-expanded" ]
+                                [ textarea
+                                    [ class "textarea"
+                                    , rows 5
+                                    , placeholder "Write your feedback here..."
+                                    , required True
+                                    , value message
+                                    , onInput (op.onChangePostFeedback "message")
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+                    ]
+                , case other of
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        text ""
+                , div [ class "field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ button
+                            [ class "button is-success"
+                            , classList [ ( "is-loading", isLoading ) ]
+                            , disabled (not isSendable)
+                            , onClick (op.onSubmit <| op.onSubmitFeedback)
+                            ]
+                            [ text "Send feedback" ]
+                        ]
+                    ]
+                ]

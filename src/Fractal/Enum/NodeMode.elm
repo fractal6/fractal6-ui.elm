@@ -8,13 +8,13 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type NodeMode
-    = Chaos
-    | Coordinated
+    = Coordinated
+    | Agile
 
 
 list : List NodeMode
 list =
-    [ Chaos, Coordinated ]
+    [ Coordinated, Agile ]
 
 
 decoder : Decoder NodeMode
@@ -23,11 +23,11 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "Chaos" ->
-                        Decode.succeed Chaos
-
                     "Coordinated" ->
                         Decode.succeed Coordinated
+
+                    "Agile" ->
+                        Decode.succeed Agile
 
                     _ ->
                         Decode.fail ("Invalid NodeMode type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -39,11 +39,11 @@ decoder =
 toString : NodeMode -> String
 toString enum =
     case enum of
-        Chaos ->
-            "Chaos"
-
         Coordinated ->
             "Coordinated"
+
+        Agile ->
+            "Agile"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -60,11 +60,11 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe NodeMode
 fromString enumString =
     case enumString of
-        "Chaos" ->
-            Just Chaos
-
         "Coordinated" ->
             Just Coordinated
+
+        "Agile" ->
+            Just Agile
 
         _ ->
             Nothing

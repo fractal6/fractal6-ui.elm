@@ -402,8 +402,8 @@ view op =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button has-text-weight-semibold"
-                                     , classList [ ( "is-success", isSendable ), ( "is-loading", isLoading ) ]
+                                    ([ class "button has-text-weight-semibold is-success"
+                                     , classList [ ( "is-loading", isLoading ) ]
                                      , disabled (not isSendable)
                                      ]
                                         ++ submitTension

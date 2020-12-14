@@ -207,6 +207,7 @@ type alias TensionForm =
     , targetData : NodeData
     , status : TensionStatus.TensionStatus
     , tension_type : TensionType.TensionType
+    , labels : List String
     , action : Maybe TensionAction.TensionAction
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc
 
@@ -295,6 +296,7 @@ initTensionForm focus =
     , targetData = initNodeData
     , status = TensionStatus.Open
     , tension_type = TensionType.Operational
+    , labels = []
     , action = Nothing
     , post = Dict.empty
     , users = []

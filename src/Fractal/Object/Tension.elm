@@ -160,11 +160,6 @@ assignees fillInOptionals object_ =
     Object.selectionForCompositeField "assignees" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
-action : SelectionSet (Maybe Fractal.Enum.TensionAction.TensionAction) Fractal.Object.Tension
-action =
-    Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
-
-
 type alias CommentsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.CommentFilter
     , order : OptionalArgument Fractal.InputObject.CommentOrder
@@ -187,6 +182,11 @@ comments fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "comments" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+action : SelectionSet (Maybe Fractal.Enum.TensionAction.TensionAction) Fractal.Object.Tension
+action =
+    Object.selectionForField "(Maybe Enum.TensionAction.TensionAction)" "action" [] (Fractal.Enum.TensionAction.decoder |> Decode.nullable)
 
 
 type alias BlobsOptionalArguments =

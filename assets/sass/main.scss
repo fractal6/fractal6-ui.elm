@@ -268,6 +268,11 @@ html.has-modal-active, html.has-modal-active2 {
         transition: transform .666s ease-in-out;
     }
 
+    .navbar-start .navbar-item {
+        font-size: 0.95rem;
+        font-weight: 500 !important;
+    }
+
     .navbar-dropdown {
         border: solid 2px $grey-darker;
     }
@@ -834,7 +839,10 @@ html.has-modal-active, html.has-modal-active2 {
     .modal-content, .modal-card {
         height: 90% !important;
         max-height: 100%;
-        min-width: $modal-width-large !important;
+        @media (min-width: $modal-width-large){
+            min-width: $modal-width-large !important;
+            .modal-card-body { padding: 30px; }
+        }
     }
 
     .modal-card-head {
@@ -1147,15 +1155,20 @@ html.has-modal-active, html.has-modal-active2 {
                 }
                 cursor: pointer !important;
             }
-        }
-        .content > a  {
-            color: $text !important;
-            &:hover {
-                color: $link !important;
+            & > a {
+                color: $text !important;
+                &:hover {
+                    color: $link !important;
+                }
+
+                & + .labelsList {
+                    margin-left: $size-small;
+                }
             }
+
+
         }
     }
-
 }
 
 .labelsList {

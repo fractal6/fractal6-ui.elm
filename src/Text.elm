@@ -18,6 +18,11 @@ createAccount =
     "create a new account"
 
 
+messageSent : String
+messageSent =
+    "Message sent"
+
+
 profile : String
 profile =
     "Profile"

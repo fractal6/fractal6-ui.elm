@@ -25,11 +25,11 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.NodeCharac
-mode =
-    Object.selectionForField "Enum.NodeMode.NodeMode" "mode" [] Fractal.Enum.NodeMode.decoder
-
-
 userCanJoin : SelectionSet Bool Fractal.Object.NodeCharac
 userCanJoin =
     Object.selectionForField "Bool" "userCanJoin" [] Decode.bool
+
+
+mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.NodeCharac
+mode =
+    Object.selectionForField "Enum.NodeMode.NodeMode" "mode" [] Fractal.Enum.NodeMode.decoder
