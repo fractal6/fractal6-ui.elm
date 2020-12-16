@@ -33,6 +33,7 @@ const RoleType = {
     Owner: "Owner",
     Member: "Member",
     Guest: "Guest",
+    Bot: "Bot",
     Retired: "Retired",
     Coordinator: "Coordinator",
     Peer: "Peer",
@@ -55,7 +56,7 @@ const formatGraph = dataset =>  {
 
     dataset.forEach( aData => {
         // Filter Speciale Role nodes
-        if (aData.role_type == RoleType.Member || aData.role_type == RoleType.Owner ) {
+        if (aData.role_type == RoleType.Member || aData.role_type == RoleType.Owner || aData.role_type == RoleType.Bot ) {
             delete dataDict[aData.nameid]
             return
         }
