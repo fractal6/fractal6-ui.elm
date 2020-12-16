@@ -198,8 +198,8 @@ type Msg
     | JoinAck (GqlData ActionResult)
       -- Graphpack
     | AddNodes (List Node)
-    | DelNodes (List String)
     | UpdateNode (Maybe Node)
+    | DelNodes (List String)
       -- GP JS Interop
     | NodeClicked String -- ports receive / Node clicked
     | NodeFocused LocalGraph_ -- ports receive / Node focused
@@ -907,14 +907,36 @@ update global msg model =
 
         CloseActionPanelModal link ->
             let
-                gcmd =
+                gcmds =
                     if link /= "" then
-                        send (Navigate link)
+                        [ send (Navigate link) ]
 
                     else
-                        Cmd.none
+                        [ case model.actionPanel.state of
+                            ArchiveAction ->
+                                send (DelNodes [ model.actionPanel.form.node.nameid ])
+
+                            UnarchiveAction ->
+                                Cmd.none
+
+                            LeaveAction ->
+                                let
+                                    newNode =
+                                        getNode model.actionPanel.form.node.nameid model.orga_data
+                                            |> Maybe.map (\n -> { n | first_link = Nothing })
+                                in
+                                case newNode |> Maybe.map (\n -> n.role_type) |> withDefault Nothing of
+                                    Just RoleType.Guest ->
+                                        send (DelNodes [ model.actionPanel.form.node.nameid ])
+
+                                    _ ->
+                                        send (UpdateNode newNode)
+
+                            NoAction ->
+                                Cmd.none
+                        ]
             in
-            ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, gcmd, Ports.close_modal )
+            ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, Cmd.batch gcmds, Ports.close_modal )
 
         OpenActionPanelModal action ->
             let
@@ -953,10 +975,7 @@ update global msg model =
                     ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
 
                 OkAuth t ->
-                    ( { model | actionPanel = aPanel }
-                    , Cmd.batch [ send (DelNodes [ aPanel.form.node.nameid ]) ]
-                    , Cmd.none
-                    )
+                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
 
                 NoAuth ->
                     ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
@@ -979,15 +998,7 @@ update global msg model =
                     ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
 
                 OkAuth t ->
-                    let
-                        newNode =
-                            getNode aPanel.form.node.nameid model.orga_data
-                                |> Maybe.map (\n -> { n | first_link = Nothing })
-                    in
-                    ( { model | actionPanel = aPanel }
-                    , Cmd.batch (gcmds ++ [ send (UpdateNode newNode) ])
-                    , Cmd.none
-                    )
+                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
 
                 NoAuth ->
                     ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
@@ -1081,6 +1092,21 @@ update global msg model =
             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
             )
 
+        UpdateNode node_m ->
+            case node_m of
+                Just n ->
+                    let
+                        ndata =
+                            hotNodeInsert n model.orga_data
+                    in
+                    ( { model | orga_data = Success ndata }
+                    , Cmd.none
+                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
+
         DelNodes nameids ->
             let
                 ndata =
@@ -1098,21 +1124,6 @@ update global msg model =
             , Cmd.batch [ send (NodeClicked newFocus) ]
             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
             )
-
-        UpdateNode node_m ->
-            case node_m of
-                Just n ->
-                    let
-                        ndata =
-                            hotNodeInsert n model.orga_data
-                    in
-                    ( { model | orga_data = Success ndata }
-                    , Cmd.none
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
-                    )
-
-                Nothing ->
-                    ( model, Cmd.none, Cmd.none )
 
         -- JS interop
         NodeClicked nameid ->
@@ -1663,10 +1674,7 @@ viewSearchBar us model =
                                                 }
                                         in
                                         div [ id "actionPanelContent", class "control" ]
-                                            [ span
-                                                [ class "button is-small is-info"
-                                                , onClick (DoActionEdit node)
-                                                ]
+                                            [ span [ class "button is-small is-info", onClick (DoActionEdit node) ]
                                                 [ i [ class "fas fa-ellipsis-v" ] [] ]
                                             , ActionPanel.view panelData
                                             ]
