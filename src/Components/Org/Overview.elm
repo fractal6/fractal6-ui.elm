@@ -911,7 +911,7 @@ update global msg model =
                     if link /= "" then
                         [ send (Navigate link) ]
 
-                    else
+                    else if ActionPanel.isSuccess model.actionPanel then
                         [ case model.actionPanel.state of
                             ArchiveAction ->
                                 send (DelNodes [ model.actionPanel.form.node.nameid ])
@@ -935,6 +935,9 @@ update global msg model =
                             NoAction ->
                                 Cmd.none
                         ]
+
+                    else
+                        [ Cmd.none ]
             in
             ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, Cmd.batch gcmds, Ports.close_modal )
 

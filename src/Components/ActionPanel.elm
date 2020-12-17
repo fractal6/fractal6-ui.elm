@@ -167,6 +167,20 @@ setAction action data =
 
 
 
+-- Accessors
+
+
+isSuccess : ActionPanel -> Bool
+isSuccess data =
+    case data.action_result of
+        Success _ ->
+            True
+
+        _ ->
+            False
+
+
+
 -- Update form
 
 
