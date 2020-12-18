@@ -346,7 +346,7 @@ update global msg model =
                         OkAuth n ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , Cmd.none
-                            , Cmd.none
+                            , send UpdateUserToken
                             )
 
                         NoAuth ->
