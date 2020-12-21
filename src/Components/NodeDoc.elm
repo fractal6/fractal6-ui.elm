@@ -903,7 +903,7 @@ updateNodeForm field value form =
 
                             newData =
                                 { node
-                                    | name = Just value
+                                    | name = Just (String.trim value)
                                     , nameid = Just (makeNewNodeId value)
                                 }
                         in
@@ -920,6 +920,7 @@ updateNodeForm field value form =
 makeNewNodeId : String -> String
 makeNewNodeId name =
     name
+        |> String.trim
         |> String.toLower
         |> String.trim
         |> String.map
