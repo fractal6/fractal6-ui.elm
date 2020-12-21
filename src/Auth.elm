@@ -27,7 +27,7 @@ type AuthState a
 
 messageToAuthState : String -> Int -> AuthState a
 messageToAuthState message trial =
-    if startsWith "token is expired" message then
+    if startsWith "token is expired" message || startsWith "no token found" message then
         Authenticate
 
     else if startsWith "Access denied" message then
