@@ -230,7 +230,7 @@ viewGqlErrors errMsg =
                 in
                 p [] [ text err ]
             )
-        |> div [ class "box has-background-danger" ]
+        |> div [ class "box has-background-danger is-size-6" ]
 
 
 viewHttpErrors : HttpError String -> Html msg

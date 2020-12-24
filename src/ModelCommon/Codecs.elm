@@ -270,6 +270,11 @@ nodeIdCodec parentid targetid nodeType =
                 String.join "#" [ parentid, targetid ]
 
 
+labelIdCodec : String -> String -> String
+labelIdCodec nameid name =
+    String.join "#" [ nid2rootid nameid, name ]
+
+
 nid2rootid : String -> String
 nid2rootid nameid =
     nameid |> String.split "#" |> List.head |> withDefault ""

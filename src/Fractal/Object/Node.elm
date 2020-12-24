@@ -371,3 +371,10 @@ skills =
 role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.Node
 role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
+
+
+shared :
+    SelectionSet decodesTo Fractal.Object.SharedNode
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+shared object_ =
+    Object.selectionForCompositeField "shared" [] object_ (identity >> Decode.nullable)

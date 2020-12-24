@@ -14,6 +14,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (LabelForm)
+import ModelCommon.Codecs exposing (labelIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
 import RemoteData exposing (RemoteData)
@@ -66,6 +67,9 @@ addOneLabel url form msg =
 labelInputEncoder : LabelForm -> Mutation.UpdateNodeRequiredArguments
 labelInputEncoder form =
     let
+        name_m =
+            Dict.get "name" form.post
+
         inputReq =
             { filter =
                 Input.buildNodeFilter
@@ -85,7 +89,8 @@ labelInputEncoder form =
                                         [ Input.buildLabelRef
                                             (\j ->
                                                 { j
-                                                    | name = fromMaybe (Dict.get "name" form.post)
+                                                    | name = fromMaybe name_m
+                                                    , nameid = name_m |> Maybe.map (\name -> labelIdCodec form.nameid name) |> fromMaybe
                                                     , color = fromMaybe (Dict.get "color" form.post)
                                                     , description = fromMaybe (Dict.get "description" form.post)
                                                 }

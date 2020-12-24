@@ -65,6 +65,29 @@ queryNode fillInOptionals object_ =
     Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias QuerySharedNodeOptionalArguments =
+    { order : OptionalArgument Fractal.InputObject.SharedNodeOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+querySharedNode :
+    (QuerySharedNodeOptionalArguments -> QuerySharedNodeOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.SharedNode
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+querySharedNode fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeSharedNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "querySharedNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
 type alias GetNodeFragmentRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -233,7 +256,7 @@ queryTension fillInOptionals object_ =
 
 type alias GetLabelOptionalArguments =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , name : OptionalArgument String
+    , nameid : OptionalArgument String
     }
 
 
@@ -244,10 +267,10 @@ getLabel :
 getLabel fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { id = Absent, name = Absent }
+            fillInOptionals { id = Absent, nameid = Absent }
 
         optionalArgs =
-            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "name" filledInOptionals.name Encode.string ]
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "nameid" filledInOptionals.nameid Encode.string ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "getLabel" optionalArgs object_ (identity >> Decode.nullable)

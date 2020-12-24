@@ -756,7 +756,8 @@ viewLabels model =
                         [ thead []
                             [ tr []
                                 [ th [] [ text "Name" ]
-                                , th [ class "is-aligned-left" ] [ text "Description" ]
+                                , th [] [ text "Description" ]
+                                , th [] []
                                 ]
                             ]
                         , labels
@@ -765,6 +766,11 @@ viewLabels model =
                                     tr []
                                         [ td [] [ viewLabel "is-medium" (Label d.name d.color) ]
                                         , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [ class "is-italic" ] ]
+                                        , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 5rem;" ]
+                                            [ span [] [ text "Edit" ]
+                                            , text " · "
+                                            , span [] [ text "Delete" ]
+                                            ]
                                         ]
                                 )
                             |> tbody []

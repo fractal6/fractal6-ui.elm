@@ -30,6 +30,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm, UserForm)
+import ModelCommon.Codecs exposing (labelIdCodec)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
@@ -131,7 +132,7 @@ addTensionInputEncoder f =
                     | action = f.action |> fromMaybe
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
-                    , labels = buildLabels f.labels
+                    , labels = buildLabels f
                 }
     in
     { input =
@@ -178,14 +179,14 @@ tensionFromForm f =
         }
 
 
-buildLabels : List String -> OptionalArgument (List Input.LabelRef)
-buildLabels labels =
-    labels
+buildLabels : TensionForm -> OptionalArgument (List Input.LabelRef)
+buildLabels form =
+    form.labels
         |> List.map
             (\label ->
                 Input.buildLabelRef
                     (\x ->
-                        { x | name = Present label }
+                        { x | nameid = labelIdCodec form.target.rootnameid label |> Present }
                     )
             )
         |> Present

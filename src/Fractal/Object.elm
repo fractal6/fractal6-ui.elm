@@ -41,6 +41,10 @@ type AddNodeStatsPayload
     = AddNodeStatsPayload
 
 
+type AddSharedNodePayload
+    = AddSharedNodePayload
+
+
 type AddTensionPayload
     = AddTensionPayload
 
@@ -135,6 +139,10 @@ type NodeStats
 
 type Post
     = Post
+
+
+type SharedNode
+    = SharedNode
 
 
 type Tension

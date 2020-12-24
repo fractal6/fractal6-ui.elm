@@ -24,6 +24,11 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
+nameid : SelectionSet String Fractal.Object.Label
+nameid =
+    Object.selectionForField "String" "nameid" [] Decode.string
+
+
 name : SelectionSet String Fractal.Object.Label
 name =
     Object.selectionForField "String" "name" [] Decode.string
