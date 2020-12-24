@@ -337,10 +337,31 @@ update global msg model =
             ( { model | result_label = LoadingSlowly }, addOneLabel apis.gql model.form_label GotLabel, Cmd.none )
 
         GotLabel result ->
-            -- if success close form edit
-            -- if success update labels
-            -- if success set result to notasked
-            ( { model | result_label = result }, Cmd.none, Cmd.none )
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | result_label = NotAsked }, send (DoOpenAuthModal model.form_label.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddLabel) 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    let
+                        f =
+                            model.form_label
+
+                        new =
+                            [ LabelFull (Dict.get "name" f.post |> withDefault "") (Dict.get "color" f.post) (Dict.get "description" f.post) ]
+
+                        d =
+                            withMaybeData model.labels |> withDefault []
+                    in
+                    ( { model | result_label = result, labels = Success (new ++ d), form_label = initLabelForm global.session.user model.node_focus.nameid, add_label = False }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                NoAuth ->
+                    ( { model | result_label = result }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -735,15 +756,15 @@ viewLabels model =
                         [ thead []
                             [ tr []
                                 [ th [] [ text "Name" ]
-                                , th [ class "" ] [ text "Description" ]
+                                , th [ class "is-aligned-left" ] [ text "Description" ]
                                 ]
                             ]
                         , labels
                             |> List.indexedMap
                                 (\i d ->
                                     tr []
-                                        [ td [] [ d.name |> text ] -- set color d.color
-                                        , td [] [ d.description |> withDefault "Add a desciption" |> text |> List.singleton |> span [ class "is-italic" ] ]
+                                        [ td [] [ viewLabel "is-medium" (Label d.name d.color) ]
+                                        , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [ class "is-italic" ] ]
                                         ]
                                 )
                             |> tbody []
@@ -825,7 +846,10 @@ viewLabelAddBox model =
                     [ text T.createLabel ]
                 ]
             ]
-        , div [] [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ], viewLabel (Label (ternary (name == "") "label name" name) color) ]
+        , div []
+            [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ]
+            , viewLabel "" (Label (ternary (name == "") "label name" name) color)
+            ]
         , case result of
             Failure err ->
                 viewGqlErrors err
