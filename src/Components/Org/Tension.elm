@@ -219,6 +219,7 @@ type Msg
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
+      -- Page
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
@@ -1662,7 +1663,7 @@ view_ global model =
                         div [ class "spinner" ] []
 
                     other ->
-                        div [] []
+                        text ""
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
@@ -1707,7 +1708,7 @@ viewTension u t model =
                                         []
                                     ]
                                 , p [ class "control buttons" ]
-                                    [ button [ class "button is-danger is-small", onClick CancelTitle ] [ text T.cancel ]
+                                    [ button [ class "button is-small", onClick CancelTitle ] [ text T.cancel ]
                                     , button
                                         ([ class "button is-success is-small"
                                          , classList [ ( "is-loading", isLoading ) ]
@@ -1723,7 +1724,7 @@ viewTension u t model =
                                     viewGqlErrors err
 
                                 _ ->
-                                    div [] []
+                                    text ""
                             ]
 
                         False ->
@@ -1887,7 +1888,7 @@ viewComments u t model =
             div [ class "spinner" ] []
 
         other ->
-            div [] []
+            text ""
 
 
 viewComment : Comment -> Model -> Html Msg
@@ -1926,7 +1927,7 @@ viewComment c model =
                                 ]
 
                           else
-                            div [] []
+                            text ""
                         ]
                     , div [ class "message-body" ]
                         [ case c.message of
@@ -2008,7 +2009,7 @@ viewCommentInput uctx tension form result viewMode =
                             viewGqlErrors err
 
                         _ ->
-                            div [] []
+                            text ""
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
@@ -2233,12 +2234,12 @@ viewUpdateInput uctx comment form result =
                     viewGqlErrors err
 
                 _ ->
-                    div [] []
+                    text ""
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]
                     [ div [ class "buttons" ]
                         [ button
-                            [ class "button has-text-weight-semibold is-danger"
+                            [ class "button has-text-weight-semibold"
                             , onClick CancelCommentPatch
                             ]
                             [ text T.cancel ]
@@ -2313,7 +2314,7 @@ viewDocument u t b model =
                     viewDocVersions model.tension_blobs
 
                 NoView ->
-                    div [] []
+                    text ""
         ]
 
 
@@ -2343,14 +2344,14 @@ viewBlobToolBar u t b model =
                     ]
 
               else
-                div [] []
+                text ""
             ]
         , case model.publish_result of
             Failure err ->
                 viewGqlErrors err
 
             _ ->
-                div [] []
+                text ""
         ]
 
 
@@ -2400,7 +2401,7 @@ viewDocVersions blobsData =
             div [ class "spinner" ] []
 
         _ ->
-            div [] []
+            text ""
 
 
 viewJoinNeeded : NodeFocus -> Html Msg
@@ -2466,7 +2467,7 @@ viewSidePane u t model =
                                 UserSearchPanel.view panelData
 
                               else
-                                div [] []
+                                text ""
                             ]
                         ]
 

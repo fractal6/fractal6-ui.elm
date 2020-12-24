@@ -450,7 +450,7 @@ viewStep1 action header color op =
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]
                     [ button
-                        ([ class "button has-text-weight-semibold is-danger" ]
+                        ([ class "button has-text-weight-semibold" ]
                             ++ [ onClick (op.onCloseModal "") ]
                         )
                         [ text T.cancel ]

@@ -1,4 +1,4 @@
-module Components.Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module Components.Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
@@ -24,7 +24,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -33,13 +33,14 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembers, getQuickDoc, login)
-import ModelCommon.View exposing (mediaTension, roleColor)
+import ModelCommon.View exposing (mediaTension, roleColor, viewLabel)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
+import Query.PatchNode exposing (addOneLabel)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembers)
+import Query.QueryNode exposing (fetchNode, queryLabels, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Task
 import Text as T
@@ -68,8 +69,13 @@ type alias Model =
     , path_data : GqlData LocalGraph
 
     -- Page
-    , members_top : GqlData (List Member)
-    , members_sub : GqlData (List Member)
+    , labels : GqlData (List LabelFull)
+    , menuFocus : MenuSettings
+    , menuList : List MenuSettings
+    , add_label : Bool
+    , edit_label : Maybe String
+    , result_label : GqlData IdPayload
+    , form_label : LabelForm
 
     -- Common
     , node_action : ActionState
@@ -79,6 +85,21 @@ type alias Model =
     , help : Help
     , refresh_trial : Int
     }
+
+
+type MenuSettings
+    = LabelsMenu
+    | SecurityMenu
+
+
+menuToString : MenuSettings -> String
+menuToString menu =
+    case menu of
+        LabelsMenu ->
+            "Labels"
+
+        SecurityMenu ->
+            "Security"
 
 
 
@@ -96,8 +117,15 @@ type Msg
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
       -- Page
-    | GotMembersTop (GqlData (List Member)) -- GraphQL
-    | GotMembersSub (GqlData (List Member)) -- Rest
+    | GotLabels (GqlData (List LabelFull)) -- GraphQL
+    | ChangeMenuFocus MenuSettings
+    | AddLabel
+    | NAddLabel
+    | EditLabel String
+    | NEditLabel
+    | ChangeLabelPost String String
+    | SubmitAddLabel Time.Posix
+    | GotLabel (GqlData IdPayload)
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -154,7 +182,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState MembersBaseUri global.session.referer global.session.node_focus newFocus
+            focusState SettingsBaseUri global.session.referer global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -162,8 +190,13 @@ init global flags =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
-            , members_top = Loading
-            , members_sub = Loading
+            , labels = Loading
+            , menuFocus = LabelsMenu
+            , menuList = [ LabelsMenu, SecurityMenu ]
+            , add_label = False
+            , edit_label = Nothing
+            , result_label = NotAsked
+            , form_label = initLabelForm global.session.user newFocus.nameid
 
             -- Common
             , node_action = NoOp
@@ -176,8 +209,7 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , queryMembers apis.gql newFocus.nameid GotMembersTop
-            , fetchMembers apis.rest newFocus.nameid GotMembersSub
+            , queryLabels apis.gql newFocus.nameid GotLabels
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -202,13 +234,10 @@ update global msg model =
 
         PassedSlowLoadTreshold ->
             let
-                members_top =
-                    ternary (model.members_top == Loading) LoadingSlowly model.members_top
-
-                members_sub =
-                    ternary (model.members_sub == Loading) LoadingSlowly model.members_sub
+                labels =
+                    ternary (model.labels == Loading) LoadingSlowly model.labels
             in
-            ( { model | members_top = members_top, members_sub = members_sub }, Cmd.none, Cmd.none )
+            ( { model | labels = labels }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -264,19 +293,54 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        GotMembersTop result ->
+        GotLabels result ->
             let
                 newModel =
-                    { model | members_top = result }
+                    { model | labels = result }
             in
             ( newModel, Cmd.none, Cmd.none )
 
-        GotMembersSub result ->
+        ChangeMenuFocus menu ->
+            ( { model | menuFocus = menu }, Cmd.none, Cmd.none )
+
+        AddLabel ->
+            ( { model | add_label = ternary (model.add_label == True) False True }, Cmd.none, Cmd.none )
+
+        NAddLabel ->
             let
-                newModel =
-                    { model | members_sub = result }
+                f =
+                    model.form_label
             in
-            ( newModel, Cmd.none, Cmd.none )
+            ( { model | add_label = False, form_label = { f | post = Dict.empty } }, Cmd.none, Cmd.none )
+
+        EditLabel label ->
+            ( { model | edit_label = Just label }, Cmd.none, Cmd.none )
+
+        NEditLabel ->
+            let
+                f =
+                    model.form_label
+            in
+            ( { model | edit_label = Nothing, form_label = { f | post = Dict.empty } }, Cmd.none, Cmd.none )
+
+        ChangeLabelPost field value ->
+            let
+                f =
+                    model.form_label
+
+                newForm =
+                    { f | post = Dict.insert field value f.post }
+            in
+            ( { model | form_label = newForm }, Cmd.none, Cmd.none )
+
+        SubmitAddLabel time ->
+            ( { model | result_label = LoadingSlowly }, addOneLabel apis.gql model.form_label GotLabel, Cmd.none )
+
+        GotLabel result ->
+            -- if success close form edit
+            -- if success update labels
+            -- if success set result to notasked
+            ( { model | result_label = result }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -575,7 +639,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Members · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ view_ global model
         , Help.view
@@ -604,7 +668,7 @@ view_ global model =
             , onCollapse = CollapseRoles
             , user = global.session.user
             , path_data = global.session.path_data
-            , baseUri = MembersBaseUri
+            , baseUri = SettingsBaseUri
             , data = model.helperBar
             }
     in
@@ -612,151 +676,163 @@ view_ global model =
         [ HelperBar.view helperData
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
-                [ div [ class "columns" ]
-                    [ viewMembers model.members_top "Direct members" model.node_focus ]
-                , div [ class "columns" ]
-                    [ viewMembers model.members_sub "Sub-Circle members" model.node_focus ]
-                , div [ class "columns" ]
-                    [ viewGuest model.members_top "Guest" model.node_focus ]
+                [ div [ class "section" ]
+                    [ div [ class "columns" ]
+                        [ div [ class "column is-2" ] [ viewSettingsMenu model ]
+                        , div [ class "column is-10" ] [ viewSettingsContent model ]
+                        ]
+                    ]
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
         ]
 
 
-viewMembers : GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewMembers data title focus =
-    div [ id "membersTable", class "section" ]
-        [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
-        , div [ class "table is-fullwidth" ]
-            [ thead []
-                [ tr []
-                    [ th [] [ text "Username" ]
-                    , th [] [ text "Name" ]
-                    , th [ class "" ] [ text "Roles" ]
-                    ]
-                ]
-            , tbody [] <|
-                case data of
-                    Success members ->
-                        List.indexedMap
-                            (\i m ->
-                                let
-                                    roles =
-                                        memberRolesFilter focus m.roles
-                                in
-                                if List.length roles == 0 then
-                                    tr [] []
-
-                                else
-                                    tr []
-                                        [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                        , td [] [ m.name |> withDefault "--" |> text ]
-                                        , td [] [ viewMemberRoles OverviewBaseUri roles ]
-                                        ]
-                            )
-                            members
-
-                    Failure err ->
-                        [ viewGqlErrors err ]
-
-                    LoadingSlowly ->
-                        [ div [ class "spinner" ] [] ]
-
-                    other ->
-                        []
-            ]
+viewSettingsMenu : Model -> Html Msg
+viewSettingsMenu model =
+    nav [ id "menuSettings", class "menu" ]
+        [ ul [ class "menu-list" ] <|
+            (model.menuList
+                |> List.map
+                    (\x ->
+                        li [] [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ] [ menuToString x |> text ] ]
+                    )
+            )
         ]
 
 
-viewGuest : GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewGuest members_d title focus =
-    let
-        guests =
-            members_d
-                |> withDefaultData []
-                |> List.filter
-                    (\u ->
-                        u.roles
-                            |> List.map (\r -> r.role_type)
-                            |> List.member RoleType.Guest
-                    )
-    in
-    if List.length guests > 0 then
-        div [ id "membersTable", class "section" ]
-            [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
-            , div [ class "table is-fullwidth" ]
-                [ thead []
-                    [ tr []
-                        [ th [] [ text "Username" ]
-                        , th [] [ text "Name" ]
-                        ]
-                    ]
-                , tbody [] <|
-                    List.indexedMap
-                        (\i m ->
-                            tr []
-                                [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                , td [] [ m.name |> withDefault "--" |> text ]
-                                ]
-                        )
-                        guests
-                ]
+viewSettingsContent : Model -> Html Msg
+viewSettingsContent model =
+    case model.menuFocus of
+        LabelsMenu ->
+            viewLabels model
+
+        SecurityMenu ->
+            div [] [ text "Work in progress" ]
+
+
+viewLabels : Model -> Html Msg
+viewLabels model =
+    div [ id "labelsTable" ]
+        [ h2 [ class "subtitle has-text-weight-semibold" ]
+            [ text "Labels"
+            , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ text "New label" ]
+            , br [] []
             ]
+        , case model.add_label of
+            True ->
+                viewLabelAddBox model
 
-    else
-        div [] []
-
-
-memberRolesFilter : NodeFocus -> List UserRoleExtended -> List UserRoleExtended
-memberRolesFilter focus roles =
-    roles
-        |> List.map
-            (\r ->
-                if r.role_type == RoleType.Guest then
-                    -- Filter Guest roles
-                    []
-
-                else if r.role_type == RoleType.Member && List.length roles > 1 then
-                    -- Filter Member with roles
-                    []
-
-                else if focus.nameid == (r.parent |> Maybe.map (\p -> p.nameid) |> withDefault "") then
-                    -- Dont include top level member for sub circle member (which contains all member)
-                    -- Note: .parentid not defined in the top member query
-                    []
+            False ->
+                text ""
+        , case model.labels of
+            Success labels ->
+                if List.length labels == 0 then
+                    div [ class "" ] [ text "No label yet" ]
 
                 else
-                    [ r ]
-            )
-        |> List.concat
+                    table [ class "table is-fullwidth" ]
+                        [ thead []
+                            [ tr []
+                                [ th [] [ text "Name" ]
+                                , th [ class "" ] [ text "Description" ]
+                                ]
+                            ]
+                        , labels
+                            |> List.indexedMap
+                                (\i d ->
+                                    tr []
+                                        [ td [] [ d.name |> text ] -- set color d.color
+                                        , td [] [ d.description |> withDefault "Add a desciption" |> text |> List.singleton |> span [ class "is-italic" ] ]
+                                        ]
+                                )
+                            |> tbody []
+                        ]
+
+            Failure err ->
+                viewGqlErrors err
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            other ->
+                text ""
+        ]
 
 
-viewMemberRoles : FractalBaseRoute -> List UserRoleExtended -> Html msg
-viewMemberRoles baseUri roles =
-    div [ class "buttons" ] <|
-        List.map
-            (\r ->
-                a
-                    [ class ("button buttonRole is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
-                    , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatTime r.createdAt ] |> String.join " ")
-                    , href <| uriFromNameid baseUri r.nameid
+viewLabelAddBox : Model -> Html Msg
+viewLabelAddBox model =
+    let
+        form =
+            model.form_label
+
+        result =
+            model.result_label
+
+        name =
+            Dict.get "name" form.post |> withDefault ""
+
+        color =
+            Dict.get "color" form.post
+
+        description =
+            Dict.get "description" form.post
+
+        isLoading =
+            model.result_label == LoadingSlowly
+
+        isSendable =
+            name /= ""
+
+        doSubmit =
+            ternary isSendable [ onClick (Submit <| SubmitAddLabel) ] []
+    in
+    div [ class "box has-background-light" ]
+        [ div [ class "field is-grouped" ]
+            [ p [ class "control" ]
+                [ label [ class "label is-small" ] [ text "Label name *" ]
+                , input
+                    [ id "titleInput"
+                    , class "input"
+                    , type_ "text"
+                    , placeholder "Label name"
+                    , value name
+                    , onInput (ChangeLabelPost "name")
                     ]
-                    [ if r.role_type == RoleType.Guest then
-                        text "Guest"
-
-                      else if r.role_type == RoleType.Member then
-                        text "Member"
-
-                      else if r.role_type == RoleType.Owner then
-                        text "Owner"
-
-                      else
-                        -- Peer
-                        text r.name
+                    []
+                ]
+            , p [ class "control is-expanded" ]
+                [ label [ class "label is-small" ] [ text "Description" ]
+                , input
+                    [ id "titleInput"
+                    , class "input"
+                    , type_ "text"
+                    , placeholder "Description"
+                    , value (withDefault "" description)
+                    , onInput (ChangeLabelPost "description")
                     ]
-            )
-            roles
+                    []
+                ]
+            , p [ class "control buttons", attribute "style" "margin-top: 1.5rem;" ]
+                [ button [ class "button is-small", onClick NAddLabel ] [ text T.cancel ]
+                , button
+                    ([ class "button is-success is-small"
+                     , classList [ ( "is-loading", isLoading ) ]
+                     , disabled (not isSendable)
+                     ]
+                        ++ doSubmit
+                    )
+                    [ text T.createLabel ]
+                ]
+            ]
+        , div [] [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ], viewLabel (Label (ternary (name == "") "label name" name) color) ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        ]
 
 
 

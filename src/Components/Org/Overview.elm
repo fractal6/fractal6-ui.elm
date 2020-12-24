@@ -27,7 +27,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -1549,7 +1549,7 @@ view_ global model =
                 , br [] []
                 , viewFromPos model.window_pos.two
                 ]
-            , div [ class "divider is-vertical", onClick SwitchWindow ] [ text "⇋" ]
+            , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
             , div
                 [ class "column is-5-desktop is-6-widescreen is-5-fullhd" ]
                 [ div [ class "columns is-gapless" ]
@@ -1726,7 +1726,7 @@ viewSearchList us model =
     in
     div
         [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]
-        [ div [ class "table is-fullwidth" ] <|
+        [ table [ class "table is-fullwidth" ] <|
             if sortedLookup == [] then
                 [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
 

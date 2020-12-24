@@ -10,6 +10,7 @@ module Query.QueryNode exposing
     , nodeOrgaPayload
     , queryFocusNode
     , queryGraphPack
+    , queryLabels
     , queryLocalGraph
     , queryMembers
     , queryNodeExt
@@ -19,11 +20,13 @@ module Query.QueryNode exposing
     )
 
 import Dict exposing (Dict)
+import Fractal.Enum.LabelOrderable as LabelOrderable
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
+import Fractal.Object.Label
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
 import Fractal.Object.NodeStats
@@ -323,13 +326,18 @@ nodeCharacPayload =
 -}
 
 
-fetchNode url targetid msg =
+fetchNode url nid msg =
     makeGQLQuery url
         (Query.getNode
-            (nidFilter targetid)
+            (nidFilter nid)
             nodeOrgaPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+nidFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
+nidFilter nid a =
+    { a | nameid = Present nid }
 
 
 
@@ -347,10 +355,10 @@ focusDecoder data =
             )
 
 
-queryFocusNode url targetid msg =
+queryFocusNode url nid msg =
     makeGQLQuery url
         (Query.getNode
-            (nidFilter targetid)
+            (nidFilter nid)
             lgPayload
         )
         (RemoteData.fromResult >> decodeResponse focusDecoder >> msg)
@@ -425,18 +433,13 @@ lgDecoder data =
             )
 
 
-queryLocalGraph url targetid msg =
+queryLocalGraph url nid msg =
     makeGQLQuery url
         (Query.getNode
-            (nidFilter targetid)
+            (nidFilter nid)
             lgPayload
         )
         (RemoteData.fromResult >> decodeResponse lgDecoder >> msg)
-
-
-nidFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-nidFilter nid a =
-    { a | nameid = Present nid }
 
 
 lgPayload : SelectionSet LocalNode Fractal.Object.Node
@@ -569,15 +572,10 @@ membersDecoder data =
 queryMembers url nid msg =
     makeGQLQuery url
         (Query.getNode
-            (membersFilter nid)
+            (nidFilter nid)
             membersPayload
         )
         (RemoteData.fromResult >> decodeResponse membersDecoder >> msg)
-
-
-membersFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-membersFilter nid a =
-    { a | nameid = Present nid }
 
 
 membersPayload : SelectionSet TopMemberNode Fractal.Object.Node
@@ -614,3 +612,52 @@ membersPayload =
                 )
             )
         |> with Fractal.Object.Node.isPrivate
+
+
+
+{-
+   Query Labels
+-}
+
+
+type alias NodeLabels =
+    { labels : Maybe (List LabelFull), isPrivate : Bool }
+
+
+labelsDecoder : Maybe NodeLabels -> Maybe (List LabelFull)
+labelsDecoder data =
+    data
+        |> Maybe.map (\d -> withDefault [] d.labels)
+
+
+queryLabels url nid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nid)
+            nodeLabelsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
+
+
+nodeLabelsPayload : SelectionSet NodeLabels Fractal.Object.Node
+nodeLabelsPayload =
+    SelectionSet.map2 NodeLabels
+        (Fractal.Object.Node.labels
+            (\args ->
+                { args
+                    | order =
+                        Input.buildLabelOrder (\b -> { b | asc = Present LabelOrderable.Name })
+                            |> Present
+                }
+            )
+            labelFullPayload
+        )
+        Fractal.Object.Node.isPrivate
+
+
+labelFullPayload : SelectionSet LabelFull Fractal.Object.Label
+labelFullPayload =
+    SelectionSet.map3 LabelFull
+        Fractal.Object.Label.name
+        Fractal.Object.Label.color
+        Fractal.Object.Label.description

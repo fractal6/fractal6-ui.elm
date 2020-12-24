@@ -20,16 +20,19 @@ import Pages.Dynamic
 import Pages.New.Orga
 import Pages.T.Dynamic
 import Pages.M.Dynamic
+import Pages.S.Dynamic
 import Pages.User.Dynamic
 import Pages.O.Dynamic
 import Pages.T.Dynamic.Dynamic
-import Pages.M.Dynamic.Dynamic
-import Pages.Tension.Dynamic.Dynamic
 import Pages.O.Dynamic.Dynamic
+import Pages.Tension.Dynamic.Dynamic
+import Pages.M.Dynamic.Dynamic
+import Pages.S.Dynamic.Dynamic
 import Pages.Tension.Dynamic.Dynamic.Action
-import Pages.O.Dynamic.Dynamic.Dynamic
 import Pages.T.Dynamic.Dynamic.Dynamic
+import Pages.O.Dynamic.Dynamic.Dynamic
 import Pages.M.Dynamic.Dynamic.Dynamic
+import Pages.S.Dynamic.Dynamic.Dynamic
 
 
 
@@ -47,16 +50,19 @@ type Model
     | New_Orga_Model Pages.New.Orga.Model
     | T_Dynamic_Model Pages.T.Dynamic.Model
     | M_Dynamic_Model Pages.M.Dynamic.Model
+    | S_Dynamic_Model Pages.S.Dynamic.Model
     | User_Dynamic_Model Pages.User.Dynamic.Model
     | O_Dynamic_Model Pages.O.Dynamic.Model
     | T_Dynamic_Dynamic_Model Pages.T.Dynamic.Dynamic.Model
-    | M_Dynamic_Dynamic_Model Pages.M.Dynamic.Dynamic.Model
-    | Tension_Dynamic_Dynamic_Model Pages.Tension.Dynamic.Dynamic.Model
     | O_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Model
+    | Tension_Dynamic_Dynamic_Model Pages.Tension.Dynamic.Dynamic.Model
+    | M_Dynamic_Dynamic_Model Pages.M.Dynamic.Dynamic.Model
+    | S_Dynamic_Dynamic_Model Pages.S.Dynamic.Dynamic.Model
     | Tension_Dynamic_Dynamic_Action_Model Pages.Tension.Dynamic.Dynamic.Action.Model
-    | O_Dynamic_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Dynamic.Model
     | T_Dynamic_Dynamic_Dynamic_Model Pages.T.Dynamic.Dynamic.Dynamic.Model
+    | O_Dynamic_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Dynamic.Model
     | M_Dynamic_Dynamic_Dynamic_Model Pages.M.Dynamic.Dynamic.Dynamic.Model
+    | S_Dynamic_Dynamic_Dynamic_Model Pages.S.Dynamic.Dynamic.Dynamic.Model
 
 
 type Msg
@@ -70,16 +76,19 @@ type Msg
     | New_Orga_Msg Pages.New.Orga.Msg
     | T_Dynamic_Msg Pages.T.Dynamic.Msg
     | M_Dynamic_Msg Pages.M.Dynamic.Msg
+    | S_Dynamic_Msg Pages.S.Dynamic.Msg
     | User_Dynamic_Msg Pages.User.Dynamic.Msg
     | O_Dynamic_Msg Pages.O.Dynamic.Msg
     | T_Dynamic_Dynamic_Msg Pages.T.Dynamic.Dynamic.Msg
-    | M_Dynamic_Dynamic_Msg Pages.M.Dynamic.Dynamic.Msg
-    | Tension_Dynamic_Dynamic_Msg Pages.Tension.Dynamic.Dynamic.Msg
     | O_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Msg
+    | Tension_Dynamic_Dynamic_Msg Pages.Tension.Dynamic.Dynamic.Msg
+    | M_Dynamic_Dynamic_Msg Pages.M.Dynamic.Dynamic.Msg
+    | S_Dynamic_Dynamic_Msg Pages.S.Dynamic.Dynamic.Msg
     | Tension_Dynamic_Dynamic_Action_Msg Pages.Tension.Dynamic.Dynamic.Action.Msg
-    | O_Dynamic_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Dynamic.Msg
     | T_Dynamic_Dynamic_Dynamic_Msg Pages.T.Dynamic.Dynamic.Dynamic.Msg
+    | O_Dynamic_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Dynamic.Msg
     | M_Dynamic_Dynamic_Dynamic_Msg Pages.M.Dynamic.Dynamic.Dynamic.Msg
+    | S_Dynamic_Dynamic_Dynamic_Msg Pages.S.Dynamic.Dynamic.Dynamic.Msg
 
 
 
@@ -104,16 +113,19 @@ type alias UpgradedPages =
     , new_orga : UpgradedPage Pages.New.Orga.Flags Pages.New.Orga.Model Pages.New.Orga.Msg
     , t_dynamic : UpgradedPage Pages.T.Dynamic.Flags Pages.T.Dynamic.Model Pages.T.Dynamic.Msg
     , m_dynamic : UpgradedPage Pages.M.Dynamic.Flags Pages.M.Dynamic.Model Pages.M.Dynamic.Msg
+    , s_dynamic : UpgradedPage Pages.S.Dynamic.Flags Pages.S.Dynamic.Model Pages.S.Dynamic.Msg
     , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
     , o_dynamic : UpgradedPage Pages.O.Dynamic.Flags Pages.O.Dynamic.Model Pages.O.Dynamic.Msg
     , t_dynamic_dynamic : UpgradedPage Pages.T.Dynamic.Dynamic.Flags Pages.T.Dynamic.Dynamic.Model Pages.T.Dynamic.Dynamic.Msg
-    , m_dynamic_dynamic : UpgradedPage Pages.M.Dynamic.Dynamic.Flags Pages.M.Dynamic.Dynamic.Model Pages.M.Dynamic.Dynamic.Msg
-    , tension_dynamic_dynamic : UpgradedPage Pages.Tension.Dynamic.Dynamic.Flags Pages.Tension.Dynamic.Dynamic.Model Pages.Tension.Dynamic.Dynamic.Msg
     , o_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Msg
+    , tension_dynamic_dynamic : UpgradedPage Pages.Tension.Dynamic.Dynamic.Flags Pages.Tension.Dynamic.Dynamic.Model Pages.Tension.Dynamic.Dynamic.Msg
+    , m_dynamic_dynamic : UpgradedPage Pages.M.Dynamic.Dynamic.Flags Pages.M.Dynamic.Dynamic.Model Pages.M.Dynamic.Dynamic.Msg
+    , s_dynamic_dynamic : UpgradedPage Pages.S.Dynamic.Dynamic.Flags Pages.S.Dynamic.Dynamic.Model Pages.S.Dynamic.Dynamic.Msg
     , tension_dynamic_dynamic_action : UpgradedPage Pages.Tension.Dynamic.Dynamic.Action.Flags Pages.Tension.Dynamic.Dynamic.Action.Model Pages.Tension.Dynamic.Dynamic.Action.Msg
-    , o_dynamic_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Dynamic.Msg
     , t_dynamic_dynamic_dynamic : UpgradedPage Pages.T.Dynamic.Dynamic.Dynamic.Flags Pages.T.Dynamic.Dynamic.Dynamic.Model Pages.T.Dynamic.Dynamic.Dynamic.Msg
+    , o_dynamic_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Dynamic.Msg
     , m_dynamic_dynamic_dynamic : UpgradedPage Pages.M.Dynamic.Dynamic.Dynamic.Flags Pages.M.Dynamic.Dynamic.Dynamic.Model Pages.M.Dynamic.Dynamic.Dynamic.Msg
+    , s_dynamic_dynamic_dynamic : UpgradedPage Pages.S.Dynamic.Dynamic.Dynamic.Flags Pages.S.Dynamic.Dynamic.Dynamic.Model Pages.S.Dynamic.Dynamic.Dynamic.Msg
     }
 
 
@@ -129,16 +141,19 @@ pages =
     , new_orga = Pages.New.Orga.page |> Page.upgrade New_Orga_Model New_Orga_Msg
     , t_dynamic = Pages.T.Dynamic.page |> Page.upgrade T_Dynamic_Model T_Dynamic_Msg
     , m_dynamic = Pages.M.Dynamic.page |> Page.upgrade M_Dynamic_Model M_Dynamic_Msg
+    , s_dynamic = Pages.S.Dynamic.page |> Page.upgrade S_Dynamic_Model S_Dynamic_Msg
     , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
     , o_dynamic = Pages.O.Dynamic.page |> Page.upgrade O_Dynamic_Model O_Dynamic_Msg
     , t_dynamic_dynamic = Pages.T.Dynamic.Dynamic.page |> Page.upgrade T_Dynamic_Dynamic_Model T_Dynamic_Dynamic_Msg
-    , m_dynamic_dynamic = Pages.M.Dynamic.Dynamic.page |> Page.upgrade M_Dynamic_Dynamic_Model M_Dynamic_Dynamic_Msg
-    , tension_dynamic_dynamic = Pages.Tension.Dynamic.Dynamic.page |> Page.upgrade Tension_Dynamic_Dynamic_Model Tension_Dynamic_Dynamic_Msg
     , o_dynamic_dynamic = Pages.O.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Msg
+    , tension_dynamic_dynamic = Pages.Tension.Dynamic.Dynamic.page |> Page.upgrade Tension_Dynamic_Dynamic_Model Tension_Dynamic_Dynamic_Msg
+    , m_dynamic_dynamic = Pages.M.Dynamic.Dynamic.page |> Page.upgrade M_Dynamic_Dynamic_Model M_Dynamic_Dynamic_Msg
+    , s_dynamic_dynamic = Pages.S.Dynamic.Dynamic.page |> Page.upgrade S_Dynamic_Dynamic_Model S_Dynamic_Dynamic_Msg
     , tension_dynamic_dynamic_action = Pages.Tension.Dynamic.Dynamic.Action.page |> Page.upgrade Tension_Dynamic_Dynamic_Action_Model Tension_Dynamic_Dynamic_Action_Msg
-    , o_dynamic_dynamic_dynamic = Pages.O.Dynamic.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Dynamic_Msg
     , t_dynamic_dynamic_dynamic = Pages.T.Dynamic.Dynamic.Dynamic.page |> Page.upgrade T_Dynamic_Dynamic_Dynamic_Model T_Dynamic_Dynamic_Dynamic_Msg
+    , o_dynamic_dynamic_dynamic = Pages.O.Dynamic.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Dynamic_Msg
     , m_dynamic_dynamic_dynamic = Pages.M.Dynamic.Dynamic.Dynamic.page |> Page.upgrade M_Dynamic_Dynamic_Dynamic_Model M_Dynamic_Dynamic_Dynamic_Msg
+    , s_dynamic_dynamic_dynamic = Pages.S.Dynamic.Dynamic.Dynamic.page |> Page.upgrade S_Dynamic_Dynamic_Dynamic_Model S_Dynamic_Dynamic_Dynamic_Msg
     }
 
 
@@ -179,6 +194,9 @@ init route =
         Route.M_Dynamic params ->
             pages.m_dynamic.init params
         
+        Route.S_Dynamic params ->
+            pages.s_dynamic.init params
+        
         Route.User_Dynamic params ->
             pages.user_dynamic.init params
         
@@ -188,26 +206,32 @@ init route =
         Route.T_Dynamic_Dynamic params ->
             pages.t_dynamic_dynamic.init params
         
-        Route.M_Dynamic_Dynamic params ->
-            pages.m_dynamic_dynamic.init params
+        Route.O_Dynamic_Dynamic params ->
+            pages.o_dynamic_dynamic.init params
         
         Route.Tension_Dynamic_Dynamic params ->
             pages.tension_dynamic_dynamic.init params
         
-        Route.O_Dynamic_Dynamic params ->
-            pages.o_dynamic_dynamic.init params
+        Route.M_Dynamic_Dynamic params ->
+            pages.m_dynamic_dynamic.init params
+        
+        Route.S_Dynamic_Dynamic params ->
+            pages.s_dynamic_dynamic.init params
         
         Route.Tension_Dynamic_Dynamic_Action params ->
             pages.tension_dynamic_dynamic_action.init params
         
-        Route.O_Dynamic_Dynamic_Dynamic params ->
-            pages.o_dynamic_dynamic_dynamic.init params
-        
         Route.T_Dynamic_Dynamic_Dynamic params ->
             pages.t_dynamic_dynamic_dynamic.init params
         
+        Route.O_Dynamic_Dynamic_Dynamic params ->
+            pages.o_dynamic_dynamic_dynamic.init params
+        
         Route.M_Dynamic_Dynamic_Dynamic params ->
             pages.m_dynamic_dynamic_dynamic.init params
+        
+        Route.S_Dynamic_Dynamic_Dynamic params ->
+            pages.s_dynamic_dynamic_dynamic.init params
 
 
 
@@ -247,6 +271,9 @@ update bigMsg bigModel =
         ( M_Dynamic_Msg msg, M_Dynamic_Model model ) ->
             pages.m_dynamic.update msg model
         
+        ( S_Dynamic_Msg msg, S_Dynamic_Model model ) ->
+            pages.s_dynamic.update msg model
+        
         ( User_Dynamic_Msg msg, User_Dynamic_Model model ) ->
             pages.user_dynamic.update msg model
         
@@ -256,26 +283,32 @@ update bigMsg bigModel =
         ( T_Dynamic_Dynamic_Msg msg, T_Dynamic_Dynamic_Model model ) ->
             pages.t_dynamic_dynamic.update msg model
         
-        ( M_Dynamic_Dynamic_Msg msg, M_Dynamic_Dynamic_Model model ) ->
-            pages.m_dynamic_dynamic.update msg model
+        ( O_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Model model ) ->
+            pages.o_dynamic_dynamic.update msg model
         
         ( Tension_Dynamic_Dynamic_Msg msg, Tension_Dynamic_Dynamic_Model model ) ->
             pages.tension_dynamic_dynamic.update msg model
         
-        ( O_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Model model ) ->
-            pages.o_dynamic_dynamic.update msg model
+        ( M_Dynamic_Dynamic_Msg msg, M_Dynamic_Dynamic_Model model ) ->
+            pages.m_dynamic_dynamic.update msg model
+        
+        ( S_Dynamic_Dynamic_Msg msg, S_Dynamic_Dynamic_Model model ) ->
+            pages.s_dynamic_dynamic.update msg model
         
         ( Tension_Dynamic_Dynamic_Action_Msg msg, Tension_Dynamic_Dynamic_Action_Model model ) ->
             pages.tension_dynamic_dynamic_action.update msg model
         
-        ( O_Dynamic_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Dynamic_Model model ) ->
-            pages.o_dynamic_dynamic_dynamic.update msg model
-        
         ( T_Dynamic_Dynamic_Dynamic_Msg msg, T_Dynamic_Dynamic_Dynamic_Model model ) ->
             pages.t_dynamic_dynamic_dynamic.update msg model
         
+        ( O_Dynamic_Dynamic_Dynamic_Msg msg, O_Dynamic_Dynamic_Dynamic_Model model ) ->
+            pages.o_dynamic_dynamic_dynamic.update msg model
+        
         ( M_Dynamic_Dynamic_Dynamic_Msg msg, M_Dynamic_Dynamic_Dynamic_Model model ) ->
             pages.m_dynamic_dynamic_dynamic.update msg model
+        
+        ( S_Dynamic_Dynamic_Dynamic_Msg msg, S_Dynamic_Dynamic_Dynamic_Model model ) ->
+            pages.s_dynamic_dynamic_dynamic.update msg model
         
         _ ->
             always ( bigModel, Cmd.none, Cmd.none )
@@ -318,6 +351,9 @@ bundle bigModel =
         M_Dynamic_Model model ->
             pages.m_dynamic.bundle model
         
+        S_Dynamic_Model model ->
+            pages.s_dynamic.bundle model
+        
         User_Dynamic_Model model ->
             pages.user_dynamic.bundle model
         
@@ -327,26 +363,32 @@ bundle bigModel =
         T_Dynamic_Dynamic_Model model ->
             pages.t_dynamic_dynamic.bundle model
         
-        M_Dynamic_Dynamic_Model model ->
-            pages.m_dynamic_dynamic.bundle model
+        O_Dynamic_Dynamic_Model model ->
+            pages.o_dynamic_dynamic.bundle model
         
         Tension_Dynamic_Dynamic_Model model ->
             pages.tension_dynamic_dynamic.bundle model
         
-        O_Dynamic_Dynamic_Model model ->
-            pages.o_dynamic_dynamic.bundle model
+        M_Dynamic_Dynamic_Model model ->
+            pages.m_dynamic_dynamic.bundle model
+        
+        S_Dynamic_Dynamic_Model model ->
+            pages.s_dynamic_dynamic.bundle model
         
         Tension_Dynamic_Dynamic_Action_Model model ->
             pages.tension_dynamic_dynamic_action.bundle model
         
-        O_Dynamic_Dynamic_Dynamic_Model model ->
-            pages.o_dynamic_dynamic_dynamic.bundle model
-        
         T_Dynamic_Dynamic_Dynamic_Model model ->
             pages.t_dynamic_dynamic_dynamic.bundle model
         
+        O_Dynamic_Dynamic_Dynamic_Model model ->
+            pages.o_dynamic_dynamic_dynamic.bundle model
+        
         M_Dynamic_Dynamic_Dynamic_Model model ->
             pages.m_dynamic_dynamic_dynamic.bundle model
+        
+        S_Dynamic_Dynamic_Dynamic_Model model ->
+            pages.s_dynamic_dynamic_dynamic.bundle model
 
 
 view : Model -> Global.Model -> Document Msg

@@ -145,13 +145,16 @@ viewTensionArrowB cls emitter receiver =
 
 viewLabels : List Label -> Html msg
 viewLabels labels =
-    span [ class "labelsList" ] <|
-        (labels
-            |> List.map
-                (\label ->
-                    span [ class "tag" ] [ text label.name ]
-                )
-        )
+    span [ class "labelsList" ] (labels |> List.map (\label -> viewLabel label))
+
+
+viewLabel : Label -> Html msg
+viewLabel label =
+    let
+        color =
+            label.color |> Maybe.map (\c -> [ attribute "style" ("background-color:" ++ c ++ ";") ]) |> withDefault []
+    in
+    span ([ class "tag is-rounded" ] ++ color) [ text label.name ]
 
 
 viewUsernameLink : String -> Html msg

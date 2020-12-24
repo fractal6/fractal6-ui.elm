@@ -234,6 +234,11 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+.box.has-background-light {
+    label {color: $grey;}
+    color: black;
+}
+
 
 /*
  *
@@ -325,7 +330,7 @@ html.has-modal-active, html.has-modal-active2 {
 
     nav > .tabs {
         font-size: 0.85rem;
-        overflow-x: hidden;
+        //overflow-x: hidden;
         &.is-boxed a {
             border-radius: 8px 8px 0 0 !important;
         }
@@ -401,6 +406,24 @@ html.has-modal-active, html.has-modal-active2 {
     li > a {
         padding-right: 0;
     }
+  }
+}
+
+#menuSettings {
+  border-right: solid 1px $grey !important;
+  margin-right: 2rem;
+  .menu-list {
+      li {
+          padding-bottom: $size-small;
+      }
+      a {
+          &:hover {background-color: $grey-dark;}
+          &.is-active {
+              font-weight: 600;
+              background-color: $blue-grey;
+              color: $link;
+          }
+      }
   }
 }
 
@@ -1199,6 +1222,10 @@ a.actionLink {
     width: 100% !important;
 }
 
+#labelsTable {
+    width: 100% !important;
+}
+
 /*
  *
  * Graph Pack Canvas
@@ -1592,6 +1619,18 @@ a.actionLink {
     @include until($desktop) {
         margin-bottom: 9px !important;
     }
+}
+
+.is-vbar-2 { // next tabs
+	display: inline-block;
+	border-left: 1px solid #ccc;
+	height: 18px;
+    margin-left: 5px;
+    padding-left: 5px;
+
+    //@include until($desktop) {
+    //    margin-bottom: 9px !important;
+    //}
 }
 
 .vline {

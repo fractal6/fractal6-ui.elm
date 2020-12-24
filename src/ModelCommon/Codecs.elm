@@ -42,6 +42,7 @@ type FractalBaseRoute
     | TensionsBaseUri
     | TensionBaseUri
     | MembersBaseUri
+    | SettingsBaseUri
     | UsersBaseUri
 
 
@@ -84,6 +85,10 @@ toString route =
         MembersBaseUri ->
             -- /tensions
             "/m"
+
+        SettingsBaseUri ->
+            -- /settings
+            "/s"
 
         UsersBaseUri ->
             -- /@username

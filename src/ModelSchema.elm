@@ -132,7 +132,11 @@ type alias ActionResult =
 
 
 type alias Label =
-    { name : String }
+    { name : String, color : Maybe String }
+
+
+type alias LabelFull =
+    { name : String, color : Maybe String, description : Maybe String }
 
 
 type alias TensionHead =

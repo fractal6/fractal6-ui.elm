@@ -331,6 +331,31 @@ initTensionPatchForm tid user =
 
 
 
+--Settings Form
+
+
+type alias LabelForm =
+    { uctx : UserCtx
+    , nameid : String
+    , post : Post
+    }
+
+
+initLabelForm : UserState -> String -> LabelForm
+initLabelForm user nameid =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , nameid = nameid
+    , post = Dict.empty
+    }
+
+
+
 -- Join Form
 -- @debug: ActionForm is defined twice here and in ActionPanel
 

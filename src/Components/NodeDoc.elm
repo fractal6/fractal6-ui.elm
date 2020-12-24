@@ -755,7 +755,7 @@ blobButtonsView isSendable isLoading op =
             [ div [ class "control" ]
                 [ div [ class "buttons" ]
                     [ button
-                        [ class "button has-text-weight-semibold is-danger"
+                        [ class "button has-text-weight-semibold"
                         , onClick op.onCancelBlob
                         ]
                         [ text T.cancel ]
@@ -867,7 +867,7 @@ updateNodeForm field value form =
             form.node
 
         mandate =
-            node.mandate |> withDefault initMandate
+            withDefault initMandate node.mandate
     in
     case field of
         "nameid" ->

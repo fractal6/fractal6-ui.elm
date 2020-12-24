@@ -166,7 +166,9 @@ tensionCommentsPayload =
 
 labelPayload : SelectionSet Label Fractal.Object.Label
 labelPayload =
-    SelectionSet.map Label Fractal.Object.Label.name
+    SelectionSet.map2 Label
+        Fractal.Object.Label.name
+        Fractal.Object.Label.color
 
 
 commentPayload : SelectionSet Comment Fractal.Object.Comment
@@ -354,7 +356,7 @@ tensionPayload =
         |> with
             (Fractal.Object.Tension.labels
                 (\args -> { args | first = Present nLabelPerTension })
-                (SelectionSet.map Label Fractal.Object.Label.name)
+                labelPayload
             )
         |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)

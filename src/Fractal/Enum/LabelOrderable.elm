@@ -9,12 +9,13 @@ import Json.Decode as Decode exposing (Decoder)
 
 type LabelOrderable
     = Name
+    | Description
     | Color
 
 
 list : List LabelOrderable
 list =
-    [ Name, Color ]
+    [ Name, Description, Color ]
 
 
 decoder : Decoder LabelOrderable
@@ -25,6 +26,9 @@ decoder =
                 case string of
                     "name" ->
                         Decode.succeed Name
+
+                    "description" ->
+                        Decode.succeed Description
 
                     "color" ->
                         Decode.succeed Color
@@ -41,6 +45,9 @@ toString enum =
     case enum of
         Name ->
             "name"
+
+        Description ->
+            "description"
 
         Color ->
             "color"
@@ -62,6 +69,9 @@ fromString enumString =
     case enumString of
         "name" ->
             Just Name
+
+        "description" ->
+            Just Description
 
         "color" ->
             Just Color

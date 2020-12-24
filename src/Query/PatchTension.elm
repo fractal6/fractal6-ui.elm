@@ -155,9 +155,7 @@ patchTensionInputEncoder f =
                 , remove = Absent
                 }
     in
-    { input =
-        Input.buildUpdateTensionInput inputReq inputOpt
-    }
+    { input = Input.buildUpdateTensionInput inputReq inputOpt }
 
 
 
@@ -272,9 +270,7 @@ patchCommentInputEncoder form =
                 , remove = Absent
                 }
     in
-    { input =
-        Input.buildUpdateCommentInput inputReq inputOpt
-    }
+    { input = Input.buildUpdateCommentInput inputReq inputOpt }
 
 
 
@@ -361,9 +357,7 @@ setAssigneeEncoder f =
                 , remove = ternary (f.isNew == False) userPatch Absent
                 }
     in
-    { input =
-        Input.buildUpdateTensionInput inputReq inputOpt
-    }
+    { input = Input.buildUpdateTensionInput inputReq inputOpt }
 
 
 
@@ -468,9 +462,7 @@ publishBlobInputEncoder bid f =
                 , remove = Absent
                 }
     in
-    { input =
-        Input.buildUpdateTensionInput inputReq inputOpt
-    }
+    { input = Input.buildUpdateTensionInput inputReq inputOpt }
 
 
 
@@ -552,6 +544,4 @@ actionInputEncoder f =
                 , remove = Absent
                 }
     in
-    { input =
-        Input.buildUpdateTensionInput inputReq inputOpt
-    }
+    { input = Input.buildUpdateTensionInput inputReq inputOpt }

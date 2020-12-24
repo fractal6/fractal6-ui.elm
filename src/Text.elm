@@ -18,6 +18,11 @@ createAccount =
     "create a new account"
 
 
+createLabel : String
+createLabel =
+    "Create label"
+
+
 messageSent : String
 messageSent =
     "Message sent"

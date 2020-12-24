@@ -1,4 +1,4 @@
-module Query.PatchNode exposing (patchNode)
+module Query.PatchNode exposing (addOneLabel)
 
 import Dict exposing (Dict)
 import Fractal.InputObject as Input
@@ -13,15 +13,19 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionForm)
+import ModelCommon exposing (LabelForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
 import RemoteData exposing (RemoteData)
 
 
 
+--
+-- Operatation define here (PatchNode) directly operate on a node. Usually only coordinator (or allowed role) can patch node.
+-- Furthermore, those operation, as they do not pass trough the tension systems, they are "free" from the notification system.
+--
 {-
-   Patch a node data
+   Add one Label
 -}
 
 
@@ -45,10 +49,10 @@ nodePatchDecoder data =
             Nothing
 
 
-patchNode url form msg =
+addOneLabel url form msg =
     makeGQLMutation url
         (Mutation.updateNode
-            (nodePatchInputEncoder form)
+            (labelInputEncoder form)
             (SelectionSet.map PatchNodeIdPayload <|
                 Fractal.Object.UpdateNodePayload.node identity <|
                     (SelectionSet.succeed IdPayload
@@ -59,56 +63,38 @@ patchNode url form msg =
         (RemoteData.fromResult >> decodeResponse nodePatchDecoder >> msg)
 
 
-nodePatchInputEncoder : TensionForm -> Mutation.UpdateNodeRequiredArguments
-nodePatchInputEncoder form =
+labelInputEncoder : LabelForm -> Mutation.UpdateNodeRequiredArguments
+labelInputEncoder form =
     let
-        createdAt =
-            Dict.get "createdAt" form.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
-
-        patchRequired =
+        inputReq =
             { filter =
                 Input.buildNodeFilter
-                    (\f ->
-                        { f | nameid = { eq = Present form.target.nameid, regexp = Absent } |> Present }
+                    (\i ->
+                        { i | nameid = { eq = Present form.nameid, regexp = Absent } |> Present }
                     )
             }
 
-        patchOpts =
+        inputOpt =
             \x ->
-                { set = buildNodePatch form
+                { set =
+                    Input.buildNodePatch
+                        (\i ->
+                            { i
+                                | labels =
+                                    Present
+                                        [ Input.buildLabelRef
+                                            (\j ->
+                                                { j
+                                                    | name = fromMaybe (Dict.get "name" form.post)
+                                                    , color = fromMaybe (Dict.get "color" form.post)
+                                                    , description = fromMaybe (Dict.get "description" form.post)
+                                                }
+                                            )
+                                        ]
+                            }
+                        )
+                        |> Present
                 , remove = Absent
                 }
     in
-    { input =
-        Input.buildUpdateNodeInput patchRequired patchOpts
-    }
-
-
-buildNodePatch : TensionForm -> OptionalArgument Input.NodePatch
-buildNodePatch f =
-    let
-        nf =
-            f.node
-    in
-    Input.buildNodePatch
-        (\n ->
-            { n
-                | name = fromMaybe nf.name
-                , type_ = fromMaybe nf.type_
-                , role_type = fromMaybe nf.role_type
-                , about = fromMaybe nf.about
-                , mandate = buildMandate nf.mandate
-                , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
-                , first_link =
-                    nf.first_link
-                        |> Maybe.map
-                            (\uname ->
-                                Input.buildUserRef
-                                    (\u -> { u | username = Present uname })
-                            )
-                        |> fromMaybe
-                , tensions_in =
-                    [ Input.buildTensionRef (tensionFromForm f) ] |> Present
-            }
-        )
-        |> Present
+    { input = Input.buildUpdateNodeInput inputReq inputOpt }

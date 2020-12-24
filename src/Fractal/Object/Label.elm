@@ -29,6 +29,11 @@ name =
     Object.selectionForField "String" "name" [] Decode.string
 
 
+description : SelectionSet (Maybe String) Fractal.Object.Label
+description =
+    Object.selectionForField "(Maybe String)" "description" [] (Decode.string |> Decode.nullable)
+
+
 color : SelectionSet (Maybe String) Fractal.Object.Label
 color =
     Object.selectionForField "(Maybe String)" "color" [] (Decode.string |> Decode.nullable)
