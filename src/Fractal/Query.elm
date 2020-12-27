@@ -254,26 +254,16 @@ queryTension fillInOptionals object_ =
     Object.selectionForCompositeField "queryTension" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-type alias GetLabelOptionalArguments =
-    { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , nameid : OptionalArgument String
-    }
+type alias GetLabelRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
 
 
 getLabel :
-    (GetLabelOptionalArguments -> GetLabelOptionalArguments)
+    GetLabelRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.Label
     -> SelectionSet (Maybe decodesTo) RootQuery
-getLabel fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { id = Absent, nameid = Absent }
-
-        optionalArgs =
-            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "nameid" filledInOptionals.nameid Encode.string ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "getLabel" optionalArgs object_ (identity >> Decode.nullable)
+getLabel requiredArgs object_ =
+    Object.selectionForCompositeField "getLabel" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
 
 
 type alias QueryLabelOptionalArguments =

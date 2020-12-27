@@ -23,6 +23,11 @@ createLabel =
     "Create label"
 
 
+updateLabel : String
+updateLabel =
+    "Update label"
+
+
 messageSent : String
 messageSent =
     "Message sent"

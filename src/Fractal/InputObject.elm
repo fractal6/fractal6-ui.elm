@@ -224,13 +224,13 @@ buildAddLabelInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { description = Absent, color = Absent }
+                { description = Absent, color = Absent, tensions = Absent, nodes = Absent }
     in
-    { nameid = required.nameid, name = required.name, description = optionals.description, color = optionals.color }
+    AddLabelInput { rootnameid = required.rootnameid, name = required.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes }
 
 
 type alias AddLabelInputRequiredFields =
-    { nameid : String
+    { rootnameid : String
     , name : String
     }
 
@@ -238,25 +238,38 @@ type alias AddLabelInputRequiredFields =
 type alias AddLabelInputOptionalFields =
     { description : OptionalArgument String
     , color : OptionalArgument String
+    , tensions : OptionalArgument (List TensionRef)
+    , nodes : OptionalArgument (List NodeRef)
+    }
+
+
+{-| Type alias for the `AddLabelInput` attributes. Note that this type
+needs to use the `AddLabelInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddLabelInputRaw =
+    { rootnameid : String
+    , name : String
+    , description : OptionalArgument String
+    , color : OptionalArgument String
+    , tensions : OptionalArgument (List TensionRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
 {-| Type for the AddLabelInput input object.
 -}
-type alias AddLabelInput =
-    { nameid : String
-    , name : String
-    , description : OptionalArgument String
-    , color : OptionalArgument String
-    }
+type AddLabelInput
+    = AddLabelInput AddLabelInputRaw
 
 
 {-| Encode a AddLabelInput into a value that can be used as an argument.
 -}
 encodeAddLabelInput : AddLabelInput -> Value
-encodeAddLabelInput input =
+encodeAddLabelInput (AddLabelInput input) =
     Encode.maybeObject
-        [ ( "nameid", Encode.string input.nameid |> Just ), ( "name", Encode.string input.name |> Just ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ) ]
+        [ ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "name", Encode.string input.name |> Just ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ) ]
 
 
 buildAddMandateInput :
@@ -1636,14 +1649,14 @@ buildLabelFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nameid = Absent, name = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, rootnameid = Absent, name = Absent, and = Absent, or = Absent, not = Absent }
     in
-    LabelFilter { id = optionals.id, nameid = optionals.nameid, name = optionals.name, and = optionals.and, or = optionals.or, not = optionals.not }
+    LabelFilter { id = optionals.id, rootnameid = optionals.rootnameid, name = optionals.name, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias LabelFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
-    , nameid : OptionalArgument StringHashFilter_StringRegExpFilter
+    , rootnameid : OptionalArgument StringTermFilter
     , name : OptionalArgument StringHashFilter_StringTermFilter
     , and : OptionalArgument LabelFilter
     , or : OptionalArgument LabelFilter
@@ -1658,7 +1671,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias LabelFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
-    , nameid : OptionalArgument StringHashFilter_StringRegExpFilter
+    , rootnameid : OptionalArgument StringTermFilter
     , name : OptionalArgument StringHashFilter_StringTermFilter
     , and : OptionalArgument LabelFilter
     , or : OptionalArgument LabelFilter
@@ -1677,7 +1690,7 @@ type LabelFilter
 encodeLabelFilter : LabelFilter -> Value
 encodeLabelFilter (LabelFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input.nameid ), ( "name", encodeStringHashFilter_StringTermFilter |> Encode.optional input.name ), ( "and", encodeLabelFilter |> Encode.optional input.and ), ( "or", encodeLabelFilter |> Encode.optional input.or ), ( "not", encodeLabelFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "rootnameid", encodeStringTermFilter |> Encode.optional input.rootnameid ), ( "name", encodeStringHashFilter_StringTermFilter |> Encode.optional input.name ), ( "and", encodeLabelFilter |> Encode.optional input.and ), ( "or", encodeLabelFilter |> Encode.optional input.or ), ( "not", encodeLabelFilter |> Encode.optional input.not ) ]
 
 
 buildLabelOrder :
@@ -1732,33 +1745,48 @@ buildLabelPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { name = Absent, description = Absent, color = Absent }
+                { rootnameid = Absent, name = Absent, description = Absent, color = Absent, tensions = Absent, nodes = Absent }
     in
-    { name = optionals.name, description = optionals.description, color = optionals.color }
+    LabelPatch { rootnameid = optionals.rootnameid, name = optionals.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes }
 
 
 type alias LabelPatchOptionalFields =
-    { name : OptionalArgument String
+    { rootnameid : OptionalArgument String
+    , name : OptionalArgument String
     , description : OptionalArgument String
     , color : OptionalArgument String
+    , tensions : OptionalArgument (List TensionRef)
+    , nodes : OptionalArgument (List NodeRef)
+    }
+
+
+{-| Type alias for the `LabelPatch` attributes. Note that this type
+needs to use the `LabelPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias LabelPatchRaw =
+    { rootnameid : OptionalArgument String
+    , name : OptionalArgument String
+    , description : OptionalArgument String
+    , color : OptionalArgument String
+    , tensions : OptionalArgument (List TensionRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
 {-| Type for the LabelPatch input object.
 -}
-type alias LabelPatch =
-    { name : OptionalArgument String
-    , description : OptionalArgument String
-    , color : OptionalArgument String
-    }
+type LabelPatch
+    = LabelPatch LabelPatchRaw
 
 
 {-| Encode a LabelPatch into a value that can be used as an argument.
 -}
 encodeLabelPatch : LabelPatch -> Value
-encodeLabelPatch input =
+encodeLabelPatch (LabelPatch input) =
     Encode.maybeObject
-        [ ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ) ]
+        [ ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ) ]
 
 
 buildLabelRef :
@@ -1768,37 +1796,50 @@ buildLabelRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nameid = Absent, name = Absent, description = Absent, color = Absent }
+                { id = Absent, rootnameid = Absent, name = Absent, description = Absent, color = Absent, tensions = Absent, nodes = Absent }
     in
-    { id = optionals.id, nameid = optionals.nameid, name = optionals.name, description = optionals.description, color = optionals.color }
+    LabelRef { id = optionals.id, rootnameid = optionals.rootnameid, name = optionals.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes }
 
 
 type alias LabelRefOptionalFields =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , nameid : OptionalArgument String
+    , rootnameid : OptionalArgument String
     , name : OptionalArgument String
     , description : OptionalArgument String
     , color : OptionalArgument String
+    , tensions : OptionalArgument (List TensionRef)
+    , nodes : OptionalArgument (List NodeRef)
+    }
+
+
+{-| Type alias for the `LabelRef` attributes. Note that this type
+needs to use the `LabelRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias LabelRefRaw =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , rootnameid : OptionalArgument String
+    , name : OptionalArgument String
+    , description : OptionalArgument String
+    , color : OptionalArgument String
+    , tensions : OptionalArgument (List TensionRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
 {-| Type for the LabelRef input object.
 -}
-type alias LabelRef =
-    { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , nameid : OptionalArgument String
-    , name : OptionalArgument String
-    , description : OptionalArgument String
-    , color : OptionalArgument String
-    }
+type LabelRef
+    = LabelRef LabelRefRaw
 
 
 {-| Encode a LabelRef into a value that can be used as an argument.
 -}
 encodeLabelRef : LabelRef -> Value
-encodeLabelRef input =
+encodeLabelRef (LabelRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "nameid", Encode.string |> Encode.optional input.nameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ) ]
 
 
 buildMandateFilter :

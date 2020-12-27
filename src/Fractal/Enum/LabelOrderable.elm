@@ -8,7 +8,7 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type LabelOrderable
-    = Nameid
+    = Rootnameid
     | Name
     | Description
     | Color
@@ -16,7 +16,7 @@ type LabelOrderable
 
 list : List LabelOrderable
 list =
-    [ Nameid, Name, Description, Color ]
+    [ Rootnameid, Name, Description, Color ]
 
 
 decoder : Decoder LabelOrderable
@@ -25,8 +25,8 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "nameid" ->
-                        Decode.succeed Nameid
+                    "rootnameid" ->
+                        Decode.succeed Rootnameid
 
                     "name" ->
                         Decode.succeed Name
@@ -47,8 +47,8 @@ decoder =
 toString : LabelOrderable -> String
 toString enum =
     case enum of
-        Nameid ->
-            "nameid"
+        Rootnameid ->
+            "rootnameid"
 
         Name ->
             "name"
@@ -74,8 +74,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe LabelOrderable
 fromString enumString =
     case enumString of
-        "nameid" ->
-            Just Nameid
+        "rootnameid" ->
+            Just Rootnameid
 
         "name" ->
             Just Name

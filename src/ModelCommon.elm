@@ -336,6 +336,7 @@ initTensionPatchForm tid user =
 
 type alias LabelForm =
     { uctx : UserCtx
+    , id : String
     , nameid : String
     , post : Post
     }
@@ -350,6 +351,7 @@ initLabelForm user nameid =
 
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
+    , id = ""
     , nameid = nameid
     , post = Dict.empty
     }

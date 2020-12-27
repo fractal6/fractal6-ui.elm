@@ -40,7 +40,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, nodeCharacPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nodeCharacPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 
@@ -162,13 +162,6 @@ tensionCommentsPayload =
                 commentPayload
             )
         |> with Fractal.Object.Tension.n_comments
-
-
-labelPayload : SelectionSet Label Fractal.Object.Label
-labelPayload =
-    SelectionSet.map2 Label
-        Fractal.Object.Label.name
-        Fractal.Object.Label.color
 
 
 commentPayload : SelectionSet Comment Fractal.Object.Comment

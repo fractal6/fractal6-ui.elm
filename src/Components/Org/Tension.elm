@@ -65,7 +65,7 @@ import ModelCommon.View
         , viewActionIcon
         , viewActionIconLink
         , viewLabels
-        , viewTensionArrowB
+        , viewTensionArrow
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
         , viewUpdated
@@ -1748,7 +1748,9 @@ viewTension u t model =
                     , span [ class "tag is-rounded is-light" ]
                         [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
                     , viewTensionDateAndUser t.createdAt t.createdBy
-                    , viewTensionArrowB "is-pulled-right" t.emitter t.receiver
+                    , div [ class "mx-2 mt-4" ] [ viewTensionArrow "" t.emitter t.receiver ]
+
+                    --, viewTensionArrow "is-pulled-right" t.emitter t.receiver
                     ]
                 ]
             ]

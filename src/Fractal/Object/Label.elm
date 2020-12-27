@@ -24,9 +24,9 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-nameid : SelectionSet String Fractal.Object.Label
-nameid =
-    Object.selectionForField "String" "nameid" [] Decode.string
+rootnameid : SelectionSet String Fractal.Object.Label
+rootnameid =
+    Object.selectionForField "String" "rootnameid" [] Decode.string
 
 
 name : SelectionSet String Fractal.Object.Label
@@ -42,3 +42,51 @@ description =
 color : SelectionSet (Maybe String) Fractal.Object.Label
 color =
     Object.selectionForField "(Maybe String)" "color" [] (Decode.string |> Decode.nullable)
+
+
+type alias TensionsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+tensions :
+    (TensionsOptionalArguments -> TensionsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Label
+tensions fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tensions" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type alias NodesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter
+    , order : OptionalArgument Fractal.InputObject.NodeOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+nodes :
+    (NodesOptionalArguments -> NodesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Node
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Label
+nodes fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "nodes" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)

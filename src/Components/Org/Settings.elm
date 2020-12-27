@@ -25,7 +25,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -38,7 +38,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
-import Query.PatchNode exposing (addOneLabel)
+import Query.PatchNode exposing (addOneLabel, removeOneLabel, updateOneLabel)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLabels, queryLocalGraph)
 import RemoteData exposing (RemoteData)
@@ -72,10 +72,11 @@ type alias Model =
     , labels : GqlData (List LabelFull)
     , menuFocus : MenuSettings
     , menuList : List MenuSettings
-    , add_label : Bool
-    , edit_label : Maybe String
-    , result_label : GqlData IdPayload
-    , form_label : LabelForm
+    , label_add : Bool
+    , label_edit : Maybe LabelFull
+    , label_result : GqlData LabelFull
+    , label_result_del : GqlData IdPayload
+    , label_form : LabelForm
 
     -- Common
     , node_action : ActionState
@@ -120,12 +121,14 @@ type Msg
     | GotLabels (GqlData (List LabelFull)) -- GraphQL
     | ChangeMenuFocus MenuSettings
     | AddLabel
-    | NAddLabel
-    | EditLabel String
-    | NEditLabel
+    | EditLabel LabelFull
+    | CancelLabel
     | ChangeLabelPost String String
     | SubmitAddLabel Time.Posix
-    | GotLabel (GqlData IdPayload)
+    | SubmitEditLabel Time.Posix
+    | SubmitDeleteLabel String Time.Posix
+    | GotLabel (GqlData LabelFull)
+    | GotLabelDel (GqlData IdPayload)
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -193,10 +196,11 @@ init global flags =
             , labels = Loading
             , menuFocus = LabelsMenu
             , menuList = [ LabelsMenu, SecurityMenu ]
-            , add_label = False
-            , edit_label = Nothing
-            , result_label = NotAsked
-            , form_label = initLabelForm global.session.user newFocus.nameid
+            , label_add = False
+            , label_edit = Nothing
+            , label_result = NotAsked
+            , label_result_del = NotAsked
+            , label_form = initLabelForm global.session.user newFocus.nameid
 
             -- Common
             , node_action = NoOp
@@ -304,64 +308,124 @@ update global msg model =
             ( { model | menuFocus = menu }, Cmd.none, Cmd.none )
 
         AddLabel ->
-            ( { model | add_label = ternary (model.add_label == True) False True }, Cmd.none, Cmd.none )
-
-        NAddLabel ->
-            let
-                f =
-                    model.form_label
-            in
-            ( { model | add_label = False, form_label = { f | post = Dict.empty } }, Cmd.none, Cmd.none )
+            ( { model | label_add = ternary (model.label_add == True) False True, label_edit = Nothing }, Cmd.none, Cmd.none )
 
         EditLabel label ->
-            ( { model | edit_label = Just label }, Cmd.none, Cmd.none )
-
-        NEditLabel ->
             let
                 f =
-                    model.form_label
+                    model.label_form
+
+                newForm =
+                    { f
+                        | id = label.id
+                        , post =
+                            Dict.fromList
+                                ([ ( "name", label.name ) ]
+                                    ++ (label.color |> Maybe.map (\x -> [ ( "color", x ) ]) |> withDefault [])
+                                    ++ (label.description |> Maybe.map (\x -> [ ( "description", x ) ]) |> withDefault [])
+                                )
+                    }
             in
-            ( { model | edit_label = Nothing, form_label = { f | post = Dict.empty } }, Cmd.none, Cmd.none )
+            ( { model | label_edit = Just label, label_form = newForm, label_add = False }, Cmd.none, Cmd.none )
+
+        CancelLabel ->
+            let
+                f =
+                    model.label_form
+            in
+            ( { model | label_add = False, label_edit = Nothing, label_form = { f | post = Dict.empty }, label_result = NotAsked }, Cmd.none, Cmd.none )
 
         ChangeLabelPost field value ->
             let
                 f =
-                    model.form_label
+                    model.label_form
 
                 newForm =
                     { f | post = Dict.insert field value f.post }
             in
-            ( { model | form_label = newForm }, Cmd.none, Cmd.none )
+            ( { model | label_form = newForm }, Cmd.none, Cmd.none )
 
         SubmitAddLabel time ->
-            ( { model | result_label = LoadingSlowly }, addOneLabel apis.gql model.form_label GotLabel, Cmd.none )
+            ( { model | label_result = LoadingSlowly }, addOneLabel apis.gql model.label_form GotLabel, Cmd.none )
+
+        SubmitEditLabel time ->
+            ( { model | label_result = LoadingSlowly }, updateOneLabel apis.gql model.label_form GotLabel, Cmd.none )
+
+        SubmitDeleteLabel id time ->
+            let
+                f =
+                    model.label_form
+
+                newForm =
+                    { f | id = id }
+            in
+            ( { model | label_result_del = LoadingSlowly, label_form = newForm }, removeOneLabel apis.gql newForm GotLabelDel, Cmd.none )
 
         GotLabel result ->
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    ( { model | result_label = NotAsked }, send (DoOpenAuthModal model.form_label.uctx), Cmd.none )
+                    ( { model | label_result = NotAsked }, send (DoOpenAuthModal model.label_form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddLabel) 500, send UpdateUserToken )
+                    if model.label_add then
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddLabel) 500, send UpdateUserToken )
 
-                OkAuth _ ->
+                    else
+                        -- assume edit
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitEditLabel) 500, send UpdateUserToken )
+
+                OkAuth label ->
                     let
-                        f =
-                            model.form_label
-
-                        new =
-                            [ LabelFull (Dict.get "name" f.post |> withDefault "") (Dict.get "color" f.post) (Dict.get "description" f.post) ]
-
                         d =
                             withMaybeData model.labels |> withDefault []
+
+                        new =
+                            if model.label_add then
+                                [ label ] ++ d
+
+                            else
+                                -- assume edit
+                                List.map
+                                    (\x ->
+                                        if x.name == label.name then
+                                            label
+
+                                        else
+                                            x
+                                    )
+                                    d
                     in
-                    ( { model | result_label = result, labels = Success (new ++ d), form_label = initLabelForm global.session.user model.node_focus.nameid, add_label = False }
+                    ( { model | label_result = result, labels = Success new, label_form = initLabelForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
                     , Cmd.none
                     , Cmd.none
                     )
 
                 NoAuth ->
-                    ( { model | result_label = result }, Cmd.none, Cmd.none )
+                    ( { model | label_result = result }, Cmd.none, Cmd.none )
+
+        GotLabelDel result ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | label_result_del = NotAsked }, send (DoOpenAuthModal model.label_form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteLabel model.label_form.id) 500, send UpdateUserToken )
+
+                OkAuth label ->
+                    let
+                        d =
+                            withMaybeData model.labels |> withDefault []
+
+                        new =
+                            List.filter (\x -> x.id /= model.label_form.id) d
+                    in
+                    ( { model | label_result_del = NotAsked, labels = Success new, label_form = initLabelForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                NoAuth ->
+                    ( { model | label_result_del = result }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -740,7 +804,7 @@ viewLabels model =
             , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ text "New label" ]
             , br [] []
             ]
-        , case model.add_label of
+        , case model.label_add of
             True ->
                 viewLabelAddBox model
 
@@ -763,16 +827,29 @@ viewLabels model =
                         , labels
                             |> List.indexedMap
                                 (\i d ->
-                                    tr []
-                                        [ td [] [ viewLabel "is-medium" (Label d.name d.color) ]
-                                        , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [ class "is-italic" ] ]
-                                        , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 5rem;" ]
-                                            [ span [] [ text "Edit" ]
-                                            , text " · "
-                                            , span [] [ text "Delete" ]
+                                    [ tr [] <|
+                                        if model.label_edit == Just d then
+                                            [ td [ colspan 3 ] [ viewLabelAddBox model ] ]
+
+                                        else
+                                            [ td [] [ viewLabel "is-medium" (Label d.id d.name d.color) ]
+                                            , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [ class "is-italic" ] ]
+                                            , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
+                                                [ span [ class "button-light", onClick (EditLabel d) ] [ text "Edit" ]
+                                                , text " · "
+                                                , span [ class "button-light", onClick (Submit <| SubmitDeleteLabel d.id) ] [ text "Delete" ]
+                                                ]
                                             ]
-                                        ]
+                                    ]
+                                        ++ (case model.label_result_del of
+                                                Failure err ->
+                                                    [ td [] [ viewGqlErrors err ] ]
+
+                                                _ ->
+                                                    []
+                                           )
                                 )
+                            |> List.concat
                             |> tbody []
                         ]
 
@@ -791,10 +868,10 @@ viewLabelAddBox : Model -> Html Msg
 viewLabelAddBox model =
     let
         form =
-            model.form_label
+            model.label_form
 
         result =
-            model.result_label
+            model.label_result
 
         name =
             Dict.get "name" form.post |> withDefault ""
@@ -806,13 +883,29 @@ viewLabelAddBox model =
             Dict.get "description" form.post
 
         isLoading =
-            model.result_label == LoadingSlowly
+            model.label_result == LoadingSlowly
 
         isSendable =
             name /= ""
 
+        txt =
+            if model.label_add then
+                { submit = T.createLabel }
+
+            else
+                -- assume edit label
+                { submit = T.updateLabel }
+
         doSubmit =
-            ternary isSendable [ onClick (Submit <| SubmitAddLabel) ] []
+            if model.label_add then
+                ternary isSendable [ onClick (Submit <| SubmitAddLabel) ] []
+
+            else
+                -- assume edit label
+                ternary isSendable [ onClick (Submit <| SubmitEditLabel) ] []
+
+        doCancel =
+            CancelLabel
     in
     div [ class "box has-background-light" ]
         [ div [ class "field is-grouped" ]
@@ -841,7 +934,7 @@ viewLabelAddBox model =
                     []
                 ]
             , p [ class "control buttons", attribute "style" "margin-top: 1.5rem;" ]
-                [ button [ class "button is-small", onClick NAddLabel ] [ text T.cancel ]
+                [ button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
                 , button
                     ([ class "button is-success is-small"
                      , classList [ ( "is-loading", isLoading ) ]
@@ -849,12 +942,12 @@ viewLabelAddBox model =
                      ]
                         ++ doSubmit
                     )
-                    [ text T.createLabel ]
+                    [ text txt.submit ]
                 ]
             ]
         , div []
             [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ]
-            , viewLabel "" (Label (ternary (name == "") "label name" name) color)
+            , viewLabel "" (Label "" (ternary (name == "") "label name" name) color)
             ]
         , case result of
             Failure err ->

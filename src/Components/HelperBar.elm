@@ -2,6 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Components.Fa as Fa
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
@@ -68,7 +69,7 @@ view hb =
         [ nav [ class "column is-11-desktop is-11-widescreen is-9-fullhd" ]
             [ div [ class "navbar" ]
                 [ div [ class "navbar-brand" ]
-                    [ viewPath OverviewBaseUri hb.path_data ]
+                    [ viewPath hb.baseUri hb.path_data ]
                 , div
                     [ class "navbar-burger burger"
                     , attribute "data-target" "rolesMenu"
@@ -122,16 +123,28 @@ view hb =
                 ]
             , div [ class "tabs is-boxed" ]
                 [ ul []
-                    [ li [ classList [ ( "is-active", hb.baseUri == OverviewBaseUri ) ] ]
+                    ([ li [ classList [ ( "is-active", hb.baseUri == OverviewBaseUri ) ] ]
                         [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ Fa.icon "fas fa-circle" "Overview" ] ]
-                    , li [ classList [ ( "is-active", hb.baseUri == TensionsBaseUri ) ] ]
+                     , li [ classList [ ( "is-active", hb.baseUri == TensionsBaseUri ) ] ]
                         [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
-                    , li [ classList [ ( "is-active", hb.baseUri == MembersBaseUri ) ] ]
+                     , li [ classList [ ( "is-active", hb.baseUri == MembersBaseUri ) ] ]
                         [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ Fa.icon "fas fa-user" "Members" ] ]
-                    , li [ class "is-vbar-2" ] []
-                    , li [ classList [ ( "is-active", hb.baseUri == SettingsBaseUri ) ] ]
-                        [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ Fa.icon "fas fa-cog" "Settings" ] ]
-                    ]
+                     ]
+                        ++ (Maybe.map
+                                (\path ->
+                                    if hb.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
+                                        [ li [ class "is-vbar-2" ] []
+                                        , li [ classList [ ( "is-active", hb.baseUri == SettingsBaseUri ) ] ]
+                                            [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ Fa.icon "fas fa-cog" "Settings" ] ]
+                                        ]
+
+                                    else
+                                        []
+                                )
+                                hb.path_data
+                                |> withDefault []
+                           )
+                    )
                 ]
             ]
         ]

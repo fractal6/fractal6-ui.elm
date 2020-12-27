@@ -5,6 +5,8 @@ module Query.QueryNode exposing
     , blobIdPayload
     , emiterOrReceiverPayload
     , fetchNode
+    , labelFullPayload
+    , labelPayload
     , nodeCharacPayload
     , nodeIdPayload
     , nodeOrgaPayload
@@ -655,9 +657,18 @@ nodeLabelsPayload =
         Fractal.Object.Node.isPrivate
 
 
+labelPayload : SelectionSet Label Fractal.Object.Label
+labelPayload =
+    SelectionSet.map3 Label
+        (Fractal.Object.Label.id |> SelectionSet.map decodedId)
+        Fractal.Object.Label.name
+        Fractal.Object.Label.color
+
+
 labelFullPayload : SelectionSet LabelFull Fractal.Object.Label
 labelFullPayload =
-    SelectionSet.map3 LabelFull
+    SelectionSet.map4 LabelFull
+        (Fractal.Object.Label.id |> SelectionSet.map decodedId)
         Fractal.Object.Label.name
         Fractal.Object.Label.color
         Fractal.Object.Label.description

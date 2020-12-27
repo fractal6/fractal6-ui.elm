@@ -30,7 +30,6 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm, UserForm)
-import ModelCommon.Codecs exposing (labelIdCodec)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
@@ -186,7 +185,7 @@ buildLabels form =
             (\label ->
                 Input.buildLabelRef
                     (\x ->
-                        { x | nameid = labelIdCodec form.target.rootnameid label |> Present }
+                        { x | id = Present (encodeId label) }
                     )
             )
         |> Present
