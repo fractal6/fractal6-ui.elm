@@ -224,9 +224,9 @@ buildAddLabelInput required fillOptionals =
     let
         optionals =
             fillOptionals
-                { description = Absent, color = Absent, tensions = Absent, nodes = Absent }
+                { description = Absent, color = Absent, tensions = Absent, nodes = Absent, n_nodes = Absent, n_tensions = Absent }
     in
-    AddLabelInput { rootnameid = required.rootnameid, name = required.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes }
+    AddLabelInput { rootnameid = required.rootnameid, name = required.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes, n_nodes = optionals.n_nodes, n_tensions = optionals.n_tensions }
 
 
 type alias AddLabelInputRequiredFields =
@@ -240,6 +240,8 @@ type alias AddLabelInputOptionalFields =
     , color : OptionalArgument String
     , tensions : OptionalArgument (List TensionRef)
     , nodes : OptionalArgument (List NodeRef)
+    , n_nodes : OptionalArgument Int
+    , n_tensions : OptionalArgument Int
     }
 
 
@@ -255,6 +257,8 @@ type alias AddLabelInputRaw =
     , color : OptionalArgument String
     , tensions : OptionalArgument (List TensionRef)
     , nodes : OptionalArgument (List NodeRef)
+    , n_nodes : OptionalArgument Int
+    , n_tensions : OptionalArgument Int
     }
 
 
@@ -269,7 +273,7 @@ type AddLabelInput
 encodeAddLabelInput : AddLabelInput -> Value
 encodeAddLabelInput (AddLabelInput input) =
     Encode.maybeObject
-        [ ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "name", Encode.string input.name |> Just ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ) ]
+        [ ( "rootnameid", Encode.string input.rootnameid |> Just ), ( "name", Encode.string input.name |> Just ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ), ( "n_nodes", Encode.int |> Encode.optional input.n_nodes ), ( "n_tensions", Encode.int |> Encode.optional input.n_tensions ) ]
 
 
 buildAddMandateInput :
@@ -1656,7 +1660,7 @@ buildLabelFilter fillOptionals =
 
 type alias LabelFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
-    , rootnameid : OptionalArgument StringTermFilter
+    , rootnameid : OptionalArgument StringHashFilter
     , name : OptionalArgument StringHashFilter_StringTermFilter
     , and : OptionalArgument LabelFilter
     , or : OptionalArgument LabelFilter
@@ -1671,7 +1675,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias LabelFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
-    , rootnameid : OptionalArgument StringTermFilter
+    , rootnameid : OptionalArgument StringHashFilter
     , name : OptionalArgument StringHashFilter_StringTermFilter
     , and : OptionalArgument LabelFilter
     , or : OptionalArgument LabelFilter
@@ -1690,7 +1694,7 @@ type LabelFilter
 encodeLabelFilter : LabelFilter -> Value
 encodeLabelFilter (LabelFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "rootnameid", encodeStringTermFilter |> Encode.optional input.rootnameid ), ( "name", encodeStringHashFilter_StringTermFilter |> Encode.optional input.name ), ( "and", encodeLabelFilter |> Encode.optional input.and ), ( "or", encodeLabelFilter |> Encode.optional input.or ), ( "not", encodeLabelFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "rootnameid", encodeStringHashFilter |> Encode.optional input.rootnameid ), ( "name", encodeStringHashFilter_StringTermFilter |> Encode.optional input.name ), ( "and", encodeLabelFilter |> Encode.optional input.and ), ( "or", encodeLabelFilter |> Encode.optional input.or ), ( "not", encodeLabelFilter |> Encode.optional input.not ) ]
 
 
 buildLabelOrder :
@@ -1745,9 +1749,9 @@ buildLabelPatch fillOptionals =
     let
         optionals =
             fillOptionals
-                { rootnameid = Absent, name = Absent, description = Absent, color = Absent, tensions = Absent, nodes = Absent }
+                { rootnameid = Absent, name = Absent, description = Absent, color = Absent, tensions = Absent, nodes = Absent, n_nodes = Absent, n_tensions = Absent }
     in
-    LabelPatch { rootnameid = optionals.rootnameid, name = optionals.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes }
+    LabelPatch { rootnameid = optionals.rootnameid, name = optionals.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes, n_nodes = optionals.n_nodes, n_tensions = optionals.n_tensions }
 
 
 type alias LabelPatchOptionalFields =
@@ -1757,6 +1761,8 @@ type alias LabelPatchOptionalFields =
     , color : OptionalArgument String
     , tensions : OptionalArgument (List TensionRef)
     , nodes : OptionalArgument (List NodeRef)
+    , n_nodes : OptionalArgument Int
+    , n_tensions : OptionalArgument Int
     }
 
 
@@ -1772,6 +1778,8 @@ type alias LabelPatchRaw =
     , color : OptionalArgument String
     , tensions : OptionalArgument (List TensionRef)
     , nodes : OptionalArgument (List NodeRef)
+    , n_nodes : OptionalArgument Int
+    , n_tensions : OptionalArgument Int
     }
 
 
@@ -1786,7 +1794,7 @@ type LabelPatch
 encodeLabelPatch : LabelPatch -> Value
 encodeLabelPatch (LabelPatch input) =
     Encode.maybeObject
-        [ ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ) ]
+        [ ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ), ( "n_nodes", Encode.int |> Encode.optional input.n_nodes ), ( "n_tensions", Encode.int |> Encode.optional input.n_tensions ) ]
 
 
 buildLabelRef :
@@ -1796,9 +1804,9 @@ buildLabelRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, rootnameid = Absent, name = Absent, description = Absent, color = Absent, tensions = Absent, nodes = Absent }
+                { id = Absent, rootnameid = Absent, name = Absent, description = Absent, color = Absent, tensions = Absent, nodes = Absent, n_nodes = Absent, n_tensions = Absent }
     in
-    LabelRef { id = optionals.id, rootnameid = optionals.rootnameid, name = optionals.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes }
+    LabelRef { id = optionals.id, rootnameid = optionals.rootnameid, name = optionals.name, description = optionals.description, color = optionals.color, tensions = optionals.tensions, nodes = optionals.nodes, n_nodes = optionals.n_nodes, n_tensions = optionals.n_tensions }
 
 
 type alias LabelRefOptionalFields =
@@ -1809,6 +1817,8 @@ type alias LabelRefOptionalFields =
     , color : OptionalArgument String
     , tensions : OptionalArgument (List TensionRef)
     , nodes : OptionalArgument (List NodeRef)
+    , n_nodes : OptionalArgument Int
+    , n_tensions : OptionalArgument Int
     }
 
 
@@ -1825,6 +1835,8 @@ type alias LabelRefRaw =
     , color : OptionalArgument String
     , tensions : OptionalArgument (List TensionRef)
     , nodes : OptionalArgument (List NodeRef)
+    , n_nodes : OptionalArgument Int
+    , n_tensions : OptionalArgument Int
     }
 
 
@@ -1839,7 +1851,7 @@ type LabelRef
 encodeLabelRef : LabelRef -> Value
 encodeLabelRef (LabelRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "rootnameid", Encode.string |> Encode.optional input.rootnameid ), ( "name", Encode.string |> Encode.optional input.name ), ( "description", Encode.string |> Encode.optional input.description ), ( "color", Encode.string |> Encode.optional input.color ), ( "tensions", (encodeTensionRef |> Encode.list) |> Encode.optional input.tensions ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input.nodes ), ( "n_nodes", Encode.int |> Encode.optional input.n_nodes ), ( "n_tensions", Encode.int |> Encode.optional input.n_tensions ) ]
 
 
 buildMandateFilter :

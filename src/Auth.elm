@@ -1,4 +1,4 @@
-module Auth exposing (AuthState(..), doRefreshToken, doRefreshToken2, refreshAuthModal)
+module Auth exposing (AuthState(..), ErrState(..), doRefreshToken, doRefreshToken2, parseErr, refreshAuthModal)
 
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, toErrorData, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
@@ -25,6 +25,12 @@ type AuthState a
     | NoAuth
 
 
+type ErrState
+    = DuplicateErr
+    | UnknownErr
+    | NoErr
+
+
 messageToAuthState : String -> Int -> AuthState a
 messageToAuthState message trial =
     if startsWith "token is expired" message || startsWith "no token found" message then
@@ -39,6 +45,52 @@ messageToAuthState message trial =
 
     else
         NoAuth
+
+
+messageToErrState : String -> ErrState
+messageToErrState message =
+    if startsWith "Duplicate error" message then
+        DuplicateErr
+
+    else
+        UnknownErr
+
+
+parseErr : GqlData a -> ErrState
+parseErr data =
+    case data of
+        Failure err ->
+            if List.length err == 1 then
+                case List.head err of
+                    Just err_ ->
+                        let
+                            gqlErr =
+                                err_
+                                    |> String.replace "\n" ""
+                                    |> SE.rightOf "{"
+                                    |> SE.insertAt "{" 0
+                                    |> JD.decodeString errorDecoder
+                        in
+                        case gqlErr of
+                            Ok errGql ->
+                                case List.head errGql.errors of
+                                    Just e ->
+                                        messageToErrState e.message
+
+                                    Nothing ->
+                                        UnknownErr
+
+                            Err errJD ->
+                                messageToErrState err_
+
+                    Nothing ->
+                        NoErr
+
+            else
+                NoErr
+
+        _ ->
+            NoErr
 
 
 {-|

@@ -136,7 +136,7 @@ type alias Label =
 
 
 type alias LabelFull =
-    { id : String, name : String, color : Maybe String, description : Maybe String }
+    { id : String, name : String, color : Maybe String, description : Maybe String, n_nodes : Maybe Int }
 
 
 type alias TensionHead =

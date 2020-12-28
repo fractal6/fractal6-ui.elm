@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
+import Fractal.Object.AddLabelPayload
 import Fractal.Object.DeleteLabelPayload
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
@@ -32,165 +33,53 @@ import RemoteData exposing (RemoteData)
 -}
 
 
-type alias NodeLabels_ =
-    { labels : Maybe (List LabelFull) }
+type alias LabelsFullPayload =
+    { label : Maybe (List (Maybe LabelFull)) }
 
 
-type alias PatchLabelNodePayload =
-    { node : Maybe (List (Maybe NodeLabels_)) }
-
-
-nodePatchLabelDecoder : Maybe PatchLabelNodePayload -> Maybe LabelFull
-nodePatchLabelDecoder data =
+labelFullDecoder : Maybe LabelsFullPayload -> Maybe LabelFull
+labelFullDecoder data =
     case data of
         Just d ->
-            d.node
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-                |> Maybe.map (\n -> n.labels)
-                |> withDefault Nothing
-                |> withDefault []
-                |> List.head
+            d.label
+                |> Maybe.map (\x -> List.head x)
+                |> Maybe.withDefault Nothing
+                |> Maybe.withDefault Nothing
 
         Nothing ->
             Nothing
 
 
 addOneLabel url form msg =
-    let
-        name =
-            Dict.get "name" form.post
-    in
     makeGQLMutation url
-        (Mutation.updateNode
-            (labelInputEncoder form)
-            (SelectionSet.map PatchLabelNodePayload <|
-                Fractal.Object.UpdateNodePayload.node identity <|
-                    SelectionSet.map NodeLabels_
-                        (Fractal.Object.Node.labels
-                            (\args ->
-                                { args
-                                    | filter =
-                                        Input.buildLabelFilter (\i -> { i | name = Present { eq = fromMaybe name, allofterms = Absent, anyofterms = Absent } })
-                                            |> Present
-                                }
-                            )
-                            labelFullPayload
-                        )
+        (Mutation.addLabel
+            (addLabelInputEncoder form)
+            (SelectionSet.map LabelsFullPayload <|
+                Fractal.Object.AddLabelPayload.label identity labelFullPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse nodePatchLabelDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
 
 
-labelInputEncoder : LabelForm -> Mutation.UpdateNodeRequiredArguments
-labelInputEncoder form =
+addLabelInputEncoder : LabelForm -> Mutation.AddLabelRequiredArguments
+addLabelInputEncoder form =
     let
         inputReq =
-            { filter =
-                Input.buildNodeFilter
-                    (\i ->
-                        { i | nameid = { eq = Present form.nameid, regexp = Absent } |> Present }
-                    )
+            { rootnameid = nid2rootid form.nameid
+            , name = Dict.get "name" form.post |> withDefault "" |> String.toLower
             }
 
         inputOpt =
             \x ->
-                { set =
-                    Input.buildNodePatch
-                        (\i ->
-                            { i
-                                | labels =
-                                    Present
-                                        [ Input.buildLabelRef
-                                            (\j ->
-                                                { j
-                                                    | rootnameid = Present (nid2rootid form.nameid)
-                                                    , name = fromMaybe (Dict.get "name" form.post)
-                                                    , color = fromMaybe (Dict.get "color" form.post)
-                                                    , description = fromMaybe (Dict.get "description" form.post)
-                                                }
-                                            )
-                                        ]
-                            }
-                        )
-                        |> Present
-                , remove = Absent
+                { x
+                    | color = fromMaybe (Dict.get "color" form.post)
+                    , description = fromMaybe (Dict.get "description" form.post)
+                    , nodes =
+                        Present
+                            [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                 }
     in
-    { input = Input.buildUpdateNodeInput inputReq inputOpt }
-
-
-
-{-
-   Update one Label (remove)
--}
-
-
-type alias PatchNodeIdPayload =
-    { node : Maybe (List (Maybe IdPayload)) }
-
-
-nodePatchIDDecoder : Maybe PatchNodeIdPayload -> Maybe IdPayload
-nodePatchIDDecoder data =
-    case data of
-        Just d ->
-            d.node
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-
-        Nothing ->
-            Nothing
-
-
-removeOneLabel url form msg =
-    makeGQLMutation url
-        (Mutation.updateNode
-            (labelInputREncoder form)
-            (SelectionSet.map PatchNodeIdPayload <|
-                Fractal.Object.UpdateNodePayload.node identity <|
-                    (SelectionSet.succeed IdPayload
-                        |> with (Fractal.Object.Node.id |> SelectionSet.map decodedId)
-                    )
-            )
-        )
-        (RemoteData.fromResult >> decodeResponse nodePatchIDDecoder >> msg)
-
-
-labelInputREncoder : LabelForm -> Mutation.UpdateNodeRequiredArguments
-labelInputREncoder form =
-    let
-        inputReq =
-            { filter =
-                Input.buildNodeFilter
-                    (\i ->
-                        { i | nameid = { eq = Present form.nameid, regexp = Absent } |> Present }
-                    )
-            }
-
-        inputOpt =
-            \x ->
-                { set = Absent
-                , remove =
-                    Input.buildNodePatch
-                        (\i ->
-                            { i
-                                | labels =
-                                    Present
-                                        [ Input.buildLabelRef (\j -> { j | id = Present (encodeId form.id) }) ]
-                            }
-                        )
-                        |> Present
-                }
-    in
-    { input = Input.buildUpdateNodeInput inputReq inputOpt }
+    { input = [ Input.buildAddLabelInput inputReq inputOpt ] }
 
 
 
@@ -199,48 +88,47 @@ labelInputREncoder form =
 -}
 
 
-type alias PatchLabelPayload =
-    { label : Maybe (List (Maybe LabelFull)) }
-
-
-labelPatchDecoder : Maybe PatchLabelPayload -> Maybe LabelFull
-labelPatchDecoder data =
-    case data of
-        Just d ->
-            d.label
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-
-        Nothing ->
-            Nothing
-
-
 updateOneLabel url form msg =
     makeGQLMutation url
         (Mutation.updateLabel
-            (labelFullInputEncoder form)
-            (SelectionSet.map PatchLabelPayload <|
+            (updateLabelInputEncoder form)
+            (SelectionSet.map LabelsFullPayload <|
                 Fractal.Object.UpdateLabelPayload.label identity <|
                     labelFullPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse labelPatchDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
 
 
-labelFullInputEncoder : LabelForm -> Mutation.UpdateLabelRequiredArguments
-labelFullInputEncoder form =
+updateLabelInputEncoder : LabelForm -> Mutation.UpdateLabelRequiredArguments
+updateLabelInputEncoder form =
     let
-        name =
-            Dict.get "name" form.post
-
         inputReq =
             { filter =
-                Input.buildLabelFilter (\i -> { i | id = Present [ encodeId form.id ] })
+                if form.id == "" then
+                    -- assumes duplicate update
+                    Input.buildLabelFilter
+                        (\i ->
+                            { i
+                                | rootnameid = Present { eq = Present (nid2rootid form.nameid) }
+                                , name = Present { eq = fromMaybe (Dict.get "name" form.post), anyofterms = Absent, allofterms = Absent }
+                            }
+                        )
+
+                else
+                    Input.buildLabelFilter (\i -> { i | id = Present [ encodeId form.id ] })
             }
+
+        post =
+            if form.id == "" then
+                -- Just register the label in the given node
+                form.post |> Dict.remove "name" |> Dict.remove "color" |> Dict.remove "description"
+
+            else if Dict.get "name" form.post == Dict.get "old_name" form.post then
+                form.post |> Dict.remove "name"
+
+            else
+                form.post |> Dict.update "name" (\x -> Maybe.map (\n -> String.toLower n) x)
 
         inputOpt =
             \x ->
@@ -248,9 +136,10 @@ labelFullInputEncoder form =
                     Input.buildLabelPatch
                         (\i ->
                             { i
-                                | name = fromMaybe (Dict.get "name" form.post)
-                                , color = fromMaybe (Dict.get "color" form.post)
-                                , description = fromMaybe (Dict.get "description" form.post)
+                                | name = fromMaybe (Dict.get "name" post)
+                                , color = fromMaybe (Dict.get "color" post)
+                                , description = fromMaybe (Dict.get "description" post)
+                                , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                             }
                         )
                         |> Present
@@ -262,19 +151,43 @@ labelFullInputEncoder form =
 
 
 {-
-   Remove Label
+   Remove label
 -}
 
 
-deleteOneLabel url form msg =
+removeOneLabel url form msg =
     makeGQLMutation url
-        (Mutation.deleteLabel
-            { filter =
-                Input.buildLabelFilter (\i -> { i | id = Present [ encodeId form.id ] })
-            }
-            (SelectionSet.map PatchLabelPayload <|
-                Fractal.Object.DeleteLabelPayload.label identity <|
+        (Mutation.updateLabel
+            (removeLabelInputEncoder form)
+            (SelectionSet.map LabelsFullPayload <|
+                Fractal.Object.UpdateLabelPayload.label identity <|
                     labelFullPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse labelPatchDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
+
+
+removeLabelInputEncoder : LabelForm -> Mutation.UpdateLabelRequiredArguments
+removeLabelInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildLabelFilter (\i -> { i | id = Present [ encodeId form.id ] })
+            }
+
+        inputOpt =
+            \x ->
+                { set = Absent
+                , remove =
+                    Input.buildLabelPatch
+                        (\i ->
+                            { i
+                                | nodes =
+                                    Present
+                                        [ Input.buildNodeRef (\j -> { j | nameid = Present form.nameid }) ]
+                            }
+                        )
+                        |> Present
+                }
+    in
+    { input = Input.buildUpdateLabelInput inputReq inputOpt }

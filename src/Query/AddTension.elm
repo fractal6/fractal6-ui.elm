@@ -41,7 +41,7 @@ import RemoteData exposing (RemoteData)
 -}
 
 
-type alias AddTensionPayload =
+type alias TensionsPayload =
     { tension : Maybe (List (Maybe Tension)) }
 
 
@@ -49,7 +49,7 @@ type alias AddTensionPayload =
 -- Response Decoder
 
 
-tensionDecoder : Maybe AddTensionPayload -> Maybe Tension
+tensionDecoder : Maybe TensionsPayload -> Maybe Tension
 tensionDecoder a =
     case a of
         Just b ->
@@ -67,7 +67,7 @@ addOneTension url form msg =
     makeGQLMutation url
         (Mutation.addTension
             (addTensionInputEncoder form)
-            (SelectionSet.map AddTensionPayload <|
+            (SelectionSet.map TensionsPayload <|
                 Fractal.Object.AddTensionPayload.tension identity tensionPayload
             )
         )
@@ -90,7 +90,7 @@ addTensionInputEncoder f =
         message =
             Dict.get "message" f.post |> withDefault ""
 
-        tensionRequired =
+        inputReq =
             { createdAt = createdAt |> Fractal.Scalar.DateTime
             , createdBy =
                 Input.buildUserRef
@@ -125,9 +125,9 @@ addTensionInputEncoder f =
                         )
             }
 
-        tensionOpts =
-            \t ->
-                { t
+        inputOpt =
+            \x ->
+                { x
                     | action = f.action |> fromMaybe
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
@@ -135,7 +135,7 @@ addTensionInputEncoder f =
                 }
     in
     { input =
-        [ Input.buildAddTensionInput tensionRequired tensionOpts ]
+        [ Input.buildAddTensionInput inputReq inputOpt ]
     }
 
 
@@ -273,7 +273,7 @@ buildNodeFragmentRef users nf =
                 commonFields =
                     { n
                         | name = fromMaybe nf.name
-                        , nameid = fromMaybe nf.nameid
+                        , nameid = fromMaybe (Maybe.map (\nid -> String.toLower nid) nf.nameid)
                         , type_ = fromMaybe nf.type_
                         , about = fromMaybe nf.about
                         , mandate = buildMandate nf.mandate

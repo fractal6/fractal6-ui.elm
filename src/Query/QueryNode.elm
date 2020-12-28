@@ -667,8 +667,9 @@ labelPayload =
 
 labelFullPayload : SelectionSet LabelFull Fractal.Object.Label
 labelFullPayload =
-    SelectionSet.map4 LabelFull
+    SelectionSet.map5 LabelFull
         (Fractal.Object.Label.id |> SelectionSet.map decodedId)
         Fractal.Object.Label.name
         Fractal.Object.Label.color
         Fractal.Object.Label.description
+        Fractal.Object.Label.n_nodes

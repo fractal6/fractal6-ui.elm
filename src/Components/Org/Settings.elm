@@ -1,7 +1,7 @@
 module Components.Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (AuthState(..), ErrState(..), doRefreshToken, parseErr, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -75,7 +75,7 @@ type alias Model =
     , label_add : Bool
     , label_edit : Maybe LabelFull
     , label_result : GqlData LabelFull
-    , label_result_del : GqlData IdPayload
+    , label_result_del : GqlData LabelFull
     , label_form : LabelForm
 
     -- Common
@@ -128,7 +128,7 @@ type Msg
     | SubmitEditLabel Time.Posix
     | SubmitDeleteLabel String Time.Posix
     | GotLabel (GqlData LabelFull)
-    | GotLabelDel (GqlData IdPayload)
+    | GotLabelDel (GqlData LabelFull)
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -323,6 +323,7 @@ update global msg model =
                                 ([ ( "name", label.name ) ]
                                     ++ (label.color |> Maybe.map (\x -> [ ( "color", x ) ]) |> withDefault [])
                                     ++ (label.description |> Maybe.map (\x -> [ ( "description", x ) ]) |> withDefault [])
+                                    ++ [ ( "old_name", label.name ) ]
                                 )
                     }
             in
@@ -387,7 +388,7 @@ update global msg model =
                                 -- assume edit
                                 List.map
                                     (\x ->
-                                        if x.name == label.name then
+                                        if x.id == label.id then
                                             label
 
                                         else
@@ -401,7 +402,12 @@ update global msg model =
                     )
 
                 NoAuth ->
-                    ( { model | label_result = result }, Cmd.none, Cmd.none )
+                    case parseErr result of
+                        DuplicateErr ->
+                            ( { model | label_result = LoadingSlowly }, send (Submit SubmitEditLabel), Cmd.none )
+
+                        _ ->
+                            ( { model | label_result = result }, Cmd.none, Cmd.none )
 
         GotLabelDel result ->
             case doRefreshToken result model.refresh_trial of
@@ -821,6 +827,7 @@ viewLabels model =
                             [ tr []
                                 [ th [] [ text "Name" ]
                                 , th [] [ text "Description" ]
+                                , th [] [ text "" ]
                                 , th [] []
                                 ]
                             ]
@@ -829,11 +836,22 @@ viewLabels model =
                                 (\i d ->
                                     [ tr [] <|
                                         if model.label_edit == Just d then
-                                            [ td [ colspan 3 ] [ viewLabelAddBox model ] ]
+                                            [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
 
                                         else
+                                            let
+                                                n_nodes =
+                                                    d.n_nodes |> withDefault 0
+                                            in
                                             [ td [] [ viewLabel "is-medium" (Label d.id d.name d.color) ]
-                                            , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [ class "is-italic" ] ]
+                                            , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
+                                            , td [ class "" ]
+                                                [ if n_nodes > 1 then
+                                                    span [ class "is-italic is-size-7" ] [ text "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
+
+                                                  else
+                                                    text ""
+                                                ]
                                             , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
                                                 [ span [ class "button-light", onClick (EditLabel d) ] [ text "Edit" ]
                                                 , text " · "
