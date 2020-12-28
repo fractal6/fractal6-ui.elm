@@ -838,6 +838,29 @@ html.has-modal-active, html.has-modal-active2 {
 
 }
 
+#colorPicker {
+    position: absolute;
+    z-index: 25;
+    background-color: $white-light;
+    color: black;
+    border-radius: 5px !important;
+    border: 1px solid $grey-light;
+    padding: 10px;
+
+    .colorBoxes {
+        width: 256px;
+    }
+
+}
+.buttonColor {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 6px !important;
+    border-width: 0 !important;
+    margin: 0px 8px 5px 0px;
+    &:hover {cursor: pointer; }
+}
+
 #actionPanelContent {
     .dropdown-content {
         position: absolute;

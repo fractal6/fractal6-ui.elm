@@ -96,7 +96,7 @@ setPattern pattern data =
     { data | form = { form | pattern = pattern } }
 
 
-type alias UserSearchPanelData msg =
+type alias Op msg =
     { selectedUsers : List User
     , targets : List String
     , users_data : GqlData UsersData
@@ -108,14 +108,14 @@ type alias UserSearchPanelData msg =
     }
 
 
-view : UserSearchPanelData msg -> Html msg
-view uspd =
+view : Op msg -> Html msg
+view op =
     nav [ id "userSearchPanel", class "panel" ]
-        [ case uspd.users_data of
+        [ case op.users_data of
             Success ud ->
                 let
                     user =
-                        uspd.data.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
+                        op.data.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
 
                     linked_users =
                         List.foldl
@@ -123,17 +123,17 @@ view uspd =
                                 List.append (Dict.get a ud |> withDefault []) b
                             )
                             []
-                            uspd.targets
+                            op.targets
 
                     users =
-                        if uspd.data.form.pattern == "" then
+                        if op.data.form.pattern == "" then
                             user
-                                ++ uspd.selectedUsers
+                                ++ op.selectedUsers
                                 ++ linked_users
                                 |> LE.uniqueBy (\u -> u.username)
 
                         else
-                            LE.uniqueBy (\u -> u.username) uspd.lookup
+                            LE.uniqueBy (\u -> u.username) op.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]
@@ -143,20 +143,20 @@ view uspd =
                                 , class "input autofocus"
                                 , type_ "text"
                                 , placeholder T.searchUsers
-                                , value uspd.data.form.pattern
-                                , onInput uspd.onChangePattern
+                                , value op.data.form.pattern
+                                , onInput op.onChangePattern
                                 ]
                                 []
                             , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                             ]
                         ]
-                    , case uspd.data.click_result of
+                    , case op.data.click_result of
                         Failure err ->
                             viewGqlErrors err
 
                         _ ->
                             div [] []
-                    , viewAssigneeSelectors users uspd
+                    , viewAssigneeSelectors users op
                     ]
 
             Loading ->
@@ -173,8 +173,8 @@ view uspd =
         ]
 
 
-viewAssigneeSelectors : List User -> UserSearchPanelData msg -> Html msg
-viewAssigneeSelectors users uspd =
+viewAssigneeSelectors : List User -> Op msg -> Html msg
+viewAssigneeSelectors users op =
     div [ class "selectors" ] <|
         if users == [] then
             [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
@@ -185,7 +185,7 @@ viewAssigneeSelectors users uspd =
                     (\u ->
                         let
                             isActive =
-                                List.member u uspd.selectedUsers
+                                List.member u op.selectedUsers
 
                             faCls =
                                 ternary isActive "fa-check-square" "fa-square"
@@ -193,7 +193,7 @@ viewAssigneeSelectors users uspd =
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (uspd.onSubmit <| uspd.onUserClick u (isActive == False))
+                            , onClick (op.onSubmit <| op.onUserClick u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                             , viewUser False u.username

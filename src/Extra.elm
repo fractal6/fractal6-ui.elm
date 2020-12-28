@@ -34,7 +34,7 @@ upAll t =
 
 
 
---- Utils
+-- Utils
 
 
 toMapOfList : List ( String, a ) -> Dict String (List a)
@@ -53,3 +53,16 @@ addParam_ value maybeValues =
 
         Nothing ->
             Just [ value ]
+
+
+
+-- Colors
+
+
+colorToTextColor : String -> String
+colorToTextColor color =
+    if List.member color [ "#7FDBFF", "#39CCCC", "#01FF70", "#FFDC00", "#FF851B", "#F012BE", "#AAAAAA", "#DDDDDD" ] then
+        "#000"
+
+    else
+        "#fff"

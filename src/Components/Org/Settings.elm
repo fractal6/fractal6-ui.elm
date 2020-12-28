@@ -5,6 +5,7 @@ import Auth exposing (AuthState(..), ErrState(..), doRefreshToken, parseErr, ref
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.Fa as Fa
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -77,6 +78,7 @@ type alias Model =
     , label_result : GqlData LabelFull
     , label_result_del : GqlData LabelFull
     , label_form : LabelForm
+    , colorPicker : ColorPicker
 
     -- Common
     , node_action : ActionState
@@ -141,6 +143,10 @@ type Msg
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
+      -- Color Picker
+    | OpenColor
+    | CloseColor
+    | SelectLabelColor String
       -- Common
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
@@ -201,6 +207,7 @@ init global flags =
             , label_result = NotAsked
             , label_result_del = NotAsked
             , label_form = initLabelForm global.session.user newFocus.nameid
+            , colorPicker = ColorPicker.init
 
             -- Common
             , node_action = NoOp
@@ -326,8 +333,11 @@ update global msg model =
                                     ++ [ ( "old_name", label.name ) ]
                                 )
                     }
+
+                color =
+                    Dict.get "color" newForm.post |> withDefault ""
             in
-            ( { model | label_edit = Just label, label_form = newForm, label_add = False }, Cmd.none, Cmd.none )
+            ( { model | label_edit = Just label, label_form = newForm, label_add = False, colorPicker = ColorPicker.setColor color model.colorPicker }, Cmd.none, Cmd.none )
 
         CancelLabel ->
             let
@@ -597,7 +607,39 @@ update global msg model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        -- Modal
+        -- Color Picker
+        OpenColor ->
+            ( { model | colorPicker = ColorPicker.open model.colorPicker }
+            , if model.colorPicker.isOpen == False then
+                Cmd.batch [ Ports.outsideClickClose "cancelColorFromJs" "colorPicker" ]
+
+              else
+                Cmd.none
+            , Cmd.none
+            )
+
+        CloseColor ->
+            ( { model | colorPicker = ColorPicker.close model.colorPicker }, Cmd.none, Cmd.none )
+
+        SelectLabelColor color ->
+            let
+                newPicker =
+                    model.colorPicker
+                        |> ColorPicker.setColor color
+                        |> ColorPicker.close
+
+                form =
+                    model.label_form
+
+                newForm =
+                    { form | post = Dict.insert "color" color form.post }
+            in
+            ( { model | colorPicker = newPicker, label_form = newForm }, Cmd.none, Ports.click "body" )
+
+        -- Common
+        Navigate url ->
+            ( model, Cmd.none, Nav.pushUrl global.key url )
+
         DoOpenModal ->
             ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
 
@@ -611,9 +653,6 @@ update global msg model =
                         Cmd.none
             in
             ( { model | isModalActive = False }, gcmd, Ports.close_modal )
-
-        Navigate url ->
-            ( model, Cmd.none, Nav.pushUrl global.key url )
 
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
@@ -721,6 +760,7 @@ subscriptions global model =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal
         , Ports.triggerHelpFromJs TriggerHelp
+        , Ports.cancelColorFromJs (always CloseColor)
         ]
 
 
@@ -847,7 +887,7 @@ viewLabels model =
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                             , td [ class "" ]
                                                 [ if n_nodes > 1 then
-                                                    span [ class "is-italic is-size-7" ] [ text "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
+                                                    span [ class "is-italic is-size-7" ] [ Fa.icon "fas fa-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
 
                                                   else
                                                     text ""
@@ -938,6 +978,10 @@ viewLabelAddBox model =
                     , onInput (ChangeLabelPost "name")
                     ]
                     []
+                ]
+            , p [ class "control" ]
+                [ label [ class "label is-small" ] [ text "Color" ]
+                , ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectLabelColor }
                 ]
             , p [ class "control is-expanded" ]
                 [ label [ class "label is-small" ] [ text "Description" ]

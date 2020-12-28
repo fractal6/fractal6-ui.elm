@@ -3,7 +3,7 @@ module ModelCommon.View exposing (..)
 import Components.Fa as Fa
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (colorToTextColor, ternary)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -152,7 +152,13 @@ viewLabel : String -> Label -> Html msg
 viewLabel cls label =
     let
         color =
-            label.color |> Maybe.map (\c -> [ attribute "style" ("background-color:" ++ c ++ ";") ]) |> withDefault []
+            label.color
+                |> Maybe.map
+                    (\c ->
+                        [ attribute "style" ("background-color:" ++ c ++ "; color:" ++ colorToTextColor c ++ ";")
+                        ]
+                    )
+                |> withDefault []
     in
     span ([ class ("tag is-rounded " ++ cls) ] ++ color) [ text label.name ]
 
