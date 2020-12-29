@@ -278,6 +278,13 @@ html.has-modal-active, html.has-modal-active2 {
         font-weight: 500 !important;
     }
 
+    .navbar-link:not(.is-arrowless) {
+        padding-right: 2rem;
+        &:after {
+            font-size: 12px !important;
+        }
+    }
+
     .navbar-dropdown {
         border: solid 2px $grey-darker;
     }
@@ -290,7 +297,6 @@ html.has-modal-active, html.has-modal-active2 {
         padding-bottom: 0 !important;
     }
 
-    // Breadcrumb
     .breadcrumb {
         font-size: 1.1rem;
         a {
@@ -299,7 +305,6 @@ html.has-modal-active, html.has-modal-active2 {
             padding-left:0.4rem;
         }
     }
-
 
     nav > .navbar {
         background-color: inherit !important;
@@ -363,6 +368,18 @@ html.has-modal-active, html.has-modal-active2 {
         line-height: 1.1 !important;
         font-weight: 600 !important;
         font-size: 3rem !important;
+    }
+}
+
+#tree-menu {
+    a {
+        justify-content: left;
+        &:hover {
+            background-color: $grey-dark;
+        }
+    }
+    a:not(:last-child) {
+        padding-bottom: 5px;
     }
 }
 

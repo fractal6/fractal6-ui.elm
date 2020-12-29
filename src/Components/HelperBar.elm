@@ -11,7 +11,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), typeFromNameid, uriFromNameid)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (LocalGraph, NodeCharac, UserRole)
 import Ports
@@ -172,12 +172,36 @@ viewPath baseUri maybePath =
                                 li [ class "is-acti has-text-weight-semibold" ]
                                     [ a [ href (uriFromNameid baseUri p.nameid) ]
                                         [ div [] [ text p.name ] ]
+                                    , if g.focus.type_ == NodeType.Circle && List.length (List.filter (\c -> typeFromNameid c.nameid == NodeType.Circle) g.focus.children) > 0 then
+                                        viewTree baseUri g
+
+                                      else
+                                        text ""
                                     ]
                         )
                     |> ul [ attribute "style" "display: inline-flex;" ]
 
             Nothing ->
                 div [ class "ph-line is-1" ] []
+        ]
+
+
+viewTree : FractalBaseRoute -> LocalGraph -> Html msg
+viewTree baseUri g =
+    div [ class "dropdown" ]
+        [ div [ class "dropdown-trigger px-2 button-light" ]
+            [ div [ attribute "aria-controls" "tree-menu" ] [ Fa.icon "fas fa-angle-down" "" ]
+            ]
+        , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
+            [ div [ class "dropdown-content" ] <|
+                (g.focus.children
+                    |> List.filter (\c -> typeFromNameid c.nameid == NodeType.Circle)
+                    |> List.map
+                        (\c ->
+                            a [ class "dropdown-item", href (uriFromNameid baseUri c.nameid) ] [ text c.name ]
+                        )
+                )
+            ]
         ]
 
 

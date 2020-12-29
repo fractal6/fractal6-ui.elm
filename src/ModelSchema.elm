@@ -70,16 +70,11 @@ type alias NodeId =
     { nameid : String, isPrivate : Bool }
 
 
-type alias RootNode =
-    { name : String
-    , nameid : String
-    , charac : NodeCharac
-    , isPrivate : Bool
+type alias LocalGraph =
+    { root : Maybe RootNode
+    , path : List PNode
+    , focus : FocusNode
     }
-
-
-type alias PNode =
-    { name : String, nameid : String, isPrivate : Bool }
 
 
 type alias FocusNode =
@@ -92,11 +87,16 @@ type alias FocusNode =
     }
 
 
-type alias LocalGraph =
-    { root : Maybe RootNode
-    , path : List PNode
-    , focus : FocusNode
+type alias RootNode =
+    { name : String
+    , nameid : String
+    , charac : NodeCharac
+    , isPrivate : Bool
     }
+
+
+type alias PNode =
+    { name : String, nameid : String, isPrivate : Bool }
 
 
 type alias EmitterOrReceiver =
