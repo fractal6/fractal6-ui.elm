@@ -375,7 +375,7 @@ view op =
                                             textarea
                                                 [ id "textAreaModal"
                                                 , class "textarea"
-                                                , rows 10
+                                                , rows 6
                                                 , placeholder "Leave a comment"
                                                 , value message
                                                 , onInput (op.onChangeNode "message")
@@ -389,6 +389,10 @@ view op =
                                 , br [] []
                                 ]
                             ]
+                        ]
+                    , div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ div [ class "button is-small is-light" ] [ Fa.icon "fas fa-plus" "", text "Label " ] ]
                         ]
                     ]
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]

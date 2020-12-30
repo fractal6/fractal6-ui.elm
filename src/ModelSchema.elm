@@ -35,6 +35,10 @@ type alias UsersData =
     Dict String (List User)
 
 
+type alias LabelssData =
+    Dict String (List Label)
+
+
 type alias Post =
     Dict String String
 

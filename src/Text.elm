@@ -173,6 +173,11 @@ searchUsers =
     "Search users"
 
 
+searchLabels : String
+searchLabels =
+    "Search labels"
+
+
 reopened : String
 reopened =
     "reopened"

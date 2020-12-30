@@ -25,8 +25,8 @@ type alias UserSearchPanel =
     }
 
 
-create : UserState -> String -> UserSearchPanel
-create user tid =
+init : UserState -> String -> UserSearchPanel
+init user tid =
     { isEdit = False
     , form = initAssigneeForm user tid
     , click_result = NotAsked
@@ -37,13 +37,13 @@ create user tid =
 -- State control
 
 
-edit : UserSearchPanel -> UserSearchPanel
-edit data =
+open : UserSearchPanel -> UserSearchPanel
+open data =
     { data | isEdit = True }
 
 
-cancelEdit : UserSearchPanel -> UserSearchPanel
-cancelEdit data =
+close : UserSearchPanel -> UserSearchPanel
+close data =
     let
         form =
             data.form

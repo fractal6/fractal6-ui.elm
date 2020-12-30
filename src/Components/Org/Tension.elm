@@ -217,8 +217,8 @@ type Msg
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Gql Data Queries
-    | GotPath (GqlData LocalGraph) -- GraphQL
-    | GotPath2 (GqlData LocalGraph) -- GraphQL
+    | GotPath (GqlData LocalGraph)
+    | GotPath2 (GqlData LocalGraph)
       -- Page
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
@@ -264,7 +264,7 @@ type Msg
     | ChangeAssigneePattern String
     | ChangeAssignee User Bool Time.Posix
     | AssigneeAck (GqlData IdPayload)
-    | GotOrga (GqlData NodesData) -- GraphQl
+    | GotOrga (GqlData NodesData)
       -- Action Edit
     | DoActionEdit Blob
     | CancelAction
@@ -385,7 +385,7 @@ init global flags =
             -- Side Pane
             , isTensionAdmin =
                 global.session.isAdmin |> withDefault False
-            , assigneesPanel = UserSearchPanel.create global.session.user tensionid
+            , assigneesPanel = UserSearchPanel.init global.session.user tensionid
             , actionPanel = ActionPanel.create global.session.user tensionid
 
             -- Common
@@ -1103,7 +1103,7 @@ update global msg model =
                             _ ->
                                 queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
                 in
-                ( { model | assigneesPanel = UserSearchPanel.edit model.assigneesPanel }
+                ( { model | assigneesPanel = UserSearchPanel.open model.assigneesPanel }
                 , gcmd
                 , Cmd.batch
                     [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
@@ -1116,7 +1116,7 @@ update global msg model =
                 ( model, Cmd.none, Cmd.none )
 
         CancelAssignees ->
-            ( { model | assigneesPanel = UserSearchPanel.cancelEdit model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
+            ( { model | assigneesPanel = UserSearchPanel.close model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
 
         ChangeAssigneePattern pattern ->
             ( { model | assigneesPanel = UserSearchPanel.setPattern pattern model.assigneesPanel }

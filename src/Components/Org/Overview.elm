@@ -143,9 +143,9 @@ type Msg
       -- Page
     | SwitchWindow
       -- Gql Data Queries
-    | GotOrga (GqlData NodesData) -- graphql
-    | GotTensions (GqlData TensionsData) -- graphql
-    | GotData (GqlData NodeData) -- graphql
+    | GotOrga (GqlData NodesData)
+    | GotTensions (GqlData TensionsData)
+    | GotData (GqlData NodeData)
       -- Quick search
     | LookupFocus String (Maybe LocalGraph)
     | LookupBlur
