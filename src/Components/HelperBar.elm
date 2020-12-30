@@ -198,7 +198,7 @@ viewTree baseUri g =
                     |> List.filter (\c -> typeFromNameid c.nameid == NodeType.Circle)
                     |> List.map
                         (\c ->
-                            a [ class "dropdown-item", href (uriFromNameid baseUri c.nameid) ] [ text c.name ]
+                            a [ class "dropdown-item pl-2", href (uriFromNameid baseUri c.nameid) ] [ text c.name ]
                         )
                 )
             ]

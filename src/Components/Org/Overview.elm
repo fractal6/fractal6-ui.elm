@@ -1782,7 +1782,7 @@ viewCanvas us model =
 
             Success d ->
                 if Dict.get model.node_focus.nameid d == Nothing then
-                    viewGqlErrors [ "Node archived or hidden" ]
+                    viewGqlErrors [ "Node is archived, hidden or has moved." ]
 
                 else
                     text ""
