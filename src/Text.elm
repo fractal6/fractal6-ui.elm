@@ -396,6 +396,16 @@ noFirstLinksCircle =
     "No members are linked to this circle yet."
 
 
+addedThe : String
+addedThe =
+    "added the"
+
+
+removedThe : String
+removedThe =
+    "removed the"
+
+
 
 -- Tension
 

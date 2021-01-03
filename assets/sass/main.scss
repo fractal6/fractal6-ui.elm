@@ -663,7 +663,7 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tensionComments {
         .media + .media {
-            margin-top: 2rem !important;
+            margin-top: 1.9rem !important;
             border: 0 !important;
         }
 
@@ -808,7 +808,7 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
-    #userSearchPanel {
+    .sidePanel {
         &.in-horizon {
             @media screen and (min-width: $tablet) {
                 margin-left: 150px !important;
@@ -817,7 +817,7 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-#userSearchPanel {
+.sidePanel {
     position: absolute;
     background: lighten($body-background-color, 7);
     border: 1px solid $grey-light;
@@ -1239,8 +1239,6 @@ html.has-modal-active, html.has-modal-active2 {
     // all children except first
     .tag + .tag {
         margin-left: 7px !important;
-    }
-    .tag:last-child {
         margin-bottom: 7px !important;
     }
 }
@@ -1800,9 +1798,9 @@ a.actionLink {
 
 .spinner2 { // @todo fix
     // The height here is just for demo purposes
-    height: 25vh;
+    //height: 25vh;
     opacity: 1;
-    //position: relative;
+    position: relative;
     transition: opacity linear 0.1s;
 	&::before {
 		animation: 1.3s linear infinite spinner;
@@ -1811,10 +1809,10 @@ a.actionLink {
 		border-radius: 50%;
 		content: "";
 		height: 40px;
-		left: 100%;
+		left: 0%;
 		opacity: inherit;
 		position: absolute;
-		top: 50%;
+		//top: 50%;
 		transform: translate3d(-50%, -50%, 0);
 		transform-origin: center;
 		width: 40px;

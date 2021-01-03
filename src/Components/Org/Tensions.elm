@@ -663,7 +663,7 @@ update global msg model =
                         |> withDefault ( "", "" )
 
                 f =
-                    initActionForm global.session.user tid
+                    initActionForm tid global.session.user
 
                 form =
                     { f

@@ -1,11 +1,11 @@
 port module Ports exposing (..)
 
-import Codecs exposing (LookupResult, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
+import Codecs exposing (LookupResult, labelDecoder, labelsEncoder, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
 import ModelCommon.Codecs exposing (nearestCircleid)
-import ModelSchema exposing (Node, NodesData, User, UserCtx)
+import ModelSchema exposing (Label, Node, NodesData, User, UserCtx)
 
 
 
@@ -29,7 +29,13 @@ port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
 port lookupUserFromJs_ : (JD.Value -> a) -> Sub a
 
 
+port lookupLabelFromJs_ : (JD.Value -> a) -> Sub a
+
+
 port cancelAssigneesFromJs : (() -> msg) -> Sub msg
+
+
+port cancelLabelsFromJs : (() -> msg) -> Sub msg
 
 
 port cancelActionFromJs : (() -> msg) -> Sub msg
@@ -229,6 +235,14 @@ initUserSearch data =
         }
 
 
+initLabelSearch : List Label -> Cmd msg
+initLabelSearch data =
+    outgoing
+        { action = "INIT_LABELSEARCH"
+        , data = labelsEncoder data
+        }
+
+
 addQuickSearchNodes : List Node -> Cmd msg
 addQuickSearchNodes nodes =
     outgoing
@@ -257,6 +271,14 @@ searchUser : String -> Cmd msg
 searchUser pattern =
     outgoing
         { action = "SEARCH_USERS"
+        , data = JE.string pattern
+        }
+
+
+searchLabel : String -> Cmd msg
+searchLabel pattern =
+    outgoing
+        { action = "SEARCH_LABELS"
         , data = JE.string pattern
         }
 
@@ -350,4 +372,20 @@ lookupUserFromJs object =
                             Err (JD.errorToString err)
                )
             << JD.decodeValue (JD.list userDecoder)
+        )
+
+
+lookupLabelFromJs : (LookupResult Label -> msg) -> Sub msg
+lookupLabelFromJs object =
+    lookupLabelFromJs_
+        (object
+            << (\x ->
+                    case x of
+                        Ok n ->
+                            Ok n
+
+                        Err err ->
+                            Err (JD.errorToString err)
+               )
+            << JD.decodeValue (JD.list labelDecoder)
         )

@@ -13,6 +13,7 @@ module Query.QueryNode exposing
     , queryFocusNode
     , queryGraphPack
     , queryLabels
+    , queryLabelsUp
     , queryLocalGraph
     , queryMembers
     , queryNodeExt
@@ -42,6 +43,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
+import String.Extra as SE
 
 
 
@@ -411,7 +413,7 @@ lgDecoder data =
                     Just p ->
                         let
                             focus =
-                                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
+                                FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.isPrivate
 
                             path =
                                 [ PNode p.name p.nameid p.isPrivate, PNode n.name n.nameid n.isPrivate ]
@@ -430,7 +432,7 @@ lgDecoder data =
                         -- Assume Root node
                         { root = RootNode n.name n.nameid n.charac n.isPrivate |> Just
                         , path = [ PNode n.name n.nameid n.isPrivate ]
-                        , focus = FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
+                        , focus = FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.isPrivate
                         }
             )
 
@@ -618,15 +620,15 @@ membersPayload =
 
 
 {-
-   Query Labels
+   Query Labels (Full)
 -}
 
 
-type alias NodeLabels =
+type alias NodeLabelsFull =
     { labels : Maybe (List LabelFull), isPrivate : Bool }
 
 
-labelsDecoder : Maybe NodeLabels -> Maybe (List LabelFull)
+labelsDecoder : Maybe NodeLabelsFull -> Maybe (List LabelFull)
 labelsDecoder data =
     data
         |> Maybe.map (\d -> withDefault [] d.labels)
@@ -641,9 +643,9 @@ queryLabels url nid msg =
         (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
 
 
-nodeLabelsPayload : SelectionSet NodeLabels Fractal.Object.Node
+nodeLabelsPayload : SelectionSet NodeLabelsFull Fractal.Object.Node
 nodeLabelsPayload =
-    SelectionSet.map2 NodeLabels
+    SelectionSet.map2 NodeLabelsFull
         (Fractal.Object.Node.labels
             (\args ->
                 { args
@@ -673,3 +675,77 @@ labelFullPayload =
         Fractal.Object.Label.color
         Fractal.Object.Label.description
         Fractal.Object.Label.n_nodes
+
+
+
+{-
+   Query Labels (Up)
+-}
+
+
+type alias NodeLabels =
+    -- isPrivate and nameid need in the backend to check if the ressource is hidden
+    { labels : Maybe (List Label), isPrivate : Bool, nameid : String }
+
+
+labelsUpDecoder : Maybe (List (Maybe NodeLabels)) -> Maybe (List Label)
+labelsUpDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.map (\x -> x.labels |> withDefault [])
+                        |> List.concat
+                        |> Just
+            )
+        |> Maybe.withDefault Nothing
+
+
+queryLabelsUp url nids msg =
+    makeGQLQuery url
+        (Query.queryNode
+            (nidUpFilter nids)
+            nodeLabelsUpPayload
+        )
+        (RemoteData.fromResult >> decodeResponse labelsUpDecoder >> msg)
+
+
+nidUpFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nidUpFilter nids a =
+    let
+        nameidsRegxp =
+            nids
+                |> List.map (\n -> "^" ++ n ++ "$")
+                |> String.join "|"
+                |> SE.surround "/"
+    in
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\c ->
+                    { c | nameid = Present { eq = Absent, regexp = Present nameidsRegxp } }
+                )
+                |> Present
+    }
+
+
+nodeLabelsUpPayload : SelectionSet NodeLabels Fractal.Object.Node
+nodeLabelsUpPayload =
+    SelectionSet.map3 NodeLabels
+        (Fractal.Object.Node.labels
+            (\args ->
+                { args
+                    | order =
+                        Input.buildLabelOrder (\b -> { b | asc = Present LabelOrderable.Name })
+                            |> Present
+                }
+            )
+            labelPayload
+        )
+        Fractal.Object.Node.isPrivate
+        Fractal.Object.Node.nameid

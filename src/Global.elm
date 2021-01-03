@@ -5,6 +5,7 @@ port module Global exposing
     , init
     , navigate
     , send
+    , sendNow
     , sendSleep
     , subscriptions
     , update
@@ -28,6 +29,7 @@ import Ports
 import Process
 import RemoteData exposing (RemoteData)
 import Task
+import Time
 import Url exposing (Url)
 
 
@@ -82,7 +84,6 @@ type Msg
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
     | UpdateSessionFocus (Maybe NodeFocus)
-    | UpdateSessionFocus2 (Maybe FocusNode)
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionOrga (Maybe NodesData)
     | UpdateSessionData (Maybe NodeData)
@@ -227,14 +228,6 @@ update msg model =
             in
             ( { model | session = { session | node_focus = data, tension_head = Nothing } }, Cmd.none )
 
-        UpdateSessionFocus2 data ->
-            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | focus = data } }, Cmd.none )
-
         UpdateSessionPath data ->
             let
                 session =
@@ -324,6 +317,11 @@ view { page, global, toMsg } =
 send : msg -> Cmd msg
 send =
     Task.succeed >> Task.perform identity
+
+
+sendNow : (Time.Posix -> msg) -> Cmd msg
+sendNow m =
+    Task.perform m Time.now
 
 
 sendSleep : msg -> Float -> Cmd msg

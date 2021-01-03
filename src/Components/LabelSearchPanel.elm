@@ -1,64 +1,70 @@
-module Components.LabelSearchPanel exposing (..)
+module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, update, view)
 
+import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Codecs exposing (LookupResult)
 import Components.Fa as Fa
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMapData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
+import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (Apis, GlobalCmd(..), LabelForm, UserState(..), initLabelForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelCommon.View exposing (viewLabel)
 import ModelSchema exposing (..)
+import Ports
+import Query.PatchTension exposing (setLabel)
+import Query.QueryNode exposing (queryLabelsUp)
+import Task
 import Text as T
 import Time
 
 
-type alias LabelSearchPanel =
+type State
+    = State Model
+
+
+type alias Model =
     { isOpen : Bool
     , form : LabelForm
     , click_result : GqlData IdPayload
+
+    -- Lookup
+    , lookup : List Label
+    , pattern : String -- search pattern
+    , labels_data : GqlData (List Label)
+
+    --, init_lookup : List Label -> Cmd Msg
+    --, search_lookup : String -> Cmd Msg
+    -- Common
+    , refresh_trial : Int
     }
 
 
-type alias LabelForm =
-    { uctx : UserCtx
-    , pattern : String
-    , nameid : String
-    , isNew : Bool
-    , label : Label
-    , events_type : Maybe (List TensionEvent.TensionEvent)
-    , post : Post
-    }
+init : String -> UserState -> State
+init tid user =
+    initModel tid user |> State
 
 
-initLabelForm : UserState -> String -> LabelForm
-initLabelForm user nameid =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
-    , pattern = ""
-    , nameid = nameid
-    , isNew = False
-    , label = Label "" "" Nothing
-    , events_type = Nothing
-    , post = Dict.empty
-    }
-
-
-init : UserState -> String -> LabelSearchPanel
-init user nid =
+initModel : String -> UserState -> Model
+initModel tid user =
     { isOpen = False
-    , form = initLabelForm user nid
+    , form = initLabelForm tid user
     , click_result = NotAsked
+
+    -- Lookup
+    , lookup = []
+    , pattern = ""
+    , labels_data = NotAsked
+
+    -- Common
+    , refresh_trial = 0
     }
 
 
@@ -66,21 +72,25 @@ init user nid =
 -- State control
 
 
-open : LabelSearchPanel -> LabelSearchPanel
-open data =
-    { data | isOpen = True }
+open : List String -> Model -> Model
+open targets data =
+    let
+        form =
+            data.form
+    in
+    { data | isOpen = True, form = { form | targets = targets } }
 
 
-close : LabelSearchPanel -> LabelSearchPanel
+close : Model -> Model
 close data =
     let
         form =
             data.form
     in
-    { data | isOpen = False, click_result = NotAsked, form = { form | pattern = "" } }
+    { data | isOpen = False, click_result = NotAsked, pattern = "" }
 
 
-click : Label -> Bool -> LabelSearchPanel -> LabelSearchPanel
+click : Label -> Bool -> Model -> Model
 click label isNew data =
     let
         form =
@@ -89,7 +99,7 @@ click label isNew data =
     { data | form = { form | label = label, isNew = isNew } }
 
 
-setClickResult : GqlData IdPayload -> LabelSearchPanel -> LabelSearchPanel
+setClickResult : GqlData IdPayload -> Model -> Model
 setClickResult result data =
     { data | click_result = result }
 
@@ -98,7 +108,7 @@ setClickResult result data =
 -- Update Form
 
 
-setEvents : List TensionEvent.TensionEvent -> LabelSearchPanel -> LabelSearchPanel
+setEvents : List TensionEvent.TensionEvent -> Model -> Model
 setEvents events data =
     let
         f =
@@ -107,7 +117,7 @@ setEvents events data =
     { data | form = { f | events_type = Just events } }
 
 
-post : String -> String -> LabelSearchPanel -> LabelSearchPanel
+post : String -> String -> Model -> Model
 post field value data =
     let
         f =
@@ -116,49 +126,218 @@ post field value data =
     { data | form = { f | post = Dict.insert field value f.post } }
 
 
-setPattern : String -> LabelSearchPanel -> LabelSearchPanel
+setPattern : String -> Model -> Model
 setPattern pattern data =
     let
         form =
             data.form
     in
-    { data | form = { form | pattern = pattern } }
+    { data | pattern = pattern }
 
 
-type alias Op msg =
-    { selectedLabels : List Label
-    , targets : List String
-    , labels_data : GqlData LabelssData
-    , lookup : List Label
-    , data : LabelSearchPanel
-    , onChangePattern : String -> msg
-    , onLabelClick : Label -> Bool -> Time.Posix -> msg
-    , onSubmit : (Time.Posix -> msg) -> msg
+
+-- ------------------------------
+-- U P D A T E
+-- ------------------------------
+
+
+type Msg
+    = OnOpen (List String)
+    | OnClose
+    | OnChangePattern String
+    | ChangeLabelLookup (LookupResult Label)
+    | OnLabelClick Label Bool Time.Posix
+    | OnLabelAck (GqlData IdPayload)
+    | OnSubmit (Time.Posix -> Msg)
+    | OnGotLabels (GqlData (List Label))
+    | SetLabel LabelForm
+
+
+type alias Out =
+    { cmds : List (Cmd Msg)
+    , gcmds : List GlobalCmd
+    , result : Maybe ( Bool, Label )
     }
 
 
-view : Op msg -> Html msg
-view op =
-    nav [ id "userSearchPanel", class "panel" ]
-        [ case op.labels_data of
-            Success ud ->
-                let
-                    linked_labels =
-                        List.foldl
-                            (\a b ->
-                                List.append (Dict.get a ud |> withDefault []) b
-                            )
-                            []
-                            op.targets
+noOut : Out
+noOut =
+    Out [] [] Nothing
 
+
+out1 : List (Cmd Msg) -> Out
+out1 cmds =
+    Out cmds [] Nothing
+
+
+out2 : List GlobalCmd -> Out
+out2 cmds =
+    Out [] cmds Nothing
+
+
+update : Apis -> Msg -> State -> ( State, Out )
+update apis message (State model) =
+    update_ apis message model
+        |> Tuple.mapFirst State
+
+
+update_ : Apis -> Msg -> Model -> ( Model, Out )
+update_ apis message model =
+    case message of
+        OnOpen targets ->
+            if model.isOpen == False then
+                let
+                    cmd =
+                        if targets /= model.form.targets then
+                            [ queryLabelsUp apis.gql targets OnGotLabels ]
+
+                        else
+                            []
+                in
+                ( open targets model
+                , out1 <|
+                    [ Ports.outsideClickClose "cancelLabelsFromJs" "labelsPanelContent"
+                    , Ports.inheritWith "labelSearchPanel"
+                    , Ports.focusOn "userInput"
+                    ]
+                        ++ cmd
+                )
+
+            else
+                ( model, noOut )
+
+        OnClose ->
+            ( close model, noOut )
+
+        OnGotLabels result ->
+            ( { model | labels_data = result }
+            , out1 <|
+                case result of
+                    Success r ->
+                        [ Ports.initLabelSearch r ]
+
+                    _ ->
+                        []
+            )
+
+        OnChangePattern pattern ->
+            ( setPattern pattern model
+            , out1 [ Ports.searchLabel pattern ]
+            )
+
+        ChangeLabelLookup data ->
+            case data of
+                Ok d ->
+                    ( { model | lookup = d }, noOut )
+
+                Err err ->
+                    ( model, out1 [ Ports.logErr err ] )
+
+        OnLabelClick label isNew time ->
+            let
+                data =
+                    click label isNew model
+                        |> post "createdAt" (fromTime time)
+                        |> post (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
+                        |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
+                        |> setClickResult LoadingSlowly
+            in
+            ( data
+            , out1 [ send (SetLabel data.form) ]
+            )
+
+        OnLabelAck result ->
+            let
+                data =
+                    setClickResult result model
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( setClickResult NotAsked model
+                    , out2 [ DoAuth data.form.uctx ]
+                    )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, Out [ sendSleep (SetLabel data.form) 500 ] [ DoUpdateToken ] Nothing )
+
+                OkAuth _ ->
+                    ( data, Out [] [] (Just ( model.form.isNew, data.form.label )) )
+
+                NoAuth ->
+                    ( data, noOut )
+
+        OnSubmit next ->
+            ( model
+            , out1 [ sendNow next ]
+            )
+
+        SetLabel form ->
+            ( model
+            , out1 [ setLabel apis.gql form OnLabelAck ]
+            )
+
+
+subscriptions =
+    [ Ports.cancelLabelsFromJs (always OnClose)
+    , Ports.lookupLabelFromJs ChangeLabelLookup
+    ]
+
+
+
+-- ------------------------------
+-- V I E W
+-- ------------------------------
+
+
+type alias Op =
+    { selectedLabels : List Label
+    , targets : List String
+    , isAdmin : Bool
+    }
+
+
+view : Op -> State -> Html Msg
+view op (State model) =
+    div []
+        [ h2
+            [ class "subtitle"
+            , classList [ ( "is-w", op.isAdmin ) ]
+            , onClick (OnOpen op.targets)
+            ]
+            [ text T.labelsH
+            , if model.isOpen then
+                Fa.icon0 "fas fa-times is-pulled-right" ""
+
+              else if op.isAdmin then
+                Fa.icon0 "fas fa-cog is-pulled-right" ""
+
+              else
+                text ""
+            ]
+        , div [ id "labelsPanelContent" ]
+            [ if model.isOpen then
+                view_ op (State model)
+
+              else
+                text ""
+            ]
+        ]
+
+
+view_ : Op -> State -> Html Msg
+view_ op (State model) =
+    nav [ id "labelSearchPanel", class "panel sidePanel" ]
+        [ case model.labels_data of
+            Success labels_d ->
+                let
                     labels =
-                        if op.data.form.pattern == "" then
+                        if model.pattern == "" then
                             op.selectedLabels
-                                ++ linked_labels
+                                ++ labels_d
                                 |> LE.uniqueBy (\u -> u.name)
 
                         else
-                            LE.uniqueBy (\u -> u.name) op.lookup
+                            LE.uniqueBy (\u -> u.name) model.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]
@@ -168,20 +347,20 @@ view op =
                                 , class "input autofocus"
                                 , type_ "text"
                                 , placeholder T.searchLabels
-                                , value op.data.form.pattern
-                                , onInput op.onChangePattern
+                                , value model.pattern
+                                , onInput OnChangePattern
                                 ]
                                 []
                             , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                             ]
                         ]
-                    , case op.data.click_result of
+                    , case model.click_result of
                         Failure err ->
                             viewGqlErrors err
 
                         _ ->
                             div [] []
-                    , viewLabelSelectors labels op
+                    , viewLabelSelectors labels op model
                     ]
 
             Loading ->
@@ -198,8 +377,8 @@ view op =
         ]
 
 
-viewLabelSelectors : List Label -> Op msg -> Html msg
-viewLabelSelectors labels op =
+viewLabelSelectors : List Label -> Op -> Model -> Html Msg
+viewLabelSelectors labels op model =
     div [ class "selectors" ] <|
         if labels == [] then
             [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
@@ -214,13 +393,17 @@ viewLabelSelectors labels op =
 
                             faCls =
                                 ternary isActive "fa-check-square" "fa-square"
+
+                            isLoading =
+                                model.click_result == LoadingSlowly && l.id == model.form.label.id
                         in
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (op.onSubmit <| op.onLabelClick l (isActive == False))
+                            , onClick (OnSubmit <| OnLabelClick l (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                             , viewLabel "" l
+                            , loadingSpin isLoading
                             ]
                     )

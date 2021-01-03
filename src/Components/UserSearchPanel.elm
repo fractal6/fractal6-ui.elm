@@ -19,16 +19,16 @@ import Time
 
 
 type alias UserSearchPanel =
-    { isEdit : Bool
+    { isOpen : Bool
     , form : AssigneeForm
     , click_result : GqlData IdPayload
     }
 
 
-init : UserState -> String -> UserSearchPanel
-init user tid =
-    { isEdit = False
-    , form = initAssigneeForm user tid
+init : String -> UserState -> UserSearchPanel
+init tid user =
+    { isOpen = False
+    , form = initAssigneeForm tid user
     , click_result = NotAsked
     }
 
@@ -39,7 +39,7 @@ init user tid =
 
 open : UserSearchPanel -> UserSearchPanel
 open data =
-    { data | isEdit = True }
+    { data | isOpen = True }
 
 
 close : UserSearchPanel -> UserSearchPanel
@@ -48,7 +48,7 @@ close data =
         form =
             data.form
     in
-    { data | isEdit = False, click_result = NotAsked, form = { form | pattern = "" } }
+    { data | isOpen = False, click_result = NotAsked, form = { form | pattern = "" } }
 
 
 click : User -> Bool -> UserSearchPanel -> UserSearchPanel
@@ -110,7 +110,7 @@ type alias Op msg =
 
 view : Op msg -> Html msg
 view op =
-    nav [ id "userSearchPanel", class "panel" ]
+    nav [ id "userSearchPanel", class "panel sidePanel" ]
         [ case op.users_data of
             Success ud ->
                 let

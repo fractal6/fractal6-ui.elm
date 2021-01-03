@@ -61,11 +61,11 @@ action2str action =
             Nothing
 
 
-create : UserState -> String -> ActionPanel
-create user tid =
+init : String -> UserState -> ActionPanel
+init tid user =
     { isEdit = False
     , isModalActive = False
-    , form = initActionForm user tid
+    , form = initActionForm tid user
     , state = NoAction
     , step = StepOne
     , action_result = NotAsked
@@ -76,8 +76,8 @@ create user tid =
 -- State controls
 
 
-edit : String -> ActionPanel -> ActionPanel
-edit bid data =
+open : String -> ActionPanel -> ActionPanel
+open bid data =
     let
         f =
             data.form
@@ -85,8 +85,8 @@ edit bid data =
     { data | isEdit = True, form = { f | bid = bid } }
 
 
-cancelEdit : ActionPanel -> ActionPanel
-cancelEdit data =
+close : ActionPanel -> ActionPanel
+close data =
     { data | isEdit = False }
 
 
@@ -123,7 +123,7 @@ terminate data =
         f =
             data.form
     in
-    { data | isEdit = False, isModalActive = False, form = initActionForm (LoggedIn f.uctx) f.tid, action_result = NotAsked }
+    { data | isEdit = False, isModalActive = False, form = initActionForm f.tid (LoggedIn f.uctx), action_result = NotAsked }
 
 
 setStep : ActionStep -> ActionPanel -> ActionPanel
@@ -268,16 +268,12 @@ view op =
                             case actionType_m of
                                 Just EDIT ->
                                     [ div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
-                                        [ Fa.icon "fas fa-archive" T.archive
-                                        , loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == ArchiveAction)
-                                        ]
+                                        [ Fa.icon "fas fa-archive" T.archive ]
                                     ]
 
                                 Just ARCHIVE ->
                                     [ div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
-                                        [ Fa.icon "fas fa-archive" T.unarchive
-                                        , loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == UnarchiveAction)
-                                        ]
+                                        [ Fa.icon "fas fa-archive" T.unarchive ]
                                     ]
 
                                 _ ->
@@ -289,9 +285,7 @@ view op =
                     ++ (if op.hasRole then
                             [ div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
                                 [ p []
-                                    [ Fa.icon "fas fa-sign-out-alt" T.leaveRole
-                                    , loadingSpin (op.data.action_result == LoadingSlowly && op.data.state == LeaveAction)
-                                    ]
+                                    [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ]
                                 ]
                             ]
                                 |> List.append [ hr [ class "dropdown-divider" ] [] ]

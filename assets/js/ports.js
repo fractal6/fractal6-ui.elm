@@ -40,7 +40,13 @@ window.addEventListener('load', _ => {
                     storeFields: ['username'],
                     fields: ['username', 'name'],
                     searchOptions: { fuzzy: 0.2, },
-                })
+                }),
+                qsl: new MiniSearch({
+                    idField: 'id',
+                    storeFields: ['id', 'name', 'color'],
+                    fields: ['name'],
+                    searchOptions: { fuzzy: 0.2, },
+                }),
             };
 
             // Suscribe to Elm outgoing ports
@@ -107,6 +113,10 @@ const actions = {
         // Setup User quickSearch
         initQuickSearch(session.qsu, data);
     },
+    'INIT_LABELSEARCH': (app, session, data) => {
+        // Setup User quickSearch
+        initQuickSearch(session.qsl, data);
+    },
     'ADD_QUICKSEARCH_NODES': (app, session, nodes) => {
         session.qsn.addAll(nodes);
     },
@@ -139,6 +149,11 @@ const actions = {
         var qs = session.qsu;
         var res = qs.search(pattern, {prefix:true}).slice(0,10);
         app.ports.lookupUserFromJs_.send(res);
+    },
+    'SEARCH_LABELS': (app, session, pattern) => {
+        var qs = session.qsl;
+        var res = qs.search(pattern, {prefix:true}).slice(0,10);
+        app.ports.lookupLabelFromJs_.send(res);
     },
     //
     // GraphPack

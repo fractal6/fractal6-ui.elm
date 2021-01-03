@@ -26,7 +26,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -302,7 +302,7 @@ init global flags =
             , tensionForm = NewTensionForm.create newFocus
 
             -- Node Action
-            , actionPanel = ActionPanel.create global.session.user ""
+            , actionPanel = ActionPanel.init "" global.session.user
 
             -- Common
             , node_action = withDefault NoOp global.session.node_action
@@ -888,13 +888,13 @@ update global msg model =
                                     |> withDefault ( "", "" )
                                 )
 
-                    aPanel =
+                    panel =
                         model.actionPanel
-                            |> ActionPanel.edit bid
+                            |> ActionPanel.open bid
                             |> ActionPanel.setTid tid
                             |> ActionPanel.setNode node
                 in
-                ( { model | actionPanel = aPanel }
+                ( { model | actionPanel = panel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
                 , Cmd.none
                 )
@@ -903,7 +903,7 @@ update global msg model =
                 ( model, send CancelAction, Cmd.none )
 
         CancelAction ->
-            ( { model | actionPanel = ActionPanel.cancelEdit model.actionPanel }, Cmd.none, Cmd.none )
+            ( { model | actionPanel = ActionPanel.close model.actionPanel }, Cmd.none, Cmd.none )
 
         CloseActionPanelModal link ->
             let
@@ -943,51 +943,51 @@ update global msg model =
 
         OpenActionPanelModal action ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
                         |> ActionPanel.activateModal
                         |> ActionPanel.setAction action
                         |> ActionPanel.setStep StepOne
             in
-            ( { model | actionPanel = aPanel }, Ports.open_modal, Cmd.none )
+            ( { model | actionPanel = panel }, Ports.open_modal, Cmd.none )
 
         ActionSubmit time ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
                         |> ActionPanel.post "createdAt" (fromTime time)
                         |> ActionPanel.setActionResult LoadingSlowly
             in
-            ( { model | actionPanel = aPanel }
-            , send (PushAction aPanel.form aPanel.state)
+            ( { model | actionPanel = panel }
+            , send (PushAction panel.form panel.state)
             , Cmd.none
             )
 
         ArchiveDocAck result ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
-                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.close
                         |> ActionPanel.setActionResult result
             in
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal aPanel.form.uctx), Cmd.none )
+                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
                 OkAuth t ->
-                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
+                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
                 NoAuth ->
-                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
+                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         LeaveRoleAck result ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
-                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.close
                         |> ActionPanel.setActionResult result
 
                 gcmds =
@@ -995,16 +995,16 @@ update global msg model =
             in
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal aPanel.form.uctx), Cmd.none )
+                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
                 OkAuth t ->
-                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
+                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
                 NoAuth ->
-                    ( { model | actionPanel = aPanel }, Cmd.batch gcmds, Cmd.none )
+                    ( { model | actionPanel = panel }, Cmd.batch gcmds, Cmd.none )
 
         UpdateActionPost field value ->
             ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
@@ -1043,7 +1043,7 @@ update global msg model =
                         |> withDefault ( "", "" )
 
                 f =
-                    initActionForm global.session.user tid
+                    initActionForm tid global.session.user
 
                 form =
                     { f
@@ -1490,7 +1490,6 @@ view_ global model =
             , node = initNodeFragment Nothing
             , isLazy = model.init_data
             , source = OverviewBaseUri
-            , focus = model.node_focus
             , hasBeenPushed = True
             , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view model.node_focus tid Nothing)) Nothing
             , receiver = nearestCircleid model.node_focus.nameid

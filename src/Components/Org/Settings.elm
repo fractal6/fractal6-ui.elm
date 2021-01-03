@@ -77,7 +77,7 @@ type alias Model =
     , label_edit : Maybe LabelFull
     , label_result : GqlData LabelFull
     , label_result_del : GqlData LabelFull
-    , label_form : LabelForm
+    , label_form : LabelNodeForm
     , colorPicker : ColorPicker
 
     -- Common
@@ -206,7 +206,7 @@ init global flags =
             , label_edit = Nothing
             , label_result = NotAsked
             , label_result_del = NotAsked
-            , label_form = initLabelForm global.session.user newFocus.nameid
+            , label_form = initLabelNodeForm global.session.user newFocus.nameid
             , colorPicker = ColorPicker.init
 
             -- Common
@@ -406,7 +406,7 @@ update global msg model =
                                     )
                                     d
                     in
-                    ( { model | label_result = result, labels = Success new, label_form = initLabelForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
+                    ( { model | label_result = result, labels = Success new, label_form = initLabelNodeForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -435,7 +435,7 @@ update global msg model =
                         new =
                             List.filter (\x -> x.id /= model.label_form.id) d
                     in
-                    ( { model | label_result_del = NotAsked, labels = Success new, label_form = initLabelForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
+                    ( { model | label_result_del = NotAsked, labels = Success new, label_form = initLabelNodeForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -477,7 +477,7 @@ update global msg model =
                         |> withDefault ( "", "" )
 
                 f =
-                    initActionForm global.session.user tid
+                    initActionForm tid global.session.user
 
                 form =
                     { f

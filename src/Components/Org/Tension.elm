@@ -9,13 +9,14 @@ import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList, up0)
+import Extra exposing (ternary, toMapOfList, toText, up0)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -28,7 +29,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
-import Global exposing (Msg(..), send, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
@@ -64,6 +65,7 @@ import ModelCommon.View
         , tensionTypeSpan
         , viewActionIcon
         , viewActionIconLink
+        , viewLabel
         , viewLabels
         , viewTensionArrow
         , viewTensionDateAndUser
@@ -126,6 +128,7 @@ type alias Model =
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
+    , expandedEvents : List Int
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionPatchForm
@@ -146,6 +149,7 @@ type alias Model =
     -- Side Pane
     , isTensionAdmin : Bool
     , assigneesPanel : UserSearchPanel
+    , labelsPanel : LabelSearchPanel.State
     , actionPanel : ActionPanel
 
     -- Common
@@ -215,6 +219,7 @@ type Msg
     | PublishBlob
     | PushAction ActionForm ActionPanelState
     | PushGuest ActionForm
+    | SetAssignee AssigneeForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph)
@@ -223,7 +228,7 @@ type Msg
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
-    | SetAdminRights (GqlData FocusNode)
+    | ExpandEvent Int
       -- Page Action
     | ChangeTensionPost String String -- {field value}
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
@@ -265,6 +270,8 @@ type Msg
     | ChangeAssignee User Bool Time.Posix
     | AssigneeAck (GqlData IdPayload)
     | GotOrga (GqlData NodesData)
+      -- Labels
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Action Edit
     | DoActionEdit Blob
     | CancelAction
@@ -363,6 +370,7 @@ init global flags =
                     |> withDefault Loading
             , tension_comments = Loading
             , tension_blobs = Loading
+            , expandedEvents = []
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionPatchForm tensionid global.session.user
@@ -385,8 +393,9 @@ init global flags =
             -- Side Pane
             , isTensionAdmin =
                 global.session.isAdmin |> withDefault False
-            , assigneesPanel = UserSearchPanel.init global.session.user tensionid
-            , actionPanel = ActionPanel.create global.session.user tensionid
+            , assigneesPanel = UserSearchPanel.init tensionid global.session.user
+            , labelsPanel = LabelSearchPanel.init tensionid global.session.user
+            , actionPanel = ActionPanel.init tensionid global.session.user
 
             -- Common
             , node_action = NoOp
@@ -399,8 +408,7 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , if tensionChanged global.session.referer global.url || model.tension_head == Loading then
+            [ if tensionChanged global.session.referer global.url || model.tension_head == Loading then
                 send LoadTensionHead
 
               else
@@ -440,12 +448,12 @@ init global flags =
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         PushTension form ack ->
             ( model, addOneTension apis.gql form ack, Cmd.none )
 
@@ -495,6 +503,9 @@ update global msg model =
             in
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
+        SetAssignee form ->
+            ( model, setAssignee apis.gql form AssigneeAck, Cmd.none )
+
         PassedSlowLoadTreshold ->
             let
                 tension_h =
@@ -514,21 +525,28 @@ update global msg model =
         -- Data queries
         GotPath result ->
             let
+                isAdmin =
+                    getTensionRights global.session.user model.tension_head result
+
                 newModel =
-                    { model | path_data = result }
+                    { model | path_data = result, isTensionAdmin = isAdmin }
             in
             case result of
                 Success path ->
+                    let
+                        gcmd =
+                            send (UpdateSessionAdmin (Just isAdmin))
+                    in
                     case path.root of
                         Just root ->
-                            ( newModel, Cmd.none, send (UpdateSessionPath (Just path)) )
+                            ( newModel, Cmd.none, Cmd.batch [ send (UpdateSessionPath (Just path)), gcmd ] )
 
                         Nothing ->
                             let
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( newModel, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
+                            ( newModel, queryLocalGraph apis.gql nameid GotPath2, gcmd )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
@@ -572,7 +590,7 @@ update global msg model =
 
                 OkAuth th ->
                     ( { model | tension_head = result }
-                    , Cmd.batch [ Ports.bulma_driver "", queryFocusNode apis.gql th.receiver.nameid SetAdminRights ]
+                    , Cmd.batch [ Ports.bulma_driver "", queryLocalGraph apis.gql th.receiver.nameid GotPath ]
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 
@@ -588,15 +606,8 @@ update global msg model =
         GotTensionBlobs result ->
             ( { model | tension_blobs = result }, Cmd.none, Ports.bulma_driver "" )
 
-        SetAdminRights result ->
-            let
-                isAdmin =
-                    getTensionRights global.session.user model.tension_head result
-            in
-            ( { model | isTensionAdmin = isAdmin }
-            , Cmd.none
-            , Cmd.batch [ send (UpdateSessionFocus2 (withMaybeData result)), send (UpdateSessionAdmin (Just isAdmin)) ]
-            )
+        ExpandEvent i ->
+            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Cmd.none )
 
         -- Page Action
         ChangeTensionPost field value ->
@@ -1093,7 +1104,7 @@ update global msg model =
 
         -- Assignees
         DoAssigneesEdit ->
-            if model.assigneesPanel.isEdit == False then
+            if model.assigneesPanel.isOpen == False then
                 let
                     gcmd =
                         case model.users_data of
@@ -1126,25 +1137,31 @@ update global msg model =
 
         ChangeAssignee user isNew time ->
             let
-                uPanel =
+                panel =
                     UserSearchPanel.click user isNew model.assigneesPanel
                         |> UserSearchPanel.post "createdAt" (fromTime time)
                         |> UserSearchPanel.post "new" user.username
                         |> UserSearchPanel.setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
                         |> UserSearchPanel.setClickResult LoadingSlowly
             in
-            ( { model | assigneesPanel = uPanel }
-            , setAssignee apis.gql uPanel.form AssigneeAck
+            ( { model | assigneesPanel = panel }
+            , send (SetAssignee panel.form)
             , Cmd.none
             )
 
         AssigneeAck result ->
             let
-                newModel =
-                    { model | assigneesPanel = UserSearchPanel.setClickResult result model.assigneesPanel }
+                panel =
+                    UserSearchPanel.setClickResult result model.assigneesPanel
             in
-            case result of
-                Success _ ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( { model | assigneesPanel = UserSearchPanel.setClickResult NotAsked model.assigneesPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (SetAssignee panel.form) 500, send UpdateUserToken )
+
+                OkAuth t ->
                     let
                         th =
                             withMapData
@@ -1164,10 +1181,10 @@ update global msg model =
                                 )
                                 model.tension_head
                     in
-                    ( { newModel | tension_head = th }, Cmd.none, Cmd.none )
+                    ( { model | assigneesPanel = panel, tension_head = th }, Cmd.none, Cmd.none )
 
-                other ->
-                    ( newModel, Cmd.none, Cmd.none )
+                NoAuth ->
+                    ( { model | assigneesPanel = panel }, Cmd.none, Cmd.none )
 
         GotOrga result ->
             case result of
@@ -1187,19 +1204,47 @@ update global msg model =
                 other ->
                     ( model, Cmd.none, Cmd.none )
 
-        -- Actionn
+        -- Labels
+        LabelSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    LabelSearchPanel.update apis msg model.labelsPanel
+
+                th =
+                    Maybe.map
+                        (\r ->
+                            withMapData
+                                (\x ->
+                                    let
+                                        labels =
+                                            if Tuple.first r == True then
+                                                withDefault [] x.labels ++ [ Tuple.second r ]
+
+                                            else
+                                                LE.remove (Tuple.second r) (withDefault [] x.labels)
+                                    in
+                                    { x | labels = Just labels }
+                                )
+                                model.tension_head
+                        )
+                        out.result
+                        |> withDefault model.tension_head
+            in
+            ( { model | labelsPanel = panel, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> Cmd.batch, Cmd.none )
+
+        -- Action
         DoActionEdit blob ->
             if model.actionPanel.isEdit == False then
                 let
                     parentid =
                         model.tension_head |> withMaybeDataMap (\th -> th.receiver.nameid) |> withDefault ""
 
-                    aPanel =
+                    panel =
                         model.actionPanel
-                            |> ActionPanel.edit blob.id
+                            |> ActionPanel.open blob.id
                             |> ActionPanel.setNode (blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid)
                 in
-                ( { model | actionPanel = aPanel }
+                ( { model | actionPanel = panel }
                 , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
                 , Cmd.none
                 )
@@ -1208,7 +1253,7 @@ update global msg model =
                 ( model, Cmd.none, Cmd.none )
 
         CancelAction ->
-            ( { model | actionPanel = ActionPanel.cancelEdit model.actionPanel }, Cmd.none, Cmd.none )
+            ( { model | actionPanel = ActionPanel.close model.actionPanel }, Cmd.none, Cmd.none )
 
         CloseActionPanelModal link ->
             let
@@ -1223,34 +1268,34 @@ update global msg model =
 
         OpenActionPanelModal action ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
                         |> ActionPanel.activateModal
                         |> ActionPanel.setAction action
                         |> ActionPanel.setStep StepOne
             in
-            ( { model | actionPanel = aPanel }
+            ( { model | actionPanel = panel }
             , Ports.open_modal
             , Cmd.none
             )
 
         ActionSubmit time ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
                         |> ActionPanel.post "createdAt" (fromTime time)
                         |> ActionPanel.setActionResult LoadingSlowly
             in
-            ( { model | actionPanel = aPanel }
-            , send (PushAction aPanel.form aPanel.state)
+            ( { model | actionPanel = panel }
+            , send (PushAction panel.form panel.state)
             , Cmd.none
             )
 
         ArchiveDocAck result ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
-                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.close
                         |> ActionPanel.setActionResult result
             in
             case doRefreshToken result model.refresh_trial of
@@ -1258,7 +1303,7 @@ update global msg model =
                     ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
                 OkAuth t ->
                     let
@@ -1270,36 +1315,36 @@ update global msg model =
                                 )
                                 model.tension_head
                     in
-                    ( { model | actionPanel = aPanel, tension_head = newTh }
+                    ( { model | actionPanel = panel, tension_head = newTh }
                     , Cmd.none
                     , send UpdateUserToken
                     )
 
                 NoAuth ->
-                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
+                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         LeaveRoleAck result ->
             let
-                aPanel =
+                panel =
                     model.actionPanel
-                        |> ActionPanel.cancelEdit
+                        |> ActionPanel.close
                         |> ActionPanel.setActionResult result
             in
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal aPanel.form.uctx), Cmd.none )
+                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction aPanel.form aPanel.state) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
                 OkAuth t ->
-                    ( { model | actionPanel = aPanel }
+                    ( { model | actionPanel = panel }
                     , Cmd.none
                     , send UpdateUserToken
                     )
 
                 NoAuth ->
-                    ( { model | actionPanel = aPanel }, Cmd.none, Cmd.none )
+                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         UpdateActionPost field value ->
             ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
@@ -1338,7 +1383,7 @@ update global msg model =
                         |> withDefault ( "", "" )
 
                 f =
-                    initActionForm global.session.user tid
+                    initActionForm tid global.session.user
 
                 form =
                     { f
@@ -1593,14 +1638,15 @@ update global msg model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    Sub.batch
-        [ Ports.closeModalFromJs DoCloseModal
-        , Ports.triggerHelpFromJs TriggerHelp
-        , Ports.cancelAssigneesFromJs (always CancelAssignees)
-        , Ports.cancelActionFromJs (always CancelAction)
-        , Ports.lookupUserFromJs ChangeUserLookup
-        , Ports.cancelLookupFsFromJs (always CancelLookupFs)
-        ]
+    [ Ports.closeModalFromJs DoCloseModal
+    , Ports.triggerHelpFromJs TriggerHelp
+    , Ports.cancelAssigneesFromJs (always CancelAssignees)
+    , Ports.cancelActionFromJs (always CancelAction)
+    , Ports.lookupUserFromJs ChangeUserLookup
+    , Ports.cancelLookupFsFromJs (always CancelLookupFs)
+    ]
+        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        |> Sub.batch
 
 
 
@@ -1802,10 +1848,29 @@ viewComments u t model =
                     tension_c.comments
                         |> withDefault []
 
-                evts =
-                    List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i }) comments
-                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i }) t.history
+                allEvts =
+                    List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
+                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) t.history
                         |> List.sortBy .createdAt
+
+                viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
+                viewCommentOrEvent e =
+                    case e.type_ of
+                        Just event_type ->
+                            case LE.getAt e.i t.history of
+                                Just event ->
+                                    viewEvent event t
+
+                                Nothing ->
+                                    text ""
+
+                        Nothing ->
+                            case LE.getAt e.i comments of
+                                Just c ->
+                                    viewComment c model
+
+                                Nothing ->
+                                    text ""
 
                 userInput =
                     case u of
@@ -1825,60 +1890,63 @@ viewComments u t model =
                             viewJoinNeeded model.node_focus
             in
             div [ class "tensionComments" ]
-                [ div []
-                    (List.map
-                        (\e ->
-                            case e.type_ of
-                                Just event_type ->
-                                    case LE.getAt e.i t.history of
-                                        Just event ->
-                                            case event.event_type of
-                                                TensionEvent.Reopened ->
-                                                    viewEventStatus event TensionStatus.Open
+                [ allEvts
+                    -- Filter events if there a above a given number.
+                    -- If above, we keep track of the extra number of event
+                    -- until a non-event (i.e a comment) is met.
+                    |> LE.indexedFoldr
+                        (\i e d ->
+                            let
+                                evts =
+                                    Tuple.first d
 
-                                                TensionEvent.Closed ->
-                                                    viewEventStatus event TensionStatus.Closed
+                                state =
+                                    Tuple.second d
 
-                                                TensionEvent.TitleUpdated ->
-                                                    viewEventTitle event
+                                isAbove =
+                                    (List.length evts > 6) && (e.type_ /= Nothing) && (evts |> List.take 6 |> List.filter (\x -> x.type_ == Nothing) |> List.length) == 0
 
-                                                TensionEvent.AssigneeAdded ->
-                                                    viewEventAssignee event True
+                                isClicked =
+                                    state.isClicked || List.member i model.expandedEvents
+                            in
+                            if isAbove && state.nskip == 0 && isClicked == False then
+                                ( evts, { state | nskip = 1, i = i } )
 
-                                                TensionEvent.AssigneeRemoved ->
-                                                    viewEventAssignee event False
+                            else if isAbove && state.nskip > 0 && state.isClicked == False then
+                                ( evts, { state | nskip = state.nskip + 1 } )
 
-                                                TensionEvent.BlobPushed ->
-                                                    viewEventPushed event t.action
+                            else if state.nskip > 0 && e.type_ == Nothing && state.isClicked == False then
+                                let
+                                    btn =
+                                        { type_ = Nothing, n = state.nskip, createdAt = "", i = state.i }
+                                in
+                                ( [ e ] ++ [ btn ] ++ evts, { state | nskip = 0, isClicked = False } )
 
-                                                TensionEvent.BlobArchived ->
-                                                    viewEventArchived event t.action True
+                            else if e.type_ == Nothing then
+                                ( [ e ] ++ evts, { state | nskip = 0, isClicked = False } )
 
-                                                TensionEvent.BlobUnarchived ->
-                                                    viewEventArchived event t.action False
-
-                                                TensionEvent.UserJoin ->
-                                                    viewEventUserJoin event t.action
-
-                                                TensionEvent.UserLeft ->
-                                                    viewEventUserLeft event t.action
-
-                                                _ ->
-                                                    text ""
-
-                                        Nothing ->
-                                            text ""
-
-                                Nothing ->
-                                    case LE.getAt e.i comments of
-                                        Just c ->
-                                            viewComment c model
-
-                                        Nothing ->
-                                            text ""
+                            else
+                                ( [ e ] ++ evts, { state | isClicked = isClicked } )
                         )
-                        evts
-                    )
+                        -- The tuple.first: filterered list of events
+                        -- The tuple.second: state of the fold loop. We stored the skips when a new comment is
+                        -- encoutered in order to insert a button later at the current position.
+                        ( [], { nskip = 0, isCollapsed = True, isClicked = False, i = 0 } )
+                    |> Tuple.first
+                    |> List.map
+                        (\x ->
+                            if x.n > 0 then
+                                div
+                                    [ class "button is-small  actionComment m-4"
+                                    , attribute "style" "left:10%;"
+                                    , onClick (ExpandEvent x.i)
+                                    ]
+                                    [ toText [ "Show", String.fromInt x.n, "older events" ] ]
+
+                            else
+                                viewCommentOrEvent x
+                        )
+                    |> div []
                 , hr [ class "has-background-grey is-3" ] []
                 , userInput
                 ]
@@ -2039,6 +2107,49 @@ viewCommentInput uctx tension form result viewMode =
         ]
 
 
+viewEvent : Event -> TensionHead -> Html Msg
+viewEvent event t =
+    case event.event_type of
+        TensionEvent.Reopened ->
+            viewEventStatus event TensionStatus.Open
+
+        TensionEvent.Closed ->
+            viewEventStatus event TensionStatus.Closed
+
+        TensionEvent.TitleUpdated ->
+            viewEventTitle event
+
+        TensionEvent.AssigneeAdded ->
+            viewEventAssignee event True
+
+        TensionEvent.AssigneeRemoved ->
+            viewEventAssignee event False
+
+        TensionEvent.LabelAdded ->
+            viewEventLabel event True
+
+        TensionEvent.LabelRemoved ->
+            viewEventLabel event False
+
+        TensionEvent.BlobPushed ->
+            viewEventPushed event t.action
+
+        TensionEvent.BlobArchived ->
+            viewEventArchived event t.action True
+
+        TensionEvent.BlobUnarchived ->
+            viewEventArchived event t.action False
+
+        TensionEvent.UserJoin ->
+            viewEventUserJoin event t.action
+
+        TensionEvent.UserLeft ->
+            viewEventUserLeft event t.action
+
+        _ ->
+            text ""
+
+
 viewEventStatus : Event -> TensionStatus.TensionStatus -> Html Msg
 viewEventStatus event status =
     let
@@ -2099,6 +2210,32 @@ viewEventAssignee event isNew =
             [ span [] <|
                 List.intersperse (text " ")
                     [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], event.new |> withDefault "" |> viewUsernameLink, text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
+viewEventLabel : Event -> Bool -> Html Msg
+viewEventLabel event isNew =
+    let
+        icon =
+            Fa.icon0 "fas fa-tag" ""
+
+        ( actionText, label_ ) =
+            if isNew then
+                ( T.addedThe, withDefault "unknown" event.new )
+
+            else
+                ( T.removedThe, withDefault "unknown" event.old )
+
+        label =
+            Label "" (SE.leftOfBack "§" label_) (SE.rightOfBack "§" label_ |> Just)
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ icon ]
+        , div [ class "media-content" ]
+            [ span [] <|
+                List.intersperse (text " ")
+                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2277,7 +2414,8 @@ viewDocument u t b model =
                     , node = b.node |> withDefault (initNodeFragment Nothing)
                     , isLazy = False
                     , source = TensionBaseUri
-                    , focus = model.node_focus
+
+                    --, focus = model.node_focus
                     , hasBeenPushed = t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
                     , toolbar = Nothing
                     , receiver = t.receiver.nameid
@@ -2443,7 +2581,7 @@ viewSidePane u t model =
                             , onClick DoAssigneesEdit
                             ]
                             [ text T.assigneesH
-                            , if model.assigneesPanel.isEdit then
+                            , if model.assigneesPanel.isOpen then
                                 Fa.icon0 "fas fa-times is-pulled-right" ""
 
                               else if model.isTensionAdmin then
@@ -2453,7 +2591,7 @@ viewSidePane u t model =
                                 text ""
                             ]
                         , div [ id "assigneesPanelContent" ]
-                            [ if model.assigneesPanel.isEdit then
+                            [ if model.assigneesPanel.isOpen then
                                 let
                                     panelData =
                                         { selectedUsers = assignees
@@ -2485,14 +2623,26 @@ viewSidePane u t model =
             ]
         , div [ class "media" ]
             [ div [ class "media-content" ]
-                [ h2 [ class "subtitle" ] [ text T.labelsH ]
-                , div [ class "" ]
-                    [ if List.length labels > 0 then
-                        viewLabels labels
+                [ div []
+                    [ case u of
+                        LoggedIn uctx ->
+                            let
+                                panelOp =
+                                    { selectedLabels = t.labels |> withDefault []
+                                    , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                                    , isAdmin = model.isTensionAdmin
+                                    }
+                            in
+                            LabelSearchPanel.view panelOp model.labelsPanel |> Html.map LabelSearchPanelMsg
 
-                      else
-                        div [ class "is-italic" ] [ text T.noLabels ]
+                        LoggedOut ->
+                            h2 [ class "subtitle" ] [ text T.assigneesH ]
                     ]
+                , if List.length labels > 0 then
+                    viewLabels labels
+
+                  else
+                    div [ class "is-italic" ] [ text T.noLabels ]
                 ]
             ]
         , div [ class "media" ]
@@ -2742,20 +2892,20 @@ eventFromForm event_type form =
     }
 
 
-getTensionRights : UserState -> GqlData TensionHead -> GqlData FocusNode -> Bool
-getTensionRights user th_d focus_d =
+getTensionRights : UserState -> GqlData TensionHead -> GqlData LocalGraph -> Bool
+getTensionRights user th_d path_d =
     case user of
         LoggedIn uctx ->
             case th_d of
                 Success th ->
-                    case focus_d of
-                        Success focus ->
+                    case path_d of
+                        Success p ->
                             let
                                 orgaRoles =
-                                    getOrgaRoles uctx.roles [ nid2rootid focus.nameid ]
+                                    getOrgaRoles uctx.roles [ nid2rootid p.focus.nameid ]
 
                                 childrenRoles =
-                                    getChildrenLeaf th.receiver.nameid focus
+                                    getChildrenLeaf th.receiver.nameid p.focus
 
                                 childrenCoordos =
                                     List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
@@ -2778,7 +2928,7 @@ getTensionRights user th_d focus_d =
                                 True
 
                             else
-                                case focus.charac.mode of
+                                case p.focus.charac.mode of
                                     NodeMode.Agile ->
                                         -- Is a  Circle member
                                         (List.length circleRoles > 0)

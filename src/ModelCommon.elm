@@ -19,6 +19,8 @@ import ModelSchema exposing (..)
 import Ports
 import RemoteData
 import Set
+import Task
+import Time
 import Url exposing (Url)
 
 
@@ -41,7 +43,6 @@ type alias Session =
     , referer : Maybe Url
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
-    , focus : Maybe FocusNode
     , path_data : Maybe LocalGraph
     , orga_data : Maybe NodesData
     , users_data : Maybe UsersData
@@ -64,6 +65,16 @@ type alias Apis =
     }
 
 
+type GlobalCmd
+    = DoAuth UserCtx
+      --| Delay msg1 Float
+    | DoUpdateToken
+
+
+
+--| SubmitDelay Int
+
+
 type alias NodesQuickSearch =
     { pattern : String
     , lookup : Array Node
@@ -78,7 +89,6 @@ resetSession flags =
     , user = LoggedOut
     , token_data = RemoteData.NotAsked
     , node_focus = Nothing
-    , focus = Nothing
     , path_data = Nothing
     , orga_data = Nothing
     , users_data = Nothing
@@ -126,7 +136,6 @@ fromLocalSession flags =
       , user = user
       , token_data = RemoteData.NotAsked
       , node_focus = Nothing
-      , focus = Nothing
       , path_data = Nothing
       , orga_data = Nothing
       , users_data = Nothing
@@ -265,8 +274,8 @@ type alias AssigneeForm =
     }
 
 
-initAssigneeForm : UserState -> String -> AssigneeForm
-initAssigneeForm user tid =
+initAssigneeForm : String -> UserState -> AssigneeForm
+initAssigneeForm tid user =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -278,6 +287,35 @@ initAssigneeForm user tid =
     , pattern = ""
     , assignee = User "" Nothing
     , isNew = False
+    , events_type = Nothing
+    , post = Dict.empty
+    }
+
+
+type alias LabelForm =
+    { uctx : UserCtx
+    , tid : String
+    , targets : List String -- Where the labels come from
+    , isNew : Bool -- add or remove a label
+    , label : Label -- selected/unselected label
+    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , post : Post
+    }
+
+
+initLabelForm : String -> UserState -> LabelForm
+initLabelForm tid user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , tid = tid
+    , targets = []
+    , isNew = False
+    , label = Label "" "" Nothing
     , events_type = Nothing
     , post = Dict.empty
     }
@@ -334,7 +372,7 @@ initTensionPatchForm tid user =
 --Settings Form
 
 
-type alias LabelForm =
+type alias LabelNodeForm =
     { uctx : UserCtx
     , id : String
     , nameid : String
@@ -342,8 +380,8 @@ type alias LabelForm =
     }
 
 
-initLabelForm : UserState -> String -> LabelForm
-initLabelForm user nameid =
+initLabelNodeForm : UserState -> String -> LabelNodeForm
+initLabelNodeForm user nameid =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -372,8 +410,8 @@ type alias ActionForm =
     }
 
 
-initActionForm : UserState -> String -> ActionForm
-initActionForm user tid =
+initActionForm : String -> UserState -> ActionForm
+initActionForm tid user =
     { uctx =
         case user of
             LoggedIn uctx ->

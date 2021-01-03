@@ -43,6 +43,7 @@ import ModelSchema exposing (..)
 import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nodeCharacPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
+import String.Extra as SE
 
 
 
@@ -93,11 +94,7 @@ tensionHeadPayload =
         |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with Fractal.Object.Tension.title
         |> with Fractal.Object.Tension.type_
-        |> with
-            (Fractal.Object.Tension.labels
-                (\args -> { args | first = Present nLabelPerTension })
-                labelPayload
-            )
+        |> with (Fractal.Object.Tension.labels identity labelPayload)
         |> with (Fractal.Object.Tension.assignees identity userPayload)
         |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
@@ -231,11 +228,6 @@ nodeFragmentPayload =
 -}
 
 
-nLabelPerTension : Int
-nLabelPerTension =
-    4
-
-
 nCircleTensionPpg : Int
 nCircleTensionPpg =
     10
@@ -346,11 +338,7 @@ tensionPayload =
         |> with (Fractal.Object.Tension.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with Fractal.Object.Tension.title
         |> with Fractal.Object.Tension.type_
-        |> with
-            (Fractal.Object.Tension.labels
-                (\args -> { args | first = Present nLabelPerTension })
-                labelPayload
-            )
+        |> with (Fractal.Object.Tension.labels identity labelPayload)
         |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
@@ -413,13 +401,11 @@ queryAllTension url targetids first offset query_ status_ type_ msg =
 subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
 subTensionIntFilterByDate nameids first offset query_ status_ type_ a =
     let
-        nameidsRegxp_ =
+        nameidsRegxp =
             nameids
                 |> List.map (\n -> "^" ++ n ++ "$")
                 |> String.join "|"
-
-        nameidsRegxp =
-            "/" ++ nameidsRegxp_ ++ "/"
+                |> SE.surround "/"
     in
     { a
         | first = Present first
@@ -465,13 +451,11 @@ subTensionIntFilterByDate nameids first offset query_ status_ type_ a =
 subTensionExtFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
 subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
     let
-        nameidsRegxp_ =
+        nameidsRegxp =
             nameids
                 |> List.map (\n -> "^" ++ n ++ "$")
                 |> String.join "|"
-
-        nameidsRegxp =
-            "/" ++ nameidsRegxp_ ++ "/"
+                |> SE.surround "/"
     in
     { a
         | first = Present first
@@ -538,13 +522,11 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
 subTensionAllFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
 subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
     let
-        nameidsRegxp_ =
+        nameidsRegxp =
             nameids
                 |> List.map (\n -> "^" ++ n ++ "$")
                 |> String.join "|"
-
-        nameidsRegxp =
-            "/" ++ nameidsRegxp_ ++ "/"
+                |> SE.surround "/"
     in
     { a
         | first = Present first

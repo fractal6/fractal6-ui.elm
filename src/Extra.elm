@@ -1,6 +1,7 @@
 module Extra exposing (..)
 
 import Dict exposing (Dict)
+import Html exposing (Html, span, text)
 import String
 import String.Extra as SE
 
@@ -31,6 +32,14 @@ up1 s =
 upAll : String -> String
 upAll t =
     String.toUpper t
+
+
+toText : List String -> Html msg
+toText l =
+    l
+        |> List.intersperse " "
+        |> List.map (\x -> text x)
+        |> span []
 
 
 

@@ -5,6 +5,7 @@ module Query.PatchTension exposing
     , publishBlob
     , pushTensionPatch
     , setAssignee
+    , setLabel
     )
 
 import Dict exposing (Dict)
@@ -30,7 +31,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, TensionPatchForm)
+import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvent)
 import Query.QueryTension exposing (blobPayload, commentPayload)
@@ -279,12 +280,12 @@ patchCommentInputEncoder form =
 -}
 
 
-type alias AssigneePayload =
+type alias TensionIdPayload =
     { tension : Maybe (List (Maybe IdPayload)) }
 
 
-assigneeDecoder : Maybe AssigneePayload -> Maybe IdPayload
-assigneeDecoder data =
+tensionIdDecoder : Maybe TensionIdPayload -> Maybe IdPayload
+tensionIdDecoder data =
     case data of
         Just d ->
             d.tension
@@ -303,13 +304,13 @@ setAssignee url form msg =
     makeGQLMutation url
         (Mutation.updateTension
             (setAssigneeEncoder form)
-            (SelectionSet.map AssigneePayload <|
+            (SelectionSet.map TensionIdPayload <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map IdPayload
                         (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
             )
         )
-        (RemoteData.fromResult >> decodeResponse assigneeDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
 
 
 setAssigneeEncoder : AssigneeForm -> Mutation.UpdateTensionRequiredArguments
@@ -329,7 +330,7 @@ setAssigneeEncoder f =
                     )
             }
 
-        userPatch =
+        patch =
             Input.buildTensionPatch
                 (\s ->
                     { s
@@ -338,12 +339,7 @@ setAssigneeEncoder f =
                                 [ Input.buildUserRef
                                     (\u -> { u | username = Present f.assignee.username })
                                 ]
-                        , history =
-                            if f.isNew then
-                                events
-
-                            else
-                                Absent
+                        , history = ternary f.isNew events Absent
                     }
                 )
                 |> Present
@@ -353,8 +349,70 @@ setAssigneeEncoder f =
 
         inputOpt =
             \x ->
-                { set = ternary f.isNew userPatch historyPatch
-                , remove = ternary (f.isNew == False) userPatch Absent
+                { set = ternary f.isNew patch historyPatch
+                , remove = ternary (f.isNew == False) patch Absent
+                }
+    in
+    { input = Input.buildUpdateTensionInput inputReq inputOpt }
+
+
+
+{-
+   set label
+-}
+
+
+setLabel url form msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (setLabelEncoder form)
+            (SelectionSet.map TensionIdPayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    SelectionSet.map IdPayload
+                        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
+
+
+setLabelEncoder : LabelForm -> Mutation.UpdateTensionRequiredArguments
+setLabelEncoder f =
+    let
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        events =
+            buildEvent createdAt f.uctx.username f.events_type f.post
+
+        inputReq =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId f.tid ] }
+                    )
+            }
+
+        patch =
+            Input.buildTensionPatch
+                (\s ->
+                    { s
+                        | labels =
+                            Present
+                                [ Input.buildLabelRef
+                                    (\u -> { u | id = Present (encodeId f.label.id) })
+                                ]
+                        , history = ternary f.isNew events Absent
+                    }
+                )
+                |> Present
+
+        historyPatch =
+            Input.buildTensionPatch (\s -> { s | history = events }) |> Present
+
+        inputOpt =
+            \x ->
+                { set = ternary f.isNew patch historyPatch
+                , remove = ternary (f.isNew == False) patch Absent
                 }
     in
     { input = Input.buildUpdateTensionInput inputReq inputOpt }

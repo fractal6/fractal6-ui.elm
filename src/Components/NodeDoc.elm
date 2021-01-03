@@ -226,7 +226,6 @@ type alias OrgaNodeData msg =
     { node : NodeFragment
     , isLazy : Bool
     , source : FractalBaseRoute
-    , focus : NodeFocus
     , hasBeenPushed : Bool
     , toolbar : Maybe (Html msg)
     , receiver : String
@@ -590,7 +589,7 @@ nodeLinksInputView txt form data op =
                         ]
                     , if data.isLookupOpen then
                         div
-                            [ id "userSearchPanel", class "panel in-horizon" ]
+                            [ id "userSearchPanel", class "panel in-horizon sidePanel" ]
                             [ UserSearchPanel.viewSelectors i u.pattern op ]
 
                       else

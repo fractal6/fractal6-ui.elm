@@ -16,7 +16,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (LabelForm)
+import ModelCommon exposing (LabelNodeForm)
 import ModelCommon.Codecs exposing (nid2rootid)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
@@ -61,7 +61,7 @@ addOneLabel url form msg =
         (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
 
 
-addLabelInputEncoder : LabelForm -> Mutation.AddLabelRequiredArguments
+addLabelInputEncoder : LabelNodeForm -> Mutation.AddLabelRequiredArguments
 addLabelInputEncoder form =
     let
         inputReq =
@@ -100,7 +100,7 @@ updateOneLabel url form msg =
         (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
 
 
-updateLabelInputEncoder : LabelForm -> Mutation.UpdateLabelRequiredArguments
+updateLabelInputEncoder : LabelNodeForm -> Mutation.UpdateLabelRequiredArguments
 updateLabelInputEncoder form =
     let
         inputReq =
@@ -167,7 +167,7 @@ removeOneLabel url form msg =
         (RemoteData.fromResult >> decodeResponse labelFullDecoder >> msg)
 
 
-removeLabelInputEncoder : LabelForm -> Mutation.UpdateLabelRequiredArguments
+removeLabelInputEncoder : LabelNodeForm -> Mutation.UpdateLabelRequiredArguments
 removeLabelInputEncoder form =
     let
         inputReq =

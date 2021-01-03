@@ -14,6 +14,7 @@ import ModelSchema
         , EmitterOrReceiver
         , FocusNode
         , IdPayload
+        , Label
         , LocalGraph
         , Node
         , NodeCharac
@@ -32,6 +33,33 @@ import ModelSchema
 --
 -- Json Decoders/Encoders
 --
+{-
+   Label decoder/encoder
+-}
+
+
+labelDecoder : JD.Decoder Label
+labelDecoder =
+    JD.map3 Label
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.maybe <| JD.field "color" JD.string)
+
+
+labelEncoder : Label -> List ( String, JE.Value )
+labelEncoder u =
+    [ ( "id", JE.string u.id )
+    , ( "name", JE.string u.name )
+    , ( "color", JEE.maybe JE.string u.color )
+    ]
+
+
+labelsEncoder : List Label -> JE.Value
+labelsEncoder users =
+    JE.list JE.object <| List.map labelEncoder users
+
+
+
 {-
    User decoder/encoder
 -}
