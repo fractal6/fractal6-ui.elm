@@ -110,6 +110,21 @@ page =
         }
 
 
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoAuth uctx ->
+                        ( send (DoOpenAuthModal uctx), Cmd.none )
+
+                    DoUpdateToken ->
+                        ( Cmd.none, send UpdateUserToken )
+            )
+        |> List.unzip
+
+
 
 ---- MODEL ----
 
@@ -1229,8 +1244,11 @@ update global message model =
                         )
                         out.result
                         |> withDefault model.tension_head
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
             in
-            ( { model | labelsPanel = panel, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> Cmd.batch, Cmd.none )
+            ( { model | labelsPanel = panel, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Action
         DoActionEdit blob ->
