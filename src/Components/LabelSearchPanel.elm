@@ -1,4 +1,4 @@
-module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, update, view)
+module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, update, view, viewNew)
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Codecs exposing (LookupResult)
@@ -16,7 +16,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), LabelForm, UserState(..), initLabelForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
-import ModelCommon.View exposing (viewLabel)
+import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)
@@ -147,6 +147,7 @@ type Msg
     | OnChangePattern String
     | ChangeLabelLookup (LookupResult Label)
     | OnLabelClick Label Bool Time.Posix
+    | OnLabelClickInt Label Bool Time.Posix
     | OnLabelAck (GqlData IdPayload)
     | OnSubmit (Time.Posix -> Msg)
     | OnGotLabels (GqlData (List Label))
@@ -244,22 +245,31 @@ update_ apis message model =
             , out1 [ send (SetLabel data.form) ]
             )
 
+        OnLabelClickInt label isNew time ->
+            let
+                data =
+                    click label isNew model
+                        |> post "new" (label.name ++ "§" ++ withDefault "" label.color)
+                        |> setEvents [ TensionEvent.LabelAdded ]
+            in
+            ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
+
         OnLabelAck result ->
             let
                 data =
                     setClickResult result model
             in
-            case doRefreshToken result model.refresh_trial of
+            case doRefreshToken result data.refresh_trial of
                 Authenticate ->
-                    ( setClickResult NotAsked model
+                    ( setClickResult NotAsked data
                     , out2 [ DoAuth data.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, Out [ sendSleep (SetLabel data.form) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { data | refresh_trial = i }, Out [ sendSleep (SetLabel data.form) 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth _ ->
-                    ( data, Out [] [] (Just ( model.form.isNew, data.form.label )) )
+                    ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
 
                 NoAuth ->
                     ( data, noOut )
@@ -294,36 +304,8 @@ type alias Op =
     }
 
 
-view : Op -> State -> Html Msg
-view op (State model) =
-    div []
-        [ h2
-            [ class "subtitle"
-            , classList [ ( "is-w", op.isAdmin ) ]
-            , onClick (OnOpen op.targets)
-            ]
-            [ text T.labelsH
-            , if model.isOpen then
-                Fa.icon0 "fas fa-times is-pulled-right" ""
-
-              else if op.isAdmin then
-                Fa.icon0 "fas fa-cog is-pulled-right" ""
-
-              else
-                text ""
-            ]
-        , div [ id "labelsPanelContent" ]
-            [ if model.isOpen then
-                view_ op (State model)
-
-              else
-                text ""
-            ]
-        ]
-
-
-view_ : Op -> State -> Html Msg
-view_ op (State model) =
+view_ : Bool -> Op -> State -> Html Msg
+view_ isInternal op (State model) =
     nav [ id "labelSearchPanel", class "panel sidePanel" ]
         [ case model.labels_data of
             Success labels_d ->
@@ -337,29 +319,30 @@ view_ op (State model) =
                         else
                             LE.uniqueBy (\u -> u.name) model.lookup
                 in
-                div []
-                    [ div [ class "panel-block" ]
-                        [ p [ class "control has-icons-left" ]
-                            [ input
-                                [ id "userInput"
-                                , class "input autofocus"
-                                , type_ "text"
-                                , placeholder T.searchLabels
-                                , value model.pattern
-                                , onInput OnChangePattern
+                div [] <|
+                    ternary isInternal List.reverse identity <|
+                        [ div [ class "panel-block" ]
+                            [ p [ class "control has-icons-left" ]
+                                [ input
+                                    [ id "userInput"
+                                    , class "input autofocus"
+                                    , type_ "text"
+                                    , placeholder T.searchLabels
+                                    , value model.pattern
+                                    , onInput OnChangePattern
+                                    ]
+                                    []
+                                , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                                 ]
-                                []
-                            , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                             ]
-                        ]
-                    , case model.click_result of
-                        Failure err ->
-                            viewGqlErrors err
+                        , case model.click_result of
+                            Failure err ->
+                                viewGqlErrors err
 
-                        _ ->
-                            div [] []
-                    , viewLabelSelectors labels op model
-                    ]
+                            _ ->
+                                div [] []
+                        , viewLabelSelectors isInternal labels op model
+                        ]
 
             Loading ->
                 div [ class "spinner" ] [ text "" ]
@@ -375,8 +358,8 @@ view_ op (State model) =
         ]
 
 
-viewLabelSelectors : List Label -> Op -> Model -> Html Msg
-viewLabelSelectors labels op model =
+viewLabelSelectors : Bool -> List Label -> Op -> Model -> Html Msg
+viewLabelSelectors isInternal labels op model =
     div [ class "selectors" ] <|
         if labels == [] then
             [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
@@ -398,10 +381,66 @@ viewLabelSelectors labels op model =
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (OnSubmit <| OnLabelClick l (isActive == False))
+                            , ternary isInternal
+                                (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
+                                (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                             , viewLabel "" l
                             , loadingSpin isLoading
                             ]
                     )
+
+
+
+--
+-- Input View
+--
+
+
+view : Op -> State -> Html Msg
+view op (State model) =
+    div []
+        [ h2
+            [ class "subtitle"
+            , classList [ ( "is-w", op.isAdmin ) ]
+            , onClick (OnOpen op.targets)
+            ]
+            [ text T.labelsH
+            , if model.isOpen then
+                Fa.icon0 "fas fa-times is-pulled-right" ""
+
+              else if op.isAdmin then
+                Fa.icon0 "fas fa-cog is-pulled-right" ""
+
+              else
+                text ""
+            ]
+        , div [ id "labelsPanelContent" ]
+            [ if model.isOpen then
+                view_ False op (State model)
+
+              else
+                text ""
+            ]
+        ]
+
+
+viewNew : Op -> State -> Html Msg
+viewNew op (State model) =
+    div []
+        [ div [ id "labelsPanelContent", class "is-reversed" ]
+            [ if model.isOpen then
+                view_ True op (State model)
+
+              else
+                text ""
+            ]
+        , div [ class "button is-small is-light mr-2", onClick (OnOpen op.targets) ]
+            [ Fa.icon "fas fa-plus" "", text "Label" ]
+        , if List.length op.selectedLabels > 0 then
+            viewLabels op.selectedLabels
+
+          else
+            text ""
+        ]

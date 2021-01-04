@@ -171,10 +171,10 @@ viewUsers users =
 viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
     if isLinked then
-        span [] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ] [ getAvatar username ] ]
+        span [ class "mr-1" ] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ] [ getAvatar username ] ]
 
     else
-        span [] [ div [ class "image circleBaseInline circle0" ] [ getAvatar username ] ]
+        span [ class "mr-1" ] [ div [ class "image circleBaseInline circle0" ] [ getAvatar username ] ]
 
 
 viewUsernameLink : String -> Html msg

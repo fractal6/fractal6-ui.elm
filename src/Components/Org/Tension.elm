@@ -274,6 +274,7 @@ type Msg
       -- User quick search
     | ChangeNodeUserPattern Int String
     | ChangeNodeUserRole Int String
+    | ChangeUserLookup (LookupResult User)
     | SelectUser Int String
     | CancelUser Int
     | ShowLookupFs
@@ -1075,6 +1076,14 @@ update global message model =
             , Cmd.none
             )
 
+        ChangeUserLookup users_ ->
+            case users_ of
+                Ok users ->
+                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
+
+                Err err ->
+                    ( model, Ports.logErr err, Cmd.none )
+
         SelectUser pos username ->
             ( { model | nodeDoc = NodeDoc.selectUser pos username model.nodeDoc }
             , Cmd.none
@@ -1128,77 +1137,6 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         -- Assignees
-        --DoAssigneesEdit ->
-        --    if model.assigneesPanel.isOpen == False then
-        --        let
-        --            gcmd =
-        --                case model.users_data of
-        --                    Success users ->
-        --                        Ports.initUserSearch (Dict.values users |> List.concat)
-        --                    _ ->
-        --                        queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
-        --        in
-        --        ( { model | assigneesPanel = AssigneeSearchPanel.open model.assigneesPanel }
-        --        , gcmd
-        --        , Cmd.batch
-        --            [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
-        --            , Ports.inheritWith "userSearchPanel"
-        --            , Ports.focusOn "userInput"
-        --            ]
-        --        )
-        --    else
-        --        ( model, Cmd.none, Cmd.none )
-        --CancelAssignees ->
-        --    ( { model | assigneesPanel = AssigneeSearchPanel.close model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
-        --ChangeAssigneePattern pattern ->
-        --    ( { model | assigneesPanel = AssigneeSearchPanel.setPattern pattern model.assigneesPanel }
-        --    , Cmd.none
-        --    , Ports.searchUser pattern
-        --    )
-        --ChangeAssignee user isNew time ->
-        --    let
-        --        panel =
-        --            AssigneeSearchPanel.click user isNew model.assigneesPanel
-        --                |> AssigneeSearchPanel.post "createdAt" (fromTime time)
-        --                |> AssigneeSearchPanel.post "new" user.username
-        --                |> AssigneeSearchPanel.setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
-        --                |> AssigneeSearchPanel.setClickResult LoadingSlowly
-        --    in
-        --    ( { model | assigneesPanel = panel }
-        --    , send (SetAssignee panel.form)
-        --    , Cmd.none
-        --    )
-        --AssigneeAck result ->
-        --    let
-        --        panel =
-        --            AssigneeSearchPanel.setClickResult result model.assigneesPanel
-        --    in
-        --    case doRefreshToken result model.refresh_trial of
-        --        Authenticate ->
-        --            ( { model | assigneesPanel = AssigneeSearchPanel.setClickResult NotAsked model.assigneesPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
-        --        RefreshToken i ->
-        --            ( { model | refresh_trial = i }, sendSleep (SetAssignee panel.form) 500, send UpdateUserToken )
-        --        OkAuth t ->
-        --            let
-        --                th =
-        --                    withMapData
-        --                        (\x ->
-        --                            let
-        --                                assignee =
-        --                                    model.assigneesPanel.form.assignee
-        --                                assignees =
-        --                                    if model.assigneesPanel.form.isNew then
-        --                                        withDefault [] x.assignees ++ [ assignee ]
-        --                                    else
-        --                                        LE.remove assignee (withDefault [] x.assignees)
-        --                            in
-        --                            { x | assignees = Just assignees }
-        --                        )
-        --                        model.tension_head
-        --            in
-        --            ( { model | assigneesPanel = panel, tension_head = th }, Cmd.none, Cmd.none )
-        --        NoAuth ->
-        --            ( { model | assigneesPanel = panel }, Cmd.none, Cmd.none )
         AssigneeSearchPanelMsg msg ->
             let
                 ( panel, out ) =
@@ -1661,6 +1599,7 @@ subscriptions global model =
     [ Ports.closeModalFromJs DoCloseModal
     , Ports.triggerHelpFromJs TriggerHelp
     , Ports.cancelActionFromJs (always CancelAction)
+    , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
         ++ (AssigneeSearchPanel.subscriptions |> List.map (\s -> Sub.map AssigneeSearchPanelMsg s))

@@ -854,6 +854,10 @@ html.has-modal-active, html.has-modal-active2 {
 
 }
 
+.is-reversed > .sidePanel {
+    bottom: 2rem;
+}
+
 #colorPicker {
     position: absolute;
     z-index: 25;
@@ -1219,14 +1223,12 @@ html.has-modal-active, html.has-modal-active2 {
                 cursor: pointer !important;
             }
             & > a {
+                margin-right: $size-small !important;
                 color: $text !important;
                 &:hover {
                     color: $link !important;
                 }
 
-                & + .labelsList {
-                    margin-left: $size-small;
-                }
             }
 
 

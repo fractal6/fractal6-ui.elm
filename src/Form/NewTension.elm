@@ -1,6 +1,7 @@
 module Form.NewTension exposing (..)
 
 import Components.Fa as Fa
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc
@@ -19,6 +20,7 @@ import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (InputViewMode(..), TensionForm, initTensionForm)
 import ModelCommon.Codecs exposing (NodeFocus)
@@ -186,6 +188,30 @@ setEvents events data =
     { data | form = newForm }
 
 
+addLabel : Label -> NewTensionForm -> NewTensionForm
+addLabel label data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | labels = f.labels ++ [ label ] }
+    in
+    { data | form = newForm }
+
+
+removeLabel : Label -> NewTensionForm -> NewTensionForm
+removeLabel label data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | labels = LE.remove label f.labels }
+    in
+    { data | form = newForm }
+
+
 post : String -> String -> NewTensionForm -> NewTensionForm
 post field value data =
     let
@@ -291,6 +317,10 @@ type alias Op msg =
     , onCancelUser : Int -> msg
     , onShowLookupFs : msg
     , onCancelLookupFs : msg
+
+    -- Labels
+    , labelsPanel : LabelSearchPanel.State
+    , onLabelSearchPanelMsg : LabelSearchPanel.Msg -> msg
     }
 
 
@@ -392,7 +422,7 @@ view op =
                         ]
                     , div [ class "field" ]
                         [ div [ class "control" ]
-                            [ div [ class "button is-small is-light" ] [ Fa.icon "fas fa-plus" "", text "Label " ] ]
+                            [ LabelSearchPanel.viewNew { selectedLabels = form.labels, targets = op.targets, isAdmin = False } op.labelsPanel |> Html.map op.onLabelSearchPanelMsg ]
                         ]
                     ]
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]

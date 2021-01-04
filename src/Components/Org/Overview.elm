@@ -9,6 +9,7 @@ import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Debug
@@ -78,6 +79,10 @@ import Time
 ---- PROGRAM ----
 
 
+type alias Flags =
+    Flags_
+
+
 page : Page Flags Model Msg
 page =
     Page.component
@@ -88,8 +93,19 @@ page =
         }
 
 
-type alias Flags =
-    Flags_
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoAuth uctx ->
+                        ( send (DoOpenAuthModal uctx), Cmd.none )
+
+                    DoUpdateToken ->
+                        ( Cmd.none, send UpdateUserToken )
+            )
+        |> List.unzip
 
 
 
@@ -111,6 +127,7 @@ type alias Model =
 
     -- Form
     , tensionForm : NewTensionForm
+    , labelsPanel : LabelSearchPanel.State
 
     -- Node Action
     , actionPanel : ActionPanel
@@ -155,10 +172,13 @@ type Msg
       -- User quick search
     | ChangeNodeUserPattern Int String
     | ChangeNodeUserRole Int String
+    | ChangeUserLookup (LookupResult User)
     | SelectUser Int String
     | CancelUser Int
     | ShowLookupFs
     | CancelLookupFs
+      -- Labels
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Node Actions
     | DoNodeAction Node_ -- ports receive / tooltip click
     | Submit (Time.Posix -> Msg) -- Get Current Time
@@ -220,7 +240,6 @@ type Msg
     | ChangeInputViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
-    | ChangeUserLookup (LookupResult User)
       -- Help
     | TriggerHelp String
     | GotQuickDoc (WebData QuickDoc)
@@ -300,6 +319,7 @@ init global flags =
 
             -- Form
             , tensionForm = NewTensionForm.create newFocus
+            , labelsPanel = LabelSearchPanel.init "" global.session.user
 
             -- Node Action
             , actionPanel = ActionPanel.init "" global.session.user
@@ -366,12 +386,12 @@ init global flags =
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         LoadOrga ->
             ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
 
@@ -610,6 +630,14 @@ update global msg model =
             , Cmd.none
             )
 
+        ChangeUserLookup users_ ->
+            case users_ of
+                Ok users ->
+                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
+
+                Err err ->
+                    ( model, Ports.logErr err, Cmd.none )
+
         SelectUser pos username ->
             ( { model | tensionForm = NewTensionForm.selectUser pos username model.tensionForm }
             , Cmd.none
@@ -634,6 +662,32 @@ update global msg model =
 
         CancelLookupFs ->
             ( { model | tensionForm = NewTensionForm.closeLookup model.tensionForm }, Cmd.none, Cmd.none )
+
+        -- Labels
+        LabelSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    LabelSearchPanel.update apis msg model.labelsPanel
+
+                form =
+                    model.tensionForm
+
+                tensionForm =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r == True then
+                                model.tensionForm |> NewTensionForm.addLabel (Tuple.second r)
+
+                            else
+                                model.tensionForm |> NewTensionForm.removeLabel (Tuple.second r)
+                        )
+                        out.result
+                        |> withDefault model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | labelsPanel = panel, tensionForm = tensionForm }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Action
         DoNodeAction node_ ->
@@ -1277,14 +1331,6 @@ update global msg model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
-        ChangeUserLookup users_ ->
-            case users_ of
-                Ok users ->
-                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
-
-                Err err ->
-                    ( model, Ports.logErr err, Cmd.none )
-
         -- Help
         TriggerHelp _ ->
             ( { model | help = Help.open model.help }
@@ -1382,17 +1428,18 @@ update global msg model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
-    Sub.batch
-        [ Ports.closeModalFromJs DoCloseModal
-        , Ports.triggerHelpFromJs TriggerHelp
-        , nodeClickedFromJs NodeClicked
-        , nodeFocusedFromJs_ NodeFocused
-        , nodeDataFromJs_ DoNodeAction
-        , Ports.lookupNodeFromJs ChangeNodeLookup
-        , Ports.lookupUserFromJs ChangeUserLookup
-        , Ports.cancelLookupFsFromJs (always CancelLookupFs)
-        , Ports.cancelActionFromJs (always CancelAction)
-        ]
+    [ Ports.closeModalFromJs DoCloseModal
+    , Ports.triggerHelpFromJs TriggerHelp
+    , nodeClickedFromJs NodeClicked
+    , nodeFocusedFromJs_ NodeFocused
+    , nodeDataFromJs_ DoNodeAction
+    , Ports.lookupNodeFromJs ChangeNodeLookup
+    , Ports.cancelActionFromJs (always CancelAction)
+    , Ports.lookupUserFromJs ChangeUserLookup
+    , Ports.cancelLookupFsFromJs (always CancelLookupFs)
+    ]
+        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        |> Sub.batch
 
 
 
@@ -1964,6 +2011,10 @@ makeNewTensionFormOp model =
     , onCancelUser = CancelUser
     , onShowLookupFs = ShowLookupFs
     , onCancelLookupFs = CancelLookupFs
+
+    -- Labels
+    , labelsPanel = model.labelsPanel
+    , onLabelSearchPanelMsg = LabelSearchPanelMsg
     }
 
 

@@ -53,17 +53,17 @@ type FeedbackType
     | Praise
 
 
-labelToString : FeedbackType -> String
-labelToString type_ =
+labelCodec : FeedbackType -> Label
+labelCodec type_ =
     case type_ of
         BugReport ->
-            "bug"
+            Label "" "bug" Nothing
 
         FeatureRequest ->
-            "feature request"
+            Label "" "feature request" Nothing
 
         Praise ->
-            "Praise"
+            Label "" "Praise" Nothing
 
 
 
@@ -187,7 +187,7 @@ setLabelsFeedback data =
         form =
             data.formFeedback
     in
-    { data | formFeedback = { form | labels = [ labelToString data.type_ ] } }
+    { data | formFeedback = { form | labels = [ labelCodec data.type_ ] } }
 
 
 type alias Op msg =

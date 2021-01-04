@@ -185,7 +185,7 @@ buildLabels form =
             (\label ->
                 Input.buildLabelRef
                     (\x ->
-                        { x | id = Present (encodeId label) }
+                        { x | id = Present (encodeId label.id) }
                     )
             )
         |> Present

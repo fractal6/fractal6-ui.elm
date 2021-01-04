@@ -249,17 +249,17 @@ update_ apis message model =
                 data =
                     setClickResult result model
             in
-            case doRefreshToken result model.refresh_trial of
+            case doRefreshToken result data.refresh_trial of
                 Authenticate ->
                     ( setClickResult NotAsked model
                     , out2 [ DoAuth data.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, Out [ sendSleep (SetAssignee data.form) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { data | refresh_trial = i }, Out [ sendSleep (SetAssignee data.form) 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth _ ->
-                    ( data, Out [] [] (Just ( model.form.isNew, data.form.assignee )) )
+                    ( data, Out [] [] (Just ( data.form.isNew, data.form.assignee )) )
 
                 NoAuth ->
                     ( data, noOut )
@@ -292,34 +292,6 @@ type alias Op =
     , targets : List String
     , isAdmin : Bool
     }
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
-    div []
-        [ h2
-            [ class "subtitle"
-            , classList [ ( "is-w", op.isAdmin ) ]
-            , onClick (OnOpen op.targets)
-            ]
-            [ text T.assigneesH
-            , if model.isOpen then
-                Fa.icon0 "fas fa-times is-pulled-right" ""
-
-              else if op.isAdmin then
-                Fa.icon0 "fas fa-cog is-pulled-right" ""
-
-              else
-                text ""
-            ]
-        , div [ id "assigneesPanelContent" ]
-            [ if model.isOpen then
-                view_ op (State model)
-
-              else
-                text ""
-            ]
-        ]
 
 
 view_ : Op -> State -> Html Msg
@@ -416,6 +388,40 @@ viewAssigneeSelectors users op model =
                             , loadingSpin isLoading
                             ]
                     )
+
+
+
+--
+-- Input View
+--
+
+
+view : Op -> State -> Html Msg
+view op (State model) =
+    div []
+        [ h2
+            [ class "subtitle"
+            , classList [ ( "is-w", op.isAdmin ) ]
+            , onClick (OnOpen op.targets)
+            ]
+            [ text T.assigneesH
+            , if model.isOpen then
+                Fa.icon0 "fas fa-times is-pulled-right" ""
+
+              else if op.isAdmin then
+                Fa.icon0 "fas fa-cog is-pulled-right" ""
+
+              else
+                text ""
+            ]
+        , div [ id "assigneesPanelContent" ]
+            [ if model.isOpen then
+                view_ op (State model)
+
+              else
+                text ""
+            ]
+        ]
 
 
 {-|
