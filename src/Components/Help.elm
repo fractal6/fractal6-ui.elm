@@ -57,13 +57,13 @@ labelCodec : FeedbackType -> Label
 labelCodec type_ =
     case type_ of
         BugReport ->
-            Label "" "bug" Nothing
+            Label "0xc5f2" "bug" Nothing
 
         FeatureRequest ->
-            Label "" "feature request" Nothing
+            Label "0xc5f3" "feature request" Nothing
 
         Praise ->
-            Label "" "Praise" Nothing
+            Label "0xc5f4" "Praise" Nothing
 
 
 
