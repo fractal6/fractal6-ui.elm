@@ -266,9 +266,9 @@ type alias CommentPatchForm =
 type alias AssigneeForm =
     { uctx : UserCtx
     , tid : String
-    , pattern : String
-    , assignee : User -- last one clicked/selected
-    , isNew : Bool -- toggle select
+    , targets : List String -- Where the labels come from
+    , assignee : User -- selected/unselected item
+    , isNew : Bool -- to add or remove item
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -284,7 +284,7 @@ initAssigneeForm tid user =
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
     , tid = tid
-    , pattern = ""
+    , targets = []
     , assignee = User "" Nothing
     , isNew = False
     , events_type = Nothing
@@ -295,9 +295,9 @@ initAssigneeForm tid user =
 type alias LabelForm =
     { uctx : UserCtx
     , tid : String
-    , targets : List String -- Where the labels come from
-    , isNew : Bool -- add or remove a label
-    , label : Label -- selected/unselected label
+    , targets : List String -- Where the items come from
+    , label : Label -- selected/unselected item
+    , isNew : Bool -- to add or remove item
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -314,8 +314,8 @@ initLabelForm tid user =
                 UserCtx "" Nothing (UserRights False False) []
     , tid = tid
     , targets = []
-    , isNew = False
     , label = Label "" "" Nothing
+    , isNew = False
     , events_type = Nothing
     , post = Dict.empty
     }

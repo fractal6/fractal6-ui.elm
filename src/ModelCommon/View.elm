@@ -17,7 +17,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromNameid, uriFromUsername)
-import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, UserCtx, Username)
+import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, User, UserCtx, Username)
 import Text as T
 
 
@@ -145,7 +145,7 @@ viewTensionArrowB cls emitter receiver =
 
 viewLabels : List Label -> Html msg
 viewLabels labels =
-    span [ class "labelsList" ] (labels |> List.map (\label -> viewLabel "" label))
+    span [ class "labelsList" ] (List.map (\label -> viewLabel "" label) labels)
 
 
 viewLabel : String -> Label -> Html msg
@@ -163,9 +163,9 @@ viewLabel cls label =
     span ([ class ("tag is-rounded " ++ cls) ] ++ color) [ text label.name ]
 
 
-viewUsernameLink : String -> Html msg
-viewUsernameLink username =
-    a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
+viewUsers : List User -> Html msg
+viewUsers users =
+    span [ class "usersList" ] (List.map (\u -> viewUser True u.username) users)
 
 
 viewUser : Bool -> String -> Html msg
@@ -175,6 +175,11 @@ viewUser isLinked username =
 
     else
         span [] [ div [ class "image circleBaseInline circle0" ] [ getAvatar username ] ]
+
+
+viewUsernameLink : String -> Html msg
+viewUsernameLink username =
+    a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
 
 
 viewOpenedDate : String -> Html msg

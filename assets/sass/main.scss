@@ -374,9 +374,6 @@ html.has-modal-active, html.has-modal-active2 {
 #tree-menu {
     a {
         justify-content: left;
-        &:hover {
-            background-color: $grey-dark;
-        }
     }
     a:not(:last-child) {
         padding-bottom: 5px;
@@ -663,7 +660,7 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tensionComments {
         .media + .media {
-            margin-top: 1.9rem !important;
+            margin-top: 1.5rem !important;
             border: 0 !important;
         }
 
@@ -776,6 +773,8 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tensionSidePane {
         margin-top: 2.25rem !important;
+
+        //.media { margin-bottom: 2rem; }
 
         .media:first-child {
             border-top: 1px solid $grey !important;
@@ -1236,10 +1235,16 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .labelsList {
-    // all children except first
-    .tag + .tag {
-        margin-left: 7px !important;
-        margin-bottom: 7px !important;
+    .tag {
+        margin-right: 8px !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+.usersList {
+    span  {
+        margin-right: 10px !important;
+        margin-bottom: 10px !important;
     }
 }
 
@@ -1627,9 +1632,13 @@ a.actionLink {
     &:hover {
         cursor: pointer !important;
     }
-    &:active {
+    &:active:not(.dropdown-item) {
         -webkit-filter: invert(50%);
         filter: invert(50%);
+    }
+    &.dropdown-item:active {
+        -webkit-filter: invert(10%);
+        filter: invert(10%);
     }
 
     &.is-warning {
@@ -1715,7 +1724,6 @@ a.actionLink {
     border-radius: 50%;
     color: white !important;
     display: inline-block !important;
-    margin: 0 10px 0 10px !important;
 }
 
 .circle0 {

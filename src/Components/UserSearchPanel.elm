@@ -19,16 +19,16 @@ import Time
 
 
 type alias UserSearchPanel =
-    { isOpen : Bool
+    { isEdit : Bool
     , form : AssigneeForm
     , click_result : GqlData IdPayload
     }
 
 
-init : String -> UserState -> UserSearchPanel
-init tid user =
-    { isOpen = False
-    , form = initAssigneeForm tid user
+create : UserState -> String -> UserSearchPanel
+create user tid =
+    { isEdit = False
+    , form = initAssigneeForm user tid
     , click_result = NotAsked
     }
 
@@ -37,18 +37,18 @@ init tid user =
 -- State control
 
 
-open : UserSearchPanel -> UserSearchPanel
-open data =
-    { data | isOpen = True }
+edit : UserSearchPanel -> UserSearchPanel
+edit data =
+    { data | isEdit = True }
 
 
-close : UserSearchPanel -> UserSearchPanel
-close data =
+cancelEdit : UserSearchPanel -> UserSearchPanel
+cancelEdit data =
     let
         form =
             data.form
     in
-    { data | isOpen = False, click_result = NotAsked, form = { form | pattern = "" } }
+    { data | isEdit = False, click_result = NotAsked, form = { form | pattern = "" } }
 
 
 click : User -> Bool -> UserSearchPanel -> UserSearchPanel
@@ -96,7 +96,7 @@ setPattern pattern data =
     { data | form = { form | pattern = pattern } }
 
 
-type alias Op msg =
+type alias UserSearchPanelData msg =
     { selectedUsers : List User
     , targets : List String
     , users_data : GqlData UsersData
@@ -108,14 +108,14 @@ type alias Op msg =
     }
 
 
-view : Op msg -> Html msg
-view op =
-    nav [ id "userSearchPanel", class "panel sidePanel" ]
-        [ case op.users_data of
+view : UserSearchPanelData msg -> Html msg
+view uspd =
+    nav [ id "userSearchPanel", class "panel" ]
+        [ case uspd.users_data of
             Success ud ->
                 let
                     user =
-                        op.data.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
+                        uspd.data.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
 
                     linked_users =
                         List.foldl
@@ -123,17 +123,17 @@ view op =
                                 List.append (Dict.get a ud |> withDefault []) b
                             )
                             []
-                            op.targets
+                            uspd.targets
 
                     users =
-                        if op.data.form.pattern == "" then
+                        if uspd.data.form.pattern == "" then
                             user
-                                ++ op.selectedUsers
+                                ++ uspd.selectedUsers
                                 ++ linked_users
                                 |> LE.uniqueBy (\u -> u.username)
 
                         else
-                            LE.uniqueBy (\u -> u.username) op.lookup
+                            LE.uniqueBy (\u -> u.username) uspd.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]
@@ -143,20 +143,20 @@ view op =
                                 , class "input autofocus"
                                 , type_ "text"
                                 , placeholder T.searchUsers
-                                , value op.data.form.pattern
-                                , onInput op.onChangePattern
+                                , value uspd.data.form.pattern
+                                , onInput uspd.onChangePattern
                                 ]
                                 []
                             , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
                             ]
                         ]
-                    , case op.data.click_result of
+                    , case uspd.data.click_result of
                         Failure err ->
                             viewGqlErrors err
 
                         _ ->
                             div [] []
-                    , viewAssigneeSelectors users op
+                    , viewAssigneeSelectors users uspd
                     ]
 
             Loading ->
@@ -173,8 +173,8 @@ view op =
         ]
 
 
-viewAssigneeSelectors : List User -> Op msg -> Html msg
-viewAssigneeSelectors users op =
+viewAssigneeSelectors : List User -> UserSearchPanelData msg -> Html msg
+viewAssigneeSelectors users uspd =
     div [ class "selectors" ] <|
         if users == [] then
             [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
@@ -185,7 +185,7 @@ viewAssigneeSelectors users op =
                     (\u ->
                         let
                             isActive =
-                                List.member u op.selectedUsers
+                                List.member u uspd.selectedUsers
 
                             faCls =
                                 ternary isActive "fa-check-square" "fa-square"
@@ -193,7 +193,7 @@ viewAssigneeSelectors users op =
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (op.onSubmit <| op.onUserClick u (isActive == False))
+                            , onClick (uspd.onSubmit <| uspd.onUserClick u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
                             , viewUser False u.username
@@ -206,48 +206,3 @@ viewAssigneeSelectors users op =
                             , span [ class "is-grey-light help" ] [ text u.username ]
                             ]
                     )
-
-
-viewSelectors i pattern op =
-    div [ class "selectors", classList [ ( "spinner", op.users_data == Loading ) ] ] <|
-        case op.users_data of
-            Success ud ->
-                let
-                    users =
-                        if pattern == "" then
-                            -- linked users
-                            op.targets
-                                |> List.foldl
-                                    (\a b ->
-                                        List.append (Dict.get a ud |> withDefault []) b
-                                    )
-                                    []
-                                |> LE.uniqueBy (\u -> u.username)
-
-                        else
-                            op.lookup
-                in
-                if users == [] then
-                    [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
-
-                else
-                    users
-                        |> List.map
-                            (\u ->
-                                p
-                                    [ class "panel-block"
-                                    , onClick (op.onSelectUser i u.username)
-                                    ]
-                                    [ viewUser False u.username
-                                    , case u.name of
-                                        Just name ->
-                                            span [ class "has-text-weight-semibold" ] [ text name ]
-
-                                        Nothing ->
-                                            span [] []
-                                    , span [ class "is-grey-light help" ] [ text u.username ]
-                                    ]
-                            )
-
-            _ ->
-                []

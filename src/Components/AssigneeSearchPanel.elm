@@ -1,4 +1,4 @@
-module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, update, view)
+module Components.AssigneeSearchPanel exposing (Msg, State, init, subscriptions, update, view, viewUserSelectors)
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Codecs exposing (LookupResult)
@@ -14,13 +14,13 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), LabelForm, UserState(..), initLabelForm)
+import ModelCommon exposing (Apis, AssigneeForm, GlobalCmd(..), UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
-import ModelCommon.View exposing (viewLabel)
+import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Ports
-import Query.PatchTension exposing (setLabel)
-import Query.QueryNode exposing (queryLabelsUp)
+import Query.PatchTension exposing (setAssignee)
+import Query.QueryNode exposing (queryMembers)
 import Task
 import Text as T
 import Time
@@ -32,15 +32,15 @@ type State
 
 type alias Model =
     { isOpen : Bool
-    , form : LabelForm
+    , form : AssigneeForm
     , click_result : GqlData IdPayload
 
     -- Lookup
-    , lookup : List Label
+    , lookup : List User
     , pattern : String -- search pattern
-    , labels_data : GqlData (List Label)
+    , assignees_data : GqlData (List User)
 
-    --, init_lookup : List Label -> Cmd Msg
+    --, init_lookup : List User -> Cmd Msg
     --, search_lookup : String -> Cmd Msg
     -- Common
     , refresh_trial : Int
@@ -55,13 +55,13 @@ init tid user =
 initModel : String -> UserState -> Model
 initModel tid user =
     { isOpen = False
-    , form = initLabelForm tid user
+    , form = initAssigneeForm tid user
     , click_result = NotAsked
 
     -- Lookup
     , lookup = []
     , pattern = ""
-    , labels_data = NotAsked
+    , assignees_data = NotAsked
 
     -- Common
     , refresh_trial = 0
@@ -90,13 +90,13 @@ close data =
     { data | isOpen = False, click_result = NotAsked, pattern = "" }
 
 
-click : Label -> Bool -> Model -> Model
-click label isNew data =
+click : User -> Bool -> Model -> Model
+click assignee isNew data =
     let
         form =
             data.form
     in
-    { data | form = { form | label = label, isNew = isNew } }
+    { data | form = { form | assignee = assignee, isNew = isNew } }
 
 
 setClickResult : GqlData IdPayload -> Model -> Model
@@ -145,18 +145,18 @@ type Msg
     = OnOpen (List String)
     | OnClose
     | OnChangePattern String
-    | ChangeLabelLookup (LookupResult Label)
-    | OnLabelClick Label Bool Time.Posix
-    | OnLabelAck (GqlData IdPayload)
+    | ChangeAssigneeLookup (LookupResult User)
+    | OnAssigneeClick User Bool Time.Posix
+    | OnAssigneeAck (GqlData IdPayload)
     | OnSubmit (Time.Posix -> Msg)
-    | OnGotLabels (GqlData (List Label))
-    | SetLabel LabelForm
+    | OnGotAssignees (GqlData (List User))
+    | SetAssignee AssigneeForm
 
 
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, Label )
+    , result : Maybe ( Bool, User )
     }
 
 
@@ -189,13 +189,13 @@ update_ apis message model =
                 let
                     cmd =
                         ternary (targets /= model.form.targets)
-                            [ queryLabelsUp apis.gql targets OnGotLabels ]
+                            [ queryMembers apis.gql targets OnGotAssignees ]
                             []
                 in
                 ( open targets model
                 , out1 <|
-                    [ Ports.outsideClickClose "cancelLabelsFromJs" "labelsPanelContent"
-                    , Ports.inheritWith "labelSearchPanel"
+                    [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
+                    , Ports.inheritWith "assigneeSearchPanel"
                     , Ports.focusOn "userInput"
                     ]
                         ++ cmd
@@ -207,12 +207,12 @@ update_ apis message model =
         OnClose ->
             ( close model, noOut )
 
-        OnGotLabels result ->
-            ( { model | labels_data = result }
+        OnGotAssignees result ->
+            ( { model | assignees_data = result }
             , out1 <|
                 case result of
                     Success r ->
-                        [ Ports.initLabelSearch r ]
+                        [ Ports.initUserSearch r ]
 
                     _ ->
                         []
@@ -220,10 +220,10 @@ update_ apis message model =
 
         OnChangePattern pattern ->
             ( setPattern pattern model
-            , out1 [ Ports.searchLabel pattern ]
+            , out1 [ Ports.searchUser pattern ]
             )
 
-        ChangeLabelLookup data ->
+        ChangeAssigneeLookup data ->
             case data of
                 Ok d ->
                     ( { model | lookup = d }, noOut )
@@ -231,20 +231,20 @@ update_ apis message model =
                 Err err ->
                     ( model, out1 [ Ports.logErr err ] )
 
-        OnLabelClick label isNew time ->
+        OnAssigneeClick assignee isNew time ->
             let
                 data =
-                    click label isNew model
+                    click assignee isNew model
                         |> post "createdAt" (fromTime time)
-                        |> post (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
-                        |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
+                        |> post "new" assignee.username
+                        |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
                         |> setClickResult LoadingSlowly
             in
             ( data
-            , out1 [ send (SetLabel data.form) ]
+            , out1 [ send (SetAssignee data.form) ]
             )
 
-        OnLabelAck result ->
+        OnAssigneeAck result ->
             let
                 data =
                     setClickResult result model
@@ -256,10 +256,10 @@ update_ apis message model =
                     )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, Out [ sendSleep (SetLabel data.form) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { model | refresh_trial = i }, Out [ sendSleep (SetAssignee data.form) 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth _ ->
-                    ( data, Out [] [] (Just ( model.form.isNew, data.form.label )) )
+                    ( data, Out [] [] (Just ( model.form.isNew, data.form.assignee )) )
 
                 NoAuth ->
                     ( data, noOut )
@@ -269,15 +269,15 @@ update_ apis message model =
             , out1 [ sendNow next ]
             )
 
-        SetLabel form ->
+        SetAssignee form ->
             ( model
-            , out1 [ setLabel apis.gql form OnLabelAck ]
+            , out1 [ setAssignee apis.gql form OnAssigneeAck ]
             )
 
 
 subscriptions =
-    [ Ports.cancelLabelsFromJs (always OnClose)
-    , Ports.lookupLabelFromJs ChangeLabelLookup
+    [ Ports.cancelAssigneesFromJs (always OnClose)
+    , Ports.lookupUserFromJs ChangeAssigneeLookup
     ]
 
 
@@ -288,7 +288,7 @@ subscriptions =
 
 
 type alias Op =
-    { selectedLabels : List Label
+    { selectedAssignees : List User
     , targets : List String
     , isAdmin : Bool
     }
@@ -302,7 +302,7 @@ view op (State model) =
             , classList [ ( "is-w", op.isAdmin ) ]
             , onClick (OnOpen op.targets)
             ]
-            [ text T.labelsH
+            [ text T.assigneesH
             , if model.isOpen then
                 Fa.icon0 "fas fa-times is-pulled-right" ""
 
@@ -312,7 +312,7 @@ view op (State model) =
               else
                 text ""
             ]
-        , div [ id "labelsPanelContent" ]
+        , div [ id "assigneesPanelContent" ]
             [ if model.isOpen then
                 view_ op (State model)
 
@@ -324,18 +324,22 @@ view op (State model) =
 
 view_ : Op -> State -> Html Msg
 view_ op (State model) =
-    nav [ id "labelSearchPanel", class "panel sidePanel" ]
-        [ case model.labels_data of
-            Success labels_d ->
+    nav [ id "assigneeSearchPanel", class "panel sidePanel" ]
+        [ case model.assignees_data of
+            Success assignees_d ->
                 let
-                    labels =
+                    user =
+                        model.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
+
+                    users =
                         if model.pattern == "" then
-                            op.selectedLabels
-                                ++ labels_d
-                                |> LE.uniqueBy (\u -> u.name)
+                            op.selectedAssignees
+                                ++ user
+                                ++ List.take 20 assignees_d
+                                |> LE.uniqueBy (\u -> u.username)
 
                         else
-                            LE.uniqueBy (\u -> u.name) model.lookup
+                            LE.uniqueBy (\u -> u.username) model.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]
@@ -344,7 +348,7 @@ view_ op (State model) =
                                 [ id "userInput"
                                 , class "input autofocus"
                                 , type_ "text"
-                                , placeholder T.searchLabels
+                                , placeholder T.searchUsers
                                 , value model.pattern
                                 , onInput OnChangePattern
                                 ]
@@ -358,7 +362,7 @@ view_ op (State model) =
 
                         _ ->
                             div [] []
-                    , viewLabelSelectors labels op model
+                    , viewAssigneeSelectors users op model
                     ]
 
             Loading ->
@@ -375,33 +379,90 @@ view_ op (State model) =
         ]
 
 
-viewLabelSelectors : List Label -> Op -> Model -> Html Msg
-viewLabelSelectors labels op model =
+viewAssigneeSelectors : List User -> Op -> Model -> Html Msg
+viewAssigneeSelectors users op model =
     div [ class "selectors" ] <|
-        if labels == [] then
+        if users == [] then
             [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
 
         else
-            labels
+            users
                 |> List.map
-                    (\l ->
+                    (\u ->
                         let
                             isActive =
-                                List.member l op.selectedLabels
+                                List.member u op.selectedAssignees
 
                             faCls =
                                 ternary isActive "fa-check-square" "fa-square"
 
                             isLoading =
-                                model.click_result == LoadingSlowly && l.id == model.form.label.id
+                                model.click_result == LoadingSlowly && u.username == model.form.assignee.username
                         in
                         p
                             [ class "panel-block"
                             , classList [ ( "is-active", isActive ) ]
-                            , onClick (OnSubmit <| OnLabelClick l (isActive == False))
+                            , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
-                            , viewLabel "" l
+                            , viewUser False u.username
+                            , case u.name of
+                                Just name ->
+                                    span [ class "has-text-weight-semibold" ] [ text name ]
+
+                                Nothing ->
+                                    span [] []
+                            , span [ class "is-grey-light help" ] [ text u.username ]
                             , loadingSpin isLoading
                             ]
                     )
+
+
+{-|
+
+     @Debug: put this in User quicsearch module
+
+-}
+viewUserSelectors i pattern op =
+    div [ class "selectors", classList [ ( "spinner", op.users_data == Loading ) ] ] <|
+        case op.users_data of
+            Success ud ->
+                let
+                    users =
+                        if pattern == "" then
+                            -- linked users
+                            op.targets
+                                |> List.foldl
+                                    (\a b ->
+                                        List.append (Dict.get a ud |> withDefault []) b
+                                    )
+                                    []
+                                |> LE.uniqueBy (\u -> u.username)
+
+                        else
+                            op.lookup
+                in
+                if users == [] then
+                    [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+
+                else
+                    users
+                        |> List.map
+                            (\u ->
+                                p
+                                    [ class "panel-block"
+                                    , onClick (op.onSelectUser i u.username)
+                                    ]
+                                    [ viewUser False u.username
+                                    , case u.name of
+                                        Just name ->
+                                            span [ class "has-text-weight-semibold" ] [ text name ]
+
+                                        Nothing ->
+                                            span [] []
+                                    , span [ class "is-grey-light help" ] [ text u.username ]
+                                    ]
+                            )
+
+            _ ->
+                []

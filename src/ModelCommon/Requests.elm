@@ -8,8 +8,8 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Member, NodeId, Post, UserCtx, UserRoleExtended)
-import Query.QueryNode exposing (MemberNode, User)
+import ModelSchema exposing (Member, NodeId, Post, User, UserCtx, UserRoleExtended)
+import Query.QueryNode exposing (MemberNode)
 import RemoteData exposing (RemoteData)
 
 

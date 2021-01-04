@@ -1,7 +1,6 @@
 module Query.QueryNode exposing
     ( MemberNode
     , NodeExt
-    , User
     , blobIdPayload
     , emiterOrReceiverPayload
     , fetchNode
@@ -16,6 +15,7 @@ module Query.QueryNode exposing
     , queryLabelsUp
     , queryLocalGraph
     , queryMembers
+    , queryMembersTop
     , queryNodeExt
     , queryNodesSub
     , queryPublicOrga
@@ -40,7 +40,9 @@ import Fractal.Scalar
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
+import List.Extra as LE
 import Maybe exposing (withDefault)
+import ModelCommon.Codecs exposing (nid2rootid)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -484,7 +486,78 @@ nArchivedFilter a =
 
 
 {-
-   Query Members
+   Query  Members
+-}
+--- Response decoder
+
+
+type alias NodeMembers =
+    -- isPrivate and nameid need in the backend to check if the ressource is hidden
+    { first_link : Maybe User, isPrivate : Bool, nameid : String }
+
+
+membersDecoder : Maybe (List (Maybe NodeMembers)) -> Maybe (List User)
+membersDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.map (\x -> x.first_link)
+                        |> List.filterMap identity
+                        |> Just
+            )
+        |> withDefault Nothing
+
+
+queryMembers url nids msg =
+    let
+        rootid =
+            nids |> LE.last |> withDefault "" |> nid2rootid
+    in
+    makeGQLQuery url
+        (Query.queryNode
+            (membersFilter rootid)
+            membersPayload
+        )
+        (RemoteData.fromResult >> decodeResponse membersDecoder >> msg)
+
+
+membersFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+membersFilter rootid a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\c ->
+                    { c
+                        | rootnameid = Present { eq = Present rootid, regexp = Absent }
+                        , and = matchAnyRoleType [ RoleType.Member, RoleType.Owner, RoleType.Guest ]
+                    }
+                )
+                |> Present
+    }
+
+
+membersPayload : SelectionSet NodeMembers Fractal.Object.Node
+membersPayload =
+    SelectionSet.succeed NodeMembers
+        |> with
+            (Fractal.Object.Node.first_link identity <|
+                SelectionSet.map2 User
+                    Fractal.Object.User.username
+                    Fractal.Object.User.name
+            )
+        |> with Fractal.Object.Node.isPrivate
+        |> with Fractal.Object.Node.nameid
+
+
+
+{-
+   Query Top  Members
 -}
 --- Response decoder
 
@@ -514,14 +587,8 @@ type alias MemberNode =
     }
 
 
-type alias User =
-    { username : String
-    , name : Maybe String
-    }
-
-
-membersDecoder : Maybe TopMemberNode -> Maybe (List Member)
-membersDecoder data =
+membersTopDecoder : Maybe TopMemberNode -> Maybe (List Member)
+membersTopDecoder data =
     let
         n2r n =
             UserRoleExtended n.name n.nameid n.rootnameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent n.isPrivate
@@ -573,17 +640,17 @@ membersDecoder data =
         |> withDefault Nothing
 
 
-queryMembers url nid msg =
+queryMembersTop url nid msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
-            membersPayload
+            membersTopPayload
         )
-        (RemoteData.fromResult >> decodeResponse membersDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse membersTopDecoder >> msg)
 
 
-membersPayload : SelectionSet TopMemberNode Fractal.Object.Node
-membersPayload =
+membersTopPayload : SelectionSet TopMemberNode Fractal.Object.Node
+membersTopPayload =
     SelectionSet.succeed TopMemberNode
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
@@ -703,7 +770,7 @@ labelsUpDecoder data =
                         |> List.concat
                         |> Just
             )
-        |> Maybe.withDefault Nothing
+        |> withDefault Nothing
 
 
 queryLabelsUp url nids msg =

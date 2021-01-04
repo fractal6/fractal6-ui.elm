@@ -31,7 +31,7 @@ window.addEventListener('load', _ => {
                     storeFields: ['nameid'],
                     fields: ['nameid', 'name', 'first_link'],
                     searchOptions: {
-                        fuzzy: 0.2,
+                        fuzzy: 0.3,
                         boost: { name: 2 },
                     },
                 }),
@@ -39,13 +39,13 @@ window.addEventListener('load', _ => {
                     idField: 'username',
                     storeFields: ['username'],
                     fields: ['username', 'name'],
-                    searchOptions: { fuzzy: 0.2, },
+                    searchOptions: { fuzzy: 0.3, },
                 }),
                 qsl: new MiniSearch({
                     idField: 'id',
                     storeFields: ['id', 'name', 'color'],
                     fields: ['name'],
-                    searchOptions: { fuzzy: 0.2, },
+                    searchOptions: { fuzzy: 0.3, },
                 }),
             };
 
@@ -132,7 +132,7 @@ const actions = {
     'SEARCH_NODES': (app, session, pattern) => {
         var qs = session.qsn;
         var nodes = session.gp.nodesDict;
-        var res = qs.search(pattern, {prefix:true}).slice(0,10).map(n => {
+        var res = qs.search(pattern, {prefix:true}).slice(0,20).map(n => {
             // Ignore Filtered Node (Owner, Member, etc)
             if (nodes[n.nameid]) {
                 return nodes[n.nameid].data;
@@ -147,12 +147,12 @@ const actions = {
     },
     'SEARCH_USERS': (app, session, pattern) => {
         var qs = session.qsu;
-        var res = qs.search(pattern, {prefix:true}).slice(0,10);
+        var res = qs.search(pattern, {prefix:true}).slice(0,20);
         app.ports.lookupUserFromJs_.send(res);
     },
     'SEARCH_LABELS': (app, session, pattern) => {
         var qs = session.qsl;
-        var res = qs.search(pattern, {prefix:true}).slice(0,10);
+        var res = qs.search(pattern, {prefix:true}).slice(0,20);
         app.ports.lookupLabelFromJs_.send(res);
     },
     //

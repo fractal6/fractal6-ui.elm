@@ -4,6 +4,7 @@ import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
+import Components.AssigneeSearchPanel as AssigneeSearchPanel
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.Fa as Fa
@@ -13,7 +14,6 @@ import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
-import Components.UserSearchPanel as UserSearchPanel exposing (UserSearchPanel)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, toMapOfList, toText, up0)
@@ -73,12 +73,13 @@ import ModelCommon.View
         , viewUpdated
         , viewUser
         , viewUsernameLink
+        , viewUsers
         )
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
-import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch, setAssignee)
+import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch)
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -163,7 +164,7 @@ type alias Model =
 
     -- Side Pane
     , isTensionAdmin : Bool
-    , assigneesPanel : UserSearchPanel
+    , assigneesPanel : AssigneeSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
     , actionPanel : ActionPanel
 
@@ -234,7 +235,6 @@ type Msg
     | PublishBlob
     | PushAction ActionForm ActionPanelState
     | PushGuest ActionForm
-    | SetAssignee AssigneeForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph)
@@ -278,13 +278,9 @@ type Msg
     | CancelUser Int
     | ShowLookupFs
     | CancelLookupFs
-      -- Assignees
-    | DoAssigneesEdit
-    | CancelAssignees
-    | ChangeAssigneePattern String
-    | ChangeAssignee User Bool Time.Posix
-    | AssigneeAck (GqlData IdPayload)
     | GotOrga (GqlData NodesData)
+      -- Assignees
+    | AssigneeSearchPanelMsg AssigneeSearchPanel.Msg
       -- Labels
     | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Action Edit
@@ -318,7 +314,6 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
-    | ChangeUserLookup (LookupResult User)
       -- Help
     | TriggerHelp String
     | GotQuickDoc (WebData QuickDoc)
@@ -408,7 +403,7 @@ init global flags =
             -- Side Pane
             , isTensionAdmin =
                 global.session.isAdmin |> withDefault False
-            , assigneesPanel = UserSearchPanel.init tensionid global.session.user
+            , assigneesPanel = AssigneeSearchPanel.init tensionid global.session.user
             , labelsPanel = LabelSearchPanel.init tensionid global.session.user
             , actionPanel = ActionPanel.init tensionid global.session.user
 
@@ -517,9 +512,6 @@ update global message model =
                             \x -> NoMsg
             in
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
-
-        SetAssignee form ->
-            ( model, setAssignee apis.gql form AssigneeAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -1117,90 +1109,6 @@ update global message model =
         CancelLookupFs ->
             ( { model | nodeDoc = NodeDoc.closeLookup model.nodeDoc }, Cmd.none, Cmd.none )
 
-        -- Assignees
-        DoAssigneesEdit ->
-            if model.assigneesPanel.isOpen == False then
-                let
-                    gcmd =
-                        case model.users_data of
-                            Success users ->
-                                Ports.initUserSearch (Dict.values users |> List.concat)
-
-                            _ ->
-                                queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
-                in
-                ( { model | assigneesPanel = UserSearchPanel.open model.assigneesPanel }
-                , gcmd
-                , Cmd.batch
-                    [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
-                    , Ports.inheritWith "userSearchPanel"
-                    , Ports.focusOn "userInput"
-                    ]
-                )
-
-            else
-                ( model, Cmd.none, Cmd.none )
-
-        CancelAssignees ->
-            ( { model | assigneesPanel = UserSearchPanel.close model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
-
-        ChangeAssigneePattern pattern ->
-            ( { model | assigneesPanel = UserSearchPanel.setPattern pattern model.assigneesPanel }
-            , Cmd.none
-            , Ports.searchUser pattern
-            )
-
-        ChangeAssignee user isNew time ->
-            let
-                panel =
-                    UserSearchPanel.click user isNew model.assigneesPanel
-                        |> UserSearchPanel.post "createdAt" (fromTime time)
-                        |> UserSearchPanel.post "new" user.username
-                        |> UserSearchPanel.setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
-                        |> UserSearchPanel.setClickResult LoadingSlowly
-            in
-            ( { model | assigneesPanel = panel }
-            , send (SetAssignee panel.form)
-            , Cmd.none
-            )
-
-        AssigneeAck result ->
-            let
-                panel =
-                    UserSearchPanel.setClickResult result model.assigneesPanel
-            in
-            case doRefreshToken result model.refresh_trial of
-                Authenticate ->
-                    ( { model | assigneesPanel = UserSearchPanel.setClickResult NotAsked model.assigneesPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (SetAssignee panel.form) 500, send UpdateUserToken )
-
-                OkAuth t ->
-                    let
-                        th =
-                            withMapData
-                                (\x ->
-                                    let
-                                        assignee =
-                                            model.assigneesPanel.form.assignee
-
-                                        assignees =
-                                            if model.assigneesPanel.form.isNew then
-                                                withDefault [] x.assignees ++ [ assignee ]
-
-                                            else
-                                                LE.remove assignee (withDefault [] x.assignees)
-                                    in
-                                    { x | assignees = Just assignees }
-                                )
-                                model.tension_head
-                    in
-                    ( { model | assigneesPanel = panel, tension_head = th }, Cmd.none, Cmd.none )
-
-                NoAuth ->
-                    ( { model | assigneesPanel = panel }, Cmd.none, Cmd.none )
-
         GotOrga result ->
             case result of
                 Success data ->
@@ -1218,6 +1126,108 @@ update global message model =
 
                 other ->
                     ( model, Cmd.none, Cmd.none )
+
+        -- Assignees
+        --DoAssigneesEdit ->
+        --    if model.assigneesPanel.isOpen == False then
+        --        let
+        --            gcmd =
+        --                case model.users_data of
+        --                    Success users ->
+        --                        Ports.initUserSearch (Dict.values users |> List.concat)
+        --                    _ ->
+        --                        queryGraphPack apis.gql model.node_focus.rootnameid GotOrga
+        --        in
+        --        ( { model | assigneesPanel = AssigneeSearchPanel.open model.assigneesPanel }
+        --        , gcmd
+        --        , Cmd.batch
+        --            [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
+        --            , Ports.inheritWith "userSearchPanel"
+        --            , Ports.focusOn "userInput"
+        --            ]
+        --        )
+        --    else
+        --        ( model, Cmd.none, Cmd.none )
+        --CancelAssignees ->
+        --    ( { model | assigneesPanel = AssigneeSearchPanel.close model.assigneesPanel, lookup_users = [] }, Cmd.none, Cmd.none )
+        --ChangeAssigneePattern pattern ->
+        --    ( { model | assigneesPanel = AssigneeSearchPanel.setPattern pattern model.assigneesPanel }
+        --    , Cmd.none
+        --    , Ports.searchUser pattern
+        --    )
+        --ChangeAssignee user isNew time ->
+        --    let
+        --        panel =
+        --            AssigneeSearchPanel.click user isNew model.assigneesPanel
+        --                |> AssigneeSearchPanel.post "createdAt" (fromTime time)
+        --                |> AssigneeSearchPanel.post "new" user.username
+        --                |> AssigneeSearchPanel.setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
+        --                |> AssigneeSearchPanel.setClickResult LoadingSlowly
+        --    in
+        --    ( { model | assigneesPanel = panel }
+        --    , send (SetAssignee panel.form)
+        --    , Cmd.none
+        --    )
+        --AssigneeAck result ->
+        --    let
+        --        panel =
+        --            AssigneeSearchPanel.setClickResult result model.assigneesPanel
+        --    in
+        --    case doRefreshToken result model.refresh_trial of
+        --        Authenticate ->
+        --            ( { model | assigneesPanel = AssigneeSearchPanel.setClickResult NotAsked model.assigneesPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
+        --        RefreshToken i ->
+        --            ( { model | refresh_trial = i }, sendSleep (SetAssignee panel.form) 500, send UpdateUserToken )
+        --        OkAuth t ->
+        --            let
+        --                th =
+        --                    withMapData
+        --                        (\x ->
+        --                            let
+        --                                assignee =
+        --                                    model.assigneesPanel.form.assignee
+        --                                assignees =
+        --                                    if model.assigneesPanel.form.isNew then
+        --                                        withDefault [] x.assignees ++ [ assignee ]
+        --                                    else
+        --                                        LE.remove assignee (withDefault [] x.assignees)
+        --                            in
+        --                            { x | assignees = Just assignees }
+        --                        )
+        --                        model.tension_head
+        --            in
+        --            ( { model | assigneesPanel = panel, tension_head = th }, Cmd.none, Cmd.none )
+        --        NoAuth ->
+        --            ( { model | assigneesPanel = panel }, Cmd.none, Cmd.none )
+        AssigneeSearchPanelMsg msg ->
+            let
+                ( panel, out ) =
+                    AssigneeSearchPanel.update apis msg model.assigneesPanel
+
+                th =
+                    Maybe.map
+                        (\r ->
+                            withMapData
+                                (\x ->
+                                    let
+                                        assignees =
+                                            if Tuple.first r == True then
+                                                withDefault [] x.assignees ++ [ Tuple.second r ]
+
+                                            else
+                                                LE.remove (Tuple.second r) (withDefault [] x.assignees)
+                                    in
+                                    { x | assignees = Just assignees }
+                                )
+                                model.tension_head
+                        )
+                        out.result
+                        |> withDefault model.tension_head
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | assigneesPanel = panel, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map AssigneeSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Labels
         LabelSearchPanelMsg msg ->
@@ -1551,14 +1561,6 @@ update global message model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
-        ChangeUserLookup users_ ->
-            case users_ of
-                Ok users ->
-                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
-
-                Err err ->
-                    ( model, Ports.logErr err, Cmd.none )
-
         -- Help
         TriggerHelp _ ->
             ( { model | help = Help.open model.help }
@@ -1658,11 +1660,10 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     [ Ports.closeModalFromJs DoCloseModal
     , Ports.triggerHelpFromJs TriggerHelp
-    , Ports.cancelAssigneesFromJs (always CancelAssignees)
     , Ports.cancelActionFromJs (always CancelAction)
-    , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
+        ++ (AssigneeSearchPanel.subscriptions |> List.map (\s -> Sub.map AssigneeSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         |> Sub.batch
 
@@ -2590,54 +2591,28 @@ viewSidePane u t model =
     in
     div [ class "tensionSidePane" ]
         [ div [ class "media" ]
-            [ div [ class "media-content" ] <|
-                (case u of
-                    LoggedIn uctx ->
-                        [ h2
-                            [ class "subtitle"
-                            , classList [ ( "is-w", model.isTensionAdmin ) ]
-                            , onClick DoAssigneesEdit
-                            ]
-                            [ text T.assigneesH
-                            , if model.assigneesPanel.isOpen then
-                                Fa.icon0 "fas fa-times is-pulled-right" ""
+            [ div [ class "media-content" ]
+                [ div []
+                    [ case u of
+                        LoggedIn uctx ->
+                            let
+                                panelOp =
+                                    { selectedAssignees = t.assignees |> withDefault []
+                                    , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                                    , isAdmin = model.isTensionAdmin
+                                    }
+                            in
+                            AssigneeSearchPanel.view panelOp model.assigneesPanel |> Html.map AssigneeSearchPanelMsg
 
-                              else if model.isTensionAdmin then
-                                Fa.icon0 "fas fa-cog is-pulled-right" ""
+                        LoggedOut ->
+                            h2 [ class "subtitle" ] [ text T.assigneesH ]
+                    ]
+                , if List.length assignees > 0 then
+                    viewUsers assignees
 
-                              else
-                                text ""
-                            ]
-                        , div [ id "assigneesPanelContent" ]
-                            [ if model.assigneesPanel.isOpen then
-                                let
-                                    panelData =
-                                        { selectedUsers = assignees
-                                        , targets = [ t.emitter.nameid, t.receiver.nameid ]
-                                        , users_data = model.users_data
-                                        , lookup = model.lookup_users
-                                        , data = model.assigneesPanel
-                                        , onChangePattern = ChangeAssigneePattern
-                                        , onUserClick = ChangeAssignee
-                                        , onSubmit = Submit
-                                        }
-                                in
-                                UserSearchPanel.view panelData
-
-                              else
-                                text ""
-                            ]
-                        ]
-
-                    LoggedOut ->
-                        [ h2 [ class "subtitle" ] [ text T.assigneesH ] ]
-                )
-                    ++ [ if List.length assignees > 0 then
-                            assignees |> List.map (\a -> viewUser True a.username) |> span []
-
-                         else
-                            div [ class "is-italic" ] [ text T.noAssignees ]
-                       ]
+                  else
+                    div [ class "is-italic" ] [ text T.noLabels ]
+                ]
             ]
         , div [ class "media" ]
             [ div [ class "media-content" ]
@@ -2654,7 +2629,7 @@ viewSidePane u t model =
                             LabelSearchPanel.view panelOp model.labelsPanel |> Html.map LabelSearchPanelMsg
 
                         LoggedOut ->
-                            h2 [ class "subtitle" ] [ text T.assigneesH ]
+                            h2 [ class "subtitle" ] [ text T.labelsH ]
                     ]
                 , if List.length labels > 0 then
                     viewLabels labels

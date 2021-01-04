@@ -237,6 +237,12 @@ a {
     background-color: $grey;
 }
 
+.dropdown-content {
+      .dropdown-item:hover {
+          background-color: $dropdown-item-hover-background-color !important;
+      }
+}
+
 .pagination-link,
 .pagination-next,
 .pagination-previous {

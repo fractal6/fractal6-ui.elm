@@ -1,10 +1,10 @@
 module Components.NodeDoc exposing (..)
 
+import Components.AssigneeSearchPanel exposing (viewUserSelectors)
 import Components.Doc exposing (ActionView(..))
 import Components.Fa as Fa
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
-import Components.UserSearchPanel as UserSearchPanel
 import Dict
 import Extra exposing (ternary)
 import Fractal.Enum.BlobType as BlobType
@@ -588,9 +588,8 @@ nodeLinksInputView txt form data op =
                             ]
                         ]
                     , if data.isLookupOpen then
-                        div
-                            [ id "userSearchPanel", class "panel in-horizon sidePanel" ]
-                            [ UserSearchPanel.viewSelectors i u.pattern op ]
+                        div [ class "panel in-horizon sidePanel" ]
+                            [ viewUserSelectors i u.pattern op ]
 
                       else
                         span [] []

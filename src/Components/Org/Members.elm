@@ -39,7 +39,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembers)
+import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersTop)
 import RemoteData exposing (RemoteData)
 import Task
 import Text as T
@@ -176,7 +176,7 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , queryMembers apis.gql newFocus.nameid GotMembersTop
+            , queryMembersTop apis.gql newFocus.nameid GotMembersTop
             , fetchMembers apis.rest newFocus.nameid GotMembersSub
             , sendSleep PassedSlowLoadTreshold 500
             ]
