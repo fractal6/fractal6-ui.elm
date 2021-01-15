@@ -2,9 +2,17 @@
 // DARKLY
 ////////////////////////////////////////////////
 $primary: #375a7f !default;
-
 $white-1: #f2f2f3; // black 900
 $white-2: #e7e8eb; // black 800
+
+
+//#282c37; //
+//#191b22; //
+$bbc: #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);
+$nbc: #172335; // $primary
+$nbbc: $nbc;  //#02071ac4;
+$hbc: $grey-dark; // #37404d; // #44444d; // #24292e;
+$chbc: lighten($hbc, 2);
 
 //$text: #fff;
 $text: $white-1;
@@ -16,10 +24,10 @@ $border-width: 1px;
 $border-width-focus: 2px;
 
 $background: $grey-darker;
-$body-background-color: #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);
-$header-background-color: $grey-dark; // #37404d; // #44444d; // #24292e;
-$comment-header-background-color: lighten($header-background-color, 2);
-$footer-background-color: $background;
+$footer-background-color: $grey-darker;
+$body-background-color: $bbc;
+$header-background-color: $hbc;
+$comment-header-background-color: $chbc;
 
 $button-background-color: $background;
 $button-border-color: lighten($button-background-color, 15);
@@ -65,8 +73,8 @@ $table-striped-row-even-hover-background-color: lighten($grey-darker, 2);
 $pagination-color: $link;
 $pagination-border-color: $border-color;
 
-$navbar-background-color: #172335; // $primary
-$navbar-brand-background-color: #02071ac4;
+$navbar-background-color: $nbc;
+$navbar-brand-background-color: $nbbc;
 $navbar-item-color: $text;
 $navbar-item-hover-color: $link;
 $navbar-item-hover-background-color: $grey-darker;
