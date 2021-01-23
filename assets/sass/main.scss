@@ -258,19 +258,14 @@ html.has-modal-active, html.has-modal-active2 {
     //}
 
     .navbar-brand a {
-        padding-top: 0 !important;
         padding-bottom: 0 !important;
-        margin-left: $size-small;
-        margin-left: 0;
-		background-color: $navbar-brand-background-color;
     }
 
     .navbar-brand svg {
-        -webkit-transform: rotate(45deg);
-        transform: rotate(45deg);
-
-        -webkit-transition: -webkit-transform .666s ease-in-out;
-        transition: transform .666s ease-in-out;
+        //-webkit-transform: rotate(45deg);
+        //transform: rotate(45deg);
+        //-webkit-transition: -webkit-transform .666s ease-in-out;
+        //transition: transform .666s ease-in-out;
     }
 
     .navbar-start .navbar-item {

@@ -30,7 +30,7 @@ defaultAvatar =
 
 
 --logo =
---    image "logo.svg"
+--    Logo.logo_fractale
 
 
 image : String -> String

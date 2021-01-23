@@ -8,11 +8,13 @@ $white-2: #e7e8eb; // black 800
 
 //#282c37; //
 //#191b22; //
-$bbc: #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);
 $nbc: #172335; // $primary
 $nbbc: $nbc;  //#02071ac4;
+$bbc: #3e4957; //#434e5b; //#4e5b6a; //#2e424bf2; //darken($grey-darker,4);
 $hbc: $grey-dark; // #37404d; // #44444d; // #24292e;
 $chbc: lighten($hbc, 2);
+//$bbc: #191b22;
+//$hbc: #282c37;
 
 //$text: #fff;
 $text: $white-1;

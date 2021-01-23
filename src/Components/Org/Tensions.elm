@@ -964,7 +964,7 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns is-centered" ]
-                    [ div [ class "column is-10-desktop is-8-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.typeFilter model.viewMode ] ]
+                    [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.typeFilter model.viewMode ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -1067,7 +1067,7 @@ viewListTensions model =
                     other |> List.sortBy .createdAt |> List.reverse |> Success
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-10-desktop is-8-fullhd" ]
+        [ div [ class "column is-10-desktop is-9-fullhd" ]
             [ viewTensions model.node_focus model.initPattern tensions_d ListTension
             ]
         ]
