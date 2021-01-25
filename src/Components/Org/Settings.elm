@@ -6,7 +6,7 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
@@ -887,7 +887,7 @@ viewLabels model =
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                             , td [ class "" ]
                                                 [ if n_nodes > 1 then
-                                                    span [ class "is-italic is-size-7" ] [ Fa.icon "fas fa-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
+                                                    span [ class "is-italic is-size-7" ] [ I.icon1 "icon-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
 
                                                   else
                                                     text ""
@@ -1071,7 +1071,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                        [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]

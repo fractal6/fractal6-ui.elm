@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (LocalGraph_, LookupResult, Node_, QuickDoc, WindowPos, localGraphDecoder, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
-import Components.Fa as Fa
+import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -1619,16 +1619,16 @@ viewLeftPane model =
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ Fa.icon "far fa-circle fa-lg" model.node_focus.nameid ]
+                        [ I.icon1 "icon-circle-o icon-lg" model.node_focus.nameid ]
                     ]
                 ]
             , li []
                 [ ul [ class "menu-list" ]
-                    [ li [] [ a [] [ Fa.icon "fas fa-scroll fa-xs" "Mandates" ] ]
-                    , li [] [ a [] [ Fa.icon "fas fa-exchange-alt fa-xs" "Tensions" ] ]
-                    , li [] [ a [] [ Fa.icon "fas fa-history fa-xs" "Journal" ] ]
+                    [ li [] [ a [] [ I.icon1 "icon-book-open icon-xs" "Mandates" ] ]
+                    , li [] [ a [] [ I.icon1 "icon-exchange icon-xs" "Tensions" ] ]
+                    , li [] [ a [] [ I.icon1 "icon-history icon-xs" "Journal" ] ]
                     , li []
-                        [ a [] [ Fa.icon "fas fa-user fa-xs" "Members" ]
+                        [ a [] [ I.icon1 "icon-user icon-xs" "Members" ]
                         ]
                     ]
                 ]
@@ -1679,7 +1679,7 @@ viewSearchBar us model =
                     --, list "searchList" -- impossible interaction !
                     ]
                     []
-                , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+                , span [ class "icon is-left" ] [ i [ class "icon-search" ] [] ]
                 ]
              ]
                 ++ (case node_ of
@@ -1691,7 +1691,7 @@ viewSearchBar us model =
                                     , onClick (DoNodeAction node_)
                                     ]
                                     [ span [ class "has-text-weight-bold is-ellipsis" ] [ text node.name ]
-                                    , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+                                    , span [ class "fa-stack ellipsisArt" ] [ i [ class "icon-plus fa-stack-1x" ] [] ]
                                     ]
                                 ]
                             , case us of
@@ -1724,7 +1724,7 @@ viewSearchBar us model =
                                         in
                                         div [ id "actionPanelContent", class "control" ]
                                             [ span [ class "button is-small is-info", onClick (DoActionEdit node) ]
-                                                [ i [ class "fas fa-ellipsis-v" ] [] ]
+                                                [ i [ class "icon-more-vertical" ] [] ]
                                             , ActionPanel.view panelData
                                             ]
 
@@ -1844,7 +1844,7 @@ viewCanvas us model =
                 , attribute "data-tooltip" T.reverseTooltip
                 , onClick ToggleGraphReverse
                 ]
-                [ Fa.icon0 "fas fa-sort-amount-up" "" ]
+                [ I.icon "icon-sort-amount-desc icon-xs" ]
             ]
         , div
             [ id "nodeTooltip"
@@ -1852,12 +1852,12 @@ viewCanvas us model =
             , attribute "data-modal" "actionModal"
             ]
             [ span [] [ text "void" ] -- Node name
-            , span [ class "fa-stack ellipsisArt" ] [ i [ class "fas fa-plus fa-stack-1x" ] [] ]
+            , span [ class "fa-stack ellipsisArt" ] [ i [ class "icon-plus fa-stack-1x" ] [] ]
 
             --, div [ id "actionPanelContent", class "control" ]
             --    [ span
             --        [ class "button is-small is-info" ]
-            --        [ i [ class "fas fa-ellipsis-v" ] [] ]
+            --        [ i [ class "icon-more-vertical" ] [] ]
             --    ]
             ]
         ]
@@ -1885,8 +1885,8 @@ viewActivies model =
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
-                            [ li [ class "is-active" ] [ a [ href "#" ] [ Fa.icon "fas fa-exchange-alt fa-sm" T.tensionH ] ]
-                            , li [] [ a [ class "has-text-grey", href "#" ] [ Fa.icon "fas fa-history fa-sm" T.journalH ] ]
+                            [ li [ class "is-active" ] [ a [ href "#" ] [ I.icon1 "icon-exchange icon-sm" T.tensionH ] ]
+                            , li [] [ a [ class "has-text-grey", href "#" ] [ I.icon1 "icon-history icon-sm" T.journalH ] ]
                             ]
                         ]
                     ]
@@ -2097,7 +2097,7 @@ viewJoinOrgaStep orga step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                        [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]

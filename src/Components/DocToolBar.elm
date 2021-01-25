@@ -1,7 +1,7 @@
 module Components.DocToolBar exposing (view)
 
 import Components.Doc exposing (ActionView(..))
-import Components.Fa as Fa
+import Components.I as I
 import Text as T
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
@@ -25,7 +25,7 @@ view focus tid actionView =
                 , href
                     (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref)
                 ]
-                [ Fa.icon0 "fas fa-eye" "" ]
+                [ I.icon "icon-eye icon-sm"  ]
             ]
         , p
             [ class "control tooltip"
@@ -37,7 +37,7 @@ view focus tid actionView =
                 , href
                     ((Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref) ++ "?v=edit")
                 ]
-                [ Fa.icon0 "fas fa-pen" "" ]
+                [ I.icon "icon-pen icon-sm"  ]
             ]
         , p
             [ class "control tooltip"
@@ -49,6 +49,6 @@ view focus tid actionView =
                 , href
                     ((Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
                 ]
-                [ Fa.icon0 "fas fa-history" "" ]
+                [ I.icon "icon-history"  ]
             ]
         ]

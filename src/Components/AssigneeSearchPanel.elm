@@ -2,7 +2,7 @@ module Components.AssigneeSearchPanel exposing (Msg, State, init, subscriptions,
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Codecs exposing (LookupResult)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -325,7 +325,7 @@ view_ op (State model) =
                                 , onInput OnChangePattern
                                 ]
                                 []
-                            , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
+                            , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
                             ]
                         ]
                     , case model.click_result of
@@ -365,8 +365,8 @@ viewAssigneeSelectors users op model =
                             isActive =
                                 List.member u op.selectedAssignees
 
-                            faCls =
-                                ternary isActive "fa-check-square" "fa-square"
+                            iconCls =
+                                ternary isActive "icon-check-square" "icon-square"
 
                             isLoading =
                                 model.click_result == LoadingSlowly && u.username == model.form.assignee.username
@@ -376,7 +376,7 @@ viewAssigneeSelectors users op model =
                             , classList [ ( "is-active", isActive ) ]
                             , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
                             ]
-                            [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
+                            [ span [ class "panel-icon" ] [ I.icon0 iconCls "" ]
                             , viewUser False u.username
                             , case u.name of
                                 Just name ->
@@ -406,10 +406,10 @@ view op (State model) =
             ]
             [ text T.assigneesH
             , if model.isOpen then
-                Fa.icon0 "fas fa-times is-pulled-right" ""
+                I.icon0 "icon-x is-pulled-right" ""
 
               else if op.isAdmin then
-                Fa.icon0 "fas fa-cog is-pulled-right" ""
+                I.icon0 "icon-settings is-pulled-right" ""
 
               else
                 text ""

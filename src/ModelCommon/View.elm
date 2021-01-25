@@ -1,6 +1,6 @@
 module ModelCommon.View exposing (..)
 
-import Components.Fa as Fa
+import Components.I as I
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
@@ -91,7 +91,7 @@ mediaTension baseUri focus tension navigate =
                         span [] []
                 , if n_comments > 1 then
                     span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments") ]
-                        [ Fa.icon "fas fa-comment" (String.fromInt (n_comments - 1)) ]
+                        [ I.icon1 "icon-message-square icon-sm" (String.fromInt (n_comments - 1)) ]
 
                   else
                     span [] []
@@ -361,45 +361,45 @@ viewActionIcon : TensionAction.TensionAction -> Html msg
 viewActionIcon action =
     case action of
         TensionAction.NewCircle ->
-            Fa.fa "far fa-circle"
+            I.icon "icon-circle-o"
 
         TensionAction.EditCircle ->
             span [ class "fa-stack stackPen ", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "fas fa-pen fa-stack-1x" ] []
-                , i [ class "far fa-circle fa-stack-2x" ] []
+                [ i [ class "icon-pen fa-stack-1x" ] []
+                , i [ class "icon-circle-o fa-stack-2x" ] []
                 ]
 
         TensionAction.ArchivedCircle ->
             span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "fas fa-archive fa-stack-2x" ] []
+                [ i [ class "icon-archive fa-stack-2x" ] []
                 ]
 
         TensionAction.NewRole ->
-            Fa.fa "fas fa-circle"
+            I.icon "icon-circle"
 
         TensionAction.EditRole ->
             span [ class "fa-stack stackPen", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "fas fa-pen fa-stack-1x" ] []
-                , i [ class "fas fa-circle fa-stack-2x" ] []
+                [ i [ class "icon-pen fa-stack-1x" ] []
+                , i [ class "icon-circle fa-stack-2x" ] []
                 ]
 
         TensionAction.ArchivedRole ->
             span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "fas fa-archive fa-stack-2x" ] []
+                [ i [ class "icon-archive fa-stack-2x" ] []
                 ]
 
         TensionAction.NewMd ->
-            Fa.fa "fas fa-markdown"
+            I.icon "icon-markdown"
 
         TensionAction.EditMd ->
             span [ class "fa-stack stackPen", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "fas fa-pen fa-stack-1x" ] []
-                , i [ class "fas fa-markdown fa-stack-2x" ] []
+                [ i [ class "icon-pen fa-stack-1x" ] []
+                , i [ class "icon-markdown fa-stack-2x" ] []
                 ]
 
         TensionAction.ArchivedMd ->
             span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "fas fa-archive fa-stack-2x" ] []
+                [ i [ class "icon-archive fa-stack-2x" ] []
                 ]
 
 

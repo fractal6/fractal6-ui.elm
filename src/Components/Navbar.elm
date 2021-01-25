@@ -1,6 +1,6 @@
 module Components.Navbar exposing (view)
 
-import Components.Fa as Fa
+import Components.I as I
 import Components.Logo as Logo
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
@@ -71,7 +71,7 @@ helpButton op =
                 [ class "navbar-item" ]
                 [ div
                     [ class "navbar-link is-arrowless has-background-info button is-rounded is-small helpTrigger" ]
-                    [ Fa.icon "fas fa-question" "" ]
+                    [ I.icon "icon-question" ]
                 ]
 
         LoggedOut ->
@@ -88,9 +88,9 @@ newButton op =
                 ]
                 [ div
                     [ class "navbar-link has-background-primary button is-small"
-                    , attribute "style" "padding-right: 1.75rem;"
+                    , attribute "style" "padding-right: 1.85rem;"
                     ]
-                    [ Fa.icon "fas fa-plus" "" ]
+                    [ I.icon "icon-plus" ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
                         [ text T.newOrganisation ]
@@ -106,18 +106,22 @@ userButton op =
     case op.user of
         LoggedIn uctx ->
             div [ class "navbar-item has-dropdown" ]
-                [ div [ class "navbar-link" ] [ text uctx.username ]
+                [ div [ class "navbar-link"
+
+                    , attribute "style" "padding-right: 1.85rem;"
+
+                ] [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toHref <| Route.User_Dynamic { param1 = uctx.username }) ]
-                        [ Fa.icon "fas fa-user" T.profile ]
+                        [ I.icon1 "icon-user" T.profile ]
                     , a [ class "navbar-item", href "#" ]
-                        [ Fa.icon "fas fa-cog" T.settings ]
+                        [ I.icon1 "icon-tool" T.settings ]
 
                     --, hr [ class "navbar-divider" ] []
-                    --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "fas fa-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
+                    --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "icon-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
-                        [ text T.signout ]
+                        [ I.icon1 "icon-power" T.signout ]
                     ]
                 ]
 

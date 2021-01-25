@@ -2,7 +2,7 @@ module Components.NodeDoc exposing (..)
 
 import Components.AssigneeSearchPanel exposing (viewUserSelectors)
 import Components.Doc exposing (ActionView(..))
-import Components.Fa as Fa
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Dict
@@ -331,10 +331,11 @@ view_ tid data op_m =
             div [ class "aboutDoc" ]
                 [ div [ class "media subtitle" ]
                     [ div [ class "media-left" ]
-                        [ span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                            [ i [ class "fas fa-info fa-stack-1x" ] []
-                            , i [ class "far fa-circle fa-stack-2x" ] []
-                            ]
+                        [ I.icon "icon-info icon-1half"
+                         -- span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
+                         --   [ i [ class "icon-info fa-stack-1x" ] []
+                         --   , i [ class "far fa-circle fa-stack-2x" ] []
+                         --   ]
                         ]
                     , div [ class "media-content nodeName" ]
                         [ (if data.hasBeenPushed && data.source == TensionBaseUri then
@@ -387,7 +388,7 @@ view_ tid data op_m =
                 Just mandate ->
                     div [ class "mandateDoc" ]
                         [ div [ class "subtitle is-5" ]
-                            [ Fa.icon "fas fa-scroll fa-sm" T.mandateH, doEditView op_m BlobType.OnMandate ]
+                            [ I.icon1 "icon-book-open icon-1half" T.mandateH, doEditView op_m BlobType.OnMandate ]
                         , viewMandateSection T.purposeH (Just mandate.purpose)
                         , viewMandateSection T.responsabilitiesH mandate.responsabilities
                         , viewMandateSection T.domainsH mandate.domains
@@ -430,7 +431,7 @@ view_ tid data op_m =
             in
             div [ class "linksDoc" ]
                 [ div [ class "subtitle is-5" ]
-                    [ Fa.icon "fas fa-users fa-sm" T.linksH
+                    [ I.icon1 "icon-users icon-1half" T.linksH
                     , links_
                         |> List.map (\l -> viewUser True l.username)
                         |> span [ attribute "style" "margin-left:20px;" ]
@@ -694,7 +695,7 @@ nodeMandateInputView txt node op =
         , if showResponsabilities == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
-                    [ Fa.icon "fas fa-plus" "", text T.addResponsabilities ]
+                    [ I.icon1 "icon-plus" "", text T.addResponsabilities ]
                 ]
 
           else
@@ -702,7 +703,7 @@ nodeMandateInputView txt node op =
         , if showDomains == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddDomains ]
-                    [ Fa.icon "fas fa-plus" "", text T.addDomains ]
+                    [ I.icon1 "icon-plus" "", text T.addDomains ]
                 ]
 
           else
@@ -710,7 +711,7 @@ nodeMandateInputView txt node op =
         , if showPolicies == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddPolicies ]
-                    [ Fa.icon "fas fa-plus" "", text T.addPolicies ]
+                    [ I.icon1 "icon-plus" "", text T.addPolicies ]
                 ]
 
           else
@@ -734,7 +735,7 @@ doEditView op_m btype =
                     [ class "button has-text-weight-normal is-pulled-right is-small"
                     , onClick (op.onBlobEdit btype)
                     ]
-                    [ Fa.icon0 "fas fa-pen" "" ]
+                    [ I.icon0 "icon-pen" "" ]
 
         Nothing ->
             span [] []

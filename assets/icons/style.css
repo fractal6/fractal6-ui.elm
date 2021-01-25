@@ -1,0 +1,237 @@
+@font-face {
+  font-family: 'fractaleicon-feather';
+  src:  url('fonts/fractaleicon-feather.eot?2djlx0');
+  src:  url('fonts/fractaleicon-feather.eot?2djlx0#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon-feather.ttf?2djlx0') format('truetype'),
+    url('fonts/fractaleicon-feather.woff?2djlx0') format('woff'),
+    url('fonts/fractaleicon-feather.svg?2djlx0#fractaleicon-feather') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+i {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'fractaleicon-feather' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-plus:before {
+  content: "\f067";
+}
+.icon-question:before {
+  content: "\f128";
+}
+.icon-sort-amount-asc:before {
+  content: "\f160";
+}
+.icon-sort-amount-desc:before {
+  content: "\f161";
+}
+.icon-alert-circle:before {
+  content: "\e900";
+}
+.icon-alert-triangle:before {
+  content: "\e901";
+}
+.icon-archive:before {
+  content: "\e902";
+}
+.icon-bell:before {
+  content: "\e903";
+}
+.icon-bell-off:before {
+  content: "\e904";
+}
+.icon-book-open:before {
+  content: "\e93e";
+}
+.icon-bookmark:before {
+  content: "\e905";
+}
+.icon-check:before {
+  content: "\e906";
+}
+.icon-check-circle:before {
+  content: "\e907";
+}
+.icon-check-square:before {
+  content: "\e908";
+}
+.icon-angle-down:before {
+  content: "\e909";
+}
+.icon-angle-left:before {
+  content: "\e90a";
+}
+.icon-angle-right:before {
+  content: "\e90b";
+}
+.icon-angle-up:before {
+  content: "\e90c";
+}
+.icon-chevrons-left:before {
+  content: "\e939";
+}
+.icon-chevrons-right:before {
+  content: "\e93a";
+}
+.icon-circle:before {
+  content: "\e90d";
+}
+.icon-clock:before {
+  content: "\e90e";
+}
+.icon-copy:before {
+  content: "\e90f";
+}
+.icon-pen:before {
+  content: "\e910";
+}
+.icon-eye:before {
+  content: "\e911";
+}
+.icon-eye-off:before {
+  content: "\e912";
+}
+.icon-file:before {
+  content: "\e913";
+}
+.icon-file-text:before {
+  content: "\e914";
+}
+.icon-flag:before {
+  content: "\e915";
+}
+.icon-folder:before {
+  content: "\e916";
+}
+.icon-github:before {
+  content: "\e917";
+}
+.icon-gitlab:before {
+  content: "\e918";
+}
+.icon-hash:before {
+  content: "\e93f";
+}
+.icon-heart:before {
+  content: "\e940";
+}
+.icon-help-circle:before {
+  content: "\e919";
+}
+.icon-image:before {
+  content: "\e91a";
+}
+.icon-info:before {
+  content: "\e91b";
+}
+.icon-link:before {
+  content: "\e93b";
+}
+.icon-lock:before {
+  content: "\e91c";
+}
+.icon-log-in:before {
+  content: "\e91d";
+}
+.icon-log-out:before {
+  content: "\e91e";
+}
+.icon-mail:before {
+  content: "\e91f";
+}
+.icon-map:before {
+  content: "\e920";
+}
+.icon-menu:before {
+  content: "\e937";
+}
+.icon-message-circle:before {
+  content: "\e921";
+}
+.icon-message-square:before {
+  content: "\e922";
+}
+.icon-more-horizontal:before {
+  content: "\e923";
+}
+.icon-more-vertical:before {
+  content: "\e924";
+}
+.icon-paperclip:before {
+  content: "\e93c";
+}
+.icon-power:before {
+  content: "\e926";
+}
+.icon-exchange:before {
+  content: "\e927";
+}
+.icon-search:before {
+  content: "\e928";
+}
+.icon-send:before {
+  content: "\e929";
+}
+.icon-settings:before {
+  content: "\e92a";
+}
+.icon-share:before {
+  content: "\e92b";
+}
+.icon-ban:before {
+  content: "\e92c";
+}
+.icon-sliders:before {
+  content: "\e92d";
+}
+.icon-square:before {
+  content: "\e92e";
+}
+.icon-star:before {
+  content: "\e93d";
+}
+.icon-tag:before {
+  content: "\e92f";
+}
+.icon-target:before {
+  content: "\e941";
+}
+.icon-tool:before {
+  content: "\e930";
+}
+.icon-trash:before {
+  content: "\e931";
+}
+.icon-user:before {
+  content: "\e932";
+}
+.icon-user-check:before {
+  content: "\e938";
+}
+.icon-user-plus:before {
+  content: "\e933";
+}
+.icon-users:before {
+  content: "\e934";
+}
+.icon-x:before {
+  content: "\e935";
+}
+.icon-x-circle:before {
+  content: "\e936";
+}
+.icon-history:before {
+  content: "\e94d";
+}

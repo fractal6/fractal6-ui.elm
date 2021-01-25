@@ -5,7 +5,7 @@ import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
@@ -1008,7 +1008,7 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
                     , onKeydown SearchKeyDown
                     ]
                     []
-                , span [ class "icon is-left" ] [ i [ class "fas fa-search" ] [] ]
+                , span [ class "icon is-left" ] [ i [ class "icon-search" ] [] ]
                 ]
             , div [ class "buttons" ]
                 [ div [ class "control" ]
@@ -1183,7 +1183,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                        [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]

@@ -2,7 +2,7 @@ module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, up
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Codecs exposing (LookupResult)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -332,7 +332,7 @@ view_ isInternal op (State model) =
                                     , onInput OnChangePattern
                                     ]
                                     []
-                                , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "fas fa-search" ] [] ]
+                                , span [ class "icon is-left" ] [ i [ attribute "aria-hidden" "true", class "icon-search" ] [] ]
                                 ]
                             ]
                         , case model.click_result of
@@ -372,8 +372,8 @@ viewLabelSelectors isInternal labels op model =
                             isActive =
                                 List.member l op.selectedLabels
 
-                            faCls =
-                                ternary isActive "fa-check-square" "fa-square"
+                            iconCls =
+                                ternary isActive "icon-check-square" "icon-square"
 
                             isLoading =
                                 model.click_result == LoadingSlowly && l.id == model.form.label.id
@@ -385,7 +385,7 @@ viewLabelSelectors isInternal labels op model =
                                 (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
                                 (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                             ]
-                            [ span [ class "panel-icon" ] [ Fa.icon0 ("far " ++ faCls) "" ]
+                            [ span [ class "panel-icon" ] [ I.icon0 iconCls "" ]
                             , viewLabel "" l
                             , loadingSpin isLoading
                             ]
@@ -408,10 +408,10 @@ view op (State model) =
             ]
             [ text T.labelsH
             , if model.isOpen then
-                Fa.icon0 "fas fa-times is-pulled-right" ""
+                I.icon0 "icon-x is-pulled-right" ""
 
               else if op.isAdmin then
-                Fa.icon0 "fas fa-cog is-pulled-right" ""
+                I.icon0 "icon-settings is-pulled-right" ""
 
               else
                 text ""
@@ -437,7 +437,7 @@ viewNew op (State model) =
                 text ""
             ]
         , div [ class "button is-small is-light mr-2", onClick (OnOpen op.targets) ]
-            [ Fa.icon "fas fa-plus" "", text "Label" ]
+            [ I.icon1 "icon-plus" "", text "Label" ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels
 

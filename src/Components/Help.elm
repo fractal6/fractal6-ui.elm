@@ -1,7 +1,7 @@
 module Components.Help exposing (..)
 
 import Codecs exposing (QuickDoc)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, loadingDiv, loadingSpin, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Dict exposing (Dict)
@@ -334,7 +334,7 @@ viewAskQuestion op =
                     Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
             in
             div [ class "box is-light" ]
-                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                [ I.icon1 "icon-check icon-2x has-text-success" " "
                 , text (T.messageSent ++ ". ")
                 , a
                     [ href link
@@ -431,7 +431,7 @@ viewFeedback op =
                     Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
             in
             div [ class "box is-light" ]
-                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                [ I.icon1 "icon-check icon-2x has-text-success" " "
                 , text (T.messageSent ++ ". ")
                 , a
                     [ href link

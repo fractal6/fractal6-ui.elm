@@ -3,7 +3,7 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)

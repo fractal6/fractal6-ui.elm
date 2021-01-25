@@ -1,7 +1,7 @@
 module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
-import Components.Fa as Fa
+import Components.I as I
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
@@ -124,18 +124,18 @@ view hb =
             , div [ class "tabs is-boxed" ]
                 [ ul []
                     ([ li [ classList [ ( "is-active", hb.baseUri == OverviewBaseUri ) ] ]
-                        [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ Fa.icon "fas fa-circle" "Overview" ] ]
+                        [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ I.icon1 "icon-circle" "Overview" ] ]
                      , li [ classList [ ( "is-active", hb.baseUri == TensionsBaseUri ) ] ]
-                        [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ Fa.icon "fas fa-exchange-alt" "Tensions" ] ]
+                        [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ I.icon1 "icon-exchange" "Tensions" ] ]
                      , li [ classList [ ( "is-active", hb.baseUri == MembersBaseUri ) ] ]
-                        [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ Fa.icon "fas fa-user" "Members" ] ]
+                        [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ I.icon1 "icon-user" "Members" ] ]
                      ]
                         ++ (Maybe.map
                                 (\path ->
                                     if hb.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                         [ li [ class "is-vbar-2" ] []
                                         , li [ classList [ ( "is-active", hb.baseUri == SettingsBaseUri ) ] ]
-                                            [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ Fa.icon "fas fa-cog" "Settings" ] ]
+                                            [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ I.icon1 "icon-settings" "Settings" ] ]
                                         ]
 
                                     else
@@ -156,7 +156,7 @@ viewPath baseUri maybePath =
         [ class "breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
-        [ Fa.icon "fas fa-angle-right" ""
+        [ I.icon1 "icon-angle-right" ""
         , case maybePath of
             Just g ->
                 g.path
@@ -190,7 +190,7 @@ viewTree : FractalBaseRoute -> LocalGraph -> Html msg
 viewTree baseUri g =
     div [ class "dropdown" ]
         [ div [ class "dropdown-trigger px-2 button-light" ]
-            [ div [ attribute "aria-controls" "tree-menu" ] [ Fa.icon "fas fa-angle-down" "" ]
+            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon1 "icon-angle-down" "" ]
             ]
         , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content" ] <|
@@ -234,13 +234,13 @@ memberButtons roles_ hb =
         lastButton =
             case hb.data of
                 Expanded ->
-                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ Fa.icon0 "fas fa-angle-left" "" ]
+                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ I.icon0 "icon-chevrons-left" "" ]
 
                 Collapsed ->
                     if roleMoreLen > 0 then
                         div [ class "button has-font-weight-semibold is-small is-primary", onClick hb.onExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
-                            , Fa.icon0 "fas fa-angle-right icon-padding-left" ""
+                            , I.icon0 "icon-chevrons-right icon-padding-left" ""
                             ]
 
                     else

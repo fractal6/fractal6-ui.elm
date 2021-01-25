@@ -7,7 +7,7 @@ import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelS
 import Components.AssigneeSearchPanel as AssigneeSearchPanel
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
-import Components.Fa as Fa
+import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -1740,11 +1740,11 @@ viewTension u t model =
                                     , attribute "data-tooltip" T.editTitle
                                     , onClick DoChangeTitle
                                     ]
-                                    [ Fa.icon0 "fas fa-pen" "" ]
+                                    [ I.icon0 "icon-pen" "" ]
 
                               else
                                 span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ]
-                                    [ Fa.icon0 "fas fa-pen" "" ]
+                                    [ I.icon0 "icon-pen" "" ]
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
@@ -1766,13 +1766,13 @@ viewTension u t model =
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
                             [ a
                                 [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                [ Fa.icon "fas fa-comments fa-sm" "Conversation" ]
+                                [ I.icon1 "icon-message-square" "Conversation" ]
                             ]
                         , if t.action /= Nothing then
                             li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
                                 [ a
                                     [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ Fa.icon "fas fa-clone fa-sm" "Document" ]
+                                    [ I.icon1 "icon-copy" "Document" ]
                                 ]
 
                           else
@@ -1945,7 +1945,7 @@ viewComment c model =
                                         , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ Fa.icon0 "fas fa-ellipsis-v" "" ]
+                                        [ I.icon0 "icon-more-vertical" "" ]
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
@@ -2114,13 +2114,13 @@ viewEventStatus event status =
         ( actionIcon, actionText ) =
             case status of
                 TensionStatus.Open ->
-                    ( "far fa-circle", T.reopened )
+                    ( "icon-circle-o", T.reopened )
 
                 TensionStatus.Closed ->
-                    ( "fas fa-ban", T.closed )
+                    ( "icon-ban", T.closed )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 (actionIcon ++ " fa-1half has-text-" ++ statusColor status) "" ]
+        [ div [ class "media-left" ] [ I.icon0 (actionIcon ++ " icon-1half has-text-" ++ statusColor status) "" ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2131,7 +2131,7 @@ viewEventTitle : Event -> Html Msg
 viewEventTitle event =
     let
         icon =
-            Fa.icon0 "fas fa-pen" ""
+            I.icon0 "icon-pen" ""
 
         actionText =
             T.updatedTitle
@@ -2153,7 +2153,7 @@ viewEventAssignee : Event -> Bool -> Html Msg
 viewEventAssignee event isNew =
     let
         icon =
-            Fa.icon0 "fas fa-user" ""
+            I.icon0 "icon-user" ""
 
         actionText =
             if isNew then
@@ -2176,7 +2176,7 @@ viewEventLabel : Event -> Bool -> Html Msg
 viewEventLabel event isNew =
     let
         icon =
-            Fa.icon0 "fas fa-tag" ""
+            I.icon0 "icon-tag" ""
 
         ( actionText, label_ ) =
             if isNew then
@@ -2205,7 +2205,7 @@ viewEventPushed event action_m =
             withDefault TensionAction.NewRole action_m
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-share-square" "" ]
+        [ div [ class "media-left" ] [ I.icon0 "icon-share-square" "" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2221,12 +2221,12 @@ viewEventArchived event action_m isArchived =
         ( icon, txt ) =
             case isArchived of
                 True ->
-                    ( Fa.icon0 "fas fa-archive" "", T.archived )
+                    ( I.icon0 "icon-archive" "", T.archived )
 
                 False ->
                     ( span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "fas fa-slash fa-stack-2x" ] []
-                        , i [ class "fas fa-archive fa-stack-2x" ] []
+                        [ i [ class "icon-slash fa-stack-2x" ] []
+                        , i [ class "icon-archive fa-stack-2x" ] []
                         ]
                     , T.unarchived
                     )
@@ -2249,7 +2249,7 @@ viewEventUserJoin event action_m =
             "the organisation"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-sign-in-alt" "" ]
+        [ div [ class "media-left" ] [ I.icon0 "icon-log-in" "" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.join ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2276,7 +2276,7 @@ viewEventUserLeft event action_m =
                     actionNameStr action
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ Fa.icon0 "fas fa-sign-out-alt" "" ]
+        [ div [ class "media-left" ] [ I.icon0 "icon-log-out" "" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2437,7 +2437,7 @@ viewBlobToolBar u t b model =
                                     [ class "button is-small is-success has-text-weight-semibold"
                                     , onClick (Submit <| PushBlob b.id)
                                     ]
-                                    [ Fa.icon "fas fa-share-square" (up0 T.publish) ]
+                                    [ I.icon1 "icon-share-square" (up0 T.publish) ]
                                 ]
                     ]
 
@@ -2481,7 +2481,7 @@ viewDocVersions blobsData =
                                                     , attribute "style" "cursor: inherit;"
                                                     , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
                                                     ]
-                                                    [ Fa.icon0 "fas fa-flag" "" ]
+                                                    [ I.icon0 "icon-flag" "" ]
 
                                             Nothing ->
                                                 text ""
@@ -2620,10 +2620,10 @@ viewSidePane u t model =
                             ]
                             [ text T.actionH
                             , if model.actionPanel.isEdit then
-                                Fa.icon0 "fas fa-times is-pulled-right" ""
+                                I.icon0 "icon-x is-pulled-right" ""
 
                               else if model.isTensionAdmin then
-                                Fa.icon0 "fas fa-cog is-pulled-right" ""
+                                I.icon0 "icon-settings is-pulled-right" ""
 
                               else
                                 text ""
@@ -2720,7 +2720,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
-                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                        [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text (T.welcomIn ++ " ")
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]

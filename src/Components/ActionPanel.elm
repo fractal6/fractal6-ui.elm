@@ -1,6 +1,6 @@
 module Components.ActionPanel exposing (..)
 
-import Components.Fa as Fa
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -257,7 +257,7 @@ view op =
                                 )
                             )
                         ]
-                        [ Fa.icon "fas fa-pen" T.edit ]
+                        [ I.icon1 "icon-pen" T.edit ]
                     , hr [ class "dropdown-divider" ] []
                     ]
 
@@ -268,12 +268,12 @@ view op =
                             case actionType_m of
                                 Just EDIT ->
                                     [ div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
-                                        [ Fa.icon "fas fa-archive" T.archive ]
+                                        [ I.icon1 "icon-archive" T.archive ]
                                     ]
 
                                 Just ARCHIVE ->
                                     [ div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
-                                        [ Fa.icon "fas fa-archive" T.unarchive ]
+                                        [ I.icon1 "icon-archive" T.unarchive ]
                                     ]
 
                                 _ ->
@@ -285,7 +285,7 @@ view op =
                     ++ (if op.hasRole then
                             [ div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
                                 [ p []
-                                    [ Fa.icon "fas fa-sign-out-alt" T.leaveRole ]
+                                    [ I.icon1 "icon-log-out" T.leaveRole ]
                                 ]
                             ]
                                 |> List.append [ hr [ class "dropdown-divider" ] [] ]
@@ -369,7 +369,7 @@ viewModalContent op =
                 Success t ->
                     div
                         [ class "box is-light" ]
-                        [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                        [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , case op.data.state of
                             ArchiveAction ->
                                 text "Document archived"

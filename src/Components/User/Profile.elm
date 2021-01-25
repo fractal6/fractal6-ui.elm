@@ -3,7 +3,7 @@ module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscrip
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Components.Fa as Fa
+import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
@@ -631,7 +631,7 @@ viewUserOrgas user_data =
                                 , div [ id "icons", class "level is-mobile" ]
                                     [ div [ class "level-left" ]
                                         [ if root.isPrivate then
-                                            span [ class "level-item" ] [ Fa.icon "fas fa-lock" "" ]
+                                            span [ class "level-item" ] [ I.icon "icon-lock"  ]
 
                                           else
                                             text ""

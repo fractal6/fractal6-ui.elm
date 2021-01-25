@@ -1,6 +1,6 @@
 module Form.NewTension exposing (..)
 
-import Components.Fa as Fa
+import Components.I as I
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
@@ -352,7 +352,7 @@ view op =
                     Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
             in
             div [ class "box is-light" ]
-                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                [ I.icon1 "icon-check icon-2x has-text-success" " "
                 , text (txt.added ++ " ")
                 , a
                     [ href link

@@ -1606,22 +1606,11 @@ a.actionLink {
  *
  */
 
-.fa-1half {
-    font-size: 1.5rem;
-    margin-left: -4px;
-}
 
 .is-w {
     &:hover {
         color: $white-ter !important;
         cursor: pointer;
-    }
-}
-
-.stackPen {
-    &.fa-stack > i.fa-pen {
-        top: -5px;
-        left: 5px;
     }
 }
 

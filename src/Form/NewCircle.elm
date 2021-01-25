@@ -1,6 +1,6 @@
 module Form.NewCircle exposing (view)
 
-import Components.Fa as Fa
+import Components.I as I
 import Components.Loading as Loading exposing (RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Dict
@@ -57,7 +57,7 @@ view op =
                     Route.Tension_Dynamic_Dynamic_Action { param1 = form.target.rootnameid, param2 = res.id } |> toHref
             in
             div [ class "box is-light" ]
-                [ Fa.icon "fas fa-check fa-2x has-text-success" " "
+                [ I.icon1 "icon-check icon-2x has-text-success" " "
                 , if data.activeButton == Just 0 then
                     text (txt.added ++ " ")
 
@@ -107,7 +107,7 @@ view op =
                       else
                         div [ class "field" ]
                             [ div [ class "button is-info", onClick op.onAddLinks ]
-                                [ Fa.icon "fas fa-plus" "", text "Add first link" ]
+                                [ I.icon1 "icon-plus" "", text "Add first link" ]
                             ]
                     , br [] []
                     , div [ class "field" ]
