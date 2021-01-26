@@ -1,18 +1,18 @@
 @font-face {
-  font-family: 'fractaleicon-feather';
-  src:  url('fonts/fractaleicon-feather.eot?2djlx0');
-  src:  url('fonts/fractaleicon-feather.eot?2djlx0#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon-feather.ttf?2djlx0') format('truetype'),
-    url('fonts/fractaleicon-feather.woff?2djlx0') format('woff'),
-    url('fonts/fractaleicon-feather.svg?2djlx0#fractaleicon-feather') format('svg');
+  font-family: 'fractaleicon';
+  src:  url('fonts/fractaleicon.eot?qunpbx');
+  src:  url('fonts/fractaleicon.eot?qunpbx#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?qunpbx') format('truetype'),
+    url('fonts/fractaleicon.woff?qunpbx') format('woff'),
+    url('fonts/fractaleicon.svg?qunpbx#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
 }
 
-i {
+[class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
-  font-family: 'fractaleicon-feather' !important;
+  font-family: 'fractaleicon' !important;
   speak: never;
   font-style: normal;
   font-weight: normal;
@@ -25,7 +25,61 @@ i {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-box:before {
+  content: "\e909";
+}
+.icon-grid:before {
+  content: "\e90c";
+}
+.icon-home:before {
+  content: "\e923";
+}
+.icon-layers:before {
+  content: "\e924";
+}
+.icon-layout:before {
+  content: "\e90a";
+}
+.icon-life-buoy:before {
+  content: "\e90b";
+}
+.icon-map-pin:before {
+  content: "\e925";
+}
+.icon-minus:before {
+  content: "\e944";
+}
 .icon-plus:before {
+  content: "\e943";
+}
+.icon-sun:before {
+  content: "\e942";
+}
+.icon-minus1:before {
+  content: "\f068";
+}
+.icon-chevron-left:before {
+  content: "\f053";
+}
+.icon-chevron-right:before {
+  content: "\f054";
+}
+.icon-chevron-up:before {
+  content: "\f077";
+}
+.icon-chevron-down:before {
+  content: "\f078";
+}
+.icon-circle1:before {
+  content: "\f111";
+}
+.icon-ellipsis-h:before {
+  content: "\f141";
+}
+.icon-ellipsis-v:before {
+  content: "\f142";
+}
+.icon-plus1:before {
   content: "\f067";
 }
 .icon-question:before {
@@ -66,18 +120,6 @@ i {
 }
 .icon-check-square:before {
   content: "\e908";
-}
-.icon-angle-down:before {
-  content: "\e909";
-}
-.icon-angle-left:before {
-  content: "\e90a";
-}
-.icon-angle-right:before {
-  content: "\e90b";
-}
-.icon-angle-up:before {
-  content: "\e90c";
 }
 .icon-chevrons-left:before {
   content: "\e939";
@@ -162,12 +204,6 @@ i {
 }
 .icon-message-square:before {
   content: "\e922";
-}
-.icon-more-horizontal:before {
-  content: "\e923";
-}
-.icon-more-vertical:before {
-  content: "\e924";
 }
 .icon-paperclip:before {
   content: "\e93c";

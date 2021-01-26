@@ -26,7 +26,7 @@ view op =
                 [ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ Logo.logo_fractal
-                    , span [ class "has-text-warning", attribute "style" "padding-top: 10px; font-size: 0.7rem;" ] [ text "Alpha" ]
+                    , span [ class "has-text-warning", attribute "style" "padding-top: 10px; font-size: 0.7rem; margin-left: -2px;" ] [ text "Alpha" ]
                     ]
                 , div
                     [ class "navbar-burger burger"
@@ -90,7 +90,7 @@ newButton op =
                     [ class "navbar-link has-background-primary button is-small"
                     , attribute "style" "padding-right: 1.85rem;"
                     ]
-                    [ I.icon "icon-plus" ]
+                    [ I.icon "icon-plus icon-bg" ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
                         [ text T.newOrganisation ]

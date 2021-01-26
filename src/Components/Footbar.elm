@@ -13,9 +13,9 @@ view =
                 [ div [ class "contacts" ]
                     [ span [] [ a [ href "mailto:contact@fractale.co" ] [ text "Contact us" ] ]
                     , span [] [ text "-" ]
-                    , span [] [ a [ href "https://gitlab.com/fractal6", target "_blank" ] [ I.icon0 "icon-gitlab" "" ] ]
+                    , span [] [ a [ href "https://gitlab.com/fractal6", target "_blank" ] [ I.icon "icon-gitlab"  ] ]
 
-                    --, span [] [ a [ href "https://github.com/fractal6", target "_blank" ] [ I.icon0 "icon-github" "" ] ]
+                    --, span [] [ a [ href "https://github.com/fractal6", target "_blank" ] [ I.icon "icon-github"  ] ]
                     ]
                 ]
             ]

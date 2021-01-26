@@ -1740,11 +1740,11 @@ viewTension u t model =
                                     , attribute "data-tooltip" T.editTitle
                                     , onClick DoChangeTitle
                                     ]
-                                    [ I.icon0 "icon-pen" "" ]
+                                    [ I.icon "icon-pen"  ]
 
                               else
                                 span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ]
-                                    [ I.icon0 "icon-pen" "" ]
+                                    [ I.icon "icon-pen"  ]
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
@@ -1945,7 +1945,7 @@ viewComment c model =
                                         , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ I.icon0 "icon-more-vertical" "" ]
+                                        [ I.icon "icon-ellipsis-v"  ]
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
@@ -2114,13 +2114,13 @@ viewEventStatus event status =
         ( actionIcon, actionText ) =
             case status of
                 TensionStatus.Open ->
-                    ( "icon-circle-o", T.reopened )
+                    ( "icon-alert-circle is-green", T.reopened )
 
                 TensionStatus.Closed ->
-                    ( "icon-ban", T.closed )
+                    ( "icon-alert-circle is-red", T.closed )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon0 (actionIcon ++ " icon-1half has-text-" ++ statusColor status) "" ]
+        [ div [ class "media-left" ] [ I.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status)  ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2131,7 +2131,7 @@ viewEventTitle : Event -> Html Msg
 viewEventTitle event =
     let
         icon =
-            I.icon0 "icon-pen" ""
+            I.icon "icon-pen"
 
         actionText =
             T.updatedTitle
@@ -2153,7 +2153,7 @@ viewEventAssignee : Event -> Bool -> Html Msg
 viewEventAssignee event isNew =
     let
         icon =
-            I.icon0 "icon-user" ""
+            I.icon "icon-user"
 
         actionText =
             if isNew then
@@ -2176,7 +2176,7 @@ viewEventLabel : Event -> Bool -> Html Msg
 viewEventLabel event isNew =
     let
         icon =
-            I.icon0 "icon-tag" ""
+            I.icon "icon-tag"
 
         ( actionText, label_ ) =
             if isNew then
@@ -2205,7 +2205,7 @@ viewEventPushed event action_m =
             withDefault TensionAction.NewRole action_m
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon0 "icon-share-square" "" ]
+        [ div [ class "media-left" ] [ I.icon "icon-share"  ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2221,15 +2221,10 @@ viewEventArchived event action_m isArchived =
         ( icon, txt ) =
             case isArchived of
                 True ->
-                    ( I.icon0 "icon-archive" "", T.archived )
+                    ( I.icon "icon-archive" , T.archived )
 
                 False ->
-                    ( span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                        [ i [ class "icon-slash fa-stack-2x" ] []
-                        , i [ class "icon-archive fa-stack-2x" ] []
-                        ]
-                    , T.unarchived
-                    )
+                    ( i [ class "icon-archive icon-is-slashed" ] [] , T.unarchived)
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2249,7 +2244,7 @@ viewEventUserJoin event action_m =
             "the organisation"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon0 "icon-log-in" "" ]
+        [ div [ class "media-left" ] [ I.icon "icon-log-in"  ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.join ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2276,7 +2271,7 @@ viewEventUserLeft event action_m =
                     actionNameStr action
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon0 "icon-log-out" "" ]
+        [ div [ class "media-left" ] [ I.icon "icon-log-out"  ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2421,7 +2416,7 @@ viewBlobToolBar u t b model =
     div [ class "blobToolBar" ]
         [ div [ class "level" ]
             [ div [ class "level-left" ]
-                [ DocToolBar.view model.node_focus t.id (Just model.actionView) ]
+                [ DocToolBar.view {focus=model.node_focus , tid=t.id , actionView=(Just model.actionView)} ]
             , if model.actionView /= DocVersion then
                 div [ class "level-right" ]
                     [ case b.pushedFlag of
@@ -2437,7 +2432,7 @@ viewBlobToolBar u t b model =
                                     [ class "button is-small is-success has-text-weight-semibold"
                                     , onClick (Submit <| PushBlob b.id)
                                     ]
-                                    [ I.icon1 "icon-share-square" (up0 T.publish) ]
+                                    [ I.icon1 "icon-share" (up0 T.publish) ]
                                 ]
                     ]
 
@@ -2481,7 +2476,7 @@ viewDocVersions blobsData =
                                                     , attribute "style" "cursor: inherit;"
                                                     , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
                                                     ]
-                                                    [ I.icon0 "icon-flag" "" ]
+                                                    [ I.icon "icon-flag"  ]
 
                                             Nothing ->
                                                 text ""
@@ -2620,10 +2615,10 @@ viewSidePane u t model =
                             ]
                             [ text T.actionH
                             , if model.actionPanel.isEdit then
-                                I.icon0 "icon-x is-pulled-right" ""
+                                I.icon "icon-x is-pulled-right"
 
                               else if model.isTensionAdmin then
-                                I.icon0 "icon-settings is-pulled-right" ""
+                                I.icon "icon-settings is-pulled-right"
 
                               else
                                 text ""
@@ -2659,7 +2654,7 @@ viewSidePane u t model =
                     ++ [ div [ class "" ]
                             [ case t.action of
                                 Just action ->
-                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action))
+                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action) ) ""
 
                                 Nothing ->
                                     div [ class "is-italic" ] [ text T.noAction ]

@@ -385,7 +385,7 @@ viewLabelSelectors isInternal labels op model =
                                 (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
                                 (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                             ]
-                            [ span [ class "panel-icon" ] [ I.icon0 iconCls "" ]
+                            [ span [ class "panel-icon" ] [ I.icon iconCls  ]
                             , viewLabel "" l
                             , loadingSpin isLoading
                             ]
@@ -408,10 +408,10 @@ view op (State model) =
             ]
             [ text T.labelsH
             , if model.isOpen then
-                I.icon0 "icon-x is-pulled-right" ""
+                I.icon "icon-x is-pulled-right"
 
               else if op.isAdmin then
-                I.icon0 "icon-settings is-pulled-right" ""
+                I.icon "icon-settings is-pulled-right"
 
               else
                 text ""

@@ -102,7 +102,7 @@ mediaTension baseUri focus tension navigate =
                 , span [ class "column" ]
                     [ case tension.action of
                         Just action ->
-                            viewActionIconLink action focus.rootnameid tension.id ""
+                            viewActionIconLink action focus.rootnameid tension.id "" "is-small"
 
                         Nothing ->
                             span [] []
@@ -340,8 +340,8 @@ actionNameStr action =
             T.documentH
 
 
-viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> Html msg
-viewActionIconLink action org tid words =
+viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> String -> Html msg
+viewActionIconLink action org tid words cls =
     let
         charac =
             getTensionCharac action
@@ -352,7 +352,7 @@ viewActionIconLink action org tid words =
         , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
         , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
         ]
-        [ span [ class "icon-padding" ] [ viewActionIcon action ]
+        [ span [ class cls ] [ viewActionIcon action ]
         , text words
         ]
 
@@ -361,46 +361,33 @@ viewActionIcon : TensionAction.TensionAction -> Html msg
 viewActionIcon action =
     case action of
         TensionAction.NewCircle ->
-            I.icon "icon-circle-o"
-
-        TensionAction.EditCircle ->
-            span [ class "fa-stack stackPen ", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "icon-pen fa-stack-1x" ] []
-                , i [ class "icon-circle-o fa-stack-2x" ] []
-                ]
-
-        TensionAction.ArchivedCircle ->
-            span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "icon-archive fa-stack-2x" ] []
-                ]
+            I.icon0 "icon-circle"
 
         TensionAction.NewRole ->
-            I.icon "icon-circle"
-
-        TensionAction.EditRole ->
-            span [ class "fa-stack stackPen", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "icon-pen fa-stack-1x" ] []
-                , i [ class "icon-circle fa-stack-2x" ] []
-                ]
-
-        TensionAction.ArchivedRole ->
-            span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "icon-archive fa-stack-2x" ] []
-                ]
+            I.icon0 "icon-circle1"
 
         TensionAction.NewMd ->
-            I.icon "icon-markdown"
+            I.icon0 "icon-markdown"
+
+        TensionAction.EditCircle ->
+            I.icon0 "icon-circle"
+
+        TensionAction.EditRole ->
+            I.icon0 "icon-circle1"
+
 
         TensionAction.EditMd ->
-            span [ class "fa-stack stackPen", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "icon-pen fa-stack-1x" ] []
-                , i [ class "icon-markdown fa-stack-2x" ] []
-                ]
+            I.icon0 "icon-markdown"
+
+        TensionAction.ArchivedCircle ->
+            I.icon0 "icon-archive"
+
+        TensionAction.ArchivedRole ->
+            I.icon0 "icon-archive"
+
 
         TensionAction.ArchivedMd ->
-            span [ class "fa-stack", attribute "style" "font-size: 0.5em;" ]
-                [ i [ class "icon-archive fa-stack-2x" ] []
-                ]
+            I.icon0 "icon-archive"
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String

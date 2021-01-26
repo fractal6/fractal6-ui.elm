@@ -376,7 +376,7 @@ viewAssigneeSelectors users op model =
                             , classList [ ( "is-active", isActive ) ]
                             , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
                             ]
-                            [ span [ class "panel-icon" ] [ I.icon0 iconCls "" ]
+                            [ span [ class "panel-icon" ] [ I.icon iconCls  ]
                             , viewUser False u.username
                             , case u.name of
                                 Just name ->
@@ -406,10 +406,10 @@ view op (State model) =
             ]
             [ text T.assigneesH
             , if model.isOpen then
-                I.icon0 "icon-x is-pulled-right" ""
+                I.icon "icon-x is-pulled-right"
 
               else if op.isAdmin then
-                I.icon0 "icon-settings is-pulled-right" ""
+                I.icon "icon-settings is-pulled-right"
 
               else
                 text ""

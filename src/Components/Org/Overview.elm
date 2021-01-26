@@ -1538,7 +1538,7 @@ view_ global model =
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
-            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view model.node_focus tid Nothing)) Nothing
+            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view {focus=model.node_focus ,tid=tid ,actionView=Nothing})) Nothing
             , receiver = nearestCircleid model.node_focus.nameid
             }
 
@@ -1619,7 +1619,7 @@ viewLeftPane model =
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ I.icon1 "icon-circle-o icon-lg" model.node_focus.nameid ]
+                        [ I.icon1 "icon-circle icon-lg" model.node_focus.nameid ]
                     ]
                 ]
             , li []
@@ -1691,7 +1691,7 @@ viewSearchBar us model =
                                     , onClick (DoNodeAction node_)
                                     ]
                                     [ span [ class "has-text-weight-bold is-ellipsis" ] [ text node.name ]
-                                    , span [ class "fa-stack ellipsisArt" ] [ i [ class "icon-plus fa-stack-1x" ] [] ]
+                                    ,  i [ class "icon-plus1 ellipsisArt" ] []
                                     ]
                                 ]
                             , case us of
@@ -1724,7 +1724,7 @@ viewSearchBar us model =
                                         in
                                         div [ id "actionPanelContent", class "control" ]
                                             [ span [ class "button is-small is-info", onClick (DoActionEdit node) ]
-                                                [ i [ class "icon-more-vertical" ] [] ]
+                                                [ i [ class "icon-ellipsis-v" ] [] ]
                                             , ActionPanel.view panelData
                                             ]
 
@@ -1852,12 +1852,12 @@ viewCanvas us model =
             , attribute "data-modal" "actionModal"
             ]
             [ span [] [ text "void" ] -- Node name
-            , span [ class "fa-stack ellipsisArt" ] [ i [ class "icon-plus fa-stack-1x" ] [] ]
+            , i [ class "icon-plus1 ellipsisArt" ] []
 
             --, div [ id "actionPanelContent", class "control" ]
             --    [ span
             --        [ class "button is-small is-info" ]
-            --        [ i [ class "icon-more-vertical" ] [] ]
+            --        [ i [ class "icon-ellipsis-v" ] [] ]
             --    ]
             ]
         ]

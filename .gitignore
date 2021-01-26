@@ -4,3 +4,10 @@ public/
 dist/
 !public/index.html
 .idea
+
+# temp data from icomoon
+assets/icons/Read*.txt
+assets/icons/demo-files/
+assets/icons/demo.html
+assets/icons/selection.json
+

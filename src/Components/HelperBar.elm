@@ -124,7 +124,7 @@ view hb =
             , div [ class "tabs is-boxed" ]
                 [ ul []
                     ([ li [ classList [ ( "is-active", hb.baseUri == OverviewBaseUri ) ] ]
-                        [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ I.icon1 "icon-circle" "Overview" ] ]
+                        [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ I.icon1 "icon-sun" "Overview" ] ]
                      , li [ classList [ ( "is-active", hb.baseUri == TensionsBaseUri ) ] ]
                         [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ I.icon1 "icon-exchange" "Tensions" ] ]
                      , li [ classList [ ( "is-active", hb.baseUri == MembersBaseUri ) ] ]
@@ -156,7 +156,7 @@ viewPath baseUri maybePath =
         [ class "breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
-        [ I.icon1 "icon-angle-right" ""
+        [ I.icon0 "icon-layers icon-lg"
         , case maybePath of
             Just g ->
                 g.path
@@ -190,7 +190,7 @@ viewTree : FractalBaseRoute -> LocalGraph -> Html msg
 viewTree baseUri g =
     div [ class "dropdown" ]
         [ div [ class "dropdown-trigger px-2 button-light" ]
-            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon1 "icon-angle-down" "" ]
+            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down"  ]
             ]
         , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content" ] <|
@@ -234,13 +234,13 @@ memberButtons roles_ hb =
         lastButton =
             case hb.data of
                 Expanded ->
-                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ I.icon0 "icon-chevrons-left" "" ]
+                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ I.icon "icon-chevrons-left"  ]
 
                 Collapsed ->
                     if roleMoreLen > 0 then
                         div [ class "button has-font-weight-semibold is-small is-primary", onClick hb.onExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
-                            , I.icon0 "icon-chevrons-right icon-padding-left" ""
+                            , I.icon "icon-chevrons-right icon-padding-left"
                             ]
 
                     else

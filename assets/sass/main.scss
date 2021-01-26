@@ -113,8 +113,8 @@ hr {
 }
 
 
-.icon-padding {
-    padding-right: 10px;
+.icon-padding-right {
+    padding-right: 8px;
 }
 
 .text-status {
@@ -1043,13 +1043,10 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .ellipsisArt {
-            margin-left: 0px !important;
-            margin-right: 2px !important;
-            .fas, .far {
-                //color: $link !important;
-                color: $green-frac6 !important;
-                font-size: 16px !important;
-            }
+            margin-left: 5px !important;
+            margin-right: 8px !important;
+            color: $green-frac6 !important;
+            //font-size: 18px !important;
         }
     }
 
@@ -1346,12 +1343,10 @@ a.actionLink {
     }
 
     .ellipsisArt {
-        margin-left: -4px !important;
-        margin-right: -4px !important;
-        .fas, .far {
-            color: $green !important;
-            font-size: 16px !important;
-        }
+        margin-left: 5px !important;
+        margin-right: 5px !important;
+        color: $green !important;
+        font-size: 16px !important;
     }
 }
 

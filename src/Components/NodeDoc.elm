@@ -332,10 +332,7 @@ view_ tid data op_m =
                 [ div [ class "media subtitle" ]
                     [ div [ class "media-left" ]
                         [ I.icon "icon-info icon-1half"
-                         -- span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ]
-                         --   [ i [ class "icon-info fa-stack-1x" ] []
-                         --   , i [ class "far fa-circle fa-stack-2x" ] []
-                         --   ]
+                          --span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ] [ i [ class "icon-info fa-stack-1x" ] [] , i [ class "far fa-circle fa-stack-2x" ] [] ]
                         ]
                     , div [ class "media-content nodeName" ]
                         [ (if data.hasBeenPushed && data.source == TensionBaseUri then
@@ -735,7 +732,7 @@ doEditView op_m btype =
                     [ class "button has-text-weight-normal is-pulled-right is-small"
                     , onClick (op.onBlobEdit btype)
                     ]
-                    [ I.icon0 "icon-pen" "" ]
+                    [ I.icon "icon-pen"  ]
 
         Nothing ->
             span [] []

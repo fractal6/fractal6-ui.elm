@@ -45,59 +45,81 @@ $acc-height: 48px;
 //@import '../../node_modules/@fortawesome/fontawesome-free/scss/brands';
 @import '../icons/style.css';
 
+.is-small {
+    i { font-size: 0.875rem; }
+}
+
 i {
-  font-size: 1rem;
-  &.icon-sm {
-    font-size: 0.875rem;
-  }
-  &.icon-xs {
-    font-size: 0.75rem;
-  }
-
-	/* makes the font 33% larger relative to the icon container */
+    font-size: 1rem;
+    &.icon-sm {
+        font-size: 0.875rem;
+    }
+    &.icon-xs {
+        font-size: 0.75rem;
+    }
 	&.icon-lg {
-		font-size: (4em / 3);
-		line-height: (3em / 4);
-		vertical-align: -.0667em;
+	/* makes the font 33% larger relative to the icon container */
+		font-size: (4rem / 3);
+		line-height: (3rem / 4);
+		vertical-align: -.0667rem;
 	}
 
-	&.icon-1half {
-			font-size: 1.5rem;
-			margin-left: -4px;
-	}
-  //
-  //
-  //
-  &.icon-1x {
-    font-size: 1em; }
+    &.icon-bg {
+        font-size: 1.12rem;
+        margin-left: -4px;
+    }
+    &.icon-1half {
+        font-size: 1.5rem;
+        margin-left: -4px;
+    }
+    //
+    //
+    //
+    &.icon-1x {
+    font-size: 1rem; }
 
   &.icon-2x {
-    font-size: 2em; }
+    font-size: 2rem; }
 
   &.icon-3x {
-    font-size: 3em; }
+    font-size: 3rem; }
 
   &.icon-4x {
-    font-size: 4em; }
+    font-size: 4rem; }
 
   &.icon-5x {
-    font-size: 5em; }
+    font-size: 5rem; }
 
   &.icon-6x {
-    font-size: 6em; }
+    font-size: 6rem; }
 
   &.icon-7x {
-    font-size: 7em; }
+    font-size: 7rem; }
 
   &.icon-8x {
-    font-size: 8em; }
+    font-size: 8rem; }
 
   &.icon-9x {
-    font-size: 9em; }
+    font-size: 9rem; }
 
   &.icon-10x {
-    font-size: 10em; }
+    font-size: 10rem; }
 
+}
+
+.icon-is-slashed {
+	position: relative;
+}
+.icon-is-slashed:after {
+	content: '|';
+	position: absolute;
+    left: 18%;
+    bottom: 0.1px;
+	font-size: 1.3em;
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	-o-transform: rotate(-45deg);
+	-ms-transform: rotate(-45deg);
 }
 
 .stackPen {
