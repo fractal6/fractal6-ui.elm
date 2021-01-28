@@ -123,6 +123,7 @@ type alias Tension =
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
+    , status : TensionStatus.TensionStatus
     , n_comments : Maybe Int
     }
 
@@ -150,9 +151,9 @@ type alias TensionHead =
     , emitter : EmitterOrReceiver
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
+    , status : TensionStatus.TensionStatus
 
     --
-    , status : TensionStatus.TensionStatus
     , blobs : Maybe (List Blob) -- head
     , history : List Event
     }

@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?qunpbx');
-  src:  url('fonts/fractaleicon.eot?qunpbx#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?qunpbx') format('truetype'),
-    url('fonts/fractaleicon.woff?qunpbx') format('woff'),
-    url('fonts/fractaleicon.svg?qunpbx#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?qwrxuj');
+  src:  url('fonts/fractaleicon.eot?qwrxuj#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?qwrxuj') format('truetype'),
+    url('fonts/fractaleicon.woff?qwrxuj') format('woff'),
+    url('fonts/fractaleicon.svg?qwrxuj#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,8 +25,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-anchor:before {
+  content: "\e945";
+}
+.icon-award:before {
+  content: "\e946";
+}
 .icon-box:before {
   content: "\e909";
+}
+.icon-calendar:before {
+  content: "\e947";
+}
+.icon-edit:before {
+  content: "\e948";
+}
+.icon-filter:before {
+  content: "\e949";
 }
 .icon-grid:before {
   content: "\e90c";
@@ -52,8 +67,26 @@
 .icon-plus:before {
   content: "\e943";
 }
+.icon-refresh-ccw:before {
+  content: "\e94a";
+}
+.icon-shield:before {
+  content: "\e94b";
+}
 .icon-sun:before {
   content: "\e942";
+}
+.icon-thermometer:before {
+  content: "\e94c";
+}
+.icon-trending-down:before {
+  content: "\e94e";
+}
+.icon-trending-up:before {
+  content: "\e94f";
+}
+.icon-watch:before {
+  content: "\e950";
 }
 .icon-minus1:before {
   content: "\f068";
@@ -69,6 +102,12 @@
 }
 .icon-chevron-down:before {
   content: "\f078";
+}
+.icon-sort:before {
+  content: "\f0dc";
+}
+.icon-unsorted:before {
+  content: "\f0dc";
 }
 .icon-circle1:before {
   content: "\f111";

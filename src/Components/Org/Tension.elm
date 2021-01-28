@@ -2114,10 +2114,10 @@ viewEventStatus event status =
         ( actionIcon, actionText ) =
             case status of
                 TensionStatus.Open ->
-                    ( "icon-alert-circle is-green", T.reopened )
+                    ( "icon-alert-circle", T.reopened )
 
                 TensionStatus.Closed ->
-                    ( "icon-alert-circle is-red", T.closed )
+                    ( "icon-alert-circle", T.closed )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status)  ]

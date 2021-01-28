@@ -454,7 +454,7 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .divider {
-    opacity: 0.15;
+    opacity: 0.24;
     &:hover {
         opacity: 1;
         transition: opacity 0.1s;
@@ -1229,16 +1229,17 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .labelsList {
+    line-height: 2;
     .tag {
         margin-right: 8px !important;
-        margin-bottom: 8px !important;
     }
 }
 
 .usersList {
+    //line-height: 2.5;
     span  {
         margin-right: 10px !important;
-        margin-bottom: 10px !important;
+        margin-bottom: 10px !important; // doesn't work
     }
 }
 
@@ -1250,6 +1251,11 @@ a.actionLink {
     //&:hover {
     //    color: $link !important;
     //}
+}
+
+.marginTensionStatus {
+    margin-top: 0.66rem;
+    margin-left: -2px;
 }
 
 //

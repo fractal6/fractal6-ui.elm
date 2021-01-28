@@ -68,10 +68,20 @@ mediaTension baseUri focus tension navigate =
     div [ class "media mediaTension" ]
         [ div [ class "media-left" ]
             [ div
-                [ class "tooltip has-tooltip-top "
+                [ class "tooltip has-tooltip-top"
                 , attribute "data-tooltip" (TensionType.toString tension.type_)
                 ]
-                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
+                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ]
+                ]
+            , if baseUri == TensionsBaseUri then
+                div
+                    [ class "tooltip has-tooltip-top"
+                    , attribute "data-tooltip" (TensionStatus.toString tension.status)
+                    ]
+                    [ I.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
+
+              else
+                text ""
             ]
         , div [ class "media-content" ]
             [ div
@@ -375,7 +385,6 @@ viewActionIcon action =
         TensionAction.EditRole ->
             I.icon0 "icon-circle1"
 
-
         TensionAction.EditMd ->
             I.icon0 "icon-markdown"
 
@@ -384,7 +393,6 @@ viewActionIcon action =
 
         TensionAction.ArchivedRole ->
             I.icon0 "icon-archive"
-
 
         TensionAction.ArchivedMd ->
             I.icon0 "icon-archive"

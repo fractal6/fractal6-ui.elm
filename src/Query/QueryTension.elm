@@ -342,6 +342,7 @@ tensionPayload =
         |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
+        |> with Fractal.Object.Tension.status
         |> with Fractal.Object.Tension.n_comments
 
 

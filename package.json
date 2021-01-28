@@ -35,7 +35,6 @@
   "dependencies": {
     "@creativebulma/bulma-tagsinput": "^1.0.3",
     "@dillonkearns/elm-graphql": "^4.0.3",
-    "@fortawesome/fontawesome-free": "^5.15.1",
     "bulma": "^0.9.1",
     "bulma-badge": "^3.0.1",
     "bulma-modal-fx": "^1.1.1",
@@ -47,6 +46,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
+    "@fortawesome/fontawesome-free": "^5.15.1",
     "autoprefixer": "^9.8.6",
     "babel-loader": "^8.1.0",
     "chokidar-cli": "2.1.0",
