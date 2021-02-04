@@ -8,7 +8,7 @@ import Components.NodeDoc as NodeDoc
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
-import Form exposing (isPostSendable)
+import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -134,6 +134,11 @@ addDomains data =
 addPolicies : NewTensionForm -> NewTensionForm
 addPolicies data =
     { data | doAddPolicies = True }
+
+
+hasData : NewTensionForm -> Bool
+hasData data =
+    isPostEmpty [ "title", "message" ] data.form.post == False
 
 
 
@@ -436,7 +441,7 @@ view op =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button has-text-weight-semibold is-success"
+                                    ([ class "button is-success"
                                      , classList [ ( "is-loading", isLoading ) ]
                                      , disabled (not isSendable)
                                      ]

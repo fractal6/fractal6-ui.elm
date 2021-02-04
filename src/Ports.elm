@@ -23,6 +23,9 @@ port outgoing : { action : String, data : JE.Value } -> Cmd msg
 port closeModalFromJs : (String -> msg) -> Sub msg
 
 
+port closeModalConfirmFromJs : (() -> msg) -> Sub msg
+
+
 port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
 
 

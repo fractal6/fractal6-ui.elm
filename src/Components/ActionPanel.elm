@@ -444,14 +444,14 @@ viewStep1 action header color op =
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]
                     [ button
-                        ([ class "button has-text-weight-semibold" ]
+                        ([ class "button" ]
                             ++ [ onClick (op.onCloseModal "") ]
                         )
                         [ text T.cancel ]
                     ]
                 , div [ class "control" ]
                     [ button
-                        ([ class ("button has-text-weight-semibold is-light is-" ++ color)
+                        ([ class ("button is-light is-" ++ color)
                          , classList [ ( "is-loading", isLoading ) ]
                          ]
                             ++ [ onClick (op.onSubmit <| op.onActionSubmit) ]

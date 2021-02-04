@@ -6,11 +6,12 @@ import Browser.Navigation as Nav
 import Codecs exposing (LocalGraph_, LookupResult, Node_, QuickDoc, WindowPos, localGraphDecoder, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
-import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.I as I
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, viewRoleNeeded, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Debug
 import Dict exposing (Dict)
@@ -139,6 +140,7 @@ type alias Model =
     , helperBar : HelperBar
     , help : Help
     , refresh_trial : Int
+    , modal_confirm : ModalConfirm Msg
     }
 
 
@@ -237,6 +239,9 @@ type Msg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
+    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmClose
+    | DoModalConfirmSend
     | ChangeInputViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
@@ -331,6 +336,7 @@ init global flags =
             , helperBar = HelperBar.create
             , help = Help.create global.session.user
             , refresh_trial = 0
+            , modal_confirm = ModalConfirm.init NoMsg
             }
 
         cmds =
@@ -1235,6 +1241,15 @@ update global message model =
             in
             ( { model | isModalActive = False }, gcmd, Ports.close_modal )
 
+        DoModalConfirmOpen msg txts ->
+            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
+
+        DoModalConfirmClose ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, Cmd.none, Cmd.none )
+
+        DoModalConfirmSend ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, send model.modal_confirm.msg, Cmd.none )
+
         DoOpenAuthModal uctx ->
             ( { model
                 | modalAuth =
@@ -1429,6 +1444,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.closeModalFromJs DoCloseModal
+    , Ports.closeModalConfirmFromJs (always DoModalConfirmClose)
     , Ports.triggerHelpFromJs TriggerHelp
     , nodeClickedFromJs NodeClicked
     , nodeFocusedFromJs_ NodeFocused
@@ -1516,6 +1532,7 @@ view global model =
             , onSubmitFeedback = SubmitFeedback
             }
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
 
@@ -1538,7 +1555,7 @@ view_ global model =
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
-            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view {focus=model.node_focus ,tid=tid ,actionView=Nothing})) Nothing
+            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view { focus = model.node_focus, tid = tid, actionView = Nothing })) Nothing
             , receiver = nearestCircleid model.node_focus.nameid
             }
 
@@ -1691,7 +1708,7 @@ viewSearchBar us model =
                                     , onClick (DoNodeAction node_)
                                     ]
                                     [ span [ class "has-text-weight-bold is-ellipsis" ] [ text node.name ]
-                                    ,  i [ class "icon-plus1 ellipsisArt" ] []
+                                    , i [ class "icon-plus1 ellipsisArt" ] []
                                     ]
                                 ]
                             , case us of
@@ -1927,6 +1944,14 @@ viewActivies model =
 
 setupActionModal : Model -> Html Msg
 setupActionModal model =
+    let
+        onClose =
+            if NewTensionForm.hasData model.tensionForm then
+                DoModalConfirmOpen (DoCloseModal "") [ ( T.confirmUnsaved, "" ) ]
+
+            else
+                DoCloseModal ""
+    in
     div
         [ id "actionModal"
         , class "modal modal-fx-fadeIn elmModal"
@@ -1935,12 +1960,12 @@ setupActionModal model =
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "actionModal"
-            , onClick (DoCloseModal "")
+            , onClick onClose
             ]
             []
         , div [ class "modal-content" ]
             [ viewActionStep model model.node_action ]
-        , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
+        , button [ class "modal-close is-large", onClick onClose ] []
         ]
 
 
@@ -2126,7 +2151,7 @@ viewSourceRoles form roles nextStep =
                 List.map
                     (\r ->
                         button
-                            [ class ("button buttonRole has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                            [ class ("button buttonRole tooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
                             , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
                             , onClick (nextStep r)
                             ]

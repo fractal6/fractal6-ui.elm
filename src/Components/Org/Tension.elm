@@ -7,9 +7,9 @@ import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelS
 import Components.AssigneeSearchPanel as AssigneeSearchPanel
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
-import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.I as I
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
@@ -1740,11 +1740,11 @@ viewTension u t model =
                                     , attribute "data-tooltip" T.editTitle
                                     , onClick DoChangeTitle
                                     ]
-                                    [ I.icon "icon-pen"  ]
+                                    [ I.icon "icon-pen" ]
 
                               else
                                 span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ]
-                                    [ I.icon "icon-pen"  ]
+                                    [ I.icon "icon-pen" ]
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
@@ -1945,7 +1945,7 @@ viewComment c model =
                                         , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ I.icon "icon-ellipsis-v"  ]
+                                        [ I.icon "icon-ellipsis-v" ]
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
@@ -2042,14 +2042,14 @@ viewCommentInput uctx tension form result viewMode =
                         [ div [ class "control" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button has-text-weight-semibold"
+                                    ([ class "button"
                                      , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
                                      ]
                                         ++ submitCloseOpenTension
                                     )
                                     [ text closeOpenText ]
                                 , button
-                                    ([ class "button is-success has-text-weight-semibold"
+                                    ([ class "button is-success"
                                      , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
                                      , disabled (not isSendable)
                                      ]
@@ -2120,7 +2120,7 @@ viewEventStatus event status =
                     ( "icon-alert-circle", T.closed )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status)  ]
+        [ div [ class "media-left" ] [ I.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2205,7 +2205,7 @@ viewEventPushed event action_m =
             withDefault TensionAction.NewRole action_m
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon "icon-share"  ]
+        [ div [ class "media-left" ] [ I.icon "icon-share" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2221,10 +2221,10 @@ viewEventArchived event action_m isArchived =
         ( icon, txt ) =
             case isArchived of
                 True ->
-                    ( I.icon "icon-archive" , T.archived )
+                    ( I.icon "icon-archive", T.archived )
 
                 False ->
-                    ( i [ class "icon-archive icon-is-slashed" ] [] , T.unarchived)
+                    ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2244,7 +2244,7 @@ viewEventUserJoin event action_m =
             "the organisation"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon "icon-log-in"  ]
+        [ div [ class "media-left" ] [ I.icon "icon-log-in" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.join ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2271,7 +2271,7 @@ viewEventUserLeft event action_m =
                     actionNameStr action
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon "icon-log-out"  ]
+        [ div [ class "media-left" ] [ I.icon "icon-log-out" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
@@ -2331,12 +2331,12 @@ viewUpdateInput uctx comment form result =
                 [ div [ class "control" ]
                     [ div [ class "buttons" ]
                         [ button
-                            [ class "button has-text-weight-semibold"
+                            [ class "button"
                             , onClick CancelCommentPatch
                             ]
                             [ text T.cancel ]
                         , button
-                            [ class "button is-success has-text-weight-semibold"
+                            [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (Submit <| SubmitCommentPatch)
@@ -2416,7 +2416,7 @@ viewBlobToolBar u t b model =
     div [ class "blobToolBar" ]
         [ div [ class "level" ]
             [ div [ class "level-left" ]
-                [ DocToolBar.view {focus=model.node_focus , tid=t.id , actionView=(Just model.actionView)} ]
+                [ DocToolBar.view { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
             , if model.actionView /= DocVersion then
                 div [ class "level-right" ]
                     [ case b.pushedFlag of
@@ -2476,7 +2476,7 @@ viewDocVersions blobsData =
                                                     , attribute "style" "cursor: inherit;"
                                                     , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
                                                     ]
-                                                    [ I.icon "icon-flag"  ]
+                                                    [ I.icon "icon-flag" ]
 
                                             Nothing ->
                                                 text ""
@@ -2654,7 +2654,7 @@ viewSidePane u t model =
                     ++ [ div [ class "" ]
                             [ case t.action of
                                 Just action ->
-                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action) ) ""
+                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action)) ""
 
                                 Nothing ->
                                     div [ class "is-italic" ] [ text T.noAction ]

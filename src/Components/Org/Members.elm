@@ -5,9 +5,9 @@ import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -738,7 +738,7 @@ viewMemberRoles baseUri roles =
         List.map
             (\r ->
                 a
-                    [ class ("button buttonRole is-small has-text-weight-semiboldtooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                    [ class ("button buttonRole is-small tooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
                     , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatTime r.createdAt ] |> String.join " ")
                     , href <| uriFromNameid baseUri r.nameid
                     ]

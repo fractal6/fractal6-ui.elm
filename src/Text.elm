@@ -238,6 +238,16 @@ updatedTitle =
     "updated title"
 
 
+confirmUnsaved : String
+confirmUnsaved =
+    "You have unsaved data, please confirm to exit."
+
+
+confirmDeleteLabel : String
+confirmDeleteLabel =
+    "Are you sure to delete the label"
+
+
 
 --Quick Search
 --(header)

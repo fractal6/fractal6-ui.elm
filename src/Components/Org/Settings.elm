@@ -6,10 +6,11 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
-import Components.I as I
 import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -87,6 +88,7 @@ type alias Model =
     , helperBar : HelperBar
     , help : Help
     , refresh_trial : Int
+    , modal_confirm : ModalConfirm Msg
     }
 
 
@@ -148,9 +150,13 @@ type Msg
     | CloseColor
     | SelectLabelColor String
       -- Common
+    | NoMsg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
+    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmClose
+    | DoModalConfirmSend
     | ExpandRoles
     | CollapseRoles
       -- Help
@@ -216,6 +222,7 @@ init global flags =
             , helperBar = HelperBar.create
             , help = Help.create global.session.user
             , refresh_trial = 0
+            , modal_confirm = ModalConfirm.init NoMsg
             }
 
         cmds =
@@ -231,12 +238,12 @@ init global flags =
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         PushTension form ack ->
             ( model, addOneTension apis.gql form ack, Cmd.none )
 
@@ -540,6 +547,15 @@ update global msg model =
                 _ ->
                     ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
 
+        DoModalConfirmOpen msg txts ->
+            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
+
+        DoModalConfirmClose ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, Cmd.none, Cmd.none )
+
+        DoModalConfirmSend ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, send model.modal_confirm.msg, Cmd.none )
+
         ChangeAuthPost field value ->
             case model.modalAuth of
                 Active form ->
@@ -637,6 +653,9 @@ update global msg model =
             ( { model | colorPicker = newPicker, label_form = newForm }, Cmd.none, Ports.click "body" )
 
         -- Common
+        NoMsg ->
+            ( model, Cmd.none, Cmd.none )
+
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
@@ -759,6 +778,7 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     Sub.batch
         [ Ports.closeModalFromJs DoCloseModal
+        , Ports.closeModalConfirmFromJs (always DoModalConfirmClose)
         , Ports.triggerHelpFromJs TriggerHelp
         , Ports.cancelColorFromJs (always CloseColor)
         ]
@@ -786,6 +806,7 @@ view global model =
             , onSubmitFeedback = SubmitFeedback
             }
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
 
@@ -895,7 +916,11 @@ viewLabels model =
                                             , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
                                                 [ span [ class "button-light", onClick (EditLabel d) ] [ text "Edit" ]
                                                 , text " · "
-                                                , span [ class "button-light", onClick (Submit <| SubmitDeleteLabel d.id) ] [ text "Delete" ]
+                                                , span
+                                                    [ class "button-light"
+                                                    , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                    ]
+                                                    [ text "Delete" ]
                                                 ]
                                             ]
                                     ]

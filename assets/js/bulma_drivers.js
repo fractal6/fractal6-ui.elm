@@ -372,6 +372,9 @@ function closeModal(e, modal, app) {
     if (modal.classList.contains("elmModal")) {
         // Close modal with elm
         app.ports.closeModalFromJs.send("")
+    } else if (modal.classList.contains("elmModalConfirm")) {
+        // Close modal with elm
+        app.ports.closeModalConfirmFromJs.send(null)
     } else {
         modal.classList.remove('is-active');
         // Fix block scrolling

@@ -1,4 +1,4 @@
-module Form exposing (isLoginSendable, isPostSendable, isSignupSendable)
+module Form exposing (isLoginSendable, isPostEmpty, isPostSendable, isSignupSendable)
 
 import Dict
 import ModelSchema exposing (Post)
@@ -6,6 +6,17 @@ import ModelSchema exposing (Post)
 
 {-| Test require fields
 -}
+isPostEmpty : List String -> Post -> Bool
+isPostEmpty keys post =
+    keys
+        |> List.map
+            (\k ->
+                Dict.get k post
+                    |> Maybe.withDefault ""
+            )
+        |> List.all (\x -> String.length x == 0)
+
+
 isPostSendable : List String -> Post -> Bool
 isPostSendable keys post =
     keys
