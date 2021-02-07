@@ -66,13 +66,11 @@ type alias Apis =
 
 
 type GlobalCmd
-    = DoAuth UserCtx
-      --| Delay msg1 Float
+    = --| Delay msg1 Float
+      --| SubmitDelay Int
+      DoAuth UserCtx
     | DoUpdateToken
-
-
-
---| SubmitDelay Int
+    | DoNavigate String
 
 
 type alias NodesQuickSearch =

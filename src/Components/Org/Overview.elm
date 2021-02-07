@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (LocalGraph_, LookupResult, Node_, QuickDoc, WindowPos, localGraphDecoder, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
-import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
+import Components.Help as Help
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.I as I
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -60,7 +60,7 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.Requests exposing (getQuickDoc, login)
+import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (action2SourceStr, getAvatar, mediaTension, roleColor, tensionTypeColor, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -100,6 +100,9 @@ mapGlobalOutcmds gcmds =
         |> List.map
             (\m ->
                 case m of
+                    DoNavigate link ->
+                        ( send (Navigate link), Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
@@ -138,9 +141,9 @@ type alias Model =
     , isModalActive : Bool
     , modalAuth : ModalAuth
     , helperBar : HelperBar
-    , help : Help
-    , refresh_trial : Int
+    , help : Help.State
     , modal_confirm : ModalConfirm Msg
+    , refresh_trial : Int
     }
 
 
@@ -239,24 +242,15 @@ type Msg
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
-    | DoModalConfirmOpen Msg (List ( String, String ))
-    | DoModalConfirmClose
-    | DoModalConfirmSend
     | ChangeInputViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
+      -- Confirm Modal
+    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmClose
+    | DoModalConfirmSend
       -- Help
-    | TriggerHelp String
-    | GotQuickDoc (WebData QuickDoc)
-    | ChangeHelpTab HelpTab
-    | ChangePostAsk String String
-    | ChangePostFeedback String String
-    | ChangeFeedbackLabel FeedbackType
-    | SubmitAsk Time.Posix
-    | SubmitFeedback Time.Posix
-    | AskAck (GqlData Tension)
-    | AskFeedback (GqlData Tension)
-    | DoCloseHelpModal String
+    | HelpMsg Help.Msg
 
 
 
@@ -323,7 +317,7 @@ init global flags =
                     |> withDefault { two = "doc", three = "activities" }
 
             -- Form
-            , tensionForm = NewTensionForm.create newFocus
+            , tensionForm = NewTensionForm.init newFocus
             , labelsPanel = LabelSearchPanel.init "" global.session.user
 
             -- Node Action
@@ -334,8 +328,8 @@ init global flags =
             , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
-            , help = Help.create global.session.user
             , refresh_trial = 0
+            , help = Help.init global.session.user
             , modal_confirm = ModalConfirm.init NoMsg
             }
 
@@ -712,7 +706,7 @@ update global message model =
         DoTensionInit target ->
             let
                 tf =
-                    NewTensionForm.create model.node_focus
+                    NewTensionForm.init model.node_focus
                         |> NewTensionForm.setTarget target (withMaybeData model.node_data)
             in
             ( { model | node_action = AddTension TensionInit, tensionForm = tf }
@@ -833,7 +827,7 @@ update global message model =
         DoCircleInit node nodeType ->
             -- We do not load users_data here because it assumes GotOrga is called at init.
             -- inherit node charac by default
-            ( { model | node_action = AddCircle NodeInit, tensionForm = NewTensionForm.create model.node_focus |> NewTensionForm.initCircle node nodeType }
+            ( { model | node_action = AddCircle NodeInit, tensionForm = NewTensionForm.init model.node_focus |> NewTensionForm.initCircle node nodeType }
             , send DoCircleSource
             , Ports.bulma_driver "actionModal"
             )
@@ -1241,15 +1235,6 @@ update global message model =
             in
             ( { model | isModalActive = False }, gcmd, Ports.close_modal )
 
-        DoModalConfirmOpen msg txts ->
-            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
-
-        DoModalConfirmClose ->
-            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, Cmd.none, Cmd.none )
-
-        DoModalConfirmSend ->
-            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, send model.modal_confirm.msg, Cmd.none )
-
         DoOpenAuthModal uctx ->
             ( { model
                 | modalAuth =
@@ -1346,106 +1331,32 @@ update global message model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
+        -- Confirm Modal
+        DoModalConfirmOpen msg txts ->
+            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
+
+        DoModalConfirmClose ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, Cmd.none, Cmd.none )
+
+        DoModalConfirmSend ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, send model.modal_confirm.msg, Cmd.none )
+
         -- Help
-        TriggerHelp _ ->
-            ( { model | help = Help.open model.help }
-            , Cmd.batch [ Ports.open_modal, getQuickDoc apis.data "en" GotQuickDoc ]
-            , Cmd.none
-            )
-
-        GotQuickDoc result ->
-            ( { model | help = Help.setDocResult result model.help }, Cmd.none, Cmd.none )
-
-        ChangeHelpTab tab ->
-            ( { model | help = Help.changeTab tab model.help }, Cmd.none, Cmd.none )
-
-        ChangePostAsk field value ->
-            ( { model | help = Help.postAsk field value model.help }, Cmd.none, Cmd.none )
-
-        ChangePostFeedback field value ->
-            ( { model | help = Help.postFeedback field value model.help }, Cmd.none, Cmd.none )
-
-        ChangeFeedbackLabel type_ ->
-            ( { model | help = Help.changeLabel type_ model.help }, Cmd.none, Cmd.none )
-
-        SubmitAsk time ->
+        HelpMsg msg ->
             let
-                help =
-                    model.help
-                        |> Help.postAsk "createdAt" (fromTime time)
-                        |> Help.setResultAsk LoadingSlowly
+                ( help, out ) =
+                    Help.update apis msg model.help
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
             in
-            ( { model | help = help }
-            , send (PushTension help.formAsk AskAck)
-            , Cmd.none
-            )
-
-        SubmitFeedback time ->
-            let
-                help =
-                    model.help
-                        |> Help.postFeedback "createdAt" (fromTime time)
-                        |> Help.setLabelsFeedback
-                        |> Help.setResultFeedback LoadingSlowly
-            in
-            ( { model | help = help }
-            , send (PushTension help.formFeedback AskFeedback)
-            , Cmd.none
-            )
-
-        AskAck result ->
-            let
-                form =
-                    model.help.formAsk
-            in
-            case doRefreshToken result model.refresh_trial of
-                Authenticate ->
-                    ( { model | help = Help.setResultAsk NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskAck) 500, send UpdateUserToken )
-
-                OkAuth tension ->
-                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
-
-                NoAuth ->
-                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
-
-        AskFeedback result ->
-            let
-                form =
-                    model.help.formFeedback
-            in
-            case doRefreshToken result model.refresh_trial of
-                Authenticate ->
-                    ( { model | help = Help.setResultFeedback NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskFeedback) 500, send UpdateUserToken )
-
-                OkAuth tension ->
-                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
-
-                NoAuth ->
-                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
-
-        DoCloseHelpModal link ->
-            let
-                gcmd =
-                    if link /= "" then
-                        send (Navigate link)
-
-                    else
-                        Cmd.none
-            in
-            ( { model | help = Help.close model.help }, gcmd, Ports.close_modal )
+            ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.closeModalFromJs DoCloseModal
     , Ports.closeModalConfirmFromJs (always DoModalConfirmClose)
-    , Ports.triggerHelpFromJs TriggerHelp
     , nodeClickedFromJs NodeClicked
     , nodeFocusedFromJs_ NodeFocused
     , nodeDataFromJs_ DoNodeAction
@@ -1455,6 +1366,7 @@ subscriptions _ _ =
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
         ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch
 
 
@@ -1519,18 +1431,7 @@ view global model =
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ view_ global model
-        , Help.view
-            { data = model.help
-            , onSubmit = Submit
-            , onCloseModal = DoCloseHelpModal
-            , onNavigate = Navigate
-            , onChangeTab = ChangeHelpTab
-            , onChangePostAsk = ChangePostAsk
-            , onChangePostFeedback = ChangePostFeedback
-            , onChangeLabel = ChangeFeedbackLabel
-            , onSubmitAsk = SubmitAsk
-            , onSubmitFeedback = SubmitFeedback
-            }
+        , Help.view {} model.help |> Html.map HelpMsg
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
@@ -1946,7 +1847,7 @@ setupActionModal : Model -> Html Msg
 setupActionModal model =
     let
         onClose =
-            if NewTensionForm.hasData model.tensionForm then
+            if NewTensionForm.hasData model.tensionForm && withMaybeData model.tensionForm.result == Nothing then
                 DoModalConfirmOpen (DoCloseModal "") [ ( T.confirmUnsaved, "" ) ]
 
             else

@@ -148,11 +148,12 @@ hr {
     }
 }
 
-.box.is-light {
+.box.is-light, .modal-card-body  {
     a {
         color: $blue !important;
     }
 }
+
 
 // Media
 

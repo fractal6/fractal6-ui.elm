@@ -301,13 +301,13 @@ viewLogin model =
                 [ if isLoginSendable model.form.post then
                     button
                         [ id "submitButton"
-                        , class "button is-success has-text-weight-semibold"
+                        , class "button is-success"
                         , onClick (SubmitUser model.form)
                         ]
                         [ text "Sign in" ]
 
                   else
-                    button [ class "button has-text-weight-semibold", disabled True ]
+                    button [ class "button", disabled True ]
                         [ text "Sign in" ]
                 ]
             ]
@@ -389,13 +389,13 @@ viewSignup model =
                 [ if isSignupSendable model.form.post then
                     button
                         [ id "submitButton2"
-                        , class "button is-success has-text-weight-semibold"
+                        , class "button is-success"
                         , onClick (SubmitUser model.form)
                         ]
                         [ text "Sign up" ]
 
                   else
-                    button [ class "button has-text-weight-semibold", disabled True ]
+                    button [ class "button", disabled True ]
                         [ text "Sign up" ]
                 ]
             ]

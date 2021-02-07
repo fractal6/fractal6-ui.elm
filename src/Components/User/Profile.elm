@@ -3,9 +3,9 @@ module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscrip
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Components.I as I
-import Components.Help as Help exposing (FeedbackType, Help, HelpTab)
+import Components.Help as Help
 import Components.HelperBar as HelperBar
+import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.NotFound exposing (viewNotFound)
 import Date exposing (formatTime)
@@ -56,6 +56,24 @@ type alias Flags =
     { param1 : String }
 
 
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoNavigate link ->
+                        ( send (Navigate link), Cmd.none )
+
+                    DoAuth uctx ->
+                        ( send (DoOpenAuthModal uctx), Cmd.none )
+
+                    DoUpdateToken ->
+                        ( Cmd.none, send UpdateUserToken )
+            )
+        |> List.unzip
+
+
 
 ---- MODEL----
 
@@ -68,7 +86,7 @@ type alias Model =
 
     -- Common
     , modalAuth : ModalAuth
-    , help : Help
+    , help : Help.State
     , refresh_trial : Int
     }
 
@@ -136,17 +154,7 @@ type Msg
     | DoOpenModal -- ports receive / Open  modal
     | DoCloseModal String -- ports receive / Close modal
       -- Help
-    | TriggerHelp String
-    | GotQuickDoc (WebData QuickDoc)
-    | ChangeHelpTab HelpTab
-    | ChangePostAsk String String
-    | ChangePostFeedback String String
-    | ChangeFeedbackLabel FeedbackType
-    | SubmitAsk Time.Posix
-    | SubmitFeedback Time.Posix
-    | AskAck (GqlData Tension)
-    | AskFeedback (GqlData Tension)
-    | DoCloseHelpModal String
+    | HelpMsg Help.Msg
 
 
 
@@ -196,7 +204,7 @@ init global flags =
 
             -- common
             , modalAuth = Inactive
-            , help = Help.create global.session.user
+            , help = Help.init global.session.user
             , refresh_trial = 0
             }
 
@@ -221,12 +229,12 @@ init global flags =
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         PushTension form ack ->
             ( model, addOneTension apis.gql form ack, Cmd.none )
 
@@ -378,106 +386,23 @@ update global msg model =
             ( model, gcmd, Ports.close_modal )
 
         -- Help
-        TriggerHelp _ ->
-            ( { model | help = Help.open model.help }
-            , Cmd.batch [ Ports.open_modal, getQuickDoc apis.data "en" GotQuickDoc ]
-            , Cmd.none
-            )
-
-        GotQuickDoc result ->
-            ( { model | help = Help.setDocResult result model.help }, Cmd.none, Cmd.none )
-
-        ChangeHelpTab tab ->
-            ( { model | help = Help.changeTab tab model.help }, Cmd.none, Cmd.none )
-
-        ChangePostAsk field value ->
-            ( { model | help = Help.postAsk field value model.help }, Cmd.none, Cmd.none )
-
-        ChangePostFeedback field value ->
-            ( { model | help = Help.postFeedback field value model.help }, Cmd.none, Cmd.none )
-
-        ChangeFeedbackLabel type_ ->
-            ( { model | help = Help.changeLabel type_ model.help }, Cmd.none, Cmd.none )
-
-        SubmitAsk time ->
+        HelpMsg msg ->
             let
-                help =
-                    model.help
-                        |> Help.postAsk "createdAt" (fromTime time)
-                        |> Help.setResultAsk LoadingSlowly
+                ( help, out ) =
+                    Help.update apis msg model.help
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
             in
-            ( { model | help = help }
-            , send (PushTension help.formAsk AskAck)
-            , Cmd.none
-            )
-
-        SubmitFeedback time ->
-            let
-                help =
-                    model.help
-                        |> Help.postFeedback "createdAt" (fromTime time)
-                        |> Help.setLabelsFeedback
-                        |> Help.setResultFeedback LoadingSlowly
-            in
-            ( { model | help = help }
-            , send (PushTension help.formFeedback AskFeedback)
-            , Cmd.none
-            )
-
-        AskAck result ->
-            let
-                form =
-                    model.help.formAsk
-            in
-            case doRefreshToken result model.refresh_trial of
-                Authenticate ->
-                    ( { model | help = Help.setResultAsk NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskAck) 500, send UpdateUserToken )
-
-                OkAuth tension ->
-                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
-
-                NoAuth ->
-                    ( { model | help = Help.setResultAsk result model.help }, Cmd.none, Cmd.none )
-
-        AskFeedback result ->
-            let
-                form =
-                    model.help.formFeedback
-            in
-            case doRefreshToken result model.refresh_trial of
-                Authenticate ->
-                    ( { model | help = Help.setResultFeedback NotAsked model.help }, send (DoOpenAuthModal form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushTension form AskFeedback) 500, send UpdateUserToken )
-
-                OkAuth tension ->
-                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
-
-                NoAuth ->
-                    ( { model | help = Help.setResultFeedback result model.help }, Cmd.none, Cmd.none )
-
-        DoCloseHelpModal link ->
-            let
-                gcmd =
-                    if link /= "" then
-                        send (Navigate link)
-
-                    else
-                        Cmd.none
-            in
-            ( { model | help = Help.close model.help }, gcmd, Ports.close_modal )
+            ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    Sub.batch
-        [ Ports.closeModalFromJs DoCloseModal
-        , Ports.triggerHelpFromJs TriggerHelp
-        ]
+    [ Ports.closeModalFromJs DoCloseModal
+    ]
+        ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        |> Sub.batch
 
 
 
@@ -504,18 +429,7 @@ view global model =
             Failure err ->
                 --viewNotFound
                 viewGqlErrors err
-        , Help.view
-            { data = model.help
-            , onSubmit = Submit
-            , onCloseModal = DoCloseHelpModal
-            , onNavigate = Navigate
-            , onChangeTab = ChangeHelpTab
-            , onChangePostAsk = ChangePostAsk
-            , onChangePostFeedback = ChangePostFeedback
-            , onChangeLabel = ChangeFeedbackLabel
-            , onSubmitAsk = SubmitAsk
-            , onSubmitFeedback = SubmitFeedback
-            }
+        , Help.view {} model.help |> Html.map HelpMsg
         , case model.modalAuth of
             -- @debug: should not be necessary...
             Active _ ->
@@ -631,7 +545,7 @@ viewUserOrgas user_data =
                                 , div [ id "icons", class "level is-mobile" ]
                                     [ div [ class "level-left" ]
                                         [ if root.isPrivate then
-                                            span [ class "level-item" ] [ I.icon "icon-lock"  ]
+                                            span [ class "level-item" ] [ I.icon "icon-lock" ]
 
                                           else
                                             text ""

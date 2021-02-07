@@ -248,6 +248,16 @@ confirmDeleteLabel =
     "Are you sure to delete the label"
 
 
+askAnotherQuestion : String
+askAnotherQuestion =
+    "Ask another question."
+
+
+giveAnotherFeedback : String
+giveAnotherFeedback =
+    "Give another feedback."
+
+
 
 --Quick Search
 --(header)

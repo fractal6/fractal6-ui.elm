@@ -1,6 +1,6 @@
 module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, update, view, viewNew)
 
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (LookupResult)
 import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
@@ -385,7 +385,7 @@ viewLabelSelectors isInternal labels op model =
                                 (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
                                 (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                             ]
-                            [ span [ class "panel-icon" ] [ I.icon iconCls  ]
+                            [ span [ class "panel-icon" ] [ I.icon iconCls ]
                             , viewLabel "" l
                             , loadingSpin isLoading
                             ]

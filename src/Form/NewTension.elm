@@ -43,8 +43,8 @@ type alias NewTensionForm =
     }
 
 
-create : NodeFocus -> NewTensionForm
-create focus =
+init : NodeFocus -> NewTensionForm
+init focus =
     { form = initTensionForm focus
     , result = NotAsked
     , activeButton = Nothing
@@ -90,6 +90,24 @@ initCircle target type_ data =
 
 
 --- State Controls
+
+
+setUctx : UserCtx -> NewTensionForm -> NewTensionForm
+setUctx uctx data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | uctx = uctx } }
+
+
+setTensionType : TensionType.TensionType -> NewTensionForm -> NewTensionForm
+setTensionType type_ data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | tension_type = type_ } }
 
 
 setActiveButton : Bool -> NewTensionForm -> NewTensionForm
@@ -193,6 +211,18 @@ setEvents events data =
     { data | form = newForm }
 
 
+setLabels : List Label -> NewTensionForm -> NewTensionForm
+setLabels labels data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | labels = labels }
+    in
+    { data | form = newForm }
+
+
 addLabel : Label -> NewTensionForm -> NewTensionForm
 addLabel label data =
     let
@@ -225,6 +255,18 @@ post field value data =
 
         newForm =
             { f | post = Dict.insert field value f.post }
+    in
+    { data | form = newForm }
+
+
+resetPost : NewTensionForm -> NewTensionForm
+resetPost data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | post = Dict.empty }
     in
     { data | form = newForm }
 

@@ -253,13 +253,13 @@ refreshAuthModal modalAuth msgs =
                                 [ if Form.isPostSendable [ "password" ] form.post then
                                     button
                                         [ id "submitButton"
-                                        , class "button is-success has-text-weight-semibold"
+                                        , class "button is-success"
                                         , onClick (msgs.submit form)
                                         ]
                                         [ text "Refresh" ]
 
                                   else
-                                    button [ class "button has-text-weight-semibold", disabled True ]
+                                    button [ class "button", disabled True ]
                                         [ text "Refresh" ]
                                 ]
                             ]

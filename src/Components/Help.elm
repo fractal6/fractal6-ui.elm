@@ -1,43 +1,57 @@
-module Components.Help exposing (..)
+module Components.Help exposing (Msg, State, init, subscriptions, update, view)
 
+import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (QuickDoc)
 import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, loadingDiv, loadingSpin, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
 import Extra exposing (ternary, up0, up1)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
+import Form.NewTension as NTF exposing (NewTensionForm)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
+import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, header, hr, i, input, label, li, nav, option, p, pre, section, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionForm, UserState(..), initTensionForm)
+import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, typeFromNameid)
+import ModelCommon.Requests exposing (getQuickDoc)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
+import Ports
+import Query.AddTension exposing (addOneTension)
 import RemoteData
 import String.Format as Format
 import Text as T
 import Time
 
 
-type alias Help =
+type State
+    = State Model
+
+
+type alias Model =
     { isModalActive : Bool
     , activeTab : HelpTab
     , doc : WebData QuickDoc
     , type_ : FeedbackType
-    , formAsk : TensionForm
-    , formFeedback : TensionForm
-    , resultAsk : GqlData Tension
-    , resultFeedback : GqlData Tension
+    , formAsk : NewTensionForm
+    , formFeedback : NewTensionForm
+
+    -- Common
+    , refresh_trial : Int
+    , modal_confirm : ModalConfirm Msg
     }
 
 
@@ -66,12 +80,13 @@ labelCodec type_ =
             Label "0xc5f4" "Praise" Nothing
 
 
+init : UserState -> State
+init user =
+    initModel user |> State
 
--- State Controls
 
-
-create : UserState -> Help
-create user =
+initModel : UserState -> Model
+initModel user =
     let
         uctx =
             case user of
@@ -81,31 +96,21 @@ create user =
                 LoggedOut ->
                     UserCtx "" Nothing (UserRights False False) []
 
-        f =
-            initTensionForm { rootnameid = "f6", nameid = "f6#feedback", type_ = NodeType.Circle }
-
         form =
-            { f
-                | uctx = uctx
-                , source =
+            NTF.init { rootnameid = "f6", nameid = "f6#feedback", type_ = NodeType.Circle }
+                |> NTF.setUctx uctx
+                |> NTF.setSource
                     { rootnameid = "f6"
                     , nameid = "f6#feedback#help-bot"
                     , name = "Help Bot"
                     , role_type = RoleType.Bot
                     }
-            }
 
         formAsk =
-            { form
-                | tension_type = TensionType.Help
-                , events_type = Just [ TensionEvent.Created ]
-            }
+            initFormAsk form
 
         formFeedback =
-            { form
-                | tension_type = TensionType.Operational
-                , events_type = Just [ TensionEvent.Created ]
-            }
+            initFormFeedback form
     in
     { isModalActive = False
     , activeTab = QuickHelp
@@ -113,165 +118,377 @@ create user =
     , type_ = BugReport
     , formAsk = formAsk
     , formFeedback = formFeedback
-    , resultAsk = NotAsked
-    , resultFeedback = NotAsked
+
+    -- Common
+    , refresh_trial = 0
+    , modal_confirm = ModalConfirm.init NoMsg
     }
 
 
-open : Help -> Help
+initFormAsk : NewTensionForm -> NewTensionForm
+initFormAsk form =
+    form
+        |> NTF.setTensionType TensionType.Help
+        |> NTF.setEvents [ TensionEvent.Created ]
+        |> NTF.setResult NotAsked
+        |> NTF.resetPost
+
+
+initFormFeedback : NewTensionForm -> NewTensionForm
+initFormFeedback form =
+    form
+        |> NTF.setTensionType TensionType.Operational
+        |> NTF.setEvents [ TensionEvent.Created ]
+        |> NTF.resetPost
+
+
+
+-- State Controls
+
+
+open : Model -> Model
 open data =
     { data | isModalActive = True, doc = RemoteData.Loading }
 
 
-changeTab : HelpTab -> Help -> Help
+changeTab : HelpTab -> Model -> Model
 changeTab tab data =
     { data | activeTab = tab }
 
 
-changeLabel : FeedbackType -> Help -> Help
+changeLabel : FeedbackType -> Model -> Model
 changeLabel type_ data =
     { data | type_ = type_ }
 
 
-close : Help -> Help
+close : Model -> Model
 close data =
-    create (LoggedIn data.formAsk.uctx)
+    initModel (LoggedIn data.formAsk.form.uctx)
 
 
-setDocResult : WebData QuickDoc -> Help -> Help
+reset : HelpTab -> Model -> Model
+reset tab data =
+    case tab of
+        QuickHelp ->
+            data
+
+        AskQuestion ->
+            { data | formAsk = initFormAsk data.formAsk }
+
+        Feedback ->
+            { data | formFeedback = initFormFeedback data.formFeedback }
+
+
+setDocResult : WebData QuickDoc -> Model -> Model
 setDocResult result data =
     { data | doc = result }
 
 
-setResultAsk : GqlData Tension -> Help -> Help
+setResultAsk : GqlData Tension -> Model -> Model
 setResultAsk result data =
-    { data | resultAsk = result }
+    { data | formAsk = NTF.setResult result data.formAsk }
 
 
-setResultFeedback : GqlData Tension -> Help -> Help
+setResultFeedback : GqlData Tension -> Model -> Model
 setResultFeedback result data =
-    { data | resultFeedback = result }
+    { data | formFeedback = NTF.setResult result data.formAsk }
 
 
 
 -- Update Form
 
 
-postAsk : String -> String -> Help -> Help
+postAsk : String -> String -> Model -> Model
 postAsk field value data =
-    let
-        f =
-            data.formAsk
-
-        newForm =
-            { f | post = Dict.insert field value f.post }
-    in
-    { data | formAsk = newForm }
+    { data | formAsk = NTF.post field value data.formAsk }
 
 
-postFeedback : String -> String -> Help -> Help
+postFeedback : String -> String -> Model -> Model
 postFeedback field value data =
-    let
-        f =
-            data.formFeedback
-
-        newForm =
-            { f | post = Dict.insert field value f.post }
-    in
-    { data | formFeedback = newForm }
+    { data | formFeedback = NTF.post field value data.formFeedback }
 
 
-setLabelsFeedback : Help -> Help
+setLabelsFeedback : Model -> Model
 setLabelsFeedback data =
-    let
-        form =
-            data.formFeedback
-    in
-    { data | formFeedback = { form | labels = [ labelCodec data.type_ ] } }
+    { data | formFeedback = NTF.setLabels [ labelCodec data.type_ ] data.formFeedback }
 
 
-type alias Op msg =
-    { data : Help
-    , onSubmit : (Time.Posix -> msg) -> msg
-    , onCloseModal : String -> msg
-    , onNavigate : String -> msg
-    , onChangeTab : HelpTab -> msg
-    , onChangePostAsk : String -> String -> msg
-    , onChangePostFeedback : String -> String -> msg
-    , onChangeLabel : FeedbackType -> msg
-    , onSubmitAsk : Time.Posix -> msg
-    , onSubmitFeedback : Time.Posix -> msg
+
+-- ------------------------------
+-- U P D A T E
+-- ------------------------------
+
+
+type Msg
+    = OnOpen String
+    | OnClose String
+    | OnReset HelpTab
+    | OnGotQuickDoc (WebData QuickDoc)
+    | OnChangeTab HelpTab
+    | OnChangePostAsk String String
+    | OnChangePostFeedback String String
+    | OnChangeLabel FeedbackType
+    | OnSubmit (Time.Posix -> Msg)
+    | PushTension NewTensionForm (GqlData Tension -> Msg)
+    | OnSubmitAsk Time.Posix
+    | OnSubmitFeedback Time.Posix
+    | OnAskAck (GqlData Tension)
+    | OnAskFeedback (GqlData Tension)
+      -- Confirm Modal
+    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmClose
+    | DoModalConfirmSend
+      -- Common
+    | NoMsg
+
+
+type alias Out =
+    { cmds : List (Cmd Msg)
+    , gcmds : List GlobalCmd
+    , result : Maybe ( Bool, User )
     }
 
 
-view : Op msg -> Html msg
-view op =
-    if op.data.isModalActive then
-        viewModal op
+noOut : Out
+noOut =
+    Out [] [] Nothing
+
+
+out1 : List (Cmd Msg) -> Out
+out1 cmds =
+    Out cmds [] Nothing
+
+
+out2 : List GlobalCmd -> Out
+out2 cmds =
+    Out [] cmds Nothing
+
+
+update : Apis -> Msg -> State -> ( State, Out )
+update apis message (State model) =
+    update_ apis message model
+        |> Tuple.mapFirst State
+
+
+update_ apis message model =
+    case message of
+        OnOpen targets ->
+            ( open model
+            , out1 [ getQuickDoc apis.data "en" OnGotQuickDoc, Ports.open_modal ]
+            )
+
+        OnClose link ->
+            let
+                gcmds =
+                    ternary (link /= "") [ DoNavigate link ] []
+            in
+            ( close model, Out [ Ports.close_modal ] gcmds Nothing )
+
+        OnReset tab ->
+            ( reset tab model, noOut )
+
+        OnGotQuickDoc result ->
+            ( setDocResult result model, noOut )
+
+        OnChangeTab tab ->
+            ( changeTab tab model, noOut )
+
+        OnChangePostAsk field value ->
+            ( postAsk field value model, noOut )
+
+        OnChangePostFeedback field value ->
+            ( postFeedback field value model, noOut )
+
+        OnChangeLabel type_ ->
+            ( changeLabel type_ model, noOut )
+
+        OnSubmit next ->
+            ( model
+            , out1 [ sendNow next ]
+            )
+
+        PushTension form ack ->
+            ( model, out1 [ addOneTension apis.gql form.form ack ] )
+
+        OnSubmitAsk time ->
+            let
+                newModel =
+                    model
+                        |> postAsk "createdAt" (fromTime time)
+                        |> setResultAsk LoadingSlowly
+            in
+            ( newModel
+            , out1 [ send (PushTension newModel.formAsk OnAskAck) ]
+            )
+
+        OnSubmitFeedback time ->
+            let
+                newModel =
+                    model
+                        |> postFeedback "createdAt" (fromTime time)
+                        |> setLabelsFeedback
+                        |> setResultFeedback LoadingSlowly
+            in
+            ( newModel
+            , out1 [ send (PushTension newModel.formFeedback OnAskFeedback) ]
+            )
+
+        OnAskAck result ->
+            let
+                form =
+                    model.formAsk
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( setResultAsk NotAsked model
+                    , out2 [ DoAuth form.form.uctx ]
+                    )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, Out [ sendSleep (PushTension form OnAskAck) 500 ] [ DoUpdateToken ] Nothing )
+
+                OkAuth tension ->
+                    ( setResultAsk result { model | formAsk = NTF.resetPost model.formAsk }, noOut )
+
+                NoAuth ->
+                    ( setResultAsk result model, noOut )
+
+        OnAskFeedback result ->
+            let
+                form =
+                    model.formFeedback
+            in
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    ( setResultFeedback NotAsked model
+                    , out2 [ DoAuth form.form.uctx ]
+                    )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, Out [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] Nothing )
+
+                OkAuth tension ->
+                    ( setResultFeedback result { model | formAsk = NTF.resetPost model.formFeedback }, noOut )
+
+                NoAuth ->
+                    ( setResultFeedback result model, noOut )
+
+        -- Confirm Modal
+        DoModalConfirmOpen msg txts ->
+            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, noOut )
+
+        DoModalConfirmClose ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
+
+        DoModalConfirmSend ->
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out1 [ send model.modal_confirm.msg ] )
+
+        -- Common
+        NoMsg ->
+            ( model, noOut )
+
+
+subscriptions =
+    [ Ports.triggerHelpFromJs OnOpen
+    ]
+
+
+
+-- ------------------------------
+-- V I E W
+-- ------------------------------
+
+
+type alias Op =
+    {}
+
+
+view : Op -> State -> Html Msg
+view op (State model) =
+    if model.isModalActive then
+        div []
+            [ viewModal op (State model)
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
 
     else
         text ""
 
 
-viewModal : Op msg -> Html msg
-viewModal op =
+viewModal : Op -> State -> Html Msg
+viewModal op (State model) =
+    let
+        onClose =
+            if
+                NTF.hasData model.formFeedback
+                    && withMaybeData model.formFeedback.result
+                    == Nothing
+                    || NTF.hasData model.formAsk
+                    && withMaybeData model.formFeedback.result
+                    == Nothing
+            then
+                DoModalConfirmOpen (OnClose "") [ ( T.confirmUnsaved, "" ) ]
+
+            else
+                OnClose ""
+    in
     div
         [ id "helpModal"
         , class "modal modal-fx-fadeIn elmModal"
-        , classList [ ( "is-active", op.data.isModalActive ) ]
+        , classList [ ( "is-active", model.isModalActive ) ]
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "helpModal"
-            , onClick (op.onCloseModal "")
+            , onClick onClose
             ]
             []
-        , div [ class "modal-content" ] [ viewModalContent op ]
-        , button [ class "modal-close is-large", onClick (op.onCloseModal "") ] []
+        , div [ class "modal-content" ] [ viewModalContent op (State model) ]
+        , button [ class "modal-close is-large", onClick onClose ] []
         ]
 
 
-viewModalContent : Op msg -> Html msg
-viewModalContent op =
+viewModalContent : Op -> State -> Html Msg
+viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "tabs is-centered is-medium is-fullwidth" ]
                 [ ul []
                     [ li
-                        [ classList [ ( "is-active", op.data.activeTab == QuickHelp ) ]
-                        , onClick (op.onChangeTab QuickHelp)
+                        [ classList [ ( "is-active", model.activeTab == QuickHelp ) ]
+                        , onClick (OnChangeTab QuickHelp)
                         ]
                         [ span [] [ text "Quick help" ] ]
                     , li
-                        [ classList [ ( "is-active", op.data.activeTab == AskQuestion ) ]
-                        , onClick (op.onChangeTab AskQuestion)
+                        [ classList [ ( "is-active", model.activeTab == AskQuestion ) ]
+                        , onClick (OnChangeTab AskQuestion)
                         ]
                         [ span [] [ text "Ask a question" ] ]
                     , li
-                        [ classList [ ( "is-active", op.data.activeTab == Feedback ) ]
-                        , onClick (op.onChangeTab Feedback)
+                        [ classList [ ( "is-active", model.activeTab == Feedback ) ]
+                        , onClick (OnChangeTab Feedback)
                         ]
                         [ span [] [ text "Give feedback" ] ]
                     ]
                 ]
             ]
         , div [ class "modal-card-body" ]
-            [ case op.data.activeTab of
+            [ case model.activeTab of
                 QuickHelp ->
-                    viewQuickHelp op
+                    viewQuickHelp op (State model)
 
                 AskQuestion ->
-                    viewAskQuestion op
+                    viewAskQuestion op (State model)
 
                 Feedback ->
-                    viewFeedback op
+                    viewFeedback op (State model)
             ]
         ]
 
 
-viewQuickHelp : Op msg -> Html msg
-viewQuickHelp op =
-    case op.data.doc of
+viewQuickHelp : Op -> State -> Html Msg
+viewQuickHelp op (State model) =
+    case model.doc of
         RemoteData.Success docs ->
             docs
                 |> List.map
@@ -309,11 +526,11 @@ viewQuickHelp op =
             text ""
 
 
-viewAskQuestion : Op msg -> Html msg
-viewAskQuestion op =
+viewAskQuestion : Op -> State -> Html Msg
+viewAskQuestion op (State model) =
     let
         form =
-            op.data.formAsk
+            model.formAsk.form
 
         title =
             Dict.get "title" form.post |> withDefault ""
@@ -322,33 +539,36 @@ viewAskQuestion op =
             Dict.get "message" form.post |> withDefault ""
 
         isLoading =
-            op.data.resultAsk == LoadingSlowly
+            model.formAsk.result == LoadingSlowly
 
         isSendable =
             isPostSendable [ "title", "message" ] form.post
     in
-    case op.data.resultAsk of
+    case model.formAsk.result of
         Success res ->
             let
                 link =
                     Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
             in
-            div [ class "box is-light" ]
-                [ I.icon1 "icon-check icon-2x has-text-success" " "
-                , text (T.messageSent ++ ". ")
-                , a
-                    [ href link
-                    , onClickPD (op.onCloseModal link)
-                    , target "_blank"
+            div []
+                [ div [ class "box is-light" ]
+                    [ I.icon1 "icon-check icon-2x has-text-success" " "
+                    , text (T.messageSent ++ ". ")
+                    , a
+                        [ href link
+                        , onClickPD (OnClose link)
+                        , target "_blank"
+                        ]
+                        [ text T.checkItOut ]
                     ]
-                    [ text T.checkItOut ]
+                , a [ onClickPD (OnReset AskQuestion), target "_blank" ] [ text T.askAnotherQuestion ]
                 ]
 
         other ->
             div [ class "section pt-0" ]
                 [ p [ class "field" ]
                     [ text "Have you checked if your question is answered in the "
-                    , span [ class "button-light has-text-info has-text-weight-semibold", onClick (op.onChangeTab QuickHelp) ] [ text "Quick help?" ]
+                    , span [ class "button-light has-text-info has-text-weight-semibold", onClick (OnChangeTab QuickHelp) ] [ text "Quick help?" ]
                     ]
                 , div [ class "field is-horizontal pt-2" ]
                     [ div [ class "field-label is-normal" ] [ label [ class "label" ] [ text "Subject" ] ]
@@ -361,7 +581,7 @@ viewAskQuestion op =
                                     , placeholder "Subject of your question."
                                     , required True
                                     , value title
-                                    , onInput (op.onChangePostAsk "title")
+                                    , onInput (OnChangePostAsk "title")
                                     ]
                                     []
                                 ]
@@ -379,7 +599,7 @@ viewAskQuestion op =
                                     , placeholder "Write your question here..."
                                     , required True
                                     , value message
-                                    , onInput (op.onChangePostAsk "message")
+                                    , onInput (OnChangePostAsk "message")
                                     ]
                                     []
                                 ]
@@ -398,7 +618,7 @@ viewAskQuestion op =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (op.onSubmit <| op.onSubmitAsk)
+                            , onClick (OnSubmit <| OnSubmitAsk)
                             ]
                             [ text "Send question" ]
                         ]
@@ -406,11 +626,11 @@ viewAskQuestion op =
                 ]
 
 
-viewFeedback : Op msg -> Html msg
-viewFeedback op =
+viewFeedback : Op -> State -> Html Msg
+viewFeedback op (State model) =
     let
         form =
-            op.data.formFeedback
+            model.formFeedback.form
 
         title =
             Dict.get "title" form.post |> withDefault ""
@@ -419,26 +639,29 @@ viewFeedback op =
             Dict.get "message" form.post |> withDefault ""
 
         isLoading =
-            op.data.resultFeedback == LoadingSlowly
+            model.formFeedback.result == LoadingSlowly
 
         isSendable =
             isPostSendable [ "title", "message" ] form.post
     in
-    case op.data.resultFeedback of
+    case model.formFeedback.result of
         Success res ->
             let
                 link =
                     Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
             in
-            div [ class "box is-light" ]
-                [ I.icon1 "icon-check icon-2x has-text-success" " "
-                , text (T.messageSent ++ ". ")
-                , a
-                    [ href link
-                    , onClickPD (op.onCloseModal link)
-                    , target "_blank"
+            div []
+                [ div [ class "box is-light" ]
+                    [ I.icon1 "icon-check icon-2x has-text-success" " "
+                    , text (T.messageSent ++ ". ")
+                    , a
+                        [ href link
+                        , onClickPD (OnClose link)
+                        , target "_blank"
+                        ]
+                        [ text T.checkItOut ]
                     ]
-                    [ text T.checkItOut ]
+                , a [ onClickPD (OnReset Feedback), target "_blank" ] [ text T.giveAnotherFeedback ]
                 ]
 
         other ->
@@ -452,8 +675,8 @@ viewFeedback op =
                                     [ input
                                         [ type_ "radio"
                                         , name "type"
-                                        , onClick (op.onChangeLabel BugReport)
-                                        , checked (op.data.type_ == BugReport)
+                                        , onClick (OnChangeLabel BugReport)
+                                        , checked (model.type_ == BugReport)
                                         ]
                                         []
                                     , text " Bug report"
@@ -462,8 +685,8 @@ viewFeedback op =
                                     [ input
                                         [ type_ "radio"
                                         , name "type"
-                                        , onClick (op.onChangeLabel FeatureRequest)
-                                        , checked (op.data.type_ == FeatureRequest)
+                                        , onClick (OnChangeLabel FeatureRequest)
+                                        , checked (model.type_ == FeatureRequest)
                                         ]
                                         []
                                     , text " Feature request"
@@ -472,8 +695,8 @@ viewFeedback op =
                                     [ input
                                         [ type_ "radio"
                                         , name "type"
-                                        , onClick (op.onChangeLabel Praise)
-                                        , checked (op.data.type_ == Praise)
+                                        , onClick (OnChangeLabel Praise)
+                                        , checked (model.type_ == Praise)
                                         ]
                                         []
                                     , text " Praise"
@@ -493,7 +716,7 @@ viewFeedback op =
                                     , placeholder "Subject of your feedback."
                                     , required True
                                     , value title
-                                    , onInput (op.onChangePostFeedback "title")
+                                    , onInput (OnChangePostFeedback "title")
                                     ]
                                     []
                                 ]
@@ -511,7 +734,7 @@ viewFeedback op =
                                     , placeholder "Write your feedback here..."
                                     , required True
                                     , value message
-                                    , onInput (op.onChangePostFeedback "message")
+                                    , onInput (OnChangePostFeedback "message")
                                     ]
                                     []
                                 ]
@@ -530,7 +753,7 @@ viewFeedback op =
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
-                            , onClick (op.onSubmit <| op.onSubmitFeedback)
+                            , onClick (OnSubmit <| OnSubmitFeedback)
                             ]
                             [ text "Send feedback" ]
                         ]
