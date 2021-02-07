@@ -188,6 +188,9 @@ update_ apis message model =
         OnOpen targets ->
             if model.isOpen == False then
                 let
+                    k =
+                        Debug.log "label up" targets
+
                     cmd =
                         ternary (targets /= model.form.targets)
                             [ queryLabelsUp apis.gql targets OnGotLabels ]

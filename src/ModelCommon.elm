@@ -531,6 +531,21 @@ getParentId nameid odata =
             Nothing
 
 
+getParents : String -> GqlData NodesData -> List String
+getParents nameid odata =
+    case odata of
+        Success data ->
+            case Maybe.map (\n -> n.parent) (Dict.get nameid data) |> withDefault Nothing of
+                Just p ->
+                    [ nameid ] ++ [ p.nameid ] ++ getParents p.nameid odata
+
+                Nothing ->
+                    []
+
+        _ ->
+            []
+
+
 hotNodeInsert : Node -> GqlData NodesData -> NodesData
 hotNodeInsert node odata =
     -- Push a new node in the model if data is success

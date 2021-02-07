@@ -1920,7 +1920,7 @@ makeNewTensionFormOp : Model -> NewTensionForm.Op Msg
 makeNewTensionFormOp model =
     { lookup = model.lookup_users
     , users_data = model.users_data
-    , targets = [ model.tensionForm.form.source.nameid, model.tensionForm.form.target.nameid ]
+    , targets = [ model.tensionForm.form.source.nameid ] ++ getParents model.tensionForm.form.target.nameid model.orga_data
     , data = model.tensionForm
     , onChangeInputViewMode = ChangeInputViewMode
     , onChangeNode = ChangeNodePost
