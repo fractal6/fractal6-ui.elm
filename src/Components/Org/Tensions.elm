@@ -44,7 +44,7 @@ import Query.QueryNode exposing (fetchNode, queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT)
 import Time
 
 
@@ -991,12 +991,12 @@ viewIntExtTensions : Model -> Html Msg
 viewIntExtTensions model =
     div [ class "columns" ]
         [ div [ class "column is-6" ]
-            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text T.internalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.internalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6" ]
-            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ text T.externalTensions ]
+            [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.externalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
@@ -1012,31 +1012,31 @@ viewTensions focus pattern tensionsData tensionDir =
                         |> div [ class "is-size-7", id "tensionsTab" ]
 
                 else if pattern /= Nothing then
-                    div [] [ "No results for: " ++ (pattern |> withDefault "") |> text ]
+                    div [] [ textH T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
 
                 else
                     case focus.type_ of
                         NodeType.Role ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ text T.noIntTensionRole ]
+                                    div [] [ textH T.noIntTensionRole ]
 
                                 ExternalTension ->
-                                    div [] [ text T.noExtTensionRole ]
+                                    div [] [ textH T.noExtTensionRole ]
 
                                 ListTension ->
-                                    div [] [ text T.noTensionRole ]
+                                    div [] [ textH T.noTensionRole ]
 
                         NodeType.Circle ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ text T.noIntTensionCircle ]
+                                    div [] [ textH T.noIntTensionCircle ]
 
                                 ExternalTension ->
-                                    div [] [ text T.noExtTensionCircle ]
+                                    div [] [ textH T.noExtTensionCircle ]
 
                                 ListTension ->
-                                    div [] [ text T.noTensionCircle ]
+                                    div [] [ textH T.noTensionCircle ]
 
             Failure err ->
                 viewGqlErrors err
@@ -1098,7 +1098,8 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text (T.welcomIn ++ " ")
+                        , textH T.welcomIn
+                        , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 

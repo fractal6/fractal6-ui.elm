@@ -15,7 +15,7 @@ import ModelCommon.Codecs exposing (FractalBaseRoute(..), typeFromNameid, uriFro
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (LocalGraph, NodeCharac, UserRole)
 import Ports
-import Text as T
+import Text as T exposing (textH, textT)
 
 
 type HelperBar
@@ -190,7 +190,7 @@ viewTree : FractalBaseRoute -> LocalGraph -> Html msg
 viewTree baseUri g =
     div [ class "dropdown" ]
         [ div [ class "dropdown-trigger px-2 button-light" ]
-            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down"  ]
+            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down" ]
             ]
         , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content" ] <|
@@ -214,7 +214,7 @@ joinButton msg =
         --, attribute "data-tooltip" "Join this organisation."
         , onClick msg
         ]
-        [ text T.joinOrga ]
+        [ textH T.joinOrga ]
 
 
 memberButtons : List UserRole -> Op msg -> Html msg
@@ -234,7 +234,7 @@ memberButtons roles_ hb =
         lastButton =
             case hb.data of
                 Expanded ->
-                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ I.icon "icon-chevrons-left"  ]
+                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ I.icon "icon-chevrons-left" ]
 
                 Collapsed ->
                     if roleMoreLen > 0 then

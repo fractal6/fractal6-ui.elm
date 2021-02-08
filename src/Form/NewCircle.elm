@@ -19,7 +19,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..))
 import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeSpan)
-import Text as T
+import Text as T exposing (textH, textT, upH)
 
 
 
@@ -59,16 +59,17 @@ view op =
             div [ class "box is-light" ]
                 [ I.icon1 "icon-check icon-2x has-text-success" " "
                 , if data.activeButton == Just 0 then
-                    text (txt.added ++ " ")
+                    textH txt.added
 
                   else
-                    text (txt.tension_added ++ " ")
+                    textH txt.tension_added
+                , text " "
                 , a
                     [ href link
                     , onClickPD (op.onCloseModal link)
                     , target "_blank"
                     ]
-                    [ text T.checkItOut ]
+                    [ textH T.checkItOut ]
                 ]
 
         other ->
@@ -84,14 +85,14 @@ view op =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text (txt.title ++ " |\u{00A0}"), tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ textT txt.title, text " |\u{00A0}", tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
                 , div [ class "modal-card-body" ]
                     [ nodeAboutInputView False OverviewBaseUri txt form.node op
                     , div [ class "card cardForm" ]
-                        [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ text T.mandateH ]
+                        [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.mandate ]
                         , div [ class "card-content" ] [ nodeMandateInputView txt form.node op ]
                         ]
                     , if op.data.doAddLinks || (form.users |> List.filter (\u -> u.username /= "")) /= [] then
@@ -99,8 +100,8 @@ view op =
                             [ class "card cardForm"
                             , attribute "style" "overflow: unset;"
                             ]
-                            --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ text T.firstLinkH ] ]
-                            [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ text T.firstLinkH ]
+                            --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ textH T.firstLink ] ]
+                            [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.firstLink ]
                             , div [ class "card-content" ] [ nodeLinksInputView txt form op.data op ]
                             ]
 
@@ -115,12 +116,12 @@ view op =
                             [ textarea
                                 [ class "textarea"
                                 , rows 3
-                                , placeholder T.leaveComment
+                                , placeholder (upH T.leaveComment)
                                 , onInput <| op.onChangeNode "message"
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ text txt.message_help ]
+                        , p [ class "help-label" ] [ textH txt.message_help ]
                         ]
                     , br [] []
                     ]
@@ -142,7 +143,7 @@ view op =
                                      ]
                                         ++ submitTension
                                     )
-                                    [ text txt.submit ]
+                                    [ textH txt.submit ]
                                 , button
                                     ([ class "button is-success"
                                      , classList
@@ -151,7 +152,7 @@ view op =
                                      ]
                                         ++ submitCloseTension
                                     )
-                                    [ text txt.close_submit ]
+                                    [ textH txt.close_submit ]
                                 ]
                             ]
                         ]

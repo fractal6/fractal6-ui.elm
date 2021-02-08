@@ -30,7 +30,7 @@ import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -325,24 +325,24 @@ viewOrgaForm global model =
     in
     div []
         [ div [ class "field" ]
-            [ div [ class "label" ] [ text (T.nameH ++ " *") ]
+            [ div [ class "label" ] [ textH T.name, text " *" ]
             , div [ class "control" ]
                 [ input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , autocomplete False
                     , type_ "search"
-                    , placeholder "Name"
+                    , placeholder (upH T.name)
                     , value name
                     , onInput <| ChangeNodePost "name"
                     , required True
                     ]
                     []
                 ]
-            , p [ class "help" ] [ text T.orgaNameHelp ]
+            , p [ class "help" ] [ textH T.orgaNameHelp ]
             ]
         , div [ class "field" ]
-            [ div [ class "label" ] [ text T.aboutH ]
+            [ div [ class "label" ] [ textH T.about ]
             , div [ class "control" ]
                 [ input
                     [ id "aboutField"
@@ -350,29 +350,29 @@ viewOrgaForm global model =
                     , attribute "data-nextfocus" "textAreaModal"
                     , autocomplete False
                     , type_ "search"
-                    , placeholder "About"
+                    , placeholder (upH T.about)
                     , value about
                     , onInput <| ChangeNodePost "about"
                     ]
                     []
                 ]
-            , p [ class "help" ] [ text T.aboutHelp ]
+            , p [ class "help" ] [ textH T.aboutHelp ]
             ]
         , div [ class "field" ]
-            [ div [ class "label" ] [ text (T.purposeH ++ " *") ]
+            [ div [ class "label" ] [ textH T.purpose, text " *" ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
                     , rows 5
-                    , placeholder T.purposeH
+                    , placeholder (upH T.purpose)
                     , value purpose
                     , onInput <| ChangeNodePost "purpose"
                     , required True
                     ]
                     []
                 ]
-            , p [ class "help" ] [ text T.purposeHelpOrga ]
+            , p [ class "help" ] [ textH T.purposeHelpOrga ]
             ]
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
@@ -384,7 +384,7 @@ viewOrgaForm global model =
                          ]
                             ++ submitOrga
                         )
-                        [ text T.createH ]
+                        [ textH T.create ]
                     ]
                 ]
             ]

@@ -19,7 +19,7 @@ import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, Tens
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import String.Format as Format
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -49,13 +49,13 @@ action2str : ActionPanelState -> Maybe String
 action2str action =
     case action of
         ArchiveAction ->
-            Just T.archive
+            Just (upH T.archive)
 
         UnarchiveAction ->
-            Just T.unarchive
+            Just (upH T.unarchive)
 
         LeaveAction ->
-            Just T.leave
+            Just (upH T.leave)
 
         NoAction ->
             Nothing
@@ -257,7 +257,7 @@ view op =
                                 )
                             )
                         ]
-                        [ I.icon1 "icon-pen" T.edit ]
+                        [ I.icon1 "icon-pen" (upH T.edit) ]
                     , hr [ class "dropdown-divider" ] []
                     ]
 
@@ -268,12 +268,12 @@ view op =
                             case actionType_m of
                                 Just EDIT ->
                                     [ div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
-                                        [ I.icon1 "icon-archive" T.archive ]
+                                        [ I.icon1 "icon-archive" (upH T.archive) ]
                                     ]
 
                                 Just ARCHIVE ->
                                     [ div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
-                                        [ I.icon1 "icon-archive" T.unarchive ]
+                                        [ I.icon1 "icon-archive" (upH T.unarchive) ]
                                     ]
 
                                 _ ->
@@ -285,7 +285,7 @@ view op =
                     ++ (if op.hasRole then
                             [ div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
                                 [ p []
-                                    [ I.icon1 "icon-log-out" T.leaveRole ]
+                                    [ I.icon1 "icon-log-out" (upH T.leaveRole) ]
                                 ]
                             ]
                                 |> List.append [ hr [ class "dropdown-divider" ] [] ]
@@ -372,13 +372,13 @@ viewModalContent op =
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , case op.data.state of
                             ArchiveAction ->
-                                text "Document archived"
+                                textH T.documentArchived
 
                             UnarchiveAction ->
-                                text "Document unarchived"
+                                textH T.documentUnarchived
 
                             LeaveAction ->
-                                text "Role left"
+                                textH T.roleLeft
 
                             NoAction ->
                                 text "error: No action requested"
@@ -426,12 +426,12 @@ viewStep1 action header color op =
                     [ textarea
                         [ class "textarea in-modal"
                         , rows 3
-                        , placeholder T.leaveComment
+                        , placeholder (upH T.leaveComment)
                         , onInput <| op.onUpdatePost "message"
                         ]
                         []
                     ]
-                , p [ class "help-label" ] [ text T.actionMessageHelp ]
+                , p [ class "help-label" ] [ textH T.actionMessageHelp ]
                 ]
             ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
@@ -447,7 +447,7 @@ viewStep1 action header color op =
                         ([ class "button" ]
                             ++ [ onClick (op.onCloseModal "") ]
                         )
-                        [ text T.cancel ]
+                        [ textH T.cancel ]
                     ]
                 , div [ class "control" ]
                     [ button

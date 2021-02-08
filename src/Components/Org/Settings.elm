@@ -45,7 +45,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLabels, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -782,7 +782,10 @@ viewSettingsContent : Model -> Html Msg
 viewSettingsContent model =
     case model.menuFocus of
         LabelsMenu ->
-            viewLabels model
+            div []
+                [ viewLabels model
+                , viewSubLabels model
+                ]
 
         SecurityMenu ->
             div [] [ text "Work in progress" ]
@@ -792,8 +795,8 @@ viewLabels : Model -> Html Msg
 viewLabels model =
     div [ id "labelsTable" ]
         [ h2 [ class "subtitle has-text-weight-semibold" ]
-            [ text "Labels"
-            , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ text "New label" ]
+            [ textH T.labels
+            , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ textH T.newLabel ]
             , br [] []
             ]
         , case model.label_add of
@@ -811,8 +814,8 @@ viewLabels model =
                     table [ class "table is-fullwidth" ]
                         [ thead []
                             [ tr []
-                                [ th [] [ text "Name" ]
-                                , th [] [ text "Description" ]
+                                [ th [] [ textH T.name ]
+                                , th [] [ textH T.description ]
                                 , th [] [ text "" ]
                                 , th [] []
                                 ]
@@ -844,6 +847,82 @@ viewLabels model =
                                                 , span
                                                     [ class "button-light"
                                                     , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                    ]
+                                                    [ text "Delete" ]
+                                                ]
+                                            ]
+                                    ]
+                                        ++ (case model.label_result_del of
+                                                Failure err ->
+                                                    [ td [] [ viewGqlErrors err ] ]
+
+                                                _ ->
+                                                    []
+                                           )
+                                )
+                            |> List.concat
+                            |> tbody []
+                        ]
+
+            Failure err ->
+                viewGqlErrors err
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            other ->
+                text ""
+        ]
+
+
+viewSubLabels : Model -> Html Msg
+viewSubLabels model =
+    div [ id "labelsTable" ]
+        [ h2 [ class "subtitle has-text-weight-semibold" ]
+            [ textT T.subLabels
+            ]
+        , case model.labels of
+            Success labels ->
+                if List.length labels == 0 then
+                    div [ class "" ] [ text "No label yet" ]
+
+                else
+                    table [ class "table is-fullwidth" ]
+                        [ thead []
+                            [ tr []
+                                [ th [] [ textH T.name ]
+                                , th [] [ textH T.description ]
+                                , th [] [ text "" ]
+                                , th [] []
+                                ]
+                            ]
+                        , labels
+                            |> List.indexedMap
+                                (\i d ->
+                                    [ tr [] <|
+                                        if model.label_edit == Just d then
+                                            [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
+
+                                        else
+                                            let
+                                                n_nodes =
+                                                    d.n_nodes |> withDefault 0
+                                            in
+                                            [ td [] [ viewLabel "is-medium" (Label d.id d.name d.color) ]
+                                            , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
+                                            , td [ class "" ]
+                                                [ if n_nodes > 1 then
+                                                    span [ class "is-italic is-size-7" ] [ I.icon1 "icon-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
+
+                                                  else
+                                                    text ""
+                                                ]
+                                            , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
+                                                [ span [ class "button-light", onClick (EditLabel d) ] [ text "Edit" ]
+                                                , text " · "
+                                                , span
+                                                    [ class "button-light"
+                                                    , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
                                                     ]
                                                     [ text "Delete" ]
                                                 ]
@@ -946,7 +1025,7 @@ viewLabelAddBox model =
                     []
                 ]
             , p [ class "control buttons", attribute "style" "margin-top: 1.5rem;" ]
-                [ button [ class "button is-small", onClick doCancel ] [ text T.cancel ]
+                [ button [ class "button is-small", onClick doCancel ] [ textH T.cancel ]
                 , button
                     ([ class "button is-success is-small"
                      , classList [ ( "is-loading", isLoading ) ]
@@ -954,7 +1033,7 @@ viewLabelAddBox model =
                      ]
                         ++ doSubmit
                     )
-                    [ text txt.submit ]
+                    [ textH txt.submit ]
                 ]
             ]
         , div []
@@ -1022,7 +1101,8 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text (T.welcomIn ++ " ")
+                        , textH T.welcomIn
+                        , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 

@@ -16,7 +16,7 @@ import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList, toText, up0)
+import Extra exposing (ternary, toMapOfList)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
@@ -85,7 +85,7 @@ import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTens
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 import Task
-import Text as T
+import Text as T exposing (textH, textT, toText, upH)
 import Time
 import Url exposing (Url)
 
@@ -1611,7 +1611,7 @@ viewTension u t model =
                                         []
                                     ]
                                 , p [ class "control buttons" ]
-                                    [ button [ class "button is-small", onClick CancelTitle ] [ text T.cancel ]
+                                    [ button [ class "button is-small", onClick CancelTitle ] [ textH T.cancel ]
                                     , button
                                         ([ class "button is-success is-small"
                                          , classList [ ( "is-loading", isLoading ) ]
@@ -1619,7 +1619,7 @@ viewTension u t model =
                                          ]
                                             ++ doSubmit
                                         )
-                                        [ text T.updateTitle ]
+                                        [ textH T.updateTitle ]
                                     ]
                                 ]
                             , case model.title_result of
@@ -1636,7 +1636,7 @@ viewTension u t model =
                                 -- @Debug check user rights
                                 span
                                     [ class "button has-text-weight-normal is-pulled-right is-small tooltip"
-                                    , attribute "data-tooltip" T.editTitle
+                                    , attribute "data-tooltip" (upH T.editTitle)
                                     , onClick DoChangeTitle
                                     ]
                                     [ I.icon "icon-pen" ]
@@ -1848,7 +1848,7 @@ viewComment c model =
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
-                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ text T.edit ] ]
+                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ textH T.edit ] ]
                                         ]
                                     ]
                                 ]
@@ -2161,10 +2161,10 @@ viewEventUserLeft event action_m =
                 Just type_ ->
                     case RoleType.fromString type_ of
                         Just RoleType.Guest ->
-                            "the Organisation"
+                            T.theOrganisation
 
                         _ ->
-                            T.roleH
+                            T.role
 
                 Nothing ->
                     actionNameStr action
@@ -2210,7 +2210,7 @@ viewUpdateInput uctx comment form result =
                                 [ id "updateCommentInput"
                                 , class "textarea"
                                 , rows 7
-                                , placeholder "Leave a comment"
+                                , placeholder (upH T.leaveComment)
                                 , value message
                                 , onInput (ChangeCommentPost "message")
                                 ]
@@ -2233,14 +2233,14 @@ viewUpdateInput uctx comment form result =
                             [ class "button"
                             , onClick CancelCommentPatch
                             ]
-                            [ text T.cancel ]
+                            [ textH T.cancel ]
                         , button
                             [ class "button is-success"
                             , classList [ ( "is-loading", isLoading ) ]
                             , disabled (not isSendable)
                             , onClick (Submit <| SubmitCommentPatch)
                             ]
-                            [ text T.updateComment ]
+                            [ textH T.updateComment ]
                         ]
                     ]
                 ]
@@ -2321,17 +2321,17 @@ viewBlobToolBar u t b model =
                     [ case b.pushedFlag of
                         Just flag ->
                             div [ class "has-text-success text-status" ]
-                                [ text (T.publishedThe ++ " " ++ formatTime flag) ]
+                                [ textH (T.publishedThe ++ " " ++ formatTime flag) ]
 
                         Nothing ->
                             div [ class "field has-addons" ]
                                 [ div [ class "has-text-warning text-status" ]
-                                    [ text "Revision not published" ]
+                                    [ textH T.revisionNotPublished ]
                                 , div
                                     [ class "button is-small is-success has-text-weight-semibold"
                                     , onClick (Submit <| PushBlob b.id)
                                     ]
-                                    [ I.icon1 "icon-share" (up0 T.publish) ]
+                                    [ I.icon1 "icon-share" (upH T.publish) ]
                                 ]
                     ]
 
@@ -2373,7 +2373,7 @@ viewDocVersions blobsData =
                                                 span
                                                     [ class "level-item tooltip"
                                                     , attribute "style" "cursor: inherit;"
-                                                    , attribute "data-tooltip" (T.publishedThe ++ " " ++ formatTime flag)
+                                                    , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatTime flag)
                                                     ]
                                                     [ I.icon "icon-flag" ]
 
@@ -2438,13 +2438,13 @@ viewSidePane u t model =
                             AssigneeSearchPanel.view panelOp model.assigneesPanel |> Html.map AssigneeSearchPanelMsg
 
                         LoggedOut ->
-                            h2 [ class "subtitle" ] [ text T.assigneesH ]
+                            h2 [ class "subtitle" ] [ textH T.assignees ]
                     ]
                 , if List.length assignees > 0 then
                     viewUsers assignees
 
                   else
-                    div [ class "is-italic" ] [ text T.noLabels ]
+                    div [ class "is-italic" ] [ textH T.noLabels ]
                 ]
             ]
         , div [ class "media" ]
@@ -2462,13 +2462,13 @@ viewSidePane u t model =
                             LabelSearchPanel.view panelOp model.labelsPanel |> Html.map LabelSearchPanelMsg
 
                         LoggedOut ->
-                            h2 [ class "subtitle" ] [ text T.labelsH ]
+                            h2 [ class "subtitle" ] [ textH T.labels ]
                     ]
                 , if List.length labels > 0 then
                     viewLabels labels
 
                   else
-                    div [ class "is-italic" ] [ text T.noLabels ]
+                    div [ class "is-italic" ] [ textH T.noLabels ]
                 ]
             ]
         , div [ class "media" ]
@@ -2512,7 +2512,7 @@ viewSidePane u t model =
                                 Nothing ->
                                     onClick NoMsg
                             ]
-                            [ text T.actionH
+                            [ textH T.action
                             , if model.actionPanel.isEdit then
                                 I.icon "icon-x is-pulled-right"
 
@@ -2548,7 +2548,7 @@ viewSidePane u t model =
                         ]
 
                     LoggedOut ->
-                        [ h2 [ class "subtitle" ] [ text T.actionH ] ]
+                        [ h2 [ class "subtitle" ] [ textH T.action ] ]
                 )
                     ++ [ div [ class "" ]
                             [ case t.action of
@@ -2556,7 +2556,7 @@ viewSidePane u t model =
                                     viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action)) ""
 
                                 Nothing ->
-                                    div [ class "is-italic" ] [ text T.noAction ]
+                                    div [ class "is-italic" ] [ textH T.noAction ]
                             ]
                        ]
             ]
@@ -2615,7 +2615,8 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text (T.welcomIn ++ " ")
+                        , textH T.welcomIn
+                        , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 

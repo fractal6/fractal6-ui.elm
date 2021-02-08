@@ -26,7 +26,7 @@ import ModelCommon exposing (InputViewMode(..), TensionForm, initTensionForm)
 import ModelCommon.Codecs exposing (NodeFocus)
 import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
 import ModelSchema exposing (..)
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -400,13 +400,14 @@ view op =
             in
             div [ class "box is-light" ]
                 [ I.icon1 "icon-check icon-2x has-text-success" " "
-                , text (txt.added ++ " ")
+                , textH txt.added
+                , text " "
                 , a
                     [ href link
                     , onClickPD (op.onCloseModal link)
                     , target "_blank"
                     ]
-                    [ text T.checkItOut ]
+                    [ textH T.checkItOut ]
                 ]
 
         other ->
@@ -415,7 +416,7 @@ view op =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ text (txt.title ++ " | "), tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ textT txt.title, text " | ", tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
@@ -432,7 +433,7 @@ view op =
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ text txt.name_help ]
+                        , p [ class "help-label" ] [ textH txt.name_help ]
                         , br [] []
                         ]
                     , div [ class "message" ]
@@ -453,7 +454,7 @@ view op =
                                                 [ id "textAreaModal"
                                                 , class "textarea"
                                                 , rows 6
-                                                , placeholder "Leave a comment"
+                                                , placeholder (upH T.leaveComment)
                                                 , value message
                                                 , onInput (op.onChangeNode "message")
                                                 ]
@@ -462,7 +463,7 @@ view op =
                                         Preview ->
                                             div [] [ renderMarkdown "is-dark" message, hr [] [] ]
                                     ]
-                                , p [ class "help-label" ] [ text txt.message_help ]
+                                , p [ class "help-label" ] [ textH txt.message_help ]
                                 , br [] []
                                 ]
                             ]
@@ -489,7 +490,7 @@ view op =
                                      ]
                                         ++ submitTension
                                     )
-                                    [ text txt.submit ]
+                                    [ textH txt.submit ]
                                 ]
                             ]
                         ]

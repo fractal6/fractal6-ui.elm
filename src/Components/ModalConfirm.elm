@@ -19,7 +19,7 @@ import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, Tens
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import String.Format as Format
-import Text as T
+import Text as T exposing (textH, textT)
 import Time
 
 

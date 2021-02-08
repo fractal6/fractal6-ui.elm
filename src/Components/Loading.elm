@@ -3,7 +3,6 @@ module Components.Loading exposing (..)
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
 import Components.Asset as Asset
-import Extra exposing (up1)
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
@@ -13,6 +12,7 @@ import Http
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
+import Text as T exposing (upH, upT)
 
 
 
@@ -192,7 +192,7 @@ spinner =
         [ src Asset.loading
         , width 26
         , height 26
-        , alt "Loading..."
+        , alt (upH T.loading ++ "..")
         ]
         []
 
@@ -222,7 +222,7 @@ viewGqlErrors errMsg =
                             Ok err_ ->
                                 err_.errors
                                     |> List.head
-                                    |> Maybe.map (\x -> up1 x.message)
+                                    |> Maybe.map (\x -> upT x.message)
                                     |> withDefault e
 
                             Err err_ ->

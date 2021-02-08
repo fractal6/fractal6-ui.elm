@@ -72,7 +72,7 @@ import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -159,7 +159,7 @@ nfirstTensions =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | LoadOrga
-    | PushTension TensionForm (GqlData Tension -> Msg)
+    | PushTension NewTensionForm (GqlData Tension -> Msg)
     | PushAction ActionForm ActionPanelState
     | PushGuest ActionForm
       -- Page
@@ -396,7 +396,7 @@ update global message model =
             ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
 
         PushTension form ack ->
-            ( model, addOneTension apis.gql form ack, Cmd.none )
+            ( model, addOneTension apis.gql form.form ack, Cmd.none )
 
         PushAction form state ->
             let
@@ -764,7 +764,7 @@ update global message model =
                         |> NewTensionForm.setResult LoadingSlowly
             in
             ( { model | tensionForm = newTensionForm }
-            , send (PushTension newTensionForm.form TensionAck)
+            , send (PushTension newTensionForm TensionAck)
             , Cmd.none
             )
 
@@ -791,7 +791,7 @@ update global message model =
                     ( { model | tensionForm = NewTensionForm.setResult NotAsked model.tensionForm }, send (DoOpenAuthModal form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushTension form TensionAck) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (PushTension model.tensionForm TensionAck) 500, send UpdateUserToken )
 
                 OkAuth tension ->
                     case na of
@@ -914,7 +914,7 @@ update global message model =
                         |> NewTensionForm.setResult LoadingSlowly
             in
             ( { model | tensionForm = newTensionForm }
-            , send (PushTension newTensionForm.form TensionAck)
+            , send (PushTension newTensionForm TensionAck)
             , Cmd.none
             )
 
@@ -1586,7 +1586,7 @@ viewSearchBar us model =
                     [ class "input is-small"
                     , type_ "search"
                     , autocomplete False
-                    , placeholder "Find a Role or Circle"
+                    , placeholder (upH T.phQS)
                     , value qs.pattern
                     , onInput ChangePattern
                     , onFocus (LookupFocus qs.pattern model.path_data)
@@ -1692,7 +1692,7 @@ viewSearchList us model =
         [ id "searchList", classList [ ( "is-hidden", isHidden ) ] ]
         [ table [ class "table is-fullwidth" ] <|
             if sortedLookup == [] then
-                [ tbody [] [ td [] [ text T.noResultsFound ] ] ]
+                [ tbody [] [ td [] [ textH T.noResultsFound ] ] ]
 
             else
                 sortedLookup
@@ -1721,10 +1721,10 @@ viewSearchList us model =
                             ]
                                 |> List.append
                                     (if i == 0 && n.type_ == NodeType.Circle then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.circleH ++ " ") ] ]
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ upH T.circle ++ " ") ] ]
 
                                      else if i == 0 || n.type_ == NodeType.Role && (Array.get (i - 1) (Array.fromList sortedLookup) |> Maybe.map (\x -> x.type_ == NodeType.Circle) |> withDefault False) == True then
-                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ T.roleH ++ " ") ] ]
+                                        [ td [ class "is-grey is-aligned-center is-size-6" ] [ text (" " ++ upH T.role ++ " ") ] ]
 
                                      else
                                         []
@@ -1733,7 +1733,7 @@ viewSearchList us model =
                     |> List.concat
                     |> tbody []
                     |> List.singleton
-                    |> List.append [ thead [] [ tr [] [ th [] [ text T.nameH ], th [] [ text T.parentH ], th [] [ text T.firstLinkH ] ] ] ]
+                    |> List.append [ thead [] [ tr [] [ th [] [ textH T.name ], th [] [ textH T.parent ], th [] [ textH T.firstLink ] ] ] ]
         ]
 
 
@@ -1759,7 +1759,7 @@ viewCanvas us model =
             [ div
                 [ id "invGraph_cvbtn"
                 , class "button buttonToggle tooltip has-tooltip-right"
-                , attribute "data-tooltip" T.reverseTooltip
+                , attribute "data-tooltip" (upH T.reverseTooltip)
                 , onClick ToggleGraphReverse
                 ]
                 [ I.icon "icon-sort-amount-desc icon-xs" ]
@@ -1803,8 +1803,8 @@ viewActivies model =
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
-                            [ li [ class "is-active" ] [ a [ href "#" ] [ I.icon1 "icon-exchange icon-sm" T.tensionH ] ]
-                            , li [] [ a [ class "has-text-grey", href "#" ] [ I.icon1 "icon-history icon-sm" T.journalH ] ]
+                            [ li [ class "is-active" ] [ a [ href "#" ] [ I.icon1 "icon-exchange icon-sm" (upH T.tension) ] ]
+                            , li [] [ a [ class "has-text-grey", href "#" ] [ I.icon1 "icon-history icon-sm" (upH T.journal) ] ]
                             ]
                         ]
                     ]
@@ -1817,7 +1817,7 @@ viewActivies model =
                         List.map (\t -> mediaTension OverviewBaseUri model.node_focus t Navigate) tensions
                             ++ ternary (List.length tensions > 5)
                                 [ div [ class "is-aligned-center", attribute "style" "margin-top:10px;" ]
-                                    [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ text T.seeMore ] ]
+                                    [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
                                 ]
                                 []
                             |> div [ class "is-size-7", id "tensionsTab" ]
@@ -1825,10 +1825,10 @@ viewActivies model =
                     else
                         case model.node_focus.type_ of
                             NodeType.Role ->
-                                div [] [ text T.noOpenTensionRole ]
+                                div [] [ textH T.noOpenTensionRole ]
 
                             NodeType.Circle ->
-                                div [] [ text T.noOpenTensionCircle ]
+                                div [] [ textH T.noOpenTensionCircle ]
 
                 Failure err ->
                     viewGqlErrors err
@@ -1848,7 +1848,7 @@ setupActionModal model =
     let
         onClose =
             if NewTensionForm.hasData model.tensionForm && withMaybeData model.tensionForm.result == Nothing then
-                DoModalConfirmOpen (DoCloseModal "") [ ( T.confirmUnsaved, "" ) ]
+                DoModalConfirmOpen (DoCloseModal "") [ ( upH T.confirmUnsaved, "" ) ]
 
             else
                 DoCloseModal ""
@@ -2024,7 +2024,8 @@ viewJoinOrgaStep orga step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text (T.welcomIn ++ " ")
+                        , textH T.welcomIn
+                        , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 

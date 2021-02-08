@@ -20,7 +20,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT)
 
 
 page : Page Flags Model Msg

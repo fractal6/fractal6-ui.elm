@@ -7,7 +7,7 @@ import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import ModelCommon exposing (UserState(..))
-import Text as T
+import Text as T exposing (textH, textT, upH)
 
 
 type alias Op =
@@ -45,13 +45,13 @@ view op =
                     [ case op.user of
                         LoggedIn _ ->
                             a [ class "navbar-item", href (toHref Route.Top) ]
-                                [ text T.yourOrg ]
+                                [ textH T.yourOrg ]
 
                         LoggedOut ->
                             text ""
                     , a
                         [ class "navbar-item", href (toHref Route.Explore) ]
-                        [ text T.explore ]
+                        [ textH T.explore ]
                     ]
                 , div [ class "navbar-end" ]
                     [ helpButton op
@@ -93,7 +93,7 @@ newButton op =
                     [ I.icon "icon-plus icon-bg" ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
-                        [ text T.newOrganisation ]
+                        [ textH T.newOrganisation ]
                     ]
                 ]
 
@@ -106,27 +106,27 @@ userButton op =
     case op.user of
         LoggedIn uctx ->
             div [ class "navbar-item has-dropdown" ]
-                [ div [ class "navbar-link"
-
+                [ div
+                    [ class "navbar-link"
                     , attribute "style" "padding-right: 1.85rem;"
-
-                ] [ text uctx.username ]
+                    ]
+                    [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toHref <| Route.User_Dynamic { param1 = uctx.username }) ]
-                        [ I.icon1 "icon-user" T.profile ]
+                        [ I.icon1 "icon-user" (upH T.profile) ]
                     , a [ class "navbar-item", href "#" ]
-                        [ I.icon1 "icon-tool" T.settings ]
+                        [ I.icon1 "icon-tool" (upH T.settings) ]
 
                     --, hr [ class "navbar-divider" ] []
                     --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "icon-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
-                        [ I.icon1 "icon-power" T.signout ]
+                        [ I.icon1 "icon-power" (upH T.signout) ]
                     ]
                 ]
 
         LoggedOut ->
             div [ class "navbar-item" ]
                 [ a [ class "button is-small is-primary has-text-weight-bold", href (toHref Route.Login) ]
-                    [ text T.signin ]
+                    [ textH T.signin ]
                 ]

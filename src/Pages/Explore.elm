@@ -29,7 +29,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.QueryNode exposing (NodeExt, queryNodeExt, queryPublicOrga)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT)
 import Time
 
 
@@ -331,7 +331,7 @@ viewPublicOrgas model =
             Success nodes ->
                 nodes
                     |> List.map (\n -> viewOrgaMedia n)
-                    |> List.append [ div [ class "subtitle" ] [ text T.exploreOrganisations ], br [] [] ]
+                    |> List.append [ div [ class "subtitle" ] [ textH T.exploreOrganisations ], br [] [] ]
 
 
 viewOrgaMedia : Node -> Html Msg

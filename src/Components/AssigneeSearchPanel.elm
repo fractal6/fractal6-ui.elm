@@ -22,7 +22,7 @@ import Ports
 import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
 import Task
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -320,7 +320,7 @@ view_ op (State model) =
                                 [ id "userInput"
                                 , class "input autofocus"
                                 , type_ "text"
-                                , placeholder T.searchUsers
+                                , placeholder (upH T.searchUsers)
                                 , value model.pattern
                                 , onInput OnChangePattern
                                 ]
@@ -355,7 +355,7 @@ viewAssigneeSelectors : List User -> Op -> Model -> Html Msg
 viewAssigneeSelectors users op model =
     div [ class "selectors" ] <|
         if users == [] then
-            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+            [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
 
         else
             users
@@ -376,7 +376,7 @@ viewAssigneeSelectors users op model =
                             , classList [ ( "is-active", isActive ) ]
                             , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
                             ]
-                            [ span [ class "panel-icon" ] [ I.icon iconCls  ]
+                            [ span [ class "panel-icon" ] [ I.icon iconCls ]
                             , viewUser False u.username
                             , case u.name of
                                 Just name ->
@@ -404,7 +404,7 @@ view op (State model) =
             , classList [ ( "is-w", op.isAdmin ) ]
             , onClick (OnOpen op.targets)
             ]
-            [ text T.assigneesH
+            [ textH T.assignees
             , if model.isOpen then
                 I.icon "icon-x is-pulled-right"
 
@@ -449,7 +449,7 @@ viewUserSelectors i pattern op =
                             op.lookup
                 in
                 if users == [] then
-                    [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+                    [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
 
                 else
                     users

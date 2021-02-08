@@ -22,7 +22,7 @@ import Ports
 import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabelsUp)
 import Task
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -330,7 +330,7 @@ view_ isInternal op (State model) =
                                     [ id "userInput"
                                     , class "input autofocus"
                                     , type_ "text"
-                                    , placeholder T.searchLabels
+                                    , placeholder (upH T.searchLabels)
                                     , value model.pattern
                                     , onInput OnChangePattern
                                     ]
@@ -365,7 +365,7 @@ viewLabelSelectors : Bool -> List Label -> Op -> Model -> Html Msg
 viewLabelSelectors isInternal labels op model =
     div [ class "selectors" ] <|
         if labels == [] then
-            [ p [ class "panel-block" ] [ text T.noResultsFound ] ]
+            [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
 
         else
             labels
@@ -409,7 +409,7 @@ view op (State model) =
             , classList [ ( "is-w", op.isAdmin ) ]
             , onClick (OnOpen op.targets)
             ]
-            [ text T.labelsH
+            [ textH T.labels
             , if model.isOpen then
                 I.icon "icon-x is-pulled-right"
 

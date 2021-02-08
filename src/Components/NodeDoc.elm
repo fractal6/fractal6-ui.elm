@@ -21,7 +21,7 @@ import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTens
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -386,11 +386,11 @@ view_ tid data op_m =
                 Just mandate ->
                     div [ class "mandateDoc" ]
                         [ div [ class "subtitle is-5" ]
-                            [ I.icon1 "icon-book-open icon-1half" T.mandateH, doEditView op_m BlobType.OnMandate ]
-                        , viewMandateSection T.purposeH (Just mandate.purpose)
-                        , viewMandateSection T.responsabilitiesH mandate.responsabilities
-                        , viewMandateSection T.domainsH mandate.domains
-                        , viewMandateSection T.policiesH mandate.policies
+                            [ I.icon1 "icon-book-open icon-1half" (upH T.mandate), doEditView op_m BlobType.OnMandate ]
+                        , viewMandateSection (upH T.purpose) (Just mandate.purpose)
+                        , viewMandateSection (upH T.responsabilities) mandate.responsabilities
+                        , viewMandateSection (upH T.domains) mandate.domains
+                        , viewMandateSection (upH T.policies) mandate.policies
                         ]
 
                 Nothing ->
@@ -429,14 +429,14 @@ view_ tid data op_m =
             in
             div [ class "linksDoc" ]
                 [ div [ class "subtitle is-5" ]
-                    [ I.icon1 "icon-users icon-1half" T.linksH
+                    [ I.icon1 "icon-users icon-1half" (upH T.links)
                     , links_
                         |> List.map (\l -> viewUser True l.username)
                         |> span [ attribute "style" "margin-left:20px;" ]
                     , doEditView op_m BlobType.OnFirstLink
                     ]
                 , if List.length links_ == 0 then
-                    span [ class "is-italic" ] [ text txt.noFirstLinks ]
+                    span [ class "is-italic" ] [ textH txt.noFirstLinks ]
 
                   else
                     text ""
@@ -499,7 +499,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                   else
                     text ""
                 ]
-            , p [ class "help-label" ] [ text txt.name_help ]
+            , p [ class "help-label" ] [ textH txt.name_help ]
             ]
         , div [ class "field" ]
             [ div [ class "control" ]
@@ -514,7 +514,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     ]
                     []
                 ]
-            , p [ class "help-label" ] [ text txt.about_help ]
+            , p [ class "help-label" ] [ textH txt.about_help ]
             , br [] []
             ]
         ]
@@ -576,7 +576,7 @@ nodeLinksInputView txt form data op =
                                 , input
                                     [ type_ "text"
                                     , class "is-expanded"
-                                    , placeholder (ternary (u.username == "") T.searchUsers "")
+                                    , placeholder (ternary (u.username == "") (upH T.searchUsers) "")
                                     , value u.pattern
                                     , onInput (op.onChangeUserPattern i)
                                     , onClick op.onShowLookupFs
@@ -595,7 +595,7 @@ nodeLinksInputView txt form data op =
                     ]
             )
             form.users
-            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ text txt.firstLink_help ] ]
+            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ textH txt.firstLink_help ] ]
         )
 
 
@@ -625,13 +625,13 @@ nodeMandateInputView txt node op =
     div [ class "" ]
         [ div [ class "field" ]
             [ div [ class "label" ]
-                [ text (T.purposeH ++ " *") ]
+                [ textH T.purpose, text " *" ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
                     , rows 5
-                    , placeholder txt.ph_purpose
+                    , placeholder (upH txt.ph_purpose)
                     , value purpose
                     , onInput <| op.onChangeNode "purpose"
                     , required True
@@ -641,12 +641,12 @@ nodeMandateInputView txt node op =
             ]
         , if showResponsabilities then
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.responsabilitiesH ]
+                [ div [ class "label" ] [ textH T.responsabilities ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 5
-                        , placeholder txt.ph_responsabilities
+                        , placeholder (upH txt.ph_responsabilities)
                         , value responsabilities
                         , onInput <| op.onChangeNode "responsabilities"
                         ]
@@ -658,12 +658,12 @@ nodeMandateInputView txt node op =
             text ""
         , if showDomains then
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.domainsH ]
+                [ div [ class "label" ] [ textH T.domains ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 5
-                        , placeholder txt.ph_domains
+                        , placeholder (upH txt.ph_domains)
                         , value domains
                         , onInput <| op.onChangeNode "domains"
                         ]
@@ -675,12 +675,12 @@ nodeMandateInputView txt node op =
             text ""
         , if showPolicies then
             div [ class "field" ]
-                [ div [ class "label" ] [ text T.policiesH ]
+                [ div [ class "label" ] [ textH T.policies ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
                         , rows 5
-                        , placeholder txt.ph_policies
+                        , placeholder (upH txt.ph_policies)
                         , value policies
                         , onInput <| op.onChangeNode "policies"
                         ]
@@ -693,7 +693,7 @@ nodeMandateInputView txt node op =
         , if showResponsabilities == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
-                    [ I.icon1 "icon-plus" "", text T.addResponsabilities ]
+                    [ I.icon1 "icon-plus" "", textH T.addResponsabilities ]
                 ]
 
           else
@@ -701,7 +701,7 @@ nodeMandateInputView txt node op =
         , if showDomains == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddDomains ]
-                    [ I.icon1 "icon-plus" "", text T.addDomains ]
+                    [ I.icon1 "icon-plus" "", textH T.addDomains ]
                 ]
 
           else
@@ -709,7 +709,7 @@ nodeMandateInputView txt node op =
         , if showPolicies == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddPolicies ]
-                    [ I.icon1 "icon-plus" "", text T.addPolicies ]
+                    [ I.icon1 "icon-plus" "", textH T.addPolicies ]
                 ]
 
           else
@@ -755,14 +755,14 @@ blobButtonsView isSendable isLoading op =
                         [ class "button"
                         , onClick op.onCancelBlob
                         ]
-                        [ text T.cancel ]
+                        [ textH T.cancel ]
                     , button
                         [ class "button is-success"
                         , classList [ ( "is-loading", isLoading ) ]
                         , disabled (not isSendable)
                         , onClick (op.onSubmit <| op.onSubmitBlob op.data)
                         ]
-                        [ text T.saveChanges ]
+                        [ textH T.saveChanges ]
                     ]
                 ]
             ]

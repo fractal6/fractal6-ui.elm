@@ -7,7 +7,7 @@ import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebDa
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
-import Extra exposing (ternary, up0, up1)
+import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
 import Form.NewTension as NTF exposing (NewTensionForm)
@@ -33,7 +33,7 @@ import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
 import String.Format as Format
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -427,7 +427,7 @@ viewModal op (State model) =
                     && withMaybeData model.formFeedback.result
                     == Nothing
             then
-                DoModalConfirmOpen (OnClose "") [ ( T.confirmUnsaved, "" ) ]
+                DoModalConfirmOpen (OnClose "") [ ( upH T.confirmUnsaved, "" ) ]
 
             else
                 OnClose ""
@@ -493,7 +493,7 @@ viewQuickHelp op (State model) =
             docs
                 |> List.map
                     (\doc ->
-                        [ header [ class "acc" ] [ label [ class "acc-title" ] [ text (up1 doc.name) ] ] ]
+                        [ header [ class "acc" ] [ label [ class "acc-title" ] [ textT doc.name ] ] ]
                             ++ (doc.tasks
                                     |> List.indexedMap
                                         (\i task ->
@@ -503,9 +503,9 @@ viewQuickHelp op (State model) =
                                             in
                                             [ input [ id did, name "accordion", type_ "radio" ] []
                                             , section [ class "acc" ]
-                                                [ label [ class "acc-title", for did ] [ text (up0 task.header) ]
+                                                [ label [ class "acc-title", for did ] [ textH task.header ]
                                                 , label [ class "acc-close", for "acc-close" ] []
-                                                , div [ class "acc-content" ] [ up0 task.content |> up0 |> renderMarkdown "is-dark" ]
+                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown "is-dark" ]
                                                 ]
                                             ]
                                         )
@@ -553,15 +553,16 @@ viewAskQuestion op (State model) =
             div []
                 [ div [ class "box is-light" ]
                     [ I.icon1 "icon-check icon-2x has-text-success" " "
-                    , text (T.messageSent ++ ". ")
+                    , textH T.messageSent
+                    , text ". "
                     , a
                         [ href link
                         , onClickPD (OnClose link)
                         , target "_blank"
                         ]
-                        [ text T.checkItOut ]
+                        [ textH T.checkItOut ]
                     ]
-                , a [ onClickPD (OnReset AskQuestion), target "_blank" ] [ text T.askAnotherQuestion ]
+                , a [ onClickPD (OnReset AskQuestion), target "_blank" ] [ textH T.askAnotherQuestion ]
                 ]
 
         other ->
@@ -653,15 +654,16 @@ viewFeedback op (State model) =
             div []
                 [ div [ class "box is-light" ]
                     [ I.icon1 "icon-check icon-2x has-text-success" " "
-                    , text (T.messageSent ++ ". ")
+                    , textH T.messageSent
+                    , text ". "
                     , a
                         [ href link
                         , onClickPD (OnClose link)
                         , target "_blank"
                         ]
-                        [ text T.checkItOut ]
+                        [ textH T.checkItOut ]
                     ]
-                , a [ onClickPD (OnReset Feedback), target "_blank" ] [ text T.giveAnotherFeedback ]
+                , a [ onClickPD (OnReset Feedback), target "_blank" ] [ textH T.giveAnotherFeedback ]
                 ]
 
         other ->

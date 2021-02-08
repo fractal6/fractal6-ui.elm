@@ -1,5 +1,52 @@
 module Text exposing (..)
 
+import Html exposing (Html, span, text)
+import String.Extra as SE
+
+
+
+-- String
+
+
+upH : String -> String
+upH s =
+    SE.toSentenceCase s
+
+
+upT : String -> String
+upT s =
+    SE.toTitleCase s
+
+
+upA : String -> String
+upA t =
+    String.toUpper t
+
+
+toText : List String -> Html msg
+toText l =
+    l
+        |> List.intersperse " "
+        |> List.map (\x -> text x)
+        |> span []
+
+
+textH : String -> Html msg
+textH s =
+    s |> upH |> text
+
+
+textT : String -> Html msg
+textT s =
+    s |> upT |> text
+
+
+textA : String -> Html msg
+textA s =
+    s |> upA |> text
+
+
+
 -- General
 
 
@@ -20,47 +67,47 @@ createAccount =
 
 createLabel : String
 createLabel =
-    "Create label"
+    "create label"
 
 
 updateLabel : String
 updateLabel =
-    "Update label"
+    "update label"
 
 
 messageSent : String
 messageSent =
-    "Message sent"
+    "message sent"
 
 
 profile : String
 profile =
-    "Profile"
+    "profile"
 
 
 settings : String
 settings =
-    "Settings"
+    "settings"
 
 
 yourOrg : String
 yourOrg =
-    "Organisations"
+    "organisations"
 
 
 loading : String
 loading =
-    "loading..."
+    "loading"
 
 
 seeMore : String
 seeMore =
-    "See more"
+    "see more"
 
 
 welcomIn : String
 welcomIn =
-    "Welcome In"
+    "welcome in"
 
 
 organisations : String
@@ -70,62 +117,62 @@ organisations =
 
 joinOrga : String
 joinOrga =
-    "Join this organisation"
+    "join this organisation"
 
 
 leaveRole : String
 leaveRole =
-    "Leave role"
+    "leave role"
 
 
 checkItOut : String
 checkItOut =
-    "Check it out."
+    "check it out."
 
 
 explore : String
 explore =
-    "Explore"
+    "explore"
 
 
 exploreOrganisations : String
 exploreOrganisations =
-    "Explore organisations"
+    "explore organisations"
 
 
 newOrganisation : String
 newOrganisation =
-    "New organisation"
+    "new organisation"
 
 
 view : String
 view =
-    "View"
+    "view"
 
 
 versions : String
 versions =
-    "Versions"
+    "versions"
 
 
 revisions : String
 revisions =
-    "Revisions"
+    "revisions"
 
 
 history : String
 history =
-    "History"
+    "history"
 
 
 edit : String
 edit =
-    "Edit"
+    "edit"
 
 
 cancel : String
 cancel =
-    "Cancel"
+    "cancel"
 
 
 publish : String
@@ -133,9 +180,19 @@ publish =
     "publish"
 
 
+published : String
+published =
+    "published"
+
+
 publishedThe : String
 publishedThe =
-    "Published the"
+    "published the"
+
+
+revisionNotPublished : String
+revisionNotPublished =
+    "revision not published"
 
 
 by : String
@@ -153,29 +210,34 @@ left =
     "left"
 
 
+roleLeft : String
+roleLeft =
+    "role left"
+
+
 saveChanges : String
 saveChanges =
-    "Save changes"
+    "save changes"
 
 
 leaveComment : String
 leaveComment =
-    "Leave a comment"
+    "leave a comment"
 
 
 noResultsFound : String
 noResultsFound =
-    "No results found"
+    "no results found"
 
 
 searchUsers : String
 searchUsers =
-    "Search users"
+    "search users"
 
 
 searchLabels : String
 searchLabels =
-    "Search labels"
+    "search labels"
 
 
 reopened : String
@@ -198,19 +260,14 @@ unassigned =
     "unassigned"
 
 
-published : String
-published =
-    "published"
-
-
 archive : String
 archive =
-    "Archive"
+    "archive"
 
 
 unarchive : String
 unarchive =
-    "Unarchive"
+    "unarchive"
 
 
 archived : String
@@ -223,9 +280,19 @@ unarchived =
     "unarchived"
 
 
+documentArchived : String
+documentArchived =
+    "document archived"
+
+
+documentUnarchived : String
+documentUnarchived =
+    "document unarchived"
+
+
 leave : String
 leave =
-    "Leave"
+    "leave"
 
 
 the : String
@@ -240,22 +307,27 @@ updatedTitle =
 
 confirmUnsaved : String
 confirmUnsaved =
-    "You have unsaved data, please confirm to exit."
+    "you have unsaved data, please confirm to exit."
 
 
 confirmDeleteLabel : String
 confirmDeleteLabel =
-    "Are you sure to delete the label"
+    "are you sure to delete the label"
 
 
 askAnotherQuestion : String
 askAnotherQuestion =
-    "Ask another question."
+    "ask another question."
 
 
 giveAnotherFeedback : String
 giveAnotherFeedback =
-    "Give another feedback."
+    "give another feedback."
+
+
+theOrganisation : String
+theOrganisation =
+    "the organisation"
 
 
 
@@ -263,39 +335,74 @@ giveAnotherFeedback =
 --(header)
 
 
-nameH : String
-nameH =
-    "Name"
+name : String
+name =
+    "name"
 
 
-circleH : String
-circleH =
-    "Circle"
+username : String
+username =
+    "username"
 
 
-roleH : String
-roleH =
-    "Role"
+circle : String
+circle =
+    "circle"
 
 
-parentH : String
-parentH =
-    "Parent"
+role : String
+role =
+    "role"
 
 
-firstLinkH : String
-firstLinkH =
-    "First Link"
+roles : String
+roles =
+    "roles"
+
+
+member : String
+member =
+    "member"
+
+
+members : String
+members =
+    "members"
+
+
+owner : String
+owner =
+    "owner"
+
+
+guest : String
+guest =
+    "Guest"
+
+
+parent : String
+parent =
+    "parent"
+
+
+firstLink : String
+firstLink =
+    "first Link"
 
 
 phQS : String
 phQS =
-    "Find a Role or Circle"
+    "find a role or circle"
 
 
-documentH : String
-documentH =
-    "Document"
+document : String
+document =
+    "document"
+
+
+noResultsFor : String
+noResultsFor =
+    "no results for"
 
 
 
@@ -304,66 +411,61 @@ documentH =
 
 reverseTooltip : String
 reverseTooltip =
-    "Reverse the organisation graph."
+    "reverse the organisation graph."
 
 
 
--- Mandate
+-- Mandate / Members / User
 
 
-aboutH : String
-aboutH =
-    "About"
+directMembers : String
+directMembers =
+    "direct members"
 
 
-linksH : String
-linksH =
-    "Links"
+subMembers : String
+subMembers =
+    "sub-circle members"
 
 
-mandateH : String
-mandateH =
-    "Mandate"
+about : String
+about =
+    "about"
 
 
-purposeH : String
-purposeH =
-    "Purpose"
+links : String
+links =
+    "links"
 
 
-responsabilitiesH : String
-responsabilitiesH =
-    "Accountabilities"
+mandate : String
+mandate =
+    "mandate"
 
 
-domainsH : String
-domainsH =
-    "Domains"
+purpose : String
+purpose =
+    "purpose"
 
 
-policiesH : String
-policiesH =
-    "Policies"
+responsabilities : String
+responsabilities =
+    "accountabilities"
 
 
-createH : String
-createH =
-    "Create"
+domains : String
+domains =
+    "domains"
 
 
-noResponsabilities : String
-noResponsabilities =
-    "no accountabilities provided"
+policies : String
+policies =
+    "policies"
 
 
-noDomains : String
-noDomains =
-    "no domains provided"
-
-
-noPolicies : String
-noPolicies =
-    "no policies provided"
+create : String
+create =
+    "create"
 
 
 phCirclePurpose : String
@@ -426,156 +528,166 @@ removedThe =
     "removed the"
 
 
+description : String
+description =
+    "description"
+
+
 
 -- Tension
 
 
-tensionH : String
-tensionH =
-    "Tensions"
+tension : String
+tension =
+    "tensions"
 
 
-journalH : String
-journalH =
-    "Journal"
+journal : String
+journal =
+    "journal"
 
 
-labelsH : String
-labelsH =
-    "Labels"
+labels : String
+labels =
+    "labels"
 
 
-assigneesH : String
-assigneesH =
-    "Assignees"
+subLabels : String
+subLabels =
+    "sub-circle labels"
 
 
-actionH : String
-actionH =
-    "Action"
+newLabel : String
+newLabel =
+    "new label"
 
 
-noAssignees : String
-noAssignees =
-    "No assignees"
+assignees : String
+assignees =
+    "assignees"
+
+
+action : String
+action =
+    "action"
 
 
 noLabels : String
 noLabels =
-    "None yet"
+    "none yet"
 
 
 noAction : String
 noAction =
-    "No action requested"
+    "no action requested"
 
 
 noOpenTensionRole : String
 noOpenTensionRole =
-    "No open tensions for this Role yet."
+    "no open tensions for this Role yet."
 
 
 noOpenTensionCircle : String
 noOpenTensionCircle =
-    "No open tensions for this Circle yet."
+    "no open tensions for this Circle yet."
 
 
 noTensionRole : String
 noTensionRole =
-    "No tensions for this Role yet."
+    "no tensions for this Role yet."
 
 
 noTensionCircle : String
 noTensionCircle =
-    "No tensions for this Circle yet."
+    "no tensions for this Circle yet."
 
 
 internalTensions =
-    "Internal Tensions"
+    "internal Tensions"
 
 
 externalTensions =
-    "External Tensions"
+    "external Tensions"
 
 
 noIntTensionRole : String
 noIntTensionRole =
-    "No internal tensions for this Role yet."
+    "no internal tensions for this Role yet."
 
 
 noIntTensionCircle : String
 noIntTensionCircle =
-    "No internal tensions for this Circle yet."
+    "no internal tensions for this Circle yet."
 
 
 noExtTensionRole : String
 noExtTensionRole =
-    "No external tensions for this Role yet."
+    "no external tensions for this Role yet."
 
 
 noExtTensionCircle : String
 noExtTensionCircle =
-    "No external tensions for this Circle yet."
+    "no external tensions for this Circle yet."
 
 
 newTension : String
 newTension =
-    "New Tension"
+    "new tension"
 
 
 newCircle : String
 newCircle =
-    "New Circle"
+    "new circle"
 
 
 newRole : String
 newRole =
-    "New Role"
+    "new role"
 
 
 editTitle : String
 editTitle =
-    "Edit title"
+    "edit title"
 
 
 tensionTitleHelp : String
 tensionTitleHelp =
-    "Title that sumarize your tension."
+    "title that sumarize your tension."
 
 
 circleNameHelp : String
 circleNameHelp =
-    "Name of the circle."
+    "name of the circle."
 
 
 roleNameHelp : String
 roleNameHelp =
-    "Name of the role."
+    "name of the role."
 
 
 orgaNameHelp : String
 orgaNameHelp =
-    "Organisation name"
+    "organisation name."
 
 
 aboutHelp : String
 aboutHelp =
-    "Short description for this organisation"
+    "short description for this organisation."
 
 
 purposeHelpOrga : String
 purposeHelpOrga =
-    "Purpose of this organisation"
+    "purpose of this organisation."
 
 
 roleAboutHelp : String
 roleAboutHelp =
-    "Short description for this role."
+    "short description for this role."
 
 
 circleAboutHelp : String
 circleAboutHelp =
-    "Short description for this circle."
+    "short description for this circle."
 
 
 tensionMessageHelp : String
@@ -585,17 +697,17 @@ tensionMessageHelp =
 
 actionMessageHelp : String
 actionMessageHelp =
-    "Add a comment to help others understand this action."
+    "add a comment to help others understand this action."
 
 
 circleMessageHelp : String
 circleMessageHelp =
-    "Add a comment to help others understand why a new circle should be created."
+    "add a comment to help others understand why a new circle should be created."
 
 
 roleMessageHelp : String
 roleMessageHelp =
-    "Add a comment to help others understand why a new role should be created."
+    "add a comment to help others understand why a new role should be created."
 
 
 autoFieldMessageHelp : String
@@ -615,27 +727,27 @@ firstLinkCircleMessageHelp =
 
 tensionAdded : String
 tensionAdded =
-    "Tension added."
+    "tension added."
 
 
 roleAdded : String
 roleAdded =
-    "Role added."
+    "role added."
 
 
 circleAdded : String
 circleAdded =
-    "Circle added."
+    "circle added."
 
 
 roleEdited : String
 roleEdited =
-    "Role edited."
+    "role edited."
 
 
 circleEdited : String
 circleEdited =
-    "Circle edited."
+    "circle edited."
 
 
 tensionCircleAdded : String
@@ -650,17 +762,17 @@ tensionRoleAdded =
 
 tensionSubmit : String
 tensionSubmit =
-    "Submit tension"
+    "submit tension"
 
 
 tensionCircleCloseSubmit : String
 tensionCircleCloseSubmit =
-    "Create Circle"
+    "create Circle"
 
 
 tensionRoleCloseSubmit : String
 tensionRoleCloseSubmit =
-    "Create Role"
+    "create Role"
 
 
 openedThe : String
@@ -685,27 +797,27 @@ commentedThe =
 
 updateTitle : String
 updateTitle =
-    "Update title"
+    "update title"
 
 
 updateComment : String
 updateComment =
-    "Update comment"
+    "update comment"
 
 
 addResponsabilities : String
 addResponsabilities =
-    "Add accountabilities"
+    "add accountabilities"
 
 
 addDomains : String
 addDomains =
-    "Add domains"
+    "add domains"
 
 
 addPolicies : String
 addPolicies =
-    "Add policies"
+    "add policies"
 
 
 

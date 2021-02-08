@@ -10,7 +10,7 @@ import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebDa
 import Components.NotFound exposing (viewNotFound)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
-import Extra exposing (ternary, up0)
+import Extra exposing (ternary)
 import Form exposing (isPostSendable)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -33,7 +33,7 @@ import Query.QueryNode exposing (NodeExt, queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT)
 import Time
 import Url exposing (Url)
 
@@ -474,7 +474,7 @@ viewProfileLeft model uctx =
 viewProfileRight : Model -> UserCtx -> Html Msg
 viewProfileRight model uctx =
     div []
-        [ h1 [ class "subtitle" ] [ text (up0 T.organisations) ]
+        [ h1 [ class "subtitle" ] [ textH T.organisations ]
         , if Dict.isEmpty model.user_data then
             p [ class "section" ] <|
                 List.intersperse (text " ")
@@ -484,7 +484,7 @@ viewProfileRight model uctx =
                     , a [ href (Route.toHref Route.Explore) ] [ text "Explore" ]
                     , text "public organisations"
                     , text ", or create a"
-                    , a [ href (Route.toHref Route.New_Orga) ] [ text T.newOrganisation ]
+                    , a [ href (Route.toHref Route.New_Orga) ] [ textH T.newOrganisation ]
                     ]
 
           else

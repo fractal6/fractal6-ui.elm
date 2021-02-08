@@ -18,7 +18,7 @@ import Html.Events exposing (onClick)
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, User, UserCtx, Username)
-import Text as T
+import Text as T exposing (textH, textT, upH)
 
 
 
@@ -323,31 +323,31 @@ actionNameStr : TensionAction.TensionAction -> String
 actionNameStr action =
     case action of
         TensionAction.NewCircle ->
-            T.circleH
+            upH T.circle
 
         TensionAction.EditCircle ->
-            T.circleH
+            upH T.circle
 
         TensionAction.ArchivedCircle ->
-            T.circleH
+            upH T.circle
 
         TensionAction.NewRole ->
-            T.roleH
+            upH T.role
 
         TensionAction.EditRole ->
-            T.roleH
+            upH T.role
 
         TensionAction.ArchivedRole ->
-            T.roleH
+            upH T.role
 
         TensionAction.NewMd ->
-            T.documentH
+            upH T.document
 
         TensionAction.EditMd ->
-            T.documentH
+            upH T.document
 
         TensionAction.ArchivedMd ->
-            T.documentH
+            upH T.document
 
 
 viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> String -> Html msg

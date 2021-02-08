@@ -1,9 +1,7 @@
 module Extra exposing (..)
 
 import Dict exposing (Dict)
-import Html exposing (Html, span, text)
 import String
-import String.Extra as SE
 
 
 ternary test positive negative =
@@ -13,33 +11,6 @@ ternary test positive negative =
 
         False ->
             negative
-
-
-
--- String
-
-
-up0 : String -> String
-up0 s =
-    SE.toSentenceCase s
-
-
-up1 : String -> String
-up1 s =
-    SE.toTitleCase s
-
-
-upAll : String -> String
-upAll t =
-    String.toUpper t
-
-
-toText : List String -> Html msg
-toText l =
-    l
-        |> List.intersperse " "
-        |> List.map (\x -> text x)
-        |> span []
 
 
 

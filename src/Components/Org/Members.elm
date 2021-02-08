@@ -42,7 +42,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersTop)
 import RemoteData exposing (RemoteData)
 import Task
-import Text as T
+import Text as T exposing (textH, textT, upH)
 import Time
 
 
@@ -500,7 +500,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Members · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ view_ global model
         , Help.view {} model.help |> Html.map HelpMsg
@@ -527,11 +527,11 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]
-                    [ viewMembers model.members_top "Direct members" model.node_focus ]
+                    [ viewMembers model.members_top (upH T.directMembers) model.node_focus ]
                 , div [ class "columns" ]
-                    [ viewMembers model.members_sub "Sub-Circle members" model.node_focus ]
+                    [ viewMembers model.members_sub (upH T.subMembers) model.node_focus ]
                 , div [ class "columns" ]
-                    [ viewGuest model.members_top "Guest" model.node_focus ]
+                    [ viewGuest model.members_top T.guest model.node_focus ]
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
@@ -545,9 +545,9 @@ viewMembers data title focus =
         , div [ class "table is-fullwidth" ]
             [ thead []
                 [ tr []
-                    [ th [] [ text "Username" ]
-                    , th [] [ text "Name" ]
-                    , th [ class "" ] [ text "Roles" ]
+                    [ th [] [ textH T.username ]
+                    , th [] [ textH T.name ]
+                    , th [ class "" ] [ textH T.roles ]
                     ]
                 ]
             , tbody [] <|
@@ -602,8 +602,8 @@ viewGuest members_d title focus =
             , div [ class "table is-fullwidth" ]
                 [ thead []
                     [ tr []
-                        [ th [] [ text "Username" ]
-                        , th [] [ text "Name" ]
+                        [ th [] [ textH T.username ]
+                        , th [] [ textH T.name ]
                         ]
                     ]
                 , tbody [] <|
@@ -657,13 +657,13 @@ viewMemberRoles baseUri roles =
                     , href <| uriFromNameid baseUri r.nameid
                     ]
                     [ if r.role_type == RoleType.Guest then
-                        text "Guest"
+                        textH T.guest
 
                       else if r.role_type == RoleType.Member then
-                        text "Member"
+                        textH T.member
 
                       else if r.role_type == RoleType.Owner then
-                        text "Owner"
+                        textH T.owner
 
                       else
                         -- Peer
@@ -725,7 +725,8 @@ viewJoinOrgaStep step =
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal "") ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text (T.welcomIn ++ " ")
+                        , textH T.welcomIn
+                        , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
                         ]
 
