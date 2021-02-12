@@ -8,7 +8,7 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Member, NodeId, Post, User, UserCtx, UserRoleExtended)
+import ModelSchema exposing (LabelFull, Member, NodeId, Post, User, UserCtx, UserRoleExtended)
 import Query.QueryNode exposing (MemberNode)
 import RemoteData exposing (RemoteData)
 
@@ -21,7 +21,7 @@ import RemoteData exposing (RemoteData)
 
 {-|
 
-    Get all children recursively
+    Get all children below the given node recursively
 
 -}
 fetchChildren url targetid msg =
@@ -30,20 +30,15 @@ fetchChildren url targetid msg =
         , headers = []
         , url = url ++ "/sub_children"
         , body = Http.jsonBody <| JE.string targetid
-        , expect = expectJson (RemoteData.fromResult >> msg) childrenDecoder
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list nodeIdDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
 
 
-childrenDecoder : JD.Decoder (List NodeId)
-childrenDecoder =
-    JD.list nodeIdDecoder
-
-
 {-|
 
-    Get all member node (role with first link) recursively
+    Get all member below the given node (role with first link) recursively
 
 -}
 fetchMembers url targetid msg =
@@ -56,6 +51,33 @@ fetchMembers url targetid msg =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+{-|
+
+    Get all labels below the given node recursively
+
+-}
+fetchLabels url targetid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/sub_labels"
+        , body = Http.jsonBody <| JE.string targetid
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+labelDecoder : JD.Decoder LabelFull
+labelDecoder =
+    JD.map5 LabelFull
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "color" JD.string |> JD.maybe)
+        (JD.field "description" JD.string |> JD.maybe)
+        (JD.field "n_nodes" JD.int |> JD.maybe)
 
 
 membersDecoder : JD.Decoder (List MemberNode)

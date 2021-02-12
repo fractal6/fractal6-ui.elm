@@ -51,9 +51,9 @@ tensionTypeColor elt tt =
             "has-" ++ elt ++ "-warning"
 
 
-tensionTypeSpan : String -> String -> TensionType.TensionType -> Html msg
-tensionTypeSpan cls elt type_ =
-    span [ class <| cls ++ " " ++ tensionTypeColor elt type_ ] [ text (TensionType.toString type_) ]
+tensionTypeSpan : TensionType.TensionType -> Html msg
+tensionTypeSpan type_ =
+    span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" type_ ] [ text (TensionType.toString type_), span [ class "ml-2 arrow down" ] [] ]
 
 
 mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> (String -> msg) -> Html msg

@@ -9,7 +9,7 @@ import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.Help as Help
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.I as I
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -34,7 +34,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchMembers, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchLabels, login)
 import ModelCommon.View exposing (mediaTension, roleColor, viewLabel)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -90,6 +90,7 @@ type alias Model =
 
     -- Page
     , labels : GqlData (List LabelFull)
+    , labels_sub : WebData (List LabelFull)
     , menuFocus : MenuSettings
     , menuList : List MenuSettings
     , label_add : Bool
@@ -147,10 +148,11 @@ type Msg
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
-    | GotPath (GqlData LocalGraph) -- GraphQL
-    | GotPath2 (GqlData LocalGraph) -- GraphQL
+    | GotPath (GqlData LocalGraph)
+    | GotPath2 (GqlData LocalGraph)
       -- Page
-    | GotLabels (GqlData (List LabelFull)) -- GraphQL
+    | GotLabels (GqlData (List LabelFull))
+    | GotLabelsSub (WebData (List LabelFull))
     | ChangeMenuFocus MenuSettings
     | AddLabel
     | EditLabel LabelFull
@@ -225,6 +227,7 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , labels = Loading
+            , labels_sub = RemoteData.Loading
             , menuFocus = LabelsMenu
             , menuList = [ LabelsMenu, SecurityMenu ]
             , label_add = False
@@ -247,6 +250,7 @@ init global flags =
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
             , queryLabels apis.gql newFocus.nameid GotLabels
+            , fetchLabels apis.rest newFocus.nameid GotLabelsSub
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -334,6 +338,13 @@ update global message model =
             let
                 newModel =
                     { model | labels = result }
+            in
+            ( newModel, Cmd.none, Cmd.none )
+
+        GotLabelsSub result ->
+            let
+                newModel =
+                    { model | labels_sub = result }
             in
             ( newModel, Cmd.none, Cmd.none )
 
@@ -784,7 +795,7 @@ viewSettingsContent model =
         LabelsMenu ->
             div []
                 [ viewLabels model
-                , viewSubLabels model
+                , viewLabelsSub model
                 ]
 
         SecurityMenu ->
@@ -796,7 +807,7 @@ viewLabels model =
     div [ id "labelsTable" ]
         [ h2 [ class "subtitle has-text-weight-semibold" ]
             [ textH T.labels
-            , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ textH T.newLabel ]
+            , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ textT T.newLabel ]
             , br [] []
             ]
         , case model.label_add of
@@ -875,19 +886,19 @@ viewLabels model =
         ]
 
 
-viewSubLabels : Model -> Html Msg
-viewSubLabels model =
-    div [ id "labelsTable" ]
-        [ h2 [ class "subtitle has-text-weight-semibold" ]
-            [ textT T.subLabels
-            ]
-        , case model.labels of
-            Success labels ->
-                if List.length labels == 0 then
-                    div [ class "" ] [ text "No label yet" ]
+viewLabelsSub : Model -> Html Msg
+viewLabelsSub model =
+    case model.labels_sub of
+        RemoteData.Success labels ->
+            if List.length labels == 0 then
+                div [ class "mt-6" ] [ text "No sub-circle label yet" ]
 
-                else
-                    table [ class "table is-fullwidth" ]
+            else
+                div [ id "labelsTable" ]
+                    [ h2 [ class "subtitle has-text-weight-semibold" ]
+                        [ textT T.subLabels
+                        ]
+                    , table [ class "table is-fullwidth" ]
                         [ thead []
                             [ tr []
                                 [ th [] [ textH T.name ]
@@ -917,14 +928,12 @@ viewSubLabels model =
                                                   else
                                                     text ""
                                                 ]
+
+                                            -- @debug: update and delete not implemented for sub circle
                                             , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
-                                                [ span [ class "button-light", onClick (EditLabel d) ] [ text "Edit" ]
-                                                , text " · "
-                                                , span
-                                                    [ class "button-light"
-                                                    , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
-                                                    ]
-                                                    [ text "Delete" ]
+                                                [ span [ class "button-light" ] [ text "" ]
+                                                , span [ class "button-light" ]
+                                                    [ text "" ]
                                                 ]
                                             ]
                                     ]
@@ -939,16 +948,16 @@ viewSubLabels model =
                             |> List.concat
                             |> tbody []
                         ]
+                    ]
 
-            Failure err ->
-                viewGqlErrors err
+        RemoteData.Failure err ->
+            viewHttpErrors err
 
-            LoadingSlowly ->
-                div [ class "spinner" ] []
+        RemoteData.Loading ->
+            div [ class "spinner" ] []
 
-            other ->
-                text ""
-        ]
+        other ->
+            text ""
 
 
 viewLabelAddBox : Model -> Html Msg

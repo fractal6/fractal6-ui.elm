@@ -62,7 +62,6 @@ import ModelCommon.View
         , getAvatar
         , statusColor
         , tensionTypeColor
-        , tensionTypeSpan
         , viewActionIcon
         , viewActionIconLink
         , viewLabel

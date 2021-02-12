@@ -42,6 +42,10 @@ import Url exposing (Url)
 ---- PROGRAM ----
 
 
+type alias Flags =
+    { param1 : String }
+
+
 page : Page Flags Model Msg
 page =
     Page.component
@@ -50,10 +54,6 @@ page =
         , subscriptions = subscriptions
         , view = view
         }
-
-
-type alias Flags =
-    { param1 : String }
 
 
 mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )

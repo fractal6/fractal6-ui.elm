@@ -191,12 +191,13 @@ type Msg
     | SubmitCircle NewTensionForm Bool Time.Posix -- Send form
       -- New Tension Action
     | DoTensionInit Node -- {target}
-    | DoTensionSource TensionType.TensionType -- {type}
+    | DoTensionSource
+    | ChangeTensionType TensionType.TensionType
     | DoTensionFinal UserRole --  {source}
     | TensionAck (GqlData Tension)
       -- New Circle Action
     | DoCircleInit Node NodeType.NodeType -- {target}
-    | DoCircleSource -- String -- {nodeMode} @DEBUG: node mode is inherited by default.
+    | DoCircleSource -- {nodeMode} @DEBUG: node mode is inherited by default.
     | DoCircleFinal UserRole -- {source}
     | ChangeNodePost String String -- {field value}
     | AddLinks
@@ -710,11 +711,11 @@ update global message model =
                         |> NewTensionForm.setTarget target (withMaybeData model.node_data)
             in
             ( { model | node_action = AddTension TensionInit, tensionForm = tf }
-            , Cmd.none
+            , send DoTensionSource
             , Ports.bulma_driver "actionModal"
             )
 
-        DoTensionSource tensionType ->
+        DoTensionSource ->
             case global.session.user of
                 LoggedOut ->
                     ( { model | node_action = ActionAuthNeeded }, Cmd.none, Cmd.none )
@@ -727,13 +728,13 @@ update global message model =
                                     model.tensionForm.form
 
                                 form =
-                                    { form_ | uctx = uctx, tension_type = tensionType }
+                                    { form_ | uctx = uctx }
 
                                 ( newStep, newForm ) =
                                     getNewTensionStepAuth form
                             in
                             if notAuthorizedTension newStep && model.refresh_trial == 0 then
-                                ( { model | refresh_trial = 1 }, sendSleep (DoTensionSource tensionType) 500, send UpdateUserToken )
+                                ( { model | refresh_trial = 1 }, sendSleep DoTensionSource 500, send UpdateUserToken )
 
                             else
                                 ( { model | node_action = AddTension newStep, tensionForm = NewTensionForm.setForm newForm model.tensionForm }
@@ -743,6 +744,9 @@ update global message model =
 
                         _ ->
                             ( { model | node_action = AskErr "Step moves not implemented" }, Cmd.none, Cmd.none )
+
+        ChangeTensionType type_ ->
+            ( { model | tensionForm = NewTensionForm.setTensionType type_ model.tensionForm }, Cmd.none, Cmd.none )
 
         DoTensionFinal source ->
             case model.node_action of
@@ -1201,7 +1205,7 @@ update global message model =
                             queryAllTension apis.gql nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
                     in
                     ( { model | path_data = Just path }
-                    , Cmd.batch [ Ports.drawButtonsGraphPack, cmd ]
+                    , Cmd.batch [ Ports.drawButtonsGraphPack, cmd, Ports.bulma_driver "" ]
                     , send (UpdateSessionPath (Just path))
                     )
 
@@ -1922,21 +1926,22 @@ makeNewTensionFormOp model =
     , users_data = model.users_data
     , targets = [ model.tensionForm.form.source.nameid ] ++ getParents model.tensionForm.form.target.nameid model.orga_data
     , data = model.tensionForm
-    , onChangeInputViewMode = ChangeInputViewMode
-    , onChangeNode = ChangeNodePost
-    , onAddLinks = AddLinks
-    , onAddResponsabilities = AddResponsabilities
-    , onAddDomains = AddDomains
-    , onAddPolicies = AddPolicies
     , onCloseModal = DoCloseModal
     , onSubmitTension = SubmitTension
     , onSubmit = Submit
+    , onChangeTensionType = ChangeTensionType
+    , onChangeNode = ChangeNodePost
+    , onAddResponsabilities = AddResponsabilities
+    , onAddDomains = AddDomains
+    , onAddPolicies = AddPolicies
+    , onAddLinks = AddLinks
     , onChangeUserPattern = ChangeNodeUserPattern
     , onChangeUserRole = ChangeNodeUserRole
     , onSelectUser = SelectUser
     , onCancelUser = CancelUser
     , onShowLookupFs = ShowLookupFs
     , onCancelLookupFs = CancelLookupFs
+    , onChangeInputViewMode = ChangeInputViewMode
 
     -- Labels
     , labelsPanel = model.labelsPanel
@@ -1967,7 +1972,7 @@ viewTensionStep step ntf model =
                                 div [ class "level-item" ]
                                     [ div
                                         [ class <| "button " ++ tensionTypeColor "background" tensionType
-                                        , onClick (DoTensionSource tensionType)
+                                        , onClick DoTensionSource
                                         ]
                                         [ TensionType.toString tensionType |> text ]
                                     ]

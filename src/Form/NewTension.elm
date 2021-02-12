@@ -24,7 +24,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (InputViewMode(..), TensionForm, initTensionForm)
 import ModelCommon.Codecs exposing (NodeFocus)
-import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, getTensionText, tensionTypeColor)
 import ModelSchema exposing (..)
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -351,6 +351,7 @@ type alias Op msg =
     , onCloseModal : String -> msg
 
     -- Doc change
+    , onChangeTensionType : TensionType.TensionType -> msg
     , onChangeNode : String -> String -> msg
     , onAddLinks : msg
     , onAddResponsabilities : msg
@@ -416,8 +417,38 @@ view op =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ textT txt.title, text " | ", tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
+                                    [ textT txt.title
+                                    , text " | "
+                                    , span [ class "dropdown" ]
+                                        [ span [ class "dropdown-trigger px-2 button-light" ]
+                                            [ span [ attribute "aria-controls" "type-menu" ]
+                                                [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.tension_type ]
+                                                    [ text (TensionType.toString form.tension_type), span [ class "ml-2 arrow down" ] [] ]
+                                                ]
+                                            ]
+                                        , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
+                                            [ div [ class "dropdown-content" ] <|
+                                                List.map
+                                                    (\t ->
+                                                        div
+                                                            [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
+                                                            , onClick (op.onChangeTensionType t)
+                                                            ]
+                                                            [ TensionType.toString t |> text ]
+                                                    )
+                                                    TensionType.list
+                                            ]
+                                        ]
+                                    ]
+                                ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
+                        ]
+                    , div [ class "tabs is-small is-boxed" ]
+                        [ ul []
+                            [ li [ class "is-active" ] [ a [] [ text "Tension" ] ]
+                            , li [ class "" ] [ a [] [ text "Role/Circle" ] ]
+                            ]
                         ]
                     ]
                 , div [ class "modal-card-body" ]
@@ -427,7 +458,7 @@ view op =
                                 [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
-                                , placeholder "Title*"
+                                , placeholder (upH T.title)
                                 , required True
                                 , onInput (op.onChangeNode "title")
                                 ]
@@ -453,8 +484,8 @@ view op =
                                             textarea
                                                 [ id "textAreaModal"
                                                 , class "textarea"
-                                                , rows 6
-                                                , placeholder (upH T.leaveComment)
+                                                , rows 5
+                                                , placeholder (upH T.leaveCommentOpt)
                                                 , value message
                                                 , onInput (op.onChangeNode "message")
                                                 ]

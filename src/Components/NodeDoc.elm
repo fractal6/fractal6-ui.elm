@@ -473,7 +473,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
-                    , placeholder "Name*"
+                    , placeholder (upH T.name)
                     , value (node.name |> withDefault "")
                     , onInput <| op.onChangeNode "name"
                     , required True
@@ -508,7 +508,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     , class "input followFocus"
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
-                    , placeholder "About"
+                    , placeholder (upH T.aboutOpt)
                     , value (node.about |> withDefault "")
                     , onInput <| op.onChangeNode "about"
                     ]
@@ -625,7 +625,7 @@ nodeMandateInputView txt node op =
     div [ class "" ]
         [ div [ class "field" ]
             [ div [ class "label" ]
-                [ textH T.purpose, text " *" ]
+                [ textH T.purpose ]
             , div [ class "control" ]
                 [ textarea
                     [ id "textAreaModal"

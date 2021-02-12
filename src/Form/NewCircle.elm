@@ -11,6 +11,7 @@ import Form.NewTension exposing (NewTensionForm, Op)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
@@ -18,7 +19,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..))
-import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeSpan)
+import ModelCommon.View exposing (edgeArrow, getNodeTextFromNodeType, tensionTypeColor)
 import Text as T exposing (textH, textT, upH)
 
 
@@ -85,7 +86,14 @@ view op =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ] [ textT txt.title, text " |\u{00A0}", tensionTypeSpan "has-text-weight-medium" "text" form.tension_type ] ]
+                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
+                                    [ textT txt.title
+                                    , text " |\u{00A0}"
+                                    , span
+                                        [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.tension_type ]
+                                        [ text (TensionType.toString form.tension_type) ]
+                                    ]
+                                ]
                         , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
@@ -116,7 +124,7 @@ view op =
                             [ textarea
                                 [ class "textarea"
                                 , rows 3
-                                , placeholder (upH T.leaveComment)
+                                , placeholder (upH T.leaveCommentOpt)
                                 , onInput <| op.onChangeNode "message"
                                 ]
                                 []

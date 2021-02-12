@@ -426,7 +426,7 @@ viewStep1 action header color op =
                     [ textarea
                         [ class "textarea in-modal"
                         , rows 3
-                        , placeholder (upH T.leaveComment)
+                        , placeholder (upH T.leaveCommentOpt)
                         , onInput <| op.onUpdatePost "message"
                         ]
                         []

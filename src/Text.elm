@@ -225,6 +225,11 @@ leaveComment =
     "leave a comment"
 
 
+leaveCommentOpt : String
+leaveCommentOpt =
+    "Text (optional)"
+
+
 noResultsFound : String
 noResultsFound =
     "no results found"
@@ -335,6 +340,11 @@ theOrganisation =
 --(header)
 
 
+title : String
+title =
+    "title"
+
+
 name : String
 name =
     "name"
@@ -431,6 +441,11 @@ subMembers =
 about : String
 about =
     "about"
+
+
+aboutOpt : String
+aboutOpt =
+    "about (optional)"
 
 
 links : String

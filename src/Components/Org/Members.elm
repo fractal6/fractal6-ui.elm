@@ -527,9 +527,9 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]
-                    [ viewMembers model.members_top (upH T.directMembers) model.node_focus ]
+                    [ viewMembers model.members_top model.node_focus ]
                 , div [ class "columns" ]
-                    [ viewMembers model.members_sub (upH T.subMembers) model.node_focus ]
+                    [ viewMembersSub model.members_sub model.node_focus ]
                 , div [ class "columns" ]
                     [ viewGuest model.members_top T.guest model.node_focus ]
                 ]
@@ -538,49 +538,116 @@ view_ global model =
         ]
 
 
-viewMembers : GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewMembers data title focus =
-    div [ id "membersTable", class "section" ]
-        [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
-        , div [ class "table is-fullwidth" ]
-            [ thead []
-                [ tr []
-                    [ th [] [ textH T.username ]
-                    , th [] [ textH T.name ]
-                    , th [ class "" ] [ textH T.roles ]
-                    ]
-                ]
-            , tbody [] <|
-                case data of
-                    Success members ->
-                        List.indexedMap
-                            (\i m ->
-                                let
-                                    roles =
-                                        memberRolesFilter focus m.roles
-                                in
-                                if List.length roles == 0 then
-                                    tr [] []
+viewMembers : GqlData (List Member) -> NodeFocus -> Html Msg
+viewMembers data focus =
+    case data of
+        Success members_ ->
+            let
+                members =
+                    members_
+                        |> List.map
+                            (\m ->
+                                case memberRolesFilter focus m.roles of
+                                    [] ->
+                                        Nothing
 
-                                else
-                                    tr []
-                                        [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                        , td [] [ m.name |> withDefault "--" |> text ]
-                                        , td [] [ viewMemberRoles OverviewBaseUri roles ]
-                                        ]
+                                    r ->
+                                        Just { m | roles = r }
                             )
-                            members
+                        |> List.filterMap identity
+            in
+            case members of
+                [] ->
+                    div [ class "section" ] [ [ "No", T.member, "yet." ] |> String.join " " |> text ]
 
-                    Failure err ->
-                        [ viewGqlErrors err ]
+                mbs ->
+                    div [ id "membersTable", class "section" ]
+                        [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.directMembers ]
+                        , div [ class "table is-fullwidth" ]
+                            [ thead []
+                                [ tr []
+                                    [ th [] [ textH T.username ]
+                                    , th [] [ textH T.name ]
+                                    , th [ class "" ] [ textH T.roles ]
+                                    ]
+                                ]
+                            , tbody [] <|
+                                List.indexedMap
+                                    (\i m ->
+                                        tr []
+                                            [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                            , td [] [ m.name |> withDefault "--" |> text ]
+                                            , td [] [ viewMemberRoles OverviewBaseUri m.roles ]
+                                            ]
+                                    )
+                                    mbs
+                            ]
+                        ]
 
-                    LoadingSlowly ->
-                        [ div [ class "spinner" ] [] ]
+        Failure err ->
+            viewGqlErrors err
 
-                    other ->
-                        []
-            ]
-        ]
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        other ->
+            text ""
+
+
+viewMembersSub : GqlData (List Member) -> NodeFocus -> Html Msg
+viewMembersSub data focus =
+    case data of
+        Success members_ ->
+            let
+                members =
+                    members_
+                        |> List.map
+                            (\m ->
+                                case memberRolesFilter focus m.roles of
+                                    [] ->
+                                        Nothing
+
+                                    r ->
+                                        Just { m | roles = r }
+                            )
+                        |> List.filterMap identity
+            in
+            case members of
+                [] ->
+                    div [ class "section" ] [ [ "No sub-circle", T.member, "yet." ] |> String.join " " |> text ]
+
+                mbs ->
+                    div [ id "membersTable", class "section" ]
+                        [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.subMembers ]
+                        , div [ class "table is-fullwidth" ]
+                            [ thead []
+                                [ tr []
+                                    [ th [] [ textH T.username ]
+                                    , th [] [ textH T.name ]
+                                    , th [ class "" ] [ textH T.roles ]
+                                    ]
+                                ]
+                            , tbody [] <|
+                                List.indexedMap
+                                    (\i m ->
+                                        tr []
+                                            [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                            , td [] [ m.name |> withDefault "--" |> text ]
+                                            , td [] [ viewMemberRoles OverviewBaseUri m.roles ]
+                                            ]
+                                    )
+                                    mbs
+                            ]
+                        ]
+
+        Failure err ->
+            viewGqlErrors err
+
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        other ->
+            text ""
 
 
 viewGuest : GqlData (List Member) -> String -> NodeFocus -> Html Msg
