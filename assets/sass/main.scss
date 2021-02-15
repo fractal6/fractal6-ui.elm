@@ -691,14 +691,19 @@ html.has-modal-active, html.has-modal-active2 {
             background-color: $body-background-color !important;
             //background-color: #404953 !important;
             border: 1px solid  $grey-darker  !important;
-
             .tabs a {
                 text-decoration: none !important;
             }
             .message-header {
                 display: inherit !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
                 background-color: $comment-header-background-color !important;
-                border-bottom: solid 1px $grey-darker !important;
+                border-bottom: solid 1px $grey-dark;
+                a {
+                    font-weight: 600 !important;
+                    text-decoration: none !important;
+                }
 
                 .dropdown-trigger {
                     position: relative;
@@ -749,45 +754,40 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .tensionCommentInput {
-            .tabs, .tabs.is-boxed {
+
+            .tabs, .tabs.is-boxed  {
                 ul {
                     border-bottom-color: $grey !important;
                 }
-
-                li a {
-                    &:hover {
-                        text-decoration: none !important;
-                    }
+                li a  {
+                    color: $grey-light !important;
                 }
-
+                li:not(.is-active) a:hover {
+                    background-color: inherit;
+                }
                 li.is-active a {
-                    border-color: $grey !important;
-                    border-bottom-color: transparent !important;
+                    color: $grey-lighter !important;
+                    text-decoration: none !important;
+                    border-color: $grey;
+                    border-bottom-color: body-background-color !important;
                 }
             }
 
             .message-header {
-                padding-bottom: 0 !important;
-                border-bottom: none !important;
+                border-bottom: 0;
+                font-weight: 500 !important;
+                padding: 0 0.75rem !important;
+                a {
+                    font-weight: 600 !important;
+                    text-decoration: none !important;
+                    //&:hover { text-decoration: underline !important; }
+                }
             }
+
             .message-body {
                 padding: 0.75rem 0.75rem !important;
             }
 
-        }
-
-        .message-header {
-            font-size: 14px !important;
-            font-weight: 500 !important;
-            background-color: $grey-dark;
-            border-radius: 0 !important;
-            a {
-                font-weight: 600 !important;
-                text-decoration: none !important;
-            }
-            a:hover {
-                text-decoration: underline !important;
-            }
         }
 
         .actionComment {
@@ -797,8 +797,6 @@ html.has-modal-active, html.has-modal-active2 {
 
     .tensionSidePane {
         margin-top: 2.25rem !important;
-
-        //.media { margin-bottom: 2rem; }
 
         .media:first-child {
             border-top: 1px solid $grey !important;
@@ -1583,9 +1581,10 @@ a.actionLink {
                 color: $grey-light !important;
             }
             li a:hover{
-                background-color: $white-ter !important;
+                background-color: inherit !important;
             }
             li.is-active a {
+                //color: $grey !important;
                 text-decoration: none !important;
                 background-color: $white-light !important;
             }
@@ -1594,16 +1593,12 @@ a.actionLink {
 
     .message-header {
         background-color: $white-ter;
-        font-size: 14px !important;
         font-weight: 500 !important;
-        border-radius: 0 !important;
         padding: 0 !important;
         a {
             font-weight: 600 !important;
             text-decoration: none !important;
-        }
-        a:hover {
-            text-decoration: underline !important;
+            &:hover { border-bottom-color: $grey !important; }
         }
     }
 

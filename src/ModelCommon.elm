@@ -196,8 +196,10 @@ type ModalAuth
 
 type ActionState
     = ActionChoice Node
+      --
     | AddTension TensionStep
     | AddCircle NodeStep
+      --
     | JoinOrga (JoinStep ActionForm)
     | ActionAuthNeeded
     | AskErr String
