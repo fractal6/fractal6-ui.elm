@@ -338,6 +338,11 @@ closeLookup data =
     { data | isLookupOpen = False }
 
 
+canExitSafe : NewTensionForm -> Bool
+canExitSafe data =
+    hasData data && withMaybeData data.result == Nothing
+
+
 type alias Op msg =
     { lookup : List User
     , users_data : GqlData UsersData
@@ -348,7 +353,7 @@ type alias Op msg =
     , onChangeInputViewMode : InputViewMode -> msg
     , onSubmitTension : NewTensionForm -> Bool -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
-    , onCloseModal : String -> msg
+    , onCloseModal : String -> String -> Bool -> msg
 
     -- Doc change
     , onChangeTensionType : TensionType.TensionType -> msg
@@ -405,23 +410,23 @@ view op =
                 , text " "
                 , a
                     [ href link
-                    , onClickPD (op.onCloseModal link)
+                    , onClickPD (op.onCloseModal link "" (canExitSafe op.data))
                     , target "_blank"
                     ]
                     [ textH T.checkItOut ]
                 ]
 
         other ->
-            div [ class "modal-card finalModal" ]
-                [ div [ class "modal-card-head" ]
+            div [ class "panel modal-card finalModal" ]
+                [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text "\u{00A0}")
                                 [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
                                     [ textT txt.title
-                                    , text " | "
+                                    , span [ class "has-text-weight-medium" ] [ text " | " ]
                                     , span [ class "dropdown" ]
-                                        [ span [ class "dropdown-trigger px-2 button-light" ]
+                                        [ span [ class "dropdown-trigger button-light" ]
                                             [ span [ attribute "aria-controls" "type-menu" ]
                                                 [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.tension_type ]
                                                     [ text (TensionType.toString form.tension_type), span [ class "ml-2 arrow down" ] [] ]
@@ -442,13 +447,13 @@ view op =
                                         ]
                                     ]
                                 ]
-                        , div [ class "level-right" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
+                        , div [ class "level-right has-text-weight-medium" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
-                    , div [ class "tabs is-small is-boxed" ]
-                        [ ul []
-                            [ li [ class "is-active" ] [ a [] [ text "Tension" ] ]
-                            , li [ class "" ] [ a [] [ text "Role/Circle" ] ]
-                            ]
+                    ]
+                , div [ id "tensionTab1", class "tabs is-boxed has-text-weight-medium" ]
+                    [ ul []
+                        [ li [ class "is-active" ] [ a [] [ I.icon1 "icon-exchange" "Tension" ] ]
+                        , li [ class "" ] [ a [] [ I.icon1 "icon-target" "Role or Circle" ] ]
                         ]
                     ]
                 , div [ class "modal-card-body" ]
@@ -501,7 +506,15 @@ view op =
                         ]
                     , div [ class "field" ]
                         [ div [ class "control" ]
-                            [ LabelSearchPanel.viewNew { selectedLabels = form.labels, targets = op.targets, isAdmin = False } op.labelsPanel |> Html.map op.onLabelSearchPanelMsg ]
+                            [ LabelSearchPanel.viewNew
+                                { selectedLabels = form.labels
+                                , targets = op.targets
+                                , isAdmin = False
+                                , exitSafe = canExitSafe op.data
+                                }
+                                op.labelsPanel
+                                |> Html.map op.onLabelSearchPanelMsg
+                            ]
                         ]
                     ]
                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]

@@ -7,7 +7,7 @@ import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
-import Form.NewTension exposing (NewTensionForm, Op)
+import Form.NewTension as NTF exposing (NewTensionForm, Op)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -67,7 +67,7 @@ view op =
                 , text " "
                 , a
                     [ href link
-                    , onClickPD (op.onCloseModal link)
+                    , onClickPD (op.onCloseModal link "" (NTF.canExitSafe op.data))
                     , target "_blank"
                     ]
                     [ textH T.checkItOut ]
@@ -88,7 +88,7 @@ view op =
                             List.intersperse (text "\u{00A0}")
                                 [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
                                     [ textT txt.title
-                                    , text " |\u{00A0}"
+                                    , span [ class "has-text-weight-medium" ] [ text " | " ]
                                     , span
                                         [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.tension_type ]
                                         [ text (TensionType.toString form.tension_type) ]

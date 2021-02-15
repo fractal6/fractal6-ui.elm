@@ -54,6 +54,9 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
+                    DoModalAsk _ _ _ ->
+                        ( Cmd.none, Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 

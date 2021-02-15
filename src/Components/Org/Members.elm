@@ -65,6 +65,9 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
+                    DoModalAsk _ _ _ ->
+                        ( Cmd.none, Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
@@ -121,6 +124,8 @@ type Msg
     | DoJoinOrga2 (GqlData Node)
     | DoJoinOrga3 Node Time.Posix
     | JoinAck (GqlData ActionResult)
+      -- Help
+    | HelpMsg Help.Msg
       -- Token refresh
     | DoOpenAuthModal UserCtx -- ports receive / Open  modal
     | DoCloseAuthModal -- ports receive / Close modal
@@ -134,8 +139,6 @@ type Msg
     | DoCloseModal String -- ports receive / Close modal
     | ExpandRoles
     | CollapseRoles
-      -- Help
-    | HelpMsg Help.Msg
 
 
 

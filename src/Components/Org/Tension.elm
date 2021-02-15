@@ -119,6 +119,9 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
+                    DoModalAsk _ _ _ ->
+                        ( Cmd.none, Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
@@ -1650,9 +1653,9 @@ viewTension u t model =
                     , span [ class "tag is-rounded is-light" ]
                         [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
                     , viewTensionDateAndUser t.createdAt t.createdBy
-                    , div [ class "mx-2 mt-4" ] [ viewTensionArrow "" t.emitter t.receiver ]
+                    , viewTensionArrow "is-pulled-right" t.emitter t.receiver
 
-                    --, viewTensionArrow "is-pulled-right" t.emitter t.receiver
+                    --, div [ class "mx-2 mt-4" ] [ viewTensionArrow "" t.emitter t.receiver ]
                     ]
                 ]
             ]
@@ -2456,6 +2459,7 @@ viewSidePane u t model =
                                     { selectedLabels = t.labels |> withDefault []
                                     , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
                                     , isAdmin = model.isTensionAdmin
+                                    , exitSafe = False -- ignored here
                                     }
                             in
                             LabelSearchPanel.view panelOp model.labelsPanel |> Html.map LabelSearchPanelMsg

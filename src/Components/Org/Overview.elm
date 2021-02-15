@@ -103,6 +103,9 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
+                    DoModalAsk link onCloseTxt doClose ->
+                        ( send (DoModalConfirmAsk link onCloseTxt doClose), Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
@@ -247,6 +250,7 @@ type Msg
     | ExpandRoles
     | CollapseRoles
       -- Confirm Modal
+    | DoModalConfirmAsk String String Bool
     | DoModalConfirmOpen Msg (List ( String, String ))
     | DoModalConfirmClose
     | DoModalConfirmSend
@@ -1336,6 +1340,16 @@ update global message model =
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
         -- Confirm Modal
+        DoModalConfirmAsk link onCloseTxt doClose ->
+            if doClose then
+                ( model
+                , send (DoModalConfirmOpen (DoCloseModal link) [ ( upH T.confirmUnsaved, onCloseTxt ) ])
+                , Cmd.none
+                )
+
+            else
+                ( model, send (DoCloseModal link), Cmd.none )
+
         DoModalConfirmOpen msg txts ->
             ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
 
@@ -1851,11 +1865,7 @@ setupActionModal : Model -> Html Msg
 setupActionModal model =
     let
         onClose =
-            if NewTensionForm.hasData model.tensionForm && withMaybeData model.tensionForm.result == Nothing then
-                DoModalConfirmOpen (DoCloseModal "") [ ( upH T.confirmUnsaved, "" ) ]
-
-            else
-                DoCloseModal ""
+            DoModalConfirmAsk "" "" (NewTensionForm.canExitSafe model.tensionForm)
     in
     div
         [ id "actionModal"
@@ -1924,9 +1934,9 @@ makeNewTensionFormOp : Model -> NewTensionForm.Op Msg
 makeNewTensionFormOp model =
     { lookup = model.lookup_users
     , users_data = model.users_data
-    , targets = [ model.tensionForm.form.source.nameid ] ++ getParents model.tensionForm.form.target.nameid model.orga_data
+    , targets = [ model.tensionForm.form.target.nameid, model.tensionForm.form.source.nameid ] ++ getParents model.tensionForm.form.target.nameid model.orga_data
     , data = model.tensionForm
-    , onCloseModal = DoCloseModal
+    , onCloseModal = DoModalConfirmAsk
     , onSubmitTension = SubmitTension
     , onSubmit = Submit
     , onChangeTensionType = ChangeTensionType

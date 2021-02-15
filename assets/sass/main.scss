@@ -207,34 +207,14 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 
-// Tabs
 .tabs {
-
-    ul {
-        border-bottom-color: #dbdee085;
-    }
-
-    &.is-boxed {
-
-        a {
-            padding-right: 1rem !important;
-            padding-left: 1rem !important;
-        }
-
-        li a:hover {
-            background-color: $grey-dark;
-            border-bottom-color: $tabs-boxed-link-hover-border-bottom-color;
-        }
-
-        li.is-active a {
-            color: $green-frac6-lighter;
-            background-color: $body-background-color;
-            border-color: #dbdee085;
-            border-bottom-color: $tabs-boxed-link-active-border-bottom-color !important;
-        }
+	&.is-boxed {
+		a {
+			padding-right: 1rem !important;
+			padding-left: 1rem !important;
+		}
     }
 }
-
 
 .has-background-turquoise {
     background-color: $turquoise !important;
@@ -364,9 +344,23 @@ html.has-modal-active, html.has-modal-active2 {
 
     nav > .tabs {
         font-size: 0.85rem;
-        //overflow-x: hidden;
-        &.is-boxed a {
-            border-radius: 8px 8px 0 0 !important;
+        ul {
+            border-bottom-color: #dbdee085;
+        }
+        &.is-boxed {
+            a {
+                border-radius: 8px 8px 0 0 !important;
+            }
+            li a:hover {
+                background-color: $grey-dark;
+                border-bottom-color: $tabs-boxed-link-hover-border-bottom-color;
+            }
+            li.is-active a {
+                color: $green-frac6-lighter;
+                background-color: $body-background-color;
+                border-color: #dbdee085;
+                border-bottom-color: $tabs-boxed-link-active-border-bottom-color !important;
+            }
         }
     }
 }
@@ -755,15 +749,7 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .tensionCommentInput {
-            .message-header {
-                padding-bottom: 0 !important;
-                border-bottom: none !important;
-            }
-            .message-body {
-                padding: 0.75rem 0.75rem !important;
-            }
-
-            .tabs.is-boxed {
+            .tabs, .tabs.is-boxed {
                 ul {
                     border-bottom-color: $grey !important;
                 }
@@ -779,6 +765,15 @@ html.has-modal-active, html.has-modal-active2 {
                     border-bottom-color: transparent !important;
                 }
             }
+
+            .message-header {
+                padding-bottom: 0 !important;
+                border-bottom: none !important;
+            }
+            .message-body {
+                padding: 0.75rem 0.75rem !important;
+            }
+
         }
 
         .message-header {
@@ -1082,6 +1077,10 @@ html.has-modal-active, html.has-modal-active2 {
             color: $green-frac6 !important;
             //font-size: 18px !important;
         }
+    }
+
+    .button {
+        border: 1px solid $grey;
     }
 
     #actionPanelContent > .button {
@@ -1422,7 +1421,6 @@ a.actionLink {
         &:hover { background-color: #952222 !important;}
     }
 
-
     &.is-active {
         visibility: visible;
         .modal-background {
@@ -1466,10 +1464,9 @@ a.actionLink {
             .modal-card-body { padding: 20px 30px 20px 30px; }
         }
         @media (max-width: 768px){
-            width: 96% !important;
-            margin: 2% 2% !important;
-            max-height: calc(100vh - 20px);
-            .tabs { font-size: 1rem; }
+            width: 98% !important;
+            margin: 0 1% !important;
+            max-height: calc(100vh - 40px);
         }
         &.is-huge {
             width: 100%;
@@ -1501,7 +1498,6 @@ a.actionLink {
     }
 
     // Positioning, center is default
-    // .modal-pos-top
     &.modal-pos {
         &-top {
             align-items: flex-start;
@@ -1517,18 +1513,12 @@ a.actionLink {
         }
     }
 
-    // Colors
-
-    .card {
-        background-color: #eee;
-    }
-
     .modal-card-body {
         background-color: $white-1 !important;
         color: #111;
     }
 
-    .modal-card-title,
+    .modal-card-title, .panel-heading,
     .modal-card-head,
     .modal-card-foot, {
         background-color: #e5e5e5;
@@ -1538,8 +1528,43 @@ a.actionLink {
             color: inherit;
             background-color: inherit;
         }
+        @media (max-width: 768px){
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
     }
 
+    .tabs, .tabs.is-boxed {
+        margin-bottom: 0;
+        li a {
+            color: $blue-grey;
+        }
+        li a:hover {
+            background-color: $blue-light;
+        }
+        li.is-active a {
+            color: $grey;
+            background-color: $white-1;
+            border-top-color: $blue-grey;
+            border-top-width: 2px;
+            &:hover {
+                background-color: $white-1;
+            }
+        }
+        li:not(:last-child) a {
+            border-right-color: $grey-lighter;
+        }
+
+        &#tensionTab1 {
+            min-height: 42px;
+            background-color: #e5e5e5;
+        }
+    }
+
+    .card {
+        background-color: #eee;
+    }
     .card-header-title, .label {
         color: #363636
     }
@@ -1553,11 +1578,9 @@ a.actionLink {
 .finalModal {
     .message {
         background-color: $white-light !important;
-        border: solid 2px  $white-ter  !important;
-
         .tabs, .tabs.is-boxed  {
             li a  {
-                color: #111 !important;
+                color: $grey-light !important;
             }
             li a:hover{
                 background-color: $white-ter !important;
@@ -1571,11 +1594,10 @@ a.actionLink {
 
     .message-header {
         background-color: $white-ter;
-        padding-bottom: 0 !important;
         font-size: 14px !important;
         font-weight: 500 !important;
         border-radius: 0 !important;
-        //padding-bottom: 0 !important;
+        padding: 0 !important;
         a {
             font-weight: 600 !important;
             text-decoration: none !important;

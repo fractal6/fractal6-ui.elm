@@ -71,6 +71,9 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
+                    DoModalAsk _ _ _ ->
+                        ( Cmd.none, Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
@@ -144,7 +147,7 @@ viewModeDecoder x =
         "intext" ->
             IntExtView
 
-        default ->
+        _ ->
             ListView
 
 
@@ -617,22 +620,17 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitSearch ->
-            case model.path_data of
-                Success path ->
-                    let
-                        query =
-                            queryBuilder
-                                [ ( "q", model.pattern |> withDefault "" |> String.trim )
-                                , ( "v", model.viewMode |> viewModeEncoder )
-                                , ( "d", model.depthFilter |> depthFilterEncoder )
-                                , ( "s", model.statusFilter |> statusFilterEncoder )
-                                , ( "t", model.typeFilter |> typeFilterEncoder )
-                                ]
-                    in
-                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri path.focus.nameid ++ "?" ++ query) )
-
-                other ->
-                    ( model, Cmd.none, Cmd.none )
+            let
+                query =
+                    queryBuilder
+                        [ ( "q", model.pattern |> withDefault "" |> String.trim )
+                        , ( "v", viewModeEncoder model.viewMode )
+                        , ( "d", depthFilterEncoder model.depthFilter )
+                        , ( "s", statusFilterEncoder model.statusFilter )
+                        , ( "t", typeFilterEncoder model.typeFilter )
+                        ]
+            in
+            ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ "?" ++ query) )
 
         GoView viewMode ->
             ( { model | viewMode = viewMode }, Cmd.none, Cmd.none )

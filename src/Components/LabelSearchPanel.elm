@@ -15,7 +15,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), LabelForm, UserState(..), initLabelForm)
-import ModelCommon.Codecs exposing (nearestCircleid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
 import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
 import Ports
@@ -152,6 +152,9 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | OnGotLabels (GqlData (List Label))
     | SetLabel LabelForm
+      --
+    | Navigate String
+    | OnModalAsk String String Bool
 
 
 type alias Out =
@@ -287,6 +290,12 @@ update_ apis message model =
             , out1 [ setLabel apis.gql form OnLabelAck ]
             )
 
+        Navigate link ->
+            ( model, out2 [ DoNavigate link ] )
+
+        OnModalAsk link onCloseTxt doClose ->
+            ( model, out2 [ DoModalAsk link onCloseTxt doClose ] )
+
 
 subscriptions =
     [ Ports.cancelLabelsFromJs (always OnClose)
@@ -304,6 +313,7 @@ type alias Op =
     { selectedLabels : List Label
     , targets : List String
     , isAdmin : Bool
+    , exitSafe : Bool
     }
 
 
@@ -363,36 +373,53 @@ view_ isInternal op (State model) =
 
 viewLabelSelectors : Bool -> List Label -> Op -> Model -> Html Msg
 viewLabelSelectors isInternal labels op model =
-    div [ class "selectors" ] <|
-        if labels == [] then
-            [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
+    let
+        viewEdit =
+            p
+                [ class "panel-block is-md"
+                , attribute "style" "border-top: 1px solid;"
+                , if isInternal then
+                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")) "" op.exitSafe)
 
-        else
-            labels
-                |> List.map
-                    (\l ->
-                        let
-                            isActive =
-                                List.member l op.selectedLabels
+                  else
+                    onClick (Navigate (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")))
+                ]
+                [ I.icon1 "icon-pen" "Edit labels" ]
+    in
+    div []
+        [ ternary isInternal viewEdit (text "")
+        , div [ class "selectors" ] <|
+            if labels == [] then
+                [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
 
-                            iconCls =
-                                ternary isActive "icon-check-square" "icon-square"
+            else
+                labels
+                    |> List.map
+                        (\l ->
+                            let
+                                isActive =
+                                    List.member l op.selectedLabels
 
-                            isLoading =
-                                model.click_result == LoadingSlowly && l.id == model.form.label.id
-                        in
-                        p
-                            [ class "panel-block"
-                            , classList [ ( "is-active", isActive ) ]
-                            , ternary isInternal
-                                (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
-                                (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
-                            ]
-                            [ span [ class "panel-icon" ] [ I.icon iconCls ]
-                            , viewLabel "" l
-                            , loadingSpin isLoading
-                            ]
-                    )
+                                iconCls =
+                                    ternary isActive "icon-check-square" "icon-square"
+
+                                isLoading =
+                                    model.click_result == LoadingSlowly && l.id == model.form.label.id
+                            in
+                            p
+                                [ class "panel-block"
+                                , classList [ ( "is-active", isActive ) ]
+                                , ternary isInternal
+                                    (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
+                                    (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
+                                ]
+                                [ span [ class "panel-icon" ] [ I.icon iconCls ]
+                                , viewLabel "" l
+                                , loadingSpin isLoading
+                                ]
+                        )
+        , ternary isInternal (text "") viewEdit
+        ]
 
 
 
@@ -439,7 +466,7 @@ viewNew op (State model) =
               else
                 text ""
             ]
-        , div [ class "button is-small is-light mr-2", onClick (OnOpen op.targets) ]
+        , div [ class "button  is-light mr-2", onClick (OnOpen op.targets) ]
             [ I.icon1 "icon-plus" "", text "Label" ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels

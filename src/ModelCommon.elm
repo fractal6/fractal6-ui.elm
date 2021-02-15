@@ -71,6 +71,7 @@ type GlobalCmd
       DoAuth UserCtx
     | DoUpdateToken
     | DoNavigate String
+    | DoModalAsk String String Bool
 
 
 type alias NodesQuickSearch =

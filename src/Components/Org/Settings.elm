@@ -15,6 +15,7 @@ import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
+import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.NewCircle
 import Form.NewTension
@@ -68,6 +69,9 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
+                    DoModalAsk _ _ _ ->
+                        ( Cmd.none, Cmd.none )
+
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
@@ -116,14 +120,42 @@ type MenuSettings
     | SecurityMenu
 
 
+menuList : List MenuSettings
+menuList =
+    [ LabelsMenu, SecurityMenu ]
+
+
+menuEncoder : MenuSettings -> String
+menuEncoder menu =
+    case menu of
+        LabelsMenu ->
+            "labels"
+
+        SecurityMenu ->
+            "security"
+
+
+menuDecoder : String -> MenuSettings
+menuDecoder menu =
+    case menu of
+        "labels" ->
+            LabelsMenu
+
+        "security" ->
+            SecurityMenu
+
+        _ ->
+            LabelsMenu
+
+
 menuToString : MenuSettings -> String
 menuToString menu =
     case menu of
         LabelsMenu ->
-            "Labels"
+            upH T.labels
 
         SecurityMenu ->
-            "Security"
+            upH T.security
 
 
 menuToIcon : MenuSettings -> String
@@ -210,6 +242,13 @@ init global flags =
         apis =
             global.session.apis
 
+        -- Query parameters
+        query =
+            queryParser global.url
+
+        menu =
+            Dict.get "m" query |> withDefault "" |> menuDecoder
+
         -- Focus
         newFocus =
             flags
@@ -228,8 +267,8 @@ init global flags =
                     |> withDefault Loading
             , labels = Loading
             , labels_sub = RemoteData.Loading
-            , menuFocus = LabelsMenu
-            , menuList = [ LabelsMenu, SecurityMenu ]
+            , menuFocus = menu
+            , menuList = menuList
             , label_add = False
             , label_edit = Nothing
             , label_result = NotAsked
@@ -249,10 +288,17 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , queryLabels apis.gql newFocus.nameid GotLabels
-            , fetchLabels apis.rest newFocus.nameid GotLabelsSub
             , sendSleep PassedSlowLoadTreshold 500
             ]
+                ++ (case menu of
+                        LabelsMenu ->
+                            [ queryLabels apis.gql newFocus.nameid GotLabels
+                            , fetchLabels apis.rest newFocus.nameid GotLabelsSub
+                            ]
+
+                        _ ->
+                            []
+                   )
     in
     ( model
     , Cmd.batch cmds
@@ -349,7 +395,12 @@ update global message model =
             ( newModel, Cmd.none, Cmd.none )
 
         ChangeMenuFocus menu ->
-            ( { model | menuFocus = menu }, Cmd.none, Cmd.none )
+            let
+                query =
+                    queryBuilder
+                        [ ( "m", menuEncoder menu ) ]
+            in
+            ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
 
         AddLabel ->
             ( { model | label_add = ternary (model.label_add == True) False True, label_edit = Nothing }, Cmd.none, Cmd.none )

@@ -424,6 +424,11 @@ reverseTooltip =
     "reverse the organisation graph."
 
 
+security : String
+security =
+    "security"
+
+
 
 -- Mandate / Members / User
 
@@ -723,11 +728,6 @@ circleMessageHelp =
 roleMessageHelp : String
 roleMessageHelp =
     "add a comment to help others understand why a new role should be created."
-
-
-autoFieldMessageHelp : String
-autoFieldMessageHelp =
-    "URL unique identifier"
 
 
 firstLinkRoleMessageHelp : String

@@ -480,11 +480,23 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     ]
                     []
                 , if hasBeenPushed == False then
+                    let
+                        ref =
+                            List.head op.targets |> withDefault "" |> String.replace "#" "/"
+                    in
                     div [ class "subForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-body control" ]
                                 [ div [] [ text "URL" ]
-                                , input [ class "input", size 13, disabled True, value "https://fractale.co/o/" ] []
+                                , input
+                                    [ class "input px-2"
+                                    , disabled True
+                                    , value "https://fractale.co/o/"
+
+                                    -- @debug: show the full url (user ref var) when hoovering
+                                    , attribute "style" "width: 11.4em"
+                                    ]
+                                    []
                                 , input
                                     [ class "input"
                                     , type_ "text"
@@ -896,7 +908,9 @@ updateNodeForm field value form =
                     if List.member action [ TensionAction.NewRole, TensionAction.NewCircle ] then
                         let
                             newPost =
-                                Dict.insert "title" ("[" ++ actionNameStr action ++ "] " ++ value) form.post
+                                ternary (value == "")
+                                    (Dict.insert "title" value form.post)
+                                    (Dict.insert "title" ("[" ++ actionNameStr action ++ "] " ++ value) form.post)
 
                             newData =
                                 { node
