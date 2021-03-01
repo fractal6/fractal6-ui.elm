@@ -205,8 +205,9 @@ refreshAuthModal modalAuth msgs =
     in
     div
         [ id "refreshAuthModal"
-        , class "modal modal-pos-top modal-fx-fadeIn elmModal"
+        , class "modal modal-pos-top modal-fx-fadeIn"
         , classList [ ( "is-active", form_m /= Nothing ) ]
+        , attribute "data-modal-close" "closeAuthModalFromJs"
         ]
         [ div [ class "modal-background", onClick msgs.closeModal ] []
         , div [ class "modal-content", classList [] ]

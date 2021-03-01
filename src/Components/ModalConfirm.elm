@@ -1,7 +1,7 @@
 module Components.ModalConfirm exposing (..)
 
 import Components.I as I
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.NodeType as NodeType
@@ -51,7 +51,7 @@ close model =
 
 type alias Op msg =
     { data : ModalConfirm msg
-    , onClose : msg
+    , onClose : ModalData -> msg
     , onConfirm : msg
     }
 
@@ -60,18 +60,19 @@ view : Op msg -> Html msg
 view op =
     div
         [ id "confirmModal"
-        , class "modal modal-fx-fadeIn elmModalConfirm"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", op.data.isOpen ) ]
+        , attribute "data-modal-close" "closeModalConfirmFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "confirmModal"
-            , onClick op.onClose
+            , onClick (op.onClose { reset = True, link = "" })
             ]
             []
         , div [ class "modal-content" ]
             [ viewConfirm op ]
-        , button [ class "modal-close is-large", onClick op.onClose ] []
+        , button [ class "modal-close is-large", onClick (op.onClose { reset = True, link = "" }) ] []
         ]
 
 
@@ -83,7 +84,7 @@ viewConfirm op =
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "buttons" ]
                     [ button
-                        [ class "button is-small is-danger", onClick op.onClose ]
+                        [ class "button is-small is-danger", onClick (op.onClose { reset = True, link = "" }) ]
                         [ text "Cancel" ]
                     , button
                         [ class "button is-small is-success", onClick op.onConfirm ]

@@ -85,14 +85,16 @@ const actions = {
             });
         }
     },
+
     //
     // Modal
     //
-    'OPEN_MODAL': (app, session, message) => {
+    'OPEN_MODAL': (app, session, modalid) => {
         document.documentElement.classList.add('has-modal-active');
         document.getElementById("navbarTop").classList.add('has-modal-active');
+        InitBulma(app, session, modalid)
     },
-    'CLOSE_MODAL': (app, session, message) => {
+    'CLOSE_MODAL': (app, session, _) => {
         document.documentElement.classList.remove('has-modal-active');
         document.getElementById("navbarTop").classList.remove('has-modal-active');
         InitBulma(app, session, "")

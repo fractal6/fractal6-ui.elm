@@ -9,7 +9,7 @@ import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.Help as Help
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.I as I
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -17,8 +17,6 @@ import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
-import Form.NewCircle
-import Form.NewTension
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -69,14 +67,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoModalAsk _ _ _ ->
-                        ( Cmd.none, Cmd.none )
-
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
             )
         |> List.unzip
 
@@ -213,14 +211,15 @@ type Msg
     | SelectLabelColor String
       -- Common
     | NoMsg
+    | LogErr String
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal String -- ports receive / Close modal
+    | DoCloseModal ModalData -- ports receive / Close modal
     | ExpandRoles
     | CollapseRoles
       -- Confirm Modal
     | DoModalConfirmOpen Msg (List ( String, String ))
-    | DoModalConfirmClose
+    | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Help
     | HelpMsg Help.Msg
@@ -623,7 +622,7 @@ update global message model =
         DoCloseAuthModal ->
             case model.node_action of
                 JoinOrga _ ->
-                    ( { model | modalAuth = Inactive }, send (DoCloseModal ""), Ports.close_auth_modal )
+                    ( { model | modalAuth = Inactive }, send (DoCloseModal { reset = True, link = "" }), Ports.close_auth_modal )
 
                 _ ->
                     ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
@@ -728,17 +727,20 @@ update global message model =
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
+        LogErr err ->
+            ( model, Ports.logErr err, Cmd.none )
+
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
         DoOpenModal ->
-            ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
+            ( { model | isModalActive = True }, Ports.open_modal "actionModal", Cmd.none )
 
-        DoCloseModal link ->
+        DoCloseModal data ->
             let
                 gcmd =
-                    if link /= "" then
-                        send (Navigate link)
+                    if data.link /= "" then
+                        send (Navigate data.link)
 
                     else
                         Cmd.none
@@ -755,7 +757,7 @@ update global message model =
         DoModalConfirmOpen msg txts ->
             ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
 
-        DoModalConfirmClose ->
+        DoModalConfirmClose _ ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, Cmd.none, Cmd.none )
 
         DoModalConfirmSend ->
@@ -775,7 +777,10 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
-    (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+    [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    ]
+        ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch
 
 
@@ -1117,13 +1122,14 @@ setupActionModal : Bool -> ActionState -> Html Msg
 setupActionModal isModalActive action =
     div
         [ id "actionModal"
-        , class "modal modal-fx-fadeIn elmModal"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", isModalActive ) ]
+        , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "actionModal"
-            , onClick (DoCloseModal "")
+            , onClick (DoCloseModal { reset = True, link = "" })
             ]
             []
         , div [ class "modal-content" ]
@@ -1139,11 +1145,8 @@ setupActionModal isModalActive action =
 
                 ActionAuthNeeded ->
                     viewAuthNeeded DoCloseModal
-
-                other ->
-                    div [] [ text "Action not implemented." ]
             ]
-        , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
+        , button [ class "modal-close is-large", onClick (DoCloseModal { reset = True, link = "" }) ] []
         ]
 
 
@@ -1159,7 +1162,7 @@ viewJoinOrgaStep step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box is-light", onClick (DoCloseModal "") ]
+                    div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.welcomIn
                         , text " "

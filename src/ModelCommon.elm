@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -72,6 +73,9 @@ type GlobalCmd
     | DoUpdateToken
     | DoNavigate String
     | DoModalAsk String String Bool
+      --
+    | DoFetchNode String
+    | DoPushTension Tension
 
 
 type alias NodesQuickSearch =
@@ -195,15 +199,11 @@ type ModalAuth
 
 
 type ActionState
-    = ActionChoice Node
-      --
-    | AddTension TensionStep
-    | AddCircle NodeStep
-      --
-    | JoinOrga (JoinStep ActionForm)
-    | ActionAuthNeeded
+    = ActionAuthNeeded
     | AskErr String
     | NoOp
+      --
+    | JoinOrga (JoinStep ActionForm)
 
 
 
@@ -327,11 +327,17 @@ initLabelForm tid user =
     Create tension a the current focus
 
 -}
-initTensionForm : NodeFocus -> TensionForm
-initTensionForm focus =
-    { uctx = UserCtx "" Nothing (UserRights False False) []
+initTensionForm : UserState -> TensionForm
+initTensionForm user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
     , source = UserRole "" "" "" RoleType.Guest
-    , target = nodeFromFocus focus
+    , target = nodeFromFocus (NodeFocus "" "" NodeType.Circle)
     , targetData = initNodeData
     , status = TensionStatus.Open
     , tension_type = TensionType.Operational
@@ -430,15 +436,6 @@ initActionForm tid user =
 
 
 -- Steps
-
-
-{-| Tension Step
--}
-type TensionStep
-    = TensionInit
-    | TensionSource (List UserRole)
-    | TensionFinal
-    | TensionNotAuthorized ErrorData
 
 
 {-| Node Step (Role Or Circle, add and edit)

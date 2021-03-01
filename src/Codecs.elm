@@ -1,5 +1,6 @@
 module Codecs exposing (..)
 
+import Components.Loading exposing (ModalData)
 import Dict
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -323,6 +324,19 @@ quickDocDecoder =
 
 
 
+{-
+   Modal Decoder
+-}
+
+
+modalDataDecoder : JD.Decoder ModalData
+modalDataDecoder =
+    JD.map2 ModalData
+        (JD.field "reset" JD.bool)
+        (JD.field "link" JD.string)
+
+
+
 -- Utils
 
 
@@ -333,12 +347,8 @@ type alias LocalGraph_ =
 
 
 type alias Node_ =
-    -- Helper for encoding ActionState / Receiving Node from JS.
-    --Result JD.Error Node
     Result String Node
 
 
 type alias LookupResult a =
-    -- Helper for encoding ActionState / Receiving Node from JS.
-    --Result JD.Error Node
     Result String (List a)

@@ -3,14 +3,14 @@ module Components.Help exposing (Msg, State, init, subscriptions, update, view)
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (QuickDoc)
 import Components.I as I
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, loadingDiv, loadingSpin, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, loadingSpin, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostSendable)
-import Form.NewTension as NTF exposing (NewTensionForm)
+import Form.NewTension as NT
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -46,8 +46,8 @@ type alias Model =
     , activeTab : HelpTab
     , doc : WebData QuickDoc
     , type_ : FeedbackType
-    , formAsk : NewTensionForm
-    , formFeedback : NewTensionForm
+    , formAsk : NT.Model
+    , formFeedback : NT.Model
 
     -- Common
     , refresh_trial : Int
@@ -97,9 +97,9 @@ initModel user =
                     UserCtx "" Nothing (UserRights False False) []
 
         form =
-            NTF.init { rootnameid = "f6", nameid = "f6#feedback", type_ = NodeType.Circle }
-                |> NTF.setUctx uctx
-                |> NTF.setSource
+            NT.initModel user
+                |> NT.setTargetShort { rootnameid = "f6", nameid = "f6#feedback", type_ = NodeType.Circle } Nothing
+                |> NT.setSource
                     { rootnameid = "f6"
                     , nameid = "f6#feedback#help-bot"
                     , name = "Help Bot"
@@ -125,21 +125,22 @@ initModel user =
     }
 
 
-initFormAsk : NewTensionForm -> NewTensionForm
+initFormAsk : NT.Model -> NT.Model
 initFormAsk form =
     form
-        |> NTF.setTensionType TensionType.Help
-        |> NTF.setEvents [ TensionEvent.Created ]
-        |> NTF.setResult NotAsked
-        |> NTF.resetPost
+        |> NT.setTensionType TensionType.Help
+        |> NT.setEvents [ TensionEvent.Created ]
+        |> NT.setResult NotAsked
+        |> NT.resetPost
 
 
-initFormFeedback : NewTensionForm -> NewTensionForm
+initFormFeedback : NT.Model -> NT.Model
 initFormFeedback form =
     form
-        |> NTF.setTensionType TensionType.Operational
-        |> NTF.setEvents [ TensionEvent.Created ]
-        |> NTF.resetPost
+        |> NT.setTensionType TensionType.Operational
+        |> NT.setEvents [ TensionEvent.Created ]
+        |> NT.setResult NotAsked
+        |> NT.resetPost
 
 
 
@@ -149,6 +150,15 @@ initFormFeedback form =
 open : Model -> Model
 open data =
     { data | isModalActive = True, doc = RemoteData.Loading }
+
+
+close : Bool -> Model -> Model
+close reset data =
+    if reset then
+        initModel data.formAsk.user
+
+    else
+        { data | isModalActive = False }
 
 
 changeTab : HelpTab -> Model -> Model
@@ -161,13 +171,8 @@ changeLabel type_ data =
     { data | type_ = type_ }
 
 
-close : Model -> Model
-close data =
-    initModel (LoggedIn data.formAsk.form.uctx)
-
-
-reset : HelpTab -> Model -> Model
-reset tab data =
+resetPost : HelpTab -> Model -> Model
+resetPost tab data =
     case tab of
         QuickHelp ->
             data
@@ -186,12 +191,12 @@ setDocResult result data =
 
 setResultAsk : GqlData Tension -> Model -> Model
 setResultAsk result data =
-    { data | formAsk = NTF.setResult result data.formAsk }
+    { data | formAsk = NT.setResult result data.formAsk }
 
 
 setResultFeedback : GqlData Tension -> Model -> Model
 setResultFeedback result data =
-    { data | formFeedback = NTF.setResult result data.formAsk }
+    { data | formFeedback = NT.setResult result data.formFeedback }
 
 
 
@@ -200,17 +205,17 @@ setResultFeedback result data =
 
 postAsk : String -> String -> Model -> Model
 postAsk field value data =
-    { data | formAsk = NTF.post field value data.formAsk }
+    { data | formAsk = NT.post field value data.formAsk }
 
 
 postFeedback : String -> String -> Model -> Model
 postFeedback field value data =
-    { data | formFeedback = NTF.post field value data.formFeedback }
+    { data | formFeedback = NT.post field value data.formFeedback }
 
 
 setLabelsFeedback : Model -> Model
 setLabelsFeedback data =
-    { data | formFeedback = NTF.setLabels [ labelCodec data.type_ ] data.formFeedback }
+    { data | formFeedback = NT.setLabels [ labelCodec data.type_ ] data.formFeedback }
 
 
 
@@ -220,8 +225,9 @@ setLabelsFeedback data =
 
 
 type Msg
-    = OnOpen String
-    | OnClose String
+    = OnOpen
+    | OnClose ModalData
+    | OnCloseSafe String String
     | OnReset HelpTab
     | OnGotQuickDoc (WebData QuickDoc)
     | OnChangeTab HelpTab
@@ -229,17 +235,18 @@ type Msg
     | OnChangePostFeedback String String
     | OnChangeLabel FeedbackType
     | OnSubmit (Time.Posix -> Msg)
-    | PushTension NewTensionForm (GqlData Tension -> Msg)
+    | PushTension NT.Model (GqlData Tension -> Msg)
     | OnSubmitAsk Time.Posix
     | OnSubmitFeedback Time.Posix
     | OnAskAck (GqlData Tension)
     | OnAskFeedback (GqlData Tension)
       -- Confirm Modal
     | DoModalConfirmOpen Msg (List ( String, String ))
-    | DoModalConfirmClose
+    | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Common
     | NoMsg
+    | LogErr String
 
 
 type alias Out =
@@ -272,20 +279,38 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen targets ->
+        OnOpen ->
             ( open model
-            , out1 [ getQuickDoc apis.data "en" OnGotQuickDoc, Ports.open_modal ]
+            , out1 [ getQuickDoc apis.data "en" OnGotQuickDoc, Ports.open_modal "helpModal" ]
             )
 
-        OnClose link ->
+        OnClose data ->
             let
                 gcmds =
-                    ternary (link /= "") [ DoNavigate link ] []
+                    ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close model, Out [ Ports.close_modal ] gcmds Nothing )
+            ( close data.reset model, Out [ Ports.close_modal ] gcmds Nothing )
+
+        OnCloseSafe link onCloseTxt ->
+            let
+                doClose =
+                    NT.hasData model.formFeedback
+                        && withMaybeData model.formFeedback.result
+                        == Nothing
+                        || NT.hasData model.formAsk
+                        && withMaybeData model.formFeedback.result
+                        == Nothing
+            in
+            if doClose then
+                ( model
+                , out1 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
+                )
+
+            else
+                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
 
         OnReset tab ->
-            ( reset tab model, noOut )
+            ( resetPost tab model, noOut )
 
         OnGotQuickDoc result ->
             ( setDocResult result model, noOut )
@@ -303,9 +328,7 @@ update_ apis message model =
             ( changeLabel type_ model, noOut )
 
         OnSubmit next ->
-            ( model
-            , out1 [ sendNow next ]
-            )
+            ( model, out1 [ sendNow next ] )
 
         PushTension form ack ->
             ( model, out1 [ addOneTension apis.gql form.form ack ] )
@@ -328,6 +351,12 @@ update_ apis message model =
                         |> postFeedback "createdAt" (fromTime time)
                         |> setLabelsFeedback
                         |> setResultFeedback LoadingSlowly
+
+                g1 =
+                    Debug.log "feed1" (Dict.get "title" model.formFeedback.form.post)
+
+                g2 =
+                    Debug.log "feed2" (Dict.get "title" newModel.formFeedback.form.post)
             in
             ( newModel
             , out1 [ send (PushTension newModel.formFeedback OnAskFeedback) ]
@@ -348,7 +377,7 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, Out [ sendSleep (PushTension form OnAskAck) 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth tension ->
-                    ( setResultAsk result { model | formAsk = NTF.resetPost model.formAsk }, noOut )
+                    ( setResultAsk result { model | formAsk = NT.resetPost model.formAsk }, noOut )
 
                 NoAuth ->
                     ( setResultAsk result model, noOut )
@@ -368,7 +397,7 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, Out [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth tension ->
-                    ( setResultFeedback result { model | formAsk = NTF.resetPost model.formFeedback }, noOut )
+                    ( setResultFeedback result { model | formAsk = NT.resetPost model.formFeedback }, noOut )
 
                 NoAuth ->
                     ( setResultFeedback result model, noOut )
@@ -377,7 +406,7 @@ update_ apis message model =
         DoModalConfirmOpen msg txts ->
             ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, noOut )
 
-        DoModalConfirmClose ->
+        DoModalConfirmClose _ ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
 
         DoModalConfirmSend ->
@@ -387,9 +416,14 @@ update_ apis message model =
         NoMsg ->
             ( model, noOut )
 
+        LogErr err ->
+            ( model, out1 [ Ports.logErr err ] )
+
 
 subscriptions =
-    [ Ports.triggerHelpFromJs OnOpen
+    [ Ports.triggerHelpFromJs (always OnOpen)
+    , Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
+    , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
 
 
@@ -405,46 +439,28 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    if model.isModalActive then
-        div []
-            [ viewModal op (State model)
-            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-            ]
-
-    else
-        text ""
+    div []
+        [ viewModal op (State model)
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        ]
 
 
 viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
-    let
-        onClose =
-            if
-                NTF.hasData model.formFeedback
-                    && withMaybeData model.formFeedback.result
-                    == Nothing
-                    || NTF.hasData model.formAsk
-                    && withMaybeData model.formFeedback.result
-                    == Nothing
-            then
-                DoModalConfirmOpen (OnClose "") [ ( upH T.confirmUnsaved, "" ) ]
-
-            else
-                OnClose ""
-    in
     div
         [ id "helpModal"
-        , class "modal modal-fx-fadeIn elmModal"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isModalActive ) ]
+        , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "helpModal"
-            , onClick onClose
+            , onClick (OnCloseSafe "" "")
             ]
             []
         , div [ class "modal-content" ] [ viewModalContent op (State model) ]
-        , button [ class "modal-close is-large", onClick onClose ] []
+        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
@@ -557,7 +573,7 @@ viewAskQuestion op (State model) =
                     , text ". "
                     , a
                         [ href link
-                        , onClickPD (OnClose link)
+                        , onClickPD (OnClose { reset = True, link = link })
                         , target "_blank"
                         ]
                         [ textH T.checkItOut ]
@@ -577,9 +593,10 @@ viewAskQuestion op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ input
-                                    [ class "input autofocus"
+                                    [ class "input autofocus followFocus"
+                                    , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
-                                    , placeholder "Subject of your question."
+                                    , placeholder "Subject of your question"
                                     , required True
                                     , value title
                                     , onInput (OnChangePostAsk "title")
@@ -595,7 +612,8 @@ viewAskQuestion op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ textarea
-                                    [ class "textarea"
+                                    [ id "textAreaModal"
+                                    , class "textarea"
                                     , rows 5
                                     , placeholder "Write your question here..."
                                     , required True
@@ -658,7 +676,7 @@ viewFeedback op (State model) =
                     , text ". "
                     , a
                         [ href link
-                        , onClickPD (OnClose link)
+                        , onClickPD (OnClose { reset = True, link = link })
                         , target "_blank"
                         ]
                         [ textH T.checkItOut ]
@@ -713,9 +731,10 @@ viewFeedback op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ input
-                                    [ class "input autofocus"
+                                    [ class "input autofocus followFocus"
+                                    , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
-                                    , placeholder "Subject of your feedback."
+                                    , placeholder "Subject of your feedback"
                                     , required True
                                     , value title
                                     , onInput (OnChangePostFeedback "title")
@@ -731,7 +750,8 @@ viewFeedback op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ textarea
-                                    [ class "textarea"
+                                    [ id "textAreaModal"
+                                    , class "textarea"
                                     , rows 5
                                     , placeholder "Write your feedback here..."
                                     , required True

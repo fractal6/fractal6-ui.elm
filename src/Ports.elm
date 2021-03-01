@@ -1,6 +1,7 @@
 port module Ports exposing (..)
 
-import Codecs exposing (LookupResult, labelDecoder, labelsEncoder, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
+import Codecs exposing (LookupResult, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
+import Components.Loading exposing (ModalData)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
@@ -9,30 +10,30 @@ import ModelSchema exposing (Label, Node, NodesData, User, UserCtx)
 
 
 
--- Outgoing Ports
+{-
+   Ingoing Ports
+-}
+-- Trigger
 
 
-port outgoing : { action : String, data : JE.Value } -> Cmd msg
+port triggerHelpFromJs : (() -> msg) -> Sub msg
 
 
 
--- Ingoing
---port getBackTimeFrom : (String -> msg) -> Sub msg
+-- Modal
 
 
-port closeModalFromJs : (String -> msg) -> Sub msg
+port closeModalFromJs : (JD.Value -> msg) -> Sub msg
 
 
-port closeModalConfirmFromJs : (() -> msg) -> Sub msg
+port closeModalTensionFromJs : (JD.Value -> msg) -> Sub msg
 
 
-port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
+port closeModalConfirmFromJs : (JD.Value -> msg) -> Sub msg
 
 
-port lookupUserFromJs_ : (JD.Value -> a) -> Sub a
 
-
-port lookupLabelFromJs_ : (JD.Value -> a) -> Sub a
+-- Panel
 
 
 port cancelAssigneesFromJs : (() -> msg) -> Sub msg
@@ -47,10 +48,36 @@ port cancelActionFromJs : (() -> msg) -> Sub msg
 port cancelLookupFsFromJs : (() -> msg) -> Sub msg
 
 
+
+-- Lookup and Quicksearch
+
+
+port lookupNodeFromJs_ : (JD.Value -> a) -> Sub a
+
+
+port lookupUserFromJs_ : (JD.Value -> a) -> Sub a
+
+
+port lookupLabelFromJs_ : (JD.Value -> a) -> Sub a
+
+
+
+-- Utils
+
+
 port cancelColorFromJs : (() -> msg) -> Sub msg
 
 
-port triggerHelpFromJs : (String -> msg) -> Sub msg
+port relogErr : (String -> msg) -> Sub msg
+
+
+
+{-
+   Outgoing Ports
+-}
+
+
+port outgoing : { action : String, data : JE.Value } -> Cmd msg
 
 
 
@@ -194,11 +221,11 @@ removeUserCtx userCtx =
 --- Modal
 
 
-open_modal : Cmd msg
-open_modal =
+open_modal : String -> Cmd msg
+open_modal modalid =
     outgoing
         { action = "OPEN_MODAL"
-        , data = JE.string ""
+        , data = JE.string modalid
         }
 
 
@@ -344,6 +371,26 @@ graphPackEncoder data focus =
 --
 -- Decoder
 --
+-- Modal data decoder
+
+
+mcPD : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (ModalData -> msg) -> Sub msg
+mcPD sub messageErr message =
+    sub
+        ((\x ->
+            case x of
+                Ok n ->
+                    message n
+
+                Err err ->
+                    messageErr (JD.errorToString err)
+         )
+            << JD.decodeValue modalDataDecoder
+        )
+
+
+
+-- Quicksearch/lookup decoder
 
 
 lookupNodeFromJs : (LookupResult Node -> msg) -> Sub msg

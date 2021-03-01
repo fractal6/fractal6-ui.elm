@@ -774,7 +774,7 @@ html.has-modal-active, html.has-modal-active2 {
             }
 
             .message-header {
-                border-bottom: 0;
+                border: 0;
                 font-weight: 500 !important;
                 padding: 0 0.75rem !important;
                 a {
@@ -1545,7 +1545,7 @@ a.actionLink {
             color: $grey;
             background-color: $white-1;
             border-top-color: $blue-grey;
-            border-top-width: 2px;
+            border-top-width: 3px;
             &:hover {
                 background-color: $white-1;
             }
@@ -1557,6 +1557,7 @@ a.actionLink {
         &#tensionTab1 {
             min-height: 42px;
             background-color: #e5e5e5;
+            border-bottom: solid 1px $grey-lighter;
         }
     }
 
@@ -1587,6 +1588,7 @@ a.actionLink {
                 //color: $grey !important;
                 text-decoration: none !important;
                 background-color: $white-light !important;
+                border-top-width: 2px !important;
             }
         }
     }
@@ -1598,7 +1600,7 @@ a.actionLink {
         a {
             font-weight: 600 !important;
             text-decoration: none !important;
-            &:hover { border-bottom-color: $grey !important; }
+            &:hover { text-decoration: underline !important; }
         }
     }
 

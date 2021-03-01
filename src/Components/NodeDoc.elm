@@ -246,7 +246,7 @@ type alias Op msg =
     , onSubmit : (Time.Posix -> msg) -> msg
 
     -- Doc change
-    , onChangeNode : String -> String -> msg
+    , onChangePost : String -> String -> msg
     , onAddResponsabilities : msg
     , onAddDomains : msg
     , onAddPolicies : msg
@@ -475,7 +475,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     , type_ "text"
                     , placeholder (upH T.name)
                     , value (node.name |> withDefault "")
-                    , onInput <| op.onChangeNode "name"
+                    , onInput <| op.onChangePost "name"
                     , required True
                     ]
                     []
@@ -501,7 +501,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                                     [ class "input"
                                     , type_ "text"
                                     , value (node.nameid |> withDefault "")
-                                    , onInput <| op.onChangeNode "nameid"
+                                    , onInput <| op.onChangePost "nameid"
                                     ]
                                     []
                                 ]
@@ -522,7 +522,7 @@ nodeAboutInputView hasBeenPushed source txt node op =
                     , type_ "text"
                     , placeholder (upH T.aboutOpt)
                     , value (node.about |> withDefault "")
-                    , onInput <| op.onChangeNode "about"
+                    , onInput <| op.onChangePost "about"
                     ]
                     []
                 ]
@@ -645,7 +645,7 @@ nodeMandateInputView txt node op =
                     , rows 5
                     , placeholder (upH txt.ph_purpose)
                     , value purpose
-                    , onInput <| op.onChangeNode "purpose"
+                    , onInput <| op.onChangePost "purpose"
                     , required True
                     ]
                     []
@@ -660,7 +660,7 @@ nodeMandateInputView txt node op =
                         , rows 5
                         , placeholder (upH txt.ph_responsabilities)
                         , value responsabilities
-                        , onInput <| op.onChangeNode "responsabilities"
+                        , onInput <| op.onChangePost "responsabilities"
                         ]
                         []
                     ]
@@ -677,7 +677,7 @@ nodeMandateInputView txt node op =
                         , rows 5
                         , placeholder (upH txt.ph_domains)
                         , value domains
-                        , onInput <| op.onChangeNode "domains"
+                        , onInput <| op.onChangePost "domains"
                         ]
                         []
                     ]
@@ -694,7 +694,7 @@ nodeMandateInputView txt node op =
                         , rows 5
                         , placeholder (upH txt.ph_policies)
                         , value policies
-                        , onInput <| op.onChangeNode "policies"
+                        , onInput <| op.onChangePost "policies"
                         ]
                         []
                     ]

@@ -54,14 +54,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoModalAsk _ _ _ ->
-                        ( Cmd.none, Cmd.none )
-
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
             )
         |> List.unzip
 

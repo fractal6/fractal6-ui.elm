@@ -368,13 +368,15 @@ function closeModal(e, modal, app) {
         btn.classList.remove('is-active');
     });
 
+    var closeMsg = modal.dataset.modalClose;
     // Elm compatibility
-    if (modal.classList.contains("elmModal")) {
+    if (closeMsg) {
         // Close modal with elm
-        app.ports.closeModalFromJs.send("")
-    } else if (modal.classList.contains("elmModalConfirm")) {
-        // Close modal with elm
-        app.ports.closeModalConfirmFromJs.send(null)
+        if (app.ports[closeMsg] === undefined) {
+            return
+        }
+        // Do not reset modal when is quitted with ESC.
+        app.ports[closeMsg].send({reset:false, link:""});
     } else {
         modal.classList.remove('is-active');
         // Fix block scrolling
@@ -384,5 +386,5 @@ function closeModal(e, modal, app) {
 }
 
 function triggerHelp(e, el, app) {
-    app.ports.triggerHelpFromJs.send("")
+    app.ports.triggerHelpFromJs.send(null)
 }

@@ -6,7 +6,7 @@ import Codecs exposing (QuickDoc)
 import Components.Help as Help
 import Components.HelperBar as HelperBar
 import Components.I as I
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Components.NotFound exposing (viewNotFound)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -65,14 +65,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoModalAsk _ _ _ ->
-                        ( Cmd.none, Cmd.none )
-
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
             )
         |> List.unzip
 
@@ -153,9 +153,11 @@ type Msg
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
+    | NoMsg
+    | LogErr String
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal String -- ports receive / Close modal
+    | DoCloseModal ModalData -- ports receive / Close modal
       -- Help
     | HelpMsg Help.Msg
 
@@ -371,17 +373,23 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         -- Common
+        NoMsg ->
+            ( model, Cmd.none, Cmd.none )
+
+        LogErr err ->
+            ( model, Ports.logErr err, Cmd.none )
+
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
         DoOpenModal ->
-            ( model, Cmd.none, Ports.open_modal )
+            ( model, Ports.open_modal "actionModal", Cmd.none )
 
-        DoCloseModal link ->
+        DoCloseModal data ->
             let
                 gcmd =
-                    if link /= "" then
-                        send (Navigate link)
+                    if data.link /= "" then
+                        send (Navigate data.link)
 
                     else
                         Cmd.none
@@ -402,7 +410,7 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    [ Ports.closeModalFromJs DoCloseModal
+    [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch

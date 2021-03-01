@@ -308,8 +308,9 @@ viewModal : Op msg -> Html msg
 viewModal op =
     div
         [ id "actionPanelModal"
-        , class "modal modal-fx-fadeIn elmModal"
+        , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", op.data.isModalActive ) ]
+        , attribute "data-modal-close" "closeActionPanelModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"

@@ -17,6 +17,16 @@ import Text as T exposing (upH, upT)
 
 
 --
+-- ModalData
+--
+
+
+type alias ModalData =
+    { reset : Bool, link : String }
+
+
+
+--
 -- Remote Data
 --
 
@@ -240,7 +250,7 @@ viewHttpErrors httpErr =
         |> viewGqlErrors
 
 
-viewAuthNeeded : (String -> msg) -> Html msg
+viewAuthNeeded : (ModalData -> msg) -> Html msg
 viewAuthNeeded forward =
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
@@ -251,11 +261,11 @@ viewAuthNeeded forward =
             [ p []
                 [ text "Please "
                 , button
-                    [ class "button is-small is-success", onClickPD (forward (Route.toHref Route.Login)) ]
+                    [ class "button is-small is-success", onClickPD (forward { reset = True, link = Route.toHref Route.Login }) ]
                     [ text "Login" ]
                 , text " or "
                 , button
-                    [ class "button is-small is-primary", onClickPD (forward (Route.toHref Route.Signup)) ]
+                    [ class "button is-small is-primary", onClickPD (forward { reset = True, link = Route.toHref Route.Signup }) ]
                     [ text "Signup" ]
                 , text " to perform this action."
                 ]

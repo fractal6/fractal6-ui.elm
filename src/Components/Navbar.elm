@@ -88,7 +88,7 @@ newButton op =
                 ]
                 [ div
                     [ class "navbar-link has-background-primary button is-small"
-                    , attribute "style" "padding-right: 1.85rem;"
+                    , attribute "style" "padding-right: 1.65rem;"
                     ]
                     [ I.icon "icon-plus icon-bg" ]
                 , div [ class "navbar-dropdown is-right" ]

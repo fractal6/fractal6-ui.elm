@@ -11,7 +11,7 @@ import Components.Help as Help
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.I as I
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Date exposing (formatTime)
@@ -119,14 +119,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoModalAsk _ _ _ ->
-                        ( Cmd.none, Cmd.none )
-
                     DoAuth uctx ->
                         ( send (DoOpenAuthModal uctx), Cmd.none )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
             )
         |> List.unzip
 
@@ -231,6 +231,7 @@ actionViewDecoder x =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+    | LoadOrga
     | PushTension TensionForm (GqlData Tension -> Msg)
     | LoadTensionHead
     | LoadTensionComments
@@ -244,6 +245,7 @@ type Msg
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph)
     | GotPath2 (GqlData LocalGraph)
+    | GotOrga (GqlData NodesData)
       -- Page
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
@@ -266,25 +268,24 @@ type Msg
     | DoBlobEdit BlobType.BlobType
     | CancelBlob
       -- Blob doc edit
-    | ChangeBlobNode String String
-    | AddResponsabilities
+    | ChangeBlobPost String String
     | AddDomains
     | AddPolicies
+    | AddResponsabilities
     | ChangeBlobMD String
       -- Blob Submit
     | SubmitBlob NodeDoc Time.Posix --@debug new type to handle MdDoc
     | BlobAck (GqlData PatchTensionPayloadID)
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
-      -- User quick search
-    | ChangeNodeUserPattern Int String
-    | ChangeNodeUserRole Int String
+      -- User Quick Search
+    | ChangeUserPattern Int String
+    | ChangeUserRole Int String
     | ChangeUserLookup (LookupResult User)
     | SelectUser Int String
     | CancelUser Int
     | ShowLookupFs
     | CancelLookupFs
-    | GotOrga (GqlData NodesData)
       -- Assignees
     | AssigneeSearchPanelMsg AssigneeSearchPanel.Msg
       -- Labels
@@ -313,9 +314,10 @@ type Msg
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
+    | LogErr String
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal String -- ports receive / Close modal
+    | DoCloseModal ModalData -- ports receive / Close modal
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
@@ -460,6 +462,9 @@ update global message model =
             global.session.apis
     in
     case message of
+        LoadOrga ->
+            ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
+
         PushTension form ack ->
             ( model, addOneTension apis.gql form ack, Cmd.none )
 
@@ -583,6 +588,44 @@ update global message model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
+        GotOrga result ->
+            case doRefreshToken result model.refresh_trial of
+                Authenticate ->
+                    let
+                        uctx =
+                            case global.session.user of
+                                LoggedIn u ->
+                                    u
+
+                                LoggedOut ->
+                                    initUserctx
+                    in
+                    ( model, send (DoOpenAuthModal uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
+
+                OkAuth data ->
+                    let
+                        users =
+                            orgaToUsersData data
+
+                        users_l =
+                            Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
+                    in
+                    if Dict.size data > 0 then
+                        ( { model | users_data = Success users }
+                        , Cmd.batch [ Ports.inheritWith "userSearchPanel", Ports.initUserSearch users_l ]
+                        , send (UpdateSessionOrga (Just data))
+                        )
+
+                    else
+                        ( { model | users_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
+
+                NoAuth ->
+                    ( model, Cmd.none, send (UpdateSessionOrga Nothing) )
+
+        -- Page
         GotTensionHead result ->
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
@@ -901,7 +944,7 @@ update global message model =
                     -- Loading or Error
                     ( model, Cmd.none, Cmd.none )
 
-        ChangeBlobNode field value ->
+        ChangeBlobPost field value ->
             let
                 action =
                     model.tension_head |> withMaybeData |> Maybe.map (\th -> th.action) |> withDefault Nothing
@@ -1059,13 +1102,13 @@ update global message model =
                     ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
         -- User quick search
-        ChangeNodeUserPattern pos pattern ->
+        ChangeUserPattern pos pattern ->
             ( { model | nodeDoc = NodeDoc.updateUserPattern pos pattern model.nodeDoc }
             , Ports.searchUser pattern
             , Cmd.none
             )
 
-        ChangeNodeUserRole pos role ->
+        ChangeUserRole pos role ->
             ( { model | nodeDoc = NodeDoc.updateUserRole pos role model.nodeDoc }
             , Cmd.none
             , Cmd.none
@@ -1096,7 +1139,7 @@ update global message model =
                 ( newModel, cmd ) =
                     case model.users_data of
                         NotAsked ->
-                            ( { model | users_data = Loading }, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga )
+                            ( { model | users_data = Loading }, send LoadOrga )
 
                         _ ->
                             ( model, Cmd.none )
@@ -1112,24 +1155,6 @@ update global message model =
 
         CancelLookupFs ->
             ( { model | nodeDoc = NodeDoc.closeLookup model.nodeDoc }, Cmd.none, Cmd.none )
-
-        GotOrga result ->
-            case result of
-                Success data ->
-                    let
-                        users =
-                            orgaToUsersData data
-
-                        users_l =
-                            Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
-                    in
-                    ( { model | users_data = Success users }
-                    , Cmd.batch [ Ports.inheritWith "userSearchPanel", Ports.initUserSearch users_l ]
-                    , send (UpdateSessionOrga (Just data))
-                    )
-
-                other ->
-                    ( model, Cmd.none, Cmd.none )
 
         -- Assignees
         AssigneeSearchPanelMsg msg ->
@@ -1236,7 +1261,7 @@ update global message model =
                         |> ActionPanel.setStep StepOne
             in
             ( { model | actionPanel = panel }
-            , Ports.open_modal
+            , Ports.open_modal "actionPanelModal"
             , Cmd.none
             )
 
@@ -1390,17 +1415,20 @@ update global message model =
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
+        LogErr err ->
+            ( model, Ports.logErr err, Cmd.none )
+
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
         DoOpenModal ->
-            ( { model | isModalActive = True }, Cmd.none, Ports.open_modal )
+            ( { model | isModalActive = True }, Ports.open_modal "actionModal", Cmd.none )
 
-        DoCloseModal link ->
+        DoCloseModal data ->
             let
                 gcmd =
-                    if link /= "" then
-                        send (Navigate link)
+                    if data.link /= "" then
+                        send (Navigate data.link)
 
                     else
                         Cmd.none
@@ -1508,7 +1536,7 @@ update global message model =
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    [ Ports.closeModalFromJs DoCloseModal
+    [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     , Ports.cancelActionFromJs (always CancelAction)
     , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
@@ -2290,12 +2318,12 @@ viewDocument u t b model =
                             , onCancelBlob = CancelBlob
                             , onSubmitBlob = SubmitBlob
                             , onSubmit = Submit
-                            , onChangeNode = ChangeBlobNode
-                            , onAddResponsabilities = AddResponsabilities
+                            , onChangePost = ChangeBlobPost
                             , onAddDomains = AddDomains
                             , onAddPolicies = AddPolicies
-                            , onChangeUserPattern = ChangeNodeUserPattern
-                            , onChangeUserRole = ChangeNodeUserRole
+                            , onAddResponsabilities = AddResponsabilities
+                            , onChangeUserPattern = ChangeUserPattern
+                            , onChangeUserRole = ChangeUserRole
                             , onSelectUser = SelectUser
                             , onCancelUser = CancelUser
                             , onShowLookupFs = ShowLookupFs
@@ -2574,13 +2602,14 @@ setupActionModal : Bool -> ActionState -> Html Msg
 setupActionModal isModalActive action =
     div
         [ id "actionModal"
-        , class "modal modal-fx-fadeIn elmModal"
+        , class "modal modal-fx-fadeIn "
         , classList [ ( "is-active", isModalActive ) ]
+        , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "actionModal"
-            , onClick (DoCloseModal "")
+            , onClick (DoCloseModal { reset = True, link = "" })
             ]
             []
         , div [ class "modal-content" ]
@@ -2596,11 +2625,8 @@ setupActionModal isModalActive action =
 
                 ActionAuthNeeded ->
                     viewAuthNeeded DoCloseModal
-
-                other ->
-                    div [] [ text "Action not implemented." ]
             ]
-        , button [ class "modal-close is-large", onClick (DoCloseModal "") ] []
+        , button [ class "modal-close is-large", onClick (DoCloseModal { reset = True, link = "" }) ] []
         ]
 
 
@@ -2616,7 +2642,7 @@ viewJoinOrgaStep step =
         JoinValidation form result ->
             case result of
                 Success _ ->
-                    div [ class "box is-light", onClick (DoCloseModal "") ]
+                    div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.welcomIn
                         , text " "
