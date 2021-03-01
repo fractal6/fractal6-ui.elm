@@ -2,7 +2,7 @@ module Form.NewTension exposing (..)
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (LookupResult)
-import Components.I as I
+import Icon as I
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)

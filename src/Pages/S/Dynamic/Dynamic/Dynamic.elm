@@ -1,6 +1,6 @@
 module Pages.S.Dynamic.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
 
-import Components.Org.Settings as S
+import Org.Settings as S
 import Global
 import Html
 import Page exposing (Document, Page)

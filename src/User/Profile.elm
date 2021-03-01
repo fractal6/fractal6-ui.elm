@@ -1,17 +1,15 @@
-module Components.User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Components.Help as Help
 import Components.HelperBar as HelperBar
-import Components.I as I
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
-import Components.NotFound exposing (viewNotFound)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)
+import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
@@ -19,6 +17,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Icon as I
 import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -438,7 +437,6 @@ view global model =
                 div [ class "spinner" ] []
 
             Failure err ->
-                --viewNotFound
                 viewGqlErrors err
         , Help.view {} model.help |> Html.map HelpMsg
         , case model.modalAuth of

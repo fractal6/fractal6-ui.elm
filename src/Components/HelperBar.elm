@@ -1,7 +1,7 @@
 module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
-import Components.I as I
+import Icon as I
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)

@@ -1,6 +1,6 @@
 module Pages.User.Dynamic exposing (Flags, Model, Msg, page)
 
-import Components.User.Profile as Profile
+import User.Profile as Profile
 import Global
 import Html
 import Page exposing (Document, Page)

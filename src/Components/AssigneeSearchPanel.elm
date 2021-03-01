@@ -2,7 +2,7 @@ module Components.AssigneeSearchPanel exposing (Msg, State, init, subscriptions,
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Codecs exposing (LookupResult)
-import Components.I as I
+import Icon as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

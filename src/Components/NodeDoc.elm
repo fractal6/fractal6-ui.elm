@@ -2,7 +2,7 @@ module Components.NodeDoc exposing (..)
 
 import Components.AssigneeSearchPanel exposing (viewUserSelectors)
 import Components.Doc exposing (ActionView(..))
-import Components.I as I
+import Icon as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Dict

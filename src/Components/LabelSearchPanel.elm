@@ -2,7 +2,6 @@ module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, up
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (LookupResult)
-import Components.I as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -11,6 +10,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -466,8 +466,8 @@ viewNew op (State model) =
               else
                 text ""
             ]
-        , div [ class "button  is-light mr-2", onClick (OnOpen op.targets) ]
-            [ I.icon1 "icon-plus" "", text "Label" ]
+        , div [ class "button is-small is-primary mr-2", onClick (OnOpen op.targets) ]
+            [ I.icon1 "icon-1x icon-plus" "", text "Label" ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels
 

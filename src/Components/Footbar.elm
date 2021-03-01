@@ -1,6 +1,6 @@
 module Components.Footbar exposing (view)
 
-import Components.I as I
+import Icon as I
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style, target)
 

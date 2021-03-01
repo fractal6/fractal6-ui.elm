@@ -2,7 +2,7 @@ module Components.Loading exposing (..)
 
 --import DateTime exposing (Calendar, DateTime, getDate, getTime)
 
-import Components.Asset as Asset
+import Asset as Asset
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp

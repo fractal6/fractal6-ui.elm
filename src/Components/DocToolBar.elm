@@ -1,7 +1,7 @@
 module Components.DocToolBar exposing (view)
 
 import Components.Doc exposing (ActionView(..))
-import Components.I as I
+import Icon as I
 import Extra exposing (ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)

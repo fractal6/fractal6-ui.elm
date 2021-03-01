@@ -1,6 +1,6 @@
 module Components.ActionPanel exposing (..)
 
-import Components.I as I
+import Icon as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

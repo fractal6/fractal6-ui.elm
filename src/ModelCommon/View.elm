@@ -1,6 +1,6 @@
 module ModelCommon.View exposing (..)
 
-import Components.I as I
+import Icon as I
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)

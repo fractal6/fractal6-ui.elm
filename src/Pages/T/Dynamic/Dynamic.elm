@@ -1,6 +1,6 @@
 module Pages.T.Dynamic.Dynamic exposing (Flags, Model, Msg, page)
 
-import Components.Org.Tensions as T
+import Org.Tensions as T
 import Global
 import Html
 import Page exposing (Document, Page)

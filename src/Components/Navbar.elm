@@ -1,11 +1,11 @@
 module Components.Navbar exposing (view)
 
-import Components.I as I
-import Components.Logo as Logo
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Icon as I
+import Logo as Logo
 import ModelCommon exposing (UserState(..))
 import Text as T exposing (textH, textT, upH)
 

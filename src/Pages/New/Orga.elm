@@ -2,7 +2,7 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
 import Auth exposing (AuthState(..), doRefreshToken2, refreshAuthModal)
 import Browser.Navigation as Nav
-import Components.Help as Help
+import Form.Help as Help
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (makeNewNodeId)
 import Dict exposing (Dict)

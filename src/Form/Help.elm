@@ -1,8 +1,8 @@
-module Components.Help exposing (Msg, State, init, subscriptions, update, view)
+module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (QuickDoc)
-import Components.I as I
+import Icon as I
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, loadingSpin, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)

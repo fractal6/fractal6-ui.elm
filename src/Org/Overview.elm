@@ -1,4 +1,4 @@
-port module Components.Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
+port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
@@ -6,9 +6,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (LocalGraph_, LookupResult, Node_, QuickDoc, WindowPos, localGraphDecoder, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
-import Components.Help as Help
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.I as I
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Debug
@@ -16,6 +14,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
+import Form.Help as Help
 import Form.NewTension as NTF exposing (Msg(..), TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
@@ -29,6 +28,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Icon as I
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
