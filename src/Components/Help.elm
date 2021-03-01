@@ -152,13 +152,9 @@ open data =
     { data | isModalActive = True, doc = RemoteData.Loading }
 
 
-close : Bool -> Model -> Model
-close reset data =
-    if reset then
-        initModel data.formAsk.user
-
-    else
-        { data | isModalActive = False }
+close : Model -> Model
+close data =
+    { data | isModalActive = False }
 
 
 changeTab : HelpTab -> Model -> Model
@@ -171,8 +167,8 @@ changeLabel type_ data =
     { data | type_ = type_ }
 
 
-resetPost : HelpTab -> Model -> Model
-resetPost tab data =
+resetForm : HelpTab -> Model -> Model
+resetForm tab data =
     case tab of
         QuickHelp ->
             data
@@ -182,6 +178,11 @@ resetPost tab data =
 
         Feedback ->
             { data | formFeedback = initFormFeedback data.formFeedback }
+
+
+resetModel : Model -> Model
+resetModel model =
+    initModel model.formAsk.user
 
 
 setDocResult : WebData QuickDoc -> Model -> Model
@@ -229,6 +230,7 @@ type Msg
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset HelpTab
+    | OnResetModel
     | OnGotQuickDoc (WebData QuickDoc)
     | OnChangeTab HelpTab
     | OnChangePostAsk String String
@@ -286,10 +288,19 @@ update_ apis message model =
 
         OnClose data ->
             let
+                cmds =
+                    ternary data.reset [ sendSleep OnResetModel 333 ] []
+
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close data.reset model, Out [ Ports.close_modal ] gcmds Nothing )
+            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
+
+        OnReset tab ->
+            ( resetForm tab model, noOut )
+
+        OnResetModel ->
+            ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             let
@@ -308,9 +319,6 @@ update_ apis message model =
 
             else
                 ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
-
-        OnReset tab ->
-            ( resetPost tab model, noOut )
 
         OnGotQuickDoc result ->
             ( setDocResult result model, noOut )

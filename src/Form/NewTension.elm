@@ -185,13 +185,9 @@ switchTab tab model =
             initCircleTab model
 
 
-close : Bool -> Model -> Model
-close reset data =
-    if reset then
-        initModel data.user
-
-    else
-        { data | isModalActive = False }
+close : Model -> Model
+close data =
+    { data | isModalActive = False }
 
 
 setActiveButton : Bool -> Model -> Model
@@ -413,6 +409,11 @@ resetPost data =
     { data | form = newForm }
 
 
+resetModel : Model -> Model
+resetModel data =
+    initModel data.user
+
+
 
 -- User Lookup
 
@@ -492,6 +493,7 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
       -- Modal control
     | OnOpen
+    | OnResetModel
     | OnClose ModalData
     | OnCloseSafe String String
     | OnChangeInputViewMode InputViewMode
@@ -587,10 +589,16 @@ update_ apis message model =
 
         OnClose data ->
             let
+                cmds =
+                    ternary data.reset [ sendSleep OnResetModel 333 ] []
+
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close data.reset model, Out [ Ports.close_modal ] gcmds Nothing )
+            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
+
+        OnResetModel ->
+            ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             let
