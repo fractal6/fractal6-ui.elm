@@ -885,7 +885,7 @@ viewSources (State model) nextStep =
 
 viewTensionTabs : TensionTab -> Html Msg
 viewTensionTabs tab =
-    div [ id "tensionTab1", class "tabs is-boxed has-text-weight-medium" ]
+    div [ id "tensionTabTop", class "tabs is-boxed has-text-weight-medium" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ] [ a [ onClickPD (OnSwitchTab NewTensionTab), target "blank_" ] [ I.icon1 "icon-exchange" "Tension" ] ]
             , li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-target" "Role or Circle" ] ]
