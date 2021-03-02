@@ -2,7 +2,6 @@ module Form.NewTension exposing (..)
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (LookupResult)
-import Icon as I
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
@@ -24,6 +23,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -942,7 +942,7 @@ viewTension op (State model) =
                 ]
 
         other ->
-            div [ class "panel modal-card finalModal" ]
+            div [ class "panel modal-card" ]
                 [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
@@ -1018,7 +1018,7 @@ viewTension op (State model) =
                                                 []
 
                                         Preview ->
-                                            div [] [ renderMarkdown "is-dark" message, hr [] [] ]
+                                            div [] [ renderMarkdown "is-dark mt-4 mx-3" message, hr [] [] ]
                                     ]
                                 , p [ class "help-label" ] [ textH txt.message_help ]
                                 , br [] []
@@ -1132,7 +1132,7 @@ viewCircle op (State model) =
                     , onChangeUserPattern = OnChangeUserPattern
                     }
             in
-            div [ class "panel modal-card finalModal" ]
+            div [ class "panel modal-card" ]
                 [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|

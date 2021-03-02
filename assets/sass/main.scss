@@ -916,58 +916,6 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-#actionPanelModal {
-    &.modal.is-active {
-        z-index: 40 !important;
-    }
-}
-
-#helpModal {
-    .modal-content, .modal-card {
-        height: 90% !important;
-        max-height: 100%;
-        @media (min-width: $modal-width-large){
-            height: 95% !important;
-            min-width: $modal-width-large !important;
-            .modal-card-body { padding: 30px; }
-        }
-
-    }
-
-    .modal-card-head {
-        display: block;
-        padding: 10px 10px 0px 10px;
-    }
-
-    .modal-card-body {
-        background-color: $white-light !important;
-    }
-
-    .tabs  {
-        li {
-            a, span {
-                color: $grey;
-                align-items: center;
-                display: flex;
-                justify-content: center;
-                padding: 0.2em 1em;
-                cursor: pointer;
-            }
-            &.is-active {
-                a, span {
-                    color: $grey-darker;
-                    border-bottom-color: orange !important;
-                    border-bottom-style: solid;
-                    border-bottom-width: 2px;
-                    padding-bottom: 0.15em;
-                    margin-bottom: -1px;
-                }
-            }
-
-        }
-    }
-}
-
 .tensionDocument {
 
     .blobToolBar {
@@ -1456,26 +1404,13 @@ a.actionLink {
     }
 
     .modal-content, .modal-card {
-        // size
-        @media (min-width: $fullhd ){
-            height: 90%;
-            max-height: 100%;
-        }
-        @media (min-width: $widescreen ){
-            height: 90%;
-            max-height: 100%;
-        }
-        @media (min-width: $desktop ){
-            height: 94%;
-            max-height: 100%;
-        }
         @media (min-width: $modal-width){
-            min-width: $modal-width !important;
+            min-width: $modal-width;
             .modal-card-body { padding: 20px 30px 20px 30px; }
         }
         @media (max-width: 768px){
-            width: 98% !important;
-            margin: 0 1% !important;
+            width: 98%;
+            margin: 0 1%;
             max-height: calc(100vh - 20px);
         }
 
@@ -1587,9 +1522,27 @@ a.actionLink {
     }
 }
 
-.finalModal {
+#tensionModal {
+    .modal-content {
+        position: absolute;
+        top: 5%;
+        overflow: hidden;
+        @media (min-width: $desktop ){
+            //max-height: 99%;
+        }
+    }
+
+    .modal-card-body {
+        overflow: auto !important;
+        height: 10%;
+        @media (min-width: $desktop ){
+            max-height: calc(72vh);
+        }
+    }
+
     .message {
-        background-color: $white-light !important;
+        //background-color: $white-light;
+        background-color: inherit;
         .tabs, .tabs.is-boxed  {
             li a  {
                 color: $grey-light !important;
@@ -1598,7 +1551,6 @@ a.actionLink {
                 background-color: inherit !important;
             }
             li.is-active a {
-                //color: $grey !important;
                 text-decoration: none !important;
                 background-color: $white-light !important;
                 border-top-width: 2px !important;
@@ -1618,7 +1570,8 @@ a.actionLink {
     }
 
     .message-body {
-        padding: 0.75rem 0.75rem !important;
+        //padding: 0.75rem 0.75rem;
+        padding: 0;
     }
 }
 
@@ -1667,6 +1620,65 @@ a.actionLink {
 #refreshAuthModal {
     .modal-background {
         background-color: $grey-light;
+    }
+}
+
+#actionPanelModal {
+    &.modal.is-active {
+        z-index: 40 !important;
+    }
+}
+
+#helpModal {
+    .modal-content, .modal-card {
+        @media (min-width: $fullhd ){
+            height: 90%;
+        }
+        @media (min-width: $widescreen ){
+            height: 90%;
+        }
+        @media (min-width: $desktop ){
+            height: 94%;
+        }
+        @media (min-width: $modal-width-large){
+            height: 95% !important;
+            min-width: $modal-width-large !important;
+            .modal-card-body { padding: 30px; }
+        }
+
+    }
+
+    .modal-card-head {
+        display: block;
+        padding: 10px 10px 0px 10px;
+    }
+
+    .modal-card-body {
+        background-color: $white-light !important;
+    }
+
+    .tabs  {
+        li {
+            a, span {
+                color: $grey;
+                align-items: center;
+                display: flex;
+                justify-content: center;
+                padding: 0.2em 1em;
+                cursor: pointer;
+            }
+            &.is-active {
+                a, span {
+                    color: $grey-darker;
+                    border-bottom-color: orange !important;
+                    border-bottom-style: solid;
+                    border-bottom-width: 2px;
+                    padding-bottom: 0.15em;
+                    margin-bottom: -1px;
+                }
+            }
+
+        }
     }
 }
 

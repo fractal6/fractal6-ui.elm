@@ -1958,7 +1958,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown "is-light" message, hr [] [] ]
+                                    div [] [ renderMarkdown "is-light mt-4 mx-3" message, hr [] [] ]
                             ]
                         ]
                     , case result of
