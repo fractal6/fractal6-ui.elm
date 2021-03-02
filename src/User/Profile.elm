@@ -145,8 +145,8 @@ type Msg
     | GotNodes (GqlData (List NodeExt))
     | GotUctx (GqlData UserCtx)
       -- Token refresh
-    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx
+    | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
@@ -155,8 +155,8 @@ type Msg
     | NoMsg
     | LogErr String
     | Navigate String
-    | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal ModalData -- ports receive / Close modal
+    | DoOpenModal
+    | DoCloseModal ModalData
       -- Help
     | HelpMsg Help.Msg
 
@@ -315,8 +315,12 @@ update global message model =
             , Ports.open_auth_modal
             )
 
-        DoCloseAuthModal ->
-            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+        DoCloseAuthModal link ->
+            let
+                cmd =
+                    ternary (link /= "") (send (Navigate link)) Cmd.none
+            in
+            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -337,7 +341,7 @@ update global message model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send DoCloseAuthModal, send LoadNodes ]
+                    , Cmd.batch [ send (DoCloseAuthModal ""), send LoadNodes ]
                     , send (UpdateUserSession uctx)
                     )
 

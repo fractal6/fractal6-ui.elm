@@ -216,7 +216,8 @@ viewLogin global model =
                         ]
                     ]
                 , br [] []
-                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Signup) ] [ text T.createAccount ]
+                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Signup) ]
+                    [ textH T.createAccount ]
                 , div [ class "field is-grouped is-grouped-right" ]
                     [ div [ class "control" ]
                         [ if isLoginSendable model.form.post then

@@ -5,6 +5,7 @@ import Components.Markdown exposing (renderMarkdown)
 import Dict
 import Extra.Events exposing (onKeydown)
 import Form
+import Generated.Route as Route exposing (Route)
 import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -202,6 +203,17 @@ refreshAuthModal modalAuth msgs =
 
                 Inactive ->
                     Nothing
+
+        username =
+            Maybe.map (\f -> Dict.get "username" f.post |> withDefault "") form_m
+                |> withDefault ""
+
+        onCloseModal =
+            if username == "" then
+                msgs.closeModal (Route.toHref Route.Logout)
+
+            else
+                msgs.closeModal ""
     in
     div
         [ id "refreshAuthModal"
@@ -209,15 +221,11 @@ refreshAuthModal modalAuth msgs =
         , classList [ ( "is-active", form_m /= Nothing ) ]
         , attribute "data-modal-close" "closeAuthModalFromJs"
         ]
-        [ div [ class "modal-background", onClick msgs.closeModal ] []
-        , div [ class "modal-content", classList [] ]
+        [ div [ class "modal-background", onClick onCloseModal ] []
+        , div [ class "modal-content" ]
             [ div [ class "box" ] <|
                 case modalAuth of
                     Active form ->
-                        let
-                            username =
-                                Dict.get "username" form.post |> withDefault ""
-                        in
                         [ p [ class "field" ] [ text "Your session expired. Please, confirm your password:" ]
                         , div [ class "field" ]
                             [ div [ class "field" ]
@@ -277,5 +285,5 @@ refreshAuthModal modalAuth msgs =
                     Inactive ->
                         []
             ]
-        , button [ class "modal-close is-large", onClick msgs.closeModal ] []
+        , button [ class "modal-close is-large", onClick onCloseModal ] []
         ]

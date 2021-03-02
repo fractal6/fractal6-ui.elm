@@ -807,7 +807,7 @@ viewModal op_ (State model) =
     div
         [ id "tensionModal"
         , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isModalActive ) ]
+        , classList [ ( "is-active", model.isModalActive ), ( "fixed-top", withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
         [ div
@@ -883,12 +883,16 @@ viewSources (State model) nextStep =
         ]
 
 
-viewTensionTabs : TensionTab -> Html Msg
-viewTensionTabs tab =
+viewTensionTabs : TensionTab -> Node -> Html Msg
+viewTensionTabs tab targ =
     div [ id "tensionTabTop", class "tabs is-boxed has-text-weight-medium" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ] [ a [ onClickPD (OnSwitchTab NewTensionTab), target "blank_" ] [ I.icon1 "icon-exchange" "Tension" ] ]
-            , li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-target" "Role or Circle" ] ]
+            , if targ.type_ == NodeType.Circle then
+                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-target" "Role or Circle" ] ]
+
+              else
+                text ""
             ]
         ]
 
@@ -975,7 +979,7 @@ viewTension op (State model) =
                         , div [ class "level-right has-text-weight-medium" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
-                , viewTensionTabs model.activeTab
+                , viewTensionTabs model.activeTab model.form.target
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -997,8 +1001,11 @@ viewTension op (State model) =
                         [ div [ class "message-header" ]
                             [ div [ class "tabs is-boxed is-small" ]
                                 [ ul []
-                                    [ li [ classList [ ( "is-active", model.viewMode == Write ) ] ] [ a [ onClickPD2 (OnChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
-                                    , li [ classList [ ( "is-active", model.viewMode == Preview ) ] ] [ a [ onClickPD2 (OnChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                                    [ li [ classList [ ( "is-active", model.viewMode == Write ) ] ]
+                                        [ a [ onClickPD2 (OnChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                                    , li
+                                        [ classList [ ( "is-active", model.viewMode == Preview ) ] ]
+                                        [ a [ onClickPD2 (OnChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
                                     ]
                                 ]
                             ]
@@ -1148,7 +1155,7 @@ viewCircle op (State model) =
                         , div [ class "level-right has-text-weight-medium" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
                         ]
                     ]
-                , viewTensionTabs model.activeTab
+                , viewTensionTabs model.activeTab model.form.target
                 , div [ class "modal-card-body" ]
                     [ nodeAboutInputView False OverviewBaseUri txt form.node op_
                     , div [ class "card cardForm" ]

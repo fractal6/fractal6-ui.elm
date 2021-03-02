@@ -2,13 +2,13 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
 import Auth exposing (AuthState(..), doRefreshToken2, refreshAuthModal)
 import Browser.Navigation as Nav
-import Form.Help as Help
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (makeNewNodeId)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable, isPostSendable)
+import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
@@ -151,15 +151,15 @@ type Msg
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (WebData NodeId)
       -- Token refresh
-    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx
+    | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | Navigate String
-    | DoCloseModal String -- ports receive / Close modal
+    | DoCloseModal String
       -- Help
     | HelpMsg Help.Msg
 
@@ -247,8 +247,12 @@ update global message model =
             , Ports.open_auth_modal
             )
 
-        DoCloseAuthModal ->
-            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+        DoCloseAuthModal link ->
+            let
+                cmd =
+                    ternary (link /= "") (send (Navigate link)) Cmd.none
+            in
+            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -269,7 +273,7 @@ update global message model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , send DoCloseAuthModal
+                    , send (DoCloseAuthModal "")
                     , send (UpdateUserSession uctx)
                     )
 

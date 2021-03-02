@@ -306,8 +306,8 @@ type Msg
     | DoJoinOrga3 Node Time.Posix
     | JoinAck (GqlData ActionResult)
       -- Token refresh
-    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx
+    | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
@@ -316,8 +316,8 @@ type Msg
     | NoMsg
     | LogErr String
     | Navigate String
-    | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal ModalData -- ports receive / Close modal
+    | DoOpenModal
+    | DoCloseModal ModalData
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
@@ -1447,8 +1447,12 @@ update global message model =
             , Ports.open_auth_modal
             )
 
-        DoCloseAuthModal ->
-            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+        DoCloseAuthModal link ->
+            let
+                cmd =
+                    ternary (link /= "") (send (Navigate link)) Cmd.none
+            in
+            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -1469,7 +1473,7 @@ update global message model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , send DoCloseAuthModal
+                    , send (DoCloseAuthModal "")
                     , send (UpdateUserSession uctx)
                     )
 
@@ -2453,6 +2457,7 @@ viewSidePane u t model =
             t.labels |> withDefault []
     in
     div [ class "tensionSidePane" ]
+        -- Assignees/User select
         [ div [ class "media" ]
             [ div [ class "media-content" ]
                 [ div []
@@ -2477,6 +2482,8 @@ viewSidePane u t model =
                     div [ class "is-italic" ] [ textH T.noLabels ]
                 ]
             ]
+
+        -- Label select
         , div [ class "media" ]
             [ div [ class "media-content" ]
                 [ div []

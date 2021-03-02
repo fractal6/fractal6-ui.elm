@@ -280,8 +280,8 @@ type Msg
     | DoJoinOrga3 Node Time.Posix
     | JoinAck (GqlData ActionResult)
       -- Token refresh
-    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx
+    | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
@@ -724,13 +724,17 @@ update global message model =
             , Ports.open_auth_modal
             )
 
-        DoCloseAuthModal ->
+        DoCloseAuthModal link ->
+            let
+                cmd =
+                    ternary (link /= "") (send (Navigate link)) Cmd.none
+            in
             case model.node_action of
                 JoinOrga _ ->
-                    ( { model | modalAuth = Inactive }, send (DoCloseModal { reset = True, link = "" }), Ports.close_auth_modal )
+                    ( { model | modalAuth = Inactive }, Cmd.batch [ cmd, send (DoCloseModal { reset = True, link = "" }) ], Ports.close_auth_modal )
 
                 _ ->
-                    ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+                    ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -765,7 +769,7 @@ update global message model =
                                     Cmd.none
                     in
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send DoCloseAuthModal, cmd ]
+                    , Cmd.batch [ send (DoCloseAuthModal ""), cmd ]
                     , send (UpdateUserSession uctx)
                     )
 

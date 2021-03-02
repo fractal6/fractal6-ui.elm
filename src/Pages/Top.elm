@@ -21,6 +21,7 @@ import Page exposing (Document, Page)
 import Ports
 import RemoteData exposing (RemoteData)
 import Task
+import Text as T exposing (textH, textT, upH)
 
 
 
@@ -296,6 +297,12 @@ viewLogin model =
                 ]
             ]
         , br [] []
+        , div [ attribute "style" "width: 225px;" ]
+            [ a [ class "is-size-7 is-pulled-left mb-2", onClickPD (ChangeViewMode Signup), target "_blank" ]
+                [ textH T.createAccount ]
+            , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Login) ]
+                [ textH T.passwordForgotten ]
+            ]
         , div [ class "field is-grouped is-grouped-right" ]
             [ div [ class "control" ]
                 [ if isLoginSendable model.form.post then

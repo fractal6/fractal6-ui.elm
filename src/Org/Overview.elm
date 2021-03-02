@@ -178,8 +178,8 @@ type Msg
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
       -- New Tension triggers
-    | DoNodeAction Node_ -- ports receive / tooltip click
-    | DoNewTension Node -- {target}
+    | DoNodeAction Node_
+    | DoNewTension Node
       -- New tension
     | NewTensionMsg NTF.Msg
       -- Node Settings
@@ -204,13 +204,13 @@ type Msg
     | UpdateNode (Maybe Node)
     | DelNodes (List String)
       -- GP JS Interop
-    | NodeClicked String -- ports receive / Node clicked
-    | NodeFocused LocalGraph_ -- ports receive / Node focused
-    | DoClearTooltip -- ports send
-    | ToggleGraphReverse -- ports send
+    | NodeClicked String
+    | NodeFocused LocalGraph_
+    | DoClearTooltip
+    | ToggleGraphReverse
       -- Token refresh
-    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx
+    | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
@@ -219,8 +219,8 @@ type Msg
     | NoMsg
     | LogErr String
     | Navigate String
-    | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal ModalData -- ports receive / Close modal
+    | DoOpenModal
+    | DoCloseModal ModalData
     | ExpandRoles
     | CollapseRoles
       -- Help
@@ -936,14 +936,14 @@ update global message model =
 
         DoCloseModal data ->
             let
-                gcmd =
+                cmd =
                     if data.link /= "" then
                         send (Navigate data.link)
 
                     else
                         Cmd.none
             in
-            ( { model | isModalActive = False }, gcmd, Ports.close_modal )
+            ( { model | isModalActive = False }, cmd, Ports.close_modal )
 
         DoOpenAuthModal uctx ->
             ( { model
@@ -957,13 +957,17 @@ update global message model =
             , Ports.open_auth_modal
             )
 
-        DoCloseAuthModal ->
+        DoCloseAuthModal link ->
+            let
+                cmd =
+                    ternary (link /= "") (send (Navigate link)) Cmd.none
+            in
             case model.node_action of
                 JoinOrga _ ->
-                    ( { model | modalAuth = Inactive }, send (DoCloseModal { reset = True, link = "" }), Ports.close_auth_modal )
+                    ( { model | modalAuth = Inactive }, Cmd.batch [ cmd, send (DoCloseModal { reset = True, link = "" }) ], Ports.close_auth_modal )
 
                 _ ->
-                    ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+                    ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -998,7 +1002,7 @@ update global message model =
                                     Cmd.none
                     in
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send DoCloseAuthModal, cmd ]
+                    , Cmd.batch [ send (DoCloseAuthModal ""), cmd ]
                     , send (UpdateUserSession uctx)
                     )
 

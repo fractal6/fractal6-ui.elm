@@ -1525,14 +1525,11 @@ a.actionLink {
     }
 }
 
-#tensionModal {
+.modal.fixed-top {
     .modal-content {
         position: absolute;
         top: 5%;
         overflow: hidden;
-        @media (min-width: $desktop ){
-            //max-height: 99%;
-        }
     }
 
     .modal-card-body {
@@ -1542,6 +1539,9 @@ a.actionLink {
             max-height: calc(72vh);
         }
     }
+}
+
+#tensionModal {
 
     .message {
         //background-color: $white-light;

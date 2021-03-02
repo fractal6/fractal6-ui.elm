@@ -339,6 +339,7 @@ view_ isInternal op (State model) =
                                 [ input
                                     [ id "userInput"
                                     , class "input autofocus"
+                                    , classList [ ( "is-small", isInternal ) ]
                                     , type_ "text"
                                     , placeholder (upH T.searchLabels)
                                     , value model.pattern

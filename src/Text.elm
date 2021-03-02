@@ -62,7 +62,17 @@ signout =
 
 createAccount : String
 createAccount =
-    "create a new account"
+    "or create an account"
+
+
+orSignin : String
+orSignin =
+    "or sign in"
+
+
+passwordForgotten : String
+passwordForgotten =
+    "forgot your password?"
 
 
 createLabel : String

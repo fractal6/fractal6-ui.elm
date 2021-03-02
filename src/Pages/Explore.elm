@@ -3,19 +3,19 @@ module Pages.Explore exposing (Flags, Model, Msg, page)
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
-import Form.Help as Help
 import Components.HelperBar as HelperBar
-import Icon as I
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)
+import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Icon as I
 import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
@@ -101,8 +101,8 @@ type Msg
     | LoadNodes
     | GotOrgas (GqlData (List Node))
       -- Token refresh
-    | DoOpenAuthModal UserCtx -- ports receive / Open  modal
-    | DoCloseAuthModal -- ports receive / Close modal
+    | DoOpenAuthModal UserCtx
+    | DoCloseAuthModal String
     | ChangeAuthPost String String
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
@@ -111,8 +111,8 @@ type Msg
     | NoMsg
     | LogErr String
     | Navigate String
-    | DoOpenModal -- ports receive / Open  modal
-    | DoCloseModal ModalData -- ports receive / Close modal
+    | DoOpenModal
+    | DoCloseModal ModalData
       -- Help
     | HelpMsg Help.Msg
 
@@ -191,8 +191,12 @@ update global message model =
             , Ports.open_auth_modal
             )
 
-        DoCloseAuthModal ->
-            ( { model | modalAuth = Inactive }, Cmd.none, Ports.close_auth_modal )
+        DoCloseAuthModal link ->
+            let
+                cmd =
+                    ternary (link /= "") (send (Navigate link)) Cmd.none
+            in
+            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -213,7 +217,7 @@ update global message model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send DoCloseAuthModal, send LoadNodes ]
+                    , Cmd.batch [ send (DoCloseAuthModal ""), send LoadNodes ]
                     , send (UpdateUserSession uctx)
                     )
 
