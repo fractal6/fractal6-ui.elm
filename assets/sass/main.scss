@@ -1111,7 +1111,6 @@ html.has-modal-active, html.has-modal-active2 {
     max-height: 400px !important;
     overflow-y: auto !important;
 
-
     .table, .table.is-fullwidth {
         //flex-grow: 1;
         //flex-shrink: 1;
@@ -1621,6 +1620,9 @@ a.actionLink {
 }
 
 #refreshAuthModal {
+    &.modal.is-active {
+        z-index: 100 !important;
+    }
     .modal-background {
         background-color: $grey-light;
     }
