@@ -604,12 +604,17 @@ update_ apis message model =
                     let
                         sources =
                             getOrgaRoles model.form.uctx.roles [ model.form.target.rootnameid ]
+
+                        g =
+                            Debug.log "sources" sources
                     in
                     if sources == [] && model.refresh_trial == 0 then
                         ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )
 
                     else if sources == [] then
-                        ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) model, noOut )
+                        ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) model |> open
+                        , out1 [ Ports.open_modal "tensionModal" ]
+                        )
 
                     else
                         ( model |> setUctx uctx |> setSources sources |> open

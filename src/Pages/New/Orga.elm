@@ -193,7 +193,7 @@ update global message model =
 
                 OkAuth n ->
                     ( { model | result = result }
-                    , send (Navigate (uriFromNameid OverviewBaseUri n.nameid))
+                    , sendSleep (Navigate (uriFromNameid OverviewBaseUri n.nameid)) 500
                     , send UpdateUserToken
                     )
 
