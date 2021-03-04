@@ -72,7 +72,7 @@ type GlobalCmd
       DoAuth UserCtx
     | DoUpdateToken
     | DoNavigate String
-    | DoModalAsk String String Bool
+    | DoModalAsk String String -- SafeClose
       --
     | DoFetchNode String
     | DoPushTension Tension

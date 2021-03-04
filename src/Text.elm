@@ -255,6 +255,11 @@ searchLabels =
     "search labels"
 
 
+editLabels : String
+editLabels =
+    "edit labels"
+
+
 reopened : String
 reopened =
     "reopened"

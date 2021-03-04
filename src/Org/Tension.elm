@@ -2505,7 +2505,6 @@ viewSidePane u t model =
                                     { selectedLabels = t.labels |> withDefault []
                                     , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
                                     , isAdmin = model.isTensionAdmin
-                                    , exitSafe = False -- ignored here
                                     }
                             in
                             LabelSearchPanel.view panelOp model.labelsPanel |> Html.map LabelSearchPanelMsg

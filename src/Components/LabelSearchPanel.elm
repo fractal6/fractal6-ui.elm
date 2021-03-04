@@ -154,7 +154,7 @@ type Msg
     | SetLabel LabelForm
       --
     | Navigate String
-    | OnModalAsk String String Bool
+    | OnModalAsk String String
 
 
 type alias Out =
@@ -293,8 +293,8 @@ update_ apis message model =
         Navigate link ->
             ( model, out2 [ DoNavigate link ] )
 
-        OnModalAsk link onCloseTxt doClose ->
-            ( model, out2 [ DoModalAsk link onCloseTxt doClose ] )
+        OnModalAsk link onCloseTxt ->
+            ( model, out2 [ DoModalAsk link onCloseTxt ] )
 
 
 subscriptions =
@@ -313,7 +313,6 @@ type alias Op =
     { selectedLabels : List Label
     , targets : List String
     , isAdmin : Bool
-    , exitSafe : Bool
     }
 
 
@@ -380,12 +379,12 @@ viewLabelSelectors isInternal labels op model =
                 [ class "panel-block is-md"
                 , attribute "style" "border-top: 1px solid;"
                 , if isInternal then
-                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")) "" op.exitSafe)
+                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")) "")
 
                   else
                     onClick (Navigate (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")))
                 ]
-                [ I.icon1 "icon-pen" "Edit labels" ]
+                [ I.icon1 "icon-pen" <| upH T.editLabels ]
     in
     div []
         [ ternary isInternal viewEdit (text "")

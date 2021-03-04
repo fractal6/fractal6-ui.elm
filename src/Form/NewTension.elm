@@ -566,6 +566,21 @@ out2 cmds =
     Out [] cmds Nothing
 
 
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoModalAsk link reset ->
+                        ( send (OnCloseSafe link reset), Cmd.none )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
+            )
+        |> List.unzip
+
+
 update : Apis -> Msg -> State -> ( State, Out )
 update apis message (State model) =
     update_ apis message model
@@ -771,8 +786,11 @@ update_ apis message model =
                         )
                         out.result
                         |> withDefault model
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
             in
-            ( { newModel | labelsPanel = panel }, Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m)) out.gcmds Nothing )
+            ( { newModel | labelsPanel = panel }, Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds Nothing )
 
         -- Confirm Modal
         DoModalConfirmOpen msg txts ->
@@ -1055,7 +1073,6 @@ viewTension op (State model) =
                                 { selectedLabels = form.labels
                                 , targets = model.targets |> List.map (\n -> n.nameid)
                                 , isAdmin = False
-                                , exitSafe = canExitSafe model
                                 }
                                 model.labelsPanel
                                 |> Html.map LabelSearchPanelMsg
