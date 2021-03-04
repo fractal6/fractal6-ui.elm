@@ -2,7 +2,7 @@ module ModelCommon exposing (..)
 
 import Array exposing (Array)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
-import Components.Loading as Loading exposing (ErrorData, GqlData, RequestResult(..), WebData)
+import Components.Loading as Loading exposing (ErrorData, GqlData, RequestResult(..), WebData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
@@ -496,6 +496,60 @@ getNodeName nameid orga =
             errMsg
 
 
+getParentId : String -> GqlData NodesData -> Maybe String
+getParentId nameid odata =
+    case odata of
+        Success data ->
+            data
+                |> Dict.get nameid
+                |> Maybe.map (\n -> n.parent)
+                |> withDefault Nothing
+                |> Maybe.map (\p -> p.nameid)
+
+        _ ->
+            Nothing
+
+
+getParents : String -> GqlData NodesData -> List Node
+getParents nameid odata =
+    case odata of
+        Success data ->
+            case Maybe.map (\n -> n.parent) (Dict.get nameid data) |> withDefault Nothing of
+                Just p ->
+                    case getNode p.nameid odata of
+                        Just n ->
+                            [ n ] ++ getParents p.nameid odata
+
+                        Nothing ->
+                            getParents p.nameid odata
+
+                Nothing ->
+                    []
+
+        _ ->
+            []
+
+
+getChildren : String -> GqlData NodesData -> List Node
+getChildren nid odata =
+    odata
+        |> withMaybeDataMap
+            (\x ->
+                x |> Dict.values |> List.filter (\n -> Just (nearestCircleid nid) == Maybe.map (\m -> m.nameid) n.parent)
+            )
+        |> withDefault []
+
+
+getChildrenLeaf : String -> GqlData NodesData -> List Node
+getChildrenLeaf nid odata =
+    odata
+        |> withMaybeDataMap
+            (\x ->
+                x |> Dict.values |> List.filter (\n -> n.type_ == NodeType.Role && Just (nearestCircleid nid) == Maybe.map (\m -> m.nameid) n.parent)
+            )
+        |> withDefault []
+
+
 getParentidFromRole : UserRole -> String
 getParentidFromRole role =
     let
@@ -515,35 +569,6 @@ getParentFragmentFromRole role =
                 |> Array.fromList
     in
     Array.get (Array.length l - 2) l |> withDefault ""
-
-
-getParentId : String -> GqlData NodesData -> Maybe String
-getParentId nameid odata =
-    case odata of
-        Success data ->
-            data
-                |> Dict.get nameid
-                |> Maybe.map (\n -> n.parent)
-                |> withDefault Nothing
-                |> Maybe.map (\p -> p.nameid)
-
-        _ ->
-            Nothing
-
-
-getParents : String -> GqlData NodesData -> List String
-getParents nameid odata =
-    case odata of
-        Success data ->
-            case Maybe.map (\n -> n.parent) (Dict.get nameid data) |> withDefault Nothing of
-                Just p ->
-                    [ nameid ] ++ [ p.nameid ] ++ getParents p.nameid odata
-
-                Nothing ->
-                    []
-
-        _ ->
-            []
 
 
 hotNodeInsert : Node -> GqlData NodesData -> NodesData

@@ -9,7 +9,7 @@ import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Date exposing (formatTime)
@@ -1047,7 +1047,7 @@ update global message model =
                                     )
                     }
             in
-            ( { model | tension_form = newForm }
+            ( { model | tension_form = newForm, publish_result = LoadingSlowly }
             , send PublishBlob
             , Cmd.none
             )
@@ -1615,6 +1615,8 @@ viewTension u t model =
     in
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
+            -- @DEBUG: width correpsoding to is-8 is hard-coded in modal-content (below) to
+            -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-8" ]
                 [ h1 [ class "title tensionTitle" ] <|
                     case model.isTitleEdit of
@@ -1856,7 +1858,10 @@ viewComment : Comment -> Model -> Html Msg
 viewComment c model =
     div [ class "media section is-paddingless" ]
         [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri c.createdBy.username) ] [ getAvatar c.createdBy.username ] ]
-        , div [ class "media-content" ]
+        , div
+            [ class "media-content"
+            , attribute "style" "width: 66.66667%;"
+            ]
             [ if model.comment_form.id == c.id then
                 viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
 
@@ -2358,6 +2363,10 @@ viewBlobToolBar u t b model =
                                 [ textH (T.publishedThe ++ " " ++ formatTime flag) ]
 
                         Nothing ->
+                            let
+                                isLoading =
+                                    model.publish_result == LoadingSlowly
+                            in
                             div [ class "field has-addons" ]
                                 [ div [ class "has-text-warning text-status" ]
                                     [ textH T.revisionNotPublished ]
@@ -2365,7 +2374,9 @@ viewBlobToolBar u t b model =
                                     [ class "button is-small is-success has-text-weight-semibold"
                                     , onClick (Submit <| PushBlob b.id)
                                     ]
-                                    [ I.icon1 "icon-share" (upH T.publish) ]
+                                    [ I.icon1 "icon-share" (upH T.publish)
+                                    , loadingSpin isLoading
+                                    ]
                                 ]
                     ]
 

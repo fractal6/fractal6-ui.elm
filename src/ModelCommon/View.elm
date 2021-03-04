@@ -1,6 +1,5 @@
 module ModelCommon.View exposing (..)
 
-import Icon as I
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
@@ -15,6 +14,7 @@ import Global
 import Html exposing (Html, a, br, button, div, i, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
+import Icon as I
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromNameid, uriFromUsername)
 import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, User, UserCtx, Username)
@@ -23,8 +23,10 @@ import Text as T exposing (textH, textT, upH)
 
 
 {-
-   Tension
-   @DEBUG: Factor this file to appropriate places in Component.{Tension, Node, User...}
+   @DEBUG: Factor this file to appropriate places in Component.{Tension, Node, User ,Color...}
+-}
+{-
+   Color
 -}
 
 
@@ -49,6 +51,37 @@ tensionTypeColor elt tt =
 
         TensionType.Help ->
             "has-" ++ elt ++ "-warning"
+
+
+roleColor : RoleType.RoleType -> String
+roleColor rt =
+    case rt of
+        RoleType.Owner ->
+            "orange"
+
+        RoleType.Member ->
+            "primary"
+
+        RoleType.Guest ->
+            "primary"
+
+        RoleType.Retired ->
+            "primary"
+
+        RoleType.Coordinator ->
+            "orange"
+
+        RoleType.Peer ->
+            "primary"
+
+        RoleType.Bot ->
+            "link"
+
+
+
+{-
+   Tension
+-}
 
 
 tensionTypeSpan : TensionType.TensionType -> Html msg
@@ -121,14 +154,6 @@ mediaTension baseUri focus tension navigate =
                 ]
             ]
         ]
-
-
-edgeArrow : String -> Html msg -> Html msg -> List (Html msg)
-edgeArrow cls source target =
-    [ span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ source ]
-    , span [ class "right-arrow" ] []
-    , span [ class <| cls ++ " is-small is-light is-inverted is-static" ] [ target ]
-    ]
 
 
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
@@ -286,31 +311,6 @@ getAvatar username =
         |> String.toLower
         |> String.append initial
         |> text
-
-
-roleColor : RoleType.RoleType -> String
-roleColor rt =
-    case rt of
-        RoleType.Owner ->
-            "orange"
-
-        RoleType.Member ->
-            "primary"
-
-        RoleType.Guest ->
-            "primary"
-
-        RoleType.Retired ->
-            "primary"
-
-        RoleType.Coordinator ->
-            "orange"
-
-        RoleType.Peer ->
-            "primary"
-
-        RoleType.Bot ->
-            "link"
 
 
 

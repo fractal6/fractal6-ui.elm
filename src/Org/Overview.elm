@@ -597,7 +597,9 @@ update global message model =
         DoNewTension target ->
             let
                 tf =
-                    model.tensionForm |> NTF.setTarget_ target (withMaybeData model.node_data)
+                    model.tensionForm
+                        |> NTF.setTarget_ target (withMaybeData model.node_data)
+                        |> NTF.setTargets_ model.orga_data
             in
             ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send OnOpen), Cmd.none )
 
@@ -1131,12 +1133,7 @@ view global model =
         [ view_ global model
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view
-            { users_data = model.users_data
-            , targets = getParents (NTF.getTargetid model.tensionForm) model.orga_data
-            }
-            model.tensionForm
-            |> Html.map NewTensionMsg
+        , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
         ]
     }
 
@@ -1704,13 +1701,3 @@ getNewNodeRights uctx target odata =
 
                     coordoRoles_ ->
                         coordoRoles_
-
-
-getChildrenLeaf : String -> GqlData NodesData -> List Node
-getChildrenLeaf nid odata =
-    odata
-        |> withMaybeDataMap
-            (\x ->
-                x |> Dict.values |> List.filter (\n -> n.type_ == NodeType.Role && Just (nearestCircleid nid) == Maybe.map (\m -> m.nameid) n.parent)
-            )
-        |> withDefault []

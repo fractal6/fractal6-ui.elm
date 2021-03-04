@@ -27,9 +27,9 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), InputViewMode(..), TensionForm, UserState(..), getParentFragmentFromRole, initTensionForm)
+import ModelCommon exposing (Apis, GlobalCmd(..), InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, nodeFromFocus, nodeIdCodec)
-import ModelCommon.View exposing (action2SourceStr, edgeArrow, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
+import ModelCommon.View exposing (action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
@@ -46,6 +46,7 @@ type alias Model =
     , form : TensionForm
     , result : GqlData Tension
     , sources : List UserRole
+    , targets : List Node
     , step : TensionStep
     , isModalActive : Bool
     , activeTab : TensionTab
@@ -89,6 +90,7 @@ initModel user =
     , form = initTensionForm user
     , result = NotAsked
     , sources = []
+    , targets = []
     , step = TensionFinal
     , isModalActive = False
     , activeTab = NewTensionTab
@@ -156,14 +158,27 @@ setTarget_ target node_data (State model) =
     State (setTarget target node_data model)
 
 
+setTargets_ : GqlData NodesData -> State -> State
+setTargets_ odata (State model) =
+    let
+        targets =
+            case odata of
+                Success od ->
+                    getParents model.form.target.nameid odata
+                        ++ (getChildren model.form.target.nameid odata |> List.filter (\n -> n.role_type == Nothing))
+                        -- Circle
+                        ++ ([ model.form.target.nameid, model.form.source.nameid ] |> List.map (\nid -> getNode nid odata) |> List.filterMap identity)
+                        |> LE.uniqueBy (\n -> n.nameid)
+
+                _ ->
+                    []
+    in
+    State { model | targets = targets }
+
+
 setTab_ : TensionTab -> State -> State
 setTab_ tab (State model) =
     State { model | activeTab = tab }
-
-
-getTargetid : State -> String
-getTargetid (State model) =
-    model.form.target.nameid
 
 
 
@@ -501,6 +516,8 @@ type Msg
     | OnSwitchTab TensionTab
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
+    | OnChangeTensionSource UserRole
+    | OnChangeTensionTarget Node
     | OnChangePost String String
     | OnAddLinks
     | OnAddDomains
@@ -625,6 +642,12 @@ update_ apis message model =
         -- Doc change
         OnChangeTensionType type_ ->
             ( setTensionType type_ model, noOut )
+
+        OnChangeTensionSource source ->
+            ( setSource source model, noOut )
+
+        OnChangeTensionTarget target ->
+            ( setTarget target Nothing model, noOut )
 
         OnChangePost field value ->
             case model.activeTab of
@@ -785,9 +808,7 @@ subscriptions =
 
 
 type alias Op =
-    { users_data : GqlData UsersData
-    , targets : List String
-    }
+    { users_data : GqlData UsersData }
 
 
 view : Op -> State -> Html Msg
@@ -799,11 +820,7 @@ view op (State model) =
 
 
 viewModal : Op -> State -> Html Msg
-viewModal op_ (State model) =
-    let
-        op =
-            { op_ | targets = op_.targets ++ [ model.form.target.nameid, model.form.source.nameid ] }
-    in
+viewModal op (State model) =
     div
         [ id "tensionModal"
         , class "modal modal-fx-fadeIn"
@@ -976,7 +993,7 @@ viewTension op (State model) =
                                         ]
                                     ]
                                 ]
-                        , div [ class "level-right has-text-weight-medium" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
+                        , viewRecipients model
                         ]
                     ]
                 , viewTensionTabs model.activeTab model.form.target
@@ -1036,7 +1053,7 @@ viewTension op (State model) =
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
                                 { selectedLabels = form.labels
-                                , targets = op.targets
+                                , targets = model.targets |> List.map (\n -> n.nameid)
                                 , isAdmin = False
                                 , exitSafe = canExitSafe model
                                 }
@@ -1126,7 +1143,7 @@ viewCircle op (State model) =
                     { data = model
                     , lookup = model.lookup_users
                     , users_data = op.users_data
-                    , targets = op.targets
+                    , targets = model.targets |> List.map (\n -> n.nameid)
                     , onChangePost = OnChangePost
                     , onAddLinks = OnAddLinks
                     , onAddDomains = OnAddDomains
@@ -1152,7 +1169,7 @@ viewCircle op (State model) =
                                         [ text (TensionType.toString form.tension_type) ]
                                     ]
                                 ]
-                        , div [ class "level-right has-text-weight-medium" ] <| edgeArrow "button" (text form.source.name) (text form.target.name)
+                        , viewRecipients model
                         ]
                     ]
                 , viewTensionTabs model.activeTab model.form.target
@@ -1227,3 +1244,56 @@ viewCircle op (State model) =
                         ]
                     ]
                 ]
+
+
+viewRecipients : Model -> Html Msg
+viewRecipients model =
+    let
+        form =
+            model.form
+    in
+    div [ class "level-right has-text-weight-medium" ]
+        [ span [ class "dropdown" ]
+            [ span [ class "dropdown-trigger button-light" ]
+                [ span [ attribute "aria-controls" "source-menu" ]
+                    [ span
+                        [ class "button is-small is-light is-inverted is-static" ]
+                        [ text form.source.name, span [ class "ml-2 arrow down" ] [] ]
+                    ]
+                ]
+            , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
+                [ div [ class "dropdown-content" ] <|
+                    List.map
+                        (\t ->
+                            div
+                                [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
+                                , onClick (OnChangeTensionSource t)
+                                ]
+                                [ text t.name ]
+                        )
+                        (List.filter (\n -> n.nameid /= model.form.source.nameid) model.sources)
+                ]
+            ]
+        , span [ class "right-arrow" ] []
+        , span [ class "dropdown" ]
+            [ span [ class "dropdown-trigger button-light" ]
+                [ span [ attribute "aria-controls" "source-menu" ]
+                    [ span
+                        [ class "button is-small is-light is-inverted is-static" ]
+                        [ text form.target.name, span [ class "ml-2 arrow down" ] [] ]
+                    ]
+                ]
+            , div [ id "source-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
+                [ div [ class "dropdown-content" ] <|
+                    List.map
+                        (\t ->
+                            div
+                                [ class <| "dropdown-item has-text-weight-semibold button-light has-text-light"
+                                , onClick (OnChangeTensionTarget t)
+                                ]
+                                [ text t.name ]
+                        )
+                        (List.filter (\n -> n.nameid /= model.form.target.nameid) model.targets)
+                ]
+            ]
+        ]

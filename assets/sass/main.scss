@@ -183,6 +183,16 @@ hr {
 	}
 }
 
+.dropdown-content {
+    max-height: 280px;
+    overflow: auto;
+}
+
+.dropdown-menu.is-right {
+	left: auto;
+	right: 0;
+}
+
 
 // Media
 
@@ -1617,6 +1627,12 @@ a.actionLink {
 .select.is-orange select:focus,
 .select.is-orange select:active {
     border-color: $orange-frac6 !important;
+}
+.has-text-orange {
+    color: $orange-frac6 !important;
+}
+.has-background-orange {
+    background: $orange-frac6 !important;
 }
 
 #refreshAuthModal {
