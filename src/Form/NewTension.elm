@@ -956,12 +956,12 @@ viewTensionTabs tab targ =
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ] [ a [ onClickPD (OnSwitchTab NewTensionTab), target "blank_" ] [ I.icon1 "icon-exchange" "Tension" ] ]
             , if targ.type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewRoleTab), target "blank_" ] [ I.icon1 "icon-circle1" "Role" ] ]
+                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewRoleTab), target "blank_" ] [ I.icon1 "icon-leaf" "Role" ] ]
 
               else
                 text ""
             , if targ.type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-circle" "Circle" ] ]
+                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-git-branch" "Circle" ] ]
 
               else
                 text ""

@@ -370,20 +370,20 @@ viewActionIconLink action org tid words cls =
 viewActionIcon : TensionAction.TensionAction -> Html msg
 viewActionIcon action =
     case action of
-        TensionAction.NewCircle ->
-            I.icon0 "icon-circle"
-
         TensionAction.NewRole ->
-            I.icon0 "icon-circle1"
+            I.icon0 "icon-leaf"
+
+        TensionAction.NewCircle ->
+            I.icon0 "icon-git-branch"
 
         TensionAction.NewMd ->
             I.icon0 "icon-markdown"
 
-        TensionAction.EditCircle ->
-            I.icon0 "icon-circle"
-
         TensionAction.EditRole ->
-            I.icon0 "icon-circle1"
+            I.icon0 "icon-leaf"
+
+        TensionAction.EditCircle ->
+            I.icon0 "icon-git-branch"
 
         TensionAction.EditMd ->
             I.icon0 "icon-markdown"

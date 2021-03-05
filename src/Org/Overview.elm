@@ -1237,7 +1237,7 @@ viewLeftPane model =
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ I.icon1 "icon-circle icon-lg" model.node_focus.nameid ]
+                        [ I.icon1 "icon-git-branch icon-lg" model.node_focus.nameid ]
                     ]
                 ]
             , li []
