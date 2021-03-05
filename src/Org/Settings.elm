@@ -402,7 +402,10 @@ update global message model =
             ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
 
         AddLabel ->
-            ( { model | label_add = ternary (model.label_add == True) False True, label_edit = Nothing }, Cmd.none, Cmd.none )
+            ( { model | label_add = ternary (model.label_add == True) False True, label_edit = Nothing, colorPicker = ColorPicker.setColor Nothing model.colorPicker }
+            , Cmd.none
+            , Cmd.none
+            )
 
         EditLabel label ->
             let
@@ -420,11 +423,11 @@ update global message model =
                                     ++ [ ( "old_name", label.name ) ]
                                 )
                     }
-
-                color =
-                    Dict.get "color" newForm.post |> withDefault ""
             in
-            ( { model | label_edit = Just label, label_form = newForm, label_add = False, colorPicker = ColorPicker.setColor color model.colorPicker }, Cmd.none, Cmd.none )
+            ( { model | label_edit = Just label, label_form = newForm, label_add = False, colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker }
+            , Cmd.none
+            , Cmd.none
+            )
 
         CancelLabel ->
             let
@@ -716,7 +719,7 @@ update global message model =
             let
                 newPicker =
                     model.colorPicker
-                        |> ColorPicker.setColor color
+                        |> ColorPicker.setColor (Just color)
                         |> ColorPicker.close
 
                 form =
@@ -783,6 +786,7 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.cancelColorFromJs (always CloseColor)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch

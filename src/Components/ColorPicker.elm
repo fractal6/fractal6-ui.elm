@@ -16,7 +16,7 @@ type alias ColorPicker =
 init : ColorPicker
 init =
     { isOpen = False
-    , color = "#001f3f"
+    , color = initColor
     , colors =
         [ "#001f3f"
         , "#0074D9"
@@ -38,6 +38,11 @@ init =
     }
 
 
+initColor : String
+initColor =
+    "#001f3f"
+
+
 
 -- State control
 
@@ -52,9 +57,14 @@ close data =
     { data | isOpen = False }
 
 
-setColor : String -> ColorPicker -> ColorPicker
-setColor color data =
-    { data | color = color }
+setColor : Maybe String -> ColorPicker -> ColorPicker
+setColor color_m data =
+    case color_m of
+        Just color ->
+            { data | color = color }
+
+        Nothing ->
+            { data | color = initColor }
 
 
 type alias Op msg =
