@@ -359,12 +359,6 @@ update_ apis message model =
                         |> postFeedback "createdAt" (fromTime time)
                         |> setLabelsFeedback
                         |> setResultFeedback LoadingSlowly
-
-                g1 =
-                    Debug.log "feed1" (Dict.get "title" model.formFeedback.form.post)
-
-                g2 =
-                    Debug.log "feed2" (Dict.get "title" newModel.formFeedback.form.post)
             in
             ( newModel
             , out1 [ send (PushTension newModel.formFeedback OnAskFeedback) ]

@@ -266,6 +266,9 @@ buildNodeFragmentRef users nf =
     let
         type_ =
             nf.type_ |> withDefault NodeType.Role
+
+        g1 =
+            Debug.log "heu" type_
     in
     Input.buildNodeFragmentRef
         (\n ->

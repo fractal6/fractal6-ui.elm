@@ -68,6 +68,7 @@ type alias Model =
 
 type TensionTab
     = NewTensionTab
+    | NewRoleTab
     | NewCircleTab
 
 
@@ -128,25 +129,29 @@ initTensionTab model =
     { model | activeTab = NewTensionTab, form = newForm }
 
 
-initCircleTab : Model -> Model
-initCircleTab model =
+initCircleTab : NodeType.NodeType -> Model -> Model
+initCircleTab type_ model =
     let
         form =
             model.form
 
         node =
-            initNodeFragment (Just NodeType.Role)
+            initNodeFragment (Just type_)
 
         newForm =
             { form
                 | tension_type = TensionType.Governance
-                , action = Just TensionAction.NewRole
                 , blob_type = Just BlobType.OnNode
-                , node = { node | charac = Just model.form.target.charac } -- inherit charac
+                , node = { node | charac = Just form.target.charac } -- inherit charac
                 , users = [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
             }
     in
-    { model | activeTab = NewCircleTab, form = newForm }
+    case type_ of
+        NodeType.Role ->
+            { model | activeTab = NewRoleTab, form = { newForm | action = Just TensionAction.NewRole } }
+
+        NodeType.Circle ->
+            { model | activeTab = NewCircleTab, form = { newForm | action = Just TensionAction.NewCircle } }
 
 
 
@@ -196,8 +201,11 @@ switchTab tab model =
         NewTensionTab ->
             initTensionTab model
 
+        NewRoleTab ->
+            initCircleTab NodeType.Role model
+
         NewCircleTab ->
-            initCircleTab model
+            initCircleTab NodeType.Circle model
 
 
 close : Model -> Model
@@ -604,9 +612,6 @@ update_ apis message model =
                     let
                         sources =
                             getOrgaRoles model.form.uctx.roles [ model.form.target.rootnameid ]
-
-                        g =
-                            Debug.log "sources" sources
                     in
                     if sources == [] && model.refresh_trial == 0 then
                         ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )
@@ -674,6 +679,9 @@ update_ apis message model =
                 NewTensionTab ->
                     ( post field value model, noOut )
 
+                NewRoleTab ->
+                    ( postNode field value model, noOut )
+
                 NewCircleTab ->
                     ( postNode field value model, noOut )
 
@@ -695,6 +703,13 @@ update_ apis message model =
                     case model.activeTab of
                         NewTensionTab ->
                             [ TensionEvent.Created ]
+
+                        NewRoleTab ->
+                            if doClose == True then
+                                [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
+
+                            else
+                                [ TensionEvent.Created, TensionEvent.BlobCreated ]
 
                         NewCircleTab ->
                             if doClose == True then
@@ -727,11 +742,20 @@ update_ apis message model =
                         NewTensionTab ->
                             ( setResult result model, out2 [ DoPushTension tension ] )
 
-                        NewCircleTab ->
+                        NewRoleTab ->
                             let
                                 newNameid =
                                     model.form.node.nameid
                                         |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Role model.form.node.type_))
+                                        |> withDefault ""
+                            in
+                            ( setResult result model, out2 [ DoFetchNode newNameid ] )
+
+                        NewCircleTab ->
+                            let
+                                newNameid =
+                                    model.form.node.nameid
+                                        |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Circle model.form.node.type_))
                                         |> withDefault ""
                             in
                             ( setResult result model, out2 [ DoFetchNode newNameid ] )
@@ -847,7 +871,7 @@ viewModal op (State model) =
     div
         [ id "tensionModal"
         , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isModalActive ), ( "fixed-top", withMaybeData model.result == Nothing ) ]
+        , classList [ ( "is-active", model.isModalActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
         [ div
@@ -892,6 +916,9 @@ viewStep op (State model) =
                 NewTensionTab ->
                     viewTension op (State model)
 
+                NewRoleTab ->
+                    viewCircle op (State model)
+
                 NewCircleTab ->
                     viewCircle op (State model)
 
@@ -929,7 +956,12 @@ viewTensionTabs tab targ =
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ] [ a [ onClickPD (OnSwitchTab NewTensionTab), target "blank_" ] [ I.icon1 "icon-exchange" "Tension" ] ]
             , if targ.type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-target" "Role or Circle" ] ]
+                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewRoleTab), target "blank_" ] [ I.icon1 "icon-circle1" "Role" ] ]
+
+              else
+                text ""
+            , if targ.type_ == NodeType.Circle then
+                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-circle" "Circle" ] ]
 
               else
                 text ""
