@@ -8,7 +8,7 @@ import Form exposing (isLoginSendable)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
@@ -124,7 +124,7 @@ update global msg model =
                     model.form
 
                 formUpdated =
-                    { form | result = result, post = Dict.remove "password" form.post }
+                    { form | result = result }
             in
             ( { model | form = formUpdated }
             , Cmd.none
@@ -167,7 +167,7 @@ view_ global model =
 
 viewLogin : Global.Model -> Model -> Html Msg
 viewLogin global model =
-    div [ class "" ]
+    div [ id "loginForm" ]
         [ div [ class "card" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]
@@ -185,6 +185,7 @@ viewLogin global model =
                                     , type_ "text"
                                     , placeholder "username or email"
                                     , name "username"
+                                    , value (Dict.get "username" model.form.post |> withDefault "")
                                     , attribute "autocomplete" "username"
                                     , required True
                                     , onInput (ChangeUserPost "username")
@@ -205,6 +206,7 @@ viewLogin global model =
                                     , type_ "password"
                                     , placeholder "password"
                                     , name "password"
+                                    , value (Dict.get "password" model.form.post |> withDefault "")
                                     , attribute "autocomplete" "password"
                                     , required True
                                     , onInput (ChangeUserPost "password")

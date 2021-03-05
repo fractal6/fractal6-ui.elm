@@ -123,7 +123,7 @@ update global msg model =
                     model.form
 
                 formUpdated =
-                    { form | result = result, post = Dict.remove "password" form.post }
+                    { form | result = result }
             in
             ( { model | form = formUpdated }
             , Cmd.none
@@ -160,13 +160,13 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered section" ]
         [ div [ class "column is-4" ]
-            [ viewLogin global model ]
+            [ viewSignup global model ]
         ]
 
 
-viewLogin : Global.Model -> Model -> Html Msg
-viewLogin global model =
-    div []
+viewSignup : Global.Model -> Model -> Html Msg
+viewSignup global model =
+    div [ id "signupForm" ]
         [ div [ class "card" ]
             [ div [ class "card-header" ]
                 [ div [ class "card-header-title" ]
@@ -184,6 +184,7 @@ viewLogin global model =
                                     , type_ "text"
                                     , placeholder "username"
                                     , name "username"
+                                    , value (Dict.get "username" model.form.post |> withDefault "")
                                     , attribute "autocomplete" "username"
                                     , required True
                                     , onInput (ChangeUserPost "username")
@@ -205,6 +206,7 @@ viewLogin global model =
                                     , type_ "text"
                                     , placeholder "email"
                                     , name "email"
+                                    , value (Dict.get "email" model.form.post |> withDefault "")
                                     , attribute "autocomplete" "email"
                                     , required True
                                     , onInput (ChangeUserPost "email")
@@ -225,6 +227,7 @@ viewLogin global model =
                                     , type_ "password"
                                     , placeholder "password"
                                     , name "password"
+                                    , value (Dict.get "password" model.form.post |> withDefault "")
                                     , attribute "autocomplete" "password"
                                     , required True
                                     , onInput (ChangeUserPost "password")
