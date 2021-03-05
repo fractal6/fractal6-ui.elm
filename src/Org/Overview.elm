@@ -598,6 +598,7 @@ update global message model =
             let
                 tf =
                     model.tensionForm
+                        |> NTF.setUser_ global.session.user
                         |> NTF.setTarget_ target (withMaybeData model.node_data)
                         |> NTF.setTargets_ model.orga_data
             in

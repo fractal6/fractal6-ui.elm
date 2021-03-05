@@ -156,6 +156,12 @@ initCircleTab type_ model =
 
 
 -- Global methods
+-- @debug; model.user not update after r UpdateUserSession !
+
+
+setUser_ : UserState -> State -> State
+setUser_ user (State model) =
+    State { model | user = user }
 
 
 setTarget_ : Node -> Maybe NodeData -> State -> State
