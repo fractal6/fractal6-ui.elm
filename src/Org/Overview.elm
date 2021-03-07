@@ -1614,41 +1614,6 @@ viewJoinOrgaStep orga step =
 ---- Utils
 
 
-{-| Get Auth Step and init form based on user roles for new circle
--}
-getNewNodeStepAuth : TensionForm -> GqlData NodesData -> ( NodeStep, TensionForm )
-getNewNodeStepAuth form odata =
-    case getNewNodeRights form.uctx form.target odata of
-        [] ->
-            let
-                isMember =
-                    form.uctx.roles
-                        |> List.map (\r -> r.rootnameid)
-                        |> List.member form.target.rootnameid
-            in
-            if isMember then
-                ( NodeNotAuthorized [ T.askCoordo ], form )
-
-            else
-                ( NodeNotAuthorized [ T.notOrgMember, T.joinForCircle ], form )
-
-        [ r ] ->
-            ( NodeFinal, { form | source = r } )
-
-        roles ->
-            ( NodeSource roles, form )
-
-
-notAuthorizedNode : NodeStep -> Bool
-notAuthorizedNode step =
-    case step of
-        NodeNotAuthorized _ ->
-            True
-
-        _ ->
-            False
-
-
 getNewNodeRights : UserCtx -> Node -> GqlData NodesData -> List UserRole
 getNewNodeRights uctx target odata =
     let

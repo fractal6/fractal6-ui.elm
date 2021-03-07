@@ -633,7 +633,7 @@ update_ apis message model =
                         )
 
                 LoggedOut ->
-                    ( setStep AuthNeeded model, noOut )
+                    ( setStep AuthNeeded model |> open, out1 [ Ports.open_modal "tensionModal" ] )
 
         OnClose data ->
             let

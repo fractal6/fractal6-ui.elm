@@ -438,15 +438,6 @@ initActionForm tid user =
 -- Steps
 
 
-{-| Node Step (Role Or Circle, add and edit)
--}
-type NodeStep
-    = NodeInit
-    | NodeSource (List UserRole)
-    | NodeFinal
-    | NodeNotAuthorized ErrorData
-
-
 {-| Join Step
 -}
 type JoinStep form

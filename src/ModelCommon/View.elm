@@ -139,7 +139,6 @@ mediaTension baseUri focus tension navigate =
                   else
                     span [] []
                 ]
-            , br [ class "is-block" ] []
             , span [ class "columns is-variable is-mobile" ]
                 [ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
                 , span [ class "column" ]
