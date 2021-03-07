@@ -158,19 +158,19 @@ depthFilterEncoder : DepthFilter -> String
 depthFilterEncoder x =
     case x of
         AllSubChildren ->
-            ""
+            "all"
 
         SelectedNode ->
-            "selected"
+            "current"
 
 
 depthFilterDecoder : String -> DepthFilter
 depthFilterDecoder x =
     case x of
-        "selected" ->
+        "current" ->
             SelectedNode
 
-        default ->
+        _ ->
             AllSubChildren
 
 
@@ -190,7 +190,7 @@ statusFilterEncoder x =
             "closed"
 
         OpenStatus ->
-            ""
+            "open"
 
 
 statusFilterDecoder : String -> StatusFilter
@@ -202,7 +202,7 @@ statusFilterDecoder x =
         "closed" ->
             ClosedStatus
 
-        default ->
+        _ ->
             OpenStatus
 
 
@@ -226,7 +226,7 @@ typeFilterEncoder x =
             "help"
 
         AllTypes ->
-            ""
+            "all"
 
 
 typeFilterDecoder : String -> TypeFilter
@@ -268,9 +268,9 @@ type Msg
       -- Page Action
     | DoLoad -- query tensions
     | ChangePattern String
-    | ChangeStatusFilter String
-    | ChangeTypeFilter String
-    | ChangeDepthFilter String
+    | ChangeStatusFilter StatusFilter
+    | ChangeTypeFilter TypeFilter
+    | ChangeDepthFilter DepthFilter
     | SearchKeyDown Int
     | SubmitSearch
     | GoView TensionsView
@@ -588,21 +588,21 @@ update global message model =
         ChangeStatusFilter value ->
             let
                 newModel =
-                    { model | statusFilter = statusFilterDecoder value }
+                    { model | statusFilter = value }
             in
             ( newModel, send SubmitSearch, Cmd.none )
 
         ChangeTypeFilter value ->
             let
                 newModel =
-                    { model | typeFilter = typeFilterDecoder value }
+                    { model | typeFilter = value }
             in
             ( newModel, send SubmitSearch, Cmd.none )
 
         ChangeDepthFilter value ->
             let
                 newModel =
-                    { model | depthFilter = depthFilterDecoder value }
+                    { model | depthFilter = value }
             in
             ( newModel, send SubmitSearch, Cmd.none )
 
@@ -916,47 +916,80 @@ view_ global model =
 
 viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> TensionsView -> Html Msg
 viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
+    let
+        checked =
+            I.icon1 "icon-check has-text-success" ""
+
+        unchecked =
+            I.icon1 "icon-check has-text-success is-invisible" ""
+    in
     div [ id "searchBarTensions", class "searchBar" ]
-        [ div [ class "field has-addons" ]
-            [ div [ class "control has-icons-left is-expanded dropdown" ]
-                [ input
-                    [ class "input is-small autofocus"
-                    , type_ "search"
-                    , autocomplete False
-                    , autofocus True
-                    , placeholder "Search tensions"
-                    , value (pattern |> withDefault "")
-                    , onInput ChangePattern
-                    , onKeydown SearchKeyDown
+        [ div [ class "columns mt-0 mb-0" ]
+            [ div [ class "column is-6" ]
+                [ div [ class "field has-addons" ]
+                    [ div [ class "control has-icons-left is-expanded" ]
+                        [ input
+                            [ class "is-rounded input is-small autofocus"
+                            , type_ "search"
+                            , autocomplete False
+                            , autofocus True
+                            , placeholder "Search tensions"
+                            , value (pattern |> withDefault "")
+                            , onInput ChangePattern
+                            , onKeydown SearchKeyDown
+                            ]
+                            []
+                        , span [ class "icon is-left" ] [ i [ class "icon-search" ] [] ]
+                        ]
                     ]
-                    []
-                , span [ class "icon is-left" ] [ i [ class "icon-search" ] [] ]
                 ]
-            , div [ class "buttons" ]
-                [ div [ class "control" ]
-                    [ div [ class "is-small select" ]
-                        [ select [ onInput ChangeStatusFilter ]
-                            [ option [ class "dropdown-item", value (statusFilterEncoder OpenStatus), selected (statusFilter == OpenStatus) ] [ text "Open" ]
-                            , option [ class "dropdown-item", value (statusFilterEncoder ClosedStatus), selected (statusFilter == ClosedStatus) ] [ text "Closed" ]
-                            , option [ class "dropdown-item", value (statusFilterEncoder AllStatus), selected (statusFilter == AllStatus) ] [ text "All" ]
+            , div [ class "column is-6" ]
+                [ div [ class "field has-addons filterBar" ]
+                    [ div [ class "control dropdown" ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ] [ textH T.status, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
+                            [ div
+                                [ class "dropdown-content" ]
+                                [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
+                                    [ ternary (statusFilter == OpenStatus) checked unchecked, textH (statusFilterEncoder OpenStatus) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
+                                    [ ternary (statusFilter == ClosedStatus) checked unchecked, textH (statusFilterEncoder ClosedStatus) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
+                                    [ ternary (statusFilter == AllStatus) checked unchecked, textH (statusFilterEncoder AllStatus) ]
+                                ]
                             ]
                         ]
-                    ]
-                , div [ class "control" ]
-                    [ div [ class "is-small select" ]
-                        [ select [ onInput ChangeTypeFilter ]
-                            [ option [ class "dropdown-item", value (typeFilterEncoder AllTypes), selected (typeFilter == AllTypes) ] [ text "All types" ]
-                            , option [ class "dropdown-item", value (typeFilterEncoder GovernanceType), selected (typeFilter == GovernanceType) ] [ text "Governance" ]
-                            , option [ class "dropdown-item", value (typeFilterEncoder OperationalType), selected (typeFilter == OperationalType) ] [ text "Operational" ]
-                            , option [ class "dropdown-item", value (typeFilterEncoder HelpType), selected (typeFilter == HelpType) ] [ text "Help" ]
+                    , div [ class "control dropdown" ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ] [ textH T.type_, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        , div [ id "type-filter", class "dropdown-menu", attribute "role" "menu" ]
+                            [ div
+                                [ class "dropdown-content" ]
+                                [ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
+                                    [ ternary (typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter OperationalType ]
+                                    [ ternary (typeFilter == OperationalType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Operational) ] [ textH (typeFilterEncoder OperationalType) ] ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter GovernanceType ]
+                                    [ ternary (typeFilter == GovernanceType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Governance) ] [ textH (typeFilterEncoder GovernanceType) ] ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter HelpType ]
+                                    [ ternary (typeFilter == HelpType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Help) ] [ textH (typeFilterEncoder HelpType) ] ]
+                                ]
                             ]
                         ]
-                    ]
-                , div [ class "control" ]
-                    [ div [ class "is-small select" ]
-                        [ select [ onInput ChangeDepthFilter ]
-                            [ option [ class "dropdown-item", value (depthFilterEncoder AllSubChildren), selected (depthFilter == AllSubChildren) ] [ text "All sub-circles" ]
-                            , option [ class "dropdown-item", value (depthFilterEncoder SelectedNode), selected (depthFilter == SelectedNode) ] [ text "Selected circle" ]
+                    , div [ class "control" ]
+                        [ div [ class "is-small button " ] [ text "Author", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+
+                        --[ select [] [ option [ class "dropdown-item" ] [ text "Author" ] ] ]
+                        ]
+                    , div [ class "control dropdown" ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ] [ textH T.depth, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        , div [ id "depth-filter", class "dropdown-menu", attribute "role" "menu" ]
+                            [ div
+                                [ class "dropdown-content" ]
+                                [ div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter AllSubChildren ]
+                                    [ ternary (depthFilter == AllSubChildren) checked unchecked, textH (depthFilterEncoder AllSubChildren) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter SelectedNode ]
+                                    [ ternary (depthFilter == SelectedNode) checked unchecked, textH (depthFilterEncoder SelectedNode) ]
+                                ]
                             ]
                         ]
                     ]

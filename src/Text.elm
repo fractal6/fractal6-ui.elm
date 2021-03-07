@@ -572,6 +572,21 @@ description =
 -- Tension
 
 
+status : String
+status =
+    "status"
+
+
+type_ : String
+type_ =
+    "type"
+
+
+depth : String
+depth =
+    "depth"
+
+
 tension : String
 tension =
     "tensions"

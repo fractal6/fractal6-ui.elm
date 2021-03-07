@@ -1,6 +1,7 @@
 
 html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  //line-height: 1.3;
 }
 
 * {
@@ -214,6 +215,8 @@ html.has-modal-active, html.has-modal-active2 {
 
 .dropdown-menu {
     min-width: 7rem !important;
+    width: max-content;
+    max-width: 330px;
 }
 
 
@@ -406,10 +409,14 @@ html.has-modal-active, html.has-modal-active2 {
 
 #tree-menu {
     a {
+        padding-top: 4px;
+        padding-bottom: 4px;
         justify-content: left;
+        // protect from breadcrumb nowrap option.
+        white-space: initial !important;
     }
     a:not(:last-child) {
-        padding-bottom: 5px;
+        border-bottom: 1px solid $grey-dark;
     }
 }
 
@@ -917,7 +924,6 @@ html.has-modal-active, html.has-modal-active2 {
     .dropdown-content {
         position: absolute;
         z-index: 25;
-        //padding-right: 8rem;
         min-width: 10rem;
         &.is-right {
             left: auto;
@@ -967,34 +973,8 @@ html.has-modal-active, html.has-modal-active2 {
 //
 
 .searchBar {
-
     .input, .button, select {
         height: 2.2rem !important;
-    }
-
-    .select {
-        &::after {
-            border-color: $primary !important;
-        }
-
-        select, & select::after {
-            //color: rgba(0, 0, 0, 0.7) !important;
-            color: $white-light !important;
-            //background-color: $grey-lighter !important;
-            background-color: #558db3 !important;
-            font-weight: 600 !important;
-            border: 0 !important;
-        }
-        select:hover {
-            //background-color: $white-light !important;
-            background-color: #4281ac !important;
-        }
-        // Don't work, we still have the dotted square
-        select:focus, & select:-moz-focusring {
-            color: transparent;
-            text-shadow: 0 0 0 #000;
-            outline: none !important;
-        }
     }
 }
 
@@ -1013,10 +993,6 @@ html.has-modal-active, html.has-modal-active2 {
         vertical-align: top;
     }
 
-    .input {
-        font-weight: 700 !important;
-    }
-
     .controlButtons {
         //display: flex;
         //flex-grow: 1;
@@ -1031,7 +1007,6 @@ html.has-modal-active, html.has-modal-active2 {
             margin-left: 5px !important;
             margin-right: 8px !important;
             color: $green-frac6 !important;
-            //font-size: 18px !important;
         }
     }
 
@@ -1046,19 +1021,16 @@ html.has-modal-active, html.has-modal-active2 {
             &:hover { border-color: $grey; }
     }
 }
+
 #searchBarTensions {
     padding-top: 5px;
 
-    .input {
-        font-weight: 700 !important;
-    }
     & > .field {
         margin-bottom: 0.25rem !important;
     }
 
     .tabs {
         margin-bottom: 0.75rem !important;
-
         ul {
             border-bottom-color: $grey !important;
             border-bottom-with: 2px !important;
@@ -1077,38 +1049,32 @@ html.has-modal-active, html.has-modal-active2 {
             }
         }
     }
+}
 
+.filterBar.has-addons {
     .control {
-        select {
-            padding-right: 0 !important;
-            border: 1px solid !important;
-        }
-    }
 
-    .buttons {
-        margin-bottom: 1rem;
-
-        .control:not(:first-child):not(:last-child) {
-            .select select {
-                //border-top-right-radius: 0px !important;
-                //border-bottom-right-radius: 0px !important;
-                border-radius: 0px !important;
-                border-radius: 0px !important;
-            }
-        }
-        .control:first-child {
-            .select select {
-                border-top-right-radius: 0px !important;
-                border-bottom-right-radius: 0px !important;
-            }
-        }
-        .control:last-child {
-            .select select {
-                border-top-left-radius: 0px !important;
-                border-bottom-left-radius: 0px !important;
+        .button {
+            border: 1px solid $grey !important;
+            //background-color: #558db3 !important;
+            &:hover {
+                background-color: #4281ac !important;
             }
         }
 
+        &:first-child .button {
+            border: 1px solid $grey !important;
+            border-top-left-radius: 15px !important;
+            border-bottom-left-radius: 15px !important;
+        }
+        &:not(:first-child):not(:last-child) .button {
+            border-radius: 0px !important;
+            border-radius: 0px !important;
+        }
+        &:last-child .button {
+            border-top-right-radius: 15px !important;
+            border-bottom-right-radius: 15px !important;
+        }
     }
 }
 
@@ -1210,8 +1176,6 @@ html.has-modal-active, html.has-modal-active2 {
                 }
 
             }
-
-
         }
     }
 }

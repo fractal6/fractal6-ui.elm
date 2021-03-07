@@ -51,11 +51,14 @@ $acc-height: 48px;
 
 i {
     font-size: 1rem;
-    &.icon-sm {
-        font-size: 0.875rem;
+    &.icon-tiny {
+        font-size: 0.55rem;
     }
     &.icon-xs {
         font-size: 0.75rem;
+    }
+    &.icon-sm {
+        font-size: 0.875rem;
     }
 	&.icon-lg {
 	/* makes the font 33% larger relative to the icon container */

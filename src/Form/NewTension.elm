@@ -1318,7 +1318,7 @@ viewRecipients model =
                 [ span [ attribute "aria-controls" "source-menu" ]
                     [ span
                         [ class "button is-small is-light is-inverted is-static" ]
-                        [ text form.source.name, span [ class "ml-2 arrow down" ] [] ]
+                        [ text form.source.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                     ]
                 ]
             , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
@@ -1340,7 +1340,7 @@ viewRecipients model =
                 [ span [ attribute "aria-controls" "source-menu" ]
                     [ span
                         [ class "button is-small is-light is-inverted is-static" ]
-                        [ text form.target.name, span [ class "ml-2 arrow down" ] [] ]
+                        [ text form.target.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                     ]
                 ]
             , div [ id "source-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
