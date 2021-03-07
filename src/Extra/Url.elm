@@ -42,6 +42,13 @@ queryParser url =
         --|> Maybe.map (String.split "&" >> List.concatMap toTuples >> toDict)
         |> Maybe.map (String.split "&" >> List.concatMap toTuples >> toDict2)
         |> Maybe.withDefault Dict.empty
+        |> (\x ->
+                if Dict.size x == 1 && Dict.toList x == [ ( "", "" ) ] then
+                    Dict.empty
+
+                else
+                    x
+           )
 
 
 queryBuilder : List ( String, String ) -> String

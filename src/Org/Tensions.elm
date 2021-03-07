@@ -103,6 +103,7 @@ type alias Model =
     , statusFilter : StatusFilter
     , typeFilter : TypeFilter
     , depthFilter : DepthFilter
+    , queryIsEmpty : Bool
 
     -- Common
     , node_action : ActionState
@@ -133,7 +134,7 @@ viewModeEncoder : TensionsView -> String
 viewModeEncoder x =
     case x of
         ListView ->
-            ""
+            "list"
 
         IntExtView ->
             "intext"
@@ -147,6 +148,11 @@ viewModeDecoder x =
 
         _ ->
             ListView
+
+
+defaultView : String
+defaultView =
+    "list"
 
 
 type DepthFilter
@@ -172,6 +178,11 @@ depthFilterDecoder x =
 
         _ ->
             AllSubChildren
+
+
+defaultDepth : String
+defaultDepth =
+    "all"
 
 
 type StatusFilter
@@ -204,6 +215,11 @@ statusFilterDecoder x =
 
         _ ->
             OpenStatus
+
+
+defaultStatus : String
+defaultStatus =
+    "open"
 
 
 type TypeFilter
@@ -245,6 +261,11 @@ typeFilterDecoder x =
             AllTypes
 
 
+defaultType : String
+defaultType =
+    "all"
+
+
 nfirst : Int
 nfirst =
     15
@@ -272,6 +293,7 @@ type Msg
     | ChangeTypeFilter TypeFilter
     | ChangeDepthFilter DepthFilter
     | SearchKeyDown Int
+    | OnClearFilter
     | SubmitSearch
     | GoView TensionsView
       -- JoinOrga Action
@@ -345,6 +367,7 @@ init global flags =
             , statusFilter = Dict.get "s" query |> withDefault "" |> statusFilterDecoder
             , typeFilter = Dict.get "t" query |> withDefault "" |> typeFilterDecoder
             , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
+            , queryIsEmpty = Dict.isEmpty query
 
             -- Common
             , node_action = NoOp
@@ -619,18 +642,22 @@ update global message model =
                 other ->
                     ( model, Cmd.none, Cmd.none )
 
+        OnClearFilter ->
+            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid), Cmd.none )
+
         SubmitSearch ->
             let
                 query =
                     queryBuilder
                         [ ( "q", model.pattern |> withDefault "" |> String.trim )
-                        , ( "v", viewModeEncoder model.viewMode )
-                        , ( "d", depthFilterEncoder model.depthFilter )
-                        , ( "s", statusFilterEncoder model.statusFilter )
-                        , ( "t", typeFilterEncoder model.typeFilter )
+                        , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
+                        , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
+                        , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
+                        , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
                         ]
+                        |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ "?" ++ query) )
+            ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query) )
 
         GoView viewMode ->
             ( { model | viewMode = viewMode }, Cmd.none, Cmd.none )
@@ -886,7 +913,7 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns is-centered" ]
-                    [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.typeFilter model.viewMode ] ]
+                    [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.typeFilter model.viewMode model.queryIsEmpty ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -914,14 +941,25 @@ view_ global model =
         ]
 
 
-viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> TensionsView -> Html Msg
-viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
+viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> TensionsView -> Bool -> Html Msg
+viewSearchBar pattern depthFilter statusFilter typeFilter viewMode isEmpty =
     let
         checked =
             I.icon1 "icon-check has-text-success" ""
 
         unchecked =
             I.icon1 "icon-check has-text-success is-invisible" ""
+
+        clearFilter =
+            if isEmpty then
+                text ""
+
+            else
+                span
+                    [ class "tag is-rounded is-small is-danger is-light ml-4 button-light"
+                    , onClick OnClearFilter
+                    ]
+                    [ text "Clear filters" ]
     in
     div [ id "searchBarTensions", class "searchBar" ]
         [ div [ class "columns mt-0 mb-0" ]
@@ -944,18 +982,18 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
                     ]
                 ]
             , div [ class "column is-6" ]
-                [ div [ class "field has-addons filterBar" ]
+                [ div [ class "field has-addons filterBar", attribute "style" "display: inline-flex;" ]
                     [ div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ] [ textH T.status, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
                         , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
-                                [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
+                                [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
+                                    [ ternary (statusFilter == AllStatus) checked unchecked, textH (statusFilterEncoder AllStatus) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
                                     [ ternary (statusFilter == OpenStatus) checked unchecked, textH (statusFilterEncoder OpenStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
                                     [ ternary (statusFilter == ClosedStatus) checked unchecked, textH (statusFilterEncoder ClosedStatus) ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
-                                    [ ternary (statusFilter == AllStatus) checked unchecked, textH (statusFilterEncoder AllStatus) ]
                                 ]
                             ]
                         ]
@@ -993,6 +1031,7 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode =
                             ]
                         ]
                     ]
+                , clearFilter
                 ]
             ]
         , div [ class "tabs is-md" ]
