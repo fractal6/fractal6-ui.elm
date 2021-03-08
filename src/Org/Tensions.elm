@@ -104,7 +104,6 @@ type alias Model =
     , statusFilter : StatusFilter
     , typeFilter : TypeFilter
     , depthFilter : DepthFilter
-    , queryIsEmpty : Bool
     , authors : List User
     , authorsPanel : UserSearchPanel.State
 
@@ -269,6 +268,18 @@ defaultType =
     "all"
 
 
+queryIsEmpty : Model -> Bool
+queryIsEmpty model =
+    model.statusFilter
+        == OpenStatus
+        && model.typeFilter
+        == AllTypes
+        && model.depthFilter
+        == AllSubChildren
+        && model.authors
+        == []
+
+
 
 {- Authors parameters -}
 
@@ -370,9 +381,6 @@ init global flags =
         fs =
             focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
 
-        f =
-            Debug.log "authors" (Dict.get "u" query)
-
         -- Model init
         model =
             { node_focus = newFocus
@@ -393,7 +401,6 @@ init global flags =
             , typeFilter = Dict.get "t" query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
-            , queryIsEmpty = Dict.isEmpty query
             , authorsPanel = UserSearchPanel.init "" SelectUser global.session.user
 
             -- Common
@@ -1030,7 +1037,7 @@ viewSearchBar model =
             I.icon1 "icon-check has-text-success is-invisible" ""
 
         clearFilter =
-            if model.queryIsEmpty then
+            if queryIsEmpty model then
                 text ""
 
             else

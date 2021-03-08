@@ -772,7 +772,7 @@ html.has-modal-active, html.has-modal-active2 {
 
             .message-body {
                 padding: 1rem 0.9rem !important;
-                font-size: 0.95rem;
+                font-size: 15px;
             }
         }
 
@@ -815,6 +815,7 @@ html.has-modal-active, html.has-modal-active2 {
 
         .actionComment {
             margin-left: 5rem !important;
+            font-size: 14px !important;
         }
     }
 
@@ -831,11 +832,12 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .media-content {
+                font-size: 14px !important;
             .subtitle {
-                margin-bottom: 1rem !important;
-                font-size: 0.9rem !important;
+                font-size: 13px !important;
                 font-weight: 600 !important;
                 color: $grey-light2;
+                margin-bottom: 1rem !important;
             }
         }
     }

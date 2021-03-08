@@ -84,6 +84,11 @@ isOpen_ (State model) =
     model.isOpen
 
 
+isEmpty_ : State -> Bool
+isEmpty_ (State model) =
+    (withMaybeData model.assignees_data |> withDefault [] |> List.length) == 0
+
+
 
 -- State control
 
