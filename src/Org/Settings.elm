@@ -246,7 +246,7 @@ init global flags =
             queryParser global.url
 
         menu =
-            Dict.get "m" query |> withDefault "" |> menuDecoder
+            Dict.get "m" query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
 
         -- Focus
         newFocus =

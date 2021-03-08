@@ -15,7 +15,7 @@ import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (Msg(..), TensionTab(..))
+import Form.NewTension as NTF exposing (TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -602,7 +602,7 @@ update global message model =
                         |> NTF.setTarget_ target (withMaybeData model.node_data)
                         |> NTF.setTargets_ model.orga_data
             in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send OnOpen), Cmd.none )
+            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
 
         -- New tension
         NewTensionMsg msg ->

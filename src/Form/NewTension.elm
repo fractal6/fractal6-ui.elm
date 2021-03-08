@@ -795,7 +795,7 @@ update_ apis message model =
         OnShowLookupFs ->
             ( openLookup model
             , if model.isLookupOpen == False then
-                out1 [ Ports.outsideClickClose "cancelLookupFsFromJs" "userSearchPanel" ]
+                out1 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
 
               else
                 noOut
@@ -1115,7 +1115,6 @@ viewTension op (State model) =
                             [ LabelSearchPanel.viewNew
                                 { selectedLabels = form.labels
                                 , targets = model.targets |> List.map (\n -> n.nameid)
-                                , isAdmin = False
                                 }
                                 model.labelsPanel
                                 |> Html.map LabelSearchPanelMsg

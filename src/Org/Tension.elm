@@ -4,7 +4,6 @@ import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
-import Components.AssigneeSearchPanel as AssigneeSearchPanel
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -12,6 +11,7 @@ import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
+import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, toMapOfList)
@@ -169,7 +169,9 @@ type alias Model =
 
     -- Side Pane
     , isTensionAdmin : Bool
-    , assigneesPanel : AssigneeSearchPanel.State
+    , isAssigneeOpen : Bool
+    , assigneesPanel : UserSearchPanel.State
+    , isLabelOpen : Bool
     , labelsPanel : LabelSearchPanel.State
     , actionPanel : ActionPanel
 
@@ -287,8 +289,10 @@ type Msg
     | ShowLookupFs
     | CancelLookupFs
       -- Assignees
-    | AssigneeSearchPanelMsg AssigneeSearchPanel.Msg
+    | DoAssigneeEdit
+    | UserSearchPanelMsg UserSearchPanel.Msg
       -- Labels
+    | DoLabelEdit
     | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Action Edit
     | DoActionEdit Blob
@@ -367,7 +371,7 @@ init global flags =
             , lookup_users = []
             , tensionid = tensionid
             , activeTab = tab
-            , actionView = Dict.get "v" query |> withDefault "" |> actionViewDecoder
+            , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
             , path_data =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
@@ -399,9 +403,10 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isTensionAdmin =
-                global.session.isAdmin |> withDefault False
-            , assigneesPanel = AssigneeSearchPanel.init tensionid global.session.user
+            , isTensionAdmin = global.session.isAdmin |> withDefault False
+            , isAssigneeOpen = False
+            , assigneesPanel = UserSearchPanel.init tensionid AssignUser global.session.user
+            , isLabelOpen = False
             , labelsPanel = LabelSearchPanel.init tensionid global.session.user
             , actionPanel = ActionPanel.init tensionid global.session.user
 
@@ -615,7 +620,7 @@ update global message model =
                     in
                     if Dict.size data > 0 then
                         ( { model | users_data = Success users }
-                        , Cmd.batch [ Ports.inheritWith "userSearchPanel", Ports.initUserSearch users_l ]
+                        , Cmd.batch [ Ports.inheritWith "usersSearchPanel", Ports.initUserSearch users_l ]
                         , send (UpdateSessionOrga (Just data))
                         )
 
@@ -1146,7 +1151,7 @@ update global message model =
             in
             ( { newModel | nodeDoc = NodeDoc.openLookup model.nodeDoc }
             , if model.nodeDoc.isLookupOpen == False then
-                Cmd.batch ([ Ports.outsideClickClose "cancelLookupFsFromJs" "userSearchPanel" ] ++ [ cmd ])
+                Cmd.batch ([ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ] ++ [ cmd ])
 
               else
                 cmd
@@ -1157,10 +1162,17 @@ update global message model =
             ( { model | nodeDoc = NodeDoc.closeLookup model.nodeDoc }, Cmd.none, Cmd.none )
 
         -- Assignees
-        AssigneeSearchPanelMsg msg ->
+        DoAssigneeEdit ->
+            let
+                targets =
+                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+            in
+            ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
+
+        UserSearchPanelMsg msg ->
             let
                 ( panel, out ) =
-                    AssigneeSearchPanel.update apis msg model.assigneesPanel
+                    UserSearchPanel.update apis msg model.assigneesPanel
 
                 th =
                     Maybe.map
@@ -1182,12 +1194,22 @@ update global message model =
                         out.result
                         |> withDefault model.tension_head
 
+                isAssigneeOpen =
+                    UserSearchPanel.isOpen_ panel
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | assigneesPanel = panel, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map AssigneeSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | assigneesPanel = panel, tension_head = th, isAssigneeOpen = isAssigneeOpen }, out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Labels
+        DoLabelEdit ->
+            let
+                targets =
+                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+            in
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets)), Cmd.none )
+
         LabelSearchPanelMsg msg ->
             let
                 ( panel, out ) =
@@ -1213,10 +1235,13 @@ update global message model =
                         out.result
                         |> withDefault model.tension_head
 
+                isLabelOpen =
+                    LabelSearchPanel.isOpen_ panel
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | labelsPanel = panel, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | labelsPanel = panel, tension_head = th, isLabelOpen = isLabelOpen }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Action
         DoActionEdit blob ->
@@ -1545,7 +1570,7 @@ subscriptions global model =
     , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
-        ++ (AssigneeSearchPanel.subscriptions |> List.map (\s -> Sub.map AssigneeSearchPanelMsg s))
+        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch
@@ -2474,14 +2499,29 @@ viewSidePane u t model =
                 [ div []
                     [ case u of
                         LoggedIn uctx ->
-                            let
-                                panelOp =
+                            div []
+                                [ h2
+                                    [ class "subtitle"
+                                    , classList [ ( "is-w", model.isTensionAdmin ) ]
+                                    , onClick DoAssigneeEdit
+                                    ]
+                                    [ textH T.assignees
+                                    , if model.isAssigneeOpen then
+                                        I.icon "icon-x is-pulled-right"
+
+                                      else if model.isTensionAdmin then
+                                        I.icon "icon-settings is-pulled-right"
+
+                                      else
+                                        text ""
+                                    ]
+                                , UserSearchPanel.view
                                     { selectedAssignees = t.assignees |> withDefault []
                                     , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
-                                    , isAdmin = model.isTensionAdmin
                                     }
-                            in
-                            AssigneeSearchPanel.view panelOp model.assigneesPanel |> Html.map AssigneeSearchPanelMsg
+                                    model.assigneesPanel
+                                    |> Html.map UserSearchPanelMsg
+                                ]
 
                         LoggedOut ->
                             h2 [ class "subtitle" ] [ textH T.assignees ]
@@ -2500,14 +2540,29 @@ viewSidePane u t model =
                 [ div []
                     [ case u of
                         LoggedIn uctx ->
-                            let
-                                panelOp =
+                            div []
+                                [ h2
+                                    [ class "subtitle"
+                                    , classList [ ( "is-w", model.isTensionAdmin ) ]
+                                    , onClick DoLabelEdit
+                                    ]
+                                    [ textH T.labels
+                                    , if model.isLabelOpen then
+                                        I.icon "icon-x is-pulled-right"
+
+                                      else if model.isTensionAdmin then
+                                        I.icon "icon-settings is-pulled-right"
+
+                                      else
+                                        text ""
+                                    ]
+                                , LabelSearchPanel.view
                                     { selectedLabels = t.labels |> withDefault []
                                     , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
-                                    , isAdmin = model.isTensionAdmin
                                     }
-                            in
-                            LabelSearchPanel.view panelOp model.labelsPanel |> Html.map LabelSearchPanelMsg
+                                    model.labelsPanel
+                                    |> Html.map LabelSearchPanelMsg
+                                ]
 
                         LoggedOut ->
                             h2 [ class "subtitle" ] [ textH T.labels ]

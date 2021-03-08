@@ -4,9 +4,9 @@ import Dict exposing (Dict)
 import Url exposing (Url)
 
 
-queryParser : Url -> Dict String String
+queryParser : Url -> Dict String (List String)
 queryParser url =
-    --queryParser : Url -> Dict String (List String)
+    --queryParser : Url -> Dict String  String
     let
         toTuples : String -> List ( String, String )
         toTuples str =
@@ -17,13 +17,6 @@ queryParser url =
                 [] ->
                     []
 
-        toDict : List ( String, String ) -> Dict String (List String)
-        toDict parameters =
-            List.foldl
-                (\( k, v ) dict -> Dict.update k (addParam v) dict)
-                Dict.empty
-                parameters
-
         addParam : String -> Maybe (List String) -> Maybe (List String)
         addParam value maybeValues =
             case maybeValues of
@@ -33,22 +26,31 @@ queryParser url =
                 Nothing ->
                     Just [ value ]
 
-        toDict2 : List ( String, String ) -> Dict String String
-        toDict2 parameters =
+        toDict : List ( String, String ) -> Dict String String
+        toDict parameters =
             Dict.fromList parameters
+
+        toDict2 : List ( String, String ) -> Dict String (List String)
+        toDict2 parameters =
+            List.foldl
+                (\( k, v ) dict -> Dict.update k (addParam v) dict)
+                Dict.empty
+                parameters
     in
     url.query
         |> Maybe.andThen Url.percentDecode
         --|> Maybe.map (String.split "&" >> List.concatMap toTuples >> toDict)
         |> Maybe.map (String.split "&" >> List.concatMap toTuples >> toDict2)
         |> Maybe.withDefault Dict.empty
-        |> (\x ->
-                if Dict.size x == 1 && Dict.toList x == [ ( "", "" ) ] then
-                    Dict.empty
 
-                else
-                    x
-           )
+
+
+--|> (\x ->
+--        if Dict.size x == 1 && Dict.toList x == [ ( "", "" ) ] then
+--            Dict.empty
+--        else
+--            x
+--   )
 
 
 queryBuilder : List ( String, String ) -> String

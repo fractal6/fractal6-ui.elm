@@ -1,4 +1,4 @@
-module Components.AssigneeSearchPanel exposing (Msg, State, init, subscriptions, update, view, viewUserSelectors)
+module Components.UserSearchPanel exposing (..)
 
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Codecs exposing (LookupResult)
@@ -34,6 +34,7 @@ type alias Model =
     { isOpen : Bool
     , form : AssigneeForm
     , click_result : GqlData IdPayload
+    , action : OnClickAction
 
     -- Lookup
     , lookup : List User
@@ -47,16 +48,22 @@ type alias Model =
     }
 
 
-init : String -> UserState -> State
-init tid user =
-    initModel tid user |> State
+type OnClickAction
+    = AssignUser
+    | SelectUser
 
 
-initModel : String -> UserState -> Model
-initModel tid user =
+init : String -> OnClickAction -> UserState -> State
+init tid action user =
+    initModel tid action user |> State
+
+
+initModel : String -> OnClickAction -> UserState -> Model
+initModel tid action user =
     { isOpen = False
     , form = initAssigneeForm tid user
     , click_result = NotAsked
+    , action = action
 
     -- Lookup
     , lookup = []
@@ -66,6 +73,15 @@ initModel tid user =
     -- Common
     , refresh_trial = 0
     }
+
+
+
+-- Global methods
+
+
+isOpen_ : State -> Bool
+isOpen_ (State model) =
+    model.isOpen
 
 
 
@@ -194,8 +210,8 @@ update_ apis message model =
                 in
                 ( open targets model
                 , out1 <|
-                    [ Ports.outsideClickClose "cancelAssigneesFromJs" "assigneesPanelContent"
-                    , Ports.inheritWith "assigneeSearchPanel"
+                    [ Ports.outsideClickClose "cancelAssigneesFromJs" "usersPanelContent"
+                    , Ports.inheritWith "usersSearchPanel"
                     , Ports.focusOn "userInput"
                     ]
                         ++ cmd
@@ -233,16 +249,39 @@ update_ apis message model =
 
         OnAssigneeClick assignee isNew time ->
             let
-                data =
+                newModel =
                     click assignee isNew model
-                        |> post "createdAt" (fromTime time)
-                        |> post "new" assignee.username
-                        |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
-                        |> setClickResult LoadingSlowly
             in
-            ( data
-            , out1 [ send (SetAssignee data.form) ]
-            )
+            case model.action of
+                AssignUser ->
+                    let
+                        data =
+                            newModel
+                                |> post "createdAt" (fromTime time)
+                                |> post "new" assignee.username
+                                |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
+                                |> setClickResult LoadingSlowly
+                    in
+                    ( data
+                    , out1 [ send (SetAssignee data.form) ]
+                    )
+
+                SelectUser ->
+                    let
+                        users =
+                            withMaybeData model.assignees_data
+                                |> withDefault []
+                                |> (\x ->
+                                        if isNew then
+                                            x ++ [ assignee ]
+
+                                        else
+                                            LE.remove assignee x
+                                   )
+                    in
+                    ( { newModel | assignees_data = Success users }
+                    , Out [] [] (Just ( newModel.form.isNew, newModel.form.assignee ))
+                    )
 
         OnAssigneeAck result ->
             let
@@ -290,13 +329,12 @@ subscriptions =
 type alias Op =
     { selectedAssignees : List User
     , targets : List String
-    , isAdmin : Bool
     }
 
 
 view_ : Op -> State -> Html Msg
 view_ op (State model) =
-    nav [ id "assigneeSearchPanel", class "panel sidePanel" ]
+    nav [ id "usersSearchPanel", class "panel sidePanel" ]
         [ case model.assignees_data of
             Success assignees_d ->
                 let
@@ -318,7 +356,7 @@ view_ op (State model) =
                         [ p [ class "control has-icons-left" ]
                             [ input
                                 [ id "userInput"
-                                , class "input autofocus"
+                                , class "input autofocus is-small"
                                 , type_ "text"
                                 , placeholder (upH T.searchUsers)
                                 , value model.pattern
@@ -398,29 +436,12 @@ viewAssigneeSelectors users op model =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ h2
-            [ class "subtitle"
-            , classList [ ( "is-w", op.isAdmin ) ]
-            , onClick (OnOpen op.targets)
-            ]
-            [ textH T.assignees
-            , if model.isOpen then
-                I.icon "icon-x is-pulled-right"
+    div [ id "usersPanelContent" ]
+        [ if model.isOpen then
+            view_ op (State model)
 
-              else if op.isAdmin then
-                I.icon "icon-settings is-pulled-right"
-
-              else
-                text ""
-            ]
-        , div [ id "assigneesPanelContent" ]
-            [ if model.isOpen then
-                view_ op (State model)
-
-              else
-                text ""
-            ]
+          else
+            text ""
         ]
 
 

@@ -6,7 +6,8 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData, withMaybeDataMap)
+import Components.UserSearchPanel as UserSearchPanel exposing (Msg(..), OnClickAction(..))
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -104,6 +105,8 @@ type alias Model =
     , typeFilter : TypeFilter
     , depthFilter : DepthFilter
     , queryIsEmpty : Bool
+    , authors : List User
+    , authorsPanel : UserSearchPanel.State
 
     -- Common
     , node_action : ActionState
@@ -266,6 +269,21 @@ defaultType =
     "all"
 
 
+
+{- Authors parameters -}
+
+
+authorsEncoder : List User -> List ( String, String )
+authorsEncoder authors =
+    authors |> List.map (\x -> ( "u", x.username ))
+
+
+
+--authorsDecoder : List ( String, String ) -> List User
+--authorsDecoder authors =
+--    authors |> List.map (\x -> ( "u", x.username ))
+
+
 nfirst : Int
 nfirst =
     15
@@ -284,18 +302,22 @@ type Msg
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
     | GotChildren (WebData (List NodeId)) -- HTTP/Json
-    | GotTensionsInt (GqlData TensionsData) -- GraphQL
+    | GotTensionsInt Int (GqlData TensionsData) -- GraphQL
     | GotTensionsExt (GqlData TensionsData) -- GraphQL
       -- Page Action
-    | DoLoad -- query tensions
+    | DoLoad Int -- query tensions
+    | OnFilterClick
     | ChangePattern String
     | ChangeStatusFilter StatusFilter
     | ChangeTypeFilter TypeFilter
     | ChangeDepthFilter DepthFilter
+    | ChangeAuthor
     | SearchKeyDown Int
     | OnClearFilter
     | SubmitSearch
     | GoView TensionsView
+      -- Authors
+    | UserSearchPanelMsg UserSearchPanel.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -348,6 +370,9 @@ init global flags =
         fs =
             focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
 
+        f =
+            Debug.log "authors" (Dict.get "u" query)
+
         -- Model init
         model =
             { node_focus = newFocus
@@ -361,13 +386,15 @@ init global flags =
             , offset = 0
             , load_more_int = False
             , load_more_ext = False
-            , pattern = Dict.get "q" query
-            , initPattern = Dict.get "q" query
-            , viewMode = Dict.get "v" query |> withDefault "" |> viewModeDecoder
-            , statusFilter = Dict.get "s" query |> withDefault "" |> statusFilterDecoder
-            , typeFilter = Dict.get "t" query |> withDefault "" |> typeFilterDecoder
-            , depthFilter = Dict.get "d" query |> withDefault "" |> depthFilterDecoder
+            , pattern = Dict.get "q" query |> withDefault [] |> List.head
+            , initPattern = Dict.get "q" query |> withDefault [] |> List.head
+            , viewMode = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
+            , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
+            , typeFilter = Dict.get "t" query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
+            , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
+            , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , queryIsEmpty = Dict.isEmpty query
+            , authorsPanel = UserSearchPanel.init "" SelectUser global.session.user
 
             -- Common
             , node_action = NoOp
@@ -379,10 +406,7 @@ init global flags =
             }
 
         cmds =
-            [ --ternary fs.focusChange
-              --  (queryLocalGraph newFocus.nameid GotPath)
-              --  (ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none)
-              queryLocalGraph apis.gql newFocus.nameid GotPath
+            [ queryLocalGraph apis.gql newFocus.nameid GotPath
             , ternary (model.depthFilter == AllSubChildren) (fetchChildren apis.rest newFocus.nameid GotChildren) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             ]
@@ -435,7 +459,7 @@ update global message model =
                         Just root ->
                             let
                                 cmd =
-                                    ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none
+                                    ternary (model.depthFilter == SelectedNode) (send (DoLoad 1)) Cmd.none
                             in
                             ( newModel, cmd, send (UpdateSessionPath (Just path)) )
 
@@ -461,7 +485,7 @@ update global message model =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                         cmd =
-                                            ternary (model.depthFilter == SelectedNode) (send DoLoad) Cmd.none
+                                            ternary (model.depthFilter == SelectedNode) (send (DoLoad 1)) Cmd.none
                                     in
                                     ( { model | path_data = Success newPath }, cmd, send (UpdateSessionPath (Just newPath)) )
 
@@ -488,12 +512,12 @@ update global message model =
             in
             case result of
                 RemoteData.Success children ->
-                    ( newModel, send DoLoad, Cmd.none )
+                    ( newModel, send (DoLoad 1), Cmd.none )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
 
-        GotTensionsInt result ->
+        GotTensionsInt inc result ->
             let
                 load_more =
                     case result of
@@ -516,7 +540,7 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_int = newResult, load_more_int = load_more, offset = model.offset + 1 }, Cmd.none, Cmd.none )
+            ( { model | tensions_int = newResult, load_more_int = load_more, offset = model.offset + inc }, Cmd.none, Cmd.none )
 
         GotTensionsExt result ->
             let
@@ -543,7 +567,7 @@ update global message model =
             in
             ( { model | tensions_ext = newResult, load_more_ext = load_more }, Cmd.none, Cmd.none )
 
-        DoLoad ->
+        DoLoad inc ->
             let
                 status =
                     case model.statusFilter of
@@ -569,41 +593,47 @@ update global message model =
 
                         HelpType ->
                             Just TensionType.Help
-            in
-            case model.depthFilter of
-                AllSubChildren ->
-                    case model.children of
-                        RemoteData.Success children ->
-                            let
-                                nameids =
+
+                nameids =
+                    case model.depthFilter of
+                        AllSubChildren ->
+                            case model.children of
+                                RemoteData.Success children ->
                                     children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
 
-                                cmds =
-                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsInt
-                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsExt
-                                    ]
-                            in
-                            ( model, Cmd.batch cmds, Cmd.none )
+                                _ ->
+                                    []
 
-                        other ->
-                            ( model, Cmd.none, Cmd.none )
-
-                SelectedNode ->
-                    case model.path_data of
-                        Success path ->
-                            let
-                                nameids =
+                        SelectedNode ->
+                            case model.path_data of
+                                Success path ->
                                     path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
-                                cmds =
-                                    [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsInt
-                                    , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status type_ GotTensionsExt
-                                    ]
-                            in
-                            ( model, Cmd.batch cmds, Cmd.none )
+                                _ ->
+                                    []
+            in
+            case nameids of
+                [] ->
+                    ( model, Cmd.none, Cmd.none )
 
-                        other ->
-                            ( model, Cmd.none, Cmd.none )
+                _ ->
+                    ( model
+                    , Cmd.batch
+                        [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
+                        , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
+                        ]
+                    , Cmd.none
+                    )
+
+        OnFilterClick ->
+            -- Fix component dropdowns close beaviour
+            if UserSearchPanel.isOpen_ model.authorsPanel then
+                -- @debug: this one doesnt work every time (race condition ?)
+                --( model, Cmd.map UserSearchPanelMsg (send OnClose), Cmd.none )
+                ( model, Ports.click "body", Cmd.none )
+
+            else
+                ( model, Cmd.none, Cmd.none )
 
         ChangePattern value ->
             ( { model | pattern = Just value }, Cmd.none, Cmd.none )
@@ -629,6 +659,13 @@ update global message model =
             in
             ( newModel, send SubmitSearch, Cmd.none )
 
+        ChangeAuthor ->
+            let
+                targets =
+                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+            in
+            ( model, Cmd.map UserSearchPanelMsg (send (OnOpen targets)), Cmd.none )
+
         SearchKeyDown key ->
             case key of
                 13 ->
@@ -643,24 +680,65 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         OnClearFilter ->
-            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid), Cmd.none )
+            let
+                query =
+                    queryBuilder
+                        [ ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) ) ]
+                        |> (\q -> ternary (q == "") "" ("?" ++ q))
+            in
+            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), Cmd.none )
 
         SubmitSearch ->
             let
                 query =
                     queryBuilder
-                        [ ( "q", model.pattern |> withDefault "" |> String.trim )
-                        , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
-                        , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
-                        , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
-                        , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
-                        ]
+                        ([ ( "q", model.pattern |> withDefault "" |> String.trim )
+                         , ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
+                         , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
+                         , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
+                         , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
+                         ]
+                            ++ authorsEncoder model.authors
+                        )
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
             ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query) )
 
         GoView viewMode ->
             ( { model | viewMode = viewMode }, Cmd.none, Cmd.none )
+
+        -- Authors
+        UserSearchPanelMsg msg ->
+            let
+                isAssigneeOpen1 =
+                    UserSearchPanel.isOpen_ model.authorsPanel
+
+                ( panel, out ) =
+                    UserSearchPanel.update apis msg model.authorsPanel
+
+                authors =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r == True then
+                                model.authors ++ [ Tuple.second r ]
+
+                            else
+                                LE.remove (Tuple.second r) model.authors
+                        )
+                        out.result
+                        |> withDefault model.authors
+
+                ( cmds_, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+
+                cmds =
+                    if model.authors /= authors then
+                        cmds_ ++ [ send (DoLoad 0) ]
+
+                    else
+                        cmds_
+            in
+            ( { model | authorsPanel = panel, authors = authors }, out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -876,6 +954,7 @@ subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
+        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch
 
@@ -913,7 +992,7 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns is-centered" ]
-                    [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model.pattern model.depthFilter model.statusFilter model.typeFilter model.viewMode model.queryIsEmpty ] ]
+                    [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -929,7 +1008,7 @@ view_ global model =
                         viewIntExtTensions model
                 , div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                     [ if model.load_more_int || model.load_more_ext then
-                        button [ class "button is-small", onClick DoLoad ]
+                        button [ class "button is-small", onClick (DoLoad 1) ]
                             [ text "Load more" ]
 
                       else
@@ -941,8 +1020,8 @@ view_ global model =
         ]
 
 
-viewSearchBar : Maybe String -> DepthFilter -> StatusFilter -> TypeFilter -> TensionsView -> Bool -> Html Msg
-viewSearchBar pattern depthFilter statusFilter typeFilter viewMode isEmpty =
+viewSearchBar : Model -> Html Msg
+viewSearchBar model =
     let
         checked =
             I.icon1 "icon-check has-text-success" ""
@@ -951,12 +1030,13 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode isEmpty =
             I.icon1 "icon-check has-text-success is-invisible" ""
 
         clearFilter =
-            if isEmpty then
+            if model.queryIsEmpty then
                 text ""
 
             else
                 span
-                    [ class "tag is-rounded is-small is-danger is-light ml-4 button-light"
+                    [ class "tag is-rounded is-small is-danger is-light button-light"
+                    , attribute "style" "margin: 0.35rem;"
                     , onClick OnClearFilter
                     ]
                     [ text "Clear filters" ]
@@ -972,7 +1052,7 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode isEmpty =
                             , autocomplete False
                             , autofocus True
                             , placeholder "Search tensions"
-                            , value (pattern |> withDefault "")
+                            , value (withDefault "" model.pattern)
                             , onInput ChangePattern
                             , onKeydown SearchKeyDown
                             ]
@@ -981,52 +1061,56 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode isEmpty =
                         ]
                     ]
                 ]
-            , div [ class "column is-6" ]
-                [ div [ class "field has-addons filterBar", attribute "style" "display: inline-flex;" ]
-                    [ div [ class "control dropdown" ]
+            , div [ class "column is-6 flex-gap" ]
+                [ div [ class "field has-addons filterBar mb-0" ]
+                    [ div [ class "control dropdown", onClick OnFilterClick ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ] [ textH T.status, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
                         , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter AllStatus ]
-                                    [ ternary (statusFilter == AllStatus) checked unchecked, textH (statusFilterEncoder AllStatus) ]
+                                    [ ternary (model.statusFilter == AllStatus) checked unchecked, textH (statusFilterEncoder AllStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter OpenStatus ]
-                                    [ ternary (statusFilter == OpenStatus) checked unchecked, textH (statusFilterEncoder OpenStatus) ]
+                                    [ ternary (model.statusFilter == OpenStatus) checked unchecked, textH (statusFilterEncoder OpenStatus) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeStatusFilter ClosedStatus ]
-                                    [ ternary (statusFilter == ClosedStatus) checked unchecked, textH (statusFilterEncoder ClosedStatus) ]
+                                    [ ternary (model.statusFilter == ClosedStatus) checked unchecked, textH (statusFilterEncoder ClosedStatus) ]
                                 ]
                             ]
                         ]
-                    , div [ class "control dropdown" ]
+                    , div [ class "control", onClick ChangeAuthor ]
+                        [ div [ class "is-small button" ] [ text "Author", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        , UserSearchPanel.view
+                            { selectedAssignees = model.authors
+                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            }
+                            model.authorsPanel
+                            |> Html.map UserSearchPanelMsg
+                        ]
+                    , div [ class "control dropdown", onClick OnFilterClick ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ] [ textH T.type_, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
-                        , div [ id "type-filter", class "dropdown-menu", attribute "role" "menu" ]
+                        , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
-                                    [ ternary (typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
+                                    [ ternary (model.typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter OperationalType ]
-                                    [ ternary (typeFilter == OperationalType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Operational) ] [ textH (typeFilterEncoder OperationalType) ] ]
+                                    [ ternary (model.typeFilter == OperationalType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Operational) ] [ textH (typeFilterEncoder OperationalType) ] ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter GovernanceType ]
-                                    [ ternary (typeFilter == GovernanceType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Governance) ] [ textH (typeFilterEncoder GovernanceType) ] ]
+                                    [ ternary (model.typeFilter == GovernanceType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Governance) ] [ textH (typeFilterEncoder GovernanceType) ] ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter HelpType ]
-                                    [ ternary (typeFilter == HelpType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Help) ] [ textH (typeFilterEncoder HelpType) ] ]
+                                    [ ternary (model.typeFilter == HelpType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Help) ] [ textH (typeFilterEncoder HelpType) ] ]
                                 ]
                             ]
                         ]
-                    , div [ class "control" ]
-                        [ div [ class "is-small button " ] [ text "Author", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
-
-                        --[ select [] [ option [ class "dropdown-item" ] [ text "Author" ] ] ]
-                        ]
-                    , div [ class "control dropdown" ]
+                    , div [ class "control dropdown", onClick OnFilterClick ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ] [ textH T.depth, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
-                        , div [ id "depth-filter", class "dropdown-menu", attribute "role" "menu" ]
+                        , div [ id "depth-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
                                 [ div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter AllSubChildren ]
-                                    [ ternary (depthFilter == AllSubChildren) checked unchecked, textH (depthFilterEncoder AllSubChildren) ]
+                                    [ ternary (model.depthFilter == AllSubChildren) checked unchecked, textH (depthFilterEncoder AllSubChildren) ]
                                 , div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter SelectedNode ]
-                                    [ ternary (depthFilter == SelectedNode) checked unchecked, textH (depthFilterEncoder SelectedNode) ]
+                                    [ ternary (model.depthFilter == SelectedNode) checked unchecked, textH (depthFilterEncoder SelectedNode) ]
                                 ]
                             ]
                         ]
@@ -1036,8 +1120,8 @@ viewSearchBar pattern depthFilter statusFilter typeFilter viewMode isEmpty =
             ]
         , div [ class "tabs is-md" ]
             [ ul []
-                [ li [ classList [ ( "is-active", viewMode == ListView ) ] ] [ a [ onClickPD (GoView ListView), target "_blank" ] [ text "List" ] ]
-                , li [ classList [ ( "is-active", viewMode == IntExtView ) ] ] [ a [ onClickPD (GoView IntExtView), target "_blank" ] [ text "Internal/External" ] ]
+                [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ] [ a [ onClickPD (GoView ListView), target "_blank" ] [ text "List" ] ]
+                , li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ] [ a [ onClickPD (GoView IntExtView), target "_blank" ] [ text "Internal/External" ] ]
                 ]
             ]
         ]

@@ -38,16 +38,24 @@ hr {
 }
 
 .column {
-  /*  Fix/scrollable column */
-  &.is-fullheight {
-    min-height: calc(100vh - #{$navbar-height} + #{$size-small});
-    max-height: calc(100vh - #{$navbar-height} + #{$size-small});
-    height:     calc(100vh - #{$navbar-height} + #{$size-small});
-    //display: flex;
-    //flex-direction: row;
-    //justify-content: stretch;
+    /*  Fix/scrollable column */
+    &.is-fullheight {
+        min-height: calc(100vh - #{$navbar-height} + #{$size-small});
+        max-height: calc(100vh - #{$navbar-height} + #{$size-small});
+        height:     calc(100vh - #{$navbar-height} + #{$size-small});
+        //display: flex;
+        //flex-direction: row;
+        //justify-content: stretch;
 
-    overflow-y: auto;
+        overflow-y: auto;
+    }
+
+
+    /* add a margin-top only when item are wrapped */
+    &.flex-gap {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 }
 
@@ -664,11 +672,9 @@ html.has-modal-active, html.has-modal-active2 {
         font-size: 1.9rem !important;
         font-weight: 600;
         margin-top: 1rem;
-        margin-bottom: 1rem;
     }
 
     .tensionSubtitle {
-        margin-bottom: -0.5rem;
         font-size: 14px !important;
         & > span:not(:last-child) {
             margin-right: 12px !important;
@@ -1053,7 +1059,6 @@ html.has-modal-active, html.has-modal-active2 {
 
 .filterBar.has-addons {
     .control {
-
         .button {
             border: 1px solid $grey !important;
             //background-color: #558db3 !important;

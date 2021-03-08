@@ -1,4 +1,4 @@
-module Components.LabelSearchPanel exposing (Msg, State, init, subscriptions, update, view, viewNew)
+module Components.LabelSearchPanel exposing (..)
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (LookupResult)
@@ -66,6 +66,15 @@ initModel tid user =
     -- Common
     , refresh_trial = 0
     }
+
+
+
+-- Global methods
+
+
+isOpen_ : State -> Bool
+isOpen_ (State model) =
+    model.isOpen
 
 
 
@@ -309,7 +318,6 @@ subscriptions =
 type alias Op =
     { selectedLabels : List Label
     , targets : List String
-    , isAdmin : Bool
     }
 
 
@@ -334,8 +342,7 @@ view_ isInternal op (State model) =
                             [ p [ class "control has-icons-left" ]
                                 [ input
                                     [ id "userInput"
-                                    , class "input autofocus"
-                                    , classList [ ( "is-small", isInternal ) ]
+                                    , class "input autofocus is-small"
                                     , type_ "text"
                                     , placeholder (upH T.searchLabels)
                                     , value model.pattern
@@ -427,29 +434,12 @@ viewLabelSelectors isInternal labels op model =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ h2
-            [ class "subtitle"
-            , classList [ ( "is-w", op.isAdmin ) ]
-            , onClick (OnOpen op.targets)
-            ]
-            [ textH T.labels
-            , if model.isOpen then
-                I.icon "icon-x is-pulled-right"
+    div [ id "labelsPanelContent" ]
+        [ if model.isOpen then
+            view_ False op (State model)
 
-              else if op.isAdmin then
-                I.icon "icon-settings is-pulled-right"
-
-              else
-                text ""
-            ]
-        , div [ id "labelsPanelContent" ]
-            [ if model.isOpen then
-                view_ False op (State model)
-
-              else
-                text ""
-            ]
+          else
+            text ""
         ]
 
 

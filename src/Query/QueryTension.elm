@@ -346,6 +346,48 @@ tensionPayload =
         |> with Fractal.Object.Tension.n_comments
 
 
+tensionPayloadFiltered : List User -> List Label -> SelectionSet Tension Fractal.Object.Tension
+tensionPayloadFiltered authors labels =
+    SelectionSet.succeed Tension
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Tension.createdBy (usersFilter authors) <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Tension.title
+        |> with Fractal.Object.Tension.type_
+        |> with (Fractal.Object.Tension.labels identity labelPayload)
+        |> with (Fractal.Object.Tension.emitter identity emiterOrReceiverPayload)
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
+        |> with Fractal.Object.Tension.action
+        |> with Fractal.Object.Tension.status
+        |> with Fractal.Object.Tension.n_comments
+
+
+
+{- Match all users -}
+
+
+usersFilter : List User -> Fractal.Object.Tension.CreatedByOptionalArguments -> Fractal.Object.Tension.CreatedByOptionalArguments
+usersFilter authors a =
+    { a | filter = matchAllUsers authors }
+
+
+matchAllUsers : List User -> OptionalArgument Input.UserFilter
+matchAllUsers alls =
+    List.foldl
+        (\x user ->
+            Input.buildUserFilter
+                (\d ->
+                    { d
+                        | username = Present { eq = Present x.username }
+                        , and = user
+                    }
+                )
+                |> Present
+        )
+        Absent
+        alls
+
+
 
 {-
    Query Regexp Tension
@@ -372,20 +414,20 @@ subTensionDecoder data =
             )
 
 
-queryIntTension url targetids first offset query_ status_ type_ msg =
+queryIntTension url targetids first offset query_ status_ authors labels type_ msg =
     makeGQLQuery url
         (Query.queryTension
             (subTensionIntFilterByDate targetids first offset query_ status_ type_)
-            tensionPayload
+            (tensionPayloadFiltered authors labels)
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-queryExtTension url targetids first offset query_ status_ type_ msg =
+queryExtTension url targetids first offset query_ status_ authors labels type_ msg =
     makeGQLQuery url
         (Query.queryTension
             (subTensionExtFilterByDate targetids first offset query_ status_ type_)
-            tensionPayload
+            (tensionPayloadFiltered authors labels)
         )
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
