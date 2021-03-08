@@ -38,6 +38,11 @@ unwrapCodecs (Codecs unwrappedCodecs) =
     unwrappedCodecs
 
 
+unwrapEncoder :
+    (RawCodecs valueDateTime valueId -> Codec getterValue)
+    -> Codecs valueDateTime valueId
+    -> getterValue
+    -> Graphql.Internal.Encode.Value
 unwrapEncoder getter (Codecs unwrappedCodecs) =
     (unwrappedCodecs |> getter |> .encoder) >> Graphql.Internal.Encode.fromJson
 

@@ -203,12 +203,12 @@ update_ apis message model =
         OnOpen targets ->
             if model.isOpen == False then
                 let
-                    cmd =
+                    ( newModel, cmd ) =
                         ternary (targets /= model.form.targets)
-                            [ queryMembers apis.gql targets OnGotAssignees ]
-                            []
+                            ( { model | assignees_data = LoadingSlowly }, [ queryMembers apis.gql targets OnGotAssignees ] )
+                            ( model, [] )
                 in
-                ( open targets model
+                ( open targets newModel
                 , out1 <|
                     [ Ports.outsideClickClose "cancelAssigneesFromJs" "usersPanelContent"
                     , Ports.inheritWith "usersSearchPanel"

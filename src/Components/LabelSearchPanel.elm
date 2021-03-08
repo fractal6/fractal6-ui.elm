@@ -200,10 +200,10 @@ update_ apis message model =
         OnOpen targets ->
             if model.isOpen == False then
                 let
-                    cmd =
+                    ( newModel, cmd ) =
                         ternary (targets /= model.form.targets)
-                            [ queryLabelsUp apis.gql targets OnGotLabels ]
-                            []
+                            ( { model | labels_data = LoadingSlowly }, [ queryLabelsUp apis.gql targets OnGotLabels ] )
+                            ( model, [] )
                 in
                 ( open targets model
                 , out1 <|
