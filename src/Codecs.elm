@@ -84,7 +84,7 @@ userCtxDecoder =
                     (JD.field "nameid" JD.string)
                     (JD.field "rootnameid" JD.string)
                     (JD.field "role_type" <| RoleType.decoder)
-             --@DEBUG/BUG: fail siletnly if role_type is not present in Role !
+             --@DEBUG/BUG: fail silently if role_type is not present in Role !
             )
             |> JDE.withDefault []
         )

@@ -47,6 +47,16 @@ type alias WebData a =
     RemoteData (HttpError String) a
 
 
+fromResult : Result (HttpError String) a -> GqlData a
+fromResult result =
+    case result of
+        Err e ->
+            Failure [ errorHttpToString e ]
+
+        Ok x ->
+            Success x
+
+
 
 --
 -- Remote Errors

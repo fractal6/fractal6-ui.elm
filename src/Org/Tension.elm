@@ -2540,17 +2540,21 @@ viewSidePane u t model =
                 [ div []
                     [ case u of
                         LoggedIn uctx ->
+                            let
+                                hasRight =
+                                    model.isTensionAdmin || t.createdBy.username == uctx.username
+                            in
                             div []
                                 [ h2
                                     [ class "subtitle"
-                                    , classList [ ( "is-w", model.isTensionAdmin ) ]
+                                    , classList [ ( "is-w", hasRight ) ]
                                     , onClick DoLabelEdit
                                     ]
                                     [ textH T.labels
                                     , if model.isLabelOpen then
                                         I.icon "icon-x is-pulled-right"
 
-                                      else if model.isTensionAdmin then
+                                      else if hasRight then
                                         I.icon "icon-settings is-pulled-right"
 
                                       else

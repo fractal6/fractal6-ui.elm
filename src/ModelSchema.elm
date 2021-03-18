@@ -163,6 +163,7 @@ type alias TensionComments =
     { id : String
     , comments : Maybe (List Comment)
     , n_comments : Maybe Int
+    , receiver : EmitterOrReceiver
     }
 
 

@@ -1208,7 +1208,7 @@ view_ global model =
     div [ id "mainPane" ]
         [ HelperBar.view helperData
         , div [ class "columns is-centered is-variable is-4" ]
-            [ div [ class "column is-6-desktop is-5-widescreen is-4-fullhd" ]
+            [ div [ class "column is-6-desktop is-5-widescreen is-5-fullhd" ]
                 [ viewSearchBar global.session.user model
                 , viewCanvas global.session.user model
                 , br [] []

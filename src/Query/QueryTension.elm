@@ -36,7 +36,7 @@ import Fractal.Scalar
 import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -159,6 +159,7 @@ tensionCommentsPayload =
                 commentPayload
             )
         |> with Fractal.Object.Tension.n_comments
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
 commentPayload : SelectionSet Comment Fractal.Object.Comment
@@ -414,6 +415,21 @@ subTensionDecoder data =
             )
 
 
+queryAllTension url targetids first offset query_ status_ type_ msg =
+    makeGQLQuery url
+        (Query.queryTension
+            (subTensionAllFilterByDate targetids first offset query_ status_ type_)
+            tensionPayload
+        )
+        (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
+
+
+
+{- queryIntTension and queryExtTension should support directive query to work with Dgraph....
+   https://github.com/dillonkearns/elm-graphql/issues/482
+-}
+
+
 queryIntTension url targetids first offset query_ status_ authors labels type_ msg =
     makeGQLQuery url
         (Query.queryTension
@@ -432,13 +448,46 @@ queryExtTension url targetids first offset query_ status_ authors labels type_ m
         (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
 
 
-queryAllTension url targetids first offset query_ status_ type_ msg =
-    makeGQLQuery url
-        (Query.queryTension
-            (subTensionAllFilterByDate targetids first offset query_ status_ type_)
-            tensionPayload
-        )
-        (RemoteData.fromResult >> decodeResponse subTensionDecoder >> msg)
+subTensionAllFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
+subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
+    let
+        nameidsRegxp =
+            nameids
+                |> List.map (\n -> "^" ++ n ++ "$")
+                |> String.join "|"
+                |> SE.surround "/"
+    in
+    { a
+        | first = Present first
+        , offset = Present offset
+        , order =
+            Input.buildTensionOrder
+                (\b -> { b | desc = Present TensionOrderable.CreatedAt })
+                |> Present
+        , filter =
+            Input.buildTensionFilter
+                (\c ->
+                    { c
+                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
+                        , and =
+                            Input.buildTensionFilter
+                                (\d1 ->
+                                    { d1
+                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                                        , or =
+                                            Input.buildTensionFilter
+                                                (\d2 ->
+                                                    { d2 | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present }
+                                                )
+                                                |> Present
+                                    }
+                                )
+                                |> Present
+                    }
+                )
+                |> Present
+    }
 
 
 subTensionIntFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
@@ -551,48 +600,6 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
                                                                 )
                                                                 |> Present
                                                     }
-                                                )
-                                                |> Present
-                                    }
-                                )
-                                |> Present
-                    }
-                )
-                |> Present
-    }
-
-
-subTensionAllFilterByDate : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> Maybe TensionType.TensionType -> Query.QueryTensionOptionalArguments -> Query.QueryTensionOptionalArguments
-subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
-    let
-        nameidsRegxp =
-            nameids
-                |> List.map (\n -> "^" ++ n ++ "$")
-                |> String.join "|"
-                |> SE.surround "/"
-    in
-    { a
-        | first = Present first
-        , offset = Present offset
-        , order =
-            Input.buildTensionOrder
-                (\b -> { b | desc = Present TensionOrderable.CreatedAt })
-                |> Present
-        , filter =
-            Input.buildTensionFilter
-                (\c ->
-                    { c
-                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
-                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
-                        , and =
-                            Input.buildTensionFilter
-                                (\d1 ->
-                                    { d1
-                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                                        , or =
-                                            Input.buildTensionFilter
-                                                (\d2 ->
-                                                    { d2 | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present }
                                                 )
                                                 |> Present
                                     }

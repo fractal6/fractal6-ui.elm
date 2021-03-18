@@ -32,7 +32,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.Requests exposing (fetchChildren, fetchMembers, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchChildren, fetchMembers, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
 import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -624,10 +624,21 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
                 _ ->
-                    ( model
+                    let
+                        offset =
+                            ternary (inc == 0) 0 model.offset
+                    in
+                    ( if inc == 0 then
+                        { model | offset = offset, tensions_int = LoadingSlowly, tensions_ext = LoadingSlowly }
+
+                      else
+                        model
                     , Cmd.batch
-                        [ queryIntTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
-                        , queryExtTension apis.gql nameids nfirst (model.offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
+                        --[ queryIntTension apis.gql nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
+                        --, queryExtTension apis.gql nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
+                        --]
+                        [ fetchTensionInt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
+                        , fetchTensionExt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
                         ]
                     , Cmd.none
                     )
@@ -997,7 +1008,7 @@ view_ global model =
     div [ id "mainPane" ]
         [ HelperBar.view helperData
         , div [ class "columns is-centered" ]
-            [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
+            [ div [ class "column is-10-desktop is-10-widescreen is-11-fullhd" ]
                 [ div [ class "columns is-centered" ]
                     [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model ] ]
                 , div [] <|
@@ -1160,13 +1171,13 @@ viewListTensions model =
 
 viewIntExtTensions : Model -> Html Msg
 viewIntExtTensions model =
-    div [ class "columns" ]
-        [ div [ class "column is-6" ]
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.internalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
-        , div [ class "column is-6" ]
+        , div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.externalTensions ]
             , viewTensions model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
