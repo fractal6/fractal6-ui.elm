@@ -2,7 +2,7 @@ module Form.NewTension exposing (..)
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (LookupResult)
-import Components.LabelSearchPanel as LabelSearchPanel
+import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
@@ -102,7 +102,7 @@ initModel user =
     , doAddResponsabilities = False
     , doAddDomains = False
     , doAddPolicies = False
-    , labelsPanel = LabelSearchPanel.init "" user
+    , labelsPanel = LabelSearchPanel.init "" SelectLabel user
     , lookup_users = []
 
     -- Common

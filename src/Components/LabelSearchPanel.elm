@@ -34,6 +34,7 @@ type alias Model =
     { isOpen : Bool
     , form : LabelForm
     , click_result : GqlData IdPayload
+    , action : OnClickAction
 
     -- Lookup
     , lookup : List Label
@@ -47,16 +48,22 @@ type alias Model =
     }
 
 
-init : String -> UserState -> State
-init tid user =
-    initModel tid user |> State
+type OnClickAction
+    = AssignLabel
+    | SelectLabel
 
 
-initModel : String -> UserState -> Model
-initModel tid user =
+init : String -> OnClickAction -> UserState -> State
+init tid action user =
+    initModel tid action user |> State
+
+
+initModel : String -> OnClickAction -> UserState -> Model
+initModel tid action user =
     { isOpen = False
     , form = initLabelForm tid user
     , click_result = NotAsked
+    , action = action
 
     -- Lookup
     , lookup = []
@@ -251,16 +258,39 @@ update_ apis message model =
 
         OnLabelClick label isNew time ->
             let
-                data =
+                newModel =
                     click label isNew model
-                        |> post "createdAt" (fromTime time)
-                        |> post (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
-                        |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
-                        |> setClickResult LoadingSlowly
             in
-            ( data
-            , out1 [ send (SetLabel data.form) ]
-            )
+            case model.action of
+                AssignLabel ->
+                    let
+                        data =
+                            newModel
+                                |> post "createdAt" (fromTime time)
+                                |> post (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
+                                |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
+                                |> setClickResult LoadingSlowly
+                    in
+                    ( data
+                    , out1 [ send (SetLabel data.form) ]
+                    )
+
+                SelectLabel ->
+                    let
+                        labels =
+                            withMaybeData model.labels_data
+                                |> withDefault []
+                                |> (\x ->
+                                        if isNew then
+                                            x ++ [ label ]
+
+                                        else
+                                            LE.remove label x
+                                   )
+                    in
+                    ( { newModel | labels_data = Success labels }
+                    , Out [] [] (Just ( newModel.form.isNew, newModel.form.label ))
+                    )
 
         OnLabelClickInt label isNew time ->
             let

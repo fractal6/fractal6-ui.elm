@@ -7,7 +7,7 @@ import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelS
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.LabelSearchPanel as LabelSearchPanel
+import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
@@ -407,7 +407,7 @@ init global flags =
             , isAssigneeOpen = False
             , assigneesPanel = UserSearchPanel.init tensionid AssignUser global.session.user
             , isLabelOpen = False
-            , labelsPanel = LabelSearchPanel.init tensionid global.session.user
+            , labelsPanel = LabelSearchPanel.init tensionid AssignLabel global.session.user
             , actionPanel = ActionPanel.init tensionid global.session.user
 
             -- Common

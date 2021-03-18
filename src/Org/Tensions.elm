@@ -6,8 +6,9 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData, withMaybeDataMap)
-import Components.UserSearchPanel as UserSearchPanel exposing (Msg(..), OnClickAction(..))
+import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -106,6 +107,8 @@ type alias Model =
     , depthFilter : DepthFilter
     , authors : List User
     , authorsPanel : UserSearchPanel.State
+    , labels : List Label
+    , labelsPanel : LabelSearchPanel.State
 
     -- Common
     , node_action : ActionState
@@ -290,6 +293,15 @@ authorsEncoder authors =
 
 
 
+{- labels parameters -}
+
+
+labelsEncoder : List Label -> List ( String, String )
+labelsEncoder labels =
+    labels |> List.map (\x -> ( "l", x.id ))
+
+
+
 --authorsDecoder : List ( String, String ) -> List User
 --authorsDecoder authors =
 --    authors |> List.map (\x -> ( "u", x.username ))
@@ -323,12 +335,15 @@ type Msg
     | ChangeTypeFilter TypeFilter
     | ChangeDepthFilter DepthFilter
     | ChangeAuthor
+    | ChangeLabel
     | SearchKeyDown Int
     | OnClearFilter
     | SubmitSearch
     | GoView TensionsView
       -- Authors
     | UserSearchPanelMsg UserSearchPanel.Msg
+      -- Labels
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -402,6 +417,8 @@ init global flags =
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , authorsPanel = UserSearchPanel.init "" SelectUser global.session.user
+            , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label x "" Nothing)
+            , labelsPanel = LabelSearchPanel.init "" SelectLabel global.session.user
 
             -- Common
             , node_action = NoOp
@@ -637,8 +654,8 @@ update global message model =
                         --[ queryIntTension apis.gql nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
                         --, queryExtTension apis.gql nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
                         --]
-                        [ fetchTensionInt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
-                        , fetchTensionExt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
+                        [ fetchTensionInt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
+                        , fetchTensionExt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors model.labels type_ GotTensionsExt
                         ]
                     , Cmd.none
                     )
@@ -682,7 +699,14 @@ update global message model =
                 targets =
                     model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
             in
-            ( model, Cmd.map UserSearchPanelMsg (send (OnOpen targets)), Cmd.none )
+            ( model, Cmd.map UserSearchPanelMsg (send (UserSearchPanel.OnOpen targets)), Cmd.none )
+
+        ChangeLabel ->
+            let
+                targets =
+                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+            in
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets)), Cmd.none )
 
         SearchKeyDown key ->
             case key of
@@ -717,6 +741,7 @@ update global message model =
                          , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
                          ]
                             ++ authorsEncoder model.authors
+                            ++ labelsEncoder model.labels
                         )
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
@@ -757,6 +782,39 @@ update global message model =
                         cmds_
             in
             ( { model | authorsPanel = panel, authors = authors }, out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
+        -- Labels
+        LabelSearchPanelMsg msg ->
+            let
+                isLabelOpen1 =
+                    LabelSearchPanel.isOpen_ model.labelsPanel
+
+                ( panel, out ) =
+                    LabelSearchPanel.update apis msg model.labelsPanel
+
+                labels =
+                    Maybe.map
+                        (\r ->
+                            if Tuple.first r == True then
+                                model.labels ++ [ Tuple.second r ]
+
+                            else
+                                LE.remove (Tuple.second r) model.labels
+                        )
+                        out.result
+                        |> withDefault model.labels
+
+                ( cmds_, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+
+                cmds =
+                    if model.labels /= labels then
+                        cmds_ ++ [ send (DoLoad 0) ]
+
+                    else
+                        cmds_
+            in
+            ( { model | labelsPanel = panel, labels = labels }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -973,6 +1031,7 @@ subscriptions global model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         |> Sub.batch
 
@@ -1103,6 +1162,15 @@ viewSearchBar model =
                             }
                             model.authorsPanel
                             |> Html.map UserSearchPanelMsg
+                        ]
+                    , div [ class "control", onClick ChangeLabel ]
+                        [ div [ class "is-small button" ] [ text "Label", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        , LabelSearchPanel.view
+                            { selectedLabels = model.labels
+                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            }
+                            model.labelsPanel
+                            |> Html.map LabelSearchPanelMsg
                         ]
                     , div [ class "control dropdown", onClick OnFilterClick ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ] [ textH T.type_, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
