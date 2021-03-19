@@ -281,6 +281,8 @@ queryIsEmpty model =
         == AllSubChildren
         && model.authors
         == []
+        && model.labels
+        == []
 
 
 
@@ -298,13 +300,7 @@ authorsEncoder authors =
 
 labelsEncoder : List Label -> List ( String, String )
 labelsEncoder labels =
-    labels |> List.map (\x -> ( "l", x.id ))
-
-
-
---authorsDecoder : List ( String, String ) -> List User
---authorsDecoder authors =
---    authors |> List.map (\x -> ( "u", x.username ))
+    labels |> List.map (\x -> ( "l", x.name ))
 
 
 nfirst : Int
@@ -417,7 +413,7 @@ init global flags =
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , authorsPanel = UserSearchPanel.init "" SelectUser global.session.user
-            , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label x "" Nothing)
+            , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing)
             , labelsPanel = LabelSearchPanel.init "" SelectLabel global.session.user
 
             -- Common
@@ -662,7 +658,7 @@ update global message model =
 
         OnFilterClick ->
             -- Fix component dropdowns close beaviour
-            if UserSearchPanel.isOpen_ model.authorsPanel then
+            if UserSearchPanel.isOpen_ model.authorsPanel || LabelSearchPanel.isOpen_ model.labelsPanel then
                 -- @debug: this one doesnt work every time (race condition ?)
                 --( model, Cmd.map UserSearchPanelMsg (send OnClose), Cmd.none )
                 ( model, Ports.click "body", Cmd.none )
@@ -776,7 +772,13 @@ update global message model =
 
                 cmds =
                     if model.authors /= authors then
+                        let
+                            focusid =
+                                withMaybeDataMap (\p -> p.focus.nameid) model.path_data |> withDefault model.node_focus.nameid
+                        in
                         cmds_ ++ [ send (DoLoad 0) ]
+                        -- @debug: We need to save locally the data and clean all after to avoid reloading everithing !!!
+                        --cmds_ ++ [ send (DoLoad 0), Nav.replaceUrl global.key (uriFromNameid TensionsBaseUri focusid ++ "?a=2") ]
 
                     else
                         cmds_
@@ -1154,6 +1156,22 @@ viewSearchBar model =
                                 ]
                             ]
                         ]
+                    , div [ class "control dropdown", onClick OnFilterClick ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ] [ textH T.type_, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
+                            [ div
+                                [ class "dropdown-content" ]
+                                [ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
+                                    [ ternary (model.typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter OperationalType ]
+                                    [ ternary (model.typeFilter == OperationalType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Operational) ] [ textH (typeFilterEncoder OperationalType) ] ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter GovernanceType ]
+                                    [ ternary (model.typeFilter == GovernanceType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Governance) ] [ textH (typeFilterEncoder GovernanceType) ] ]
+                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter HelpType ]
+                                    [ ternary (model.typeFilter == HelpType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Help) ] [ textH (typeFilterEncoder HelpType) ] ]
+                                ]
+                            ]
+                        ]
                     , div [ class "control", onClick ChangeAuthor ]
                         [ div [ class "is-small button" ] [ text "Author", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
                         , UserSearchPanel.view
@@ -1171,22 +1189,6 @@ viewSearchBar model =
                             }
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg
-                        ]
-                    , div [ class "control dropdown", onClick OnFilterClick ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ] [ textH T.type_, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
-                        , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
-                            [ div
-                                [ class "dropdown-content" ]
-                                [ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
-                                    [ ternary (model.typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter OperationalType ]
-                                    [ ternary (model.typeFilter == OperationalType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Operational) ] [ textH (typeFilterEncoder OperationalType) ] ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter GovernanceType ]
-                                    [ ternary (model.typeFilter == GovernanceType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Governance) ] [ textH (typeFilterEncoder GovernanceType) ] ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter HelpType ]
-                                    [ ternary (model.typeFilter == HelpType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Help) ] [ textH (typeFilterEncoder HelpType) ] ]
-                                ]
-                            ]
                         ]
                     , div [ class "control dropdown", onClick OnFilterClick ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ] [ textH T.depth, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
@@ -1231,7 +1233,7 @@ viewListTensions model =
                     other |> List.sortBy .createdAt |> List.reverse |> Success
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-10-desktop is-9-fullhd" ]
+        [ div [ class "column is-10-desktop is-10-fullhd" ]
             [ viewTensions model.node_focus model.initPattern tensions_d ListTension
             ]
         ]

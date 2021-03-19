@@ -98,7 +98,14 @@ mediaTension baseUri focus tension navigate =
         labels_m =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
-    div [ class "media mediaTension" ]
+    div
+        [ class "media mediaTension"
+        , if baseUri == OverviewBaseUri then
+            attribute "style" "margin-top:10px"
+
+          else
+            attribute "style" ""
+        ]
         [ div [ class "media-left" ]
             [ div
                 [ class "tooltip has-tooltip-top"
@@ -122,7 +129,8 @@ mediaTension baseUri focus tension navigate =
                 , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
                 ]
                 [ a
-                    [ classList [ ( "has-text-weight-semibold", True ), ( "is-size-6", baseUri == TensionsBaseUri ) ]
+                    [ class "has-text-weight-semibold"
+                    , classList [ ( "is-size-6", baseUri == TensionsBaseUri ) ]
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
@@ -131,26 +139,41 @@ mediaTension baseUri focus tension navigate =
                         viewLabels labels
 
                     Nothing ->
-                        span [] []
-                , if n_comments > 1 then
-                    span [ class "is-pulled-right tooltip has-tooltip-top", attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments") ]
-                        [ I.icon1 "icon-message-square icon-sm" (String.fromInt (n_comments - 1)) ]
-
-                  else
-                    span [] []
-                ]
-            , span [ class "columns is-variable is-mobile" ]
-                [ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
-                , span [ class "column" ]
+                        text ""
+                , span [ class "level is-pulled-right" ]
                     [ case tension.action of
                         Just action ->
-                            viewActionIconLink action focus.rootnameid tension.id "" "is-small"
+                            viewActionIconLink action focus.rootnameid tension.id "" "is-small level-item"
 
                         Nothing ->
-                            span [] []
-                    , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
+                            text ""
+                    , if n_comments > 1 then
+                        a
+                            [ class "tooltip has-tooltip-top level-item"
+                            , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                            , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                            ]
+                            [ I.icon1 "icon-message-square icon-sm" "", text (String.fromInt (n_comments - 1)) ]
+
+                      else
+                        text ""
                     ]
                 ]
+            , span [ class "" ]
+                [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver
+                , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
+                ]
+
+            --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
+            --, span [ class "column" ]
+            --    [ case tension.action of
+            --        Just action ->
+            --            viewActionIconLink action focus.rootnameid tension.id "" "is-small"
+            --        Nothing ->
+            --            text ""
+            --    , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
+            --    ]
+            --]
             ]
         ]
 

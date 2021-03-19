@@ -362,6 +362,10 @@ view_ isInternal op (State model) =
         [ case model.labels_data of
             Success labels_d ->
                 let
+                    --selection =
+                    --    List.map (\x -> x.name) op_.selectedLabels
+                    --op =
+                    --    { op_ | selectedLabels = List.map (\x -> ternary (List.member x.name selection) x ) selection }
                     labels =
                         if model.pattern == "" then
                             op.selectedLabels

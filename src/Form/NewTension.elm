@@ -755,7 +755,7 @@ update_ apis message model =
                                         |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Role model.form.node.type_))
                                         |> withDefault ""
                             in
-                            ( setResult result model, out2 [ DoFetchNode newNameid ] )
+                            ( setResult result model, out2 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                         NewCircleTab ->
                             let
@@ -764,7 +764,7 @@ update_ apis message model =
                                         |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Circle model.form.node.type_))
                                         |> withDefault ""
                             in
-                            ( setResult result model, out2 [ DoFetchNode newNameid ] )
+                            ( setResult result model, out2 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                 NoAuth ->
                     ( setResult result model, noOut )

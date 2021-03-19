@@ -1613,7 +1613,7 @@ view_ global model =
     div [ id "mainPane" ]
         [ HelperBar.view helperData
         , div [ class "columns is-centered" ]
-            [ div [ class "column is-12-desktop is-12-widescreen is-10-fullhd is-offset-1" ]
+            [ div [ class "column is-11-desktop is-10-widescreen is-10-fullhd " ]
                 [ case model.tension_head of
                     Success t ->
                         viewTension global.session.user t model
@@ -1640,9 +1640,9 @@ viewTension u t model =
     in
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
-            -- @DEBUG: width correpsoding to is-8 is hard-coded in modal-content (below) to
+            -- @DEBUG: width correpsoding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
-            [ div [ class "column is-8" ]
+            [ div [ class "column is-9" ]
                 [ h1 [ class "title tensionTitle" ] <|
                     case model.isTitleEdit of
                         True ->
@@ -1719,8 +1719,8 @@ viewTension u t model =
                 ]
             ]
         , div [ class "block is-hidden-desktop" ] []
-        , div [ class "columns is-variable is-4" ]
-            [ div [ class "column is-8 " ]
+        , div [ class "columns is-centered is-variable is-4" ]
+            [ div [ class "column is-9" ]
                 [ div [ class "tabs is-md" ]
                     [ ul []
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]

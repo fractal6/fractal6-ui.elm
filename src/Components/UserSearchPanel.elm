@@ -338,11 +338,17 @@ type alias Op =
 
 
 view_ : Op -> State -> Html Msg
-view_ op (State model) =
+view_ op_ (State model) =
     nav [ id "usersSearchPanel", class "panel sidePanel" ]
         [ case model.assignees_data of
             Success assignees_d ->
                 let
+                    selection =
+                        List.map (\x -> x.username) op_.selectedAssignees
+
+                    op =
+                        { op_ | selectedAssignees = List.filter (\x -> List.member x.username selection) assignees_d }
+
                     user =
                         model.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
 

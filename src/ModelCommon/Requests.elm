@@ -207,7 +207,7 @@ fetchTensionEncoder nameids first offset query_ status_ authors labels type_ =
         , ( "query", JEE.maybe JE.string query_ )
         , ( "status", JEE.maybe JE.string <| Maybe.map (\t -> TensionStatus.toString t) status_ )
         , ( "authors", JE.list JE.string <| List.map (\x -> x.username) authors )
-        , ( "labels", JE.list JE.string <| List.map (\x -> x.id) labels )
+        , ( "labels", JE.list JE.string <| List.map (\x -> x.name) labels )
         , ( "type_", JEE.maybe JE.string <| Maybe.map (\t -> TensionType.toString t) type_ )
         ]
 
@@ -223,7 +223,7 @@ tensionDecoder =
         |> JDE.andMap (JD.maybe <| JD.field "labels" (JD.list <| labelDecoder))
         |> JDE.andMap (JD.field "emitter" emitterOrReceiverDecoder)
         |> JDE.andMap (JD.field "receiver" emitterOrReceiverDecoder)
-        |> JDE.andMap (JD.maybe <| JD.field "n_comments" TensionAction.decoder)
+        |> JDE.andMap (JD.maybe <| JD.field "action" TensionAction.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
 
