@@ -11,9 +11,9 @@ import Icon as I
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), typeFromNameid, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2type, uriFromNameid)
 import ModelCommon.View exposing (roleColor)
-import ModelSchema exposing (LocalGraph, NodeCharac, UserRole)
+import ModelSchema exposing (LocalGraph, Node, NodeCharac, UserRole, initNode)
 import Ports
 import Text as T exposing (textH, textT)
 
@@ -51,14 +51,15 @@ type alias Op msg =
     , onJoin : msg
     , onExpand : msg
     , onCollapse : msg
+    , onCreateTension : LocalGraph -> msg
     }
 
 
 view : Op msg -> Html msg
-view hb =
+view op =
     let
         ( focusid, rootnameid, charac ) =
-            case hb.path_data of
+            case op.path_data of
                 Just path ->
                     ( path.focus.nameid, path.root |> Maybe.map (\r -> r.nameid) |> withDefault "", Just path.focus.charac )
 
@@ -69,7 +70,7 @@ view hb =
         [ nav [ class "column is-11-desktop is-10-widescreen is-10-fullhd" ]
             [ div [ class "navbar" ]
                 [ div [ class "navbar-brand" ]
-                    [ viewPath hb.baseUri hb.path_data ]
+                    [ viewPath op.baseUri op.path_data ]
                 , div
                     [ class "navbar-burger burger"
                     , attribute "data-target" "rolesMenu"
@@ -82,23 +83,23 @@ view hb =
                     , span [ attribute "aria-hidden" "true" ] []
                     ]
                 , div [ id "rolesMenu", class "navbar-menu" ]
-                    [ case hb.user of
+                    [ case op.user of
                         LoggedIn uctx ->
-                            case hb.path_data of
+                            case op.path_data of
                                 Just path ->
                                     let
                                         roles =
                                             List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
                                     in
                                     if List.length roles > 0 then
-                                        memberButtons roles { hb | baseUri = OverviewBaseUri }
+                                        memberButtons roles { op | baseUri = OverviewBaseUri }
 
                                     else
                                         charac
                                             |> Maybe.map
                                                 (\c ->
                                                     if c.userCanJoin then
-                                                        joinButton hb.onJoin
+                                                        joinButton op.onJoin
 
                                                     else
                                                         text ""
@@ -113,7 +114,7 @@ view hb =
                                 |> Maybe.map
                                     (\c ->
                                         if c.userCanJoin then
-                                            joinButton hb.onJoin
+                                            joinButton op.onJoin
 
                                         else
                                             text ""
@@ -123,28 +124,41 @@ view hb =
                 ]
             , div [ class "tabs is-boxed" ]
                 [ ul []
-                    ([ li [ classList [ ( "is-active", hb.baseUri == OverviewBaseUri ) ] ]
+                    ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
                         [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ I.icon1 "icon-sun" "Overview" ] ]
-                     , li [ classList [ ( "is-active", hb.baseUri == TensionsBaseUri ) ] ]
+                     , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri ) ] ]
                         [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ I.icon1 "icon-exchange" "Tensions" ] ]
-                     , li [ classList [ ( "is-active", hb.baseUri == MembersBaseUri ) ] ]
+                     , li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
                         [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ I.icon1 "icon-user" "Members" ] ]
                      ]
                         ++ (Maybe.map
                                 (\path ->
-                                    if hb.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
+                                    if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                         [ li [ class "is-vbar-2" ] []
-                                        , li [ classList [ ( "is-active", hb.baseUri == SettingsBaseUri ) ] ]
+                                        , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
                                             [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ I.icon1 "icon-settings" "Settings" ] ]
                                         ]
 
                                     else
                                         []
                                 )
-                                hb.path_data
+                                op.path_data
                                 |> withDefault []
                            )
                     )
+                , div
+                    ([ class "button is-small is-info is-rounded is-pulled-right"
+                     , attribute "style" "bottom:-5px;"
+                     ]
+                        ++ (case op.path_data of
+                                Just p ->
+                                    [ onClick (op.onCreateTension p) ]
+
+                                Nothing ->
+                                    []
+                           )
+                    )
+                    [ I.icon1 "icon-send" "Create tension" ]
                 ]
             ]
         ]
@@ -172,7 +186,7 @@ viewPath baseUri maybePath =
                                 li [ class "is-acti has-text-weight-semibold" ]
                                     [ a [ href (uriFromNameid baseUri p.nameid) ]
                                         [ div [] [ text p.name ] ]
-                                    , if g.focus.type_ == NodeType.Circle && List.length (List.filter (\c -> typeFromNameid c.nameid == NodeType.Circle) g.focus.children) > 0 then
+                                    , if g.focus.type_ == NodeType.Circle && List.length (List.filter (\c -> nid2type c.nameid == NodeType.Circle) g.focus.children) > 0 then
                                         viewTree baseUri g
 
                                       else
@@ -195,7 +209,7 @@ viewTree baseUri g =
         , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content" ] <|
                 (g.focus.children
-                    |> List.filter (\c -> typeFromNameid c.nameid == NodeType.Circle)
+                    |> List.filter (\c -> nid2type c.nameid == NodeType.Circle)
                     |> List.map
                         (\c ->
                             a [ class "dropdown-item pl-2", href (uriFromNameid baseUri c.nameid) ] [ text c.name ]
@@ -218,10 +232,10 @@ joinButton msg =
 
 
 memberButtons : List UserRole -> Op msg -> Html msg
-memberButtons roles_ hb =
+memberButtons roles_ op =
     let
         roles =
-            case hb.data of
+            case op.data of
                 Expanded ->
                     roles_
 
@@ -232,13 +246,13 @@ memberButtons roles_ hb =
             List.length roles_ - List.length roles
 
         lastButton =
-            case hb.data of
+            case op.data of
                 Expanded ->
-                    div [ class "button is-small is-primary", onClick hb.onCollapse ] [ I.icon "icon-chevrons-left" ]
+                    div [ class "button is-small is-primary", onClick op.onCollapse ] [ I.icon "icon-chevrons-left" ]
 
                 Collapsed ->
                     if roleMoreLen > 0 then
-                        div [ class "button has-font-weight-semibold is-small is-primary", onClick hb.onExpand ]
+                        div [ class "button has-font-weight-semibold is-small is-primary", onClick op.onExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
                             , I.icon "icon-chevrons-right icon-padding-left"
                             ]
@@ -253,7 +267,7 @@ memberButtons roles_ hb =
                     [ a
                         [ class ("button buttonRole is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                        , href <| uriFromNameid hb.baseUri r.nameid
+                        , href <| uriFromNameid op.baseUri r.nameid
                         ]
                         [ text r.name ]
 

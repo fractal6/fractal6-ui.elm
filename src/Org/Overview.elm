@@ -3,7 +3,7 @@ port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions,
 import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
-import Codecs exposing (LocalGraph_, LookupResult, Node_, QuickDoc, WindowPos, localGraphDecoder, nodeDecoder)
+import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -133,9 +133,6 @@ type alias Model =
     , node_quickSearch : NodesQuickSearch
     , window_pos : WindowPos
 
-    -- Form
-    , tensionForm : NTF.State
-
     -- Node Action
     , actionPanel : ActionPanel
 
@@ -145,6 +142,7 @@ type alias Model =
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     , help : Help.State
+    , tensionForm : NTF.State
     , refresh_trial : Int
     }
 
@@ -177,10 +175,8 @@ type Msg
     | ChangePattern String
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
-      -- New Tension triggers
-    | DoNodeAction Node_
-    | DoNewTension Node
-      -- New tension
+      -- New Tension
+    | DoCreateTension LocalGraph
     | NewTensionMsg NTF.Msg
       -- Node Settings
     | DoActionEdit Node
@@ -205,7 +201,7 @@ type Msg
     | DelNodes (List String)
       -- GP JS Interop
     | NodeClicked String
-    | NodeFocused LocalGraph_
+    | NodeFocused LocalGraph
     | DoClearTooltip
     | ToggleGraphReverse
       -- Token refresh
@@ -289,9 +285,6 @@ init global flags =
                 global.session.window_pos
                     |> withDefault { two = "doc", three = "activities" }
 
-            -- Form
-            , tensionForm = NTF.init global.session.user
-
             -- Node Action
             , actionPanel = ActionPanel.init "" global.session.user
 
@@ -300,8 +293,9 @@ init global flags =
             , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
-            , refresh_trial = 0
             , help = Help.init global.session.user
+            , tensionForm = NTF.init global.session.user
+            , refresh_trial = 0
             }
 
         cmds =
@@ -586,21 +580,12 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         -- New tension triggers
-        DoNodeAction node_ ->
-            case node_ of
-                Ok node ->
-                    ( model, send (DoNewTension node), Cmd.none )
-
-                Err err ->
-                    ( { model | node_action = AskErr err }, send DoOpenModal, Cmd.none )
-
-        DoNewTension target ->
+        DoCreateTension lg ->
             let
                 tf =
                     model.tensionForm
                         |> NTF.setUser_ global.session.user
-                        |> NTF.setTarget_ target (withMaybeData model.node_data)
-                        |> NTF.setTargets_ model.orga_data
+                        |> NTF.setPath_ lg
             in
             ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
 
@@ -899,24 +884,19 @@ update global message model =
             , Nav.replaceUrl global.key (uriFromNameid OverviewBaseUri nameid)
             )
 
-        NodeFocused path_ ->
-            case path_ of
-                Ok path ->
-                    -- May change the node_focus var
-                    let
-                        nameids =
-                            path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+        NodeFocused path ->
+            -- May change the node_focus var
+            let
+                nameids =
+                    path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
-                        cmd =
-                            queryAllTension apis.gql nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
-                    in
-                    ( { model | path_data = Just path }
-                    , Cmd.batch [ Ports.drawButtonsGraphPack, cmd, Ports.bulma_driver "" ]
-                    , send (UpdateSessionPath (Just path))
-                    )
-
-                Err err ->
-                    ( model, Ports.logErr err, Cmd.none )
+                cmd =
+                    queryAllTension apis.gql nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+            in
+            ( { model | path_data = Just path }
+            , Cmd.batch [ Ports.drawButtonsGraphPack, cmd, Ports.bulma_driver "" ]
+            , send (UpdateSessionPath (Just path))
+            )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
@@ -1060,14 +1040,14 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ nodeClickedFromJs NodeClicked
-    , nodeFocusedFromJs_ NodeFocused
-    , nodeDataFromJs_ DoNodeAction
+    , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
+    , Ports.lgPD nodeDataFromJs LogErr DoCreateTension
     , Ports.lookupNodeFromJs ChangeNodeLookup
     , Ports.cancelActionFromJs (always CancelAction)
     , Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
-        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
         |> Sub.batch
 
 
@@ -1082,38 +1062,6 @@ port nodeFocusedFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port nodeDataFromJs : (JD.Value -> a) -> Sub a
-
-
-nodeDataFromJs_ : (Node_ -> msg) -> Sub msg
-nodeDataFromJs_ object =
-    nodeDataFromJs
-        (object
-            << (\x ->
-                    case x of
-                        Ok n ->
-                            Ok n
-
-                        Err err ->
-                            Err (JD.errorToString err)
-               )
-            << JD.decodeValue nodeDecoder
-        )
-
-
-nodeFocusedFromJs_ : (LocalGraph_ -> msg) -> Sub msg
-nodeFocusedFromJs_ object =
-    nodeFocusedFromJs
-        (object
-            << (\x ->
-                    case x of
-                        Ok n ->
-                            Ok n
-
-                        Err err ->
-                            Err (JD.errorToString err)
-               )
-            << JD.decodeValue localGraphDecoder
-        )
 
 
 
@@ -1183,13 +1131,14 @@ view_ global model =
                     nodeData_
 
         helperData =
-            { onJoin = DoJoinOrga model.node_focus.rootnameid
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , user = global.session.user
+            { user = global.session.user
             , path_data = model.path_data
             , baseUri = OverviewBaseUri
             , data = model.helperBar
+            , onJoin = DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , onCreateTension = DoCreateTension
             }
 
         viewFromPos : String -> Html Msg
@@ -1258,21 +1207,6 @@ viewLeftPane model =
 viewSearchBar : UserState -> Model -> Html Msg
 viewSearchBar us model =
     let
-        node_ =
-            model.path_data
-                |> Maybe.map
-                    (\p ->
-                        case model.orga_data of
-                            Success d ->
-                                Dict.get p.focus.nameid d
-                                    |> Maybe.map (\n -> Ok n)
-                                    |> withDefault (Err "Node not found")
-
-                            other ->
-                                Err "No nodes data"
-                    )
-                |> withDefault (Err "No path returned")
-
         qs =
             model.node_quickSearch
     in
@@ -1301,21 +1235,24 @@ viewSearchBar us model =
                 , span [ class "icon is-left" ] [ i [ class "icon-search" ] [] ]
                 ]
              ]
-                ++ (case node_ of
-                        Ok node ->
+                ++ (case model.path_data of
+                        Just p ->
                             [ div [ class "control controlButtons" ]
                                 [ span
                                     [ class "button is-small is-info is-ellipsis"
                                     , attribute "data-modal" "actionModal"
-                                    , onClick (DoNodeAction node_)
+                                    , onClick (DoCreateTension p)
                                     ]
-                                    [ span [ class "has-text-weight-bold is-ellipsis" ] [ text node.name ]
+                                    [ span [ class "has-text-weight-bold is-ellipsis" ] [ text p.focus.name ]
                                     , i [ class "icon-plus1 ellipsisArt" ] []
                                     ]
                                 ]
                             , case us of
                                 LoggedIn uctx ->
                                     let
+                                        node =
+                                            Dict.get p.focus.nameid (withMaybeData model.orga_data |> withDefault Dict.empty) |> withDefault initNode
+
                                         isAdmin =
                                             List.length (getNewNodeRights uctx node model.orga_data) > 0
 
@@ -1354,7 +1291,7 @@ viewSearchBar us model =
                                     text ""
                             ]
 
-                        Err err ->
+                        _ ->
                             []
                    )
             )

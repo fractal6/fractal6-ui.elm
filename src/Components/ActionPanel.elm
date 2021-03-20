@@ -15,7 +15,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, UserState(..), initActionForm)
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, typeFromNameid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, nid2type)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import String.Format as Format

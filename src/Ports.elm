@@ -1,12 +1,35 @@
 port module Ports exposing (..)
 
-import Codecs exposing (LookupResult, labelDecoder, labelsEncoder, modalDataDecoder, nodeDecoder, nodeEncoder, nodesEncoder, userCtxDecoder, userCtxEncoder, userDecoder, userEncoder, usersEncoder)
+import Codecs
+    exposing
+        ( LookupResult
+        , labelDecoder
+        , labelsEncoder
+        , localGraphDecoder
+        , modalDataDecoder
+        , nodeDecoder
+        , nodeEncoder
+        , nodesEncoder
+        , userCtxDecoder
+        , userCtxEncoder
+        , userDecoder
+        , userEncoder
+        , usersEncoder
+        )
 import Components.Loading exposing (ModalData)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
 import ModelCommon.Codecs exposing (nearestCircleid)
-import ModelSchema exposing (Label, Node, NodesData, User, UserCtx)
+import ModelSchema
+    exposing
+        ( Label
+        , LocalGraph
+        , Node
+        , NodesData
+        , User
+        , UserCtx
+        )
 
 
 
@@ -386,6 +409,25 @@ mcPD sub messageErr message =
                     messageErr (JD.errorToString err)
          )
             << JD.decodeValue modalDataDecoder
+        )
+
+
+
+-- Local graph Decoder
+
+
+lgPD : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (LocalGraph -> msg) -> Sub msg
+lgPD sub messageErr message =
+    sub
+        ((\x ->
+            case x of
+                Ok n ->
+                    message n
+
+                Err err ->
+                    messageErr (JD.errorToString err)
+         )
+            << JD.decodeValue localGraphDecoder
         )
 
 

@@ -1,6 +1,6 @@
 module ModelCommon.Requests exposing (..)
 
-import Codecs exposing (nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
+import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, expectJson, fromResult, toErrorData)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
@@ -13,7 +13,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (EmitterOrReceiver, Label, LabelFull, Member, NodeId, Post, Tension, User, UserCtx, UserRoleExtended, Username)
+import ModelSchema exposing (Label, LabelFull, Member, NodeId, Post, Tension, User, UserCtx, UserRoleExtended, Username)
 import Query.QueryNode exposing (MemberNode)
 import RemoteData exposing (RemoteData)
 
@@ -226,15 +226,6 @@ tensionDecoder =
         |> JDE.andMap (JD.maybe <| JD.field "action" TensionAction.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
-
-
-emitterOrReceiverDecoder : JD.Decoder EmitterOrReceiver
-emitterOrReceiverDecoder =
-    JD.map4 EmitterOrReceiver
-        (JD.field "name" JD.string)
-        (JD.field "nameid" JD.string)
-        (JD.field "role_type" RoleType.decoder |> JD.maybe)
-        (JD.field "isPrivate" JD.bool)
 
 
 

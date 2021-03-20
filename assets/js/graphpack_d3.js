@@ -709,16 +709,49 @@ export const GraphPack = {
         return {mouseX, mouseY}
     },
 
+
+    // Returns a PNode from a Node
+    getPNode(node) {
+        return {
+            nameid: node.data.nameid,
+            name: node.data.name,
+            charac: node.data.charac,
+            isPrivate: node.data.isPrivate,
+        }
+    },
+
     // Returns the path from root to node.
     getNodePath(node) {
         var path = this.gPack.path(node).map(n => {
-            return {
-                nameid: n.data.nameid,
-                name: n.data.name,
-                isPrivate: n.data.isPrivate,
-            };
+            return this.getPNode(n)
         });
         return path
+    },
+
+    getNodeData(node) {
+        var rootNode = this.getPNode(this.rootNode);
+        var focusNode = {
+            name: node.data.name,
+            nameid: node.data.nameid,
+            type_: node.data.type_,
+            charac: node.data.charac,
+            children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
+                return {
+                    name: n.data.name,
+                    nameid: n.data.nameid,
+                    role_type: n.data.role_type,
+                    charac: n.data.charac,
+                    isPrivate: n.data.isPrivate
+                }
+            }) : [],
+            isPrivate: node.data.isPrivate
+        };
+
+        return {
+            root: rootNode,
+            path: this.getNodePath(node),
+            focus: focusNode
+        }
     },
 
     // Get node position and properties
@@ -995,38 +1028,11 @@ export const GraphPack = {
     nodeFocusedFromJs(node) {
         // @DEBUG: why / where would node be undefined ?
         if (!node) return
-
-        var rootNode = {
-            name: this.rootNode.data.name,
-            nameid: this.rootNode.data.nameid,
-            charac: this.rootNode.data.charac,
-            isPrivate: this.rootNode.data.isPrivate,
-        };
-        var focusNode = {
-            name: node.data.name,
-            nameid: node.data.nameid,
-            type_: node.data.type_,
-            charac: node.data.charac,
-            children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
-                return {
-                    name: n.data.name,
-                    nameid: n.data.nameid,
-                    role_type: n.data.role_type,
-                    isPrivate: n.data.isPrivate
-                }
-            }) : [],
-            isPrivate: node.data.isPrivate
-        };
-        var lg = {
-            root: rootNode,
-            path: this.getNodePath(node),
-            focus: focusNode
-        };
-        this.app.ports.nodeFocusedFromJs.send(lg);
+        this.app.ports.nodeFocusedFromJs.send(this.getNodeData(node));
     },
 
     sendNodeDataFromJs(node) {
-        this.app.ports.nodeDataFromJs.send(node.data);
+        this.app.ports.nodeDataFromJs.send(this.getNodeData(node));
     },
 
     //

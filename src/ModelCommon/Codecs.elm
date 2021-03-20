@@ -172,22 +172,6 @@ nameidFromFlags flags =
 -}
 
 
-nodeFromFocus : NodeFocus -> Node
-nodeFromFocus focus =
-    { createdAt = ""
-    , name = ""
-    , nameid = focus.nameid
-    , rootnameid = focus.rootnameid
-    , parent = Nothing
-    , type_ = focus.type_
-    , role_type = Nothing
-    , first_link = Nothing
-    , charac = NodeCharac False NodeMode.Coordinated
-    , isPrivate = False
-    , source = Nothing
-    }
-
-
 focusFromPath : LocalGraph -> NodeFocus
 focusFromPath path =
     { rootnameid = nid2rootid path.focus.nameid
@@ -232,8 +216,8 @@ focusFromNameid nameid_ =
     NodeFocus rootid nameid nodeType
 
 
-typeFromNameid : String -> NodeType.NodeType
-typeFromNameid nameid =
+nid2type : String -> NodeType.NodeType
+nid2type nameid =
     let
         path =
             String.split "#" nameid

@@ -25,7 +25,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid, typeFromNameid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
 import ModelCommon.Requests exposing (getQuickDoc)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
@@ -98,7 +98,7 @@ initModel user =
 
         form =
             NT.initModel user
-                |> NT.setTargetShort { rootnameid = "f6", nameid = "f6#feedback", type_ = NodeType.Circle } Nothing
+                |> NT.setTargetShort "f6#feedback"
                 |> NT.setSource
                     { rootnameid = "f6"
                     , nameid = "f6#feedback#help-bot"
@@ -566,7 +566,7 @@ viewAskQuestion op (State model) =
         Success res ->
             let
                 link =
-                    Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
+                    Route.Tension_Dynamic_Dynamic { param1 = nid2rootid form.target.nameid, param2 = res.id } |> toHref
             in
             div []
                 [ div [ class "box is-light" ]
@@ -669,7 +669,7 @@ viewFeedback op (State model) =
         Success res ->
             let
                 link =
-                    Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
+                    Route.Tension_Dynamic_Dynamic { param1 = nid2rootid form.target.nameid, param2 = res.id } |> toHref
             in
             div []
                 [ div [ class "box is-light" ]

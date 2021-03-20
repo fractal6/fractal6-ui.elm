@@ -28,8 +28,8 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, nodeFromFocus, nodeIdCodec)
-import ModelCommon.View exposing (action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
+import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
@@ -46,7 +46,7 @@ type alias Model =
     , form : TensionForm
     , result : GqlData Tension
     , sources : List UserRole
-    , targets : List Node
+    , targets : List PNode
     , step : TensionStep
     , isModalActive : Bool
     , activeTab : TensionTab
@@ -59,6 +59,7 @@ type alias Model =
     , doAddPolicies : Bool
     , labelsPanel : LabelSearchPanel.State
     , lookup_users : List User
+    , path_data : Maybe LocalGraph
 
     -- Common
     , refresh_trial : Int
@@ -104,6 +105,7 @@ initModel user =
     , doAddPolicies = False
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
     , lookup_users = []
+    , path_data = Nothing
 
     -- Common
     , refresh_trial = 0
@@ -161,35 +163,49 @@ initCircleTab type_ model =
 
 setUser_ : UserState -> State -> State
 setUser_ user (State model) =
-    State { model | user = user }
+    { model | user = user } |> State
 
 
-setTarget_ : Node -> Maybe NodeData -> State -> State
-setTarget_ target node_data (State model) =
-    State (setTarget target node_data model)
-
-
-setTargets_ : GqlData NodesData -> State -> State
-setTargets_ odata (State model) =
+setPath_ : LocalGraph -> State -> State
+setPath_ p (State model) =
     let
-        targets =
-            case odata of
-                Success od ->
-                    getParents model.form.target.nameid odata
-                        ++ (getChildren model.form.target.nameid odata |> List.filter (\n -> n.role_type == Nothing))
-                        -- Circle
-                        ++ ([ model.form.target.nameid, model.form.source.nameid ] |> List.map (\nid -> getNode nid odata) |> List.filterMap identity)
-                        |> LE.uniqueBy (\n -> n.nameid)
+        ( target, targets ) =
+            let
+                f =
+                    shrinkNode p.focus
+            in
+            ( f
+            , p.path ++ [ f ] ++ (p.focus.children |> List.filter (\x -> List.member x.role_type [ Just RoleType.Guest, Just RoleType.Member ] == False) |> List.map shrinkNode)
+            )
 
-                _ ->
-                    []
+        newModel =
+            setTarget target model
     in
-    State { model | targets = targets }
+    { newModel | path_data = Just p, targets = targets } |> State
+
+
+
+--setTargets_ : GqlData NodesData -> State -> State
+--setTargets_ odata (State model) =
+--    let
+--        targets =
+--            case odata of
+--                Success od ->
+--                    getParents model.form.target.nameid odata
+--                        ++ (getChildren model.form.target.nameid odata |> List.filter (\n -> n.role_type == Nothing))
+--                        -- Circle
+--                        ++ ([ model.form.target.nameid, model.form.source.nameid ] |> List.map (\nid -> getNode nid odata) |> List.filterMap identity)
+--                        |> LE.uniqueBy (\n -> n.nameid)
+--
+--                _ ->
+--                    []
+--    in
+--    State { model | targets = targets }
 
 
 setTab_ : TensionTab -> State -> State
 setTab_ tab (State model) =
-    State { model | activeTab = tab }
+    { model | activeTab = tab } |> State
 
 
 
@@ -325,26 +341,26 @@ setSource source data =
     { data | form = newForm }
 
 
-setTarget : Node -> Maybe NodeData -> Model -> Model
-setTarget target node_data data =
+setTarget : PNode -> Model -> Model
+setTarget target data =
     let
         f =
             data.form
 
         newForm =
-            { f | target = target, targetData = node_data |> withDefault initNodeData }
+            { f | target = target }
     in
     { data | form = newForm }
 
 
-setTargetShort : NodeFocus -> Maybe NodeData -> Model -> Model
-setTargetShort focus node_data data =
+setTargetShort : String -> Model -> Model
+setTargetShort nameid data =
     let
         f =
             data.form
 
         newForm =
-            { f | target = nodeFromFocus focus, targetData = node_data |> withDefault initNodeData }
+            { f | target = { name = nameid, nameid = nameid, isPrivate = False, charac = initCharac } }
     in
     { data | form = newForm }
 
@@ -531,7 +547,7 @@ type Msg
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource UserRole
-    | OnChangeTensionTarget Node
+    | OnChangeTensionTarget PNode
     | OnChangePost String String
     | OnAddLinks
     | OnAddDomains
@@ -617,7 +633,7 @@ update_ apis message model =
                 LoggedIn uctx ->
                     let
                         sources =
-                            getOrgaRoles model.form.uctx.roles [ model.form.target.rootnameid ]
+                            getOrgaRoles model.form.uctx.roles [ nid2rootid model.form.target.nameid ]
                     in
                     if sources == [] && model.refresh_trial == 0 then
                         ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )
@@ -678,7 +694,7 @@ update_ apis message model =
             ( setSource source model, noOut )
 
         OnChangeTensionTarget target ->
-            ( setTarget target Nothing model, noOut )
+            ( setTarget target model, noOut )
 
         OnChangePost field value ->
             case model.activeTab of
@@ -956,17 +972,21 @@ viewSources (State model) nextStep =
         ]
 
 
-viewTensionTabs : TensionTab -> Node -> Html Msg
+viewTensionTabs : TensionTab -> PNode -> Html Msg
 viewTensionTabs tab targ =
+    let
+        type_ =
+            nid2type targ.nameid
+    in
     div [ id "tensionTabTop", class "tabs is-boxed has-text-weight-medium" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ] [ a [ onClickPD (OnSwitchTab NewTensionTab), target "blank_" ] [ I.icon1 "icon-exchange" "Tension" ] ]
-            , if targ.type_ == NodeType.Circle then
+            , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewRoleTab), target "blank_" ] [ I.icon1 "icon-leaf" "Role" ] ]
 
               else
                 text ""
-            , if targ.type_ == NodeType.Circle then
+            , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-git-branch" "Circle" ] ]
 
               else
@@ -1007,21 +1027,7 @@ viewTension op (State model) =
     in
     case model.result of
         Success res ->
-            let
-                link =
-                    Route.Tension_Dynamic_Dynamic { param1 = form.target.rootnameid, param2 = res.id } |> toHref
-            in
-            div [ class "box is-light" ]
-                [ I.icon1 "icon-check icon-2x has-text-success" " "
-                , textH txt.added
-                , text " "
-                , a
-                    [ href link
-                    , onClickPD (OnClose { reset = True, link = link })
-                    , target "_blank"
-                    ]
-                    [ textH T.checkItOut ]
-                ]
+            viewSuccess txt res model
 
         other ->
             div [ class "panel modal-card" ]
@@ -1169,25 +1175,7 @@ viewCircle op (State model) =
     in
     case model.result of
         Success res ->
-            let
-                link =
-                    Route.Tension_Dynamic_Dynamic_Action { param1 = form.target.rootnameid, param2 = res.id } |> toHref
-            in
-            div [ class "box is-light" ]
-                [ I.icon1 "icon-check icon-2x has-text-success" " "
-                , if model.activeButton == Just 0 then
-                    textH txt.added
-
-                  else
-                    textH txt.tension_added
-                , text " "
-                , a
-                    [ href link
-                    , onClickPD (OnClose { reset = True, link = link })
-                    , target "_blank"
-                    ]
-                    [ textH T.checkItOut ]
-                ]
+            viewSuccess txt res model
 
         other ->
             let
@@ -1328,7 +1316,7 @@ viewRecipients model =
                                 [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
                                 , onClick (OnChangeTensionSource t)
                                 ]
-                                [ text t.name ]
+                                [ I.icon1 "icon-user" t.name ]
                         )
                         (List.filter (\n -> n.nameid /= model.form.source.nameid) model.sources)
                 ]
@@ -1350,9 +1338,28 @@ viewRecipients model =
                                 [ class <| "dropdown-item has-text-weight-semibold button-light has-text-light"
                                 , onClick (OnChangeTensionTarget t)
                                 ]
-                                [ text t.name ]
+                                [ I.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
                         )
                         (List.filter (\n -> n.nameid /= model.form.target.nameid) model.targets)
                 ]
             ]
+        ]
+
+
+viewSuccess : FormText -> Tension -> Model -> Html Msg
+viewSuccess txt res model =
+    let
+        link =
+            Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
+    in
+    div [ class "box is-light" ]
+        [ I.icon1 "icon-check icon-2x has-text-success" " "
+        , textH txt.added
+        , text " "
+        , a
+            [ href link
+            , onClickPD (OnClose { reset = True, link = link })
+            , target "_blank"
+            ]
+            [ textH T.checkItOut ]
         ]

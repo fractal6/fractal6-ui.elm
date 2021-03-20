@@ -360,3 +360,10 @@ withMapData resMap result =
 
         NotAsked ->
             NotAsked
+
+
+fromMaybeData : Maybe a -> RequestResult e a
+fromMaybeData ma =
+    ma
+        |> Maybe.map (\x -> Success x)
+        |> withDefault NotAsked

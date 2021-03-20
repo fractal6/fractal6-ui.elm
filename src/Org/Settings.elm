@@ -7,7 +7,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -16,6 +16,7 @@ import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
+import Form.NewTension as NTF exposing (TensionTab(..))
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -107,9 +108,10 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
-    , refresh_trial : Int
     , help : Help.State
+    , tensionForm : NTF.State
     , modal_confirm : ModalConfirm Msg
+    , refresh_trial : Int
     }
 
 
@@ -193,6 +195,9 @@ type Msg
     | SubmitDeleteLabel String Time.Posix
     | GotLabel (GqlData LabelFull)
     | GotLabelDel (GqlData LabelFull)
+      -- New Tension
+    | DoCreateTension LocalGraph
+    | NewTensionMsg NTF.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -282,6 +287,7 @@ init global flags =
             , helperBar = HelperBar.create
             , refresh_trial = 0
             , help = Help.init global.session.user
+            , tensionForm = NTF.init global.session.user
             , modal_confirm = ModalConfirm.init NoMsg
             }
 
@@ -532,6 +538,26 @@ update global message model =
 
                 NoAuth ->
                     ( { model | label_result_del = result }, Cmd.none, Cmd.none )
+
+        -- New tension
+        DoCreateTension lg ->
+            let
+                tf =
+                    model.tensionForm
+                        |> NTF.setUser_ global.session.user
+                        |> NTF.setPath_ lg
+            in
+            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
+
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -789,6 +815,7 @@ subscriptions _ _ =
     , Ports.cancelColorFromJs (always CloseColor)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
         |> Sub.batch
 
 
@@ -801,8 +828,9 @@ view global model =
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
@@ -812,13 +840,14 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         helperData =
-            { onJoin = DoJoinOrga model.node_focus.rootnameid
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , user = global.session.user
+            { user = global.session.user
             , path_data = global.session.path_data
             , baseUri = SettingsBaseUri
             , data = model.helperBar
+            , onJoin = DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , onCreateTension = DoCreateTension
             }
     in
     div [ id "mainPane" ]

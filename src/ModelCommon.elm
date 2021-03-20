@@ -15,7 +15,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid, nodeFromFocus)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid)
 import ModelSchema exposing (..)
 import Ports
 import RemoteData
@@ -213,8 +213,7 @@ type ActionState
 type alias TensionForm =
     { uctx : UserCtx
     , source : UserRole
-    , target : Node
-    , targetData : NodeData
+    , target : PNode
     , status : TensionStatus.TensionStatus
     , tension_type : TensionType.TensionType
     , labels : List Label
@@ -337,8 +336,7 @@ initTensionForm user =
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
     , source = UserRole "" "" "" RoleType.Guest
-    , target = nodeFromFocus (NodeFocus "" "" NodeType.Circle)
-    , targetData = initNodeData
+    , target = initPNode
     , status = TensionStatus.Open
     , tension_type = TensionType.Operational
     , labels = []

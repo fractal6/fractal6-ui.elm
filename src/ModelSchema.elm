@@ -71,7 +71,7 @@ type alias NodeId =
 
 
 type alias LocalGraph =
-    { root : Maybe RootNode
+    { root : Maybe PNode
     , path : List PNode
     , focus : FocusNode
     }
@@ -87,7 +87,7 @@ type alias FocusNode =
     }
 
 
-type alias RootNode =
+type alias PNode =
     { name : String
     , nameid : String
     , charac : NodeCharac
@@ -95,14 +95,11 @@ type alias RootNode =
     }
 
 
-type alias PNode =
-    { name : String, nameid : String, isPrivate : Bool }
-
-
 type alias EmitterOrReceiver =
     { name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
+    , charac : NodeCharac
     , isPrivate : Bool
     }
 
@@ -291,12 +288,17 @@ initNode =
     }
 
 
-initRootNode : RootNode
-initRootNode =
-    { name = ""
-    , nameid = ""
-    , charac = initCharac
-    , isPrivate = False
+initPNode : PNode
+initPNode =
+    shrinkNode initNode
+
+
+shrinkNode n =
+    --shrinkNode : node -> PNode
+    { name = n.name
+    , nameid = n.nameid
+    , charac = n.charac
+    , isPrivate = n.isPrivate
     }
 
 

@@ -6,13 +6,14 @@ import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Form.Help as Help
+import Form.NewTension as NTF exposing (TensionTab(..))
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -95,8 +96,9 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
-    , refresh_trial : Int
     , help : Help.State
+    , tensionForm : NTF.State
+    , refresh_trial : Int
     }
 
 
@@ -117,6 +119,9 @@ type Msg
       -- Page
     | GotMembersTop (GqlData (List Member)) -- GraphQL
     | GotMembersSub (GqlData (List Member)) -- Rest
+      -- New Tension
+    | DoCreateTension LocalGraph
+    | NewTensionMsg NTF.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -181,8 +186,9 @@ init global flags =
             , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
-            , refresh_trial = 0
             , help = Help.init global.session.user
+            , tensionForm = NTF.init global.session.user
+            , refresh_trial = 0
             }
 
         cmds =
@@ -288,6 +294,26 @@ update global message model =
                     { model | members_sub = result }
             in
             ( newModel, Cmd.none, Cmd.none )
+
+        -- New tension
+        DoCreateTension lg ->
+            let
+                tf =
+                    model.tensionForm
+                        |> NTF.setUser_ global.session.user
+                        |> NTF.setPath_ lg
+            in
+            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
+
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -505,6 +531,7 @@ subscriptions global model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
         |> Sub.batch
 
 
@@ -517,8 +544,9 @@ view global model =
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
         ]
     }
 
@@ -527,13 +555,14 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         helperData =
-            { onJoin = DoJoinOrga model.node_focus.rootnameid
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , user = global.session.user
+            { user = global.session.user
             , path_data = global.session.path_data
             , baseUri = MembersBaseUri
             , data = model.helperBar
+            , onJoin = DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , onCreateTension = DoCreateTension
             }
     in
     div [ id "mainPane" ]

@@ -22,7 +22,6 @@ import ModelSchema
         , NodeId
         , NodesData
         , PNode
-        , RootNode
         , User
         , UserCtx
         , UserRights
@@ -237,7 +236,7 @@ localGraphDecoder =
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
-                JD.map4 RootNode
+                JD.map4 PNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "charac" characDecoder)
@@ -245,9 +244,10 @@ localGraphDecoder =
         )
         (JD.field "path"
             (JD.list <|
-                JD.map3 PNode
+                JD.map4 PNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
+                    (JD.field "charac" characDecoder)
                     (JD.field "isPrivate" JD.bool)
             )
         )
@@ -258,16 +258,20 @@ localGraphDecoder =
                 (JD.field "type_" NodeType.decoder)
                 (JD.field "charac" characDecoder)
                 (JD.field "children"
-                    (JD.list <|
-                        JD.map4 EmitterOrReceiver
-                            (JD.field "name" JD.string)
-                            (JD.field "nameid" JD.string)
-                            (JD.maybe (JD.field "role_type" RoleType.decoder))
-                            (JD.field "isPrivate" JD.bool)
-                    )
+                    (JD.list emitterOrReceiverDecoder)
                 )
                 (JD.field "isPrivate" JD.bool)
         )
+
+
+emitterOrReceiverDecoder : JD.Decoder EmitterOrReceiver
+emitterOrReceiverDecoder =
+    JD.map5 EmitterOrReceiver
+        (JD.field "name" JD.string)
+        (JD.field "nameid" JD.string)
+        (JD.maybe (JD.field "role_type" RoleType.decoder))
+        (JD.field "charac" characDecoder)
+        (JD.field "isPrivate" JD.bool)
 
 
 
@@ -323,12 +327,8 @@ quickDocDecoder =
             )
 
 
-
-{-
-   Modal Decoder
+{-| Modal Decoder
 -}
-
-
 modalDataDecoder : JD.Decoder ModalData
 modalDataDecoder =
     JD.map2 ModalData
@@ -338,16 +338,6 @@ modalDataDecoder =
 
 
 -- Utils
-
-
-type alias LocalGraph_ =
-    -- Helper for encoding ActionState / Receiving Node from JS.
-    --Result JD.Error Node
-    Result String LocalGraph
-
-
-type alias Node_ =
-    Result String Node
 
 
 type alias LookupResult a =

@@ -8,7 +8,7 @@ import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
@@ -19,6 +19,7 @@ import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
+import Form.NewTension as NTF exposing (TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -180,9 +181,10 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
-    , refresh_trial : Int
     , helperBar : HelperBar
     , help : Help.State
+    , tensionForm : NTF.State
+    , refresh_trial : Int
     }
 
 
@@ -304,6 +306,9 @@ type Msg
     | ArchiveDocAck (GqlData ActionResult)
     | LeaveRoleAck (GqlData ActionResult)
     | UpdateActionPost String String
+      -- New Tension
+    | DoCreateTension LocalGraph
+    | NewTensionMsg NTF.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -416,8 +421,9 @@ init global flags =
             , modalAuth = Inactive
             , inputViewMode = Write
             , helperBar = HelperBar.create
-            , refresh_trial = 0
             , help = Help.init global.session.user
+            , tensionForm = NTF.init global.session.user
+            , refresh_trial = 0
             }
 
         cmds =
@@ -1360,6 +1366,26 @@ update global message model =
         UpdateActionPost field value ->
             ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
 
+        -- New tension
+        DoCreateTension lg ->
+            let
+                tf =
+                    model.tensionForm
+                        |> NTF.setUser_ global.session.user
+                        |> NTF.setPath_ lg
+            in
+            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
+
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         -- Join
         DoJoinOrga rootnameid ->
             case global.session.user of
@@ -1573,6 +1599,7 @@ subscriptions global model =
         ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
         |> Sub.batch
 
 
@@ -1591,8 +1618,9 @@ view global model =
                 "Loading tension..."
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
         ]
     }
 
@@ -1601,13 +1629,14 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         helperData =
-            { onJoin = DoJoinOrga model.node_focus.rootnameid
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , user = global.session.user
+            { user = global.session.user
             , path_data = global.session.path_data
             , baseUri = TensionsBaseUri
             , data = model.helperBar
+            , onJoin = DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , onCreateTension = DoCreateTension
             }
     in
     div [ id "mainPane" ]

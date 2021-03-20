@@ -392,8 +392,8 @@ type alias LocalRootNode =
     { name : String
     , nameid : String
     , charac : NodeCharac
-    , isRoot : Bool
     , isPrivate : Bool
+    , isRoot : Bool
     }
 
 
@@ -403,6 +403,7 @@ emiterOrReceiverPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
+        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
 
 
@@ -418,10 +419,10 @@ lgDecoder data =
                                 FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.isPrivate
 
                             path =
-                                [ PNode p.name p.nameid p.isPrivate, PNode n.name n.nameid n.isPrivate ]
+                                [ PNode p.name p.nameid p.charac p.isPrivate, PNode n.name n.nameid n.charac n.isPrivate ]
                         in
                         if p.isRoot then
-                            { root = RootNode p.name p.nameid p.charac p.isPrivate |> Just
+                            { root = PNode p.name p.nameid p.charac p.isPrivate |> Just
                             , path = path
                             , focus = focus
                             }
@@ -432,8 +433,8 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = RootNode n.name n.nameid n.charac n.isPrivate |> Just
-                        , path = [ PNode n.name n.nameid n.isPrivate ]
+                        { root = PNode n.name n.nameid n.charac n.isPrivate |> Just
+                        , path = [ PNode n.name n.nameid n.charac n.isPrivate ]
                         , focus = FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.isPrivate
                         }
             )
@@ -468,8 +469,8 @@ lg2Payload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with Fractal.Object.Node.isRoot
         |> with Fractal.Object.Node.isPrivate
+        |> with Fractal.Object.Node.isRoot
 
 
 nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
