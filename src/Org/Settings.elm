@@ -216,6 +216,7 @@ type Msg
     | SelectLabelColor String
       -- Common
     | NoMsg
+    | InitModals
     | LogErr String
     | Navigate String
     | DoOpenModal
@@ -294,6 +295,7 @@ init global flags =
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
+            , sendSleep InitModals 400
             ]
                 ++ (case menu of
                         LabelsMenu ->
@@ -759,6 +761,9 @@ update global message model =
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
+
+        InitModals ->
+            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
 
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )

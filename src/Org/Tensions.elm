@@ -34,7 +34,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.Requests exposing (fetchChildren, fetchMembers, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchChildren, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
 import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -359,6 +359,7 @@ type Msg
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
+    | InitModals
     | LogErr String
     | Navigate String
     | DoOpenModal -- ports receive / Open  modal
@@ -432,9 +433,10 @@ init global flags =
             }
 
         cmds =
-            [ queryLocalGraph apis.gql newFocus.nameid GotPath
+            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
             , ternary (model.depthFilter == AllSubChildren) (fetchChildren apis.rest newFocus.nameid GotChildren) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
+            , sendSleep InitModals 400
             ]
     in
     ( model
@@ -1015,6 +1017,9 @@ update global message model =
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
+
+        InitModals ->
+            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
 
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )

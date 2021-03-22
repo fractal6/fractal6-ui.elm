@@ -63,6 +63,7 @@ type alias Model =
 
     -- Common
     , refresh_trial : Int
+    , preventGlitch : Bool -- Debug flag to avoid have a glitch when clikin on a link in the modal that will reset it and make its border likeliy to change (from success to init)
     , modal_confirm : ModalConfirm Msg
     }
 
@@ -109,6 +110,7 @@ initModel user =
 
     -- Common
     , refresh_trial = 0
+    , preventGlitch = True
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
@@ -128,7 +130,7 @@ initTensionTab model =
                 , users = []
             }
     in
-    { model | activeTab = NewTensionTab, form = newForm }
+    { model | activeTab = NewTensionTab, form = newForm, result = NotAsked }
 
 
 initCircleTab : NodeType.NodeType -> Model -> Model
@@ -150,10 +152,10 @@ initCircleTab type_ model =
     in
     case type_ of
         NodeType.Role ->
-            { model | activeTab = NewRoleTab, form = { newForm | action = Just TensionAction.NewRole } }
+            { model | activeTab = NewRoleTab, form = { newForm | action = Just TensionAction.NewRole }, result = NotAsked }
 
         NodeType.Circle ->
-            { model | activeTab = NewCircleTab, form = { newForm | action = Just TensionAction.NewCircle } }
+            { model | activeTab = NewCircleTab, form = { newForm | action = Just TensionAction.NewCircle }, result = NotAsked }
 
 
 
@@ -206,6 +208,11 @@ setPath_ p (State model) =
 setTab_ : TensionTab -> State -> State
 setTab_ tab (State model) =
     { model | activeTab = tab } |> State
+
+
+fixGlitch_ : State -> State
+fixGlitch_ (State model) =
+    { model | preventGlitch = False } |> State
 
 
 
@@ -456,7 +463,11 @@ resetPost data =
 
 resetModel : Model -> Model
 resetModel data =
-    initModel data.user
+    let
+        m =
+            initModel data.user
+    in
+    { m | preventGlitch = False }
 
 
 
@@ -656,10 +667,14 @@ update_ apis message model =
                 cmds =
                     ternary data.reset [ sendSleep OnResetModel 333 ] []
 
-                gcmds =
-                    ternary (data.link /= "") [ DoNavigate data.link ] []
+                ( newModel, gcmds ) =
+                    if data.link == "" then
+                        ( model, [] )
+
+                    else
+                        ( { model | preventGlitch = True }, [ DoNavigate data.link ] )
             in
-            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
+            ( close newModel, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
 
         OnResetModel ->
             ( resetModel model, noOut )
@@ -882,10 +897,14 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ viewModal op (State model)
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        ]
+    if model.preventGlitch then
+        text ""
+
+    else
+        div []
+            [ viewModal op (State model)
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
 
 
 viewModal : Op -> State -> Html Msg

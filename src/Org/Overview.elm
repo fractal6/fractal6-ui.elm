@@ -213,6 +213,7 @@ type Msg
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
+    | InitModals
     | LogErr String
     | Navigate String
     | DoOpenModal
@@ -298,7 +299,7 @@ init global flags =
             , refresh_trial = 0
             }
 
-        cmds =
+        cmds_ =
             if fs.orgChange || isInit then
                 [ send LoadOrga
                 , Ports.initGraphPack Dict.empty "" -- canvas loading effet
@@ -338,10 +339,16 @@ init global flags =
                 []
 
         model2 =
-            ternary (cmds == []) { model | init_tensions = False, init_data = False } model
+            ternary (cmds_ == []) { model | init_tensions = False, init_data = False } model
+
+        cmds =
+            cmds_
+                ++ [ sendSleep PassedSlowLoadTreshold 500
+                   , sendSleep InitModals 400
+                   ]
     in
     ( model2
-    , Cmd.batch (cmds ++ [ sendSleep PassedSlowLoadTreshold 500 ])
+    , Cmd.batch cmds
     , send (UpdateSessionFocus (Just newFocus))
     )
 
@@ -907,6 +914,9 @@ update global message model =
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
+
+        InitModals ->
+            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
 
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )

@@ -138,6 +138,7 @@ type Msg
     | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
+    | InitModals
     | LogErr String
     | Navigate String
     | DoOpenModal
@@ -196,6 +197,7 @@ init global flags =
             , queryMembersTop apis.gql newFocus.nameid GotMembersTop
             , fetchMembers apis.rest newFocus.nameid GotMembersSub
             , sendSleep PassedSlowLoadTreshold 500
+            , sendSleep InitModals 400
             ]
     in
     ( model
@@ -501,6 +503,9 @@ update global message model =
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
+
+        InitModals ->
+            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
 
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
