@@ -356,7 +356,7 @@ view_ op_ (State model) =
                         if model.pattern == "" then
                             op.selectedAssignees
                                 ++ user
-                                ++ List.take 20 assignees_d
+                                ++ List.take 42 assignees_d
                                 |> LE.uniqueBy (\u -> u.username)
 
                         else

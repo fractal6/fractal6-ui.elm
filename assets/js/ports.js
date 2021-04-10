@@ -71,11 +71,54 @@ const actions = {
     'LOG': (app, session, message) => {
         console.log(`From Elm:`, message);
     },
+    'SHOW': (app, session, id) => {
+        var $e = document.getElementById(id);
+        if (!$e) { return }
+        $e.style.display = "";
+        //$e.style.visibility = "hidden";
+    },
+    'HIDE': (app, session, id) => {
+        var $e = document.getElementById(id);
+        if (!$e) { return }
+        $e.style.display = "none";
+        //$e.style.visibility = "hidden";
+    },
+    'FIT_HEIGHT': (app, session, id) => {
+        // @debug: add delay when sending Ports !
+        setTimeout(() => {
+
+        var $e = document.getElementById(id);
+        if (!$e) { return }
+
+        var doc_h = document.body.scrollHeight;
+        var screen_h = window.innerHeight;
+        var elt_h = $e.offsetHeight; // $e.clientHeight -> smaller
+        var x = doc_h - elt_h; // header height (above the target)
+        var h = screen_h - x; // target size tha fit in screen
+
+        $e.style.height = h + "px";
+        //document.getElementsByTagName('html')[0].style.overflow = "hidden"; // @debug: html overflow stay disable...
+        //document.body.style.overflowY = "hidden";
+
+        //$e.style.maxHeight = 0.8*screen_h + "px";
+
+        //console.log("document client:", document.body.clientHeight);
+        //console.log("document scroll:", document.body.scrollHeight);
+        //console.log("window inner:", window.innerHeight);
+        //console.log("window outer:", window.outerHeight);
+        //console.log("screen:", screen.height);
+        //console.log("screen avail:", screen.availHeight);
+        //console.log("elt client:", $e.clientHeight);
+        //console.log("elt scrol:", $e.scrollHeight);
+        //console.log("elt style:", $e.style.height);
+
+        }, 300)
+    },
     'LOGERR': (app, session, message) => {
         console.warn(`Error from Elm:`, message);
     },
-    'BULMA': (app, session, eltId) => {
-        InitBulma(app, session, eltId);
+    'BULMA': (app, session, id) => {
+        InitBulma(app, session, id);
     },
     'TOGGLE_TH': (app, session, message) => {
         var $tt = document.getElementById("themeButton_port");

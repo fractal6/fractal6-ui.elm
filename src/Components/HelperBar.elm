@@ -45,6 +45,7 @@ numberRolesCollapsed =
 
 type alias Op msg =
     { baseUri : FractalBaseRoute
+    , uriQuery : Maybe String
     , user : UserState
     , path_data : Maybe LocalGraph
     , data : HelperBar
@@ -70,7 +71,7 @@ view op =
         [ nav [ class "column is-11-desktop is-10-widescreen is-10-fullhd" ]
             [ div [ class "navbar" ]
                 [ div [ class "navbar-brand" ]
-                    [ viewPath op.baseUri op.path_data ]
+                    [ viewPath op.baseUri op.uriQuery op.path_data ]
                 , div
                     [ class "navbar-burger burger"
                     , attribute "data-target" "rolesMenu"
@@ -164,8 +165,8 @@ view op =
         ]
 
 
-viewPath : FractalBaseRoute -> Maybe LocalGraph -> Html msg
-viewPath baseUri maybePath =
+viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html msg
+viewPath baseUri uriQuery maybePath =
     div
         [ class "breadcrumb"
         , attribute "aria-label" "breadcrumbs"
@@ -173,21 +174,25 @@ viewPath baseUri maybePath =
         [ I.icon0 "icon-layers icon-lg"
         , case maybePath of
             Just g ->
+                let
+                    q =
+                        uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+                in
                 g.path
                     |> List.indexedMap
                         (\i p ->
                             if i < (List.length g.path - 1) then
                                 li []
-                                    [ a [ href (uriFromNameid baseUri p.nameid) ]
+                                    [ a [ href (uriFromNameid baseUri p.nameid ++ q) ]
                                         [ div [] [ text p.name ] ]
                                     ]
 
                             else
                                 li [ class "is-acti has-text-weight-semibold" ]
-                                    [ a [ href (uriFromNameid baseUri p.nameid) ]
+                                    [ a [ href (uriFromNameid baseUri p.nameid ++ q) ]
                                         [ div [] [ text p.name ] ]
                                     , if g.focus.type_ == NodeType.Circle && List.length (List.filter (\c -> nid2type c.nameid == NodeType.Circle) g.focus.children) > 0 then
-                                        viewTree baseUri g
+                                        viewTree baseUri uriQuery g
 
                                       else
                                         text ""
@@ -200,8 +205,12 @@ viewPath baseUri maybePath =
         ]
 
 
-viewTree : FractalBaseRoute -> LocalGraph -> Html msg
-viewTree baseUri g =
+viewTree : FractalBaseRoute -> Maybe String -> LocalGraph -> Html msg
+viewTree baseUri uriQuery g =
+    let
+        q =
+            uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+    in
     div [ class "dropdown" ]
         [ div [ class "dropdown-trigger px-2 button-light" ]
             [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down" ]
@@ -212,7 +221,7 @@ viewTree baseUri g =
                     |> List.filter (\c -> nid2type c.nameid == NodeType.Circle)
                     |> List.map
                         (\c ->
-                            a [ class "dropdown-item pl-2", href (uriFromNameid baseUri c.nameid) ] [ text c.name ]
+                            a [ class "dropdown-item pl-2", href (uriFromNameid baseUri c.nameid ++ q) ] [ text c.name ]
                         )
                 )
             ]

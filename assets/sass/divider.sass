@@ -58,6 +58,21 @@ $divider-width: 5px !default
             margin-right: 0
             margin-bottom: $divider-margin-inner-size
 
+    &.is-vertical2
+        flex-direction: column
+        margin: $size-small $divider-margin-size
+
+        &::after,
+        &::before
+            height: auto
+            width: $divider-width
+
+        &::after
+            margin-left: 0
+
+        &::before
+            margin-right: 0
+
     @each $name, $pair in $colors
         $color: nth($pair, 1)
         &.is-#{$name}

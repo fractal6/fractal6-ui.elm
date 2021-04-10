@@ -245,7 +245,7 @@ init global flags =
 
         -- What has changed
         fs_ =
-            focusState OverviewBaseUri session.referer session.node_focus newFocus
+            focusState OverviewBaseUri session.referer global.url session.node_focus newFocus
 
         isInit =
             session.orga_data == Nothing
@@ -1142,6 +1142,7 @@ view_ global model =
 
         helperData =
             { user = global.session.user
+            , uriQuery = global.url.query
             , path_data = model.path_data
             , baseUri = OverviewBaseUri
             , data = model.helperBar
@@ -1458,17 +1459,17 @@ viewActivies model =
                     ]
                 ]
             ]
-        , div [ classList [ ( "content", True ), ( "spinner", model.tensions_data == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
+        , div [ class "content is-size-7", classList [ ( "spinner", model.tensions_data == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
             [ case model.tensions_data of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> mediaTension OverviewBaseUri model.node_focus t Navigate) tensions
+                        List.map (\t -> mediaTension OverviewBaseUri model.node_focus t False True "is-size-7" Navigate) tensions
                             ++ ternary (List.length tensions > 5)
                                 [ div [ class "is-aligned-center", attribute "style" "margin-top:10px;" ]
                                     [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
                                 ]
                                 []
-                            |> div [ class "is-size-7", id "tensionsTab" ]
+                            |> div [ id "tensionsTab" ]
 
                     else
                         case model.node_focus.type_ of

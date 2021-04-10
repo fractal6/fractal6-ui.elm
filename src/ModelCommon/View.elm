@@ -89,8 +89,8 @@ tensionTypeSpan type_ =
     span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" type_ ] [ text (TensionType.toString type_), span [ class "ml-2 arrow down" ] [] ]
 
 
-mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> (String -> msg) -> Html msg
-mediaTension baseUri focus tension navigate =
+mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension baseUri focus tension showStatus showRecip size navigate =
     let
         n_comments =
             tension.n_comments |> withDefault 0
@@ -99,7 +99,7 @@ mediaTension baseUri focus tension navigate =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div
-        [ class "media mediaTension"
+        [ class ("media mediaTension " ++ size)
         , if baseUri == OverviewBaseUri then
             attribute "style" "margin-top:10px"
 
@@ -111,26 +111,15 @@ mediaTension baseUri focus tension navigate =
                 [ class "tooltip has-tooltip-top"
                 , attribute "data-tooltip" (TensionType.toString tension.type_)
                 ]
-                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ]
-                ]
-            , if baseUri == TensionsBaseUri then
-                div
-                    [ class "tooltip has-tooltip-top"
-                    , attribute "data-tooltip" (TensionStatus.toString tension.status)
-                    ]
-                    [ I.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
-
-              else
-                text ""
+                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
             ]
         , div [ class "media-content" ]
             [ div
-                [ class "content"
+                [ class "content mb-1"
                 , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
                 ]
                 [ a
                     [ class "has-text-weight-semibold"
-                    , classList [ ( "is-size-6", baseUri == TensionsBaseUri ) ]
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
@@ -159,9 +148,22 @@ mediaTension baseUri focus tension navigate =
                         text ""
                     ]
                 ]
-            , span [ class "" ]
-                [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver
-                , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
+            , span [ class "is-smaller" ]
+                [ if showStatus then
+                    span
+                        [ class "tooltip has-tooltip-top"
+                        , attribute "data-tooltip" (TensionStatus.toString tension.status)
+                        ]
+                        [ I.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
+
+                  else
+                    text ""
+                , span [] [ viewTensionDateAndUser "has-text-weight-light" tension.createdAt tension.createdBy ]
+                , if showRecip then
+                    viewTensionArrow "has-text-weight-light is-pulled-right" tension.emitter tension.receiver
+
+                  else
+                    text ""
                 ]
 
             --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
@@ -267,9 +269,9 @@ viewCommentedDate date =
         ]
 
 
-viewTensionDateAndUser : String -> Username -> Html msg
-viewTensionDateAndUser createdAt createdBy =
-    span [ class "is-grey-light" ]
+viewTensionDateAndUser : String -> String -> Username -> Html msg
+viewTensionDateAndUser cls createdAt createdBy =
+    span [ class cls ]
         [ viewOpenedDate createdAt
         , text (" " ++ T.by ++ " ")
         , viewUsernameLink createdBy.username

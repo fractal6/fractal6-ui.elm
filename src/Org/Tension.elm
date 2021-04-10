@@ -366,7 +366,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionBaseUri global.session.referer global.session.node_focus newFocus
+            focusState TensionBaseUri global.session.referer global.url global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -1253,6 +1253,10 @@ update global message model =
 
         -- Action
         DoActionEdit blob ->
+            let
+                f =
+                    Debug.log "action edit here" model.actionPanel.isEdit
+            in
             if model.actionPanel.isEdit == False then
                 let
                     parentid =
@@ -1282,6 +1286,9 @@ update global message model =
 
                     else
                         Cmd.none
+
+                f =
+                    Debug.log "close here" link
             in
             ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, gcmd, Ports.close_modal )
 
@@ -1635,6 +1642,7 @@ view_ global model =
     let
         helperData =
             { user = global.session.user
+            , uriQuery = global.url.query
             , path_data = global.session.path_data
             , baseUri = TensionsBaseUri
             , data = model.helperBar
@@ -1745,7 +1753,7 @@ viewTension u t model =
                         [ t.status |> TensionStatus.toString |> text ]
                     , span [ class "tag is-rounded is-light" ]
                         [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
-                    , viewTensionDateAndUser t.createdAt t.createdBy
+                    , viewTensionDateAndUser "is-grey-light" t.createdAt t.createdBy
                     , viewTensionArrow "is-pulled-right" t.emitter t.receiver
 
                     --, div [ class "mx-2 mt-4" ] [ viewTensionArrow "" t.emitter t.receiver ]
@@ -2525,139 +2533,144 @@ viewSidePane u t model =
 
         labels =
             t.labels |> withDefault []
+
+        actionType_m =
+            Maybe.map (\c -> c.action_type) tc
+
+        blob_m =
+            t.blobs |> withDefault [] |> List.head
+
+        --
+        uctx_m =
+            case u of
+                LoggedIn uctx ->
+                    Just uctx
+
+                LoggedOut ->
+                    Nothing
+
+        hasRole =
+            case t.blobs of
+                Just [ b ] ->
+                    let
+                        fs =
+                            b.node
+                                |> Maybe.map (\n -> n.first_link)
+                                |> withDefault Nothing
+                    in
+                    Maybe.map (\uctx -> Just uctx.username == fs) uctx_m |> withDefault False
+
+                _ ->
+                    False
+
+        --
+        hasAssigneeRight =
+            model.isTensionAdmin
+
+        hasLabelRight =
+            model.isTensionAdmin || (Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False)
+
+        hasBlobRight =
+            model.isTensionAdmin && actionType_m /= Just NEW && blob_m /= Nothing
     in
     div [ class "tensionSidePane" ]
         -- Assignees/User select
-        [ div [ class "media" ]
-            [ div [ class "media-content" ]
-                [ div []
-                    [ case u of
-                        LoggedIn uctx ->
-                            div []
-                                [ h2
-                                    [ class "subtitle"
-                                    , classList [ ( "is-w", model.isTensionAdmin ) ]
-                                    , onClick DoAssigneeEdit
-                                    ]
-                                    [ textH T.assignees
-                                    , if model.isAssigneeOpen then
-                                        I.icon "icon-x is-pulled-right"
-
-                                      else if model.isTensionAdmin then
-                                        I.icon "icon-settings is-pulled-right"
-
-                                      else
-                                        text ""
-                                    ]
-                                , UserSearchPanel.view
-                                    { selectedAssignees = t.assignees |> withDefault []
-                                    , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
-                                    }
-                                    model.assigneesPanel
-                                    |> Html.map UserSearchPanelMsg
-                                ]
-
-                        LoggedOut ->
-                            h2 [ class "subtitle" ] [ textH T.assignees ]
-                    ]
-                , if List.length assignees > 0 then
-                    viewUsers assignees
-
-                  else
-                    div [ class "is-italic" ] [ textH T.noLabels ]
-                ]
+        [ div
+            [ class "media"
+            , classList [ ( "is-w", hasAssigneeRight ) ]
+            , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
             ]
-
-        -- Label select
-        , div [ class "media" ]
-            [ div [ class "media-content" ]
-                [ div []
-                    [ case u of
-                        LoggedIn uctx ->
-                            let
-                                hasRight =
-                                    model.isTensionAdmin || t.createdBy.username == uctx.username
-                            in
-                            div []
-                                [ h2
-                                    [ class "subtitle"
-                                    , classList [ ( "is-w", hasRight ) ]
-                                    , onClick DoLabelEdit
-                                    ]
-                                    [ textH T.labels
-                                    , if model.isLabelOpen then
-                                        I.icon "icon-x is-pulled-right"
-
-                                      else if hasRight then
-                                        I.icon "icon-settings is-pulled-right"
-
-                                      else
-                                        text ""
-                                    ]
-                                , LabelSearchPanel.view
-                                    { selectedLabels = t.labels |> withDefault []
-                                    , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
-                                    }
-                                    model.labelsPanel
-                                    |> Html.map LabelSearchPanelMsg
-                                ]
-
-                        LoggedOut ->
-                            h2 [ class "subtitle" ] [ textH T.labels ]
-                    ]
-                , if List.length labels > 0 then
-                    viewLabels labels
-
-                  else
-                    div [ class "is-italic" ] [ textH T.noLabels ]
-                ]
-            ]
-        , div [ class "media" ]
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn uctx ->
-                        let
-                            actionType_m =
-                                Maybe.map (\c -> c.action_type) tc
-
-                            blob_m =
-                                t.blobs |> withDefault [] |> List.head
-
-                            isAdmin =
-                                model.isTensionAdmin && actionType_m /= Just NEW && blob_m /= Nothing
-
-                            hasRole =
-                                case t.blobs of
-                                    Just [ b ] ->
-                                        let
-                                            fs =
-                                                b.node
-                                                    |> Maybe.map (\n -> n.first_link)
-                                                    |> withDefault Nothing
-                                        in
-                                        Just uctx.username == fs
-
-                                    _ ->
-                                        False
-
-                            hasConfig =
-                                isAdmin || hasRole
-                        in
                         [ h2
-                            [ class "subtitle"
-                            , classList [ ( "is-w", hasConfig ) ]
-                            , case blob_m of
-                                Just blob ->
-                                    onClick (DoActionEdit blob)
+                            [ class "subtitle is-h" ]
+                            [ textH T.assignees
+                            , if model.isAssigneeOpen then
+                                I.icon "icon-x is-pulled-right"
 
-                                Nothing ->
-                                    onClick NoMsg
+                              else if hasAssigneeRight then
+                                I.icon "icon-settings is-pulled-right"
+
+                              else
+                                text ""
+                            ]
+                        , UserSearchPanel.view
+                            { selectedAssignees = t.assignees |> withDefault []
+                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            }
+                            model.assigneesPanel
+                            |> Html.map UserSearchPanelMsg
+                        ]
+
+                    LoggedOut ->
+                        [ h2 [ class "subtitle" ] [ textH T.assignees ] ]
+                )
+                    ++ [ div []
+                            [ if List.length assignees > 0 then
+                                viewUsers assignees
+
+                              else
+                                div [ class "is-italic" ] [ textH T.noLabels ]
+                            ]
+                       ]
+            ]
+
+        -- Label select
+        , div
+            [ class "media"
+            , classList [ ( "is-w", hasLabelRight ) ]
+            , ternary hasLabelRight (onClick DoLabelEdit) (onClick NoMsg)
+            ]
+            [ div [ class "media-content" ] <|
+                (case u of
+                    LoggedIn uctx ->
+                        [ h2 [ class "subtitle is-h" ]
+                            [ textH T.labels
+                            , if model.isLabelOpen then
+                                I.icon "icon-x is-pulled-right"
+
+                              else if hasLabelRight then
+                                I.icon "icon-settings is-pulled-right"
+
+                              else
+                                text ""
+                            ]
+                        , LabelSearchPanel.view
+                            { selectedLabels = t.labels |> withDefault []
+                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            }
+                            model.labelsPanel
+                            |> Html.map LabelSearchPanelMsg
+                        ]
+
+                    LoggedOut ->
+                        [ h2 [ class "subtitle" ] [ textH T.labels ] ]
+                )
+                    ++ [ div []
+                            [ if List.length labels > 0 then
+                                viewLabels labels
+
+                              else
+                                div [ class "is-italic" ] [ textH T.noLabels ]
+                            ]
+                       ]
+            ]
+        , div
+            [ class "media" ]
+            [ div [ class "media-content" ] <|
+                (case u of
+                    LoggedIn uctx ->
+                        [ h2
+                            [ class "subtitle is-h"
+                            , classList [ ( "is-w", hasBlobRight || hasRole ) ]
+                            , Maybe.map (\b -> onClick (DoActionEdit b)) blob_m |> withDefault (onClick NoMsg)
                             ]
                             [ textH T.action
                             , if model.actionPanel.isEdit then
                                 I.icon "icon-x is-pulled-right"
 
-                              else if model.isTensionAdmin then
+                              else if hasBlobRight || hasRole then
                                 I.icon "icon-settings is-pulled-right"
 
                               else
@@ -2665,11 +2678,11 @@ viewSidePane u t model =
                             ]
                         , div
                             [ id "actionPanelContent" ]
-                            [ if hasConfig then
+                            [ if hasBlobRight || hasRole then
                                 let
                                     panelData =
                                         { tc = tc
-                                        , isAdmin = isAdmin
+                                        , isAdmin = hasBlobRight
                                         , hasRole = hasRole
                                         , isRight = False
                                         , data = model.actionPanel
@@ -2691,7 +2704,7 @@ viewSidePane u t model =
                     LoggedOut ->
                         [ h2 [ class "subtitle" ] [ textH T.action ] ]
                 )
-                    ++ [ div [ class "" ]
+                    ++ [ div []
                             [ case t.action of
                                 Just action ->
                                     viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action)) ""

@@ -198,6 +198,18 @@ fetchTensionExt url targetids first offset query_ status_ authors labels type_ m
         }
 
 
+fetchTensionAll url targetids first offset query_ status_ authors labels type_ msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/tensions_all"
+        , body = Http.jsonBody <| fetchTensionEncoder targetids first offset query_ status_ authors labels type_
+        , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 fetchTensionEncoder : List String -> Int -> Int -> Maybe String -> Maybe TensionStatus.TensionStatus -> List User -> List Label -> Maybe TensionType.TensionType -> JD.Value
 fetchTensionEncoder nameids first offset query_ status_ authors labels type_ =
     JE.object

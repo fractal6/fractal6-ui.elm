@@ -34,7 +34,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.Requests exposing (fetchChildren, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
 import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -47,6 +47,7 @@ import RemoteData exposing (RemoteData)
 import Task
 import Text as T exposing (textH, textT)
 import Time
+import Url exposing (Url)
 
 
 
@@ -97,6 +98,7 @@ type alias Model =
     -- Pages
     , tensions_int : GqlData TensionsData
     , tensions_ext : GqlData TensionsData
+    , tensions_all : GqlData TensionsData
     , offset : Int
     , load_more_int : Bool
     , load_more_ext : Bool
@@ -119,6 +121,7 @@ type alias Model =
     , help : Help.State
     , tensionForm : NTF.State
     , refresh_trial : Int
+    , url : Url
     }
 
 
@@ -135,6 +138,7 @@ type TensionDirection
 type TensionsView
     = ListView
     | IntExtView
+    | CircleView
 
 
 viewModeEncoder : TensionsView -> String
@@ -146,12 +150,18 @@ viewModeEncoder x =
         IntExtView ->
             "intext"
 
+        CircleView ->
+            "circle"
+
 
 viewModeDecoder : String -> TensionsView
 viewModeDecoder x =
     case x of
         "intext" ->
             IntExtView
+
+        "circle" ->
+            CircleView
 
         _ ->
             ListView
@@ -305,9 +315,70 @@ labelsEncoder labels =
     labels |> List.map (\x -> ( "l", x.name ))
 
 
-nfirst : Int
-nfirst =
+nfirstL : Int
+nfirstL =
     15
+
+
+nfirstC : Int
+nfirstC =
+    -- @debug message/warning if thera are more than nfirstC tensions
+    1000
+
+
+
+--
+-- DoLoad utils
+--
+
+
+getTargets : Model -> List String
+getTargets model =
+    case model.depthFilter of
+        AllSubChildren ->
+            case model.children of
+                RemoteData.Success children ->
+                    children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
+
+                _ ->
+                    []
+
+        SelectedNode ->
+            case model.path_data of
+                Success path ->
+                    path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+
+                _ ->
+                    []
+
+
+statusDecoder : StatusFilter -> Maybe TensionStatus.TensionStatus
+statusDecoder statusF =
+    case statusF of
+        AllStatus ->
+            Nothing
+
+        OpenStatus ->
+            Just TensionStatus.Open
+
+        ClosedStatus ->
+            Just TensionStatus.Closed
+
+
+typeDecoder : TypeFilter -> Maybe TensionType.TensionType
+typeDecoder typeF =
+    case typeF of
+        AllTypes ->
+            Nothing
+
+        GovernanceType ->
+            Just TensionType.Governance
+
+        OperationalType ->
+            Just TensionType.Operational
+
+        HelpType ->
+            Just TensionType.Help
 
 
 
@@ -325,6 +396,7 @@ type Msg
     | GotChildren (WebData (List NodeId)) -- HTTP/Json
     | GotTensionsInt Int (GqlData TensionsData) -- GraphQL
     | GotTensionsExt (GqlData TensionsData) -- GraphQL
+    | GotTensionsAll (GqlData TensionsData) -- GraphQL
       -- Page Action
     | DoLoad Int -- query tensions
     | OnFilterClick
@@ -396,7 +468,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionsBaseUri global.session.referer global.session.node_focus newFocus
+            focusState TensionsBaseUri global.session.referer global.url global.session.node_focus newFocus
 
         -- Model init
         model =
@@ -408,6 +480,7 @@ init global flags =
             , children = RemoteData.Loading
             , tensions_int = Loading
             , tensions_ext = Loading
+            , tensions_all = Loading
             , offset = 0
             , load_more_int = False
             , load_more_ext = False
@@ -430,11 +503,21 @@ init global flags =
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
+            , url = global.url
             }
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , ternary (model.depthFilter == AllSubChildren) (fetchChildren apis.rest newFocus.nameid GotChildren) Cmd.none
+            , case model.depthFilter of
+                AllSubChildren ->
+                    fetchChildren apis.rest newFocus.nameid GotChildren
+
+                SelectedNode ->
+                    if fs.focusChange == False then
+                        send (DoLoad 0)
+
+                    else
+                        Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             ]
@@ -487,7 +570,7 @@ update global message model =
                         Just root ->
                             let
                                 cmd =
-                                    ternary (model.depthFilter == SelectedNode) (send (DoLoad 1)) Cmd.none
+                                    ternary (model.depthFilter == SelectedNode) (send (DoLoad 0)) Cmd.none
                             in
                             ( newModel, cmd, send (UpdateSessionPath (Just path)) )
 
@@ -513,7 +596,7 @@ update global message model =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                         cmd =
-                                            ternary (model.depthFilter == SelectedNode) (send (DoLoad 1)) Cmd.none
+                                            ternary (model.depthFilter == SelectedNode) (send (DoLoad 0)) Cmd.none
                                     in
                                     ( { model | path_data = Success newPath }, cmd, send (UpdateSessionPath (Just newPath)) )
 
@@ -540,22 +623,25 @@ update global message model =
             in
             case result of
                 RemoteData.Success children ->
-                    ( newModel, send (DoLoad 1), Cmd.none )
+                    ( newModel, send (DoLoad 0), Cmd.none )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
 
         GotTensionsInt inc result ->
             let
+                i =
+                    ternary (inc == 0) 1 inc
+
                 load_more =
                     case result of
                         Success ts ->
-                            List.length ts == nfirst
+                            List.length ts == nfirstL
 
                         other ->
                             False
 
-                newResult =
+                newTensions =
                     case model.tensions_int of
                         Success tsOld ->
                             case result of
@@ -568,19 +654,19 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_int = newResult, load_more_int = load_more, offset = model.offset + inc }, Cmd.none, Cmd.none )
+            ( { model | tensions_int = newTensions, load_more_int = load_more, offset = model.offset + i }, Cmd.none, Cmd.none )
 
         GotTensionsExt result ->
             let
                 load_more =
                     case result of
                         Success ts ->
-                            List.length ts == nfirst
+                            List.length ts == nfirstL
 
                         other ->
                             False
 
-                newResult =
+                newTensions =
                     case model.tensions_ext of
                         Success tsOld ->
                             case result of
@@ -593,76 +679,55 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_ext = newResult, load_more_ext = load_more }, Cmd.none, Cmd.none )
+            ( { model | tensions_ext = newTensions, load_more_ext = load_more }, Cmd.none, Cmd.none )
+
+        GotTensionsAll result ->
+            ( { model | tensions_all = result }, Ports.fitHeight "tensionsCircle", Cmd.none )
 
         DoLoad inc ->
+            -- if inc == 0, reset the offset
+            -- else increments the results span
             let
+                nameids =
+                    getTargets model
+
                 status =
-                    case model.statusFilter of
-                        AllStatus ->
-                            Nothing
-
-                        OpenStatus ->
-                            Just TensionStatus.Open
-
-                        ClosedStatus ->
-                            Just TensionStatus.Closed
+                    statusDecoder model.statusFilter
 
                 type_ =
-                    case model.typeFilter of
-                        AllTypes ->
-                            Nothing
+                    typeDecoder model.typeFilter
 
-                        GovernanceType ->
-                            Just TensionType.Governance
-
-                        OperationalType ->
-                            Just TensionType.Operational
-
-                        HelpType ->
-                            Just TensionType.Help
-
-                nameids =
-                    case model.depthFilter of
-                        AllSubChildren ->
-                            case model.children of
-                                RemoteData.Success children ->
-                                    children |> List.map (\x -> x.nameid) |> List.append [ model.node_focus.nameid ]
-
-                                _ ->
-                                    []
-
-                        SelectedNode ->
-                            case model.path_data of
-                                Success path ->
-                                    path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
-
-                                _ ->
-                                    []
+                offset =
+                    -- In other words inc=0 reset the offset (used by  panel filter (User, Label, etc)
+                    ternary (inc == 0) 0 model.offset
             in
-            case nameids of
-                [] ->
-                    ( model, Cmd.none, Cmd.none )
+            if nameids == [] then
+                ( model, Cmd.none, Cmd.none )
 
-                _ ->
-                    let
-                        offset =
-                            ternary (inc == 0) 0 model.offset
-                    in
-                    ( if inc == 0 then
-                        { model | offset = offset, tensions_int = LoadingSlowly, tensions_ext = LoadingSlowly }
+            else if model.viewMode == CircleView then
+                ( { model | tensions_all = LoadingSlowly }
+                , fetchTensionAll apis.rest nameids nfirstC 0 model.pattern status model.authors model.labels type_ GotTensionsAll
+                , Ports.hide "footBar"
+                )
 
-                      else
-                        model
-                    , Cmd.batch
-                        --[ queryIntTension apis.gql nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ (GotTensionsInt inc)
-                        --, queryExtTension apis.gql nameids nfirst (offset * nfirst) model.pattern status model.authors [] type_ GotTensionsExt
-                        --]
-                        [ fetchTensionInt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
-                        , fetchTensionExt apis.rest nameids nfirst (offset * nfirst) model.pattern status model.authors model.labels type_ GotTensionsExt
-                        ]
-                    , Cmd.none
-                    )
+            else if List.member model.viewMode [ ListView, IntExtView ] then
+                ( if inc == 0 then
+                    { model | offset = offset, tensions_int = LoadingSlowly, tensions_ext = LoadingSlowly }
+
+                  else
+                    model
+                , Cmd.batch
+                    --[ queryIntTension apis.gql nameids nfirstL (offset * nfirstL) model.pattern status model.authors [] type_ (GotTensionsInt inc)
+                    --, queryExtTension apis.gql nameids nfirstL (offset * nfirstL) model.pattern status model.authors [] type_ GotTensionsExt
+                    --]
+                    [ fetchTensionInt apis.rest nameids nfirstL (offset * nfirstL) model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
+                    , fetchTensionExt apis.rest nameids nfirstL (offset * nfirstL) model.pattern status model.authors model.labels type_ GotTensionsExt
+                    ]
+                , Ports.show "footBar"
+                )
+
+            else
+                ( model, Cmd.none, Cmd.none )
 
         OnFilterClick ->
             -- Fix component dropdowns close beaviour
@@ -752,7 +817,26 @@ update global message model =
             ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query) )
 
         GoView viewMode ->
-            ( { model | viewMode = viewMode }, Cmd.none, Cmd.none )
+            let
+                newModel =
+                    { model | viewMode = viewMode }
+
+                ( data_m, cmds ) =
+                    Tuple.mapFirst (\x -> withMaybeData x) <|
+                        case viewMode of
+                            ListView ->
+                                ( model.tensions_int, [ Ports.show "footBar" ] )
+
+                            IntExtView ->
+                                ( model.tensions_int, [ Ports.show "footBar" ] )
+
+                            CircleView ->
+                                ( model.tensions_all, [ Ports.hide "footBar", Ports.fitHeight "tensionsCircle" ] )
+            in
+            ( newModel
+            , Cmd.batch (ternary (data_m == Nothing) [ send (DoLoad 0) ] [] ++ cmds)
+            , Cmd.none
+            )
 
         -- Authors
         UserSearchPanelMsg msg ->
@@ -1091,6 +1175,7 @@ view_ global model =
     let
         helperData =
             { user = global.session.user
+            , uriQuery = model.url.query
             , path_data = global.session.path_data
             , baseUri = TensionsBaseUri
             , data = model.helperBar
@@ -1099,13 +1184,16 @@ view_ global model =
             , onCollapse = CollapseRoles
             , onCreateTension = DoCreateTension
             }
+
+        isFullwidth =
+            model.viewMode == CircleView
     in
     div [ id "mainPane" ]
         [ HelperBar.view helperData
-        , div [ class "columns is-centered" ]
-            [ div [ class "column is-10-desktop is-10-widescreen is-11-fullhd" ]
-                [ div [ class "columns is-centered" ]
-                    [ div [ class "column is-10-desktop is-9-fullhd" ] [ viewSearchBar model ] ]
+        , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
+            [ div [ class "column is-10-desktop is-10-widescreen is-11-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
+                [ div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
+                    [ div [ class "column is-10-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
                 , div [] <|
                     case model.children of
                         RemoteData.Failure err ->
@@ -1119,16 +1207,31 @@ view_ global model =
 
                     IntExtView ->
                         viewIntExtTensions model
-                , div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
-                    [ if model.load_more_int || model.load_more_ext then
-                        button [ class "button is-small", onClick (DoLoad 1) ]
-                            [ text "Load more" ]
 
-                      else
-                        div [] []
-                    ]
+                    CircleView ->
+                        text ""
+                , if model.viewMode == CircleView && (withMaybeData model.tensions_all |> Maybe.map (\ts -> List.length ts == 1000) |> withDefault False) then
+                    div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
+                        [ button [ class "button is-small" ]
+                            -- @TODO: load more for CircleView
+                            [ text "Viewing only the 1000 more recent tensions" ]
+                        ]
+
+                  else if model.viewMode /= CircleView && (model.load_more_int || model.load_more_ext) then
+                    div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
+                        [ button [ class "button is-small", onClick (DoLoad 1) ]
+                            [ text "Load more" ]
+                        ]
+
+                  else
+                    text ""
                 ]
             ]
+        , if model.viewMode == CircleView then
+            viewCircleTensions model
+
+          else
+            text ""
         , setupActionModal model.isModalActive model.node_action
         ]
 
@@ -1244,6 +1347,7 @@ viewSearchBar model =
             [ ul []
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ] [ a [ onClickPD (GoView ListView), target "_blank" ] [ text "List" ] ]
                 , li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ] [ a [ onClickPD (GoView IntExtView), target "_blank" ] [ text "Internal/External" ] ]
+                , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ] [ a [ onClickPD (GoView CircleView), target "_blank" ] [ text "Circles" ] ]
                 ]
             ]
         ]
@@ -1288,14 +1392,80 @@ viewIntExtTensions model =
         ]
 
 
+viewCircleTensions : Model -> Html Msg
+viewCircleTensions model =
+    case model.tensions_all of
+        Success tensions ->
+            let
+                addParam : Tension -> Maybe (List Tension) -> Maybe (List Tension)
+                addParam value maybeValues =
+                    case maybeValues of
+                        Just values ->
+                            Just (value :: values)
+
+                        Nothing ->
+                            Just [ value ]
+
+                toDict2 : List ( String, Tension ) -> Dict String (List Tension)
+                toDict2 parameters =
+                    List.foldl
+                        (\( k, v ) dict -> Dict.update k (addParam v) dict)
+                        Dict.empty
+                        parameters
+
+                tensions_d =
+                    tensions
+                        |> List.map
+                            (\x ->
+                                ( x.receiver.nameid, x )
+                            )
+                        |> toDict2
+            in
+            Dict.toList tensions_d
+                |> List.map
+                    (\( k, ts ) ->
+                        [ div [ class "column is-3" ]
+                            [ div [ class "subtitle is-aligned-center mb-3" ]
+                                [ ts
+                                    |> List.head
+                                    |> Maybe.map (\h -> h.receiver.name)
+                                    |> withDefault "No tensions here."
+                                    |> text
+                                ]
+                            , ts
+                                |> List.sortBy .createdAt
+                                |> List.reverse
+                                |> List.map
+                                    (\t ->
+                                        div [ class "box mb-2 mx-2 px-3 pt-2 pb-2" ]
+                                            [ mediaTension TensionsBaseUri model.node_focus t True False "is-size-6" Navigate ]
+                                    )
+                                |> List.append []
+                                |> div [ attribute "style" "height: 100%; overflow-y: auto;overflow-x: hidden;" ]
+                            ]
+                        , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
+                        ]
+                    )
+                |> List.concat
+                |> div [ id "tensionsCircle", class "columns is-fullwidth is-marginless", attribute "style" "overflow-y: hidden; overflow-x: auto;" ]
+
+        --attribute "style" "height: 900px; overflow-y: hidden;overflow-x: auto;" ]
+        Failure err ->
+            viewGqlErrors err
+
+        _ ->
+            div [ class "spinner" ] []
+
+
 viewTensions : NodeFocus -> Maybe String -> GqlData TensionsData -> TensionDirection -> Html Msg
 viewTensions focus pattern tensionsData tensionDir =
     div [ classList [ ( "box", True ), ( "spinner", tensionsData == LoadingSlowly ) ] ]
         [ case tensionsData of
             Success tensions ->
                 if List.length tensions > 0 then
-                    List.map (\t -> mediaTension TensionsBaseUri focus t Navigate) tensions
-                        |> div [ class "is-size-7", id "tensionsTab" ]
+                    tensions
+                        |> List.map (\t -> mediaTension TensionsBaseUri focus t True True "is-size-6" Navigate)
+                        |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then
                     div [] [ textH T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
@@ -1327,7 +1497,7 @@ viewTensions focus pattern tensionsData tensionDir =
             Failure err ->
                 viewGqlErrors err
 
-            default ->
+            _ ->
                 div [] []
         ]
 

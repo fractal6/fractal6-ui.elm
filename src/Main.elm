@@ -98,6 +98,7 @@ update msg model =
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
                 , Ports.bulma_driver ""
+                , Ports.show "footBar"
                 ]
             )
 

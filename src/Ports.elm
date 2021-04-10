@@ -117,6 +117,30 @@ log message =
         }
 
 
+show : String -> Cmd msg
+show message =
+    outgoing
+        { action = "SHOW"
+        , data = JE.string message
+        }
+
+
+hide : String -> Cmd msg
+hide message =
+    outgoing
+        { action = "HIDE"
+        , data = JE.string message
+        }
+
+
+fitHeight : String -> Cmd msg
+fitHeight message =
+    outgoing
+        { action = "FIT_HEIGHT"
+        , data = JE.string message
+        }
+
+
 logErr : String -> Cmd msg
 logErr message =
     outgoing

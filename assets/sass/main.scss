@@ -138,6 +138,11 @@ hr {
     font-style: italic !important;
 }
 
+
+.is-smaller {
+    font-size: 88% !important;
+}
+
 // Tooltip
 
 .tooltip.has-tooltip-multiline::before {
@@ -518,6 +523,11 @@ html.has-modal-active, html.has-modal-active2 {
         opacity: 1;
         transition: opacity 0.1s;
         cursor: pointer;
+    }
+
+    &.is-small::after,
+    &.is-small::before {
+        width: 2px;
     }
 }
 
@@ -1212,8 +1222,8 @@ a.actionLink {
 }
 
 .marginTensionStatus {
-    margin-top: 0.66rem;
-    margin-left: -2px;
+    margin-top: 0.2rem;
+    margin-left: -28px;
 }
 
 //
@@ -1473,12 +1483,10 @@ a.actionLink {
         }
         li.is-active a {
             color: $grey;
-            background-color: $white-1;
+            //background-color: $white-1;
+            background-color: $blue-light;
             border-top-color: $blue-grey;
             border-top-width: 3px;
-            &:hover {
-                background-color: $white-1;
-            }
         }
         li:not(:last-child) a {
             border-right-color: $grey-lighter;
@@ -1683,8 +1691,10 @@ a.actionLink {
 
 .is-w {
     &:hover {
-        color: $white-ter !important;
         cursor: pointer;
+        .is-h, &.is-h {
+            color: $white-ter !important;
+        }
     }
 }
 

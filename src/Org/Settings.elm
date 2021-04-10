@@ -35,7 +35,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchLabels, login)
-import ModelCommon.View exposing (mediaTension, roleColor, viewLabel)
+import ModelCommon.View exposing (roleColor, viewLabel)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -262,7 +262,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState SettingsBaseUri global.session.referer global.session.node_focus newFocus
+            focusState SettingsBaseUri global.session.referer global.url global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -846,6 +846,7 @@ view_ global model =
     let
         helperData =
             { user = global.session.user
+            , uriQuery = global.url.query
             , path_data = global.session.path_data
             , baseUri = SettingsBaseUri
             , data = model.helperBar

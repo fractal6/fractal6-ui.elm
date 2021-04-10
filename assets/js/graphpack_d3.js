@@ -1345,7 +1345,7 @@ export const GraphPack = {
         this.$canvas.addEventListener("mousemove", canvasMouseMoveEvent);
         this.$canvas.addEventListener("mouseenter", canvasMouseEnterEvent);
         this.$canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
-        this.$canvas.addEventListener("mousedown", nodeClickEvent);
+        this.$canvas.addEventListener("click", nodeClickEvent);
         // Canvas button events redirection
         // Review -- Better implementation ?
         this.$canvasButtons.addEventListener("mousedown", e => {

@@ -63,6 +63,7 @@ type alias FocusState =
     { isInit : Bool
     , orgChange : Bool
     , focusChange : Bool
+    , paramsChange : Bool
     , refresh : Bool
     }
 
@@ -95,8 +96,8 @@ toString route =
             ""
 
 
-focusState : FractalBaseRoute -> Maybe Url -> Maybe NodeFocus -> NodeFocus -> FocusState
-focusState baseUri referer maybeFocus newFocus =
+focusState : FractalBaseRoute -> Maybe Url -> Url -> Maybe NodeFocus -> NodeFocus -> FocusState
+focusState baseUri referer url maybeFocus newFocus =
     let
         oldFocus =
             maybeFocus |> withDefault newFocus
@@ -107,6 +108,7 @@ focusState baseUri referer maybeFocus newFocus =
     { isInit = isInit
     , orgChange = (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
     , focusChange = (newFocus.nameid /= oldFocus.nameid) || isInit
+    , paramsChange = referer |> Maybe.map (\r -> r.query /= url.query) |> withDefault False
     , refresh = basePathChanged baseUri referer || isInit
     }
 
