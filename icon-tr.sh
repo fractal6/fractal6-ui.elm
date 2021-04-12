@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the number of icons
+#   cat assets/icons/selection.json |jq '.icons | length'
+
 # fa -> feather
 # icon-circle-o -> icon role ?
 # icon-circle -> icon role ?

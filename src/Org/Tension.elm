@@ -255,19 +255,30 @@ type Msg
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
     | ExpandEvent Int
+      --
       -- Page Action
+      --
+      -- new comment
     | ChangeTensionPost String String -- {field value}
     | SubmitComment (Maybe TensionStatus.TensionStatus) Time.Posix
     | CommentAck (GqlData PatchTensionPayloadID)
+      -- edit comment
     | DoUpdateComment String
+    | CancelCommentPatch
     | ChangeCommentPost String String
     | SubmitCommentPatch Time.Posix
     | CommentPatchAck (GqlData Comment)
-    | CancelCommentPatch
+      -- edit title
     | DoChangeTitle
+    | CancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData String)
-    | CancelTitle
+      -- move tension
+    | DoMove
+    | DoMoveCancel
+    | DoMoveChangeTarget
+    | DoMoveSubmit
+    | DoMoveAck
       -- Blob control
     | DoBlobEdit BlobType.BlobType
     | CancelBlob
@@ -922,6 +933,21 @@ update global message model =
 
                 NoAuth ->
                     ( { model | title_result = result }, Cmd.none, Cmd.none )
+
+        DoMove ->
+            ( model, Cmd.none, Cmd.none )
+
+        DoMoveCancel ->
+            ( model, Cmd.none, Cmd.none )
+
+        DoMoveChangeTarget ->
+            ( model, Cmd.none, Cmd.none )
+
+        DoMoveSubmit ->
+            ( model, Cmd.none, Cmd.none )
+
+        DoMoveAck ->
+            ( model, Cmd.none, Cmd.none )
 
         DoBlobEdit blobType ->
             case model.tension_head of
@@ -2564,16 +2590,22 @@ viewSidePane u t model =
                     False
 
         --
-        hasAssigneeRight =
+        isAdmin =
             model.isTensionAdmin
 
+        isAuthor =
+            Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False
+
+        hasAssigneeRight =
+            isAdmin
+
         hasLabelRight =
-            model.isTensionAdmin || (Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False)
+            isAdmin || isAuthor
 
         hasBlobRight =
-            model.isTensionAdmin && actionType_m /= Just NEW && blob_m /= Nothing
+            isAdmin && actionType_m /= Just NEW && blob_m /= Nothing
     in
-    div [ class "tensionSidePane" ]
+    div [ class "tensionSidePane" ] <|
         -- Assignees/User select
         [ div
             [ class "media"
@@ -2715,6 +2747,28 @@ viewSidePane u t model =
                        ]
             ]
         ]
+            ++ (if isAdmin || isAuthor then
+                    --, hr [ class "has-background-grey mt-6 mb-1" ] [] , hr [ class "has-background-grey mt-0" ] []
+                    [ hr [ class "has-background-grey mt-6" ] [] ]
+                        ++ (if isAdmin then
+                                [ div
+                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    , onClick DoMove
+                                    ]
+                                    [ span [ class "right-arrow2 pl-0 pr-2" ] [], text "Move tension" ]
+
+                                --, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ I.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
+                                ]
+
+                            else
+                                []
+                           )
+                        ++ []
+                    --, div [ class "is-smaller2 has-text-weight-semibold button-light is-link" ] [ I.icon "icon-lock icon-disc mr-1", text "Change type" ]
+
+                else
+                    []
+               )
 
 
 

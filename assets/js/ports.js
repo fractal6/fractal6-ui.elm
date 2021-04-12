@@ -23,6 +23,10 @@ window.addEventListener('load', _ => {
                 isInit: true,
                 user_ctx: null, // from localstorage
                 bulmaHandlers: [],
+                // Resizing
+                rtime: null,
+                timeout: false,
+                delta: 200,
                 // Graphpack
                 gp: Object.create(GraphPack),
                 // QuickSearch
@@ -84,34 +88,58 @@ const actions = {
         //$e.style.visibility = "hidden";
     },
     'FIT_HEIGHT': (app, session, id) => {
-        // @debug: add delay when sending Ports !
+        var fitElement = id => {
+            // SOlved with Browser.Dom.getElement
+            var $e = document.getElementById(id);
+            if (!$e) { return }
+
+            var doc_h = document.body.scrollHeight;
+            var screen_h = window.innerHeight;
+            var elt_h = $e.offsetHeight; // $e.clientHeight -> smaller
+            var x = doc_h - elt_h; // header height (above the target)
+            var h = screen_h - x; // target size tha fit in screen
+
+            if (doc_h > screen_h) {
+                $e.style.height = h + "px";
+            } else {
+                var rect = $e.getBoundingClientRect();
+                $e.style.height = elt_h + (screen_h - (rect.top+elt_h)) + "px";
+            }
+            //document.getElementsByTagName('html')[0].style.overflow = "hidden"; // @debug: html overflow stay disable...
+            //document.body.style.overflowY = "hidden";
+
+            //$e.style.maxHeight = 0.8*screen_h + "px";
+
+            //console.log("document client:", document.body.clientHeight);
+            //console.log("document scroll:", document.body.scrollHeight);
+            //console.log("window inner:", window.innerHeight);
+            //console.log("window outer:", window.outerHeight);
+            //console.log("screen:", screen.height);
+            //console.log("screen avail:", screen.availHeight);
+            //console.log("elt client:", $e.clientHeight);
+            //console.log("elt scrol:", $e.scrollHeight);
+            //console.log("elt style:", $e.style.height);
+            //console.log("elt top:", $e.offsetTop);
+            //console.log("elt bottom:", $e.offsetTop + $e.clientHeight);
+        }
+
         setTimeout(() => {
-
-        var $e = document.getElementById(id);
-        if (!$e) { return }
-
-        var doc_h = document.body.scrollHeight;
-        var screen_h = window.innerHeight;
-        var elt_h = $e.offsetHeight; // $e.clientHeight -> smaller
-        var x = doc_h - elt_h; // header height (above the target)
-        var h = screen_h - x; // target size tha fit in screen
-
-        $e.style.height = h + "px";
-        //document.getElementsByTagName('html')[0].style.overflow = "hidden"; // @debug: html overflow stay disable...
-        //document.body.style.overflowY = "hidden";
-
-        //$e.style.maxHeight = 0.8*screen_h + "px";
-
-        //console.log("document client:", document.body.clientHeight);
-        //console.log("document scroll:", document.body.scrollHeight);
-        //console.log("window inner:", window.innerHeight);
-        //console.log("window outer:", window.outerHeight);
-        //console.log("screen:", screen.height);
-        //console.log("screen avail:", screen.availHeight);
-        //console.log("elt client:", $e.clientHeight);
-        //console.log("elt scrol:", $e.scrollHeight);
-        //console.log("elt style:", $e.style.height);
-
+            fitElement(id);
+            //window.onresize = () => {
+            //    session.rtime = new Date();
+            //    if (session.timeout === false) {
+            //        session.timeout = true;
+            //        // Smooth redraw
+            //        setTimeout( () => {
+            //            if (new Date() - session.rtime < session.delta) {
+            //                setTimeout(() => fitElement(id), session.delta);
+            //            } else {
+            //                session.timeout = false;
+            //                fitElement(id)
+            //            }
+            //        }, session.delta);
+            //    }
+            //};
         }, 300)
     },
     'LOGERR': (app, session, message) => {

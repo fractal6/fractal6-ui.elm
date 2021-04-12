@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?dsu4tb');
-  src:  url('fonts/fractaleicon.eot?dsu4tb#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?dsu4tb') format('truetype'),
-    url('fonts/fractaleicon.woff?dsu4tb') format('woff'),
-    url('fonts/fractaleicon.svg?dsu4tb#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?nq14v7');
+  src:  url('fonts/fractaleicon.eot?nq14v7#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?nq14v7') format('truetype'),
+    url('fonts/fractaleicon.woff?nq14v7') format('woff'),
+    url('fonts/fractaleicon.svg?nq14v7#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -36,6 +36,9 @@
 }
 .icon-calendar:before {
   content: "\e947";
+}
+.icon-disc:before {
+  content: "\e952";
 }
 .icon-edit:before {
   content: "\e948";

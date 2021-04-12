@@ -91,6 +91,7 @@ type Msg
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
+    | UpdateSessionScreen Screen
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -282,6 +283,13 @@ update msg model =
                 -- @debug: Save window_pos in localStorage ?
             in
             ( { model | session = { session | window_pos = data } }, Cmd.none )
+
+        UpdateSessionScreen data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | screen = data } }, Cmd.none )
 
 
 

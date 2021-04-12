@@ -1216,4 +1216,4 @@ viewJoinOrgaStep step =
                     viewGqlErrors err
 
                 default ->
-                    div [ class "box spinner" ] [ text "" ]
+                    div [ class "box spinner" ] []

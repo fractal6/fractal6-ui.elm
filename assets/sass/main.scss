@@ -142,6 +142,9 @@ hr {
 .is-smaller {
     font-size: 88% !important;
 }
+.is-smaller2 {
+    font-size: 80% !important;
+}
 
 // Tooltip
 
@@ -1717,6 +1720,10 @@ a.actionLink {
     &.is-danger {
         color: $red;
     }
+
+    &.is-link:hover {
+        color: $link;
+    }
 }
 
 .right-arrow {
@@ -1724,6 +1731,13 @@ a.actionLink {
         content: " \27F6 ";
         padding-right: 5px;
         padding-left: 5px;
+    }
+}
+.right-arrow2 {
+    padding-right: 5px;
+    padding-left: 5px;
+    &::after {
+        content: " \2192 ";
     }
 }
 

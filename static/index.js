@@ -28,7 +28,8 @@ window.addEventListener('load', _ => {
                 gql: GRAPHQL_API,
                 rest: REST_API,
                 data: DATA_API
-            }
+            },
+            screen: { w: window.innerWidth, h: window.innerHeight }
         }
     }));
 });

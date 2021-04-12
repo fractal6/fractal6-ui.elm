@@ -32,10 +32,23 @@ import Url exposing (Url)
 --
 
 
+type alias Apis =
+    { auth : String
+    , gql : String
+    , rest : String
+    , data : String
+    }
+
+
+type alias Screen =
+    { w : Int, h : Int }
+
+
 type alias SessionFlags =
     { uctx : Maybe JD.Value
     , window_pos : Maybe JD.Value
     , apis : Apis
+    , screen : Screen
     }
 
 
@@ -55,14 +68,7 @@ type alias Session =
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
     , window_pos : Maybe WindowPos
-    }
-
-
-type alias Apis =
-    { auth : String
-    , gql : String
-    , rest : String
-    , data : String
+    , screen : Screen
     }
 
 
@@ -103,6 +109,7 @@ resetSession flags =
     , node_quickSearch = Nothing
     , window_pos = Nothing
     , apis = flags.apis
+    , screen = flags.screen
     }
 
 
@@ -150,6 +157,7 @@ fromLocalSession flags =
       , node_quickSearch = Nothing
       , window_pos = window_pos
       , apis = flags.apis
+      , screen = flags.screen
       }
     , [ cmd1, cmd2 ]
     )
@@ -202,7 +210,7 @@ type ActionState
     = ActionAuthNeeded
     | AskErr String
     | NoOp
-      --
+      --  @debug: move this to Components
     | JoinOrga (JoinStep ActionForm)
 
 

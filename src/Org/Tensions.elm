@@ -2,7 +2,8 @@ module Org.Tensions exposing (Flags, Model, Msg, init, page, subscriptions, upda
 
 import Array
 import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
-import Browser.Events exposing (onKeyDown)
+import Browser.Dom as Dom
+import Browser.Events as Events
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -99,6 +100,7 @@ type alias Model =
     , tensions_int : GqlData TensionsData
     , tensions_ext : GqlData TensionsData
     , tensions_all : GqlData TensionsData
+    , boardHeight : Maybe Float
     , offset : Int
     , load_more_int : Bool
     , load_more_ext : Bool
@@ -115,6 +117,7 @@ type alias Model =
 
     -- Common
     , node_action : ActionState
+    , screen : Screen
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
@@ -387,6 +390,8 @@ typeDecoder typeF =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
+    | OnResize Int Int
+    | FitBoard (Result Dom.Error Dom.Element)
     | PushTension TensionForm (GqlData Tension -> Msg)
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
@@ -473,6 +478,7 @@ init global flags =
         -- Model init
         model =
             { node_focus = newFocus
+            , screen = global.session.screen
             , path_data =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
@@ -481,6 +487,7 @@ init global flags =
             , tensions_int = Loading
             , tensions_ext = Loading
             , tensions_all = Loading
+            , boardHeight = Nothing
             , offset = 0
             , load_more_int = False
             , load_more_ext = False
@@ -554,6 +561,28 @@ update global message model =
                     ternary (model.tensions_ext == Loading) LoadingSlowly model.tensions_ext
             in
             ( { model | tensions_int = tensions_int, tensions_ext = tensions_ext }, Cmd.none, Cmd.none )
+
+        OnResize w h ->
+            let
+                screen =
+                    global.session.screen
+
+                newScreen =
+                    { screen | w = w, h = h }
+            in
+            ( { model | screen = newScreen }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionScreen newScreen) )
+
+        FitBoard elt ->
+            case elt of
+                Ok e ->
+                    let
+                        h =
+                            e.viewport.height - e.element.y
+                    in
+                    ( { model | boardHeight = Just h }, Cmd.none, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -682,7 +711,7 @@ update global message model =
             ( { model | tensions_ext = newTensions, load_more_ext = load_more }, Cmd.none, Cmd.none )
 
         GotTensionsAll result ->
-            ( { model | tensions_all = result }, Ports.fitHeight "tensionsCircle", Cmd.none )
+            ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), Cmd.none )
 
         DoLoad inc ->
             -- if inc == 0, reset the offset
@@ -831,7 +860,7 @@ update global message model =
                                 ( model.tensions_int, [ Ports.show "footBar" ] )
 
                             CircleView ->
-                                ( model.tensions_all, [ Ports.hide "footBar", Ports.fitHeight "tensionsCircle" ] )
+                                ( model.tensions_all, [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
             in
             ( newModel
             , Cmd.batch (ternary (data_m == Nothing) [ send (DoLoad 0) ] [] ++ cmds)
@@ -1146,6 +1175,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Events.onResize (\w h -> OnResize w h)
     ]
         ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
@@ -1447,9 +1477,18 @@ viewCircleTensions model =
                         ]
                     )
                 |> List.concat
-                |> div [ id "tensionsCircle", class "columns is-fullwidth is-marginless", attribute "style" "overflow-y: hidden; overflow-x: auto;" ]
+                |> div
+                    [ id "tensionsCircle"
+                    , class "columns is-fullwidth is-marginless"
+                    , attribute "style" <|
+                        case model.boardHeight of
+                            Just h ->
+                                "overflow-y: hidden; overflow-x: auto; height:" ++ String.fromFloat h ++ "px;"
 
-        --attribute "style" "height: 900px; overflow-y: hidden;overflow-x: auto;" ]
+                            Nothing ->
+                                "overflow-y: hidden; overflow-x: auto;"
+                    ]
+
         Failure err ->
             viewGqlErrors err
 

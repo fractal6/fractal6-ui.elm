@@ -2,7 +2,7 @@ module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (QuickDoc)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, loadingSpin, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
@@ -32,7 +32,6 @@ import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
-import String.Format as Format
 import Text as T exposing (textH, textT, upH)
 import Time
 
