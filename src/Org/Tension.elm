@@ -10,6 +10,7 @@ import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
+import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
 import Date exposing (formatTime)
@@ -185,6 +186,7 @@ type alias Model =
     , help : Help.State
     , tensionForm : NTF.State
     , refresh_trial : Int
+    , moveTension : MoveTension.State
     }
 
 
@@ -345,6 +347,7 @@ type Msg
     | CollapseRoles
       -- Help
     | HelpMsg Help.Msg
+    | MoveTensionMsg MoveTension.Msg
 
 
 
@@ -436,6 +439,7 @@ init global flags =
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
+            , moveTension = MoveTension.init global.session.user
             }
 
         cmds =
@@ -1626,6 +1630,19 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        MoveTensionMsg msg ->
+            let
+                ( data, out ) =
+                    MoveTension.update apis msg model.moveTension
+
+                res =
+                    out.result
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -1638,6 +1655,7 @@ subscriptions global model =
         ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 
 
@@ -1659,6 +1677,7 @@ view global model =
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
+        , MoveTension.view {} model.moveTension |> Html.map MoveTensionMsg
         ]
     }
 

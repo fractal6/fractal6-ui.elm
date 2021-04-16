@@ -3,12 +3,19 @@
 '''Elm spa parser/generator.
 
 Usage:
-    melm add MODULE_NAME...
-    melm push MODULE_NAME...
+    melm add [-w] MODULE_NAME...
+    melm push [-w] MODULE_NAME...
 
 Commands:
     add     Add a new sub-component.
     push    Add a sub-component in a existing component.
+
+Options:
+    -w, --write  save/replace in file
+
+Examples:
+    melm.py add Components.MoveTension
+    melm.py push Components.MoveTension Org.Tension
 '''
 
 import os
@@ -58,11 +65,15 @@ class ElmSpa(object):
     def add_subcomponent(self, module_name):
         d = self.get_module_map(module_name)
         s = self.template.substitute(d)
-        if os.path.exists(d["fn"]):
-            raise ValueError("Path already exists: %s" % d["fn"])
-        with open(fn, "w") as f:
-            f.write(s)
-        print("file %s written" % fn)
+
+        if self.conf['--write']:
+            if os.path.exists(d["fn"]):
+                raise ValueError("Path already exists: %s" % d["fn"])
+            with open(d["fn"], "w") as f:
+                f.write(s)
+            print("file %s written" % d["fn"])
+        else:
+            print(s)
 
     def push_subcomponent(self, module_name_source, module_name_target):
 
@@ -175,7 +186,13 @@ class ElmSpa(object):
 
         for spec in all_specs:
             _, content = self.rmatch(spec, content, mapping=s_map)
-        print(content)
+
+        if self.conf['--write']:
+            with open(t_map["fn"], "w") as f:
+                f.write(content)
+            print("file %s written" % t_map["fn"])
+        else:
+            print(content)
 
 
     def rmatch(self, regs, content, mapping=None):

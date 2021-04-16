@@ -1,5 +1,6 @@
 module Query.PatchTension exposing
     ( actionRequest
+    , moveTension
     , patchComment
     , patchTitle
     , publishBlob
@@ -33,7 +34,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionPatchForm)
 import ModelSchema exposing (..)
-import Query.AddTension exposing (buildBlob, buildComment, buildEvent)
+import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
 import Query.QueryTension exposing (blobPayload, commentPayload)
 import RemoteData exposing (RemoteData)
 
@@ -148,7 +149,7 @@ patchTensionInputEncoder f =
                                 , action = fromMaybe f.action
                                 , type_ = fromMaybe f.tension_type
                                 , comments = buildComment createdAt f.uctx.username message
-                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                , history = buildEvents createdAt f.uctx.username f.events_type f.post
                                 , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                             }
                         )
@@ -320,7 +321,7 @@ setAssigneeEncoder f =
             Dict.get "createdAt" f.post |> withDefault ""
 
         events =
-            buildEvent createdAt f.uctx.username f.events_type f.post
+            buildEvents createdAt f.uctx.username f.events_type f.post
 
         inputReq =
             { filter =
@@ -382,7 +383,7 @@ setLabelEncoder f =
             Dict.get "createdAt" f.post |> withDefault ""
 
         events =
-            buildEvent createdAt f.uctx.username f.events_type f.post
+            buildEvents createdAt f.uctx.username f.events_type f.post
 
         inputReq =
             { filter =
@@ -414,6 +415,57 @@ setLabelEncoder f =
                 { set = ternary f.isNew patch historyPatch
                 , remove = ternary (f.isNew == False) patch Absent
                 }
+    in
+    { input = Input.buildUpdateTensionInput inputReq inputOpt }
+
+
+
+{-
+   Move tension
+-}
+
+
+moveTension url form msg =
+    makeGQLMutation url
+        (Mutation.updateTension
+            (setMoveEncoder form)
+            (SelectionSet.map TensionIdPayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity <|
+                    SelectionSet.map IdPayload
+                        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
+
+
+{-| setMoveEncoder : MoveForm -> Mutation.UpdateTensionRequiredArguments
+-}
+setMoveEncoder f =
+    let
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault ""
+
+        events =
+            buildEvents createdAt f.uctx.username f.events_type f.post
+
+        inputReq =
+            { filter =
+                Input.buildTensionFilter
+                    (\ft ->
+                        { ft | id = Present [ encodeId f.tid ] }
+                    )
+            }
+
+        patch =
+            Input.buildTensionPatch
+                (\s ->
+                    { s | history = events }
+                )
+                |> Present
+
+        inputOpt =
+            \x ->
+                { set = patch, remove = Absent }
     in
     { input = Input.buildUpdateTensionInput inputReq inputOpt }
 
@@ -513,7 +565,7 @@ publishBlobInputEncoder bid f =
                                         )
                                     ]
                                         |> Present
-                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                , history = buildEvents createdAt f.uctx.username f.events_type f.post
                             }
                         )
                         |> Present
@@ -588,7 +640,7 @@ actionInputEncoder f =
                         (\s ->
                             { s
                                 | comments = buildComment createdAt f.uctx.username message
-                                , history = buildEvent createdAt f.uctx.username f.events_type f.post
+                                , history = buildEvents createdAt f.uctx.username f.events_type f.post
                                 , blobs =
                                     if f.bid /= "" then
                                         [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present

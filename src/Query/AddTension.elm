@@ -2,7 +2,7 @@ module Query.AddTension exposing
     ( addOneTension
     , buildBlob
     , buildComment
-    , buildEvent
+    , buildEvents
     , buildMandate
     , tensionFromForm
     )
@@ -174,7 +174,7 @@ tensionFromForm f =
             , receiverid = f.target.nameid |> Present
             , comments = buildComment createdAt f.uctx.username (Just message)
             , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
-            , history = buildEvent createdAt f.uctx.username f.events_type f.post
+            , history = buildEvents createdAt f.uctx.username f.events_type f.post
         }
 
 
@@ -235,8 +235,8 @@ buildBlob createdAt username blob_type_m users node post =
         |> fromMaybe
 
 
-buildEvent : String -> String -> Maybe (List TensionEvent.TensionEvent) -> Post -> OptionalArgument (List Input.EventRef)
-buildEvent createdAt username events_type_m post =
+buildEvents : String -> String -> Maybe (List TensionEvent.TensionEvent) -> Post -> OptionalArgument (List Input.EventRef)
+buildEvents createdAt username events_type_m post =
     events_type_m
         |> Maybe.map
             (\events_type ->

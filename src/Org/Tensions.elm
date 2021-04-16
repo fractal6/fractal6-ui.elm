@@ -1459,7 +1459,7 @@ viewCircleTensions model =
                                 [ ts
                                     |> List.head
                                     |> Maybe.map (\h -> h.receiver.name)
-                                    |> withDefault "No tensions here."
+                                    |> withDefault "Loading..."
                                     |> text
                                 ]
                             , ts
@@ -1477,6 +1477,13 @@ viewCircleTensions model =
                         ]
                     )
                 |> List.concat
+                |> (\x ->
+                        if List.length x == 0 then
+                            [ div [] [ text "No tensions here." ] ]
+
+                        else
+                            x
+                   )
                 |> div
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless"
