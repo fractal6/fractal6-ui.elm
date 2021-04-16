@@ -5,6 +5,7 @@ import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
@@ -25,12 +26,37 @@ type State
 
 type alias MyData = String
 
+type alias MyForm =
+    { uctx : UserCtx
+    , tid : String
+    , target : String
+    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , post : Post
+    }
+
+initForm : UserState -> MoveForm
+initForm user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                UserCtx "" Nothing (UserRights False False) []
+    , tid = "" -- example
+    , target = "" -- example
+    , events_type = Nothing
+    , post = Dict.empty
+    }
+
 type alias Model =
     { user : UserState
     , isOpen : Bool
-    , data_result : GqlData MyData
+    , data_result : GqlData MyData -- result of any query
+    , form : MyForm -- user inputs
     -- Common
-    , refresh_trial : Int
+    , refresh_trial : Int -- use to refresh user token
+    , modal_confirm : ModalConfirm Msg
     }
 
 init : UserState -> State
@@ -43,8 +69,10 @@ initModel user =
     { user = user
     , isOpen = False
     , data_result = NotAsked
+    , form = initForm user
     -- Common
     , refresh_trial = 0
+    , modal_confirm = ModalConfirm.init NoMsg
     }
 
 -- Global methods
@@ -56,12 +84,12 @@ isOpen_ (State model) =
 --- State Controls
 
 open : Model -> Model
-open data =
-    { data | isOpen = True}
+open model =
+    { model | isOpen = True}
 
 close : Model -> Model
-close data =
-    { data | isOpen = False }
+close model =
+    { model | isOpen = False }
 
 reset : Model -> Model
 reset model =
@@ -69,8 +97,8 @@ reset model =
 
 
 setDataResult : GqlData MyData -> Model -> Model
-setDataResult result data =
-    { data | data_result = result }
+setDataResult result model =
+    { model | data_result = result }
 
 -- ------------------------------
 -- U P D A T E
@@ -157,13 +185,17 @@ update_ apis message model =
                 ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
 
         -- Data
+        DoGetData ->
+            -- Adapt your query
+            (model, out1 [getData apis.gql model.form OnDataAck])
+
         OnSubmit next ->
             ( model
             , out1 [ sendNow next ]
             )
         OnDataFetch ->
             (model
-            , out1 [ getData apis.gql OnDataAck ] -- adapt the query
+            , out1 [ send DoGetData ]
             )
 
         OnDataAck result ->
@@ -178,7 +210,7 @@ update_ apis message model =
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, Out [ sendSleep (getData apis.gql OnDataAck) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { data | refresh_trial = i }, Out [ sendSleep DoGetData 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth _ ->
                     ( data, Out [] [] (Just ( True, data.data_result )) )
