@@ -1,6 +1,5 @@
 module Components.ActionPanel exposing (..)
 
-import Icon as I
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -12,6 +11,7 @@ import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Icon as I
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, UserState(..), initActionForm)
@@ -409,6 +409,9 @@ viewStep1 action header color op =
             form.node.type_
                 |> NodeType.toString
 
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
         isLoading =
             op.data.action_result == LoadingSlowly
     in
@@ -428,11 +431,12 @@ viewStep1 action header color op =
                         [ class "textarea in-modal"
                         , rows 3
                         , placeholder (upH T.leaveCommentOpt)
+                        , value message
                         , onInput <| op.onUpdatePost "message"
                         ]
                         []
                     ]
-                , p [ class "help-label" ] [ textH T.actionMessageHelp ]
+                , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
                 ]
             ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]

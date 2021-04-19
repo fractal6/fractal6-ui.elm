@@ -147,6 +147,7 @@ tensionBlobsPayload =
                 blobPayload
             )
         |> with Fractal.Object.Tension.n_blobs
+        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
 tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension

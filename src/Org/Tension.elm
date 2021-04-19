@@ -141,6 +141,7 @@ type alias Model =
     { -- Focus
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
+    , orga_data : GqlData NodesData
     , users_data : GqlData UsersData
     , lookup_users : List User
 
@@ -172,9 +173,7 @@ type alias Model =
     -- Side Pane
     , isTensionAdmin : Bool
     , isAssigneeOpen : Bool
-    , assigneesPanel : UserSearchPanel.State
     , isLabelOpen : Bool
-    , labelsPanel : LabelSearchPanel.State
     , actionPanel : ActionPanel
 
     -- Common
@@ -183,9 +182,13 @@ type alias Model =
     , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
     , helperBar : HelperBar
+    , refresh_trial : Int
+
+    -- Components
     , help : Help.State
     , tensionForm : NTF.State
-    , refresh_trial : Int
+    , assigneesPanel : UserSearchPanel.State
+    , labelsPanel : LabelSearchPanel.State
     , moveTension : MoveTension.State
     }
 
@@ -276,11 +279,7 @@ type Msg
     | SubmitTitle Time.Posix
     | TitleAck (GqlData String)
       -- move tension
-    | DoMove
-    | DoMoveCancel
-    | DoMoveChangeTarget
-    | DoMoveSubmit
-    | DoMoveAck
+    | DoMove TensionHead
       -- Blob control
     | DoBlobEdit BlobType.BlobType
     | CancelBlob
@@ -305,10 +304,8 @@ type Msg
     | CancelLookupFs
       -- Assignees
     | DoAssigneeEdit
-    | UserSearchPanelMsg UserSearchPanel.Msg
       -- Labels
     | DoLabelEdit
-    | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Action Edit
     | DoActionEdit Blob
     | CancelAction
@@ -321,7 +318,6 @@ type Msg
     | UpdateActionPost String String
       -- New Tension
     | DoCreateTension LocalGraph
-    | NewTensionMsg NTF.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -345,8 +341,11 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
-      -- Help
+      -- Components
     | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
     | MoveTensionMsg MoveTension.Msg
 
 
@@ -384,6 +383,10 @@ init global flags =
 
         model =
             { node_focus = newFocus
+            , orga_data =
+                global.session.orga_data
+                    |> Maybe.map (\x -> Success x)
+                    |> withDefault NotAsked
             , users_data =
                 global.session.users_data
                     |> Maybe.map (\x -> Success x)
@@ -642,7 +645,7 @@ update global message model =
                             Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
                     in
                     if Dict.size data > 0 then
-                        ( { model | users_data = Success users }
+                        ( { model | orga_data = Success data, users_data = Success users }
                         , Cmd.batch [ Ports.inheritWith "usersSearchPanel", Ports.initUserSearch users_l ]
                         , send (UpdateSessionOrga (Just data))
                         )
@@ -938,20 +941,20 @@ update global message model =
                 NoAuth ->
                     ( { model | title_result = result }, Cmd.none, Cmd.none )
 
-        DoMove ->
-            ( model, Cmd.none, Cmd.none )
+        DoMove t ->
+            let
+                ( newModel, cmd ) =
+                    case model.orga_data of
+                        NotAsked ->
+                            ( { model | orga_data = Loading }, send LoadOrga )
 
-        DoMoveCancel ->
-            ( model, Cmd.none, Cmd.none )
-
-        DoMoveChangeTarget ->
-            ( model, Cmd.none, Cmd.none )
-
-        DoMoveSubmit ->
-            ( model, Cmd.none, Cmd.none )
-
-        DoMoveAck ->
-            ( model, Cmd.none, Cmd.none )
+                        _ ->
+                            ( model, Cmd.none )
+            in
+            ( model
+            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid)), cmd ]
+            , Cmd.none
+            )
 
         DoBlobEdit blobType ->
             case model.tension_head of
@@ -1283,10 +1286,6 @@ update global message model =
 
         -- Action
         DoActionEdit blob ->
-            let
-                f =
-                    Debug.log "action edit here" model.actionPanel.isEdit
-            in
             if model.actionPanel.isEdit == False then
                 let
                     parentid =
@@ -1316,9 +1315,6 @@ update global message model =
 
                     else
                         Cmd.none
-
-                f =
-                    Debug.log "close here" link
             in
             ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, gcmd, Ports.close_modal )
 
@@ -1651,10 +1647,10 @@ subscriptions global model =
     , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
-        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
-        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 
@@ -1677,7 +1673,7 @@ view global model =
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
-        , MoveTension.view {} model.moveTension |> Html.map MoveTensionMsg
+        , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
         ]
     }
 
@@ -2772,7 +2768,7 @@ viewSidePane u t model =
                         ++ (if isAdmin then
                                 [ div
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
-                                    , onClick DoMove
+                                    , onClick (DoMove t)
                                     ]
                                     [ span [ class "right-arrow2 pl-0 pr-2" ] [], text "Move tension" ]
 

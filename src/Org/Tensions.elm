@@ -111,9 +111,7 @@ type alias Model =
     , typeFilter : TypeFilter
     , depthFilter : DepthFilter
     , authors : List User
-    , authorsPanel : UserSearchPanel.State
     , labels : List Label
-    , labelsPanel : LabelSearchPanel.State
 
     -- Common
     , node_action : ActionState
@@ -121,10 +119,14 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
-    , help : Help.State
-    , tensionForm : NTF.State
     , refresh_trial : Int
     , url : Url
+
+    -- Components
+    , help : Help.State
+    , tensionForm : NTF.State
+    , authorsPanel : UserSearchPanel.State
+    , labelsPanel : LabelSearchPanel.State
     }
 
 
@@ -415,13 +417,8 @@ type Msg
     | OnClearFilter
     | SubmitSearch
     | GoView TensionsView
-      -- Authors
-    | UserSearchPanelMsg UserSearchPanel.Msg
-      -- Labels
-    | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- New Tension
     | DoCreateTension LocalGraph
-    | NewTensionMsg NTF.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -443,8 +440,11 @@ type Msg
     | DoCloseModal ModalData -- ports receive / Close modal
     | ExpandRoles
     | CollapseRoles
-      -- Help
+      -- Components
     | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
+    | UserSearchPanelMsg UserSearchPanel.Msg
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
 
 
 
@@ -1177,10 +1177,10 @@ subscriptions global model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     , Events.onResize (\w h -> OnResize w h)
     ]
-        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
-        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         |> Sub.batch
 
 

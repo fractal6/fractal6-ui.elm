@@ -291,11 +291,6 @@ addPolicies data =
     { data | doAddPolicies = True }
 
 
-hasData : Model -> Bool
-hasData data =
-    isPostEmpty [ "title", "message" ] data.form.post == False
-
-
 
 -- Update Form
 
@@ -532,9 +527,18 @@ closeLookup data =
     { data | isLookupOpen = False }
 
 
+
+-- utils
+
+
 canExitSafe : Model -> Bool
 canExitSafe data =
-    hasData data && withMaybeData data.result == Nothing
+    (hasData data && withMaybeData data.result == Nothing) == False
+
+
+hasData : Model -> Bool
+hasData data =
+    isPostEmpty [ "title", "message" ] data.form.post == False
 
 
 
@@ -680,17 +684,13 @@ update_ apis message model =
             ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
-            let
-                doClose =
-                    canExitSafe model
-            in
-            if doClose then
+            if canExitSafe model then
+                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
+
+            else
                 ( model
                 , out1 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
                 )
-
-            else
-                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
 
         OnChangeInputViewMode viewMode ->
             ( setViewMode viewMode model, noOut )

@@ -445,6 +445,10 @@ setMoveEncoder f =
         createdAt =
             Dict.get "createdAt" f.post |> withDefault ""
 
+        message =
+            -- new comment
+            Dict.get "message" f.post
+
         events =
             buildEvents createdAt f.uctx.username f.events_type f.post
 
@@ -459,7 +463,10 @@ setMoveEncoder f =
         patch =
             Input.buildTensionPatch
                 (\s ->
-                    { s | history = events }
+                    { s
+                        | history = events
+                        , comments = buildComment createdAt f.uctx.username message
+                    }
                 )
                 |> Present
 

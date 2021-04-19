@@ -124,8 +124,8 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { node_focus : NodeFocus
     , path_data : Maybe LocalGraph
-    , users_data : GqlData UsersData
     , orga_data : GqlData NodesData
+    , users_data : GqlData UsersData
     , tensions_data : GqlData TensionsData
     , node_data : GqlData NodeData
     , init_tensions : Bool
@@ -141,9 +141,11 @@ type alias Model =
     , isModalActive : Bool
     , modalAuth : ModalAuth
     , helperBar : HelperBar
+    , refresh_trial : Int
+
+    -- Components
     , help : Help.State
     , tensionForm : NTF.State
-    , refresh_trial : Int
     }
 
 
@@ -177,7 +179,6 @@ type Msg
     | SearchKeyDown Int
       -- New Tension
     | DoCreateTension LocalGraph
-    | NewTensionMsg NTF.Msg
       -- Node Settings
     | DoActionEdit Node
     | CancelAction
@@ -220,8 +221,9 @@ type Msg
     | DoCloseModal ModalData
     | ExpandRoles
     | CollapseRoles
-      -- Help
+      -- Components
     | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
 
 
 
@@ -263,12 +265,12 @@ init global flags =
         model =
             { node_focus = newFocus
             , path_data = ternary fs.orgChange Nothing global.session.path_data -- Loaded from GraphPack
-            , users_data =
-                global.session.users_data
-                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
-                    |> withDefault Loading
             , orga_data =
                 session.orga_data
+                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
+                    |> withDefault Loading
+            , users_data =
+                global.session.users_data
                     |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
                     |> withDefault Loading
             , tensions_data =

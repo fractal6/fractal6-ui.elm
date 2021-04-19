@@ -108,10 +108,12 @@ type alias Model =
     , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
-    , help : Help.State
-    , tensionForm : NTF.State
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
+
+    -- Components
+    , help : Help.State
+    , tensionForm : NTF.State
     }
 
 
@@ -197,7 +199,6 @@ type Msg
     | GotLabelDel (GqlData LabelFull)
       -- New Tension
     | DoCreateTension LocalGraph
-    | NewTensionMsg NTF.Msg
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -227,8 +228,9 @@ type Msg
     | DoModalConfirmOpen Msg (List ( String, String ))
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
-      -- Help
+      -- Components
     | HelpMsg Help.Msg
+    | NewTensionMsg NTF.Msg
 
 
 

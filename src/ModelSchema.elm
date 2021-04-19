@@ -168,6 +168,7 @@ type alias TensionBlobs =
     { id : String
     , blobs : Maybe (List Blob)
     , n_blobs : Maybe Int
+    , receiver : EmitterOrReceiver
     }
 
 

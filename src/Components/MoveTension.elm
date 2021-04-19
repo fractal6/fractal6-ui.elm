@@ -1,10 +1,13 @@
-module Components.MoveTension exposing (Msg, State, init, subscriptions, update, view)
+module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Form exposing (isPostEmpty, isPostSendable)
+import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
@@ -15,6 +18,8 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
+import ModelCommon.Codecs exposing (nid2type)
+import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
@@ -30,7 +35,6 @@ type alias Model =
     { user : UserState
     , isOpen : Bool
     , move_result : GqlData IdPayload
-    , orga_data : GqlData NodesData
     , target : String -- keep origin target
     , form : MoveForm
 
@@ -43,7 +47,7 @@ type alias Model =
 type alias MoveForm =
     { uctx : UserCtx
     , tid : String
-    , target : String
+    , target : Node
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -59,8 +63,8 @@ initForm user =
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
     , tid = ""
-    , target = ""
-    , events_type = Nothing
+    , target = initNode
+    , events_type = Just [ TensionEvent.Moved ]
     , post = Dict.empty
     }
 
@@ -75,7 +79,6 @@ initModel user =
     { user = user
     , isOpen = False
     , move_result = NotAsked
-    , orga_data = Loading
     , form = initForm user
     , target = ""
 
@@ -98,13 +101,13 @@ isOpen_ (State model) =
 --- State Controls
 
 
-open : String -> String -> GqlData NodesData -> Model -> Model
-open tid target odata model =
+open : String -> String -> Model -> Model
+open tid target model =
     let
         form =
             model.form
     in
-    { model | isOpen = True, target = target, orga_data = odata, form = { form | tid = tid } }
+    { model | isOpen = True, target = target, form = { form | tid = tid } }
 
 
 close : Model -> Model
@@ -117,18 +120,41 @@ reset model =
     initModel model.user
 
 
-setTarget : String -> Model -> Model
-setTarget target model =
+setTarget : Node -> Model -> Model
+setTarget node model =
     let
         form =
             model.form
     in
-    { model | form = { form | target = target } }
+    { model | form = { form | target = node } }
+
+
+updatePost : String -> String -> Model -> Model
+updatePost field value model =
+    let
+        form =
+            model.form
+    in
+    { model | form = { form | post = Dict.insert field value form.post } }
 
 
 setMoveResult : GqlData IdPayload -> Model -> Model
 setMoveResult result model =
     { model | move_result = result }
+
+
+
+-- utils
+
+
+canExitSafe : Model -> Bool
+canExitSafe model =
+    (hasData model && withMaybeData model.move_result == Nothing) == False
+
+
+hasData : Model -> Bool
+hasData model =
+    (isPostEmpty [ "message" ] model.form.post && model.form.target.nameid == "") == False
 
 
 
@@ -139,14 +165,15 @@ setMoveResult result model =
 
 type Msg
     = DoMoveTension
-    | OnOpen String String (GqlData NodesData)
+    | OnOpen String String
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
       -- Data
-    | OnChangeTarget String
+    | OnChangePost String String
+    | OnChangeTarget Node
     | OnSubmit (Time.Posix -> Msg)
-    | OnMove String Time.Posix
+    | OnMove Time.Posix
     | OnMoveAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg (List ( String, String ))
@@ -187,11 +214,8 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        DoMoveTension ->
-            ( model, out1 [ moveTension apis.gql model.form OnMoveAck ] )
-
-        OnOpen tid target odata ->
-            ( open tid target odata model
+        OnOpen tid target ->
+            ( open tid target model
             , out1 [ Ports.open_modal "MoveTensionModal" ]
             )
 
@@ -209,29 +233,30 @@ update_ apis message model =
             ( reset model, noOut )
 
         OnCloseSafe link onCloseTxt ->
-            let
-                -- Condition to close safely (e.g. empty form data)
-                doClose =
-                    True
-            in
-            if doClose then
+            if canExitSafe model then
+                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
+
+            else
                 ( model
                 , out1 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
                 )
 
-            else
-                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
-
         -- Data
-        OnChangeTarget target ->
-            ( setTarget target model, noOut )
+        OnChangePost field value ->
+            ( updatePost field value model, noOut )
+
+        OnChangeTarget node ->
+            ( setTarget node model, noOut )
+
+        DoMoveTension ->
+            ( model, out1 [ moveTension apis.gql model.form OnMoveAck ] )
 
         OnSubmit next ->
             ( model
             , out1 [ sendNow next ]
             )
 
-        OnMove source time ->
+        OnMove time ->
             let
                 form =
                     model.form
@@ -242,8 +267,8 @@ update_ apis message model =
                             Dict.insert "createdAt" (fromTime time) form.post
                                 |> Dict.union
                                     (Dict.fromList
-                                        [ ( "old", source )
-                                        , ( "new", form.target )
+                                        [ ( "old", model.target )
+                                        , ( "new", form.target.nameid )
                                         ]
                                     )
                     }
@@ -303,7 +328,7 @@ subscriptions =
 
 
 type alias Op =
-    {}
+    { orga_data : GqlData NodesData }
 
 
 view : Op -> State -> Html Msg
@@ -328,32 +353,141 @@ viewModal op (State model) =
             , onClick (OnCloseSafe "" "")
             ]
             []
-        , div [ class "modal-content" ] [ viewModalContent op (State model) ]
+        , div [ class "modal-content" ]
+            [ case model.move_result of
+                Success _ ->
+                    div [ class "box is-light" ]
+                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        , textH T.tensionMoved
+                        ]
+
+                _ ->
+                    viewModalContent op (State model)
+            ]
         , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
 viewModalContent : Op -> State -> Html Msg
 viewModalContent op (State model) =
-    div []
-        [ span [] [ text "New tension receiver: " ]
-        , button [] [ text "select a destination" ]
-        , case model.move_result of
-            Success data ->
-                div [ class "box is-light", onClick (OnClose { reset = True, link = "" }) ]
-                    [ I.icon1 "icon-check icon-2x has-text-success" " "
-                    , text "data: "
-                    , text data.id
+    let
+        color =
+            "warning"
+
+        message =
+            Dict.get "message" model.form.post |> withDefault ""
+
+        isLoading =
+            model.move_result == LoadingSlowly
+
+        isSendable =
+            model.form.target.nameid /= ""
+
+        target =
+            if List.member model.form.target.nameid [ "", model.target ] then
+                "select a destination"
+
+            else
+                model.form.target.name
+    in
+    div [ class "modal-card" ]
+        [ div [ class ("modal-card-head has-background-" ++ color) ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+                [ text "Move tension" ]
+            ]
+        , div [ class "modal-card-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ]
+                    [ span [] [ text "New receiver: " ]
+                    , span [ class "dropdown" ]
+                        [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid white;" ]
+                            [ span [ attribute "aria-controls" "target-menu" ]
+                                [ span
+                                    [ class "button is-small is-light is-inverted is-static" ]
+                                    [ text target, span [ class "ml-2 icon-chevron-down" ] [] ]
+                                ]
+                            ]
+                        , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]
+                            [ div [ class "dropdown-content" ] <|
+                                case op.orga_data of
+                                    Success data ->
+                                        let
+                                            targets =
+                                                Dict.values data
+                                                    |> List.filter
+                                                        (\n ->
+                                                            n.nameid /= model.form.target.nameid && n.nameid /= model.target && n.role_type /= Just RoleType.Member
+                                                        )
+                                        in
+                                        viewNodesSelector targets
+
+                                    _ ->
+                                        [ div [ class "spinner" ] [] ]
+                            ]
+                        ]
                     ]
+                ]
+            , div [ class "field" ]
+                [ div [ class "control" ]
+                    [ textarea
+                        [ class "textarea in-modal"
+                        , rows 5
+                        , placeholder (upH T.leaveCommentOpt)
+                        , value message
+                        , onInput <| OnChangePost "message"
+                        ]
+                        []
+                    ]
+                , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
+                ]
+            ]
+        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+            [ case model.move_result of
+                Failure err ->
+                    div [ class "field" ] [ viewGqlErrors err ]
 
-            Failure err ->
-                viewGqlErrors err
-
-            NotAsked ->
-                text ""
-
-            _ ->
-                div [ class "box spinner" ] []
-
-        -- footer: submit button
+                _ ->
+                    text ""
+            , div [ class "field is-grouped is-grouped-right" ]
+                [ div [ class "control" ]
+                    [ button
+                        ([ class "button" ]
+                            ++ [ onClick (OnClose { reset = True, link = "" }) ]
+                        )
+                        [ textH T.cancel ]
+                    ]
+                , div [ class "control" ]
+                    [ button
+                        ([ class ("button is-light is-" ++ color)
+                         , classList [ ( "is-loading", isLoading ) ]
+                         , disabled (not isSendable || isLoading)
+                         ]
+                            ++ [ onClick (OnSubmit <| OnMove) ]
+                        )
+                        [ text "Move tension" ]
+                    ]
+                ]
+            ]
         ]
+
+
+viewNodesSelector : List Node -> List (Html Msg)
+viewNodesSelector targets =
+    List.map
+        (\n ->
+            let
+                color =
+                    case n.role_type of
+                        Just r ->
+                            roleColor r |> String.replace "primary" "info"
+
+                        Nothing ->
+                            "light"
+            in
+            div
+                [ class <| ("dropdown-item has-text-weight-semibold button-light has-text-" ++ color)
+                , onClick (OnChangeTarget n)
+                ]
+                [ I.icon1 (ternary (nid2type n.nameid == NodeType.Role) "icon-user" "icon-circle") n.name ]
+        )
+        targets

@@ -22,26 +22,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias CreatedByOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.UserFilter }
-
-
-createdBy :
-    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.User
-    -> SelectionSet decodesTo Fractal.Object.Tension
-createdBy fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
-
-
 nth : SelectionSet (Maybe String) Fractal.Object.Tension
 nth =
     Object.selectionForField "(Maybe String)" "nth" [] (Decode.string |> Decode.nullable)
@@ -250,6 +230,26 @@ n_blobs =
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Tension
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+
+
+type alias CreatedByOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Tension
+createdBy fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
 
 
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Tension

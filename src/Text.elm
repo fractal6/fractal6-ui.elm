@@ -310,6 +310,11 @@ documentUnarchived =
     "document unarchived"
 
 
+tensionMoved : String
+tensionMoved =
+    "tension moved"
+
+
 leave : String
 leave =
     "leave"
@@ -743,11 +748,6 @@ circleAboutHelp =
 tensionMessageHelp : String
 tensionMessageHelp =
     "Add a comment to help others understand your issue."
-
-
-actionMessageHelp : String
-actionMessageHelp =
-    "add a comment to help others understand this action."
 
 
 circleMessageHelp : String
