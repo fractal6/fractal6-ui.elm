@@ -1906,12 +1906,23 @@ viewComments u t model =
                                     Tuple.second d
 
                                 isAbove =
-                                    (List.length evts > 6) && (e.type_ /= Nothing) && (evts |> List.take 6 |> List.filter (\x -> x.type_ == Nothing) |> List.length) == 0
+                                    (List.length evts > 6)
+                                        && (e.type_ /= Nothing)
+                                        && (evts
+                                                |> List.take 6
+                                                |> List.filter (\x -> x.type_ == Nothing)
+                                                |> List.length
+                                           )
+                                        == 0
 
                                 isClicked =
                                     state.isClicked || List.member i model.expandedEvents
                             in
-                            if isAbove && state.nskip == 0 && isClicked == False then
+                            if e.type_ == Just TensionEvent.Created then
+                                -- Ignore these type
+                                ( evts, state )
+
+                            else if isAbove && state.nskip == 0 && isClicked == False then
                                 ( evts, { state | nskip = 1, i = i } )
 
                             else if isAbove && state.nskip > 0 && state.isClicked == False then
