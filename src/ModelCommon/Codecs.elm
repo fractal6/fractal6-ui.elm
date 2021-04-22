@@ -238,13 +238,13 @@ guestIdCodec rootnameid username =
 
 
 nodeIdCodec : String -> String -> NodeType.NodeType -> String
-nodeIdCodec parentid targetid nodeType =
+nodeIdCodec parentid targetid type_ =
     -- Returns the nameid of a new Circle/Role given the parentid and the nameid fragment.
     let
         rootnameid =
             nid2rootid parentid
     in
-    case nodeType of
+    case type_ of
         NodeType.Circle ->
             String.join "#" [ rootnameid, targetid ]
 

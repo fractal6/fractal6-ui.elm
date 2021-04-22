@@ -1,6 +1,7 @@
 module Extra exposing (..)
 
 import Dict exposing (Dict)
+import Regex exposing (Regex)
 import String
 
 
@@ -33,6 +34,21 @@ addParam_ value maybeValues =
 
         Nothing ->
             Just [ value ]
+
+
+
+-- String
+
+
+regexFromString : String -> Regex
+regexFromString =
+    Regex.fromString >> Maybe.withDefault Regex.never
+
+
+clean : String -> String -> String
+clean c s =
+    -- Remove any repetition of the character c in string s
+    s |> Regex.replace (regexFromString (c ++ c ++ "+")) (always c)
 
 
 

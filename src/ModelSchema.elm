@@ -151,7 +151,7 @@ type alias TensionHead =
     , status : TensionStatus.TensionStatus
 
     --
-    , blobs : Maybe (List Blob) -- head
+    , blobs : Maybe (List Blob) -- head / len() == 1
     , history : List Event
     }
 

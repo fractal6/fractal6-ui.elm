@@ -18,7 +18,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
-import ModelCommon.Codecs exposing (nid2type)
+import ModelCommon.Codecs exposing (nid2type, nodeIdCodec)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (..)
 import Ports
@@ -36,6 +36,7 @@ type alias Model =
     , isOpen : Bool
     , move_result : GqlData IdPayload
     , target : String -- keep origin target
+    , blob : Maybe Blob
     , form : MoveForm
 
     -- Common
@@ -81,6 +82,7 @@ initModel user =
     , move_result = NotAsked
     , form = initForm user
     , target = ""
+    , blob = Nothing
 
     -- Common
     , refresh_trial = 0
@@ -101,13 +103,13 @@ isOpen_ (State model) =
 --- State Controls
 
 
-open : String -> String -> Model -> Model
-open tid target model =
+open : String -> String -> Maybe Blob -> Model -> Model
+open tid target blob_m model =
     let
         form =
             model.form
     in
-    { model | isOpen = True, target = target, form = { form | tid = tid } }
+    { model | isOpen = True, target = target, blob = blob_m, form = { form | tid = tid } }
 
 
 close : Model -> Model
@@ -165,7 +167,7 @@ hasData model =
 
 type Msg
     = DoMoveTension
-    | OnOpen String String
+    | OnOpen String String (Maybe Blob)
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -214,8 +216,8 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen tid target ->
-            ( open tid target model
+        OnOpen tid target blob_m ->
+            ( open tid target blob_m model
             , out1 [ Ports.open_modal "MoveTensionModal" ]
             )
 
@@ -412,11 +414,24 @@ viewModalContent op (State model) =
                                 case op.orga_data of
                                     Success data ->
                                         let
+                                            self_ =
+                                                model.blob
+                                                    |> Maybe.map
+                                                        (\b ->
+                                                            b.node
+                                                                |> Maybe.map
+                                                                    (\n ->
+                                                                        nodeIdCodec model.target (withDefault "" n.nameid) (withDefault NodeType.Circle n.type_)
+                                                                    )
+                                                                |> withDefault ""
+                                                        )
+                                                    |> withDefault ""
+
                                             targets =
                                                 Dict.values data
                                                     |> List.filter
                                                         (\n ->
-                                                            n.nameid /= model.form.target.nameid && n.nameid /= model.target && n.role_type /= Just RoleType.Member
+                                                            n.nameid /= model.form.target.nameid && n.nameid /= model.target && n.role_type /= Just RoleType.Member && n.nameid /= self_
                                                         )
                                         in
                                         viewNodesSelector targets

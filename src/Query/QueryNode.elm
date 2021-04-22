@@ -6,7 +6,9 @@ module Query.QueryNode exposing
     , fetchNode
     , labelFullPayload
     , labelPayload
+    , nidFilter
     , nodeCharacPayload
+    , nodeDecoder
     , nodeIdPayload
     , nodeOrgaPayload
     , queryFocusNode
@@ -78,6 +80,22 @@ type alias NodeStats =
     }
 
 
+nodeDecoder : Maybe (List (Maybe node)) -> Maybe node
+nodeDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.head
+            )
+        |> withDefault Nothing
+
+
 nodesDecoder : Maybe (List (Maybe node)) -> Maybe (List node)
 nodesDecoder data =
     data
@@ -91,7 +109,7 @@ nodesDecoder data =
                         |> List.filterMap identity
                         |> Just
             )
-        |> Maybe.withDefault Nothing
+        |> withDefault Nothing
 
 
 queryPublicOrga url msg =
@@ -237,7 +255,7 @@ nodeOrgaDecoder data =
                         |> Dict.fromList
                         |> Just
             )
-        |> Maybe.withDefault Nothing
+        |> withDefault Nothing
 
 
 queryGraphPack url rootid msg =
@@ -341,12 +359,27 @@ fetchNode url nid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
+
+-- Usage with Query.getNode
+
+
 nidFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
 nidFilter nid a =
     { a | nameid = Present nid }
 
 
 
+-- Usage with Query.queryNode
+--nidFilter : String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+--nidFilter nid a =
+--    { a
+--        | filter =
+--            Input.buildNodeFilter
+--                (\b ->
+--                    { b | nameid = Present { eq = Present nid, regexp = Absent } }
+--                )
+--                |> Present
+--    }
 {-
    Query FocusNode
 -}

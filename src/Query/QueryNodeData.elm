@@ -22,7 +22,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (nodeOrgaPayload)
+import Query.QueryNode exposing (nidFilter, nodeDecoder, nodeOrgaPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -35,15 +35,10 @@ import RemoteData exposing (RemoteData)
 queryNodeData url nameid msg =
     makeGQLQuery url
         (Query.getNode
-            (dataFilter nameid)
+            (nidFilter nameid)
             nodeDataPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
-
-
-dataFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-dataFilter nid a =
-    { a | nameid = Present nid }
 
 
 nodeDataPayload : SelectionSet NodeData Fractal.Object.Node

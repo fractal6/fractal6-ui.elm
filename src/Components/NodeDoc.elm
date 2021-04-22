@@ -5,7 +5,7 @@ import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewG
 import Components.Markdown exposing (renderMarkdown)
 import Components.UserSearchPanel exposing (viewUserSelectors)
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (clean, ternary)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -21,6 +21,7 @@ import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTens
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
+import String.Extra as SE
 import Text as T exposing (textH, textT, upH)
 import Time
 
@@ -880,7 +881,7 @@ updateNodeForm field value form =
     in
     case field of
         "nameid" ->
-            { form | node = { node | nameid = Just value } }
+            { form | node = { node | nameid = Just (makeNewNodeId value) } }
 
         "about" ->
             { form | node = { node | about = Just value } }
@@ -914,7 +915,7 @@ updateNodeForm field value form =
 
                             newData =
                                 { node
-                                    | name = Just (String.trim value)
+                                    | name = Just value
                                     , nameid = Just (makeNewNodeId value)
                                 }
                         in
@@ -945,6 +946,8 @@ makeNewNodeId name =
                 else
                     c
             )
+        |> clean "-"
+        |> clean "_"
 
 
 

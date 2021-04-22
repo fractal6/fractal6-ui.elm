@@ -547,17 +547,6 @@ getChildrenLeaf nid odata =
         |> withDefault []
 
 
-getParentidFromRole : UserRole -> String
-getParentidFromRole role =
-    let
-        l =
-            String.split "#" role.nameid
-                |> List.filter (\x -> x /= "")
-    in
-    List.take (List.length l - 1) l
-        |> String.join "#"
-
-
 getParentFragmentFromRole role =
     let
         l =

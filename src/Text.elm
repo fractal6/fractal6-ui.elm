@@ -215,6 +215,21 @@ join =
     "join"
 
 
+from : String
+from =
+    "from"
+
+
+to : String
+to =
+    "to"
+
+
+moved : String
+moved =
+    "moved"
+
+
 left : String
 left =
     "left"

@@ -316,6 +316,18 @@ viewNodeRef baseUri n =
     a [ href ref ] [ n.name |> text ]
 
 
+viewNodeRefShort : FractalBaseRoute -> String -> Html msg
+viewNodeRefShort baseUri nid =
+    let
+        ref =
+            uriFromNameid baseUri nid
+
+        name =
+            nid |> String.split "#" |> List.reverse |> List.head |> withDefault nid
+    in
+    a [ href ref ] [ name |> text ]
+
+
 
 {-
    User

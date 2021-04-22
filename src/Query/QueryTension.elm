@@ -40,7 +40,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nodeCharacPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nidFilter, nodeCharacPayload, nodeDecoder, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -294,15 +294,10 @@ queryCircleTension url targetid msg =
     --@DEBUG: Archived Nodes are not filtered
     makeGQLQuery url
         (Query.getNode
-            (circleFilter targetid)
+            (nidFilter targetid)
             circleTensionPayload
         )
         (RemoteData.fromResult >> decodeResponse circleTensionDecoder >> msg)
-
-
-circleFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments
-circleFilter nid a =
-    { a | nameid = Present nid }
 
 
 circleTensionFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal.Object.Node.TensionsInOptionalArguments

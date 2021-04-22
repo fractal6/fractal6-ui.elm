@@ -68,6 +68,7 @@ import ModelCommon.View
         , viewActionIconLink
         , viewLabel
         , viewLabels
+        , viewNodeRefShort
         , viewTensionArrow
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
@@ -952,7 +953,7 @@ update global message model =
                             ( model, Cmd.none )
             in
             ( model
-            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid)), cmd ]
+            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))), cmd ]
             , Cmd.none
             )
 
@@ -2150,6 +2151,9 @@ viewEvent event t =
         TensionEvent.UserLeft ->
             viewEventUserLeft event t.action
 
+        TensionEvent.Moved ->
+            viewEventMoved event
+
         _ ->
             text ""
 
@@ -2320,6 +2324,31 @@ viewEventUserLeft event action_m =
         [ div [ class "media-left" ] [ I.icon "icon-log-out" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text T.the, text (formatTime event.createdAt) ]
+            ]
+        ]
+
+
+viewEventMoved : Event -> Html Msg
+viewEventMoved event =
+    let
+        action_txt =
+            "tension"
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ span [ class "right-arrow2 pl-0 pr-0 mr-0" ] [] ]
+        , div [ class "media-content" ]
+            [ span [] <|
+                List.intersperse (text " ")
+                    [ viewUsernameLink event.createdBy.username
+                    , strong [] [ text T.moved ]
+                    , text action_txt
+                    , text T.from
+                    , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
+                    , text T.to
+                    , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
+                    , text T.the
+                    , text (formatTime event.createdAt)
+                    ]
             ]
         ]
 
@@ -2927,6 +2956,16 @@ mdFromTensionHead t =
         |> List.head
         |> Maybe.map (\h -> h.md)
         |> withDefault Nothing
+
+
+blobFromTensionHead : TensionHead -> Maybe Blob
+blobFromTensionHead th =
+    case th.blobs of
+        Just [ b ] ->
+            Just b
+
+        _ ->
+            Nothing
 
 
 eventFromForm : TensionEvent.TensionEvent -> TensionPatchForm -> Event
