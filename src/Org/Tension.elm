@@ -2503,33 +2503,29 @@ viewBlobToolBar u t b model =
         [ div [ class "level" ]
             [ div [ class "level-left" ]
                 [ DocToolBar.view { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
-            , if model.actionView /= DocVersion then
-                div [ class "level-right" ]
-                    [ case b.pushedFlag of
-                        Just flag ->
-                            div [ class "has-text-success text-status" ]
-                                [ textH (T.publishedThe ++ " " ++ formatTime flag) ]
+            , div [ class "level-right" ]
+                [ case b.pushedFlag of
+                    Just flag ->
+                        div [ class "has-text-success text-status" ]
+                            [ textH (T.publishedThe ++ " " ++ formatTime flag) ]
 
-                        Nothing ->
-                            let
-                                isLoading =
-                                    model.publish_result == LoadingSlowly
-                            in
-                            div [ class "field has-addons" ]
-                                [ div [ class "has-text-warning text-status" ]
-                                    [ textH T.revisionNotPublished ]
-                                , div
-                                    [ class "button is-small is-success has-text-weight-semibold"
-                                    , onClick (Submit <| PushBlob b.id)
-                                    ]
-                                    [ I.icon1 "icon-share" (upH T.publish)
-                                    , loadingSpin isLoading
-                                    ]
+                    Nothing ->
+                        let
+                            isLoading =
+                                model.publish_result == LoadingSlowly
+                        in
+                        div [ class "field has-addons" ]
+                            [ div [ class "has-text-warning text-status" ]
+                                [ textH T.revisionNotPublished ]
+                            , div
+                                [ class "button is-small is-success has-text-weight-semibold"
+                                , onClick (Submit <| PushBlob b.id)
                                 ]
-                    ]
-
-              else
-                text ""
+                                [ I.icon1 "icon-share" (upH T.publish)
+                                , loadingSpin isLoading
+                                ]
+                            ]
+                ]
             ]
         , case model.publish_result of
             Failure err ->

@@ -1286,6 +1286,7 @@ viewCircle op (State model) =
                             text ""
                     , div [ class "field is-grouped is-grouped-right" ]
                         [ div [ class "control" ]
+                            --, button [ class "button is-danger is-light is-pulled-right" ] [ text T.cancel ]
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button is-warning"
