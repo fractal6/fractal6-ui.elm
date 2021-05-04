@@ -1,6 +1,7 @@
 module Query.QueryTension exposing
     ( blobPayload
     , commentPayload
+    , eventPayload
     , getTensionBlobs
     , getTensionComments
     , getTensionHead

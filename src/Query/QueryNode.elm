@@ -21,6 +21,7 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryPublicOrga
+    , tidPayload
     , userPayload
     )
 
@@ -327,7 +328,8 @@ blobIdPayload : SelectionSet BlobId Fractal.Object.Blob
 blobIdPayload =
     SelectionSet.succeed BlobId
         |> with (Fractal.Object.Blob.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Blob.tension identity (SelectionSet.succeed IdPayload |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)))
+        |> with
+            (Fractal.Object.Blob.tension identity tidPayload)
 
 
 userPayload : SelectionSet User Fractal.Object.User
@@ -342,6 +344,12 @@ nodeCharacPayload =
     SelectionSet.map2 NodeCharac
         Fractal.Object.NodeCharac.userCanJoin
         Fractal.Object.NodeCharac.mode
+
+
+tidPayload : SelectionSet IdPayload Fractal.Object.Tension
+tidPayload =
+    SelectionSet.map IdPayload
+        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
 
 
 
@@ -512,7 +520,7 @@ nArchivedFilter a =
         | filter =
             Input.buildNodeFilter
                 (\b ->
-                    { b | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired ] }) |> Present }
+                    { b | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired, RoleType.Pending ] }) |> Present }
                 )
                 |> Present
     }

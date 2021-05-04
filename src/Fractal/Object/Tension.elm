@@ -22,21 +22,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-nth : SelectionSet (Maybe String) Fractal.Object.Tension
-nth =
-    Object.selectionForField "(Maybe String)" "nth" [] (Decode.string |> Decode.nullable)
-
-
-title : SelectionSet String Fractal.Object.Tension
-title =
-    Object.selectionForField "String" "title" [] Decode.string
-
-
-type_ : SelectionSet Fractal.Enum.TensionType.TensionType Fractal.Object.Tension
-type_ =
-    Object.selectionForField "Enum.TensionType.TensionType" "type_" [] Fractal.Enum.TensionType.decoder
-
-
 emitterid : SelectionSet String Fractal.Object.Tension
 emitterid =
     Object.selectionForField "String" "emitterid" [] Decode.string
@@ -85,6 +70,21 @@ receiver fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "receiver" optionalArgs object_ identity
+
+
+nth : SelectionSet (Maybe String) Fractal.Object.Tension
+nth =
+    Object.selectionForField "(Maybe String)" "nth" [] (Decode.string |> Decode.nullable)
+
+
+title : SelectionSet String Fractal.Object.Tension
+title =
+    Object.selectionForField "String" "title" [] Decode.string
+
+
+type_ : SelectionSet Fractal.Enum.TensionType.TensionType Fractal.Object.Tension
+type_ =
+    Object.selectionForField "Enum.TensionType.TensionType" "type_" [] Fractal.Enum.TensionType.decoder
 
 
 status : SelectionSet Fractal.Enum.TensionStatus.TensionStatus Fractal.Object.Tension
@@ -191,6 +191,30 @@ blobs fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "blobs" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+type alias ContractsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ContractFilter
+    , order : OptionalArgument Fractal.InputObject.ContractOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+contracts :
+    (ContractsOptionalArguments -> ContractsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Contract
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
+contracts fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeContractFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeContractOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "contracts" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
 type alias HistoryOptionalArguments =

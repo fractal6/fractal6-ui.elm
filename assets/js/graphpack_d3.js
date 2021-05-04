@@ -35,6 +35,7 @@ const RoleType = {
     Guest: "Guest",
     Bot: "Bot",
     Retired: "Retired",
+    Pending: "Pending",
     Coordinator: "Coordinator",
     Peer: "Peer",
 }

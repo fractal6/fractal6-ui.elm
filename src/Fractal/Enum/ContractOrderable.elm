@@ -2,29 +2,23 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.TensionOrderable exposing (..)
+module Fractal.Enum.ContractOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type TensionOrderable
+type ContractOrderable
     = CreatedAt
     | UpdatedAt
     | Message
-    | Emitterid
-    | Receiverid
-    | Nth
-    | Title
-    | N_comments
-    | N_blobs
 
 
-list : List TensionOrderable
+list : List ContractOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, Emitterid, Receiverid, Nth, Title, N_comments, N_blobs ]
+    [ CreatedAt, UpdatedAt, Message ]
 
 
-decoder : Decoder TensionOrderable
+decoder : Decoder ContractOrderable
 decoder =
     Decode.string
         |> Decode.andThen
@@ -39,32 +33,14 @@ decoder =
                     "message" ->
                         Decode.succeed Message
 
-                    "emitterid" ->
-                        Decode.succeed Emitterid
-
-                    "receiverid" ->
-                        Decode.succeed Receiverid
-
-                    "nth" ->
-                        Decode.succeed Nth
-
-                    "title" ->
-                        Decode.succeed Title
-
-                    "n_comments" ->
-                        Decode.succeed N_comments
-
-                    "n_blobs" ->
-                        Decode.succeed N_blobs
-
                     _ ->
-                        Decode.fail ("Invalid TensionOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid ContractOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : TensionOrderable -> String
+toString : ContractOrderable -> String
 toString enum =
     case enum of
         CreatedAt ->
@@ -75,24 +51,6 @@ toString enum =
 
         Message ->
             "message"
-
-        Emitterid ->
-            "emitterid"
-
-        Receiverid ->
-            "receiverid"
-
-        Nth ->
-            "nth"
-
-        Title ->
-            "title"
-
-        N_comments ->
-            "n_comments"
-
-        N_blobs ->
-            "n_blobs"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -106,7 +64,7 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe TensionOrderable
+fromString : String -> Maybe ContractOrderable
 fromString enumString =
     case enumString of
         "createdAt" ->
@@ -117,24 +75,6 @@ fromString enumString =
 
         "message" ->
             Just Message
-
-        "emitterid" ->
-            Just Emitterid
-
-        "receiverid" ->
-            Just Receiverid
-
-        "nth" ->
-            Just Nth
-
-        "title" ->
-            Just Title
-
-        "n_comments" ->
-            Just N_comments
-
-        "n_blobs" ->
-            Just N_blobs
 
         _ ->
             Nothing

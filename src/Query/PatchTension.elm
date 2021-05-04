@@ -21,10 +21,13 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Comment
+import Fractal.Object.Contract
 import Fractal.Object.Label
+import Fractal.Object.Node
 import Fractal.Object.Tension
 import Fractal.Object.UpdateCommentPayload
 import Fractal.Object.UpdateTensionPayload
+import Fractal.Object.Vote
 import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
@@ -35,7 +38,8 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
-import Query.QueryTension exposing (blobPayload, commentPayload)
+import Query.QueryNode exposing (tidPayload)
+import Query.QueryTension exposing (blobPayload, commentPayload, eventPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -306,9 +310,7 @@ setAssignee url form msg =
         (Mutation.updateTension
             (setAssigneeEncoder form)
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map IdPayload
-                        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -368,9 +370,7 @@ setLabel url form msg =
         (Mutation.updateTension
             (setLabelEncoder form)
             (SelectionSet.map TensionIdPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map IdPayload
-                        (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
@@ -425,17 +425,51 @@ setLabelEncoder f =
 -}
 
 
+type alias TensionIdPayload2 =
+    { tension : Maybe (List (Maybe TensionId)) }
+
+
+tensionIdDecoder2 : Maybe TensionIdPayload2 -> Maybe TensionId
+tensionIdDecoder2 data =
+    case data of
+        Just d ->
+            d.tension
+                |> Maybe.map
+                    (\items ->
+                        List.filterMap identity items
+                    )
+                |> withDefault []
+                |> List.head
+
+        Nothing ->
+            Nothing
+
+
 moveTension url form msg =
     makeGQLMutation url
         (Mutation.updateTension
             (setMoveEncoder form)
-            (SelectionSet.map TensionIdPayload <|
+            (SelectionSet.map TensionIdPayload2 <|
                 Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map IdPayload
+                    SelectionSet.map2 TensionId
                         (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                        (Fractal.Object.Tension.contracts identity <|
+                            -- ContractPayload_
+                            SelectionSet.map5 Contract_
+                                (Fractal.Object.Contract.event identity eventPayload)
+                                (Fractal.Object.Contract.tension identity tidPayload)
+                                Fractal.Object.Contract.status
+                                Fractal.Object.Contract.contract_type
+                                (Fractal.Object.Contract.participants identity <|
+                                    -- VotePayload
+                                    SelectionSet.map2 Vote
+                                        (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
+                                        Fractal.Object.Vote.data
+                                )
+                        )
             )
         )
-        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder2 >> msg)
 
 
 {-| setMoveEncoder : MoveForm -> Mutation.UpdateTensionRequiredArguments

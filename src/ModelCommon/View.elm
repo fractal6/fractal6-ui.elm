@@ -62,12 +62,6 @@ roleColor rt =
         RoleType.Member ->
             "primary"
 
-        RoleType.Guest ->
-            "primary"
-
-        RoleType.Retired ->
-            "primary"
-
         RoleType.Coordinator ->
             "orange"
 
@@ -76,6 +70,15 @@ roleColor rt =
 
         RoleType.Bot ->
             "link"
+
+        RoleType.Guest ->
+            "primary"
+
+        RoleType.Retired ->
+            "primary"
+
+        RoleType.Pending ->
+            "primary"
 
 
 

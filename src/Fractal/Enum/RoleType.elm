@@ -12,6 +12,7 @@ type RoleType
     | Member
     | Guest
     | Retired
+    | Pending
     | Coordinator
     | Peer
     | Bot
@@ -19,7 +20,7 @@ type RoleType
 
 list : List RoleType
 list =
-    [ Owner, Member, Guest, Retired, Coordinator, Peer, Bot ]
+    [ Owner, Member, Guest, Retired, Pending, Coordinator, Peer, Bot ]
 
 
 decoder : Decoder RoleType
@@ -39,6 +40,9 @@ decoder =
 
                     "Retired" ->
                         Decode.succeed Retired
+
+                    "Pending" ->
+                        Decode.succeed Pending
 
                     "Coordinator" ->
                         Decode.succeed Coordinator
@@ -70,6 +74,9 @@ toString enum =
 
         Retired ->
             "Retired"
+
+        Pending ->
+            "Pending"
 
         Coordinator ->
             "Coordinator"
@@ -106,6 +113,9 @@ fromString enumString =
 
         "Retired" ->
             Just Retired
+
+        "Pending" ->
+            Just Pending
 
         "Coordinator" ->
             Just Coordinator

@@ -1,7 +1,7 @@
 module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -34,7 +34,7 @@ type State
 type alias Model =
     { user : UserState
     , isOpen : Bool
-    , move_result : GqlData IdPayload
+    , move_result : GqlData TensionId
     , target : String -- keep origin target
     , blob : Maybe Blob
     , form : MoveForm
@@ -140,7 +140,7 @@ updatePost field value model =
     { model | form = { form | post = Dict.insert field value form.post } }
 
 
-setMoveResult : GqlData IdPayload -> Model -> Model
+setMoveResult : GqlData TensionId -> Model -> Model
 setMoveResult result model =
     { model | move_result = result }
 
@@ -176,7 +176,7 @@ type Msg
     | OnChangeTarget Node
     | OnSubmit (Time.Posix -> Msg)
     | OnMove Time.Posix
-    | OnMoveAck (GqlData IdPayload)
+    | OnMoveAck (GqlData TensionId)
       -- Confirm Modal
     | DoModalConfirmOpen Msg (List ( String, String ))
     | DoModalConfirmClose ModalData
@@ -189,7 +189,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, IdPayload ) -- define what data is to be returned
+    , result : Maybe ( Bool, TensionId ) -- define what data is to be returned
     }
 
 
@@ -281,8 +281,22 @@ update_ apis message model =
 
         OnMoveAck result ->
             let
-                data =
-                    setMoveResult result model
+                contract_m =
+                    withMaybeDataMap
+                        (\x ->
+                            x.contracts
+                                |> Maybe.map (\y -> List.head y)
+                                |> withDefault Nothing
+                        )
+                        result
+
+                ( data, cmd ) =
+                    case contract_m of
+                        Just c ->
+                            ( model, Cmd.map ConfirmContractMsg (send (ConfirmContract.OnOpen c)) )
+
+                        Nothing ->
+                            ( setMoveResult result model, Cmd.none )
             in
             case doRefreshToken result data.refresh_trial of
                 Authenticate ->
@@ -294,7 +308,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, Out [ sendSleep DoMoveTension 500 ] [ DoUpdateToken ] Nothing )
 
                 OkAuth _ ->
-                    ( data, Out [] [] Nothing )
+                    ( data, Out [ cmd ] [] Nothing )
 
                 NoAuth ->
                     ( data, noOut )
@@ -414,24 +428,38 @@ viewModalContent op (State model) =
                                 case op.orga_data of
                                     Success data ->
                                         let
-                                            self_ =
+                                            ( self_, type_m ) =
                                                 model.blob
                                                     |> Maybe.map
                                                         (\b ->
                                                             b.node
                                                                 |> Maybe.map
                                                                     (\n ->
-                                                                        nodeIdCodec model.target (withDefault "" n.nameid) (withDefault NodeType.Circle n.type_)
+                                                                        let
+                                                                            dr =
+                                                                                NodeType.Circle
+                                                                        in
+                                                                        ( nodeIdCodec model.target (withDefault "" n.nameid) (withDefault dr n.type_)
+                                                                        , n.type_
+                                                                        )
                                                                     )
-                                                                |> withDefault ""
+                                                                |> withDefault ( "", Nothing )
                                                         )
-                                                    |> withDefault ""
+                                                    |> withDefault ( "", Nothing )
+
+                                            roleTest r_ =
+                                                case type_m of
+                                                    Just t ->
+                                                        r_ == Nothing
+
+                                                    Nothing ->
+                                                        List.member r_ [ Just RoleType.Member, Just RoleType.Guest ] == False
 
                                             targets =
                                                 Dict.values data
                                                     |> List.filter
                                                         (\n ->
-                                                            n.nameid /= model.form.target.nameid && n.nameid /= model.target && n.role_type /= Just RoleType.Member && n.nameid /= self_
+                                                            n.nameid /= model.form.target.nameid && n.nameid /= model.target && roleTest n.role_type && n.nameid /= self_
                                                         )
                                         in
                                         viewNodesSelector targets

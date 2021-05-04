@@ -19,17 +19,17 @@ type TensionEvent
     | LabelRemoved
     | BlobCreated
     | BlobCommitted
-    | Moved
     | BlobPushed
     | BlobArchived
     | BlobUnarchived
     | UserJoin
     | UserLeft
+    | Moved
 
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, Moved, BlobPushed, BlobArchived, BlobUnarchived, UserJoin, UserLeft ]
+    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserJoin, UserLeft, Moved ]
 
 
 decoder : Decoder TensionEvent
@@ -71,9 +71,6 @@ decoder =
                     "BlobCommitted" ->
                         Decode.succeed BlobCommitted
 
-                    "Moved" ->
-                        Decode.succeed Moved
-
                     "BlobPushed" ->
                         Decode.succeed BlobPushed
 
@@ -88,6 +85,9 @@ decoder =
 
                     "UserLeft" ->
                         Decode.succeed UserLeft
+
+                    "Moved" ->
+                        Decode.succeed Moved
 
                     _ ->
                         Decode.fail ("Invalid TensionEvent type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -132,9 +132,6 @@ toString enum =
         BlobCommitted ->
             "BlobCommitted"
 
-        Moved ->
-            "Moved"
-
         BlobPushed ->
             "BlobPushed"
 
@@ -149,6 +146,9 @@ toString enum =
 
         UserLeft ->
             "UserLeft"
+
+        Moved ->
+            "Moved"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -198,9 +198,6 @@ fromString enumString =
         "BlobCommitted" ->
             Just BlobCommitted
 
-        "Moved" ->
-            Just Moved
-
         "BlobPushed" ->
             Just BlobPushed
 
@@ -215,6 +212,9 @@ fromString enumString =
 
         "UserLeft" ->
             Just UserLeft
+
+        "Moved" ->
+            Just Moved
 
         _ ->
             Nothing

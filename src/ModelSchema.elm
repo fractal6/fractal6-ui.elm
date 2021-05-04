@@ -3,6 +3,8 @@ module ModelSchema exposing (..)
 import Components.Loading exposing (ErrorData, RequestResult(..), errorGraphQLHttpToString)
 import Dict exposing (Dict)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.ContractStatus as ContractStatus
+import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -206,6 +208,23 @@ type alias Event =
     }
 
 
+type alias Contract_ =
+    { event : Event
+    , tension : IdPayload
+    , status : ContractStatus.ContractStatus
+    , contract_type : ContractType.ContractType
+
+    --, candidate:
+    , participants : Maybe (List Vote)
+    }
+
+
+type alias Vote =
+    { node : NameidPayload
+    , data : Maybe (List Int)
+    }
+
+
 type alias NodeFragment =
     { name : Maybe String
     , nameid : Maybe String
@@ -403,6 +422,16 @@ type alias BlobId =
 
 type alias IdPayload =
     { id : String }
+
+
+type alias NameidPayload =
+    { nameid : String }
+
+
+type alias TensionId =
+    { id : String
+    , contracts : Maybe (List Contract_)
+    }
 
 
 

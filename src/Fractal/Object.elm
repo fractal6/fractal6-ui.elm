@@ -13,6 +13,10 @@ type AddCommentPayload
     = AddCommentPayload
 
 
+type AddContractPayload
+    = AddContractPayload
+
+
 type AddEventPayload
     = AddEventPayload
 
@@ -57,6 +61,10 @@ type AddUserRightsPayload
     = AddUserRightsPayload
 
 
+type AddVotePayload
+    = AddVotePayload
+
+
 type Blob
     = Blob
 
@@ -65,12 +73,20 @@ type Comment
     = Comment
 
 
+type Contract
+    = Contract
+
+
 type DeleteBlobPayload
     = DeleteBlobPayload
 
 
 type DeleteCommentPayload
     = DeleteCommentPayload
+
+
+type DeleteContractPayload
+    = DeleteContractPayload
 
 
 type DeleteEventPayload
@@ -107,6 +123,10 @@ type DeleteTensionPayload
 
 type DeleteUserPayload
     = DeleteUserPayload
+
+
+type DeleteVotePayload
+    = DeleteVotePayload
 
 
 type Event
@@ -157,6 +177,10 @@ type UpdateCommentPayload
     = UpdateCommentPayload
 
 
+type UpdateContractPayload
+    = UpdateContractPayload
+
+
 type UpdateEventPayload
     = UpdateEventPayload
 
@@ -193,9 +217,17 @@ type UpdateUserPayload
     = UpdateUserPayload
 
 
+type UpdateVotePayload
+    = UpdateVotePayload
+
+
 type User
     = User
 
 
 type UserRights
     = UserRights
+
+
+type Vote
+    = Vote

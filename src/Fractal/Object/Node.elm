@@ -373,6 +373,29 @@ role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
 
 
+type alias ContractsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.VoteFilter
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+contracts :
+    (ContractsOptionalArguments -> ContractsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Vote
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
+contracts fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "contracts" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
 shared :
     SelectionSet decodesTo Fractal.Object.SharedNode
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Node

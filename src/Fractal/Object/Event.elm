@@ -20,6 +20,26 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+type alias TensionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+tension :
+    (TensionOptionalArguments -> TensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet decodesTo Fractal.Object.Event
+tension fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tension" optionalArgs object_ identity
+
+
 event_type : SelectionSet Fractal.Enum.TensionEvent.TensionEvent Fractal.Object.Event
 event_type =
     Object.selectionForField "Enum.TensionEvent.TensionEvent" "event_type" [] Fractal.Enum.TensionEvent.decoder
