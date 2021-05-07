@@ -1158,8 +1158,15 @@ viewTension op (State model) =
 
                         _ ->
                             text ""
-                    , div [ class "field is-grouped is-grouped-right" ]
-                        [ div [ class "control" ]
+                    , div [ class "field" ]
+                        [ div [ class "is-pulled-left" ]
+                            [ button
+                                [ class "button is-light"
+                                , onClick (OnCloseSafe "" "")
+                                ]
+                                [ textH T.cancel ]
+                            ]
+                        , div [ class "is-pulled-right" ]
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button is-success"
@@ -1289,9 +1296,15 @@ viewCircle op (State model) =
 
                         _ ->
                             text ""
-                    , div [ class "field is-grouped is-grouped-right" ]
-                        [ div [ class "control" ]
-                            --, button [ class "button is-danger is-light is-pulled-right" ] [ text T.cancel ]
+                    , div [ class "field" ]
+                        [ div [ class "is-pulled-left" ]
+                            [ button
+                                [ class "button is-light"
+                                , onClick (OnCloseSafe "" "")
+                                ]
+                                [ textH T.cancel ]
+                            ]
+                        , div [ class "is-pulled-right" ]
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button is-warning"

@@ -522,15 +522,15 @@ viewModalContent op (State model) =
 
                 _ ->
                     text ""
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
+            , div [ class "field" ]
+                [ div [ class "is-pulled-left" ]
                     [ button
-                        ([ class "button" ]
-                            ++ [ onClick (OnClose { reset = True, link = "" }) ]
-                        )
+                        [ class "button is-light"
+                        , onClick (OnCloseSafe "" "")
+                        ]
                         [ textH T.cancel ]
                     ]
-                , div [ class "control" ]
+                , div [ class "is-pulled-right" ]
                     [ button
                         ([ class ("button is-light is-" ++ color)
                          , classList [ ( "is-loading", isLoading ) ]

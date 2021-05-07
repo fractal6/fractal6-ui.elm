@@ -446,15 +446,15 @@ viewStep1 action header color op =
 
                 _ ->
                     text ""
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
+            , div [ class "field " ]
+                [ div [ class "is-pulled-left" ]
                     [ button
-                        ([ class "button" ]
-                            ++ [ onClick (op.onCloseModal "") ]
-                        )
+                        [ class "button is-light"
+                        , onClick (op.onCloseModal "")
+                        ]
                         [ textH T.cancel ]
                     ]
-                , div [ class "control" ]
+                , div [ class "is-pulled-right" ]
                     [ button
                         ([ class ("button is-light is-" ++ color)
                          , classList [ ( "is-loading", isLoading ) ]
