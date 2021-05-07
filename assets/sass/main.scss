@@ -62,6 +62,12 @@ hr {
     }
 }
 
+.form {
+    .field-label {
+        flex-grow: 1;
+    }
+}
+
 .help-label {
   //font-family: bold !important;
   color: $grey !important;
@@ -2091,7 +2097,6 @@ a.actionLink {
 }
 .acc {
 	position: relative;
-	height: $acc-height-subtitle;
 	transition: all .15s ease-in-out;
 }
 .acc::before {
@@ -2106,37 +2111,21 @@ a.actionLink {
 	//box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
 header.acc {
-	background: $grey-lighter;
 	z-index: 100;
 	cursor: initial;
-	height: $acc-height-title !important;
-	//box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
 }
 header .acc-title {
 	margin: 0;
-	font-weight: 600;
-	font-size: 12pt;
-	color: $darker;
 	cursor: initial;
-	height: $acc-height-title !important;
-	line-height: $acc-height-title !important;
 }
 .acc-title {
 	//width: calc(100% - 40px);
     width: 100%;
-	height: $acc-height;
-	line-height: $acc-height;
-	padding: 0 20px;
-	color: $grey-darker;
 	display: inline-block;
 	cursor: pointer;
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
 }
 .acc-content {
-	width: calc(100% - 20px);
-	padding: 20px 10px 20px 20px;
-	font-size: 11pt;
-	color: $grey-dark;
 	display: none;
 }
 .acc-close {
@@ -2148,26 +2137,20 @@ header .acc-title {
 	cursor: pointer;
 	display: none;
 }
-section.acc > .acc-title {
-	border-top: 1px solid rgba(0,0,0,.18);
-}
 input:checked + .acc {
 	height: auto;
 	//margin: 16px 0;
 	//box-shadow: 0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32);
 }
-input:checked + section.acc .acc-title {
-    background-color: $blue-light;
-}
 input:checked + .acc .acc-content,
 input:checked + .acc .acc-close {
 	display: inline-block;
 }
-.arrows section .acc-title {
+.arrows-left section .acc-title {
 	padding-left: 44px;
 	width: calc(100%);
 }
-.arrows section .acc-title:before {
+.arrows-left section .acc-title:before {
 	position: absolute;
 	display: block;
 	content: '\203a';
@@ -2175,12 +2158,58 @@ input:checked + .acc .acc-close {
 	left: 20px;
 	top: -2px;
 	transition: transform .15s ease-in-out;
-	color: rgba(0,0,0,.54);
+	opacity: 0.5;
+}
+.arrows-right section .acc-title:before {
+	position: absolute;
+	display: block;
+	content: '\203a';
+	font-size: 18pt;
+	right: 20px;
+	top: -2px;
+	transition: transform .15s ease-in-out;
+	opacity: 0.5;
 }
 input:checked + section.acc .acc-title:before {
 	transform: rotate(90deg);
 }
 
+.quickHelp { // Style for accordion (acc)
+    .acc {
+        height: $acc-height-subtitle;
+    }
+    header.acc {
+        height: $acc-height-title !important;
+        background: $grey-lighter;
+        //box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
+    }
+    header .acc-title {
+        height: $acc-height-title !important;
+        line-height: $acc-height-title !important;
+        font-weight: 600;
+        font-size: 12pt;
+        color: $darker;
+    }
+    .acc-title {
+        height: $acc-height;
+        line-height: $acc-height;
+        padding: 0 20px;
+        color: $grey-darker;
+    }
+    .acc-content {
+        width: calc(100% - 20px);
+        font-size: 11pt;
+        padding: 20px 10px 20px 20px;
+        color: $grey-dark;
+    }
+
+    section.acc > .acc-title {
+        border-top: 1px solid rgba(0,0,0,.18);
+    }
+    input:checked + section.acc .acc-title {
+        background-color: $blue-light;
+    }
+}
 
 /*
  *

@@ -48,8 +48,8 @@ import ModelCommon.Codecs
         , getCircleRoles
         , getCoordoRoles
         , getOrgaRoles
-        , guestIdCodec
         , isOwner
+        , memberIdCodec
         , nameidFromFlags
         , nearestCircleid
         , nid2rootid
@@ -692,7 +692,7 @@ update global message model =
             let
                 panel =
                     model.actionPanel
-                        |> ActionPanel.post "createdAt" (fromTime time)
+                        |> ActionPanel.updatePost "createdAt" (fromTime time)
                         |> ActionPanel.setActionResult LoadingSlowly
             in
             ( { model | actionPanel = panel }
@@ -744,7 +744,7 @@ update global message model =
                     ( { model | actionPanel = panel }, Cmd.batch gcmds, Cmd.none )
 
         UpdateActionPost field value ->
-            ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
+            ( { model | actionPanel = model.actionPanel |> ActionPanel.updatePost field value }, Cmd.none, Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -812,7 +812,7 @@ update global message model =
 
                         OkAuth n ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , queryNodesSub apis.gql (guestIdCodec form.node.nameid form.uctx.username) NewNodesAck
+                            , queryNodesSub apis.gql (memberIdCodec form.node.nameid form.uctx.username) NewNodesAck
                             , Cmd.none
                             )
 

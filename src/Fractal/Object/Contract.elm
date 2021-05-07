@@ -22,12 +22,12 @@ import Json.Decode as Decode
 
 
 type alias EventOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.EventFilter }
+    { filter : OptionalArgument Fractal.InputObject.EventFragmentFilter }
 
 
 event :
     (EventOptionalArguments -> EventOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet decodesTo Fractal.Object.EventFragment
     -> SelectionSet decodesTo Fractal.Object.Contract
 event fillInOptionals object_ =
     let
@@ -35,7 +35,7 @@ event fillInOptionals object_ =
             fillInOptionals { filter = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFilter ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFragmentFilter ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "event" optionalArgs object_ identity
@@ -72,7 +72,8 @@ contract_type =
 
 
 type alias CandidatesOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.VoteFilter
+    { filter : OptionalArgument Fractal.InputObject.UserFilter
+    , order : OptionalArgument Fractal.InputObject.UserOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -80,15 +81,15 @@ type alias CandidatesOptionalArguments =
 
 candidates :
     (CandidatesOptionalArguments -> CandidatesOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.Vote
+    -> SelectionSet decodesTo Fractal.Object.User
     -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Contract
 candidates fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeUserOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "candidates" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)

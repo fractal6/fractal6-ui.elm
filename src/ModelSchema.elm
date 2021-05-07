@@ -208,9 +208,17 @@ type alias Event =
     }
 
 
-type alias Contract_ =
-    { event : Event
+type alias EventFragment =
+    { event_type : TensionEvent.TensionEvent
+    , old : Maybe String
+    , new : Maybe String
+    }
+
+
+type alias Contract =
+    { id : String
     , tension : IdPayload
+    , event : EventFragment
     , status : ContractStatus.ContractStatus
     , contract_type : ContractType.ContractType
 
@@ -221,8 +229,12 @@ type alias Contract_ =
 
 type alias Vote =
     { node : NameidPayload
-    , data : Maybe (List Int)
+    , data : Maybe VoteData
     }
+
+
+type alias VoteData =
+    List Int
 
 
 type alias NodeFragment =
@@ -337,6 +349,11 @@ initCharac =
     { userCanJoin = False, mode = NodeMode.Coordinated }
 
 
+initEventFragment : EventFragment
+initEventFragment =
+    { event_type = TensionEvent.Created, old = Nothing, new = Nothing }
+
+
 
 --
 -- User/Members
@@ -430,7 +447,7 @@ type alias NameidPayload =
 
 type alias TensionId =
     { id : String
-    , contracts : Maybe (List Contract_)
+    , contracts : Maybe (List Contract)
     }
 
 

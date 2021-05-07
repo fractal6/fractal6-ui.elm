@@ -1024,7 +1024,7 @@ update global message model =
 
                 newDoc =
                     data
-                        |> NodeDoc.post "createdAt" (fromTime time)
+                        |> NodeDoc.updatePost "createdAt" (fromTime time)
                         |> NodeDoc.setEvents [ TensionEvent.BlobCommitted ]
                         |> NodeDoc.setResult LoadingSlowly
             in
@@ -1336,7 +1336,7 @@ update global message model =
             let
                 panel =
                     model.actionPanel
-                        |> ActionPanel.post "createdAt" (fromTime time)
+                        |> ActionPanel.updatePost "createdAt" (fromTime time)
                         |> ActionPanel.setActionResult LoadingSlowly
             in
             ( { model | actionPanel = panel }
@@ -1400,7 +1400,7 @@ update global message model =
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         UpdateActionPost field value ->
-            ( { model | actionPanel = model.actionPanel |> ActionPanel.post field value }, Cmd.none, Cmd.none )
+            ( { model | actionPanel = model.actionPanel |> ActionPanel.updatePost field value }, Cmd.none, Cmd.none )
 
         -- New tension
         DoCreateTension lg ->

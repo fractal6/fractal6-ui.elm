@@ -370,6 +370,26 @@ theOrganisation =
     "the organisation"
 
 
+moveTension : String
+moveTension =
+    "move tension"
+
+
+newContract : String
+newContract =
+    "new contract"
+
+
+createContract : String
+createContract =
+    "create contract"
+
+
+submit : String
+submit =
+    "submit"
+
+
 
 --Quick Search
 --(header)
@@ -924,3 +944,19 @@ joinForCircle =
 nodeNotExist : String
 nodeNotExist =
     "Sorry, this node doesn't exist yet."
+
+
+
+--
+-- Info
+--
+
+
+contractInfoHeader : String
+contractInfoHeader =
+    "A peer validation is needed to complete this action."
+
+
+contractInfo : String
+contractInfo =
+    "By creating a contract, it will notify the organisation roles with the authority level able to validate your request. The action will be performed once the contract has been validated"

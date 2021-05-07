@@ -17,6 +17,10 @@ type AddContractPayload
     = AddContractPayload
 
 
+type AddEventFragmentPayload
+    = AddEventFragmentPayload
+
+
 type AddEventPayload
     = AddEventPayload
 
@@ -89,6 +93,10 @@ type DeleteContractPayload
     = DeleteContractPayload
 
 
+type DeleteEventFragmentPayload
+    = DeleteEventFragmentPayload
+
+
 type DeleteEventPayload
     = DeleteEventPayload
 
@@ -131,6 +139,10 @@ type DeleteVotePayload
 
 type Event
     = Event
+
+
+type EventFragment
+    = EventFragment
 
 
 type Label
@@ -179,6 +191,10 @@ type UpdateCommentPayload
 
 type UpdateContractPayload
     = UpdateContractPayload
+
+
+type UpdateEventFragmentPayload
+    = UpdateEventFragmentPayload
 
 
 type UpdateEventPayload

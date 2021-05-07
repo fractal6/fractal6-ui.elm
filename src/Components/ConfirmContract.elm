@@ -1,15 +1,18 @@
-module ${module_name} exposing (Msg, State, init, subscriptions, update, view)
+module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
+import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isPostSendable)
+import Fractal.Enum.ContractStatus as ContractStatus
+import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
+import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
@@ -17,20 +20,26 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
+import ModelCommon.Codecs exposing (nid2eor)
+import ModelCommon.View exposing (viewTensionArrow)
 import ModelSchema exposing (..)
 import Ports
-import Query.AddData exposing (getData)
+import Query.AddContract exposing (addOneContract)
 import Text as T exposing (textH, textT, upH)
 import Time
+
 
 type State
     = State Model
 
+
 type alias Model =
     { user : UserState
     , isOpen : Bool
-    , data_result : GqlData MyData -- result of any query
-    , form : MyForm -- user inputs
+    , data_result : GqlData Contract -- result of any query
+    , contract : Maybe Contract
+    , form : ContractForm -- user inputs
+
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
@@ -42,23 +51,29 @@ initModel user =
     { user = user
     , isOpen = False
     , data_result = NotAsked
+    , contract = Nothing
     , form = initForm user
+
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
-type alias MyData = String
 
-type alias MyForm =
+type alias ContractForm =
     { uctx : UserCtx
     , tid : String
-    , target : String
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , status : ContractStatus.ContractStatus
+    , contract_type : ContractType.ContractType
+    , event : EventFragment
+
+    --, candidate:
+    , participants : Maybe (List Vote)
     , post : Post
     }
 
-initForm : UserState -> MyForm
+
+initForm : UserState -> ContractForm
 initForm user =
     { uctx =
         case user of
@@ -68,35 +83,74 @@ initForm user =
             LoggedOut ->
                 UserCtx "" Nothing (UserRights False False) []
     , tid = "" -- example
-    , target = "" -- example
-    , events_type = Nothing
+    , status = ContractStatus.Open
+    , contract_type = ContractType.AnyCoordoDual
+    , event = initEventFragment
+    , participants = Nothing
     , post = Dict.empty
     }
+
+
+updateFormFromData : Contract -> ContractForm -> ContractForm
+updateFormFromData c f =
+    { f
+        | tid = c.tension.id
+        , status = c.status
+        , contract_type = c.contract_type
+        , event = c.event
+        , participants = c.participants
+    }
+
 
 init : UserState -> State
 init user =
     initModel user |> State
 
 
+
 -- Global methods
+
 
 isOpen_ : State -> Bool
 isOpen_ (State model) =
     model.isOpen
 
+
+
 --- State Controls
 
-open : Model -> Model
-open model =
-    { model | isOpen = True}
+
+open : Post -> Maybe Contract -> Model -> Model
+open post c_m model =
+    let
+        newForm =
+            case c_m of
+                Just c ->
+                    updateFormFromData c model.form
+
+                Nothing ->
+                    model.form
+
+        upf f =
+            case Dict.get "message" post of
+                Just m ->
+                    { f | post = Dict.insert "message" m f.post }
+
+                Nothing ->
+                    f
+    in
+    { model | isOpen = True, contract = c_m, form = upf newForm }
+
 
 close : Model -> Model
 close model =
     { model | isOpen = False }
 
+
 reset : Model -> Model
 reset model =
     initModel model.user
+
 
 updatePost : String -> String -> Model -> Model
 updatePost field value model =
@@ -106,9 +160,12 @@ updatePost field value model =
     in
     { model | form = { form | post = Dict.insert field value form.post } }
 
-setDataResult : GqlData MyData -> Model -> Model
+
+setDataResult : GqlData Contract -> Model -> Model
 setDataResult result model =
     { model | data_result = result }
+
+
 
 -- utils
 
@@ -122,7 +179,9 @@ canExitSafe model =
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    (isPostEmpty [ "message" ] model.form.post) == False
+    isPostEmpty [ "message" ] model.form.post == False
+
+
 
 -- ------------------------------
 -- U P D A T E
@@ -130,16 +189,16 @@ hasData model =
 
 
 type Msg
-    = OnOpen
+    = OnOpen Post (Maybe Contract)
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
-    -- Data
+      -- Data
     | OnChangePost String String
-    | DoQueryData
+    | DoAddContract
     | OnSubmit (Time.Posix -> Msg)
     | OnDataQuery Time.Posix
-    | OnDataAck (GqlData MyData)
+    | OnDataAck (GqlData Contract)
       -- Confirm Modal
     | DoModalConfirmOpen Msg (List ( String, String ))
     | DoModalConfirmClose ModalData
@@ -152,7 +211,10 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, MyData ) -- define what data is to be returned
+
+    --Bool : Does the parent modal should be closed
+    --Contract : the result Contract
+    , result : Maybe ( Bool, Contract )
     }
 
 
@@ -170,9 +232,11 @@ out1 : List GlobalCmd -> Out
 out1 cmds =
     Out [] cmds Nothing
 
+
 out2 : List (Cmd Msg) -> List GlobalCmd -> Out
 out2 cmds gcmds =
     Out cmds gcmds Nothing
+
 
 update : Apis -> Msg -> State -> ( State, Out )
 update apis message (State model) =
@@ -182,9 +246,9 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen ->
-            ( open model
-            , out0 [ Ports.open_modal "${module_basename}Modal" ]
+        OnOpen post c_m ->
+            ( open post c_m model
+            , out0 [ Ports.open_modal "ConfirmContractModal" ]
             )
 
         OnClose data ->
@@ -194,8 +258,11 @@ update_ apis message model =
 
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
+
+                res =
+                    withMaybeDataMap (\r -> ( True, r )) model.data_result
             in
-            ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
+            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds res )
 
         OnReset ->
             ( reset model, noOut )
@@ -213,17 +280,18 @@ update_ apis message model =
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
-        DoQueryData ->
+        DoAddContract ->
             -- Adapt your query
-            (model, out0 [getData apis.gql model.form OnDataAck])
+            ( model, out0 [ addOneContract apis.gql model.form OnDataAck ] )
 
         OnSubmit next ->
             ( model
             , out0 [ sendNow next ]
             )
+
         OnDataQuery time ->
-            (model
-            , out0 [ send DoQueryData ]
+            ( model |> updatePost "createdAt" (fromTime time)
+            , out0 [ send DoAddContract ]
             )
 
         OnDataAck result ->
@@ -238,14 +306,13 @@ update_ apis message model =
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryData 500 ] [ DoUpdateToken ] )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep DoAddContract 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, d )) )
+                    ( data, Out [] [] (Just ( False, d )) )
 
                 NoAuth ->
                     ( data, noOut )
-
 
         -- Confirm Modal
         DoModalConfirmOpen msg txts ->
@@ -265,11 +332,12 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
 
-
 subscriptions =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
+
+
 
 -- ------------------------------
 -- V I E W
@@ -291,26 +359,29 @@ view op (State model) =
 viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
-        [ id "${module_basename}Modal"
+        [ id "ConfirmContractModal"
         , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
-            , attribute "data-modal" "${module_basename}Modal"
+            , attribute "data-modal" "ConfirmContractModal"
             , onClick (OnCloseSafe "" "")
             ]
             []
-        , div [ class "modal-content" ] [
-            case model.data_result of
+        , div [ class "modal-content" ]
+            [ case model.data_result of
                 Success data ->
                     let
-                        link = data.id -- example @tofix
+                        link =
+                            "todo"
+
+                        --Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
                     in
-                    div [ class "box is-light"]
+                    div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "data queried..."
+                        , text "New contract created."
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })
@@ -318,11 +389,13 @@ viewModal op (State model) =
                             ]
                             [ textH T.checkItOut ]
                         ]
+
                 _ ->
                     viewModalContent op (State model)
-                ]
+            ]
         , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
+
 
 viewModalContent : Op -> State -> Html Msg
 viewModalContent op (State model) =
@@ -335,23 +408,20 @@ viewModalContent op (State model) =
 
         isSendable =
             True
-
     in
     div [ class "modal-card" ]
-        [ div [ class "modal-card-head" ]
+        [ div [ class "modal-card-head has-background-warning" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ textH "EditMe" ]
+                [ textH T.newContract ]
             ]
         , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ]
-                    [ span [] [ text "EditMe" ] ]
-                ]
+            [ showMsg "0" "is-info" "icon-info" T.contractInfoHeader T.contractInfo
+            , showContractForm model.form
             , div [ class "field" ]
                 [ div [ class "control" ]
                     [ textarea
                         [ class "textarea in-modal"
-                        , rows 5
+                        , rows 3
                         , placeholder (upH T.leaveCommentOpt)
                         , value message
                         , onInput <| OnChangePost "message"
@@ -382,10 +452,45 @@ viewModalContent op (State model) =
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not isSendable || isLoading)
                          ]
-                            ++ [ onClick (OnSubmit <| OnDataQuery ) ]
+                            ++ [ onClick (OnSubmit <| OnDataQuery) ]
                         )
-                        [ textH T.submit ]
+                        [ textH T.createContract ]
                     ]
                 ]
+            ]
+        ]
+
+
+showContractForm : ContractForm -> Html Msg
+showContractForm f =
+    form [ class "box is-light form" ]
+        [ div [ class "field is-horizontal" ]
+            [ div [ class "field-label" ] [ label [ class "label" ] [ text "contract type" ] ]
+            , div [ class "field-body" ]
+                [ div [ class "field is-narro" ]
+                    [ input [ class "input", value "Dual coordo", disabled True ] []
+                    ]
+                ]
+            ]
+        , div [ class "field is-horizontal" ]
+            [ div [ class "field-label" ] [ label [ class "label" ] [ text "event" ] ]
+            , div [ class "field-body" ] <|
+                case f.event.event_type of
+                    TensionEvent.Moved ->
+                        let
+                            emitter =
+                                f.event.old |> withDefault "unknown" |> nid2eor
+
+                            receiver =
+                                f.event.new |> withDefault "unkown" |> nid2eor
+                        in
+                        [ div [ class "field is-narrow" ]
+                            [ input [ class "input", value "move tension", disabled True ] []
+                            ]
+                        , viewTensionArrow "is-pulled-right" emitter receiver
+                        ]
+
+                    _ ->
+                        [ text "not implemented" ]
             ]
         ]

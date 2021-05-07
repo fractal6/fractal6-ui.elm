@@ -39,7 +39,7 @@ import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelFo
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
 import Query.QueryNode exposing (tidPayload)
-import Query.QueryTension exposing (blobPayload, commentPayload, eventPayload)
+import Query.QueryTension exposing (blobPayload, commentPayload, contractPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -453,20 +453,7 @@ moveTension url form msg =
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map2 TensionId
                         (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                        (Fractal.Object.Tension.contracts identity <|
-                            -- ContractPayload_
-                            SelectionSet.map5 Contract_
-                                (Fractal.Object.Contract.event identity eventPayload)
-                                (Fractal.Object.Contract.tension identity tidPayload)
-                                Fractal.Object.Contract.status
-                                Fractal.Object.Contract.contract_type
-                                (Fractal.Object.Contract.participants identity <|
-                                    -- VotePayload
-                                    SelectionSet.map2 Vote
-                                        (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
-                                        Fractal.Object.Vote.data
-                                )
-                        )
+                        (Fractal.Object.Tension.contracts identity contractPayload)
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder2 >> msg)

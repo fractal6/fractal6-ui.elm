@@ -1,6 +1,8 @@
 module Query.QueryTension exposing
     ( blobPayload
     , commentPayload
+    , contractPayload
+    , eventFragmentPayload
     , eventPayload
     , getTensionBlobs
     , getTensionComments
@@ -25,13 +27,16 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Comment
+import Fractal.Object.Contract
 import Fractal.Object.Event
+import Fractal.Object.EventFragment
 import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeFragment
 import Fractal.Object.Tension
 import Fractal.Object.User
+import Fractal.Object.Vote
 import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
@@ -41,7 +46,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nidFilter, nodeCharacPayload, nodeDecoder, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nidFilter, nodeCharacPayload, nodeDecoder, tidPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -195,6 +200,14 @@ eventPayload =
         |> with Fractal.Object.Event.event_type
         |> with Fractal.Object.Event.old
         |> with Fractal.Object.Event.new
+
+
+eventFragmentPayload : SelectionSet EventFragment Fractal.Object.EventFragment
+eventFragmentPayload =
+    SelectionSet.succeed EventFragment
+        |> with Fractal.Object.EventFragment.event_type
+        |> with Fractal.Object.EventFragment.old
+        |> with Fractal.Object.EventFragment.new
 
 
 nodeFragmentPayload : SelectionSet NodeFragment Fractal.Object.NodeFragment
@@ -358,6 +371,25 @@ tensionPayloadFiltered authors labels =
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
         |> with Fractal.Object.Tension.n_comments
+
+
+contractPayload : SelectionSet Contract Fractal.Object.Contract
+contractPayload =
+    SelectionSet.succeed Contract
+        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Contract.tension identity tidPayload)
+        |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
+        |> with Fractal.Object.Contract.status
+        |> with Fractal.Object.Contract.contract_type
+        |> with
+            (Fractal.Object.Contract.participants identity votePayload)
+
+
+votePayload : SelectionSet Vote Fractal.Object.Vote
+votePayload =
+    SelectionSet.succeed Vote
+        |> with (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
+        |> with Fractal.Object.Vote.data
 
 
 

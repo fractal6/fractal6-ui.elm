@@ -22,6 +22,7 @@ import os
 from string import Template
 from docopt import docopt
 import re
+from loguru import logger
 
 
 class ElmSpa(object):
@@ -185,7 +186,11 @@ class ElmSpa(object):
         content = open(t_map["fn"]).read()
 
         for spec in all_specs:
-            _, content = self.rmatch(spec, content, mapping=s_map)
+            try:
+                _, content = self.rmatch(spec, content, mapping=s_map)
+            except TypeError as e:
+                logger.warning("Potentially not found regex: %s" % spec )
+                continue
 
         if self.conf['--write']:
             with open(t_map["fn"], "w") as f:

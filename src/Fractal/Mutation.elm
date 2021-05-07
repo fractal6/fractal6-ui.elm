@@ -391,6 +391,42 @@ deleteEvent requiredArgs object_ =
     Object.selectionForCompositeField "deleteEvent" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeEventFilter ] object_ (identity >> Decode.nullable)
 
 
+type alias AddEventFragmentRequiredArguments =
+    { input : List Fractal.InputObject.AddEventFragmentInput }
+
+
+addEventFragment :
+    AddEventFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddEventFragmentPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addEventFragment requiredArgs object_ =
+    Object.selectionForCompositeField "addEventFragment" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddEventFragmentInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+
+
+type alias UpdateEventFragmentRequiredArguments =
+    { input : Fractal.InputObject.UpdateEventFragmentInput }
+
+
+updateEventFragment :
+    UpdateEventFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateEventFragmentPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateEventFragment requiredArgs object_ =
+    Object.selectionForCompositeField "updateEventFragment" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateEventFragmentInput ] object_ (identity >> Decode.nullable)
+
+
+type alias DeleteEventFragmentRequiredArguments =
+    { filter : Fractal.InputObject.EventFragmentFilter }
+
+
+deleteEventFragment :
+    DeleteEventFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteEventFragmentPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteEventFragment requiredArgs object_ =
+    Object.selectionForCompositeField "deleteEventFragment" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeEventFragmentFilter ] object_ (identity >> Decode.nullable)
+
+
 type alias AddContractRequiredArguments =
     { input : List Fractal.InputObject.AddContractInput }
 

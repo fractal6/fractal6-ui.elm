@@ -138,8 +138,8 @@ setEvents events data =
     { data | form = { f | events_type = Just events } }
 
 
-post : String -> String -> Model -> Model
-post field value data =
+updatePost : String -> String -> Model -> Model
+updatePost field value data =
     let
         f =
             data.form
@@ -190,14 +190,19 @@ noOut =
     Out [] [] Nothing
 
 
-out1 : List (Cmd Msg) -> Out
-out1 cmds =
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
     Out cmds [] Nothing
 
 
-out2 : List GlobalCmd -> Out
-out2 cmds =
+out1 : List GlobalCmd -> Out
+out1 cmds =
     Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -218,7 +223,7 @@ update_ apis message model =
                             ( model, [] )
                 in
                 ( open targets model
-                , out1 <|
+                , out0 <|
                     [ Ports.outsideClickClose "cancelLabelsFromJs" "labelsPanelContent"
                     , Ports.inheritWith "labelSearchPanel"
                     , Ports.focusOn "userInput"
@@ -234,7 +239,7 @@ update_ apis message model =
 
         OnGotLabels result ->
             ( { model | labels_data = result }
-            , out1 <|
+            , out0 <|
                 case result of
                     Success r ->
                         [ Ports.initLabelSearch r ]
@@ -245,7 +250,7 @@ update_ apis message model =
 
         OnChangePattern pattern ->
             ( setPattern pattern model
-            , out1 [ Ports.searchLabel pattern ]
+            , out0 [ Ports.searchLabel pattern ]
             )
 
         ChangeLabelLookup data ->
@@ -254,7 +259,7 @@ update_ apis message model =
                     ( { model | lookup = d }, noOut )
 
                 Err err ->
-                    ( model, out1 [ Ports.logErr err ] )
+                    ( model, out0 [ Ports.logErr err ] )
 
         OnLabelClick label isNew time ->
             let
@@ -266,13 +271,13 @@ update_ apis message model =
                     let
                         data =
                             newModel
-                                |> post "createdAt" (fromTime time)
-                                |> post (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
+                                |> updatePost "createdAt" (fromTime time)
+                                |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
                                 |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
                                 |> setClickResult LoadingSlowly
                     in
                     ( data
-                    , out1 [ send (SetLabel data.form) ]
+                    , out0 [ send (SetLabel data.form) ]
                     )
 
                 SelectLabel ->
@@ -296,7 +301,7 @@ update_ apis message model =
             let
                 data =
                     click label isNew model
-                        |> post "new" (label.name ++ "§" ++ withDefault "" label.color)
+                        |> updatePost "new" (label.name ++ "§" ++ withDefault "" label.color)
                         |> setEvents [ TensionEvent.LabelAdded ]
             in
             ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
@@ -309,11 +314,11 @@ update_ apis message model =
             case doRefreshToken result data.refresh_trial of
                 Authenticate ->
                     ( setClickResult NotAsked data
-                    , out2 [ DoAuth data.form.uctx ]
+                    , out1 [ DoAuth data.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, Out [ sendSleep (SetLabel data.form) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep (SetLabel data.form) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
                     ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
@@ -323,19 +328,19 @@ update_ apis message model =
 
         OnSubmit next ->
             ( model
-            , out1 [ sendNow next ]
+            , out0 [ sendNow next ]
             )
 
         SetLabel form ->
             ( model
-            , out1 [ setLabel apis.gql form OnLabelAck ]
+            , out0 [ setLabel apis.gql form OnLabelAck ]
             )
 
         Navigate link ->
-            ( model, out2 [ DoNavigate link ] )
+            ( model, out1 [ DoNavigate link ] )
 
         OnModalAsk link onCloseTxt ->
-            ( model, out2 [ DoModalAsk link onCloseTxt ] )
+            ( model, out1 [ DoModalAsk link onCloseTxt ] )
 
 
 subscriptions =

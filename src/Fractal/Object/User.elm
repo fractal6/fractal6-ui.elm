@@ -167,6 +167,30 @@ tensions_assigned fillInOptionals object_ =
     Object.selectionForCompositeField "tensions_assigned" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+type alias ContractsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ContractFilter
+    , order : OptionalArgument Fractal.InputObject.ContractOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+contracts :
+    (ContractsOptionalArguments -> ContractsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Contract
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+contracts fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeContractFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeContractOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "contracts" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
 bio : SelectionSet (Maybe String) Fractal.Object.User
 bio =
     Object.selectionForField "(Maybe String)" "bio" [] (Decode.string |> Decode.nullable)

@@ -19,7 +19,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, TensionForm)
-import ModelCommon.Codecs exposing (guestIdCodec, nodeIdCodec)
+import ModelCommon.Codecs exposing (memberIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
 import Query.QueryNode exposing (blobIdPayload, nodeIdPayload, nodeOrgaPayload, userPayload)

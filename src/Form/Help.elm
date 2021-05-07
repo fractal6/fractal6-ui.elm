@@ -262,14 +262,19 @@ noOut =
     Out [] [] Nothing
 
 
-out1 : List (Cmd Msg) -> Out
-out1 cmds =
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
     Out cmds [] Nothing
 
 
-out2 : List GlobalCmd -> Out
-out2 cmds =
+out1 : List GlobalCmd -> Out
+out1 cmds =
     Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -282,7 +287,7 @@ update_ apis message model =
     case message of
         OnOpen ->
             ( open model
-            , out1 [ getQuickDoc apis.data "en" OnGotQuickDoc, Ports.open_modal "helpModal" ]
+            , out0 [ getQuickDoc apis.data "en" OnGotQuickDoc, Ports.open_modal "helpModal" ]
             )
 
         OnClose data ->
@@ -313,11 +318,11 @@ update_ apis message model =
             in
             if doClose then
                 ( model
-                , out1 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
                 )
 
             else
-                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
+                ( model, out0 [ send (OnClose { reset = True, link = link }) ] )
 
         OnGotQuickDoc result ->
             ( setDocResult result model, noOut )
@@ -335,10 +340,10 @@ update_ apis message model =
             ( changeLabel type_ model, noOut )
 
         OnSubmit next ->
-            ( model, out1 [ sendNow next ] )
+            ( model, out0 [ sendNow next ] )
 
         PushTension form ack ->
-            ( model, out1 [ addOneTension apis.gql form.form ack ] )
+            ( model, out0 [ addOneTension apis.gql form.form ack ] )
 
         OnSubmitAsk time ->
             let
@@ -348,7 +353,7 @@ update_ apis message model =
                         |> setResultAsk LoadingSlowly
             in
             ( newModel
-            , out1 [ send (PushTension newModel.formAsk OnAskAck) ]
+            , out0 [ send (PushTension newModel.formAsk OnAskAck) ]
             )
 
         OnSubmitFeedback time ->
@@ -360,7 +365,7 @@ update_ apis message model =
                         |> setResultFeedback LoadingSlowly
             in
             ( newModel
-            , out1 [ send (PushTension newModel.formFeedback OnAskFeedback) ]
+            , out0 [ send (PushTension newModel.formFeedback OnAskFeedback) ]
             )
 
         OnAskAck result ->
@@ -371,11 +376,11 @@ update_ apis message model =
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
                     ( setResultAsk NotAsked model
-                    , out2 [ DoAuth form.form.uctx ]
+                    , out1 [ DoAuth form.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, Out [ sendSleep (PushTension form OnAskAck) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskAck) 500 ] [ DoUpdateToken ] )
 
                 OkAuth tension ->
                     ( setResultAsk result { model | formAsk = NT.resetPost model.formAsk }, noOut )
@@ -391,11 +396,11 @@ update_ apis message model =
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
                     ( setResultFeedback NotAsked model
-                    , out2 [ DoAuth form.form.uctx ]
+                    , out1 [ DoAuth form.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, Out [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] )
 
                 OkAuth tension ->
                     ( setResultFeedback result { model | formAsk = NT.resetPost model.formFeedback }, noOut )
@@ -411,14 +416,14 @@ update_ apis message model =
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
 
         DoModalConfirmSend ->
-            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out1 [ send model.modal_confirm.msg ] )
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
 
         -- Common
         NoMsg ->
             ( model, noOut )
 
         LogErr err ->
-            ( model, out1 [ Ports.logErr err ] )
+            ( model, out0 [ Ports.logErr err ] )
 
 
 subscriptions =
@@ -531,7 +536,7 @@ viewQuickHelp op (State model) =
                     )
                 |> List.concat
                 |> List.append [ input [ id "acc-close", name "accordion", type_ "radio" ] [] ]
-                |> nav [ class "accordion arrows" ]
+                |> nav [ class "accordion arrows-left quickHelp" ]
 
         RemoteData.Failure err ->
             viewHttpErrors err

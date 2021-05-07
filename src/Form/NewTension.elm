@@ -601,14 +601,19 @@ noOut =
     Out [] [] Nothing
 
 
-out1 : List (Cmd Msg) -> Out
-out1 cmds =
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
     Out cmds [] Nothing
 
 
-out2 : List GlobalCmd -> Out
-out2 cmds =
+out1 : List GlobalCmd -> Out
+out1 cmds =
     Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
 
 
 mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
@@ -637,10 +642,10 @@ update_ apis message model =
     case message of
         -- Data control
         PushTension ack ->
-            ( model, out1 [ addOneTension apis.gql model.form ack ] )
+            ( model, out0 [ addOneTension apis.gql model.form ack ] )
 
         OnSubmit next ->
-            ( model, out1 [ sendNow next ] )
+            ( model, out0 [ sendNow next ] )
 
         -- Modal control
         OnOpen ->
@@ -655,16 +660,16 @@ update_ apis message model =
 
                     else if sources == [] then
                         ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) model |> open
-                        , out1 [ Ports.open_modal "tensionModal" ]
+                        , out0 [ Ports.open_modal "tensionModal" ]
                         )
 
                     else
                         ( model |> setUctx uctx |> setSources sources |> open
-                        , out1 [ Ports.open_modal "tensionModal" ]
+                        , out0 [ Ports.open_modal "tensionModal" ]
                         )
 
                 LoggedOut ->
-                    ( setStep AuthNeeded model |> open, out1 [ Ports.open_modal "tensionModal" ] )
+                    ( setStep AuthNeeded model |> open, out0 [ Ports.open_modal "tensionModal" ] )
 
         OnClose data ->
             let
@@ -678,28 +683,28 @@ update_ apis message model =
                     else
                         ( { model | preventGlitch = True }, [ DoNavigate data.link ] )
             in
-            ( close newModel, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
+            ( close newModel, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
 
         OnResetModel ->
             ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             if canExitSafe model then
-                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
+                ( model, out0 [ send (OnClose { reset = True, link = link }) ] )
 
             else
                 ( model
-                , out1 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
                 )
 
         OnChangeInputViewMode viewMode ->
             ( setViewMode viewMode model, noOut )
 
         OnTensionStep step ->
-            ( setStep step model, out1 [ Ports.bulma_driver "tensionModal" ] )
+            ( setStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnSwitchTab tab ->
-            ( switchTab tab model, out1 [ Ports.bulma_driver "tensionModal" ] )
+            ( switchTab tab model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         -- Doc change
         OnChangeTensionType type_ ->
@@ -761,23 +766,23 @@ update_ apis message model =
                 |> setStatus (ternary (doClose == True) TensionStatus.Closed TensionStatus.Open)
                 |> setActiveButton doClose
                 |> setResult LoadingSlowly
-            , out1 [ send (PushTension OnTensionAck) ]
+            , out0 [ send (PushTension OnTensionAck) ]
             )
 
         OnTensionAck result ->
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
                     ( setResult NotAsked model
-                    , out2 [ DoAuth model.form.uctx ]
+                    , out1 [ DoAuth model.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, Out [ sendSleep (PushTension OnTensionAck) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension OnTensionAck) 500 ] [ DoUpdateToken ] )
 
                 OkAuth tension ->
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult result model, out2 [ DoPushTension tension ] )
+                            ( setResult result model, out1 [ DoPushTension tension ] )
 
                         NewRoleTab ->
                             let
@@ -786,7 +791,7 @@ update_ apis message model =
                                         |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Role model.form.node.type_))
                                         |> withDefault ""
                             in
-                            ( setResult result model, out2 [ DoPushTension tension, DoFetchNode newNameid ] )
+                            ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                         NewCircleTab ->
                             let
@@ -795,7 +800,7 @@ update_ apis message model =
                                         |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Circle model.form.node.type_))
                                         |> withDefault ""
                             in
-                            ( setResult result model, out2 [ DoPushTension tension, DoFetchNode newNameid ] )
+                            ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                 NoAuth ->
                     ( setResult result model, noOut )
@@ -803,7 +808,7 @@ update_ apis message model =
         -- User Quick Search
         OnChangeUserPattern pos pattern ->
             ( updateUserPattern pos pattern model
-            , out1 [ Ports.searchUser pattern ]
+            , out0 [ Ports.searchUser pattern ]
             )
 
         OnChangeUserRole pos role ->
@@ -815,7 +820,7 @@ update_ apis message model =
                     ( { model | lookup_users = users }, noOut )
 
                 Err err ->
-                    ( model, out1 [ Ports.logErr err ] )
+                    ( model, out0 [ Ports.logErr err ] )
 
         OnSelectUser pos username ->
             ( selectUser pos username model, noOut )
@@ -826,7 +831,7 @@ update_ apis message model =
         OnShowLookupFs ->
             ( openLookup model
             , if model.isLookupOpen == False then
-                out1 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
+                out0 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
 
               else
                 noOut
@@ -856,7 +861,7 @@ update_ apis message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { newModel | labelsPanel = panel }, Out (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds Nothing )
+            ( { newModel | labelsPanel = panel }, out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds )
 
         -- Confirm Modal
         DoModalConfirmOpen msg txts ->
@@ -866,14 +871,14 @@ update_ apis message model =
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
 
         DoModalConfirmSend ->
-            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out1 [ send model.modal_confirm.msg ] )
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
 
         -- Common
         NoMsg ->
             ( model, noOut )
 
         LogErr err ->
-            ( model, out1 [ Ports.logErr err ] )
+            ( model, out0 [ Ports.logErr err ] )
 
 
 subscriptions =

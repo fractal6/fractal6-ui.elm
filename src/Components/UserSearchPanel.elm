@@ -138,8 +138,8 @@ setEvents events data =
     { data | form = { f | events_type = Just events } }
 
 
-post : String -> String -> Model -> Model
-post field value data =
+updatePost : String -> String -> Model -> Model
+updatePost field value data =
     let
         f =
             data.form
@@ -186,14 +186,19 @@ noOut =
     Out [] [] Nothing
 
 
-out1 : List (Cmd Msg) -> Out
-out1 cmds =
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
     Out cmds [] Nothing
 
 
-out2 : List GlobalCmd -> Out
-out2 cmds =
+out1 : List GlobalCmd -> Out
+out1 cmds =
     Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -214,7 +219,7 @@ update_ apis message model =
                             ( model, [] )
                 in
                 ( open targets newModel
-                , out1 <|
+                , out0 <|
                     [ Ports.outsideClickClose "cancelAssigneesFromJs" "usersPanelContent"
                     , Ports.inheritWith "usersSearchPanel"
                     , Ports.focusOn "userInput"
@@ -230,7 +235,7 @@ update_ apis message model =
 
         OnGotAssignees result ->
             ( { model | assignees_data = result }
-            , out1 <|
+            , out0 <|
                 case result of
                     Success r ->
                         [ Ports.initUserSearch r ]
@@ -241,7 +246,7 @@ update_ apis message model =
 
         OnChangePattern pattern ->
             ( setPattern pattern model
-            , out1 [ Ports.searchUser pattern ]
+            , out0 [ Ports.searchUser pattern ]
             )
 
         ChangeAssigneeLookup data ->
@@ -250,7 +255,7 @@ update_ apis message model =
                     ( { model | lookup = d }, noOut )
 
                 Err err ->
-                    ( model, out1 [ Ports.logErr err ] )
+                    ( model, out0 [ Ports.logErr err ] )
 
         OnAssigneeClick assignee isNew time ->
             let
@@ -262,13 +267,13 @@ update_ apis message model =
                     let
                         data =
                             newModel
-                                |> post "createdAt" (fromTime time)
-                                |> post "new" assignee.username
+                                |> updatePost "createdAt" (fromTime time)
+                                |> updatePost "new" assignee.username
                                 |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
                                 |> setClickResult LoadingSlowly
                     in
                     ( data
-                    , out1 [ send (SetAssignee data.form) ]
+                    , out0 [ send (SetAssignee data.form) ]
                     )
 
                 SelectUser ->
@@ -296,11 +301,11 @@ update_ apis message model =
             case doRefreshToken result data.refresh_trial of
                 Authenticate ->
                     ( setClickResult NotAsked model
-                    , out2 [ DoAuth data.form.uctx ]
+                    , out1 [ DoAuth data.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, Out [ sendSleep (SetAssignee data.form) 500 ] [ DoUpdateToken ] Nothing )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep (SetAssignee data.form) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
                     ( data, Out [] [] (Just ( data.form.isNew, data.form.assignee )) )
@@ -310,12 +315,12 @@ update_ apis message model =
 
         OnSubmit next ->
             ( model
-            , out1 [ sendNow next ]
+            , out0 [ sendNow next ]
             )
 
         SetAssignee form ->
             ( model
-            , out1 [ setAssignee apis.gql form OnAssigneeAck ]
+            , out0 [ setAssignee apis.gql form OnAssigneeAck ]
             )
 
 

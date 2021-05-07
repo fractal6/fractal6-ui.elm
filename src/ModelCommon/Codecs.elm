@@ -12,7 +12,8 @@ import Generated.Route as Route exposing (Route)
 import Maybe exposing (withDefault)
 import ModelSchema
     exposing
-        ( FocusNode
+        ( EmitterOrReceiver
+        , FocusNode
         , LocalGraph
         , Node
         , NodeCharac
@@ -231,8 +232,32 @@ nid2type nameid =
         NodeType.Circle
 
 
-guestIdCodec : String -> String -> String
-guestIdCodec rootnameid username =
+nid2eor : String -> EmitterOrReceiver
+nid2eor nid =
+    let
+        name =
+            nid
+                |> String.split "#"
+                |> (\l ->
+                        if List.length l == 1 then
+                            Just [ nid ]
+
+                        else
+                            List.tail l
+                   )
+                |> withDefault [ nid ]
+                |> String.join "/"
+    in
+    { nameid = nid
+    , name = name
+    , role_type = Nothing
+    , charac = initCharac
+    , isPrivate = True
+    }
+
+
+memberIdCodec : String -> String -> String
+memberIdCodec rootnameid username =
     -- Returns the namid of a new Role given an username and a rootnameid
     String.join "#" [ rootnameid, "", "@" ++ username ]
 

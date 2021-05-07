@@ -1,6 +1,7 @@
 module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
+import Components.ConfirmContract as ConfirmContract
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Dict exposing (Dict)
@@ -42,6 +43,7 @@ type alias Model =
     -- Common
     , refresh_trial : Int
     , modal_confirm : ModalConfirm Msg
+    , confirmContract : ConfirmContract.State
     }
 
 
@@ -87,6 +89,7 @@ initModel user =
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , confirmContract = ConfirmContract.init user
     }
 
 
@@ -184,6 +187,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | ConfirmContractMsg ConfirmContract.Msg
 
 
 type alias Out =
@@ -198,14 +202,19 @@ noOut =
     Out [] [] Nothing
 
 
-out1 : List (Cmd Msg) -> Out
-out1 cmds =
+out0 : List (Cmd Msg) -> Out
+out0 cmds =
     Out cmds [] Nothing
 
 
-out2 : List GlobalCmd -> Out
-out2 cmds =
+out1 : List GlobalCmd -> Out
+out1 cmds =
     Out [] cmds Nothing
+
+
+out2 : List (Cmd Msg) -> List GlobalCmd -> Out
+out2 cmds gcmds =
+    Out cmds gcmds Nothing
 
 
 update : Apis -> Msg -> State -> ( State, Out )
@@ -218,7 +227,7 @@ update_ apis message model =
     case message of
         OnOpen tid target blob_m ->
             ( open tid target blob_m model
-            , out1 [ Ports.open_modal "MoveTensionModal" ]
+            , out0 [ Ports.open_modal "MoveTensionModal" ]
             )
 
         OnClose data ->
@@ -229,18 +238,18 @@ update_ apis message model =
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
+            ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
 
         OnReset ->
             ( reset model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             if canExitSafe model then
-                ( model, out1 [ send (OnClose { reset = True, link = link }) ] )
+                ( model, out0 [ send (OnClose { reset = True, link = link }) ] )
 
             else
                 ( model
-                , out1 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
                 )
 
         -- Data
@@ -251,11 +260,11 @@ update_ apis message model =
             ( setTarget node model, noOut )
 
         DoMoveTension ->
-            ( model, out1 [ moveTension apis.gql model.form OnMoveAck ] )
+            ( model, out0 [ moveTension apis.gql model.form OnMoveAck ] )
 
         OnSubmit next ->
             ( model
-            , out1 [ sendNow next ]
+            , out0 [ sendNow next ]
             )
 
         OnMove time ->
@@ -276,7 +285,7 @@ update_ apis message model =
                     }
             in
             ( { model | form = newForm }
-            , out1 [ send DoMoveTension ]
+            , out0 [ send DoMoveTension ]
             )
 
         OnMoveAck result ->
@@ -289,11 +298,12 @@ update_ apis message model =
                                 |> withDefault Nothing
                         )
                         result
+                        |> withDefault Nothing
 
                 ( data, cmd ) =
                     case contract_m of
                         Just c ->
-                            ( model, Cmd.map ConfirmContractMsg (send (ConfirmContract.OnOpen c)) )
+                            ( model, Cmd.map ConfirmContractMsg (send (ConfirmContract.OnOpen model.form.post (Just c))) )
 
                         Nothing ->
                             ( setMoveResult result model, Cmd.none )
@@ -301,14 +311,14 @@ update_ apis message model =
             case doRefreshToken result data.refresh_trial of
                 Authenticate ->
                     ( setMoveResult NotAsked model
-                    , out2 [ DoAuth data.form.uctx ]
+                    , out1 [ DoAuth data.form.uctx ]
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, Out [ sendSleep DoMoveTension 500 ] [ DoUpdateToken ] Nothing )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep DoMoveTension 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( data, Out [ cmd ] [] Nothing )
+                    ( data, out0 [ cmd ] )
 
                 NoAuth ->
                     ( data, noOut )
@@ -321,20 +331,40 @@ update_ apis message model =
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
 
         DoModalConfirmSend ->
-            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out1 [ send model.modal_confirm.msg ] )
+            ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, out0 [ send model.modal_confirm.msg ] )
 
         -- Common
         NoMsg ->
             ( model, noOut )
 
         LogErr err ->
-            ( model, out1 [ Ports.logErr err ] )
+            ( model, out0 [ Ports.logErr err ] )
+
+        ConfirmContractMsg msg ->
+            let
+                ( data, out ) =
+                    ConfirmContract.update apis msg model.confirmContract
+
+                cmds =
+                    out.result
+                        |> Maybe.map
+                            (\( terminate, contract ) ->
+                                if terminate == True then
+                                    [ send (OnClose { reset = True, link = "" }) ]
+
+                                else
+                                    []
+                            )
+                        |> withDefault []
+            in
+            ( { model | confirmContract = data }, out2 (out.cmds |> List.map (\m -> Cmd.map ConfirmContractMsg m) |> List.append cmds) out.gcmds )
 
 
 subscriptions =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
+        ++ (ConfirmContract.subscriptions |> List.map (\s -> Sub.map ConfirmContractMsg s))
 
 
 
@@ -352,6 +382,7 @@ view op (State model) =
     div []
         [ viewModal op (State model)
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        , ConfirmContract.view {} model.confirmContract |> Html.map ConfirmContractMsg
         ]
 
 
@@ -409,7 +440,7 @@ viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ text "Move tension" ]
+                [ textH T.moveTension ]
             ]
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
@@ -474,7 +505,7 @@ viewModalContent op (State model) =
                 [ div [ class "control" ]
                     [ textarea
                         [ class "textarea in-modal"
-                        , rows 5
+                        , rows 3
                         , placeholder (upH T.leaveCommentOpt)
                         , value message
                         , onInput <| OnChangePost "message"
@@ -507,7 +538,7 @@ viewModalContent op (State model) =
                          ]
                             ++ [ onClick (OnSubmit <| OnMove) ]
                         )
-                        [ text "Move tension" ]
+                        [ textH T.moveTension ]
                     ]
                 ]
             ]

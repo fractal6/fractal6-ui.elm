@@ -152,12 +152,12 @@ setAction action data =
             case events of
                 [ TensionEvent.UserLeft ] ->
                     data
-                        |> post "old"
+                        |> updatePost "old"
                             (data.form.node.role_type
                                 |> Maybe.map (\rt -> RoleType.toString rt)
                                 |> withDefault ""
                             )
-                        |> post "new" data.form.node.nameid
+                        |> updatePost "new" data.form.node.nameid
 
                 _ ->
                     data
@@ -184,8 +184,8 @@ isSuccess data =
 -- Update form
 
 
-post : String -> String -> ActionPanel -> ActionPanel
-post field value data =
+updatePost : String -> String -> ActionPanel -> ActionPanel
+updatePost field value data =
     let
         f =
             data.form

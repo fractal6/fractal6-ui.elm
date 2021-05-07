@@ -434,6 +434,30 @@ queryEvent fillInOptionals object_ =
     Object.selectionForCompositeField "queryEvent" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias QueryEventFragmentOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFragmentFilter
+    , order : OptionalArgument Fractal.InputObject.EventFragmentOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryEventFragment :
+    (QueryEventFragmentOptionalArguments -> QueryEventFragmentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventFragment
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryEventFragment fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFragmentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeEventFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "queryEventFragment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
 type alias GetContractRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 

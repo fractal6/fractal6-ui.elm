@@ -130,8 +130,8 @@ setEvents events data =
     { data | form = newForm }
 
 
-post : String -> String -> NodeDoc -> NodeDoc
-post field value data =
+updatePost : String -> String -> NodeDoc -> NodeDoc
+updatePost field value data =
     let
         f =
             data.form
