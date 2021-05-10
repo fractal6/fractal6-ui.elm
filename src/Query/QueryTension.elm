@@ -17,6 +17,8 @@ module Query.QueryTension exposing
 
 import Dict exposing (Dict)
 import Fractal.Enum.BlobOrderable as BlobOrderable
+import Fractal.Enum.ContractStatus as ContractStatus
+import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionOrderable as TensionOrderable
@@ -113,11 +115,24 @@ tensionHeadPayload =
                         | first = Present 1
                         , order =
                             Input.buildBlobOrder
-                                (\b -> { b | desc = Present BlobOrderable.CreatedAt })
+                                (\x -> { x | desc = Present BlobOrderable.CreatedAt })
                                 |> Present
                     }
                 )
                 blobPayload
+            )
+        |> with
+            (Fractal.Object.Tension.contracts
+                (\args ->
+                    { args
+                        | first = Present 1
+                        , filter =
+                            Input.buildContractFilter
+                                (\x -> { x | status = Present { eq = ContractStatus.Open } })
+                                |> Present
+                    }
+                )
+                contractPayloadId
             )
         |> with
             (Fractal.Object.Tension.history
@@ -208,6 +223,33 @@ eventFragmentPayload =
         |> with Fractal.Object.EventFragment.event_type
         |> with Fractal.Object.EventFragment.old
         |> with Fractal.Object.EventFragment.new
+
+
+contractPayload : SelectionSet Contract Fractal.Object.Contract
+contractPayload =
+    SelectionSet.succeed Contract
+        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Contract.tension identity tidPayload)
+        |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
+        |> with Fractal.Object.Contract.status
+        |> with Fractal.Object.Contract.contract_type
+        |> with
+            (Fractal.Object.Contract.participants identity votePayload)
+
+
+contractPayloadId : SelectionSet IdPayload Fractal.Object.Contract
+contractPayloadId =
+    SelectionSet.map IdPayload (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+
+
+votePayload : SelectionSet Vote Fractal.Object.Vote
+votePayload =
+    SelectionSet.succeed Vote
+        |> with (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
+        |> with Fractal.Object.Vote.data
 
 
 nodeFragmentPayload : SelectionSet NodeFragment Fractal.Object.NodeFragment
@@ -371,25 +413,6 @@ tensionPayloadFiltered authors labels =
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
         |> with Fractal.Object.Tension.n_comments
-
-
-contractPayload : SelectionSet Contract Fractal.Object.Contract
-contractPayload =
-    SelectionSet.succeed Contract
-        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Contract.tension identity tidPayload)
-        |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
-        |> with Fractal.Object.Contract.status
-        |> with Fractal.Object.Contract.contract_type
-        |> with
-            (Fractal.Object.Contract.participants identity votePayload)
-
-
-votePayload : SelectionSet Vote Fractal.Object.Vote
-votePayload =
-    SelectionSet.succeed Vote
-        |> with (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
-        |> with Fractal.Object.Vote.data
 
 
 

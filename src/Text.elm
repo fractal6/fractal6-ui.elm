@@ -460,11 +460,6 @@ phQS =
     "find a role or circle"
 
 
-document : String
-document =
-    "document"
-
-
 noResultsFor : String
 noResultsFor =
     "no results for"
@@ -610,6 +605,21 @@ description =
 
 
 -- Tension
+
+
+conversation : String
+conversation =
+    "conversation"
+
+
+document : String
+document =
+    "document"
+
+
+contracts : String
+contracts =
+    "contracts"
 
 
 status : String

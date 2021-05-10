@@ -1435,7 +1435,7 @@ viewCanvas us model =
 viewActivies : Model -> Html Msg
 viewActivies model =
     div
-        [ id "activities", class "box is-flex-grow" ]
+        [ id "activities", class "box is-shrinked2 is-flex-grow" ]
         [ div [ class "title" ]
             [ div
                 [ class "level" ]
@@ -1465,7 +1465,7 @@ viewActivies model =
             [ case model.tensions_data of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> mediaTension OverviewBaseUri model.node_focus t False True "is-size-7" Navigate) tensions
+                        List.map (\t -> mediaTension model.node_focus t False True "is-size-7" Navigate) tensions
                             ++ ternary (List.length tensions > 5)
                                 [ div [ class "is-aligned-center", attribute "style" "margin-top:10px;" ]
                                     [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]

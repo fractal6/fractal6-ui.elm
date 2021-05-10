@@ -92,8 +92,8 @@ tensionTypeSpan type_ =
     span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" type_ ] [ text (TensionType.toString type_), span [ class "ml-2 arrow down" ] [] ]
 
 
-mediaTension : FractalBaseRoute -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension baseUri focus tension showStatus showRecip size navigate =
+mediaTension : NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension focus tension showStatus showRecip size navigate =
     let
         n_comments =
             tension.n_comments |> withDefault 0
@@ -102,12 +102,8 @@ mediaTension baseUri focus tension showStatus showRecip size navigate =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div
-        [ class ("media mediaTension " ++ size)
-        , if baseUri == OverviewBaseUri then
-            attribute "style" "margin-top:10px"
-
-          else
-            attribute "style" ""
+        [ class ("media mediaBox " ++ size)
+        , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
         ]
         [ div [ class "media-left" ]
             [ div
@@ -118,8 +114,9 @@ mediaTension baseUri focus tension showStatus showRecip size navigate =
             ]
         , div [ class "media-content" ]
             [ div
-                [ class "content mb-1"
-                , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
+                [ class "content mb-0"
+
+                --, onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
                 ]
                 [ a
                     [ class "has-text-weight-semibold"

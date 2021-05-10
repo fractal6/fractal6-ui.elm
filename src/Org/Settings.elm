@@ -944,7 +944,7 @@ viewLabels model =
                                                 n_nodes =
                                                     d.n_nodes |> withDefault 0
                                             in
-                                            [ td [] [ viewLabel "is-medium" (Label d.id d.name d.color) ]
+                                            [ td [] [ viewLabel "s-medium" (Label d.id d.name d.color) ]
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                             , td [ class "" ]
                                                 [ if n_nodes > 1 then
@@ -1020,7 +1020,7 @@ viewLabelsSub model =
                                                 n_nodes =
                                                     d.n_nodes |> withDefault 0
                                             in
-                                            [ td [] [ viewLabel "is-medium" (Label d.id d.name d.color) ]
+                                            [ td [] [ viewLabel "s-medium" (Label d.id d.name d.color) ]
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                             , td [ class "" ]
                                                 [ if n_nodes > 1 then

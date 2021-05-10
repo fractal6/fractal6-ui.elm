@@ -3,15 +3,16 @@
 '''Elm spa parser/generator.
 
 Usage:
-    melm add [-w] MODULE_NAME...
-    melm push [-w] MODULE_NAME...
+    melm add  [-w] [-t TEMPLATE ] MODULE_NAME...
+    melm push [-w] [-t TEMPLATE ] MODULE_NAME...
 
 Commands:
     add     Add a new sub-component.
     push    Add a sub-component in a existing component.
 
 Options:
-    -w, --write  save/replace in file
+    -w, --write         save/replace in file.
+    -t, --template TEMPLATE      template to user.
 
 Examples:
     melm.py add Components.MoveTension
@@ -30,16 +31,21 @@ class ElmSpa(object):
     # An Elm module name. CamelCase, dot separated.
     component_path = "src/"
     templates = {
-        "simple": "tests/component-simple.template.elm", # @todo
+        "default": "tests/component-default.template.elm", # @todo
         "modal": "tests/component-modal.template.elm",
     }
-    default_template = "modal"
+    default_template = "default"
 
     def __init__(self, conf):
         self.conf = conf
         self.checks()
 
-        model = self.default_template
+        model = self.conf["--template"]
+        if not model:
+            model = self.default_template
+        elif model not in self.templates:
+            raise ValueError("Unknown template: %s" % model)
+
         self.template = Template(open(self.templates[model]).read())
 
     def checks(self):

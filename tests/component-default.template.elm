@@ -28,7 +28,6 @@ type State
 
 type alias Model =
     { user : UserState
-    , isOpen : Bool
     , data_result : GqlData MyData -- result of any query
     , form : MyForm -- user inputs
     -- Common
@@ -40,7 +39,6 @@ type alias Model =
 initModel : UserState -> Model
 initModel user =
     { user = user
-    , isOpen = False
     , data_result = NotAsked
     , form = initForm user
     -- Common
@@ -80,19 +78,12 @@ init user =
 
 -- Global methods
 
-isOpen_ : State -> Bool
-isOpen_ (State model) =
-    model.isOpen
+--isOpen_ : State -> Bool
+--isOpen_ (State model) =
+--    model.isOpen
 
 --- State Controls
 
-open : Model -> Model
-open model =
-    { model | isOpen = True}
-
-close : Model -> Model
-close model =
-    { model | isOpen = False }
 
 reset : Model -> Model
 reset model =
@@ -130,11 +121,9 @@ hasData model =
 
 
 type Msg
-    = OnOpen
-    | OnClose ModalData
-    | OnCloseSafe String String
-    | OnReset
+    =
     -- Data
+      OnLoad
     | OnChangePost String String
     | DoQueryData
     | OnSubmit (Time.Posix -> Msg)
@@ -182,34 +171,10 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen ->
-            ( open model
-            , out0 [ Ports.open_modal "${module_basename}Modal" ]
-            )
-
-        OnClose data ->
-            let
-                cmds =
-                    ternary data.reset [ sendSleep OnReset 333 ] []
-
-                gcmds =
-                    ternary (data.link /= "") [ DoNavigate data.link ] []
-            in
-            ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
-
-        OnReset ->
-            ( reset model, noOut )
-
-        OnCloseSafe link onCloseTxt ->
-            if canExitSafe model then
-                ( model, out0 [ send (OnClose { reset = True, link = link }) ] )
-
-            else
-                ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
-                )
-
         -- Data
+        OnLoad ->
+            (model, out0 [ OnSubmit OnDataQuery ])
+
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
@@ -283,109 +248,21 @@ type alias Op =
 view : Op -> State -> Html Msg
 view op (State model) =
     div []
-        [ viewModal op (State model)
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        [ case model.data_result of
+            Success data ->
+                viewData data op model
+            Failure err ->
+                viewGqlErrors err
+            LoadingSlowly ->
+                div [class "spinner"] []
+            _ ->
+                text ""
+
         ]
 
-
-viewModal : Op -> State -> Html Msg
-viewModal op (State model) =
-    div
-        [ id "${module_basename}Modal"
-        , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isOpen ) ]
-        , attribute "data-modal-close" "closeModalFromJs"
-        ]
-        [ div
-            [ class "modal-background modal-escape"
-            , attribute "data-modal" "${module_basename}Modal"
-            , onClick (OnCloseSafe "" "")
-            ]
-            []
-        , div [ class "modal-content" ] [
-            case model.data_result of
-                Success data ->
-                    let
-                        link = data.id -- example @tofix
-                    in
-                    div [ class "box is-light"]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "data queried..."
-                        , a
-                            [ href link
-                            , onClickPD (OnClose { reset = True, link = link })
-                            , target "_blank"
-                            ]
-                            [ textH T.checkItOut ]
-                        ]
-                _ ->
-                    viewModalContent op (State model)
-                ]
-        , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
-        ]
-
-viewModalContent : Op -> State -> Html Msg
-viewModalContent op (State model) =
-    let
-        message =
-            Dict.get "message" model.form.post |> withDefault ""
-
-        isLoading =
-            model.data_result == LoadingSlowly
-
-        isSendable =
-            True
-
-    in
-    div [ class "modal-card" ]
-        [ div [ class "modal-card-head" ]
-            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ textH "EditMe" ]
-            ]
-        , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ]
-                    [ span [] [ text "EditMe" ] ]
-                ]
-            , div [ class "field" ]
-                [ div [ class "control" ]
-                    [ textarea
-                        [ class "textarea in-modal"
-                        , rows 5
-                        , placeholder (upH T.leaveCommentOpt)
-                        , value message
-                        , onInput <| OnChangePost "message"
-                        ]
-                        []
-                    ]
-                , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
-                ]
-            ]
-        , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-            [ case model.data_result of
-                Failure err ->
-                    div [ class "field" ] [ viewGqlErrors err ]
-
-                _ ->
-                    text ""
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ button
-                        ([ class "button" ]
-                            ++ [ onClick (OnClose { reset = True, link = "" }) ]
-                        )
-                        [ textH T.cancel ]
-                    ]
-                , div [ class "control" ]
-                    [ button
-                        ([ class "button is-light is-success"
-                         , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not isSendable || isLoading)
-                         ]
-                            ++ [ onClick (OnSubmit <| OnDataQuery ) ]
-                        )
-                        [ textH T.submit ]
-                    ]
-                ]
-            ]
-        ]
+viewData : MyData -> Op -> Model -> Html Msg
+viewData data op model =
+    div []
+    [
+        text data
+    ]

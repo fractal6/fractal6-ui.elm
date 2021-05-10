@@ -4,6 +4,7 @@ import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
+import Components.ContractsPage as ContractsPage
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -60,7 +61,6 @@ import ModelCommon.View
     exposing
         ( actionNameStr
         , blobTypeStr
-        , byAt
         , getAvatar
         , statusColor
         , tensionTypeColor
@@ -100,6 +100,7 @@ type alias Flags =
     { param1 : String
     , param2 : String
     , param3 : TensionTab
+    , param4 : Maybe String
     }
 
 
@@ -191,6 +192,7 @@ type alias Model =
     , assigneesPanel : UserSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
     , moveTension : MoveTension.State
+    , contractsPage : ContractsPage.State
     }
 
 
@@ -201,6 +203,7 @@ type alias Model =
 type TensionTab
     = Conversation
     | Document
+    | Contracts
 
 
 actionViewEncoder : ActionView -> String
@@ -348,6 +351,7 @@ type Msg
     | UserSearchPanelMsg UserSearchPanel.Msg
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | MoveTensionMsg MoveTension.Msg
+    | ContractsPageMsg ContractsPage.Msg
 
 
 
@@ -368,7 +372,7 @@ init global flags =
         rootnameid =
             flags.param1 |> Url.percentDecode |> withDefault ""
 
-        tensionid =
+        tid =
             flags.param2
 
         tab =
@@ -393,7 +397,7 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault NotAsked
             , lookup_users = []
-            , tensionid = tensionid
+            , tensionid = tid
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
             , path_data =
@@ -409,7 +413,7 @@ init global flags =
             , expandedEvents = []
 
             -- Form (Title, Status, Comment)
-            , tension_form = initTensionPatchForm tensionid global.session.user
+            , tension_form = initTensionPatchForm tid global.session.user
 
             -- Push Comment / Change status
             , tension_patch = NotAsked
@@ -423,16 +427,16 @@ init global flags =
             , comment_result = NotAsked
 
             -- Blob Edit
-            , nodeDoc = NodeDoc.create tensionid global.session.user
+            , nodeDoc = NodeDoc.create tid global.session.user
             , publish_result = NotAsked
 
             -- Side Pane
             , isTensionAdmin = global.session.isAdmin |> withDefault False
             , isAssigneeOpen = False
-            , assigneesPanel = UserSearchPanel.init tensionid AssignUser global.session.user
+            , assigneesPanel = UserSearchPanel.init tid AssignUser global.session.user
             , isLabelOpen = False
-            , labelsPanel = LabelSearchPanel.init tensionid AssignLabel global.session.user
-            , actionPanel = ActionPanel.init tensionid global.session.user
+            , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
+            , actionPanel = ActionPanel.init tid global.session.user
 
             -- Common
             , node_action = NoOp
@@ -444,6 +448,7 @@ init global flags =
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
             , moveTension = MoveTension.init global.session.user
+            , contractsPage = ContractsPage.init global.session.user
             }
 
         cmds =
@@ -454,7 +459,7 @@ init global flags =
                 Cmd.none
             , case tab of
                 Conversation ->
-                    getTensionComments apis.gql model.tensionid GotTensionComments
+                    getTensionComments apis.gql tid GotTensionComments
 
                 Document ->
                     case model.actionView of
@@ -465,10 +470,17 @@ init global flags =
                             Cmd.none
 
                         DocVersion ->
-                            getTensionBlobs apis.gql model.tensionid GotTensionBlobs
+                            getTensionBlobs apis.gql tid GotTensionBlobs
 
                         NoView ->
                             Cmd.none
+
+                Contracts ->
+                    let
+                        cid_m =
+                            flags.param4
+                    in
+                    Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad tid cid_m))
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             ]
@@ -1640,6 +1652,19 @@ update global message model =
             in
             ( { model | moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        ContractsPageMsg msg ->
+            let
+                ( data, out ) =
+                    ContractsPage.update apis msg model.contractsPage
+
+                res =
+                    out.result
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | contractsPage = data }, out.cmds |> List.map (\m -> Cmd.map ContractsPageMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -1808,19 +1833,25 @@ viewTension u t model =
                 [ div [ class "tabs is-md" ]
                     [ ul []
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
-                            [ a
-                                [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                [ I.icon1 "icon-message-square" "Conversation" ]
+                            [ a [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
+                                [ I.icon1 "icon-message-square" (upH T.conversation) ]
                             ]
-                        , if t.action /= Nothing then
+                        , if t.blobs /= Nothing then
                             li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
-                                [ a
-                                    [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ I.icon1 "icon-copy" "Document" ]
+                                [ a [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
+                                    [ I.icon1 "icon-copy" (upH T.document) ]
                                 ]
 
                           else
-                            li [] []
+                            text ""
+                        , if t.contracts /= Nothing && t.contracts /= Just [] then
+                            li [ classList [ ( "is-active", model.activeTab == Contracts ) ] ]
+                                [ a [ href (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
+                                    [ I.icon1 "icon-copy" (upH T.contracts) ]
+                                ]
+
+                          else
+                            text ""
                         ]
                     ]
                 , case model.activeTab of
@@ -1833,7 +1864,15 @@ viewTension u t model =
                                 viewDocument u t b model
 
                             _ ->
-                                div [] [ text "No data to show..." ]
+                                div [] [ text "No document yet..." ]
+
+                    Contracts ->
+                        case t.contracts |> withDefault [] of
+                            [ c ] ->
+                                ContractsPage.view {} model.contractsPage |> Html.map ContractsPageMsg
+
+                            _ ->
+                                div [] [ text "No contracts yet..." ]
                 ]
             , div [ class "column is-3" ]
                 [ viewSidePane u t model ]
@@ -2123,6 +2162,91 @@ viewCommentInput uctx tension form result viewMode =
         ]
 
 
+viewUpdateInput : UserCtx -> Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
+viewUpdateInput uctx comment form result =
+    let
+        message =
+            Dict.get "message" form.post |> withDefault comment.message
+
+        viewMode =
+            form.viewMode
+
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            message /= comment.message
+    in
+    div [ class "message tensionCommentInput" ]
+        [ div [ class "message-header" ]
+            [ div [ class "tabs is-boxed is-small" ]
+                [ ul []
+                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Write), target "_blank" ] [ text "Write" ] ]
+                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                    ]
+                ]
+            ]
+        , div [ class "message-body" ]
+            [ div [ class "field" ]
+                [ div [ class "control" ]
+                    [ case viewMode of
+                        Write ->
+                            textarea
+                                [ id "updateCommentInput"
+                                , class "textarea"
+                                , rows 7
+                                , placeholder (upH T.leaveComment)
+                                , value message
+                                , onInput (ChangeCommentPost "message")
+                                ]
+                                []
+
+                        Preview ->
+                            div [] [ renderMarkdown "is-light" message, hr [] [] ]
+                    ]
+                ]
+            , case result of
+                Failure err ->
+                    viewGqlErrors err
+
+                _ ->
+                    text ""
+            , div [ class "field is-grouped is-grouped-right" ]
+                [ div [ class "control" ]
+                    [ div [ class "buttons" ]
+                        [ button
+                            [ class "button"
+                            , onClick CancelCommentPatch
+                            ]
+                            [ textH T.cancel ]
+                        , button
+                            [ class "button is-success"
+                            , classList [ ( "is-loading", isLoading ) ]
+                            , disabled (not isSendable)
+                            , onClick (Submit <| SubmitCommentPatch)
+                            ]
+                            [ textH T.updateComment ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+
+viewJoinNeeded : NodeFocus -> Html Msg
+viewJoinNeeded focus =
+    div [ class "box has-background-primary" ]
+        [ p []
+            [ button
+                [ class "button is-small"
+                , onClick (DoJoinOrga focus.rootnameid)
+                ]
+                [ text "Join" ]
+            , text " this organisation to participate to this conversation."
+            ]
+        ]
+
+
 viewEvent : Event -> TensionHead -> Html Msg
 viewEvent event t =
     case event.event_type of
@@ -2364,74 +2488,42 @@ viewEventMoved event =
         ]
 
 
-viewUpdateInput : UserCtx -> Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
-viewUpdateInput uctx comment form result =
-    let
-        message =
-            Dict.get "message" form.post |> withDefault comment.message
+viewBlobToolBar : UserState -> TensionHead -> Blob -> Model -> Html Msg
+viewBlobToolBar u t b model =
+    div [ class "blobToolBar" ]
+        [ div [ class "level" ]
+            [ div [ class "level-left" ]
+                [ DocToolBar.view { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
+            , div [ class "level-right" ]
+                [ case b.pushedFlag of
+                    Just flag ->
+                        div [ class "has-text-success text-status" ]
+                            [ textH (T.publishedThe ++ " " ++ formatTime flag) ]
 
-        viewMode =
-            form.viewMode
-
-        isLoading =
-            result == LoadingSlowly
-
-        isSendable =
-            message /= comment.message
-    in
-    div [ class "message tensionCommentInput" ]
-        [ div [ class "message-header" ]
-            [ div [ class "tabs is-boxed is-small" ]
-                [ ul []
-                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Write), target "_blank" ] [ text "Write" ] ]
-                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Preview), target "_blank" ] [ text "Preview" ] ]
-                    ]
-                ]
-            ]
-        , div [ class "message-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ]
-                    [ case viewMode of
-                        Write ->
-                            textarea
-                                [ id "updateCommentInput"
-                                , class "textarea"
-                                , rows 7
-                                , placeholder (upH T.leaveComment)
-                                , value message
-                                , onInput (ChangeCommentPost "message")
+                    Nothing ->
+                        let
+                            isLoading =
+                                model.publish_result == LoadingSlowly
+                        in
+                        div [ class "field has-addons" ]
+                            [ div [ class "has-text-warning text-status" ]
+                                [ textH T.revisionNotPublished ]
+                            , div
+                                [ class "button is-small is-success has-text-weight-semibold"
+                                , onClick (Submit <| PushBlob b.id)
                                 ]
-                                []
-
-                        Preview ->
-                            div [] [ renderMarkdown "is-light" message, hr [] [] ]
-                    ]
-                ]
-            , case result of
-                Failure err ->
-                    viewGqlErrors err
-
-                _ ->
-                    text ""
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ div [ class "buttons" ]
-                        [ button
-                            [ class "button"
-                            , onClick CancelCommentPatch
+                                [ I.icon1 "icon-share" (upH T.publish)
+                                , loadingSpin isLoading
+                                ]
                             ]
-                            [ textH T.cancel ]
-                        , button
-                            [ class "button is-success"
-                            , classList [ ( "is-loading", isLoading ) ]
-                            , disabled (not isSendable)
-                            , onClick (Submit <| SubmitCommentPatch)
-                            ]
-                            [ textH T.updateComment ]
-                        ]
-                    ]
                 ]
             ]
+        , case model.publish_result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
         ]
 
 
@@ -2490,113 +2582,17 @@ viewDocument u t b model =
                     NodeDoc.view nodeData (Just msgs)
 
                 DocVersion ->
-                    viewDocVersions model.tension_blobs
+                    NodeDoc.viewVersions model.tension_blobs
 
                 NoView ->
                     text ""
         ]
 
 
-viewBlobToolBar : UserState -> TensionHead -> Blob -> Model -> Html Msg
-viewBlobToolBar u t b model =
-    div [ class "blobToolBar" ]
-        [ div [ class "level" ]
-            [ div [ class "level-left" ]
-                [ DocToolBar.view { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
-            , div [ class "level-right" ]
-                [ case b.pushedFlag of
-                    Just flag ->
-                        div [ class "has-text-success text-status" ]
-                            [ textH (T.publishedThe ++ " " ++ formatTime flag) ]
 
-                    Nothing ->
-                        let
-                            isLoading =
-                                model.publish_result == LoadingSlowly
-                        in
-                        div [ class "field has-addons" ]
-                            [ div [ class "has-text-warning text-status" ]
-                                [ textH T.revisionNotPublished ]
-                            , div
-                                [ class "button is-small is-success has-text-weight-semibold"
-                                , onClick (Submit <| PushBlob b.id)
-                                ]
-                                [ I.icon1 "icon-share" (upH T.publish)
-                                , loadingSpin isLoading
-                                ]
-                            ]
-                ]
-            ]
-        , case model.publish_result of
-            Failure err ->
-                viewGqlErrors err
-
-            _ ->
-                text ""
-        ]
-
-
-viewDocVersions : GqlData TensionBlobs -> Html Msg
-viewDocVersions blobsData =
-    case blobsData of
-        Success tblobs ->
-            let
-                n_blobs =
-                    tblobs.n_blobs |> withDefault 0
-            in
-            div [ class "box boxShrinked" ]
-                [ tblobs.blobs
-                    |> withDefault []
-                    |> List.indexedMap
-                        (\i blob ->
-                            div [ class "media", classList [ ( "is-active", i == 0 ) ] ]
-                                [ div [ class "media-content" ]
-                                    [ div [ class "level" ]
-                                        [ span [ class "level-left" ]
-                                            [ ternary (i == n_blobs - 1) (span [] [ text "Document created" ]) (span [] [ text (blobTypeStr blob.blob_type) ])
-                                            , text "\u{00A0}"
-                                            , byAt blob.createdBy blob.createdAt
-                                            ]
-                                        , case blob.pushedFlag of
-                                            Just flag ->
-                                                span
-                                                    [ class "level-item tooltip"
-                                                    , attribute "style" "cursor: inherit;"
-                                                    , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatTime flag)
-                                                    ]
-                                                    [ I.icon "icon-flag" ]
-
-                                            Nothing ->
-                                                text ""
-                                        ]
-                                    ]
-                                ]
-                        )
-                    |> div []
-                ]
-
-        Failure err ->
-            viewGqlErrors err
-
-        LoadingSlowly ->
-            div [ class "spinner" ] []
-
-        _ ->
-            text ""
-
-
-viewJoinNeeded : NodeFocus -> Html Msg
-viewJoinNeeded focus =
-    div [ class "box has-background-primary" ]
-        [ p []
-            [ button
-                [ class "button is-small"
-                , onClick (DoJoinOrga focus.rootnameid)
-                ]
-                [ text "Join" ]
-            , text " this organisation to participate to this conversation."
-            ]
-        ]
+--
+-- Side Pane
+--
 
 
 viewSidePane : UserState -> TensionHead -> Model -> Html Msg
@@ -2799,8 +2795,7 @@ viewSidePane u t model =
             ]
         ]
             ++ (if isAdmin || isAuthor then
-                    --, hr [ class "has-background-grey mt-6 mb-1" ] [] , hr [ class "has-background-grey mt-0" ] []
-                    [ hr [ class "has-background-grey mt-6" ] [] ]
+                    [ hr [ class "has-background-grey" ] [] ]
                         ++ (if isAdmin then
                                 [ div
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
@@ -2918,6 +2913,9 @@ tensionChanged from_m to =
                                 Route.Tension_Dynamic_Dynamic_Action params ->
                                     params.param2
 
+                                Route.Tension_Dynamic_Dynamic_Contract params ->
+                                    params.param2
+
                                 _ ->
                                     ""
 
@@ -2935,6 +2933,9 @@ tensionChanged from_m to =
                             params.param2
 
                         Route.Tension_Dynamic_Dynamic_Action params ->
+                            params.param2
+
+                        Route.Tension_Dynamic_Dynamic_Contract params ->
                             params.param2
 
                         _ ->

@@ -1467,8 +1467,8 @@ viewCircleTensions model =
                                 |> List.reverse
                                 |> List.map
                                     (\t ->
-                                        div [ class "box mb-2 mx-2 px-3 pt-2 pb-2" ]
-                                            [ mediaTension TensionsBaseUri model.node_focus t True False "is-size-6" Navigate ]
+                                        div [ class "box is-shrinked2 mb-2 mx-2" ]
+                                            [ mediaTension model.node_focus t True False "is-size-6" Navigate ]
                                     )
                                 |> List.append []
                                 |> div [ attribute "style" "height: 100%; overflow-y: auto;overflow-x: hidden;" ]
@@ -1505,12 +1505,12 @@ viewCircleTensions model =
 
 viewTensions : NodeFocus -> Maybe String -> GqlData TensionsData -> TensionDirection -> Html Msg
 viewTensions focus pattern tensionsData tensionDir =
-    div [ classList [ ( "box", True ), ( "spinner", tensionsData == LoadingSlowly ) ] ]
+    div [ class "box is-shrinked", classList [ ( "spinner", tensionsData == LoadingSlowly ) ] ]
         [ case tensionsData of
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension TensionsBaseUri focus t True True "is-size-6" Navigate)
+                        |> List.map (\t -> mediaTension focus t True True "is-size-6" Navigate)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then

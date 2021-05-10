@@ -4,6 +4,7 @@ import Components.Doc exposing (ActionView(..))
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.UserSearchPanel exposing (viewUserSelectors)
+import Date exposing (formatTime)
 import Dict
 import Extra exposing (clean, ternary)
 import Fractal.Enum.BlobType as BlobType
@@ -11,7 +12,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
-import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
@@ -19,7 +20,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (FormText, actionNameStr, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
+import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
 import Text as T exposing (textH, textT, upH)
@@ -783,6 +784,67 @@ blobButtonsView isSendable isLoading op =
 
 
 
+-- Versions view
+
+
+viewVersions : GqlData TensionBlobs -> Html msg
+viewVersions blobsData =
+    case blobsData of
+        Success tblobs ->
+            let
+                headers =
+                    []
+            in
+            table [ class "table is-fullwidth tensionContracts" ]
+                [ thead []
+                    [ tr [] (headers |> List.map (\x -> th [] [ textH x ]))
+                    ]
+                , tblobs.blobs
+                    |> withDefault []
+                    |> List.indexedMap (\i d -> viewVerRow i d)
+                    |> List.concat
+                    |> tbody []
+                ]
+
+        Failure err ->
+            viewGqlErrors err
+
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        _ ->
+            text ""
+
+
+viewVerRow : Int -> Blob -> List (Html msg)
+viewVerRow i blob =
+    [ tr [ class "mediaBox", classList [ ( "is-active", i == 0 ) ] ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text "\u{00A0}", byAt blob.createdBy blob.createdAt ]
+        , td []
+            [ case blob.pushedFlag of
+                Just flag ->
+                    span
+                        [ class "tooltip"
+                        , attribute "style" "cursor: inherit;"
+                        , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatTime flag)
+                        ]
+                        [ I.icon "icon-flag" ]
+
+                Nothing ->
+                    text ""
+            ]
+        ]
+    ]
+
+
+
+--, td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
+--    [ span
+--        [ class "button-light"
+--        --, onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+--        ]
+--        [ text "Delete" ]
+--    ]
 --- Utils
 
 

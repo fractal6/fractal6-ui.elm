@@ -28,6 +28,7 @@ type Route
     | T_Dynamic_Dynamic { param1 : String, param2 : String }
     | Tension_Dynamic_Dynamic { param1 : String, param2 : String }
     | Tension_Dynamic_Dynamic_Action { param1 : String, param2 : String }
+    | Tension_Dynamic_Dynamic_Contract { param1 : String, param2 : String }
     | M_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
     | O_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
     | S_Dynamic_Dynamic_Dynamic { param1 : String, param2 : String, param3 : String }
@@ -85,6 +86,9 @@ routes =
         , (Parser.s "tension" </> Parser.string </> Parser.string </> Parser.s "action")
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map Tension_Dynamic_Dynamic_Action
+        , (Parser.s "tension" </> Parser.string </> Parser.string </> Parser.s "contract")
+          |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
+          |> Parser.map Tension_Dynamic_Dynamic_Contract
         , (Parser.s "m" </> Parser.string </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 param3 -> { param1 = param1, param2 = param2, param3 = param3 })
           |> Parser.map M_Dynamic_Dynamic_Dynamic
@@ -162,6 +166,9 @@ toHref route =
                 
                 Tension_Dynamic_Dynamic_Action { param1, param2 } ->
                     [ "tension", param1, param2, "action" ]
+                
+                Tension_Dynamic_Dynamic_Contract { param1, param2 } ->
+                    [ "tension", param1, param2, "contract" ]
                 
                 M_Dynamic_Dynamic_Dynamic { param1, param2, param3 } ->
                     [ "m", param1, param2, param3 ]

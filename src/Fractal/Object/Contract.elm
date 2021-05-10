@@ -41,6 +41,11 @@ event fillInOptionals object_ =
     Object.selectionForCompositeField "event" optionalArgs object_ identity
 
 
+closedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Contract
+closedAt =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "closedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
 type alias TensionOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

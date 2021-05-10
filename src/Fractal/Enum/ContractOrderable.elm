@@ -11,11 +11,12 @@ type ContractOrderable
     = CreatedAt
     | UpdatedAt
     | Message
+    | ClosedAt
 
 
 list : List ContractOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message ]
+    [ CreatedAt, UpdatedAt, Message, ClosedAt ]
 
 
 decoder : Decoder ContractOrderable
@@ -32,6 +33,9 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
+
+                    "closedAt" ->
+                        Decode.succeed ClosedAt
 
                     _ ->
                         Decode.fail ("Invalid ContractOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -51,6 +55,9 @@ toString enum =
 
         Message ->
             "message"
+
+        ClosedAt ->
+            "closedAt"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -75,6 +82,9 @@ fromString enumString =
 
         "message" ->
             Just Message
+
+        "closedAt" ->
+            Just ClosedAt
 
         _ ->
             Nothing

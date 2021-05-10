@@ -154,6 +154,7 @@ type alias TensionHead =
 
     --
     , blobs : Maybe (List Blob) -- head / len() == 1
+    , contracts : Maybe (List IdPayload)
     , history : List Event
     }
 
@@ -217,6 +218,9 @@ type alias EventFragment =
 
 type alias Contract =
     { id : String
+    , createdAt : String
+    , closedAt : Maybe String
+    , createdBy : Username
     , tension : IdPayload
     , event : EventFragment
     , status : ContractStatus.ContractStatus

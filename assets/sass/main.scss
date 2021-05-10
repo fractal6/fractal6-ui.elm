@@ -90,6 +90,11 @@ hr {
 .is-bg-grey-light {
     background-color: $grey-light2 !important;
 }
+.has-links-light {
+    a {
+        color: $blue-light;
+    }
+}
 
 .is-md {
     font-size: 0.9rem !important;
@@ -268,21 +273,32 @@ html.has-modal-active, html.has-modal-active2 {
     background-color: $grey-light2 !important;
 }
 
-.boxShrinked {
-    &.box {
-        padding:0 !important;
-    }
-
+.box {
+    border: 1px solid $grey-darker;
     .media {
-        padding: 1rem !important;
-
         &.is-active {
             border: solid 2px $link !important;
         }
+
+        & + .media {
+            border-top: 1px solid $grey-darker;
+        }
     }
 
-    .media + .media {
-        margin-top: 0 !important;
+    &.is-shrinked {
+        padding: 0;
+        .media {
+            margin: 0;
+            padding: 1rem 1.25rem 1rem 0.9rem;
+        }
+    }
+
+    &.is-shrinked2 {
+        padding: 0;
+        .media {
+            margin: 0;
+            padding: 0.5rem 0.7rem;
+        }
     }
 }
 
@@ -605,14 +621,16 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #activities {
-    padding-top: 0.5rem;
     & > .title {
+        margin-top: 1rem !important;
+        margin-left: 1rem !important;
         margin-bottom: 1rem !important;
     }
 }
 
 #DocContainer {
     border-radius: 5px;
+    border: 1px solid $grey-darker;
     .title {
         //
     }
@@ -738,7 +756,7 @@ html.has-modal-active, html.has-modal-active2 {
         .message {
             background-color: $body-background-color !important;
             //background-color: #404953 !important;
-            border: 1px solid  $grey-darker  !important;
+            border: 1px solid  $grey-darker2  !important;
             .tabs a {
                 text-decoration: none !important;
             }
@@ -758,7 +776,7 @@ html.has-modal-active, html.has-modal-active2 {
                     bottom: $size-small2;
                     left: $size-small;
                     padding: $size-small2 $size-small $size-small2 $size-small ;
-                    border-left: 1px solid $grey-darker;
+                    border-left: 1px solid $grey-darker2;
                     &:hover { cursor: pointer !important; }
                     &:active { color: $grey; }
                 }
@@ -790,7 +808,7 @@ html.has-modal-active, html.has-modal-active2 {
 			}
 			.message-header:before {
 				//border-color: rgba(52, 60, 61, 0);
-				border-right-color: $grey-darker;
+				border-right-color: $grey-darker2;
 				border-width: 9px;
 				margin-top: -9px;
 			}
@@ -852,13 +870,14 @@ html.has-modal-active, html.has-modal-active2 {
             padding-top: 1rem !important;
         }
 
-        .media + .media {
+        .media {
             border-top: 1px solid $grey !important;
-            margin-top: 2rem;
+            margin:0;
+            padding-bottom: 2rem;
         }
 
         .media-content {
-                font-size: 14px !important;
+            font-size: 14px !important;
             .subtitle {
                 font-size: 13px !important;
                 font-weight: 600 !important;
@@ -967,10 +986,12 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .tensionDocument {
-
     .blobToolBar {
         margin-bottom: 1rem;
     }
+}
+
+.tensionContracts {
 }
 
 
@@ -1181,17 +1202,20 @@ html.has-modal-active, html.has-modal-active2 {
      }
 }
 
-.mediaTension {
-    //border-bottom: 1px solid #e1e4e8;
-    //margin-bottom: -1.11rem !important;
+.mediaBox {
+    &:hover {
+        background-color: $grey-darker2;
+    }
+
+    &.is-active {
+        border: solid 2px $link !important;
+    }
+
     .media-content {
         overflow: unset;
 
         // Improve UX when hovering content
         .content  {
-            &:hover { // wider click area
-                cursor: pointer !important;
-            }
             & > a { // space between title and labels
                 margin-right: $size-small !important;
             }
@@ -1203,6 +1227,10 @@ html.has-modal-active, html.has-modal-active2 {
             }
         }
     }
+}
+
+tr.mediaBox {
+    line-height: 2.1rem;
 }
 
 .labelsList {

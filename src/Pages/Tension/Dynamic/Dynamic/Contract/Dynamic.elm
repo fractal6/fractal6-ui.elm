@@ -1,4 +1,4 @@
-module Pages.Tension.Dynamic.Dynamic.Action exposing (Flags, Model, Msg, page)
+module Pages.Tension.Dynamic.Dynamic.Contract.Dynamic exposing (Flags, Model, Msg, page)
 
 import Global
 import Html
@@ -9,6 +9,7 @@ import Page exposing (Document, Page)
 type alias Flags =
     { param1 : String
     , param2 : String
+    , param3 : String
     }
 
 
@@ -32,4 +33,4 @@ page =
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
-    Tension.init global { param1 = flags.param1, param2 = flags.param2, param3 = Document, param4 = Nothing }
+    Tension.init global { param1 = flags.param1, param2 = flags.param2, param3 = Contracts, param4 = Just flags.param3 }
