@@ -1476,10 +1476,10 @@ viewActivies model =
                     else
                         case model.node_focus.type_ of
                             NodeType.Role ->
-                                div [] [ textH T.noOpenTensionRole ]
+                                div [ class "ml-4" ] [ textH T.noOpenTensionRole ]
 
                             NodeType.Circle ->
-                                div [] [ textH T.noOpenTensionCircle ]
+                                div [ class "ml-4" ] [ textH T.noOpenTensionCircle ]
 
                 Failure err ->
                     viewGqlErrors err

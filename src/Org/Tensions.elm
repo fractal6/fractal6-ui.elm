@@ -1521,24 +1521,24 @@ viewTensions focus pattern tensionsData tensionDir =
                         NodeType.Role ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ textH T.noIntTensionRole ]
+                                    div [ class "m-4" ] [ textH T.noIntTensionRole ]
 
                                 ExternalTension ->
-                                    div [] [ textH T.noExtTensionRole ]
+                                    div [ class "m-4" ] [ textH T.noExtTensionRole ]
 
                                 ListTension ->
-                                    div [] [ textH T.noTensionRole ]
+                                    div [ class "m-4" ] [ textH T.noTensionRole ]
 
                         NodeType.Circle ->
                             case tensionDir of
                                 InternalTension ->
-                                    div [] [ textH T.noIntTensionCircle ]
+                                    div [ class "m-4" ] [ textH T.noIntTensionCircle ]
 
                                 ExternalTension ->
-                                    div [] [ textH T.noExtTensionCircle ]
+                                    div [ class "m-4" ] [ textH T.noExtTensionCircle ]
 
                                 ListTension ->
-                                    div [] [ textH T.noTensionCircle ]
+                                    div [ class "m-4" ] [ textH T.noTensionCircle ]
 
             Failure err ->
                 viewGqlErrors err

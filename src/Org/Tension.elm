@@ -1847,7 +1847,7 @@ viewTension u t model =
                         , if t.contracts /= Nothing && t.contracts /= Just [] then
                             li [ classList [ ( "is-active", model.activeTab == Contracts ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ I.icon1 "icon-copy" (upH T.contracts) ]
+                                    [ I.icon1 "icon-link-2" (upH T.contracts) ]
                                 ]
 
                           else
