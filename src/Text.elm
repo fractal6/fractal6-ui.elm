@@ -667,19 +667,14 @@ assignees =
     "assignees"
 
 
-action : String
-action =
-    "action"
-
-
 noLabels : String
 noLabels =
     "none yet"
 
 
-noAction : String
-noAction =
-    "no action requested"
+noDocument : String
+noDocument =
+    "no document attached"
 
 
 noOpenTensionRole : String

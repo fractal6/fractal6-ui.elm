@@ -2740,6 +2740,8 @@ viewSidePane u t model =
                             ]
                        ]
             ]
+
+        -- Document
         , div
             [ class "media" ]
             [ div [ class "media-content" ] <|
@@ -2750,7 +2752,7 @@ viewSidePane u t model =
                             , classList [ ( "is-w", hasBlobRight || hasRole ) ]
                             , Maybe.map (\b -> onClick (DoActionEdit b)) blob_m |> withDefault (onClick NoMsg)
                             ]
-                            [ textH T.action
+                            [ textH T.document
                             , if model.actionPanel.isEdit then
                                 I.icon "icon-x is-pulled-right"
 
@@ -2786,15 +2788,15 @@ viewSidePane u t model =
                         ]
 
                     LoggedOut ->
-                        [ h2 [ class "subtitle" ] [ textH T.action ] ]
+                        [ h2 [ class "subtitle" ] [ textH T.document ] ]
                 )
                     ++ [ div []
                             [ case t.action of
                                 Just action ->
-                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (TensionAction.toString action)) ""
+                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (actionNameStr action)) ""
 
                                 Nothing ->
-                                    div [ class "is-italic" ] [ textH T.noAction ]
+                                    div [ class "is-italic" ] [ textH T.noDocument ]
                             ]
                        ]
             ]

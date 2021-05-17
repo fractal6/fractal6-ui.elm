@@ -102,6 +102,7 @@ hr {
 
 .is-transparent {
     opacity: 0;
+    z-index: -1;
 }
 
 .is-flex-grow {
