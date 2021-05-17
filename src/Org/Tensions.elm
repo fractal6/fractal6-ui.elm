@@ -1482,19 +1482,14 @@ viewCircleTensions model =
                                             [ mediaTension model.node_focus t True False "is-size-6" Navigate ]
                                     )
                                 |> List.append []
-                                |> div [ attribute "style" "height: 100%; overflow-y: auto;overflow-x: hidden;" ]
+                                -- @DEBUG: 100% height overflow because the header height is ignored (not responsive)...
+                                |> div [ attribute "style" "height: 95%; overflow-y: auto;overflow-x: hidden;" ]
                             ]
                         , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
                         ]
                     )
                 |> List.concat
-                |> (\x ->
-                        if List.length x == 0 then
-                            [ div [] [ text "No tensions here." ] ]
-
-                        else
-                            x
-                   )
+                |> (\x -> ternary (List.length x == 0) [ div [] [ text "No tensions here." ] ] x)
                 |> div
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless"

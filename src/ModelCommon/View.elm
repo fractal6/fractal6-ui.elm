@@ -158,12 +158,14 @@ mediaTension focus tension showStatus showRecip size navigate =
 
                   else
                     text ""
-                , span [] [ viewTensionDateAndUser "has-text-weight-light" tension.createdAt tension.createdBy ]
                 , if showRecip then
-                    viewTensionArrow "has-text-weight-light is-pulled-right" tension.emitter tension.receiver
+                    span []
+                        [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver
+                        , span [] [ viewTensionDateAndUser "has-text-weight-light is-pulled-right" tension.createdAt tension.createdBy ]
+                        ]
 
                   else
-                    text ""
+                    span [] [ viewTensionDateAndUser "has-text-weight-light" tension.createdAt tension.createdBy ]
                 ]
 
             --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]

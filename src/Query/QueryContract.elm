@@ -138,6 +138,7 @@ votePayload =
 contractCommentsPayload : SelectionSet ContractComments Fractal.Object.Contract
 contractCommentsPayload =
     SelectionSet.succeed ContractComments
+        |> with (Fractal.Object.Contract.tension identity tidPayload)
         |> with
             (Fractal.Object.Contract.comments
                 (\args -> { args | first = Present nCommentPerContract })

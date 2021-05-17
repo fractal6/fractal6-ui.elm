@@ -96,9 +96,6 @@ addContractInputEncoder f =
             , contract_type = f.contract_type
             }
 
-        q =
-            Debug.log "participants" f.participants
-
         inputOpt =
             \x ->
                 { x

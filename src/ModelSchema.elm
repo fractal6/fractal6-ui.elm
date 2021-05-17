@@ -235,7 +235,9 @@ type alias Contract =
 
 
 type alias ContractComments =
-    { comments : Maybe (List Comment) }
+    { tension : IdPayload
+    , comments : Maybe (List Comment)
+    }
 
 
 type alias Vote =
