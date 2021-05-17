@@ -228,7 +228,14 @@ type alias Contract =
 
     --, candidate:
     , participants : Maybe (List Vote)
+
+    -- Maybe hardocded
+    , comments : Maybe (List Comment)
     }
+
+
+type alias ContractComments =
+    { comments : Maybe (List Comment) }
 
 
 type alias Vote =

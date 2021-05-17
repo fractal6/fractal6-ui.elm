@@ -9,7 +9,22 @@ import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , fromMaybeData
+        , fromMaybeData2
+        , loadingSpin
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , withMapData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Components.Markdown exposing (renderMarkdown)
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
@@ -128,6 +143,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -378,6 +396,9 @@ init global flags =
         tab =
             flags.param3
 
+        cid_m =
+            flags.param4
+
         -- Focus
         newFocus =
             NodeFocus rootnameid rootnameid NodeType.Circle
@@ -388,26 +409,14 @@ init global flags =
 
         model =
             { node_focus = newFocus
-            , orga_data =
-                global.session.orga_data
-                    |> Maybe.map (\x -> Success x)
-                    |> withDefault NotAsked
-            , users_data =
-                global.session.users_data
-                    |> Maybe.map (\x -> Success x)
-                    |> withDefault NotAsked
+            , orga_data = fromMaybeData global.session.orga_data
+            , users_data = fromMaybeData global.session.users_data
             , lookup_users = []
             , tensionid = tid
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
-            , path_data =
-                global.session.path_data
-                    |> Maybe.map (\x -> Success x)
-                    |> withDefault Loading
-            , tension_head =
-                global.session.tension_head
-                    |> Maybe.map (\x -> Success x)
-                    |> withDefault Loading
+            , path_data = fromMaybeData2 global.session.path_data Loading
+            , tension_head = fromMaybeData2 global.session.tension_head Loading
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
@@ -448,11 +457,12 @@ init global flags =
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
             , moveTension = MoveTension.init global.session.user
-            , contractsPage = ContractsPage.init global.session.user
+            , contractsPage = ContractsPage.init rootnameid global.session.user
             }
 
         cmds =
-            [ if tensionChanged global.session.referer global.url || model.tension_head == Loading then
+            --[ if tensionChanged global.session.referer global.url || model.tension_head == Loading then
+            [ if tensionChanged2 model.tension_head global.url || model.tension_head == Loading then
                 send LoadTensionHead
 
               else
@@ -476,10 +486,6 @@ init global flags =
                             Cmd.none
 
                 Contracts ->
-                    let
-                        cid_m =
-                            flags.param4
-                    in
                     Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad tid cid_m))
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
@@ -1836,7 +1842,7 @@ viewTension u t model =
                             [ a [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                 [ I.icon1 "icon-message-square" (upH T.conversation) ]
                             ]
-                        , if t.blobs /= Nothing then
+                        , if t.blobs /= Nothing && t.blobs /= Just [] then
                             li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
                                     [ I.icon1 "icon-copy" (upH T.document) ]
@@ -2046,8 +2052,7 @@ viewComment c model =
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]
-                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ textH T.edit ] ]
-                                        ]
+                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ textH T.edit ] ] ]
                                     ]
                                 ]
 
@@ -2898,53 +2903,37 @@ initCommentPatchForm user =
     }
 
 
+url2tid : Url -> String
+url2tid url =
+    url.path |> String.split "/" |> LE.getAt 3 |> withDefault url.path
+
+
 tensionChanged : Maybe Url -> Url -> Bool
 tensionChanged from_m to =
     let
-        id1 =
-            Maybe.map
-                (\from ->
-                    case Route.fromUrl from of
-                        Just r ->
-                            case r of
-                                Route.Tension_Dynamic_Dynamic params ->
-                                    params.param2
-
-                                Route.Tension_Dynamic_Dynamic_Action params ->
-                                    params.param2
-
-                                Route.Tension_Dynamic_Dynamic_Contract params ->
-                                    params.param2
-
-                                _ ->
-                                    ""
-
-                        Nothing ->
-                            ""
-                )
-                from_m
+        tid1 =
+            from_m
+                |> Maybe.map url2tid
                 |> withDefault ""
 
-        id2 =
-            case Route.fromUrl to of
-                Just r ->
-                    case r of
-                        Route.Tension_Dynamic_Dynamic params ->
-                            params.param2
-
-                        Route.Tension_Dynamic_Dynamic_Action params ->
-                            params.param2
-
-                        Route.Tension_Dynamic_Dynamic_Contract params ->
-                            params.param2
-
-                        _ ->
-                            ""
-
-                Nothing ->
-                    ""
+        tid2 =
+            url2tid to
     in
-    id1 /= id2
+    tid1 /= tid2
+
+
+tensionChanged2 : GqlData TensionHead -> Url -> Bool
+tensionChanged2 t_m to =
+    let
+        tid1 =
+            t_m
+                |> withMaybeDataMap (\x -> x.id)
+                |> withDefault ""
+
+        tid2 =
+            url2tid to
+    in
+    tid1 /= tid2
 
 
 nodeFragmentFromTensionHead : TensionHead -> NodeFragment

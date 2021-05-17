@@ -19,8 +19,8 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm, UserForm)
 import ModelSchema exposing (..)
+import Query.QueryContract exposing (contractPayload)
 import Query.QueryNode exposing (tidPayload)
-import Query.QueryTension exposing (contractPayload)
 import RemoteData exposing (RemoteData)
 
 

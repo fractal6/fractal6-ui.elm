@@ -8,7 +8,21 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , fromMaybeData
+        , fromMaybeData2
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , withDefaultData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -479,10 +493,7 @@ init global flags =
         model =
             { node_focus = newFocus
             , screen = global.session.screen
-            , path_data =
-                global.session.path_data
-                    |> Maybe.map (\x -> Success x)
-                    |> withDefault Loading
+            , path_data = fromMaybeData2 global.session.path_data Loading
             , children = RemoteData.Loading
             , tensions_int = Loading
             , tensions_ext = Loading
@@ -1293,10 +1304,10 @@ viewSearchBar model =
                 [ div [ class "field has-addons" ]
                     [ div [ class "control has-icons-left is-expanded" ]
                         [ input
-                            [ class "is-rounded input is-small autofocus"
+                            [ class "is-rounded input is-small"
                             , type_ "search"
                             , autocomplete False
-                            , autofocus True
+                            , autofocus False
                             , placeholder "Search tensions"
                             , value (withDefault "" model.pattern)
                             , onInput ChangePattern

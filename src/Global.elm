@@ -76,6 +76,7 @@ init flags url key =
 
 type Msg
     = Navigate Route
+    | ReplaceUrl String
     | UpdateReferer Url
     | UpdateUserSession UserCtx -- user is logged In !
     | UpdateUserTokenAck (WebData UserCtx)
@@ -103,6 +104,9 @@ update msg model =
     case msg of
         Navigate route ->
             ( model, Nav.pushUrl model.key (Route.toHref route) )
+
+        ReplaceUrl url ->
+            ( model, Nav.replaceUrl model.key url )
 
         UpdateReferer url ->
             let

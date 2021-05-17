@@ -357,6 +357,8 @@ const actions = {
         // outside click listener
         const outsideClickListener = event => {
             if (event.target.closest("#"+id) === null) {
+                // @debug; doesnt work!
+                //event.stopPropagation();
                 closeEvent();
             }
         }

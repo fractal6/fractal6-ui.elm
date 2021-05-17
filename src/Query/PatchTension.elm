@@ -38,8 +38,9 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionPatchForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
+import Query.QueryContract exposing (contractPayload)
 import Query.QueryNode exposing (tidPayload)
-import Query.QueryTension exposing (blobPayload, commentPayload, contractPayload)
+import Query.QueryTension exposing (blobPayload, commentPayload)
 import RemoteData exposing (RemoteData)
 
 

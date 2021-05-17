@@ -18,12 +18,12 @@ import Json.Decode as JD
 
 onClickPD : msg -> Html.Attribute msg
 onClickPD msg =
-    preventDefaultOn "mousedown" <| JD.succeed ( msg, True )
+    preventDefaultOn "click" <| JD.succeed ( msg, True )
 
 
 onClickPD2 : msg -> Html.Attribute msg
 onClickPD2 msg =
-    custom "mousedown" <|
+    custom "click" <|
         JD.map
             (\x ->
                 { message = msg

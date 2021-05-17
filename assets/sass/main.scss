@@ -100,6 +100,10 @@ hr {
     font-size: 0.9rem !important;
 }
 
+.is-transparent {
+    opacity: 0;
+}
+
 .is-flex-grow {
     flex-grow: 1 !important;
 }
@@ -1887,6 +1891,22 @@ a.actionLink {
     font-size: 4rem;
 }
 
+/*
+ * Slider
+ */
+.slider {
+  transition: transform .5s ease, opacity .5s ease;
+  &.is-slide-left {
+      transform: translateX(-100%);
+      -webkit-transform: translateX(-100%);
+      //opacity: 0;
+  }
+  &.is-slide-right {
+      transform: translateX(100%);
+      -webkit-transform: translateX(100%);
+      //opacity: 0;
+  }
+}
 
 /*
  *

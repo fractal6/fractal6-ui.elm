@@ -78,6 +78,7 @@ type GlobalCmd
       DoAuth UserCtx
     | DoUpdateToken
     | DoNavigate String
+    | DoReplaceUrl String
     | DoModalAsk String String -- SafeClose
       --
     | DoFetchNode String

@@ -7,7 +7,23 @@ import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isFailure, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading
+    exposing
+        ( GqlData
+        , ModalData
+        , RequestResult(..)
+        , WebData
+        , fromMaybeData
+        , fromMaybeData2
+        , isFailure
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewHttpErrors
+        , withDefaultData
+        , withMapData
+        , withMaybeData
+        , withMaybeDataMap
+        )
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Debug
 import Dict exposing (Dict)
@@ -265,22 +281,10 @@ init global flags =
         model =
             { node_focus = newFocus
             , path_data = ternary fs.orgChange Nothing global.session.path_data -- Loaded from GraphPack
-            , orga_data =
-                session.orga_data
-                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
-                    |> withDefault Loading
-            , users_data =
-                global.session.users_data
-                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
-                    |> withDefault Loading
-            , tensions_data =
-                session.tensions_data
-                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
-                    |> withDefault Loading
-            , node_data =
-                session.node_data
-                    |> Maybe.map (\x -> ternary fs.orgChange Loading (Success x))
-                    |> withDefault Loading
+            , orga_data = fromMaybeData2 session.orga_data Loading
+            , users_data = fromMaybeData2 session.users_data Loading
+            , tensions_data = fromMaybeData2 session.tensions_data Loading
+            , node_data = fromMaybeData2 session.node_data Loading
             , init_tensions = True
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
@@ -890,7 +894,7 @@ update global message model =
         NodeClicked nameid ->
             ( model
             , Cmd.none
-            , Nav.replaceUrl global.key (uriFromNameid OverviewBaseUri nameid)
+            , ReplaceUrl (uriFromNameid OverviewBaseUri nameid) |> send
             )
 
         NodeFocused path ->

@@ -381,7 +381,7 @@ viewModal op (State model) =
                     in
                     div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "New contract created."
+                        , text "New contract created. "
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })
