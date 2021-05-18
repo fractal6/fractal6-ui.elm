@@ -101,12 +101,28 @@ hr {
 }
 
 .is-transparent {
-    opacity: 0;
+	opacity: 0;
     z-index: -1;
 }
 
+.do-clear {
+    animation: fadeOut 0.5s;
+}
+
+.canBeClearedRow {
+	//display: revert;
+	//opacity: 1;
+	//transition: opacity 500ms;
+	//transform: translate(0);
+	//&.do-clear {
+	//	transform:translate(9999px);
+	//	opacity: 0;
+	//	display: none;
+	//}
+}
+
 .is-flex-grow {
-    flex-grow: 1 !important;
+	flex-grow: 1 !important;
 }
 
 .is-aligned-center {
@@ -530,11 +546,16 @@ html.has-modal-active, html.has-modal-active2 {
   }
 }
 
-
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
 
 #mainPane {
     // when Helpbar is active

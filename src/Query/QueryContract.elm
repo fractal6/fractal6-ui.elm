@@ -1,4 +1,10 @@
-module Query.QueryContract exposing (contractPayload, getContract, getContractComments, getContracts)
+module Query.QueryContract exposing
+    ( cidPayload
+    , contractPayload
+    , getContract
+    , getContractComments
+    , getContracts
+    )
 
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -144,3 +150,9 @@ contractCommentsPayload =
                 (\args -> { args | first = Present nCommentPerContract })
                 commentPayload
             )
+
+
+cidPayload : SelectionSet IdPayload Fractal.Object.Contract
+cidPayload =
+    SelectionSet.map IdPayload
+        (Fractal.Object.Contract.id |> SelectionSet.map decodedId)

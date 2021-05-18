@@ -444,12 +444,6 @@ type alias UserRoleExtended =
 --
 
 
-type alias BlobId =
-    { id : String
-    , tension : IdPayload
-    }
-
-
 type alias IdPayload =
     { id : String }
 
@@ -461,6 +455,12 @@ type alias NameidPayload =
 type alias TensionId =
     { id : String
     , contracts : Maybe (List Contract)
+    }
+
+
+type alias BlobId =
+    { id : String
+    , tension : IdPayload
     }
 
 

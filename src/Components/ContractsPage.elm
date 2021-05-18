@@ -1,7 +1,7 @@
 module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Auth exposing (AuthState(..), doRefreshToken)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
 import Date exposing (formatTime)
@@ -25,6 +25,7 @@ import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
 import ModelCommon.View exposing (getAvatar, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
 import ModelSchema exposing (..)
 import Ports
+import Query.AddContract exposing (deleteOneContract)
 import Query.QueryContract exposing (getContract, getContractComments, getContracts)
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -39,6 +40,7 @@ type alias Model =
     , rootnameid : String
     , contracts_result : GqlData Contracts -- result of any query
     , contract_result : GqlData Contract
+    , contract_result_del : GqlData IdPayload
     , form : MyForm -- user inputs
     , activeView : ContractsPageView
 
@@ -59,6 +61,7 @@ initModel rootnameid user =
     , rootnameid = rootnameid
     , contracts_result = NotAsked
     , contract_result = NotAsked
+    , contract_result_del = NotAsked
     , form = initForm user
     , activeView = ContractsView
 
@@ -114,11 +117,6 @@ init rid user =
 --- State Controls
 
 
-reset : String -> Model -> Model
-reset rid model =
-    initModel rid model.user
-
-
 updatePost : String -> String -> Model -> Model
 updatePost field value model =
     let
@@ -136,6 +134,11 @@ setContractsResult result model =
 setContractResult : GqlData Contract -> Model -> Model
 setContractResult result model =
     { model | contract_result = result }
+
+
+setContractDelResult : GqlData IdPayload -> Model -> Model
+setContractDelResult result model =
+    { model | contract_result_del = result }
 
 
 
@@ -168,10 +171,13 @@ type Msg
     | DoQueryContracts
     | DoQueryContract String
     | DoQueryContractComments String
+    | DoDeleteContract String
+    | DoPopContract String
     | OnSubmit (Time.Posix -> Msg)
     | OnContractsAck (GqlData Contracts)
     | OnContractAck (GqlData Contract)
     | OnContractCommentsAck (GqlData ContractComments)
+    | OnContractDeleteAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg (List ( String, String ))
     | DoModalConfirmClose ModalData
@@ -243,13 +249,6 @@ update_ apis message model =
                 f =
                     { form | cid = cid }
 
-                --contract_m =
-                --    model.contracts_result
-                --        |> withMaybeDataMap
-                --            (\cs ->
-                --                LE.find (\c -> c.id == cid) cs
-                --            )
-                --        |> withDefault Nothing
                 url =
                     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = cid } |> toHref
             in
@@ -270,6 +269,16 @@ update_ apis message model =
                     { form | cid = cid }
             in
             ( { model | form = f }, out0 [ getContractComments apis.gql f OnContractCommentsAck ] )
+
+        DoDeleteContract cid ->
+            let
+                form =
+                    model.form
+
+                f =
+                    { form | cid = cid }
+            in
+            ( { model | contract_result_del = LoadingSlowly, form = f }, out0 [ deleteOneContract apis.gql f OnContractDeleteAck ] )
 
         OnSubmit next ->
             ( model
@@ -344,6 +353,42 @@ update_ apis message model =
                 NoAuth ->
                     ( data, noOut )
 
+        OnContractDeleteAck result ->
+            let
+                data =
+                    setContractDelResult result model
+            in
+            case doRefreshToken result data.refresh_trial of
+                Authenticate ->
+                    ( setContractDelResult NotAsked model
+                    , out1 [ DoAuth data.form.uctx ]
+                    )
+
+                RefreshToken i ->
+                    ( { data | refresh_trial = i }, out2 [ sendSleep (DoDeleteContract model.form.cid) 500 ] [ DoUpdateToken ] )
+
+                OkAuth d ->
+                    ( data, Out [ sendSleep (DoPopContract model.form.cid) 500 ] [] (Just ( True, [] )) )
+
+                NoAuth ->
+                    ( data, noOut )
+
+        DoPopContract cid ->
+            let
+                result =
+                    model.contracts_result
+                        |> withMapData
+                            (\cs ->
+                                case LE.findIndex (\c -> c.id == cid) cs of
+                                    Just i ->
+                                        LE.removeAt i cs
+
+                                    Nothing ->
+                                        cs
+                            )
+            in
+            ( setContractsResult result model, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg txts ->
             ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, noOut )
@@ -363,7 +408,8 @@ update_ apis message model =
 
 
 subscriptions =
-    []
+    [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    ]
 
 
 
@@ -378,17 +424,20 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div [ class "columns" ]
-        [ div
-            [ class "slider column is-12"
-            , classList [ ( "is-slide-left", model.activeView /= ContractsView ), ( "is-transparent", model.activeView /= ContractsView ) ]
+    div []
+        [ div [ class "columns" ]
+            [ div
+                [ class "slider column is-12"
+                , classList [ ( "is-slide-left", model.activeView /= ContractsView ), ( "is-transparent", model.activeView /= ContractsView ) ]
+                ]
+                [ viewContracts op model ]
+            , div
+                [ class "slider column is-12"
+                , classList [ ( "is-slide-left", model.activeView == ContractView ), ( "is-transparent", model.activeView /= ContractView ) ]
+                ]
+                [ viewContract op model ]
             ]
-            [ viewContracts op model ]
-        , div
-            [ class "slider column is-12"
-            , classList [ ( "is-slide-left", model.activeView == ContractView ), ( "is-transparent", model.activeView /= ContractView ) ]
-            ]
-            [ viewContract op model ]
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 
@@ -408,12 +457,13 @@ viewContracts op model =
             text ""
 
 
+headers : List String
+headers =
+    [ "Event", "Validation", "Author", "Opened", "" ]
+
+
 viewContractsTable : Contracts -> Op -> Model -> Html Msg
 viewContractsTable data op model =
-    let
-        headers =
-            [ "Event", "Validation", "Author", "Opened", "" ]
-    in
     table
         [ class "table is-fullwidth tensionContracts"
         ]
@@ -429,13 +479,23 @@ viewContractsTable data op model =
 
 viewRow : Contract -> Model -> List (Html Msg)
 viewRow d model =
-    [ tr [ class "mediaBox", onClick (DoClickContract d.id) ]
-        [ td []
+    let
+        deleteLoading =
+            (model.contract_result_del == LoadingSlowly) && d.id == model.form.cid
+
+        isDeleted =
+            (withMaybeData model.contract_result_del /= Nothing) && model.form.cid == d.id
+    in
+    [ tr
+        [ class "mediaBox"
+        , classList [ ( "do-clear", isDeleted ) ]
+        ]
+        [ td [ onClick (DoClickContract d.id) ]
             [ a
                 [ href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref) ]
                 [ viewContractEvent d ]
             ]
-        , td [] [ viewContractType d ]
+        , td [ onClick (DoClickContract d.id) ] [ viewContractType d ]
         , td [ class "has-links-light" ] [ viewUsernameLink d.createdBy.username ]
         , td [] [ text (formatTime d.createdAt) ]
 
@@ -444,19 +504,30 @@ viewRow d model =
         , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
             [ span
                 [ class "button-light"
-
-                --, onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ]
                 ]
-                [ text "Cancel" ]
+                [ span [ class "tag is-danger is-light is-smaller2" ] [ I.icon "icon-x", loadingSpin deleteLoading ] ]
             ]
         ]
     ]
-        ++ (case model.contract_result of
-                Failure err ->
-                    [ td [] [ viewGqlErrors err ] ]
+        ++ (if model.form.cid == d.id then
+                [ case model.contract_result of
+                    Failure err ->
+                        td [ colspan (List.length headers) ] [ viewGqlErrors err ]
 
-                _ ->
-                    []
+                    _ ->
+                        text ""
+                ]
+                    ++ [ case model.contract_result_del of
+                            Failure err ->
+                                td [ colspan (List.length headers) ] [ viewGqlErrors err ]
+
+                            _ ->
+                                text ""
+                       ]
+
+            else
+                []
            )
 
 

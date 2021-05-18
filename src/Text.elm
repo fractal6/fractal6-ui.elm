@@ -355,6 +355,11 @@ confirmDeleteLabel =
     "are you sure to delete the label"
 
 
+confirmDeleteContract : String
+confirmDeleteContract =
+    "are you sure to cancel this contract"
+
+
 askAnotherQuestion : String
 askAnotherQuestion =
     "ask another question."

@@ -89,7 +89,7 @@ initModel user =
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , confirmContract = ConfirmContract.init user
+    , confirmContract = ConfirmContract.init "" user
     }
 
 
@@ -260,7 +260,7 @@ update_ apis message model =
             ( setTarget node model, noOut )
 
         DoMoveTension ->
-            ( model, out0 [ moveTension apis.gql model.form OnMoveAck ] )
+            ( setMoveResult LoadingSlowly model, out0 [ moveTension apis.gql model.form OnMoveAck ] )
 
         OnSubmit next ->
             ( model
@@ -303,7 +303,7 @@ update_ apis message model =
                 ( data, cmd ) =
                     case contract_m of
                         Just c ->
-                            ( model, Cmd.map ConfirmContractMsg (send (ConfirmContract.OnOpen model.form.post (Just c))) )
+                            ( setMoveResult NotAsked model, Cmd.map ConfirmContractMsg (send (ConfirmContract.OnOpen model.target model.form.post (Just c))) )
 
                         Nothing ->
                             ( setMoveResult result model, Cmd.none )

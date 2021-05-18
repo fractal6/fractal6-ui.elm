@@ -222,7 +222,7 @@ update_ apis message model =
             , out0 [ sendNow next ]
             )
         OnDataQuery time ->
-            (model
+            (setDataResult model LoadingSlowly
             , out0 [ send DoQueryData ]
             )
 

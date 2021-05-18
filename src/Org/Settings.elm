@@ -958,7 +958,7 @@ viewLabels model =
                                                 , text " · "
                                                 , span
                                                     [ class "button-light"
-                                                    , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                    , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
                                                     ]
                                                     [ text "Delete" ]
                                                 ]

@@ -11,6 +11,7 @@ import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionEvent as TensionEvent
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
@@ -20,7 +21,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
-import ModelCommon.Codecs exposing (nid2eor)
+import ModelCommon.Codecs exposing (nid2eor, nid2rootid)
 import ModelCommon.View exposing (viewTensionArrow)
 import ModelSchema exposing (..)
 import Ports
@@ -36,8 +37,9 @@ type State
 type alias Model =
     { user : UserState
     , isOpen : Bool
-    , data_result : GqlData Contract -- result of any query
-    , contract : Maybe Contract
+    , target : String -- keep origin target
+    , data_result : GqlData Contract -- contract created
+    , contract : Maybe Contract -- partial contract
     , form : ContractForm -- user inputs
 
     -- Common
@@ -50,6 +52,7 @@ initModel : UserState -> Model
 initModel user =
     { user = user
     , isOpen = False
+    , target = ""
     , data_result = NotAsked
     , contract = Nothing
     , form = initForm user
@@ -102,8 +105,8 @@ updateFormFromData c f =
     }
 
 
-init : UserState -> State
-init user =
+init : String -> UserState -> State
+init target user =
     initModel user |> State
 
 
@@ -120,8 +123,8 @@ isOpen_ (State model) =
 --- State Controls
 
 
-open : Post -> Maybe Contract -> Model -> Model
-open post c_m model =
+open : String -> Post -> Maybe Contract -> Model -> Model
+open target post c_m model =
     let
         newForm =
             case c_m of
@@ -139,7 +142,7 @@ open post c_m model =
                 Nothing ->
                     f
     in
-    { model | isOpen = True, contract = c_m, form = upf newForm }
+    { model | isOpen = True, target = target, contract = c_m, form = upf newForm }
 
 
 close : Model -> Model
@@ -189,7 +192,7 @@ hasData model =
 
 
 type Msg
-    = OnOpen Post (Maybe Contract)
+    = OnOpen String Post (Maybe Contract)
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -246,8 +249,8 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen post c_m ->
-            ( open post c_m model
+        OnOpen target post c_m ->
+            ( open target post c_m model
             , out0 [ Ports.open_modal "ConfirmContractModal" ]
             )
 
@@ -281,8 +284,7 @@ update_ apis message model =
             ( updatePost field value model, noOut )
 
         DoAddContract ->
-            -- Adapt your query
-            ( model, out0 [ addOneContract apis.gql model.form OnDataAck ] )
+            ( setDataResult LoadingSlowly model, out0 [ addOneContract apis.gql model.form OnDataAck ] )
 
         OnSubmit next ->
             ( model
@@ -375,9 +377,7 @@ viewModal op (State model) =
                 Success data ->
                     let
                         link =
-                            "todo"
-
-                        --Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
+                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = data.tension.id, param3 = data.id } |> toHref
                     in
                     div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "

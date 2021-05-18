@@ -232,8 +232,7 @@ update_ apis message model =
 
 
 subscriptions =
-    [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
-    , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
 
 -- ------------------------------
@@ -257,7 +256,7 @@ view op (State model) =
                 div [class "spinner"] []
             _ ->
                 text ""
-
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
 
 viewData : MyData -> Op -> Model -> Html Msg

@@ -1,4 +1,4 @@
-module Query.AddContract exposing (addOneContract)
+module Query.AddContract exposing (addOneContract, deleteOneContract)
 
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -10,6 +10,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddContractPayload
 import Fractal.Object.Contract
+import Fractal.Object.DeleteContractPayload
 import Fractal.Query as Query
 import Fractal.Scalar
 import Fractal.ScalarCodecs
@@ -19,8 +20,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm, UserForm)
 import ModelSchema exposing (..)
-import Query.QueryContract exposing (contractPayload)
-import Query.QueryNode exposing (tidPayload)
+import Query.QueryContract exposing (cidPayload, contractPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -121,4 +121,44 @@ addContractInputEncoder f =
     in
     { input =
         [ Input.buildAddContractInput inputReq inputOpt ]
+    }
+
+
+
+{-
+   Remove contract
+-}
+
+
+type alias ContractsPayloadId =
+    { contract : Maybe (List (Maybe IdPayload)) }
+
+
+contractIdDecoder : Maybe ContractsPayloadId -> Maybe IdPayload
+contractIdDecoder a =
+    case a of
+        Just b ->
+            b.contract
+                |> Maybe.map (\x -> List.head x)
+                |> Maybe.withDefault Nothing
+                |> Maybe.withDefault Nothing
+
+        Nothing ->
+            Nothing
+
+
+deleteOneContract url form msg =
+    makeGQLMutation url
+        (Mutation.deleteContract
+            (deleteContractInputEncoder form)
+            (SelectionSet.map ContractsPayloadId <|
+                Fractal.Object.DeleteContractPayload.contract identity cidPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse contractIdDecoder >> msg)
+
+
+deleteContractInputEncoder form =
+    { filter =
+        Input.buildContractFilter (\i -> { i | id = Present [ encodeId form.cid ] })
     }
