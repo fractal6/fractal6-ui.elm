@@ -65,8 +65,29 @@ queryNode fillInOptionals object_ =
     Object.selectionForCompositeField "queryNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateNodeOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
+
+
+aggregateNode :
+    (AggregateNodeOptionalArguments -> AggregateNodeOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateNode fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateNode" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias QuerySharedNodeOptionalArguments =
-    { order : OptionalArgument Fractal.InputObject.SharedNodeOrder
+    { filter : OptionalArgument Fractal.InputObject.SharedNodeFilter
+    , order : OptionalArgument Fractal.InputObject.SharedNodeOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -79,13 +100,33 @@ querySharedNode :
 querySharedNode fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeSharedNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeSharedNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeSharedNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "querySharedNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateSharedNodeOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.SharedNodeFilter }
+
+
+aggregateSharedNode :
+    (AggregateSharedNodeOptionalArguments -> AggregateSharedNodeOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.SharedNodeAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateSharedNode fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeSharedNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateSharedNode" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetNodeFragmentRequiredArguments =
@@ -124,6 +165,26 @@ queryNodeFragment fillInOptionals object_ =
     Object.selectionForCompositeField "queryNodeFragment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateNodeFragmentOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
+
+
+aggregateNodeFragment :
+    (AggregateNodeFragmentOptionalArguments -> AggregateNodeFragmentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeFragmentAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateNodeFragment fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateNodeFragment" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias GetMandateRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -158,6 +219,26 @@ queryMandate fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryMandate" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateMandateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.MandateFilter }
+
+
+aggregateMandate :
+    (AggregateMandateOptionalArguments -> AggregateMandateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.MandateAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateMandate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateMandate" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetNodeCharacRequiredArguments =
@@ -195,8 +276,29 @@ queryNodeCharac fillInOptionals object_ =
     Object.selectionForCompositeField "queryNodeCharac" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateNodeCharacOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
+
+
+aggregateNodeCharac :
+    (AggregateNodeCharacOptionalArguments -> AggregateNodeCharacOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeCharacAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateNodeCharac fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateNodeCharac" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias QueryNodeStatsOptionalArguments =
-    { order : OptionalArgument Fractal.InputObject.NodeStatsOrder
+    { filter : OptionalArgument Fractal.InputObject.NodeStatsFilter
+    , order : OptionalArgument Fractal.InputObject.NodeStatsOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -209,13 +311,33 @@ queryNodeStats :
 queryNodeStats fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeStatsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeStatsFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeStatsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryNodeStats" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateNodeStatsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeStatsFilter }
+
+
+aggregateNodeStats :
+    (AggregateNodeStatsOptionalArguments -> AggregateNodeStatsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeStatsAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateNodeStats fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeStatsFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateNodeStats" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetPostRequiredArguments =
@@ -254,6 +376,26 @@ queryPost fillInOptionals object_ =
     Object.selectionForCompositeField "queryPost" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregatePostOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PostFilter }
+
+
+aggregatePost :
+    (AggregatePostOptionalArguments -> AggregatePostOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.PostAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregatePost fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodePostFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregatePost" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias GetTensionRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -288,6 +430,26 @@ queryTension fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryTension" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateTensionOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+aggregateTension :
+    (AggregateTensionOptionalArguments -> AggregateTensionOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateTension fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateTension" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetLabelRequiredArguments =
@@ -326,6 +488,26 @@ queryLabel fillInOptionals object_ =
     Object.selectionForCompositeField "queryLabel" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateLabelOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.LabelFilter }
+
+
+aggregateLabel :
+    (AggregateLabelOptionalArguments -> AggregateLabelOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.LabelAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateLabel fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeLabelFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateLabel" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias GetCommentRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -360,6 +542,26 @@ queryComment fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryComment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateCommentOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CommentFilter }
+
+
+aggregateComment :
+    (AggregateCommentOptionalArguments -> AggregateCommentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.CommentAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateComment fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCommentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateComment" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetBlobRequiredArguments =
@@ -398,6 +600,26 @@ queryBlob fillInOptionals object_ =
     Object.selectionForCompositeField "queryBlob" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateBlobOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.BlobFilter }
+
+
+aggregateBlob :
+    (AggregateBlobOptionalArguments -> AggregateBlobOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.BlobAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateBlob fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeBlobFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateBlob" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias GetEventRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -434,6 +656,26 @@ queryEvent fillInOptionals object_ =
     Object.selectionForCompositeField "queryEvent" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateEventOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFilter }
+
+
+aggregateEvent :
+    (AggregateEventOptionalArguments -> AggregateEventOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateEvent fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateEvent" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias QueryEventFragmentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.EventFragmentFilter
     , order : OptionalArgument Fractal.InputObject.EventFragmentOrder
@@ -456,6 +698,26 @@ queryEventFragment fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryEventFragment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateEventFragmentOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFragmentFilter }
+
+
+aggregateEventFragment :
+    (AggregateEventFragmentOptionalArguments -> AggregateEventFragmentOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventFragmentAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateEventFragment fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFragmentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateEventFragment" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetContractRequiredArguments =
@@ -494,6 +756,26 @@ queryContract fillInOptionals object_ =
     Object.selectionForCompositeField "queryContract" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateContractOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ContractFilter }
+
+
+aggregateContract :
+    (AggregateContractOptionalArguments -> AggregateContractOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ContractAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateContract fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeContractFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateContract" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias GetVoteRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -527,6 +809,26 @@ queryVote fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryVote" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateVoteOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.VoteFilter }
+
+
+aggregateVote :
+    (AggregateVoteOptionalArguments -> AggregateVoteOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.VoteAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateVote fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateVote" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias GetUserOptionalArguments =
@@ -575,8 +877,29 @@ queryUser fillInOptionals object_ =
     Object.selectionForCompositeField "queryUser" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias AggregateUserOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+aggregateUser :
+    (AggregateUserOptionalArguments -> AggregateUserOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateUser fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateUser" optionalArgs object_ (identity >> Decode.nullable)
+
+
 type alias QueryUserRightsOptionalArguments =
-    { order : OptionalArgument Fractal.InputObject.UserRightsOrder
+    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter
+    , order : OptionalArgument Fractal.InputObject.UserRightsOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -589,10 +912,30 @@ queryUserRights :
 queryUserRights fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeUserRightsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserRightsFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeUserRightsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryUserRights" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateUserRightsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter }
+
+
+aggregateUserRights :
+    (AggregateUserRightsOptionalArguments -> AggregateUserRightsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserRightsAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateUserRights fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserRightsFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "aggregateUserRights" optionalArgs object_ (identity >> Decode.nullable)

@@ -1479,7 +1479,7 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoin ]
+                        , events_type = Just [ TensionEvent.UserJoined ]
                         , post =
                             Dict.fromList
                                 [ ( "createdAt", fromTime time )
@@ -2285,8 +2285,8 @@ viewEvent event t =
         TensionEvent.BlobUnarchived ->
             viewEventArchived event t.action False
 
-        TensionEvent.UserJoin ->
-            viewEventUserJoin event t.action
+        TensionEvent.UserJoined ->
+            viewEventUserJoined event t.action
 
         TensionEvent.UserLeft ->
             viewEventUserLeft event t.action
@@ -2424,8 +2424,8 @@ viewEventArchived event action_m isArchived =
         ]
 
 
-viewEventUserJoin : Event -> Maybe TensionAction.TensionAction -> Html Msg
-viewEventUserJoin event action_m =
+viewEventUserJoined : Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventUserJoined event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
@@ -2436,7 +2436,7 @@ viewEventUserJoin event action_m =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon "icon-log-in" ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.join ], text action_txt, text T.the, text (formatTime event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text T.the, text (formatTime event.createdAt) ]
             ]
         ]
 
@@ -2898,7 +2898,7 @@ initCommentPatchForm user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , id = ""
     , post = Dict.empty
     , viewMode = Write

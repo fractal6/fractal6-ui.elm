@@ -17,11 +17,12 @@ type NodeOrderable
     | N_tensions_out
     | N_tensions_in
     | N_children
+    | Rights
 
 
 list : List NodeOrderable
 list =
-    [ CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, About, N_tensions_out, N_tensions_in, N_children ]
+    [ CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, About, N_tensions_out, N_tensions_in, N_children, Rights ]
 
 
 decoder : Decoder NodeOrderable
@@ -56,6 +57,9 @@ decoder =
 
                     "n_children" ->
                         Decode.succeed N_children
+
+                    "rights" ->
+                        Decode.succeed Rights
 
                     _ ->
                         Decode.fail ("Invalid NodeOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -93,6 +97,9 @@ toString enum =
 
         N_children ->
             "n_children"
+
+        Rights ->
+            "rights"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -135,6 +142,9 @@ fromString enumString =
 
         "n_children" ->
             Just N_children
+
+        "rights" ->
+            Just Rights
 
         _ ->
             Nothing

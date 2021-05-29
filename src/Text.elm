@@ -210,9 +210,9 @@ by =
     "by"
 
 
-join : String
-join =
-    "join"
+joined : String
+joined =
+    "joined"
 
 
 from : String
@@ -395,6 +395,21 @@ submit =
     "submit"
 
 
+add : String
+add =
+    "add"
+
+
+remove : String
+remove =
+    "remove"
+
+
+delete : String
+delete =
+    "delete"
+
+
 
 --Quick Search
 --(header)
@@ -468,6 +483,11 @@ phQS =
 noResultsFor : String
 noResultsFor =
     "no results for"
+
+
+nodeNotFound : String
+nodeNotFound =
+    "Node is archived, hidden or has moved."
 
 
 
@@ -960,6 +980,11 @@ nodeNotExist =
 --
 -- Info
 --
+
+
+labelDeleteInfoHeader : String
+labelDeleteInfoHeader =
+    "Label present in other circles, and in labeled tensions, wont' be deleted."
 
 
 contractInfoHeader : String

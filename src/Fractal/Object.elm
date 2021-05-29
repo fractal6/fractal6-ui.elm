@@ -73,12 +73,24 @@ type Blob
     = Blob
 
 
+type BlobAggregateResult
+    = BlobAggregateResult
+
+
 type Comment
     = Comment
 
 
+type CommentAggregateResult
+    = CommentAggregateResult
+
+
 type Contract
     = Contract
+
+
+type ContractAggregateResult
+    = ContractAggregateResult
 
 
 type DeleteBlobPayload
@@ -121,8 +133,16 @@ type DeleteNodePayload
     = DeleteNodePayload
 
 
+type DeleteNodeStatsPayload
+    = DeleteNodeStatsPayload
+
+
 type DeletePostPayload
     = DeletePostPayload
+
+
+type DeleteSharedNodePayload
+    = DeleteSharedNodePayload
 
 
 type DeleteTensionPayload
@@ -133,6 +153,10 @@ type DeleteUserPayload
     = DeleteUserPayload
 
 
+type DeleteUserRightsPayload
+    = DeleteUserRightsPayload
+
+
 type DeleteVotePayload
     = DeleteVotePayload
 
@@ -141,44 +165,104 @@ type Event
     = Event
 
 
+type EventAggregateResult
+    = EventAggregateResult
+
+
 type EventFragment
     = EventFragment
+
+
+type EventFragmentAggregateResult
+    = EventFragmentAggregateResult
 
 
 type Label
     = Label
 
 
+type LabelAggregateResult
+    = LabelAggregateResult
+
+
 type Mandate
     = Mandate
+
+
+type MandateAggregateResult
+    = MandateAggregateResult
+
+
+type MultiPolygon
+    = MultiPolygon
 
 
 type Node
     = Node
 
 
+type NodeAggregateResult
+    = NodeAggregateResult
+
+
 type NodeCharac
     = NodeCharac
+
+
+type NodeCharacAggregateResult
+    = NodeCharacAggregateResult
 
 
 type NodeFragment
     = NodeFragment
 
 
+type NodeFragmentAggregateResult
+    = NodeFragmentAggregateResult
+
+
 type NodeStats
     = NodeStats
+
+
+type NodeStatsAggregateResult
+    = NodeStatsAggregateResult
+
+
+type Point
+    = Point
+
+
+type PointList
+    = PointList
+
+
+type Polygon
+    = Polygon
 
 
 type Post
     = Post
 
 
+type PostAggregateResult
+    = PostAggregateResult
+
+
 type SharedNode
     = SharedNode
 
 
+type SharedNodeAggregateResult
+    = SharedNodeAggregateResult
+
+
 type Tension
     = Tension
+
+
+type TensionAggregateResult
+    = TensionAggregateResult
 
 
 type UpdateBlobPayload
@@ -221,8 +305,16 @@ type UpdateNodePayload
     = UpdateNodePayload
 
 
+type UpdateNodeStatsPayload
+    = UpdateNodeStatsPayload
+
+
 type UpdatePostPayload
     = UpdatePostPayload
+
+
+type UpdateSharedNodePayload
+    = UpdateSharedNodePayload
 
 
 type UpdateTensionPayload
@@ -233,6 +325,10 @@ type UpdateUserPayload
     = UpdateUserPayload
 
 
+type UpdateUserRightsPayload
+    = UpdateUserRightsPayload
+
+
 type UpdateVotePayload
     = UpdateVotePayload
 
@@ -241,9 +337,21 @@ type User
     = User
 
 
+type UserAggregateResult
+    = UserAggregateResult
+
+
 type UserRights
     = UserRights
 
 
+type UserRightsAggregateResult
+    = UserRightsAggregateResult
+
+
 type Vote
     = Vote
+
+
+type VoteAggregateResult
+    = VoteAggregateResult

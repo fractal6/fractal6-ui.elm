@@ -78,10 +78,11 @@ uctxPayload =
         |> with Fractal.Object.User.username
         |> with Fractal.Object.User.name
         |> with
-            (Fractal.Object.User.rights <|
-                SelectionSet.map2 UserRights
+            (Fractal.Object.User.rights identity <|
+                SelectionSet.map3 UserRights
                     Fractal.Object.UserRights.canLogin
                     Fractal.Object.UserRights.canCreateRoot
+                    Fractal.Object.UserRights.type_
             )
         |> with
             (Fractal.Object.User.roles pubFilter

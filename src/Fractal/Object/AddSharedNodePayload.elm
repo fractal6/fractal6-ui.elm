@@ -20,7 +20,8 @@ import Json.Decode as Decode
 
 
 type alias SharedNodeOptionalArguments =
-    { order : OptionalArgument Fractal.InputObject.SharedNodeOrder
+    { filter : OptionalArgument Fractal.InputObject.SharedNodeFilter
+    , order : OptionalArgument Fractal.InputObject.SharedNodeOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -33,10 +34,10 @@ sharedNode :
 sharedNode fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { order = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeSharedNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeSharedNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeSharedNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "sharedNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)

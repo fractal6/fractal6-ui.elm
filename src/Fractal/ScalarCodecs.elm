@@ -16,9 +16,14 @@ type alias Id =
     Fractal.Scalar.Id
 
 
-codecs : Fractal.Scalar.Codecs DateTime Id
+type alias Int64 =
+    Fractal.Scalar.Int64
+
+
+codecs : Fractal.Scalar.Codecs DateTime Id Int64
 codecs =
     Fractal.Scalar.defineCodecs
         { codecDateTime = defaultCodecs.codecDateTime
         , codecId = defaultCodecs.codecId
+        , codecInt64 = defaultCodecs.codecInt64
         }

@@ -13,12 +13,16 @@ showMsg id_ color icon header message =
         did =
             "acc" ++ id_
     in
-    div [ class "accordion arrows-right" ]
-        [ input [ id did, name "accordion", type_ "radio" ] []
-        , section [ class ("acc message is-info is-small  " ++ color) ]
-            [ label [ class "acc-title message-header", for did ] [ I.icon1 icon (upH header) ]
-            , label [ class "acc-close", for "acc-close" ] []
-            , div [ class "acc-content message-body" ] [ textH message ]
+    if message == "" then
+        div [ class "notification is-info is-light p-4 m-0 mb-2 is-size-7" ] [ I.icon1 icon (upH header) ]
+
+    else
+        div [ class "accordion arrows-right" ]
+            [ input [ id did, name "accordion", type_ "radio" ] []
+            , section [ class ("acc message is-info is-small  " ++ color) ]
+                [ label [ class "acc-title message-header", for did ] [ I.icon1 icon (upH header) ]
+                , label [ class "acc-close", for "acc-close" ] []
+                , div [ class "acc-content message-body" ] [ textH message ]
+                ]
+            , input [ id "acc-close", name "accordion", type_ "radio" ] []
             ]
-        , input [ id "acc-close", name "accordion", type_ "radio" ] []
-        ]

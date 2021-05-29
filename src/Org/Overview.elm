@@ -789,7 +789,7 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoin ]
+                        , events_type = Just [ TensionEvent.UserJoined ]
                         , post =
                             Dict.fromList
                                 [ ( "createdAt", fromTime time )
@@ -1400,8 +1400,8 @@ viewCanvas us model =
                 viewGqlErrors err
 
             Success d ->
-                if Dict.get model.node_focus.nameid d == Nothing then
-                    viewGqlErrors [ "Node is archived, hidden or has moved." ]
+                if isFailure model.node_data && Dict.get model.node_focus.nameid d == Nothing then
+                    viewGqlErrors [ T.nodeNotFound ]
 
                 else
                     text ""

@@ -4,6 +4,7 @@
 
 module Fractal.Object.UserRights exposing (..)
 
+import Fractal.Enum.UserType
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -32,3 +33,8 @@ canCreateRoot =
 maxPublicOrga : SelectionSet Int Fractal.Object.UserRights
 maxPublicOrga =
     Object.selectionForField "Int" "maxPublicOrga" [] Decode.int
+
+
+type_ : SelectionSet Fractal.Enum.UserType.UserType Fractal.Object.UserRights
+type_ =
+    Object.selectionForField "Enum.UserType.UserType" "type_" [] Fractal.Enum.UserType.decoder

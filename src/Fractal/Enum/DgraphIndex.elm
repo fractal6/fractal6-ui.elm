@@ -9,6 +9,7 @@ import Json.Decode as Decode exposing (Decoder)
 
 type DgraphIndex
     = Int
+    | Int64
     | Float
     | Bool
     | Hash
@@ -21,11 +22,12 @@ type DgraphIndex
     | Month
     | Day
     | Hour
+    | Geo
 
 
 list : List DgraphIndex
 list =
-    [ Int, Float, Bool, Hash, Exact, Term, Fulltext, Trigram, Regexp, Year, Month, Day, Hour ]
+    [ Int, Int64, Float, Bool, Hash, Exact, Term, Fulltext, Trigram, Regexp, Year, Month, Day, Hour, Geo ]
 
 
 decoder : Decoder DgraphIndex
@@ -36,6 +38,9 @@ decoder =
                 case string of
                     "int" ->
                         Decode.succeed Int
+
+                    "int64" ->
+                        Decode.succeed Int64
 
                     "float" ->
                         Decode.succeed Float
@@ -73,6 +78,9 @@ decoder =
                     "hour" ->
                         Decode.succeed Hour
 
+                    "geo" ->
+                        Decode.succeed Geo
+
                     _ ->
                         Decode.fail ("Invalid DgraphIndex type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
@@ -85,6 +93,9 @@ toString enum =
     case enum of
         Int ->
             "int"
+
+        Int64 ->
+            "int64"
 
         Float ->
             "float"
@@ -122,6 +133,9 @@ toString enum =
         Hour ->
             "hour"
 
+        Geo ->
+            "geo"
+
 
 {-| Convert from a String representation to an elm representation enum.
 This is the inverse of the Enum `toString` function. So you can call `toString` and then convert back `fromString` safely.
@@ -139,6 +153,9 @@ fromString enumString =
     case enumString of
         "int" ->
             Just Int
+
+        "int64" ->
+            Just Int64
 
         "float" ->
             Just Float
@@ -175,6 +192,9 @@ fromString enumString =
 
         "hour" ->
             Just Hour
+
+        "geo" ->
+            Just Geo
 
         _ ->
             Nothing

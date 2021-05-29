@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Scalar exposing (Codecs, DateTime(..), Id(..), defaultCodecs, defineCodecs, unwrapCodecs, unwrapEncoder)
+module Fractal.Scalar exposing (Codecs, DateTime(..), Id(..), Int64(..), defaultCodecs, defineCodecs, unwrapCodecs, unwrapEncoder)
 
 import Graphql.Codec exposing (Codec)
 import Graphql.Internal.Builder.Object as Object
@@ -19,45 +19,52 @@ type Id
     = Id String
 
 
+type Int64
+    = Int64 String
+
+
 defineCodecs :
     { codecDateTime : Codec valueDateTime
     , codecId : Codec valueId
+    , codecInt64 : Codec valueInt64
     }
-    -> Codecs valueDateTime valueId
+    -> Codecs valueDateTime valueId valueInt64
 defineCodecs definitions =
     Codecs definitions
 
 
 unwrapCodecs :
-    Codecs valueDateTime valueId
+    Codecs valueDateTime valueId valueInt64
     ->
         { codecDateTime : Codec valueDateTime
         , codecId : Codec valueId
+        , codecInt64 : Codec valueInt64
         }
 unwrapCodecs (Codecs unwrappedCodecs) =
     unwrappedCodecs
 
 
 unwrapEncoder :
-    (RawCodecs valueDateTime valueId -> Codec getterValue)
-    -> Codecs valueDateTime valueId
+    (RawCodecs valueDateTime valueId valueInt64 -> Codec getterValue)
+    -> Codecs valueDateTime valueId valueInt64
     -> getterValue
     -> Graphql.Internal.Encode.Value
 unwrapEncoder getter (Codecs unwrappedCodecs) =
     (unwrappedCodecs |> getter |> .encoder) >> Graphql.Internal.Encode.fromJson
 
 
-type Codecs valueDateTime valueId
-    = Codecs (RawCodecs valueDateTime valueId)
+type Codecs valueDateTime valueId valueInt64
+    = Codecs (RawCodecs valueDateTime valueId valueInt64)
 
 
-type alias RawCodecs valueDateTime valueId =
+type alias RawCodecs valueDateTime valueId valueInt64 =
     { codecDateTime : Codec valueDateTime
     , codecId : Codec valueId
+    , codecInt64 : Codec valueInt64
     }
 
 
-defaultCodecs : RawCodecs DateTime Id
+defaultCodecs : RawCodecs DateTime Id Int64
 defaultCodecs =
     { codecDateTime =
         { encoder = \(DateTime raw) -> Encode.string raw
@@ -66,5 +73,9 @@ defaultCodecs =
     , codecId =
         { encoder = \(Id raw) -> Encode.string raw
         , decoder = Object.scalarDecoder |> Decode.map Id
+        }
+    , codecInt64 =
+        { encoder = \(Int64 raw) -> Encode.string raw
+        , decoder = Object.scalarDecoder |> Decode.map Int64
         }
     }

@@ -12,6 +12,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Fractal.Enum.UserType as UserType
 import Fractal.Scalar
 import Fractal.ScalarCodecs
 import Graphql.Http
@@ -309,7 +310,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx "" Nothing (UserRights False False) []
+    UserCtx "" Nothing initUserRights []
 
 
 initNodeData : NodeData
@@ -414,6 +415,7 @@ type alias UserCtx =
 type alias UserRights =
     { canLogin : Bool
     , canCreateRoot : Bool
+    , type_ : UserType.UserType
     }
 
 
@@ -436,6 +438,11 @@ type alias UserRoleExtended =
     , parent : Maybe NodeId
     , isPrivate : Bool
     }
+
+
+initUserRights : UserRights
+initUserRights =
+    UserRights False False UserType.Regular
 
 
 

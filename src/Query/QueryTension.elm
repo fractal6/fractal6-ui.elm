@@ -124,7 +124,7 @@ tensionHeadPayload =
                         | first = Present 1
                         , filter =
                             Input.buildContractFilter
-                                (\x -> { x | status = Present { eq = ContractStatus.Open } })
+                                (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } })
                                 |> Present
                     }
                 )
@@ -137,7 +137,7 @@ tensionHeadPayload =
                         | filter =
                             Input.buildEventFilter
                                 (\x ->
-                                    { x | not = Input.buildEventFilter (\e -> { e | event_type = Present { eq = TensionEvent.CommentPushed } }) |> Present }
+                                    { x | not = Input.buildEventFilter (\e -> { e | event_type = Present { eq = Present TensionEvent.CommentPushed, in_ = Absent } }) |> Present }
                                 )
                                 |> Present
                     }
@@ -326,7 +326,7 @@ circleTensionFilter : Fractal.Object.Node.TensionsInOptionalArguments -> Fractal
 circleTensionFilter a =
     { a
         | first = Present (nCircleTensionPpg + nCircleTensionPpg // 2)
-        , filter = Input.buildTensionFilter (\x -> { x | status = Present { eq = TensionStatus.Open } }) |> Present
+        , filter = Input.buildTensionFilter (\x -> { x | status = Present { eq = Present TensionStatus.Open, in_ = Absent } }) |> Present
         , order =
             Input.buildTensionOrder
                 (\b -> { b | desc = Present TensionOrderable.CreatedAt })
@@ -393,12 +393,21 @@ usersFilter authors a =
 matchAllUsers : List User -> OptionalArgument Input.UserFilter
 matchAllUsers alls =
     List.foldl
-        (\x user ->
+        (\x filter ->
             Input.buildUserFilter
                 (\d ->
+                    let
+                        f =
+                            case filter of
+                                Present y ->
+                                    Just y
+
+                                _ ->
+                                    Nothing
+                    in
                     { d
-                        | username = Present { eq = Present x.username }
-                        , and = user
+                        | username = Present { eq = Present x.username, in_ = Absent }
+                        , and = Present [ f ]
                     }
                 )
                 |> Present
@@ -486,22 +495,26 @@ subTensionAllFilterByDate nameids first offset query_ status_ type_ a =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
-                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
+                        | status = status_ |> Maybe.map (\s -> { eq = Present s, in_ = Absent }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = Present t, in_ = Absent }) |> fromMaybe
                         , and =
-                            Input.buildTensionFilter
-                                (\d1 ->
-                                    { d1
-                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                                        , or =
-                                            Input.buildTensionFilter
-                                                (\d2 ->
-                                                    { d2 | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present }
-                                                )
-                                                |> Present
-                                    }
-                                )
-                                |> Present
+                            Present
+                                [ Input.buildTensionFilter
+                                    (\d1 ->
+                                        { d1
+                                            | emitterid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                                            , or =
+                                                Present
+                                                    [ Input.buildTensionFilter
+                                                        (\d2 ->
+                                                            { d2 | receiverid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present }
+                                                        )
+                                                        |> Just
+                                                    ]
+                                        }
+                                    )
+                                    |> Just
+                                ]
                     }
                 )
                 |> Present
@@ -528,28 +541,32 @@ subTensionIntFilterByDate nameids first offset query_ status_ type_ a =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
-                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
-                        , emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                        , receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                        | status = status_ |> Maybe.map (\s -> { eq = Present s, in_ = Absent }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = Present t, in_ = Absent }) |> fromMaybe
+                        , emitterid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                        , receiverid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
                         , and =
                             query_
                                 |> Maybe.map
                                     (\q ->
-                                        Input.buildTensionFilter
+                                        [ Input.buildTensionFilter
                                             (\d2 ->
                                                 { d2
                                                     | title = { alloftext = Absent, anyoftext = Present q } |> Present
                                                     , or =
-                                                        Input.buildTensionFilter
-                                                            (\d3 ->
-                                                                { d3
-                                                                    | message = { alloftext = Absent, anyoftext = Present q } |> Present
-                                                                }
-                                                            )
-                                                            |> Present
+                                                        Present
+                                                            [ Input.buildTensionFilter
+                                                                (\d3 ->
+                                                                    { d3
+                                                                        | message = { alloftext = Absent, anyoftext = Present q } |> Present
+                                                                    }
+                                                                )
+                                                                |> Just
+                                                            ]
                                                 }
                                             )
+                                            |> Just
+                                        ]
                                     )
                                 |> fromMaybe
                     }
@@ -580,49 +597,55 @@ subTensionExtFilterByDate nameids first offset query_ status_ type_ a =
             Input.buildTensionFilter
                 (\c ->
                     { c
-                        | status = status_ |> Maybe.map (\s -> { eq = s }) |> fromMaybe
-                        , type_ = type_ |> Maybe.map (\t -> { eq = t }) |> fromMaybe
+                        | status = status_ |> Maybe.map (\s -> { eq = Present s, in_ = Absent }) |> fromMaybe
+                        , type_ = type_ |> Maybe.map (\t -> { eq = Present t, in_ = Absent }) |> fromMaybe
                         , title = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
                         , or =
-                            Input.buildTensionFilter
-                                (\d3 ->
-                                    { d3
-                                        | message = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
-                                    }
-                                )
-                                |> Present
+                            Present
+                                [ Input.buildTensionFilter
+                                    (\d3 ->
+                                        { d3
+                                            | message = query_ |> Maybe.map (\q -> { alloftext = Absent, anyoftext = Present q }) |> fromMaybe
+                                        }
+                                    )
+                                    |> Just
+                                ]
                         , and =
-                            Input.buildTensionFilter
-                                (\d ->
-                                    { d
-                                        | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                                        , not =
-                                            Input.buildTensionFilter
-                                                (\e ->
-                                                    { e
-                                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                                                    }
-                                                )
-                                                |> Present
-                                        , or =
-                                            Input.buildTensionFilter
-                                                (\d1 ->
-                                                    { d1
-                                                        | emitterid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                                                        , not =
-                                                            Input.buildTensionFilter
-                                                                (\e1 ->
-                                                                    { e1
-                                                                        | receiverid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
-                                                                    }
-                                                                )
-                                                                |> Present
-                                                    }
-                                                )
-                                                |> Present
-                                    }
-                                )
-                                |> Present
+                            Present
+                                [ Input.buildTensionFilter
+                                    (\d ->
+                                        { d
+                                            | receiverid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                                            , not =
+                                                Input.buildTensionFilter
+                                                    (\e ->
+                                                        { e
+                                                            | emitterid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                                                        }
+                                                    )
+                                                    |> Present
+                                            , or =
+                                                Present
+                                                    [ Input.buildTensionFilter
+                                                        (\d1 ->
+                                                            { d1
+                                                                | emitterid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                                                                , not =
+                                                                    Input.buildTensionFilter
+                                                                        (\e1 ->
+                                                                            { e1
+                                                                                | receiverid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                                                                            }
+                                                                        )
+                                                                        |> Present
+                                                            }
+                                                        )
+                                                        |> Just
+                                                    ]
+                                        }
+                                    )
+                                    |> Just
+                                ]
                     }
                 )
                 |> Present

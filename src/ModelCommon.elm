@@ -291,7 +291,7 @@ initAssigneeForm tid user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , tid = tid
     , targets = []
     , assignee = User "" Nothing
@@ -320,7 +320,7 @@ initLabelForm tid user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , tid = tid
     , targets = []
     , label = Label "" "" Nothing
@@ -343,7 +343,7 @@ initTensionForm user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , source = UserRole "" "" "" RoleType.Guest
     , target = initPNode
     , status = TensionStatus.Open
@@ -366,7 +366,7 @@ initTensionPatchForm tid user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , id = tid
     , status = Nothing
     , tension_type = Nothing
@@ -402,7 +402,7 @@ initLabelNodeForm user nameid =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , id = ""
     , nameid = nameid
     , post = Dict.empty
@@ -432,7 +432,7 @@ initActionForm tid user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , tid = tid
     , bid = ""
     , node = initNode

@@ -5,6 +5,7 @@ import Dict
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
+import Fractal.Enum.UserType as UserType
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
@@ -71,9 +72,10 @@ userCtxDecoder =
         (JD.field "username" JD.string)
         (JD.maybe <| JD.field "name" JD.string)
         (JD.field "rights" <|
-            JD.map2 UserRights
+            JD.map3 UserRights
                 (JD.field "canLogin" JD.bool)
                 (JD.field "canCreateRoot" JD.bool)
+                (JD.field "type_" <| UserType.decoder)
         )
         --(JD.maybe <|
         (JD.field "roles"
@@ -98,6 +100,7 @@ userCtxEncoder userCtx =
           , JE.object
                 [ ( "canLogin", JE.bool userCtx.rights.canLogin )
                 , ( "canCreateRoot", JE.bool userCtx.rights.canCreateRoot )
+                , ( "type_", JE.string <| UserType.toString userCtx.rights.type_ )
                 ]
           )
         , ( "roles"

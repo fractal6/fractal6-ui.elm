@@ -21,31 +21,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias EventOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.EventFragmentFilter }
-
-
-event :
-    (EventOptionalArguments -> EventOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.EventFragment
-    -> SelectionSet decodesTo Fractal.Object.Contract
-event fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFragmentFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "event" optionalArgs object_ identity
-
-
-closedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Contract
-closedAt =
-    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "closedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
-
-
 type alias TensionOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 
@@ -74,6 +49,31 @@ status =
 contract_type : SelectionSet Fractal.Enum.ContractType.ContractType Fractal.Object.Contract
 contract_type =
     Object.selectionForField "Enum.ContractType.ContractType" "contract_type" [] Fractal.Enum.ContractType.decoder
+
+
+closedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Contract
+closedAt =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "closedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+type alias EventOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFragmentFilter }
+
+
+event :
+    (EventOptionalArguments -> EventOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventFragment
+    -> SelectionSet decodesTo Fractal.Object.Contract
+event fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeEventFragmentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "event" optionalArgs object_ identity
 
 
 type alias CandidatesOptionalArguments =

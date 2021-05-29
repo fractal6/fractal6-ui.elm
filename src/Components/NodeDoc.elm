@@ -838,13 +838,6 @@ viewVerRow i blob =
 
 
 
---, td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
---    [ span
---        [ class "button-light"
---        --, onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
---        ]
---        [ text "Delete" ]
---    ]
 --- Utils
 
 

@@ -1263,14 +1263,15 @@ tr.mediaBox {
     line-height: 2;
     .tag {
         margin-right: 8px !important;
+        margin-bottom: 5px !important;
     }
 }
 
 .usersList {
     //line-height: 2.5;
     span  {
-        margin-right: 10px !important;
-        margin-bottom: 10px !important; // doesn't work
+        margin-right: 5px !important;
+        margin-bottom: 5px !important; // doesn't work
     }
 }
 

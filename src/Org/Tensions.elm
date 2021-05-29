@@ -1009,7 +1009,7 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoin ]
+                        , events_type = Just [ TensionEvent.UserJoined ]
                         , post =
                             Dict.fromList
                                 [ ( "createdAt", fromTime time )

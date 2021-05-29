@@ -4,7 +4,7 @@ import Auth exposing (AuthState(..), doRefreshToken)
 import Codecs exposing (QuickDoc)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
@@ -93,7 +93,7 @@ initModel user =
                     u
 
                 LoggedOut ->
-                    UserCtx "" Nothing (UserRights False False) []
+                    initUserctx
 
         form =
             NT.initModel user
@@ -242,7 +242,7 @@ type Msg
     | OnAskAck (GqlData Tension)
     | OnAskFeedback (GqlData Tension)
       -- Confirm Modal
-    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Common
@@ -318,7 +318,7 @@ update_ apis message model =
             in
             if doClose then
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
             else
@@ -409,8 +409,8 @@ update_ apis message model =
                     ( setResultFeedback result model, noOut )
 
         -- Confirm Modal
-        DoModalConfirmOpen msg txts ->
-            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, noOut )
+        DoModalConfirmOpen msg mess ->
+            ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
 
         DoModalConfirmClose _ ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )

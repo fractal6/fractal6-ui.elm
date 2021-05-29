@@ -64,11 +64,24 @@ emailValidated =
     Object.selectionForField "Bool" "emailValidated" [] Decode.bool
 
 
+type alias RightsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter }
+
+
 rights :
-    SelectionSet decodesTo Fractal.Object.UserRights
+    (RightsOptionalArguments -> RightsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserRights
     -> SelectionSet decodesTo Fractal.Object.User
-rights object_ =
-    Object.selectionForCompositeField "rights" [] object_ identity
+rights fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserRightsFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "rights" optionalArgs object_ identity
 
 
 type alias RolesOptionalArguments =

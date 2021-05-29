@@ -8,12 +8,13 @@ import Codecs exposing (QuickDoc)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Extra.Url exposing (queryBuilder, queryParser)
+import Extra.Views exposing (showMsg)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (TensionTab(..))
@@ -225,7 +226,7 @@ type Msg
     | ExpandRoles
     | CollapseRoles
       -- Confirm Modal
-    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Components
@@ -412,6 +413,7 @@ update global message model =
             ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
 
         AddLabel ->
+            -- Toggle Add Label Box
             ( { model | label_add = ternary (model.label_add == True) False True, label_edit = Nothing, colorPicker = ColorPicker.setColor Nothing model.colorPicker }
             , Cmd.none
             , Cmd.none
@@ -514,7 +516,18 @@ update global message model =
                 NoAuth ->
                     case parseErr result of
                         DuplicateErr ->
-                            ( { model | label_result = LoadingSlowly }, send (Submit SubmitEditLabel), Cmd.none )
+                            let
+                                here =
+                                    (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == (Dict.get "name" model.label_form.post |> withDefault "")) |> List.length)
+                                        > 0
+                            in
+                            if here then
+                                -- trow error if the labels is in the list of labels
+                                ( { model | label_result = result }, Cmd.none, Cmd.none )
+
+                            else
+                                -- set the labels in the node labels list
+                                ( { model | label_result = LoadingSlowly }, send (Submit SubmitEditLabel), Cmd.none )
 
                         _ ->
                             ( { model | label_result = result }, Cmd.none, Cmd.none )
@@ -602,7 +615,7 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoin ]
+                        , events_type = Just [ TensionEvent.UserJoined ]
                         , post =
                             Dict.fromList
                                 [ ( "createdAt", fromTime time )
@@ -794,8 +807,8 @@ update global message model =
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
         -- Confirm Modal
-        DoModalConfirmOpen msg txts ->
-            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, Cmd.none, Cmd.none )
+        DoModalConfirmOpen msg mess ->
+            ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, Cmd.none, Cmd.none )
 
         DoModalConfirmClose _ ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, Cmd.none, Cmd.none )
@@ -954,13 +967,17 @@ viewLabels model =
                                                     text ""
                                                 ]
                                             , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
-                                                [ span [ class "button-light", onClick (EditLabel d) ] [ text "Edit" ]
+                                                [ span [ class "button-light", onClick (EditLabel d) ] [ textH T.edit ]
                                                 , text " · "
                                                 , span
                                                     [ class "button-light"
-                                                    , onClick <| DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id) [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                    , onClick <|
+                                                        DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id)
+                                                            { message = Just ( T.labelDeleteInfoHeader, "" )
+                                                            , txts = [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                            }
                                                     ]
-                                                    [ text "Delete" ]
+                                                    [ textH T.remove ]
                                                 ]
                                             ]
                                     ]
@@ -995,60 +1012,14 @@ viewLabelsSub model =
                 div [ class "mt-6" ] [ text "No sub-circle label yet" ]
 
             else
-                div [ id "labelsTable" ]
-                    [ h2 [ class "subtitle has-text-weight-semibold" ]
-                        [ textT T.subLabels
-                        ]
-                    , table [ class "table is-fullwidth" ]
-                        [ thead []
-                            [ tr []
-                                [ th [] [ textH T.name ]
-                                , th [] [ textH T.description ]
-                                , th [] [ text "" ]
-                                , th [] []
-                                ]
-                            ]
-                        , labels
-                            |> List.indexedMap
-                                (\i d ->
-                                    [ tr [] <|
-                                        if model.label_edit == Just d then
-                                            [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
-
-                                        else
-                                            let
-                                                n_nodes =
-                                                    d.n_nodes |> withDefault 0
-                                            in
-                                            [ td [] [ viewLabel "s-medium" (Label d.id d.name d.color) ]
-                                            , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
-                                            , td [ class "" ]
-                                                [ if n_nodes > 1 then
-                                                    span [ class "is-italic is-size-7" ] [ I.icon1 "icon-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
-
-                                                  else
-                                                    text ""
-                                                ]
-
-                                            -- @debug: update and delete not implemented for sub circle
-                                            , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
-                                                [ span [ class "button-light" ] [ text "" ]
-                                                , span [ class "button-light" ]
-                                                    [ text "" ]
-                                                ]
-                                            ]
-                                    ]
-                                        ++ (case model.label_result_del of
-                                                Failure err ->
-                                                    [ td [] [ viewGqlErrors err ] ]
-
-                                                _ ->
-                                                    []
-                                           )
-                                )
-                            |> List.concat
-                            |> tbody []
-                        ]
+                div [ class "mt-6" ]
+                    [ text "Labels also present in sub-circles "
+                    , labels
+                        |> List.indexedMap
+                            (\i d ->
+                                viewLabel "ml-2" (Label d.id d.name d.color)
+                            )
+                        |> span []
                     ]
 
         RemoteData.Failure err ->

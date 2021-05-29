@@ -3,7 +3,7 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 import Auth exposing (AuthState(..), doRefreshToken)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -94,7 +94,7 @@ initForm user =
                 uctx
 
             LoggedOut ->
-                UserCtx "" Nothing (UserRights False False) []
+                initUserctx
     , tid = ""
     , cid = ""
     , page = 0
@@ -179,7 +179,7 @@ type Msg
     | OnContractCommentsAck (GqlData ContractComments)
     | OnContractDeleteAck (GqlData IdPayload)
       -- Confirm Modal
-    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Common
@@ -390,8 +390,8 @@ update_ apis message model =
             ( setContractsResult result model, noOut )
 
         -- Confirm Modal
-        DoModalConfirmOpen msg txts ->
-            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, noOut )
+        DoModalConfirmOpen msg mess ->
+            ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
 
         DoModalConfirmClose _ ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )
@@ -504,7 +504,7 @@ viewRow d model =
         , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
             [ span
                 [ class "button-light"
-                , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ]
+                , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                 ]
                 [ span [ class "tag is-danger is-light is-smaller2" ] [ I.icon "icon-x", loadingSpin deleteLoading ] ]
             ]

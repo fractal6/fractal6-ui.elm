@@ -252,11 +252,24 @@ n_children =
     Object.selectionForField "(Maybe Int)" "n_children" [] (Decode.int |> Decode.nullable)
 
 
+type alias StatsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeStatsFilter }
+
+
 stats :
-    SelectionSet decodesTo Fractal.Object.NodeStats
+    (StatsOptionalArguments -> StatsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeStats
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-stats object_ =
-    Object.selectionForCompositeField "stats" [] object_ (identity >> Decode.nullable)
+stats fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeStatsFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "stats" optionalArgs object_ (identity >> Decode.nullable)
 
 
 isRoot : SelectionSet Bool Fractal.Object.Node
@@ -297,6 +310,11 @@ charac fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "charac" optionalArgs object_ identity
+
+
+rights : SelectionSet Int Fractal.Object.Node
+rights =
+    Object.selectionForField "Int" "rights" [] Decode.int
 
 
 type alias LabelsOptionalArguments =
@@ -396,8 +414,21 @@ contracts fillInOptionals object_ =
     Object.selectionForCompositeField "contracts" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+type alias SharedOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.SharedNodeFilter }
+
+
 shared :
-    SelectionSet decodesTo Fractal.Object.SharedNode
+    (SharedOptionalArguments -> SharedOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.SharedNode
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-shared object_ =
-    Object.selectionForCompositeField "shared" [] object_ (identity >> Decode.nullable)
+shared fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeSharedNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "shared" optionalArgs object_ (identity >> Decode.nullable)

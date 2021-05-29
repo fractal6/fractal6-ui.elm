@@ -5,7 +5,7 @@ import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
-import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm)
+import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Dict
 import Extra exposing (ternary)
@@ -581,7 +581,7 @@ type Msg
       -- Labels
     | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Confirm Modal
-    | DoModalConfirmOpen Msg (List ( String, String ))
+    | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
     | DoModalConfirmSend
       -- Common
@@ -694,7 +694,7 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) [ ( upH T.confirmUnsaved, onCloseTxt ) ]) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         OnChangeInputViewMode viewMode ->
@@ -864,8 +864,8 @@ update_ apis message model =
             ( { newModel | labelsPanel = panel }, out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds )
 
         -- Confirm Modal
-        DoModalConfirmOpen msg txts ->
-            ( { model | modal_confirm = ModalConfirm.open msg txts model.modal_confirm }, noOut )
+        DoModalConfirmOpen msg mess ->
+            ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
 
         DoModalConfirmClose _ ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, noOut )

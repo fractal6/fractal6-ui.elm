@@ -22,14 +22,14 @@ type TensionEvent
     | BlobPushed
     | BlobArchived
     | BlobUnarchived
-    | UserJoin
+    | UserJoined
     | UserLeft
     | Moved
 
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserJoin, UserLeft, Moved ]
+    [ Created, Reopened, Closed, TitleUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, Moved ]
 
 
 decoder : Decoder TensionEvent
@@ -80,8 +80,8 @@ decoder =
                     "BlobUnarchived" ->
                         Decode.succeed BlobUnarchived
 
-                    "UserJoin" ->
-                        Decode.succeed UserJoin
+                    "UserJoined" ->
+                        Decode.succeed UserJoined
 
                     "UserLeft" ->
                         Decode.succeed UserLeft
@@ -141,8 +141,8 @@ toString enum =
         BlobUnarchived ->
             "BlobUnarchived"
 
-        UserJoin ->
-            "UserJoin"
+        UserJoined ->
+            "UserJoined"
 
         UserLeft ->
             "UserLeft"
@@ -207,8 +207,8 @@ fromString enumString =
         "BlobUnarchived" ->
             Just BlobUnarchived
 
-        "UserJoin" ->
-            Just UserJoin
+        "UserJoined" ->
+            Just UserJoined
 
         "UserLeft" ->
             Just UserLeft

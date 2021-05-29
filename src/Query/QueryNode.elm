@@ -153,7 +153,7 @@ nodeOrgaExtPayload =
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
         |> with
-            (Fractal.Object.Node.stats <|
+            (Fractal.Object.Node.stats identity <|
                 SelectionSet.map2 NodeStats
                     Fractal.Object.NodeStats.n_member
                     Fractal.Object.NodeStats.n_guest
@@ -194,7 +194,7 @@ nodeExtFilter nameids a =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | nameid = { eq = Absent, regexp = Present nameidsRegxp } |> Present
+                        | nameid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
                     }
                 )
                 |> Present
@@ -227,7 +227,7 @@ nodesSubFilter nameid a =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | nameid = { eq = Absent, regexp = Present nameidRegxp } |> Present
+                        | nameid = { eq = Absent, in_ = Absent, regexp = Present nameidRegxp } |> Present
                     }
                 )
                 |> Present
@@ -275,7 +275,7 @@ nodeOrgaFilter rootid a =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | rootnameid = Present { eq = Present rootid, regexp = Absent }
+                        | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
                         , not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired ] }) |> Present
                     }
                 )
@@ -283,21 +283,30 @@ nodeOrgaFilter rootid a =
     }
 
 
-matchAnyRoleType : List RoleType.RoleType -> OptionalArgument Input.NodeFilter
+matchAnyRoleType : List RoleType.RoleType -> OptionalArgument (List (Maybe Input.NodeFilter))
 matchAnyRoleType alls =
-    List.foldl
-        (\x filter ->
-            Input.buildNodeFilter
-                (\d ->
-                    { d
-                        | role_type = Present { eq = Present x }
-                        , or = filter
-                    }
-                )
-                |> Present
-        )
-        Absent
-        alls
+    --List.foldl
+    --    (\x filter ->
+    --        Input.buildNodeFilter
+    --            (\d ->
+    --                { d
+    --                    | role_type = Present { eq = Present x }
+    --                    , or = filter
+    --                }
+    --            )
+    --            |> Present
+    --    )
+    --    Absent
+    --    alls
+    Present
+        [ Input.buildNodeFilter
+            (\d ->
+                { d
+                    | role_type = Present { eq = Absent, in_ = alls |> List.map (\x -> Just x) |> Present }
+                }
+            )
+            |> Just
+        ]
 
 
 nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
@@ -520,7 +529,9 @@ nArchivedFilter a =
         | filter =
             Input.buildNodeFilter
                 (\b ->
-                    { b | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired, RoleType.Pending ] }) |> Present }
+                    { b
+                        | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired, RoleType.Pending ] }) |> Present
+                    }
                 )
                 |> Present
     }
@@ -576,7 +587,7 @@ membersFilter rootid a =
             Input.buildNodeFilter
                 (\c ->
                     { c
-                        | rootnameid = Present { eq = Present rootid, regexp = Absent }
+                        | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
                         , and = matchAnyRoleType [ RoleType.Member, RoleType.Owner, RoleType.Guest ]
                     }
                 )
@@ -837,7 +848,7 @@ nidUpFilter nids a =
         | filter =
             Input.buildNodeFilter
                 (\c ->
-                    { c | nameid = Present { eq = Absent, regexp = Present nameidsRegxp } }
+                    { c | nameid = Present { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } }
                 )
                 |> Present
     }

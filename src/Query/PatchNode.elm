@@ -110,8 +110,8 @@ updateLabelInputEncoder form =
                     Input.buildLabelFilter
                         (\i ->
                             { i
-                                | rootnameid = Present { eq = Present (nid2rootid form.nameid) }
-                                , name = Present { eq = fromMaybe (Dict.get "name" form.post), anyofterms = Absent, allofterms = Absent }
+                                | rootnameid = Present { eq = Present (nid2rootid form.nameid), in_ = Absent }
+                                , name = Present { eq = fromMaybe (Dict.get "name" form.post), in_ = Absent, anyofterms = Absent, allofterms = Absent }
                             }
                         )
 
