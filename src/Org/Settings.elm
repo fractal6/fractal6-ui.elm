@@ -414,7 +414,12 @@ update global message model =
 
         AddLabel ->
             -- Toggle Add Label Box
-            ( { model | label_add = ternary (model.label_add == True) False True, label_edit = Nothing, colorPicker = ColorPicker.setColor Nothing model.colorPicker }
+            ( { model
+                | label_add = ternary (model.label_add == True) False True
+                , label_edit = Nothing
+                , colorPicker = ColorPicker.setColor Nothing model.colorPicker
+                , label_form = initLabelNodeForm global.session.user model.node_focus.nameid
+              }
             , Cmd.none
             , Cmd.none
             )
@@ -436,7 +441,14 @@ update global message model =
                                 )
                     }
             in
-            ( { model | label_edit = Just label, label_form = newForm, label_add = False, colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker }
+            ( { model
+                | label_add = False
+                , label_edit = Just label
+                , label_form = newForm
+                , label_result = NotAsked
+                , label_result_del = NotAsked
+                , colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker
+              }
             , Cmd.none
             , Cmd.none
             )
@@ -446,7 +458,16 @@ update global message model =
                 f =
                     model.label_form
             in
-            ( { model | label_add = False, label_edit = Nothing, label_form = { f | post = Dict.empty }, label_result = NotAsked }, Cmd.none, Cmd.none )
+            ( { model
+                | label_add = False
+                , label_edit = Nothing
+                , label_form = initLabelNodeForm global.session.user model.node_focus.nameid
+                , label_result = NotAsked
+                , label_result_del = NotAsked
+              }
+            , Cmd.none
+            , Cmd.none
+            )
 
         ChangeLabelPost field value ->
             let
@@ -517,17 +538,23 @@ update global message model =
                     case parseErr result of
                         DuplicateErr ->
                             let
-                                here =
-                                    (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == (Dict.get "name" model.label_form.post |> withDefault "")) |> List.length)
+                                label_name =
+                                    Dict.get "name" model.label_form.post |> withDefault ""
+
+                                here ln =
+                                    (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
                                         > 0
+
+                                form =
+                                    model.label_form
                             in
-                            if here then
-                                -- trow error if the labels is in the list of labels
-                                ( { model | label_result = result }, Cmd.none, Cmd.none )
+                            if model.label_add && (here label_name == False) then
+                                -- set the labels in the node labels list
+                                ( { model | label_result = LoadingSlowly, label_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
 
                             else
-                                -- set the labels in the node labels list
-                                ( { model | label_result = LoadingSlowly }, send (Submit SubmitEditLabel), Cmd.none )
+                                -- trow error if the labels is in the list of labels
+                                ( { model | label_result = result }, Cmd.none, Cmd.none )
 
                         _ ->
                             ( { model | label_result = result }, Cmd.none, Cmd.none )
@@ -983,7 +1010,10 @@ viewLabels model =
                                     ]
                                         ++ (case model.label_result_del of
                                                 Failure err ->
-                                                    [ td [] [ viewGqlErrors err ] ]
+                                                    [ ternary (model.label_form.id == d.id)
+                                                        (td [] [ viewGqlErrors err ])
+                                                        (text "")
+                                                    ]
 
                                                 _ ->
                                                     []

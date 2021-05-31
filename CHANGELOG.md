@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### New
 - This changelog file
 - add a new tension sub-tab in the tensions mains tab. The circle view allow the tensions to be separated in the kanban like view.
+- A info message can now be passed to the ConfirmModal component.
 
 ### Changed
 - Improve the tension search bar filter
@@ -23,11 +24,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     * creator of that tension
     * coordinator of the source or target circle
     * assigness
+- fix how duplicate label are managed in the label settings page.
 
 ## [0.4] - ...
 
 ### New
-- Labels management:
+- Tension Labels management:
     - add labels (or tags) to assist in categorization/triage/search of tensions
     - tensions may have one or more labels
     - visual/memory color coding

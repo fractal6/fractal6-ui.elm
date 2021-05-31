@@ -13,7 +13,7 @@ import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
@@ -21,8 +21,8 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
-import ModelCommon.View exposing (getAvatar, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2eor, uriFromUsername)
+import ModelCommon.View exposing (byAt, contractEventToText, contractTypeToText, getAvatar, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)
@@ -465,8 +465,7 @@ headers =
 viewContractsTable : Contracts -> Op -> Model -> Html Msg
 viewContractsTable data op model =
     table
-        [ class "table is-fullwidth tensionContracts"
-        ]
+        [ class "table is-fullwidth tensionContracts" ]
         [ thead [ class "is-size-7" ]
             [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ textH x ]))
             ]
@@ -493,9 +492,9 @@ viewRow d model =
         [ td [ onClick (DoClickContract d.id) ]
             [ a
                 [ href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref) ]
-                [ viewContractEvent d ]
+                [ span [] [ textH (contractEventToText d.event.event_type) ] ]
             ]
-        , td [ onClick (DoClickContract d.id) ] [ viewContractType d ]
+        , td [ onClick (DoClickContract d.id) ] [ span [] [ textH (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-light" ] [ viewUsernameLink d.createdBy.username ]
         , td [] [ text (formatTime d.createdAt) ]
 
@@ -550,7 +549,7 @@ viewContract op model =
 viewContractPage : Contract -> Op -> Model -> Html Msg
 viewContractPage data op model =
     div []
-        [ text "contract page"
+        [ viewContractBox data
         , case data.comments of
             Nothing ->
                 div [ class "spinner" ] []
@@ -566,31 +565,44 @@ viewContractPage data op model =
                             viewComment c isAuthor
                         )
                     |> div []
-        , div [] [ text "input box here" ]
         ]
 
 
-viewContractEvent : Contract -> Html Msg
-viewContractEvent d =
-    span []
-        [ case d.event.event_type of
-            TensionEvent.Moved ->
-                textH "tension movement"
+viewContractBox : Contract -> Html Msg
+viewContractBox data =
+    div []
+        [ form [ class "box is-light form" ]
+            [ div [ class "field is-horizontal" ]
+                [ div [ class "field-label" ] [ label [ class "label" ] [ text "contract type" ] ]
+                , div [ class "field-body" ]
+                    [ div [ class "field is-narrow" ]
+                        [ input [ class "input", value (upH (contractTypeToText data.contract_type)), disabled True ] []
+                        ]
+                    ]
+                ]
+            , div [ class "field is-horizontal" ]
+                [ div [ class "field-label" ] [ label [ class "label" ] [ text "event" ] ]
+                , div [ class "field-body" ] <|
+                    case data.event.event_type of
+                        TensionEvent.Moved ->
+                            let
+                                emitter =
+                                    data.event.old |> withDefault "unknown" |> nid2eor
 
-            _ ->
-                text ""
-        ]
+                                receiver =
+                                    data.event.new |> withDefault "unkown" |> nid2eor
+                            in
+                            [ div [ class "field is-narrow" ]
+                                [ input [ class "input", value (upH (contractEventToText data.event.event_type)), disabled True ] []
+                                ]
+                            , viewTensionArrow "is-pulled-right" emitter receiver
+                            ]
 
-
-viewContractType : Contract -> Html Msg
-viewContractType d =
-    span []
-        [ case d.contract_type of
-            ContractType.AnyCoordoDual ->
-                text "Coordo validation"
-
-            _ ->
-                text ""
+                        _ ->
+                            [ text "not implemented" ]
+                ]
+            , div [ class "field pb-3" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ "\u{00A0}"), byAt data.createdBy data.createdAt ] ]
+            ]
         ]
 
 

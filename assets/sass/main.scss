@@ -109,18 +109,6 @@ hr {
     animation: fadeOut 0.5s;
 }
 
-.canBeClearedRow {
-	//display: revert;
-	//opacity: 1;
-	//transition: opacity 500ms;
-	//transform: translate(0);
-	//&.do-clear {
-	//	transform:translate(9999px);
-	//	opacity: 0;
-	//	display: none;
-	//}
-}
-
 .is-flex-grow {
 	flex-grow: 1 !important;
 }

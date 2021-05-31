@@ -1520,7 +1520,7 @@ viewTensions focus pattern tensionsData tensionDir =
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then
-                    div [] [ textH T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
+                    div [ class "m-4" ] [ textH T.noResultsFor, text ": ", text (pattern |> withDefault "") ]
 
                 else
                     case focus.type_ of

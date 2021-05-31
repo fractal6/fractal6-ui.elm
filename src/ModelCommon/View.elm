@@ -4,9 +4,11 @@ import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
@@ -533,3 +535,35 @@ getNodeTextFromNodeType type_ =
 
         NodeType.Role ->
             FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp T.tensionRoleAdded T.noFirstLinksRole
+
+
+
+{-
+   Contract
+-}
+
+
+contractTypeToText : ContractType.ContractType -> String
+contractTypeToText c =
+    case c of
+        ContractType.AnyCoordoDual ->
+            "dual coordinators"
+
+        ContractType.AnyParticipants ->
+            "poll"
+
+        ContractType.AnyCoordoTarget ->
+            "receiver coordinator"
+
+        ContractType.AnyCoordoSource ->
+            "emitter coordinator"
+
+
+contractEventToText : TensionEvent.TensionEvent -> String
+contractEventToText c =
+    case c of
+        TensionEvent.Moved ->
+            "move tension"
+
+        _ ->
+            "@TODO text"

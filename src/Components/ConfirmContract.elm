@@ -22,7 +22,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
 import ModelCommon.Codecs exposing (nid2eor, nid2rootid)
-import ModelCommon.View exposing (viewTensionArrow)
+import ModelCommon.View exposing (contractEventToText, contractTypeToText, viewTensionArrow)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -468,7 +468,7 @@ showContractForm f =
             [ div [ class "field-label" ] [ label [ class "label" ] [ text "contract type" ] ]
             , div [ class "field-body" ]
                 [ div [ class "field is-narro" ]
-                    [ input [ class "input", value "Dual coordo", disabled True ] []
+                    [ input [ class "input", value (upH (contractTypeToText f.contract_type)), disabled True ] []
                     ]
                 ]
             ]
@@ -485,7 +485,7 @@ showContractForm f =
                                 f.event.new |> withDefault "unkown" |> nid2eor
                         in
                         [ div [ class "field is-narrow" ]
-                            [ input [ class "input", value "move tension", disabled True ] []
+                            [ input [ class "input", value (upH (contractEventToText f.event.event_type)), disabled True ] []
                             ]
                         , viewTensionArrow "is-pulled-right" emitter receiver
                         ]
