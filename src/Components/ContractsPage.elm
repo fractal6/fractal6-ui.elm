@@ -10,6 +10,7 @@ import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
@@ -21,7 +22,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2eor, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, hasCoordoRole, memberIdDecodec, nid2eor, uriFromUsername)
 import ModelCommon.View exposing (byAt, contractEventToText, contractTypeToText, getAvatar, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
 import ModelSchema exposing (..)
 import Ports
@@ -419,7 +420,10 @@ subscriptions =
 
 
 type alias Op =
-    {}
+    { emitterid : String
+    , receiverid : String
+    , isAdmin : Bool
+    }
 
 
 view : Op -> State -> Html Msg
@@ -470,20 +474,23 @@ viewContractsTable data op model =
             [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ textH x ]))
             ]
         , data
-            |> List.map (\d -> viewRow d model)
+            |> List.map (\d -> viewRow d op model)
             |> List.concat
             |> tbody []
         ]
 
 
-viewRow : Contract -> Model -> List (Html Msg)
-viewRow d model =
+viewRow : Contract -> Op -> Model -> List (Html Msg)
+viewRow d op model =
     let
         deleteLoading =
             (model.contract_result_del == LoadingSlowly) && d.id == model.form.cid
 
         isDeleted =
             (withMaybeData model.contract_result_del /= Nothing) && model.form.cid == d.id
+
+        isAuthor =
+            d.createdBy.username == model.form.uctx.username
     in
     [ tr
         [ class "mediaBox"
@@ -501,11 +508,15 @@ viewRow d model =
         -- participant
         -- n comments icons
         , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
-            [ span
-                [ class "button-light"
-                , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ] }
-                ]
-                [ span [ class "tag is-danger is-light is-smaller2" ] [ I.icon "icon-x", loadingSpin deleteLoading ] ]
+            [ if isAuthor || op.isAdmin then
+                span
+                    [ class "button-light"
+                    , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ] }
+                    ]
+                    [ span [ class "tag is-danger is-light is-smaller2" ] [ I.icon "icon-x", loadingSpin deleteLoading ] ]
+
+              else
+                text ""
             ]
         ]
     ]
@@ -549,31 +560,49 @@ viewContract op model =
 viewContractPage : Contract -> Op -> Model -> Html Msg
 viewContractPage data op model =
     div []
-        [ viewContractBox data
+        [ viewContractBox data op model
         , case data.comments of
             Nothing ->
                 div [ class "spinner" ] []
 
             Just comments ->
-                comments
-                    |> List.map
-                        (\c ->
-                            let
-                                isAuthor =
-                                    c.createdBy.username == model.form.uctx.username
-                            in
-                            viewComment c isAuthor
-                        )
-                    |> div []
+                --viewComments comments data op model -- @todo
+                text ""
         ]
 
 
-viewContractBox : Contract -> Html Msg
-viewContractBox data =
+viewContractBox : Contract -> Op -> Model -> Html Msg
+viewContractBox data op model =
+    let
+        uctx =
+            model.form.uctx
+
+        isCandidate =
+            data.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member uctx.username
+
+        participants =
+            data.participants |> withDefault []
+
+        isParticipant =
+            participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member uctx.username
+
+        --coordoRoles =
+        --    uctx.roles |> getOrgaRoles [ model.rootnameid ] |> getCoordoRoles |> List.map (\x -> x.nameid)
+        isValidator =
+            case data.contract_type of
+                ContractType.AnyCoordoDual ->
+                    -- nedd charac -> make db request !!!
+                    hasCoordoRole uctx (withDefault "" data.event.old) NodeMode.Coordinated
+                        || hasCoordoRole uctx (withDefault "" data.event.new) NodeMode.Coordinated
+
+                _ ->
+                    -- @todo / not implemented
+                    False
+    in
     div []
         [ form [ class "box is-light form" ]
             [ div [ class "field is-horizontal" ]
-                [ div [ class "field-label" ] [ label [ class "label" ] [ text "contract type" ] ]
+                [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractType ] ]
                 , div [ class "field-body" ]
                     [ div [ class "field is-narrow" ]
                         [ input [ class "input", value (upH (contractTypeToText data.contract_type)), disabled True ] []
@@ -581,7 +610,7 @@ viewContractBox data =
                     ]
                 ]
             , div [ class "field is-horizontal" ]
-                [ div [ class "field-label" ] [ label [ class "label" ] [ text "event" ] ]
+                [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractEvent ] ]
                 , div [ class "field-body" ] <|
                     case data.event.event_type of
                         TensionEvent.Moved ->
@@ -601,9 +630,50 @@ viewContractBox data =
                         _ ->
                             [ text "not implemented" ]
                 ]
-            , div [ class "field pb-3" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ "\u{00A0}"), byAt data.createdBy data.createdAt ] ]
+            , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ "\u{00A0}"), byAt data.createdBy data.createdAt ] ]
             ]
+        , if (isValidator || isCandidate) && isParticipant == False then
+            p [ class "buttons is-centered" ]
+                [ div [ class "button is-danger is-light is-rounded" ] [ span [ class "mx-4" ] [ textH "decline" ] ]
+                , div [ class "button is-success is-light is-rounded" ] [ span [ class "mx-4" ] [ textH "accept" ] ]
+                ]
+
+          else
+            text ""
         ]
+
+
+
+--viewComments : List Comment -> Contract -> Op -> Model -> Html Msg
+--viewComments comments data op model =
+--    let
+--        userInput =
+--            case model.user of
+--                LoggedIn uctx ->
+--                    let
+--                        orgaRoles =
+--                            getOrgaRoles uctx.roles [ op.emitterid, op.receiverid ]
+--                    in
+--                    case orgaRoles of
+--                        [] ->
+--                            viewJoinNeeded model.node_focus
+--
+--                        _ ->
+--                            viewCommentInput uctx t model.tension_form model.tension_patch model.inputViewMode
+--
+--                LoggedOut ->
+--                    viewJoinNeeded model.node_focus
+--    in
+--    comments
+--        |> List.map
+--            (\c ->
+--                let
+--                    isAuthor =
+--                        c.createdBy.username == model.form.uctx.username
+--                in
+--                viewComment c isAuthor
+--            )
+--        |> div []
 
 
 viewComment : Comment -> Bool -> Html Msg

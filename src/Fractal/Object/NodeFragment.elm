@@ -133,3 +133,23 @@ skills =
 role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.NodeFragment
 role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
+
+
+type alias ChildrenAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
+
+
+childrenAggregate :
+    (ChildrenAggregateOptionalArguments -> ChildrenAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeFragmentAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
+childrenAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "childrenAggregate" optionalArgs object_ (identity >> Decode.nullable)

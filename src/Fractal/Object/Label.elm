@@ -100,3 +100,43 @@ n_nodes =
 n_tensions : SelectionSet (Maybe Int) Fractal.Object.Label
 n_tensions =
     Object.selectionForField "(Maybe Int)" "n_tensions" [] (Decode.int |> Decode.nullable)
+
+
+type alias TensionsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+tensionsAggregate :
+    (TensionsAggregateOptionalArguments -> TensionsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Label
+tensionsAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tensionsAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias NodesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
+
+
+nodesAggregate :
+    (NodesAggregateOptionalArguments -> NodesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Label
+nodesAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "nodesAggregate" optionalArgs object_ (identity >> Decode.nullable)

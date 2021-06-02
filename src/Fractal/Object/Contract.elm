@@ -147,6 +147,66 @@ comments fillInOptionals object_ =
     Object.selectionForCompositeField "comments" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
+type alias CandidatesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+candidatesAggregate :
+    (CandidatesAggregateOptionalArguments -> CandidatesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Contract
+candidatesAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "candidatesAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias ParticipantsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.VoteFilter }
+
+
+participantsAggregate :
+    (ParticipantsAggregateOptionalArguments -> ParticipantsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.VoteAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Contract
+participantsAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "participantsAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias CommentsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.CommentFilter }
+
+
+commentsAggregate :
+    (CommentsAggregateOptionalArguments -> CommentsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.CommentAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Contract
+commentsAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeCommentFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "commentsAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
 id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Contract
 id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)

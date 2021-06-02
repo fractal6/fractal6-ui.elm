@@ -31,7 +31,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm, UserForm)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload, userPayload)
 import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
 
@@ -122,6 +122,7 @@ contractPayload =
         |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
         |> with Fractal.Object.Contract.status
         |> with Fractal.Object.Contract.contract_type
+        |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.participants identity votePayload)
         |> hardcoded Nothing
 

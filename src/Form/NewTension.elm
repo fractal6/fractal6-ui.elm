@@ -653,7 +653,7 @@ update_ apis message model =
                 LoggedIn uctx ->
                     let
                         sources =
-                            getOrgaRoles model.form.uctx.roles [ nid2rootid model.form.target.nameid ]
+                            getOrgaRoles [ nid2rootid model.form.target.nameid ] model.form.uctx.roles
                     in
                     if sources == [] && model.refresh_trial == 0 then
                         ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )

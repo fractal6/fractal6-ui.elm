@@ -9,6 +9,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
+import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema
     exposing
@@ -262,6 +263,12 @@ memberIdCodec rootnameid username =
     String.join "#" [ rootnameid, "", "@" ++ username ]
 
 
+memberIdDecodec : String -> String
+memberIdDecodec nameid =
+    -- Returns the username of member given the Member node nameid
+    String.split "@" nameid |> LE.last |> withDefault ""
+
+
 nodeIdCodec : String -> String -> NodeType.NodeType -> String
 nodeIdCodec parentid targetid type_ =
     -- Returns the nameid of a new Circle/Role given the parentid and the nameid fragment.
@@ -301,8 +308,8 @@ nearestCircleid nameid =
             nameid
 
 
-getOrgaRoles : List UserRole -> List String -> List UserRole
-getOrgaRoles roles nameids =
+getOrgaRoles : List String -> List UserRole -> List UserRole
+getOrgaRoles nameids roles =
     -- Return all roles of an user inside organisations given the nameids in those organisations
     let
         rootnameids =
@@ -311,8 +318,8 @@ getOrgaRoles roles nameids =
     List.filter (\r -> List.member r.rootnameid rootnameids) roles
 
 
-getCircleRoles : List UserRole -> List String -> List UserRole
-getCircleRoles roles nameids =
+getCircleRoles : List String -> List UserRole -> List UserRole
+getCircleRoles nameids roles =
     -- Return all roles of an user inside circles given the nameids of thoses circles (or the nearest circles if a role is given).
     let
         circleids =
@@ -329,6 +336,42 @@ getCoordoRoles roles =
 isOwner : List UserRole -> Bool
 isOwner roles =
     List.any (\r -> r.role_type == RoleType.Owner) roles
+
+
+
+{-
+   Auth
+-}
+
+
+userHasRole : UserCtx -> String -> Bool
+userHasRole uctx nameid =
+    uctx.roles
+        |> List.filter (\r -> r.role_type /= RoleType.Guest)
+        |> List.map (\r -> nearestCircleid r.nameid)
+        |> List.member nameid
+
+
+userIsCoordo : UserCtx -> String -> Bool
+userIsCoordo uctx nameid =
+    uctx.roles
+        |> List.filter (\r -> r.role_type == RoleType.Coordinator)
+        |> List.map (\r -> nearestCircleid r.nameid)
+        |> List.member nameid
+
+
+hasCoordoRole : UserCtx -> String -> NodeMode.NodeMode -> Bool
+hasCoordoRole uctx nameid mode =
+    let
+        nid =
+            nearestCircleid nameid
+    in
+    case mode of
+        NodeMode.Agile ->
+            userHasRole uctx nameid
+
+        NodeMode.Coordinated ->
+            userIsCoordo uctx nameid
 
 
 

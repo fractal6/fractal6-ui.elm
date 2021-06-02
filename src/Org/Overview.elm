@@ -1271,7 +1271,7 @@ viewSearchBar us model =
                                             Dict.get p.focus.nameid (withMaybeData model.orga_data |> withDefault Dict.empty) |> withDefault initNode
 
                                         isAdmin =
-                                            List.length (getNewNodeRights uctx node model.orga_data) > 0
+                                            List.length (getNodeRights uctx node model.orga_data) > 0
 
                                         hasRole =
                                             Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
@@ -1568,11 +1568,11 @@ viewJoinOrgaStep orga step =
 ---- Utils
 
 
-getNewNodeRights : UserCtx -> Node -> GqlData NodesData -> List UserRole
-getNewNodeRights uctx target odata =
+getNodeRights : UserCtx -> Node -> GqlData NodesData -> List UserRole
+getNodeRights uctx target odata =
     let
         orgaRoles =
-            getOrgaRoles uctx.roles [ target.rootnameid ]
+            getOrgaRoles [ target.rootnameid ] uctx.roles
     in
     if List.length orgaRoles == 0 then
         []
@@ -1589,7 +1589,7 @@ getNewNodeRights uctx target odata =
                 List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
             circleRoles =
-                getCircleRoles orgaRoles [ target.nameid ]
+                getCircleRoles [ target.nameid ] orgaRoles
 
             allCoordoRoles =
                 getCoordoRoles orgaRoles
@@ -1601,11 +1601,7 @@ getNewNodeRights uctx target odata =
             NodeMode.Agile ->
                 case circleRoles of
                     [] ->
-                        if List.length childrenRoles == 0 then
-                            orgaRoles
-
-                        else
-                            []
+                        orgaRoles
 
                     circleRoles_ ->
                         circleRoles_

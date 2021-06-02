@@ -955,7 +955,10 @@ update global message model =
                         resetForm =
                             initTensionPatchForm model.tensionid global.session.user
                     in
-                    ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }, Cmd.none, Ports.bulma_driver "" )
+                    ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
+                    , Ports.bulma_driver ""
+                    , send (UpdateSessionTensionHead (withMaybeData tension_h))
+                    )
 
                 NoAuth ->
                     ( { model | title_result = result }, Cmd.none, Cmd.none )
@@ -1260,7 +1263,10 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | assigneesPanel = panel, tension_head = th, isAssigneeOpen = isAssigneeOpen }, out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | assigneesPanel = panel, tension_head = th, isAssigneeOpen = isAssigneeOpen }
+            , out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            )
 
         -- Labels
         DoLabelEdit ->
@@ -1301,7 +1307,10 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | labelsPanel = panel, tension_head = th, isLabelOpen = isLabelOpen }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | labelsPanel = panel, tension_head = th, isLabelOpen = isLabelOpen }
+            , out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            )
 
         -- Action
         DoActionEdit blob ->
@@ -1376,19 +1385,19 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
-                OkAuth t ->
+                OkAuth _ ->
                     let
-                        newTh =
+                        th =
                             withMapData
-                                (\th ->
+                                (\t ->
                                     -- @debug t.action not sync
-                                    { th | action = archiveActionToggle th.action }
+                                    { t | action = archiveActionToggle t.action }
                                 )
                                 model.tension_head
                     in
-                    ( { model | actionPanel = panel, tension_head = newTh }
+                    ( { model | actionPanel = panel, tension_head = th }
                     , Cmd.none
-                    , send UpdateUserToken
+                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTensionHead (withMaybeData th)) ]
                     )
 
                 NoAuth ->
@@ -1663,13 +1672,21 @@ update global message model =
                 ( data, out ) =
                     ContractsPage.update apis msg model.contractsPage
 
-                res =
-                    out.result
+                th =
+                    Maybe.map
+                        (\r ->
+                            withMapData (\x -> { x | contracts = Just [ { id = x.id } ] }) model.tension_head
+                        )
+                        out.result
+                        |> withDefault model.tension_head
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | contractsPage = data }, out.cmds |> List.map (\m -> Cmd.map ContractsPageMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | contractsPage = data, tension_head = th }
+            , out.cmds |> List.map (\m -> Cmd.map ContractsPageMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1875,7 +1892,8 @@ viewTension u t model =
                     Contracts ->
                         case t.contracts |> withDefault [] of
                             [ c ] ->
-                                ContractsPage.view {} model.contractsPage |> Html.map ContractsPageMsg
+                                ContractsPage.view { emitterid = t.emitter.nameid, receiverid = t.receiver.nameid, isAdmin = model.isTensionAdmin } model.contractsPage
+                                    |> Html.map ContractsPageMsg
 
                             _ ->
                                 div [] [ text "No contracts yet..." ]
@@ -1924,7 +1942,7 @@ viewComments u t model =
                         LoggedIn uctx ->
                             let
                                 orgaRoles =
-                                    getOrgaRoles uctx.roles [ t.emitter.nameid, t.receiver.nameid ]
+                                    getOrgaRoles [ t.emitter.nameid, t.receiver.nameid ] uctx.roles
                             in
                             case orgaRoles of
                                 [] ->
@@ -2988,7 +3006,7 @@ getTensionRights user th_d path_d =
                         Success p ->
                             let
                                 orgaRoles =
-                                    getOrgaRoles uctx.roles [ nid2rootid p.focus.nameid ]
+                                    getOrgaRoles [ nid2rootid p.focus.nameid ] uctx.roles
 
                                 childrenRoles =
                                     getChildrenLeaf th.receiver.nameid p.focus
@@ -2997,7 +3015,7 @@ getTensionRights user th_d path_d =
                                     List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
 
                                 circleRoles =
-                                    getCircleRoles orgaRoles [ th.receiver.nameid, th.emitter.nameid ]
+                                    getCircleRoles [ th.receiver.nameid, th.emitter.nameid ] orgaRoles
 
                                 coordoRoles =
                                     getCoordoRoles circleRoles
@@ -3019,10 +3037,10 @@ getTensionRights user th_d path_d =
                                         -- Is a  Circle member
                                         (List.length circleRoles > 0)
                                             || -- Or No member in this circle
-                                               (List.length childrenRoles == 0 && List.length orgaRoles > 0)
+                                               (List.length orgaRoles > 0)
 
                                     NodeMode.Coordinated ->
-                                        -- Is s a circle coordo
+                                        -- Is a circle coordo
                                         (List.length coordoRoles > 0)
                                             || -- Or No coordo in this circe
                                                (List.length childrenCoordos == 0 && List.length (getCoordoRoles orgaRoles) > 0)

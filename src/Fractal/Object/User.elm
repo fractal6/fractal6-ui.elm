@@ -212,3 +212,103 @@ bio =
 utc : SelectionSet (Maybe String) Fractal.Object.User
 utc =
     Object.selectionForField "(Maybe String)" "utc" [] (Decode.string |> Decode.nullable)
+
+
+type alias RolesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
+
+
+rolesAggregate :
+    (RolesAggregateOptionalArguments -> RolesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+rolesAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "rolesAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias BackedRolesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NodeFilter }
+
+
+backed_rolesAggregate :
+    (BackedRolesAggregateOptionalArguments -> BackedRolesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+backed_rolesAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "backed_rolesAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias TensionsCreatedAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+tensions_createdAggregate :
+    (TensionsCreatedAggregateOptionalArguments -> TensionsCreatedAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+tensions_createdAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tensions_createdAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias TensionsAssignedAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+tensions_assignedAggregate :
+    (TensionsAssignedAggregateOptionalArguments -> TensionsAssignedAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+tensions_assignedAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "tensions_assignedAggregate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+type alias ContractsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.ContractFilter }
+
+
+contractsAggregate :
+    (ContractsAggregateOptionalArguments -> ContractsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.ContractAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+contractsAggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeContractFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "contractsAggregate" optionalArgs object_ (identity >> Decode.nullable)

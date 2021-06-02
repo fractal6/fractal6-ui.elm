@@ -390,6 +390,16 @@ newContract =
     "new contract"
 
 
+contractType : String
+contractType =
+    "contract type"
+
+
+contractEvent : String
+contractEvent =
+    "event"
+
+
 createContract : String
 createContract =
     "create contract"

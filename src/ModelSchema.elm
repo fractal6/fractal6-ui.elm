@@ -155,7 +155,7 @@ type alias TensionHead =
 
     --
     , blobs : Maybe (List Blob) -- head / len() == 1
-    , contracts : Maybe (List IdPayload)
+    , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : List Event
     }
 
@@ -228,6 +228,7 @@ type alias Contract =
     , contract_type : ContractType.ContractType
 
     --, candidate:
+    , candidates : Maybe (List Username)
     , participants : Maybe (List Vote)
 
     -- Maybe hardocded

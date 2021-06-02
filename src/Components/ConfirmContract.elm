@@ -465,7 +465,7 @@ showContractForm : ContractForm -> Html Msg
 showContractForm f =
     form [ class "box is-light form" ]
         [ div [ class "field is-horizontal" ]
-            [ div [ class "field-label" ] [ label [ class "label" ] [ text "contract type" ] ]
+            [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractType ] ]
             , div [ class "field-body" ]
                 [ div [ class "field is-narro" ]
                     [ input [ class "input", value (upH (contractTypeToText f.contract_type)), disabled True ] []
@@ -473,7 +473,7 @@ showContractForm f =
                 ]
             ]
         , div [ class "field is-horizontal" ]
-            [ div [ class "field-label" ] [ label [ class "label" ] [ text "event" ] ]
+            [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractEvent ] ]
             , div [ class "field-body" ] <|
                 case f.event.event_type of
                     TensionEvent.Moved ->
