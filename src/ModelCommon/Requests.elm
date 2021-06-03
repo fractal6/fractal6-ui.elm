@@ -13,7 +13,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Label, LabelFull, Member, NodeId, Post, Tension, User, UserCtx, UserRoleExtended, Username)
+import ModelSchema exposing (Count, Label, LabelFull, Member, NodeId, Post, Tension, User, UserCtx, UserRoleExtended, Username)
 import Query.QueryNode exposing (MemberNode)
 import RemoteData exposing (RemoteData)
 
@@ -237,10 +237,31 @@ tensionDecoder =
         |> JDE.andMap (JD.field "receiver" emitterOrReceiverDecoder)
         |> JDE.andMap (JD.maybe <| JD.field "action" TensionAction.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
+        --|> JDE.andMap commentsAggDecoder
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
 
 
+{-| Decode count into a Aggregage collections
+-}
+commentsAggDecoder : JD.Decoder (Maybe Count)
+commentsAggDecoder =
+    JD.map (\x -> Just { count = x }) (JD.maybe <| JD.field "n_comments" JD.int)
 
+
+
+--|> tt (JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int))
+
+
+tt c x =
+    { c | comments_aggr = { count = x } }
+
+
+
+--|> JDE.andMap
+--    (JD.maybe <|
+--        JD.field "comments_agg"
+--            (JD.map Count (JD.maybe <| JD.field "count" JD.int))
+--    )
 --
 -- User management
 --

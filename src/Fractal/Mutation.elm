@@ -68,42 +68,6 @@ deleteNode requiredArgs object_ =
     Object.selectionForCompositeField "deleteNode" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeFilter ] object_ (identity >> Decode.nullable)
 
 
-type alias AddSharedNodeRequiredArguments =
-    { input : List Fractal.InputObject.AddSharedNodeInput }
-
-
-addSharedNode :
-    AddSharedNodeRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddSharedNodePayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-addSharedNode requiredArgs object_ =
-    Object.selectionForCompositeField "addSharedNode" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddSharedNodeInput |> Encode.list) ] object_ (identity >> Decode.nullable)
-
-
-type alias UpdateSharedNodeRequiredArguments =
-    { input : Fractal.InputObject.UpdateSharedNodeInput }
-
-
-updateSharedNode :
-    UpdateSharedNodeRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateSharedNodePayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-updateSharedNode requiredArgs object_ =
-    Object.selectionForCompositeField "updateSharedNode" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateSharedNodeInput ] object_ (identity >> Decode.nullable)
-
-
-type alias DeleteSharedNodeRequiredArguments =
-    { filter : Fractal.InputObject.SharedNodeFilter }
-
-
-deleteSharedNode :
-    DeleteSharedNodeRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteSharedNodePayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-deleteSharedNode requiredArgs object_ =
-    Object.selectionForCompositeField "deleteSharedNode" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeSharedNodeFilter ] object_ (identity >> Decode.nullable)
-
-
 type alias AddNodeFragmentRequiredArguments =
     { input : List Fractal.InputObject.AddNodeFragmentInput }
 
@@ -212,40 +176,40 @@ deleteNodeCharac requiredArgs object_ =
     Object.selectionForCompositeField "deleteNodeCharac" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeCharacFilter ] object_ (identity >> Decode.nullable)
 
 
-type alias AddNodeStatsRequiredArguments =
-    { input : List Fractal.InputObject.AddNodeStatsInput }
+type alias AddOrgaAggRequiredArguments =
+    { input : List Fractal.InputObject.AddOrgaAggInput }
 
 
-addNodeStats :
-    AddNodeStatsRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddNodeStatsPayload
+addOrgaAgg :
+    AddOrgaAggRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddOrgaAggPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addNodeStats requiredArgs object_ =
-    Object.selectionForCompositeField "addNodeStats" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddNodeStatsInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addOrgaAgg requiredArgs object_ =
+    Object.selectionForCompositeField "addOrgaAgg" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddOrgaAggInput |> Encode.list) ] object_ (identity >> Decode.nullable)
 
 
-type alias UpdateNodeStatsRequiredArguments =
-    { input : Fractal.InputObject.UpdateNodeStatsInput }
+type alias UpdateOrgaAggRequiredArguments =
+    { input : Fractal.InputObject.UpdateOrgaAggInput }
 
 
-updateNodeStats :
-    UpdateNodeStatsRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateNodeStatsPayload
+updateOrgaAgg :
+    UpdateOrgaAggRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateOrgaAggPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateNodeStats requiredArgs object_ =
-    Object.selectionForCompositeField "updateNodeStats" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateNodeStatsInput ] object_ (identity >> Decode.nullable)
+updateOrgaAgg requiredArgs object_ =
+    Object.selectionForCompositeField "updateOrgaAgg" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateOrgaAggInput ] object_ (identity >> Decode.nullable)
 
 
-type alias DeleteNodeStatsRequiredArguments =
-    { filter : Fractal.InputObject.NodeStatsFilter }
+type alias DeleteOrgaAggRequiredArguments =
+    { filter : Fractal.InputObject.OrgaAggFilter }
 
 
-deleteNodeStats :
-    DeleteNodeStatsRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteNodeStatsPayload
+deleteOrgaAgg :
+    DeleteOrgaAggRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteOrgaAggPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteNodeStats requiredArgs object_ =
-    Object.selectionForCompositeField "deleteNodeStats" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeStatsFilter ] object_ (identity >> Decode.nullable)
+deleteOrgaAgg requiredArgs object_ =
+    Object.selectionForCompositeField "deleteOrgaAgg" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeOrgaAggFilter ] object_ (identity >> Decode.nullable)
 
 
 type alias UpdatePostRequiredArguments =

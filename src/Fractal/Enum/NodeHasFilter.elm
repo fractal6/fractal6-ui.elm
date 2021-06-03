@@ -23,10 +23,6 @@ type NodeHasFilter
     | Mandate
     | Docs
     | Source
-    | N_tensions_out
-    | N_tensions_in
-    | N_children
-    | Stats
     | IsRoot
     | IsPersonal
     | IsPrivate
@@ -39,12 +35,12 @@ type NodeHasFilter
     | Skills
     | Role_type
     | Contracts
-    | Shared
+    | Orga_agg
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, N_tensions_out, N_tensions_in, N_children, Stats, IsRoot, IsPersonal, IsPrivate, IsArchived, Charac, Rights, Labels, First_link, Second_link, Skills, Role_type, Contracts, Shared ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, IsRoot, IsPersonal, IsPrivate, IsArchived, Charac, Rights, Labels, First_link, Second_link, Skills, Role_type, Contracts, Orga_agg ]
 
 
 decoder : Decoder NodeHasFilter
@@ -98,18 +94,6 @@ decoder =
                     "source" ->
                         Decode.succeed Source
 
-                    "n_tensions_out" ->
-                        Decode.succeed N_tensions_out
-
-                    "n_tensions_in" ->
-                        Decode.succeed N_tensions_in
-
-                    "n_children" ->
-                        Decode.succeed N_children
-
-                    "stats" ->
-                        Decode.succeed Stats
-
                     "isRoot" ->
                         Decode.succeed IsRoot
 
@@ -146,8 +130,8 @@ decoder =
                     "contracts" ->
                         Decode.succeed Contracts
 
-                    "shared" ->
-                        Decode.succeed Shared
+                    "orga_agg" ->
+                        Decode.succeed Orga_agg
 
                     _ ->
                         Decode.fail ("Invalid NodeHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -204,18 +188,6 @@ toString enum =
         Source ->
             "source"
 
-        N_tensions_out ->
-            "n_tensions_out"
-
-        N_tensions_in ->
-            "n_tensions_in"
-
-        N_children ->
-            "n_children"
-
-        Stats ->
-            "stats"
-
         IsRoot ->
             "isRoot"
 
@@ -252,8 +224,8 @@ toString enum =
         Contracts ->
             "contracts"
 
-        Shared ->
-            "shared"
+        Orga_agg ->
+            "orga_agg"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -315,18 +287,6 @@ fromString enumString =
         "source" ->
             Just Source
 
-        "n_tensions_out" ->
-            Just N_tensions_out
-
-        "n_tensions_in" ->
-            Just N_tensions_in
-
-        "n_children" ->
-            Just N_children
-
-        "stats" ->
-            Just Stats
-
         "isRoot" ->
             Just IsRoot
 
@@ -363,8 +323,8 @@ fromString enumString =
         "contracts" ->
             Just Contracts
 
-        "shared" ->
-            Just Shared
+        "orga_agg" ->
+            Just Orga_agg
 
         _ ->
             Nothing

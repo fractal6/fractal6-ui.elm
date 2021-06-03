@@ -982,7 +982,7 @@ viewLabels model =
                                         else
                                             let
                                                 n_nodes =
-                                                    d.n_nodes |> withDefault 0
+                                                    withDefault 0 d.n_nodes
                                             in
                                             [ td [] [ viewLabel "s-medium" (Label d.id d.name d.color) ]
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]

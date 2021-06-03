@@ -246,9 +246,9 @@ n_comments =
     Object.selectionForField "(Maybe Int)" "n_comments" [] (Decode.int |> Decode.nullable)
 
 
-n_blobs : SelectionSet (Maybe Int) Fractal.Object.Tension
-n_blobs =
-    Object.selectionForField "(Maybe Int)" "n_blobs" [] (Decode.int |> Decode.nullable)
+n_open_contracts : SelectionSet (Maybe Int) Fractal.Object.Tension
+n_open_contracts =
+    Object.selectionForField "(Maybe Int)" "n_open_contracts" [] (Decode.int |> Decode.nullable)
 
 
 type alias AssigneesAggregateOptionalArguments =

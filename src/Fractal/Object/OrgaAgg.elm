@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.SharedNode exposing (..)
+module Fractal.Object.OrgaAgg exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,16 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-n_labels : SelectionSet (Maybe Int) Fractal.Object.SharedNode
-n_labels =
-    Object.selectionForField "(Maybe Int)" "n_labels" [] (Decode.int |> Decode.nullable)
+n_members : SelectionSet (Maybe Int) Fractal.Object.OrgaAgg
+n_members =
+    Object.selectionForField "(Maybe Int)" "n_members" [] (Decode.int |> Decode.nullable)
 
 
-n_tensions : SelectionSet (Maybe Int) Fractal.Object.SharedNode
-n_tensions =
-    Object.selectionForField "(Maybe Int)" "n_tensions" [] (Decode.int |> Decode.nullable)
-
-
-n_closed_tensions : SelectionSet (Maybe Int) Fractal.Object.SharedNode
-n_closed_tensions =
-    Object.selectionForField "(Maybe Int)" "n_closed_tensions" [] (Decode.int |> Decode.nullable)
+n_guests : SelectionSet (Maybe Int) Fractal.Object.OrgaAgg
+n_guests =
+    Object.selectionForField "(Maybe Int)" "n_guests" [] (Decode.int |> Decode.nullable)

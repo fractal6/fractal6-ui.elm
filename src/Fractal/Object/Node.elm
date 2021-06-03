@@ -237,41 +237,6 @@ source fillInOptionals object_ =
     Object.selectionForCompositeField "source" optionalArgs object_ (identity >> Decode.nullable)
 
 
-n_tensions_out : SelectionSet (Maybe Int) Fractal.Object.Node
-n_tensions_out =
-    Object.selectionForField "(Maybe Int)" "n_tensions_out" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_in : SelectionSet (Maybe Int) Fractal.Object.Node
-n_tensions_in =
-    Object.selectionForField "(Maybe Int)" "n_tensions_in" [] (Decode.int |> Decode.nullable)
-
-
-n_children : SelectionSet (Maybe Int) Fractal.Object.Node
-n_children =
-    Object.selectionForField "(Maybe Int)" "n_children" [] (Decode.int |> Decode.nullable)
-
-
-type alias StatsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeStatsFilter }
-
-
-stats :
-    (StatsOptionalArguments -> StatsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.NodeStats
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-stats fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeStatsFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "stats" optionalArgs object_ (identity >> Decode.nullable)
-
-
 isRoot : SelectionSet Bool Fractal.Object.Node
 isRoot =
     Object.selectionForField "Bool" "isRoot" [] Decode.bool
@@ -414,24 +379,24 @@ contracts fillInOptionals object_ =
     Object.selectionForCompositeField "contracts" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
 
 
-type alias SharedOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.SharedNodeFilter }
+type alias OrgaAggOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.OrgaAggFilter }
 
 
-shared :
-    (SharedOptionalArguments -> SharedOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.SharedNode
+orga_agg :
+    (OrgaAggOptionalArguments -> OrgaAggOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.OrgaAgg
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-shared fillInOptionals object_ =
+orga_agg fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeSharedNodeFilter ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeOrgaAggFilter ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "shared" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "orga_agg" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias ChildrenAggregateOptionalArguments =

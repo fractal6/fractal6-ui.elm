@@ -7,7 +7,6 @@ import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Node
 import Fractal.Object.NodeCharac
-import Fractal.Object.NodeStats
 import Fractal.Object.User
 import Fractal.Object.UserRights
 import Fractal.Query as Query

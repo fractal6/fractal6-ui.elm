@@ -4,7 +4,7 @@ import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -19,16 +19,17 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
+import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nid2rootid, uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
-import ModelCommon.View exposing (getAvatar, roleColor)
+import ModelCommon.View exposing (getAvatar, roleColor, viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
-import Query.QueryNode exposing (NodeExt, queryNodeExt)
+import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)
 import Task
@@ -83,8 +84,8 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { username : String
     , user : GqlData UserCtx
-    , user_data : UserDict
-    , uctx_m : Maybe UserCtx
+    , uctx_my : Maybe UserCtx
+    , orgas : GqlData (List NodeExt)
 
     -- Common
     , modalAuth : ModalAuth
@@ -93,47 +94,46 @@ type alias Model =
     }
 
 
-type alias UserDict =
-    Dict String UserData
 
-
-{-| User organisation media
--}
-type alias UserData =
-    { root : GqlData NodeExt
-    , roles : List UserRole
-    }
-
-
-buildUserDict : UserCtx -> UserDict
-buildUserDict uctx =
-    let
-        toTuples : UserRole -> List ( String, UserData )
-        toTuples role =
-            [ ( role.rootnameid, UserData NotAsked [ role ] ) ]
-
-        toDict : List ( String, UserData ) -> Dict String UserData
-        toDict tupleList =
-            List.foldl
-                (\( k, v ) dict -> Dict.update k (addParam v) dict)
-                Dict.empty
-                tupleList
-
-        addParam : UserData -> Maybe UserData -> Maybe UserData
-        addParam value maybeData =
-            case maybeData of
-                Just data ->
-                    Just { data | roles = data.roles ++ value.roles }
-
-                Nothing ->
-                    Just (UserData NotAsked value.roles)
-    in
-    uctx.roles
-        |> List.concatMap toTuples
-        |> toDict
-
-
-
+--type alias UserDict =
+--    Dict String UserData
+--
+--
+--{-| User organisation media
+---}
+--type alias UserData =
+--    { root : GqlData NodeExt
+--    , roles : List UserRole
+--    }
+--
+--
+--buildUserDict : UserCtx -> UserDict
+--buildUserDict uctx =
+--    let
+--        toTuples : UserRole -> List ( String, UserData )
+--        toTuples role =
+--            [ ( role.rootnameid, UserData NotAsked [ role ] ) ]
+--
+--        toDict : List ( String, UserData ) -> Dict String UserData
+--        toDict tupleList =
+--            List.foldl
+--                (\( k, v ) dict -> Dict.update k (addParam v) dict)
+--                Dict.empty
+--                tupleList
+--
+--        addParam : UserData -> Maybe UserData -> Maybe UserData
+--        addParam value maybeData =
+--            case maybeData of
+--                Just data ->
+--                    Just { data | roles = data.roles ++ value.roles }
+--
+--                Nothing ->
+--                    Just (UserData NotAsked value.roles)
+--    in
+--    uctx.roles
+--        |> List.concatMap toTuples
+--        |> toDict
+--
 ---- MSG ----
 
 
@@ -141,7 +141,7 @@ type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
     | PushTension TensionForm (GqlData Tension -> Msg)
-    | LoadNodes
+    | LoadNodes UserCtx
     | GotNodes (GqlData (List NodeExt))
     | GotUctx (GqlData UserCtx)
       -- Token refresh
@@ -174,7 +174,7 @@ init global flags =
         username =
             flags.param1 |> Url.percentDecode |> withDefault ""
 
-        uctx_m =
+        uctx_my =
             case global.session.user of
                 LoggedIn uctx ->
                     Just uctx
@@ -183,7 +183,7 @@ init global flags =
                     Nothing
 
         uctx_data =
-            case uctx_m of
+            case uctx_my of
                 Just uctx ->
                     if uctx.username == username then
                         Success uctx
@@ -197,14 +197,8 @@ init global flags =
         model =
             { username = username
             , user = uctx_data
-            , user_data =
-                case uctx_data of
-                    Success uctx ->
-                        buildUserDict uctx
-
-                    _ ->
-                        Dict.empty
-            , uctx_m = uctx_m
+            , uctx_my = uctx_my
+            , orgas = Loading
 
             -- common
             , modalAuth = Inactive
@@ -215,7 +209,7 @@ init global flags =
         cmds =
             [ case uctx_data of
                 Success uctx ->
-                    send LoadNodes
+                    send (LoadNodes uctx)
 
                 _ ->
                     queryUctx apis.gql username GotUctx
@@ -242,8 +236,12 @@ update global message model =
         PushTension form ack ->
             ( model, addOneTension apis.gql form ack, Cmd.none )
 
-        LoadNodes ->
-            ( model, queryNodeExt apis.gql (Dict.keys model.user_data) GotNodes, Cmd.none )
+        LoadNodes uctx ->
+            let
+                nameids =
+                    uctx.roles |> List.map (\r -> nid2rootid r.nameid) |> LE.unique
+            in
+            ( model, queryNodeExt apis.gql nameids GotNodes, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -258,34 +256,17 @@ update global message model =
         GotNodes result ->
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal (withDefault initUserctx model.uctx_m)), Cmd.none )
+                    ( model, send (DoOpenAuthModal (withDefault initUserctx model.uctx_my)), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep LoadNodes 500, send UpdateUserToken )
+                    let
+                        uctx =
+                            withMaybeData model.user |> withDefault initUserctx
+                    in
+                    ( { model | refresh_trial = i }, sendSleep (LoadNodes uctx) 500, send UpdateUserToken )
 
                 OkAuth data ->
-                    let
-                        resDict =
-                            data
-                                |> List.map (\n -> ( n.nameid, n ))
-                                |> Dict.fromList
-
-                        newUD =
-                            model.user_data
-                                |> Dict.map
-                                    (\k v ->
-                                        { v
-                                            | root =
-                                                case Dict.get k resDict of
-                                                    Just n ->
-                                                        Success n
-
-                                                    Nothing ->
-                                                        Failure [ "no root node found" ]
-                                        }
-                                    )
-                    in
-                    ( { model | user_data = newUD }, Cmd.none, Cmd.none )
+                    ( { model | orgas = result }, Cmd.none, Cmd.none )
 
                 NoAuth ->
                     ( model, Cmd.none, Cmd.none )
@@ -293,11 +274,7 @@ update global message model =
         GotUctx result ->
             case result of
                 Success uctx ->
-                    let
-                        user_data =
-                            buildUserDict uctx
-                    in
-                    ( { model | user = result, user_data = user_data }, send LoadNodes, Cmd.none )
+                    ( { model | user = result }, send (LoadNodes uctx), Cmd.none )
 
                 _ ->
                     ( { model | user = result }, Cmd.none, Cmd.none )
@@ -341,7 +318,7 @@ update global message model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send (DoCloseAuthModal ""), send LoadNodes ]
+                    , Cmd.batch [ send (DoCloseAuthModal ""), send (LoadNodes uctx) ]
                     , send (UpdateUserSession uctx)
                     )
 
@@ -488,7 +465,7 @@ viewProfileRight : Model -> UserCtx -> Html Msg
 viewProfileRight model uctx =
     div []
         [ h1 [ class "subtitle" ] [ textH T.organisations ]
-        , if Dict.isEmpty model.user_data then
+        , if List.length uctx.roles == 0 then
             p [ class "section" ] <|
                 List.intersperse (text " ")
                     [ text "You have no organisations yet."
@@ -501,99 +478,30 @@ viewProfileRight model uctx =
                     ]
 
           else
-            viewUserOrgas model.user_data
+            case model.orgas of
+                Success orgas ->
+                    viewUserOrgas uctx orgas
+
+                Failure err ->
+                    viewGqlErrors err
+
+                _ ->
+                    div [ class "media box" ]
+                        [ div [ class "media-content" ]
+                            [ div [ class "columns" ]
+                                [ div [ class "column is-8" ]
+                                    [ div [ class "ph-line is-0" ] []
+                                    , div [ class "ph-line is-1" ] []
+                                    ]
+                                ]
+                            ]
+                        ]
         ]
 
 
-viewUserOrgas : UserDict -> Html Msg
-viewUserOrgas user_data =
-    Dict.values user_data
+viewUserOrgas : UserCtx -> List NodeExt -> Html Msg
+viewUserOrgas uctx orgas =
+    orgas
         |> List.map
-            (\ud ->
-                case ud.root of
-                    Success root ->
-                        let
-                            n_member =
-                                root.stats |> Maybe.map (\s -> s.n_member |> withDefault 0) |> withDefault 0 |> String.fromInt
-
-                            n_guest =
-                                root.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
-                        in
-                        div [ class "media box" ]
-                            [ div [ class "media-left" ]
-                                [ a
-                                    [ class "image circleBase circle2"
-                                    , href (uriFromNameid OverviewBaseUri root.nameid)
-                                    ]
-                                    [ getAvatar root.name ]
-                                ]
-                            , div [ class "media-content" ]
-                                [ div [ class "columns" ]
-                                    [ div [ class "column is-8" ]
-                                        [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ]
-                                        , case root.about of
-                                            Just about ->
-                                                p [ class "is-italic pt-1" ] [ text about ]
-
-                                            Nothing ->
-                                                text ""
-                                        ]
-                                    , div [ class "column is-4" ]
-                                        [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
-                                            [ div [ class "control" ]
-                                                [ div [ class "tags has-addons" ]
-                                                    [ span [ class "tag is-light" ] [ text "member" ]
-                                                    , span [ class "tag is-white" ] [ text n_member ]
-                                                    ]
-                                                ]
-                                            , div [ class "control" ]
-                                                [ div [ class "tags has-addons" ]
-                                                    [ span [ class "tag is-light" ] [ text "guest" ]
-                                                    , span [ class "tag is-white" ] [ text n_guest ]
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
-                                , div [ id "icons", class "level is-mobile" ]
-                                    [ div [ class "level-left" ]
-                                        [ if root.isPrivate then
-                                            span [ class "level-item" ] [ I.icon "icon-lock" ]
-
-                                          else
-                                            text ""
-                                        ]
-                                    ]
-                                , hr [] []
-                                , div [ class "buttons" ] <|
-                                    (ud.roles
-                                        |> List.filter (\r -> r.role_type /= RoleType.Member)
-                                        |> List.map
-                                            (\r ->
-                                                a
-                                                    [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
-                                                    , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                                                    , href <| uriFromNameid OverviewBaseUri r.nameid
-                                                    ]
-                                                    [ text r.name ]
-                                            )
-                                    )
-                                ]
-                            ]
-
-                    Failure err ->
-                        viewGqlErrors err
-
-                    _ ->
-                        div [ class "media box" ]
-                            [ div [ class "media-content" ]
-                                [ div [ class "columns" ]
-                                    [ div [ class "column is-8" ]
-                                        [ div [ class "ph-line is-0" ] []
-                                        , div [ class "ph-line is-1" ] []
-                                        ]
-                                    ]
-                                ]
-                            ]
-            )
+            (\root -> viewOrgaMedia (LoggedIn uctx) root)
         |> div [ class "nodesList" ]

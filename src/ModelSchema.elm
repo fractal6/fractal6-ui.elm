@@ -63,6 +63,31 @@ type alias Node =
     }
 
 
+type alias NodeExt =
+    { id : String
+    , createdAt : String
+    , name : String
+    , nameid : String
+    , rootnameid : String
+    , parent : Maybe NodeId -- see issue with recursive structure
+    , type_ : NodeType.NodeType
+    , role_type : Maybe RoleType.RoleType
+    , first_link : Maybe Username
+    , charac : NodeCharac
+    , isPrivate : Bool
+    , about : Maybe String
+
+    -- aggregate
+    , orga_agg : Maybe OrgaAgg
+    }
+
+
+type alias OrgaAgg =
+    { n_members : Maybe Int
+    , n_guests : Maybe Int
+    }
+
+
 type alias NodeCharac =
     { userCanJoin : Bool
     , mode : NodeMode.NodeMode
@@ -124,8 +149,15 @@ type alias Tension =
     , receiver : EmitterOrReceiver
     , action : Maybe TensionAction.TensionAction
     , status : TensionStatus.TensionStatus
+
+    -- aggregate
+    --, comments_agg : Maybe Count
     , n_comments : Maybe Int
     }
+
+
+type alias Count =
+    { count : Maybe Int }
 
 
 type alias ActionResult =
@@ -157,13 +189,13 @@ type alias TensionHead =
     , blobs : Maybe (List Blob) -- head / len() == 1
     , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : List Event
+    , n_open_contracts : Maybe Int
     }
 
 
 type alias TensionComments =
     { id : String
     , comments : Maybe (List Comment)
-    , n_comments : Maybe Int
     , receiver : EmitterOrReceiver
     }
 
@@ -171,7 +203,6 @@ type alias TensionComments =
 type alias TensionBlobs =
     { id : String
     , blobs : Maybe (List Blob)
-    , n_blobs : Maybe Int
     , receiver : EmitterOrReceiver
     }
 

@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.AddNodeStatsPayload exposing (..)
+module Fractal.Object.AddOrgaAggPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,30 +19,30 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias NodeStatsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeStatsFilter
-    , order : OptionalArgument Fractal.InputObject.NodeStatsOrder
+type alias OrgaAggOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.OrgaAggFilter
+    , order : OptionalArgument Fractal.InputObject.OrgaAggOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-nodeStats :
-    (NodeStatsOptionalArguments -> NodeStatsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.NodeStats
-    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeStatsPayload
-nodeStats fillInOptionals object_ =
+orgaAgg :
+    (OrgaAggOptionalArguments -> OrgaAggOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.OrgaAgg
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddOrgaAggPayload
+orgaAgg fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeStatsFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeStatsOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeOrgaAggFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeOrgaAggOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "nodeStats" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "orgaAgg" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeStatsPayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.AddOrgaAggPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

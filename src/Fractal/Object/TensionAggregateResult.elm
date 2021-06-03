@@ -114,21 +114,21 @@ n_commentsAvg =
     Object.selectionForField "(Maybe Float)" "n_commentsAvg" [] (Decode.float |> Decode.nullable)
 
 
-n_blobsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_blobsMin =
-    Object.selectionForField "(Maybe Int)" "n_blobsMin" [] (Decode.int |> Decode.nullable)
+n_open_contractsMin : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
+n_open_contractsMin =
+    Object.selectionForField "(Maybe Int)" "n_open_contractsMin" [] (Decode.int |> Decode.nullable)
 
 
-n_blobsMax : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_blobsMax =
-    Object.selectionForField "(Maybe Int)" "n_blobsMax" [] (Decode.int |> Decode.nullable)
+n_open_contractsMax : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
+n_open_contractsMax =
+    Object.selectionForField "(Maybe Int)" "n_open_contractsMax" [] (Decode.int |> Decode.nullable)
 
 
-n_blobsSum : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
-n_blobsSum =
-    Object.selectionForField "(Maybe Int)" "n_blobsSum" [] (Decode.int |> Decode.nullable)
+n_open_contractsSum : SelectionSet (Maybe Int) Fractal.Object.TensionAggregateResult
+n_open_contractsSum =
+    Object.selectionForField "(Maybe Int)" "n_open_contractsSum" [] (Decode.int |> Decode.nullable)
 
 
-n_blobsAvg : SelectionSet (Maybe Float) Fractal.Object.TensionAggregateResult
-n_blobsAvg =
-    Object.selectionForField "(Maybe Float)" "n_blobsAvg" [] (Decode.float |> Decode.nullable)
+n_open_contractsAvg : SelectionSet (Maybe Float) Fractal.Object.TensionAggregateResult
+n_open_contractsAvg =
+    Object.selectionForField "(Maybe Float)" "n_open_contractsAvg" [] (Decode.float |> Decode.nullable)

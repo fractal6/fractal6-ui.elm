@@ -13,13 +13,23 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global
-import Html exposing (Html, a, br, button, div, i, span, text)
+import Html exposing (Html, a, br, button, div, hr, i, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
 import Icon as I
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, getTensionCharac, uriFromNameid, uriFromUsername)
-import ModelSchema exposing (EmitterOrReceiver, Label, Post, Tension, User, UserCtx, Username)
+import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
+import ModelCommon.Codecs
+    exposing
+        ( ActionType(..)
+        , FractalBaseRoute(..)
+        , NodeFocus
+        , getTensionCharac
+        , nid2rootid
+        , uriFromNameid
+        , uriFromUsername
+        )
+import ModelSchema exposing (EmitterOrReceiver, Label, NodeExt, Post, Tension, User, UserCtx, Username)
 import Text as T exposing (textH, textT, upH)
 
 
@@ -98,7 +108,8 @@ mediaTension : NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg)
 mediaTension focus tension showStatus showRecip size navigate =
     let
         n_comments =
-            tension.n_comments |> withDefault 0
+            --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
+            withDefault 0 tension.n_comments
 
         labels_m =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
@@ -131,7 +142,7 @@ mediaTension focus tension showStatus showRecip size navigate =
 
                     Nothing ->
                         text ""
-                , span [ class "level is-pulled-right" ]
+                , span [ class "level is-pulled-right icons-list" ]
                     [ case tension.action of
                         Just action ->
                             viewActionIconLink action focus.rootnameid tension.id "" "is-small level-item"
@@ -234,7 +245,10 @@ viewUsers users =
 viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
     if isLinked then
-        span [ class "mr-1" ] [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ] [ getAvatar username ] ]
+        span [ class "mr-1" ]
+            [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ]
+                [ getAvatar username ]
+            ]
 
     else
         span [ class "mr-1" ] [ div [ class "image circleBaseInline circle0" ] [ getAvatar username ] ]
@@ -330,6 +344,86 @@ viewNodeRefShort baseUri nid =
             nid |> String.split "#" |> List.reverse |> List.head |> withDefault nid
     in
     a [ href ref ] [ name |> text ]
+
+
+viewOrgaMedia : UserState -> NodeExt -> Html msg
+viewOrgaMedia user root =
+    let
+        n_members =
+            root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_members) |> withDefault 0
+
+        n_guests =
+            root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_guests) |> withDefault 0
+    in
+    div [ class "media box mediaBox" ]
+        [ div [ class "media-left" ]
+            [ a
+                [ class "image circleBase circle2"
+                , href (uriFromNameid OverviewBaseUri root.nameid)
+                ]
+                [ getAvatar root.name ]
+            ]
+        , div [ class "media-content" ]
+            ([ div [ class "columns" ]
+                [ div [ class "column is-8" ]
+                    [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ]
+                    , case root.about of
+                        Just ab ->
+                            p [ class "is-italic pt-1" ] [ text ab ]
+
+                        Nothing ->
+                            text ""
+                    ]
+                , span [ class "column is-4" ]
+                    [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
+                        [ div [ class "control" ]
+                            [ div [ class "tags has-addons" ]
+                                [ span [ class "tag is-light" ] [ text "member" ]
+                                , span [ class "tag is-white" ] [ text (String.fromInt n_members) ]
+                                ]
+                            ]
+                        , div [ class "control" ]
+                            [ div [ class "tags has-addons" ]
+                                [ span [ class "tag is-light" ] [ text "guest" ]
+                                , span [ class "tag is-white" ] [ text (String.fromInt n_guests) ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+             , div [ id "icons", class "level is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ if root.isPrivate then
+                        span [ class "level-item" ] [ I.icon "icon-lock" ]
+
+                      else
+                        text ""
+                    ]
+                ]
+             ]
+                ++ (case user of
+                        LoggedIn uctx ->
+                            [ hr [] []
+                            , div [ class "buttons" ] <|
+                                (uctx.roles
+                                    |> List.filter (\r -> r.role_type /= RoleType.Member && nid2rootid r.nameid == root.rootnameid)
+                                    |> List.map
+                                        (\r ->
+                                            a
+                                                [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
+                                                , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
+                                                , href <| uriFromNameid OverviewBaseUri r.nameid
+                                                ]
+                                                [ text r.name ]
+                                        )
+                                )
+                            ]
+
+                        LoggedOut ->
+                            []
+                   )
+            )
+        ]
 
 
 

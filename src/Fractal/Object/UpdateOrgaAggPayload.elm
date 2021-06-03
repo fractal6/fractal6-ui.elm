@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Object.UpdateSharedNodePayload exposing (..)
+module Fractal.Object.UpdateOrgaAggPayload exposing (..)
 
 import Fractal.InputObject
 import Fractal.Interface
@@ -19,30 +19,30 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias SharedNodeOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.SharedNodeFilter
-    , order : OptionalArgument Fractal.InputObject.SharedNodeOrder
+type alias OrgaAggOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.OrgaAggFilter
+    , order : OptionalArgument Fractal.InputObject.OrgaAggOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-sharedNode :
-    (SharedNodeOptionalArguments -> SharedNodeOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.SharedNode
-    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateSharedNodePayload
-sharedNode fillInOptionals object_ =
+orgaAgg :
+    (OrgaAggOptionalArguments -> OrgaAggOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.OrgaAgg
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.UpdateOrgaAggPayload
+orgaAgg fillInOptionals object_ =
     let
         filledInOptionals =
             fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeSharedNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeSharedNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeOrgaAggFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeOrgaAggOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "sharedNode" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "orgaAgg" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateSharedNodePayload
+numUids : SelectionSet (Maybe Int) Fractal.Object.UpdateOrgaAggPayload
 numUids =
     Object.selectionForField "(Maybe Int)" "numUids" [] (Decode.int |> Decode.nullable)

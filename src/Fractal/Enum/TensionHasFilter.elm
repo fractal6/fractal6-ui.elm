@@ -28,12 +28,12 @@ type TensionHasFilter
     | Contracts
     | History
     | N_comments
-    | N_blobs
+    | N_open_contracts
 
 
 list : List TensionHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitterid, Emitter, Receiverid, Receiver, Nth, Title, Type_, Status, Assignees, Labels, Comments, Action, Blobs, Contracts, History, N_comments, N_blobs ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitterid, Emitter, Receiverid, Receiver, Nth, Title, Type_, Status, Assignees, Labels, Comments, Action, Blobs, Contracts, History, N_comments, N_open_contracts ]
 
 
 decoder : Decoder TensionHasFilter
@@ -102,8 +102,8 @@ decoder =
                     "n_comments" ->
                         Decode.succeed N_comments
 
-                    "n_blobs" ->
-                        Decode.succeed N_blobs
+                    "n_open_contracts" ->
+                        Decode.succeed N_open_contracts
 
                     _ ->
                         Decode.fail ("Invalid TensionHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -175,8 +175,8 @@ toString enum =
         N_comments ->
             "n_comments"
 
-        N_blobs ->
-            "n_blobs"
+        N_open_contracts ->
+            "n_open_contracts"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -253,8 +253,8 @@ fromString enumString =
         "n_comments" ->
             Just N_comments
 
-        "n_blobs" ->
-            Just N_blobs
+        "n_open_contracts" ->
+            Just N_open_contracts
 
         _ ->
             Nothing

@@ -21,12 +21,12 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
-import ModelCommon.View exposing (getAvatar)
+import ModelCommon.View exposing (getAvatar, viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.AddTension exposing (addOneTension)
-import Query.QueryNode exposing (NodeExt, queryNodeExt, queryPublicOrga)
+import Query.QueryNode exposing (queryPublicOrga)
 import RemoteData exposing (RemoteData)
 import Task
 import Text as T exposing (textH, textT)
@@ -77,17 +77,13 @@ mapGlobalOutcmds gcmds =
 
 
 type alias Model =
-    { orgas : GqlData (List Node)
+    { orgas : GqlData (List NodeExt)
 
     -- Common
     , modalAuth : ModalAuth
     , help : Help.State
     , refresh_trial : Int
     }
-
-
-type alias Node =
-    NodeExt
 
 
 
@@ -98,8 +94,8 @@ type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
     | PushTension TensionForm (GqlData Tension -> Msg)
-    | LoadNodes
-    | GotOrgas (GqlData (List Node))
+    | LoadNodeExts
+    | GotOrgas (GqlData (List NodeExt))
       -- Token refresh
     | DoOpenAuthModal UserCtx
     | DoCloseAuthModal String
@@ -137,7 +133,7 @@ init global flags =
             }
 
         cmds =
-            [ send LoadNodes
+            [ send LoadNodeExts
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -161,7 +157,7 @@ update global message model =
         PushTension form ack ->
             ( model, addOneTension apis.gql form ack, Cmd.none )
 
-        LoadNodes ->
+        LoadNodeExts ->
             ( model, queryPublicOrga apis.gql GotOrgas, Cmd.none )
 
         PassedSlowLoadTreshold ->
@@ -217,7 +213,7 @@ update global message model =
             case result of
                 RemoteData.Success uctx ->
                     ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send (DoCloseAuthModal ""), send LoadNodes ]
+                    , Cmd.batch [ send (DoCloseAuthModal ""), send LoadNodeExts ]
                     , send (UpdateUserSession uctx)
                     )
 
@@ -321,78 +317,31 @@ view_ global model =
     div [ id "explore", class "section" ]
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-7" ]
-                [ viewPublicOrgas model
-                ]
+                [ viewPublicOrgas global.session.user model ]
             ]
         ]
 
 
-viewPublicOrgas : Model -> Html Msg
-viewPublicOrgas model =
-    div [ class "" ] <|
-        case model.orgas of
-            Loading ->
-                [ text "" ]
+viewPublicOrgas : UserState -> Model -> Html Msg
+viewPublicOrgas user model =
+    div []
+        [ h1 [ class "subtitle" ] [ textH T.exploreOrganisations ]
 
-            NotAsked ->
-                [ text "" ]
+        --, div  br [] []
+        , div [ class "nodesList" ] <|
+            case model.orgas of
+                Loading ->
+                    [ text "" ]
 
-            LoadingSlowly ->
-                [ div [ class "spinner" ] [] ]
+                NotAsked ->
+                    [ text "" ]
 
-            Failure err ->
-                [ viewGqlErrors err ]
+                LoadingSlowly ->
+                    [ div [ class "spinner" ] [] ]
 
-            Success nodes ->
-                nodes
-                    |> List.map (\n -> viewOrgaMedia n)
-                    |> List.append [ div [ class "subtitle" ] [ textH T.exploreOrganisations ], br [] [] ]
+                Failure err ->
+                    [ viewGqlErrors err ]
 
-
-viewOrgaMedia : Node -> Html Msg
-viewOrgaMedia node =
-    let
-        n_member =
-            node.stats |> Maybe.map (\s -> s.n_member |> withDefault 0) |> withDefault 0 |> String.fromInt
-
-        n_guest =
-            node.stats |> Maybe.map (\s -> s.n_guest |> withDefault 0) |> withDefault 0 |> String.fromInt
-    in
-    div [ class "media box nodesList" ]
-        [ div [ class "media-left" ]
-            [ a
-                [ class "image circleBase circle2"
-                , href (uriFromNameid OverviewBaseUri node.nameid)
-                ]
-                [ getAvatar node.name ]
-            ]
-        , div [ class "media-content" ]
-            [ div [ class "columns" ]
-                [ div [ class "column is-8" ]
-                    [ a [ href (uriFromNameid OverviewBaseUri node.nameid) ] [ text node.name ]
-                    , case node.about of
-                        Just ab ->
-                            p [ class "is-italic pt-1" ] [ text ab ]
-
-                        Nothing ->
-                            text ""
-                    ]
-                , span [ class "column is-4" ]
-                    [ div [ class "field is-grouped is-grouped-multiline is-pulled-right" ]
-                        [ div [ class "control" ]
-                            [ div [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text "member" ]
-                                , span [ class "tag is-white" ] [ text n_member ]
-                                ]
-                            ]
-                        , div [ class "control" ]
-                            [ div [ class "tags has-addons" ]
-                                [ span [ class "tag is-light" ] [ text "guest" ]
-                                , span [ class "tag is-white" ] [ text n_guest ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
+                Success nodes ->
+                    List.map (\n -> viewOrgaMedia user n) nodes
         ]

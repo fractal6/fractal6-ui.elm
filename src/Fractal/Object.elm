@@ -45,12 +45,8 @@ type AddNodePayload
     = AddNodePayload
 
 
-type AddNodeStatsPayload
-    = AddNodeStatsPayload
-
-
-type AddSharedNodePayload
-    = AddSharedNodePayload
+type AddOrgaAggPayload
+    = AddOrgaAggPayload
 
 
 type AddTensionPayload
@@ -133,16 +129,12 @@ type DeleteNodePayload
     = DeleteNodePayload
 
 
-type DeleteNodeStatsPayload
-    = DeleteNodeStatsPayload
+type DeleteOrgaAggPayload
+    = DeleteOrgaAggPayload
 
 
 type DeletePostPayload
     = DeletePostPayload
-
-
-type DeleteSharedNodePayload
-    = DeleteSharedNodePayload
 
 
 type DeleteTensionPayload
@@ -221,12 +213,12 @@ type NodeFragmentAggregateResult
     = NodeFragmentAggregateResult
 
 
-type NodeStats
-    = NodeStats
+type OrgaAgg
+    = OrgaAgg
 
 
-type NodeStatsAggregateResult
-    = NodeStatsAggregateResult
+type OrgaAggAggregateResult
+    = OrgaAggAggregateResult
 
 
 type Point
@@ -247,14 +239,6 @@ type Post
 
 type PostAggregateResult
     = PostAggregateResult
-
-
-type SharedNode
-    = SharedNode
-
-
-type SharedNodeAggregateResult
-    = SharedNodeAggregateResult
 
 
 type Tension
@@ -305,16 +289,12 @@ type UpdateNodePayload
     = UpdateNodePayload
 
 
-type UpdateNodeStatsPayload
-    = UpdateNodeStatsPayload
+type UpdateOrgaAggPayload
+    = UpdateOrgaAggPayload
 
 
 type UpdatePostPayload
     = UpdatePostPayload
-
-
-type UpdateSharedNodePayload
-    = UpdateSharedNodePayload
 
 
 type UpdateTensionPayload

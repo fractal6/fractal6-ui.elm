@@ -283,14 +283,14 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 .box {
-    border: 1px solid $grey-darker;
+    border: 1px solid $grey-darker !important;
     .media {
         &.is-active {
             border: solid 2px $link !important;
         }
 
         & + .media {
-            border-top: 1px solid $grey-darker;
+            border-top: 1px solid $grey-darker !important;
         }
     }
 
@@ -572,22 +572,18 @@ html.has-modal-active, html.has-modal-active2 {
 
 
 #explore {
-    .media + .media {
-        border-top: none !important;
-        padding-top: 1.5rem !important;
+     .media {
+        padding-top: 1.2rem !important;
     }
 }
 
 #profile {
-    .media + .media {
-        border-top: none !important;
+    .media {
+        padding-top: 1.2rem !important;
     }
 }
 
 .nodesList {
-    .media-content{
-        overflow: unset
-    }
     hr {
         margin-top: 0.5rem !important;
     }
@@ -1208,16 +1204,16 @@ html.has-modal-active, html.has-modal-active2 {
     .tooltip {
         // Increase the area of activation (better UX)
         margin: -8px;
-		border: 8px solid transparent;
+        border: 8px solid transparent;
         &::before,
         &::after {
-             font-size: $size-6 !important;
+            font-size: $size-6 !important;
         }
-     }
+    }
 }
 
 .mediaBox {
-    &:hover {
+    &.is-hoverable:hover {
         background-color: $grey-darker2;
     }
 
@@ -1387,6 +1383,12 @@ a.actionLink {
 
     .button {
         margin-right: 0;
+    }
+}
+
+.icons-list {
+    .level-item:not(first-child) {
+        padding-left: 5px;
     }
 }
 

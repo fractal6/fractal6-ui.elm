@@ -84,66 +84,6 @@ aboutMax =
     Object.selectionForField "(Maybe String)" "aboutMax" [] (Decode.string |> Decode.nullable)
 
 
-n_tensions_outMin : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_tensions_outMin =
-    Object.selectionForField "(Maybe Int)" "n_tensions_outMin" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_outMax : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_tensions_outMax =
-    Object.selectionForField "(Maybe Int)" "n_tensions_outMax" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_outSum : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_tensions_outSum =
-    Object.selectionForField "(Maybe Int)" "n_tensions_outSum" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_outAvg : SelectionSet (Maybe Float) Fractal.Object.NodeAggregateResult
-n_tensions_outAvg =
-    Object.selectionForField "(Maybe Float)" "n_tensions_outAvg" [] (Decode.float |> Decode.nullable)
-
-
-n_tensions_inMin : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_tensions_inMin =
-    Object.selectionForField "(Maybe Int)" "n_tensions_inMin" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_inMax : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_tensions_inMax =
-    Object.selectionForField "(Maybe Int)" "n_tensions_inMax" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_inSum : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_tensions_inSum =
-    Object.selectionForField "(Maybe Int)" "n_tensions_inSum" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions_inAvg : SelectionSet (Maybe Float) Fractal.Object.NodeAggregateResult
-n_tensions_inAvg =
-    Object.selectionForField "(Maybe Float)" "n_tensions_inAvg" [] (Decode.float |> Decode.nullable)
-
-
-n_childrenMin : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_childrenMin =
-    Object.selectionForField "(Maybe Int)" "n_childrenMin" [] (Decode.int |> Decode.nullable)
-
-
-n_childrenMax : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_childrenMax =
-    Object.selectionForField "(Maybe Int)" "n_childrenMax" [] (Decode.int |> Decode.nullable)
-
-
-n_childrenSum : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
-n_childrenSum =
-    Object.selectionForField "(Maybe Int)" "n_childrenSum" [] (Decode.int |> Decode.nullable)
-
-
-n_childrenAvg : SelectionSet (Maybe Float) Fractal.Object.NodeAggregateResult
-n_childrenAvg =
-    Object.selectionForField "(Maybe Float)" "n_childrenAvg" [] (Decode.float |> Decode.nullable)
-
-
 rightsMin : SelectionSet (Maybe Int) Fractal.Object.NodeAggregateResult
 rightsMin =
     Object.selectionForField "(Maybe Int)" "rightsMin" [] (Decode.int |> Decode.nullable)

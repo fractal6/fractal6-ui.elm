@@ -1,6 +1,5 @@
 module Query.QueryNode exposing
     ( MemberNode
-    , NodeExt
     , blobIdPayload
     , emiterOrReceiverPayload
     , fetchNode
@@ -34,8 +33,9 @@ import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Label
 import Fractal.Object.Node
+import Fractal.Object.NodeAggregateResult
 import Fractal.Object.NodeCharac
-import Fractal.Object.NodeStats
+import Fractal.Object.OrgaAgg
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query
@@ -56,29 +56,6 @@ import String.Extra as SE
    Query Public Orga / Explore
 -}
 --- Response decoder
-
-
-type alias NodeExt =
-    { id : String
-    , createdAt : String
-    , name : String
-    , nameid : String
-    , rootnameid : String
-    , parent : Maybe NodeId -- see issue with recursive structure
-    , type_ : NodeType.NodeType
-    , role_type : Maybe RoleType.RoleType
-    , first_link : Maybe Username
-    , charac : NodeCharac
-    , isPrivate : Bool
-    , stats : Maybe NodeStats
-    , about : Maybe String
-    }
-
-
-type alias NodeStats =
-    { n_member : Maybe Int
-    , n_guest : Maybe Int
-    }
 
 
 nodeDecoder : Maybe (List (Maybe node)) -> Maybe node
@@ -138,6 +115,26 @@ publicOrgaFilter a =
     }
 
 
+memberFilter : Query.AggregateNodeOptionalArguments -> Query.AggregateNodeOptionalArguments
+memberFilter a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b -> { b | role_type = Present { eq = Present RoleType.Member, in_ = Absent } })
+                |> Present
+    }
+
+
+guestFilter : Query.AggregateNodeOptionalArguments -> Query.AggregateNodeOptionalArguments
+guestFilter a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b -> { b | role_type = Present { eq = Present RoleType.Guest, in_ = Absent } })
+                |> Present
+    }
+
+
 nodeOrgaExtPayload : SelectionSet NodeExt Fractal.Object.Node
 nodeOrgaExtPayload =
     SelectionSet.succeed NodeExt
@@ -152,13 +149,13 @@ nodeOrgaExtPayload =
         |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
-        |> with
-            (Fractal.Object.Node.stats identity <|
-                SelectionSet.map2 NodeStats
-                    Fractal.Object.NodeStats.n_member
-                    Fractal.Object.NodeStats.n_guest
-            )
         |> with Fractal.Object.Node.about
+        |> with
+            (Fractal.Object.Node.orga_agg identity <|
+                SelectionSet.map2 OrgaAgg
+                    Fractal.Object.OrgaAgg.n_members
+                    Fractal.Object.OrgaAgg.n_guests
+            )
 
 
 
@@ -794,7 +791,10 @@ labelFullPayload =
         Fractal.Object.Label.name
         Fractal.Object.Label.color
         Fractal.Object.Label.description
-        Fractal.Object.Label.n_nodes
+        (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+            Fractal.Object.Label.nodesAggregate identity <|
+                SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+        )
 
 
 

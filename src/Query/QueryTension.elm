@@ -27,7 +27,9 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Comment
+import Fractal.Object.CommentAggregateResult
 import Fractal.Object.Contract
+import Fractal.Object.ContractAggregateResult
 import Fractal.Object.Event
 import Fractal.Object.Label
 import Fractal.Object.Mandate
@@ -144,6 +146,14 @@ tensionHeadPayload =
                 )
                 eventPayload
             )
+        -- Aggregate
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+                -- @debug: filter OPEN contract
+                Fractal.Object.Tension.contractsAggregate identity
+                <|
+                    SelectionSet.map Count Fractal.Object.ContractAggregateResult.count
+            )
 
 
 tensionBlobsPayload : SelectionSet TensionBlobs Fractal.Object.Tension
@@ -163,7 +173,6 @@ tensionBlobsPayload =
                 )
                 blobPayload
             )
-        |> with Fractal.Object.Tension.n_blobs
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
@@ -176,7 +185,6 @@ tensionCommentsPayload =
                 (\args -> { args | first = Present nCommentPerTension })
                 commentPayload
             )
-        |> with Fractal.Object.Tension.n_comments
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
@@ -362,7 +370,11 @@ tensionPayload =
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
-        |> with Fractal.Object.Tension.n_comments
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+                Fractal.Object.Tension.commentsAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
+            )
 
 
 tensionPayloadFiltered : List User -> List Label -> SelectionSet Tension Fractal.Object.Tension
@@ -378,7 +390,11 @@ tensionPayloadFiltered authors labels =
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
-        |> with Fractal.Object.Tension.n_comments
+        |> with
+            (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+                Fractal.Object.Tension.commentsAggregate identity <|
+                    SelectionSet.map Count Fractal.Object.CommentAggregateResult.count
+            )
 
 
 
