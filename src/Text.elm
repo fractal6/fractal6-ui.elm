@@ -235,6 +235,11 @@ moved =
     "moved"
 
 
+move : String
+move =
+    "move"
+
+
 left : String
 left =
     "left"

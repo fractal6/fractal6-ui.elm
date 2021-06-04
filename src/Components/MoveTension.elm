@@ -490,7 +490,11 @@ viewModalContent op (State model) =
                                                 Dict.values data
                                                     |> List.filter
                                                         (\n ->
-                                                            n.nameid /= model.form.target.nameid && n.nameid /= model.target && roleTest n.role_type && n.nameid /= self_
+                                                            (n.nameid /= model.form.target.nameid)
+                                                                && (n.nameid /= model.target)
+                                                                && roleTest n.role_type
+                                                                && (n.nameid /= self_)
+                                                                && (self_ /= (Maybe.map (\p -> p.nameid) n.parent |> withDefault ""))
                                                         )
                                         in
                                         viewNodesSelector targets

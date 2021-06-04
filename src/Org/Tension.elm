@@ -335,6 +335,7 @@ type Msg
     | CloseActionPanelModal String
       --| ActionStep1 XXX
     | ActionSubmit Time.Posix
+    | ActionMove Time.Posix
     | ArchiveDocAck (GqlData ActionResult)
     | LeaveRoleAck (GqlData ActionResult)
     | UpdateActionPost String String
@@ -550,6 +551,9 @@ update global message model =
             let
                 ackMsg =
                     case state of
+                        MoveAction ->
+                            ArchiveDocAck
+
                         ArchiveAction ->
                             ArchiveDocAck
 
@@ -1370,6 +1374,14 @@ update global message model =
             , send (PushAction panel.form panel.state)
             , Cmd.none
             )
+
+        ActionMove time ->
+            case model.tension_head of
+                Success th ->
+                    ( model, Cmd.batch [ send (DoMove th), send CancelAction ], Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         ArchiveDocAck result ->
             let
@@ -2795,6 +2807,7 @@ viewSidePane u t model =
                                         , onCloseModal = CloseActionPanelModal
                                         , onNavigate = Navigate
                                         , onActionSubmit = ActionSubmit
+                                        , onActionMove = ActionMove
                                         , onUpdatePost = UpdateActionPost
                                         }
                                 in
@@ -2826,7 +2839,7 @@ viewSidePane u t model =
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                     , onClick (DoMove t)
                                     ]
-                                    [ span [ class "right-arrow2 pl-0 pr-2" ] [], text "Move tension" ]
+                                    [ span [ class "right-arrow2 pl-0 pr-2" ] [], textH T.moveTension ]
 
                                 --, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ I.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
                                 ]

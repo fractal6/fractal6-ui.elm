@@ -188,8 +188,10 @@ type Msg
       -- Page
     | SwitchWindow
       -- Quick search
-    | LookupFocus String (Maybe LocalGraph)
+    | LookupFocus String
+    | ToggleLookup
     | LookupBlur
+    | LookupBlur_
     | ChangePattern String
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
@@ -216,6 +218,7 @@ type Msg
     | AddNodes (List Node)
     | UpdateNode (Maybe Node)
     | DelNodes (List String)
+    | MoveNode String
       -- GP JS Interop
     | NodeClicked String
     | NodeFocused LocalGraph
@@ -377,6 +380,9 @@ update global message model =
             let
                 ackMsg =
                     case state of
+                        MoveAction ->
+                            ArchiveDocAck
+
                         ArchiveAction ->
                             ArchiveDocAck
 
@@ -476,17 +482,25 @@ update global message model =
                     ( { model | node_data = result }, Cmd.none, Cmd.none )
 
         -- Search
-        LookupFocus pattern path_m ->
+        ToggleLookup ->
+            if model.node_quickSearch.visible then
+                ( model, send LookupBlur, Cmd.none )
+
+            else
+                ( model, send (LookupFocus model.node_quickSearch.pattern), Cmd.none )
+
+        LookupFocus pattern ->
+            let
+                qs =
+                    model.node_quickSearch
+            in
             case pattern of
                 "" ->
-                    case path_m of
+                    case model.path_data of
                         Just path ->
                             case model.orga_data of
                                 Success data ->
                                     let
-                                        qs =
-                                            model.node_quickSearch
-
                                         newLookup =
                                             path.focus.children
                                                 |> List.map (\n -> Dict.get n.nameid data)
@@ -502,9 +516,12 @@ update global message model =
                             ( model, Cmd.none, Cmd.none )
 
                 _ ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( { model | node_quickSearch = { qs | visible = True } }, Cmd.none, Cmd.none )
 
         LookupBlur ->
+            ( model, sendSleep LookupBlur_ 150, Cmd.none )
+
+        LookupBlur_ ->
             let
                 qs =
                     model.node_quickSearch
@@ -518,7 +535,7 @@ update global message model =
 
                 cmd =
                     if pattern == "" then
-                        LookupFocus pattern model.path_data |> send
+                        LookupFocus pattern |> send
 
                     else
                         Ports.searchNode pattern
@@ -664,6 +681,9 @@ update global message model =
 
                     else if ActionPanel.isSuccess model.actionPanel then
                         [ case model.actionPanel.state of
+                            MoveAction ->
+                                send (MoveNode model.actionPanel.form.node.nameid)
+
                             ArchiveAction ->
                                 send (DelNodes [ model.actionPanel.form.node.nameid ])
 
@@ -874,7 +894,7 @@ update global message model =
 
         DelNodes nameids ->
             let
-                ndata =
+                ( ndata, _ ) =
                     hotNodePull nameids model.orga_data
 
                 newFocus =
@@ -890,8 +910,30 @@ update global message model =
             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
             )
 
+        MoveNode nameid ->
+            --let
+            --    ( ndata_, node ) =
+            --        hotNodePull [ nameid ] model.orga_data
+            --    newFocus =
+            --        getParentId nameid model.orga_data
+            --            |> withDefault model.node_focus.rootnameid
+            --    -- @todo overwrite node parent with the destination
+            --    ndata =
+            --        hotNodePush [node] (Success ndata_)
+            --in
+            --( { model | orga_data = Success ndata }
+            --  --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
+            --, Cmd.batch [ send (NodeClicked newFocus), send () ]
+            --, Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            --)
+            ( model, Cmd.none, Cmd.none )
+
         -- JS interop
         NodeClicked nameid ->
+            let
+                f =
+                    Debug.log "noooo go" ""
+            in
             ( model
             , Cmd.none
             , ReplaceUrl (uriFromNameid OverviewBaseUri nameid) |> send
@@ -1241,8 +1283,9 @@ viewSearchBar us model =
                     , placeholder (upH T.phQS)
                     , value qs.pattern
                     , onInput ChangePattern
-                    , onFocus (LookupFocus qs.pattern model.path_data)
-                    , onClick (LookupFocus qs.pattern model.path_data)
+
+                    --, onFocus (LookupFocus qs.pattern)
+                    , onClick ToggleLookup
                     , onBlur LookupBlur
                     , onKeydown SearchKeyDown
 
@@ -1292,6 +1335,7 @@ viewSearchBar us model =
                                                 , onCloseModal = CloseActionPanelModal
                                                 , onNavigate = Navigate
                                                 , onActionSubmit = ActionSubmit
+                                                , onActionMove = ActionSubmit
                                                 , onUpdatePost = UpdateActionPost
                                                 }
                                         in
@@ -1313,8 +1357,7 @@ viewSearchBar us model =
                    )
             )
         , div [ class "control" ]
-            [ viewSearchList us model
-            ]
+            [ viewSearchList us model ]
         ]
 
 

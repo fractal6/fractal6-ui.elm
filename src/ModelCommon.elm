@@ -421,6 +421,7 @@ type alias ActionForm =
     , node : Node
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
+    , moveTo : String
     }
 
 
@@ -438,6 +439,7 @@ initActionForm tid user =
     , node = initNode
     , events_type = Nothing
     , post = Dict.empty
+    , moveTo = ""
     }
 
 
@@ -580,15 +582,18 @@ hotNodePush nodes odata =
             Dict.empty
 
 
-hotNodePull : List String -> GqlData NodesData -> NodesData
+hotNodePull : List String -> GqlData NodesData -> ( NodesData, Maybe Node )
 hotNodePull nameids odata =
     -- Push a new node in the model if data is success
+    -- return the first node removed
     case odata of
         Success data ->
-            data |> DE.removeMany (Set.fromList nameids)
+            ( data |> DE.removeMany (Set.fromList nameids)
+            , List.head nameids |> Maybe.map (\nid -> Dict.get nid data) |> withDefault Nothing
+            )
 
         other ->
-            Dict.empty
+            ( Dict.empty, Nothing )
 
 
 hotTensionPush : Tension -> GqlData TensionsData -> TensionsData

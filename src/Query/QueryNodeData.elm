@@ -44,11 +44,9 @@ queryNodeData url nameid msg =
 nodeDataPayload : SelectionSet NodeData Fractal.Object.Node
 nodeDataPayload =
     SelectionSet.succeed NodeData
-        |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.about
         |> with
             (Fractal.Object.Node.mandate identity mandatePayload)
-        |> with Fractal.Object.Node.isPrivate
 
 
 mandatePayload : SelectionSet Mandate Fractal.Object.Mandate

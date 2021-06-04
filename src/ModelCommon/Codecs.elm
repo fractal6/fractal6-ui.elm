@@ -253,7 +253,6 @@ nid2eor nid =
     , name = name
     , role_type = Nothing
     , charac = initCharac
-    , isPrivate = True
     }
 
 

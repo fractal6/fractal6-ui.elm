@@ -95,7 +95,7 @@ type alias NodeCharac =
 
 
 type alias NodeId =
-    { nameid : String, isPrivate : Bool }
+    { nameid : String }
 
 
 type alias LocalGraph =
@@ -111,7 +111,6 @@ type alias FocusNode =
     , type_ : NodeType.NodeType
     , charac : NodeCharac
     , children : List EmitterOrReceiver
-    , isPrivate : Bool
     }
 
 
@@ -119,7 +118,6 @@ type alias PNode =
     { name : String
     , nameid : String
     , charac : NodeCharac
-    , isPrivate : Bool
     }
 
 
@@ -128,7 +126,6 @@ type alias EmitterOrReceiver =
     , nameid : String
     , role_type : Maybe RoleType.RoleType
     , charac : NodeCharac
-    , isPrivate : Bool
     }
 
 
@@ -323,10 +320,8 @@ type alias PatchTensionPayloadID =
 
 
 type alias NodeData =
-    { nameid : String -- needed for @isPrivate test
-    , about : Maybe String
+    { about : Maybe String
     , mandate : Maybe Mandate
-    , isPrivate : Bool
     }
 
 
@@ -347,7 +342,7 @@ initUserctx =
 
 initNodeData : NodeData
 initNodeData =
-    NodeData "" Nothing Nothing False
+    NodeData Nothing Nothing
 
 
 initNode : Node
@@ -376,7 +371,6 @@ shrinkNode n =
     { name = n.name
     , nameid = n.nameid
     , charac = n.charac
-    , isPrivate = n.isPrivate
     }
 
 
@@ -468,7 +462,6 @@ type alias UserRoleExtended =
     --
     , createdAt : String
     , parent : Maybe NodeId
-    , isPrivate : Bool
     }
 
 

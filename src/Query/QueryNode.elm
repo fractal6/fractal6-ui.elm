@@ -325,9 +325,7 @@ nodeOrgaPayload =
 
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
 nodeIdPayload =
-    SelectionSet.map2 NodeId
-        Fractal.Object.Node.nameid
-        Fractal.Object.Node.isPrivate
+    SelectionSet.map NodeId Fractal.Object.Node.nameid
 
 
 blobIdPayload : SelectionSet BlobId Fractal.Object.Blob
@@ -404,7 +402,7 @@ focusDecoder data =
     data
         |> Maybe.map
             (\n ->
-                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault []) n.isPrivate
+                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
             )
 
 
@@ -431,7 +429,6 @@ type alias LocalNode =
     , charac : NodeCharac
     , children : Maybe (List EmitterOrReceiver)
     , parent : Maybe LocalRootNode
-    , isPrivate : Bool
     }
 
 
@@ -439,7 +436,6 @@ type alias LocalRootNode =
     { name : String
     , nameid : String
     , charac : NodeCharac
-    , isPrivate : Bool
     , isRoot : Bool
     }
 
@@ -451,7 +447,6 @@ emiterOrReceiverPayload =
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with Fractal.Object.Node.isPrivate
 
 
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
@@ -463,13 +458,13 @@ lgDecoder data =
                     Just p ->
                         let
                             focus =
-                                FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.isPrivate
+                                FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children)
 
                             path =
-                                [ PNode p.name p.nameid p.charac p.isPrivate, PNode n.name n.nameid n.charac n.isPrivate ]
+                                [ PNode p.name p.nameid p.charac, PNode n.name n.nameid n.charac ]
                         in
                         if p.isRoot then
-                            { root = PNode p.name p.nameid p.charac p.isPrivate |> Just
+                            { root = PNode p.name p.nameid p.charac |> Just
                             , path = path
                             , focus = focus
                             }
@@ -480,9 +475,9 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = PNode n.name n.nameid n.charac n.isPrivate |> Just
-                        , path = [ PNode n.name n.nameid n.charac n.isPrivate ]
-                        , focus = FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.isPrivate
+                        { root = PNode n.name n.nameid n.charac |> Just
+                        , path = [ PNode n.name n.nameid n.charac ]
+                        , focus = FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children)
                         }
             )
 
@@ -507,7 +502,6 @@ lgPayload =
             (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
         |> with
             (Fractal.Object.Node.parent identity lg2Payload)
-        |> with Fractal.Object.Node.isPrivate
 
 
 lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node
@@ -516,7 +510,6 @@ lg2Payload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with Fractal.Object.Node.isPrivate
         |> with Fractal.Object.Node.isRoot
 
 
@@ -542,8 +535,7 @@ nArchivedFilter a =
 
 
 type alias NodeMembers =
-    -- isPrivate and nameid need in the backend to check if the ressource is hidden
-    { first_link : Maybe User, isPrivate : Bool, nameid : String }
+    { first_link : Maybe User }
 
 
 membersDecoder : Maybe (List (Maybe NodeMembers)) -> Maybe (List User)
@@ -601,8 +593,6 @@ membersPayload =
                     Fractal.Object.User.username
                     Fractal.Object.User.name
             )
-        |> with Fractal.Object.Node.isPrivate
-        |> with Fractal.Object.Node.nameid
 
 
 
@@ -621,7 +611,6 @@ type alias TopMemberNode =
     , first_link : Maybe User
     , parent : Maybe NodeId
     , children : Maybe (List MemberNode)
-    , isPrivate : Bool
     }
 
 
@@ -633,7 +622,6 @@ type alias MemberNode =
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe User
     , parent : Maybe NodeId
-    , isPrivate : Bool
     }
 
 
@@ -641,7 +629,7 @@ membersTopDecoder : Maybe TopMemberNode -> Maybe (List Member)
 membersTopDecoder data =
     let
         n2r n =
-            UserRoleExtended n.name n.nameid n.rootnameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent n.isPrivate
+            UserRoleExtended n.name n.nameid n.rootnameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent
     in
     data
         |> Maybe.map
@@ -729,10 +717,8 @@ membersTopPayload =
                                 Fractal.Object.User.name
                         )
                     |> hardcoded Nothing
-                    |> with Fractal.Object.Node.isPrivate
                 )
             )
-        |> with Fractal.Object.Node.isPrivate
 
 
 
@@ -742,7 +728,7 @@ membersTopPayload =
 
 
 type alias NodeLabelsFull =
-    { labels : Maybe (List LabelFull), isPrivate : Bool }
+    { labels : Maybe (List LabelFull) }
 
 
 labelsDecoder : Maybe NodeLabelsFull -> Maybe (List LabelFull)
@@ -762,7 +748,7 @@ queryLabels url nid msg =
 
 nodeLabelsPayload : SelectionSet NodeLabelsFull Fractal.Object.Node
 nodeLabelsPayload =
-    SelectionSet.map2 NodeLabelsFull
+    SelectionSet.map NodeLabelsFull
         (Fractal.Object.Node.labels
             (\args ->
                 { args
@@ -773,7 +759,6 @@ nodeLabelsPayload =
             )
             labelFullPayload
         )
-        Fractal.Object.Node.isPrivate
 
 
 labelPayload : SelectionSet Label Fractal.Object.Label
@@ -804,8 +789,7 @@ labelFullPayload =
 
 
 type alias NodeLabels =
-    -- isPrivate and nameid need in the backend to check if the ressource is hidden
-    { labels : Maybe (List Label), isPrivate : Bool, nameid : String }
+    { labels : Maybe (List Label) }
 
 
 labelsUpDecoder : Maybe (List (Maybe NodeLabels)) -> Maybe (List Label)
@@ -856,7 +840,7 @@ nidUpFilter nids a =
 
 nodeLabelsUpPayload : SelectionSet NodeLabels Fractal.Object.Node
 nodeLabelsUpPayload =
-    SelectionSet.map3 NodeLabels
+    SelectionSet.map NodeLabels
         (Fractal.Object.Node.labels
             (\args ->
                 { args
@@ -867,5 +851,3 @@ nodeLabelsUpPayload =
             )
             labelPayload
         )
-        Fractal.Object.Node.isPrivate
-        Fractal.Object.Node.nameid

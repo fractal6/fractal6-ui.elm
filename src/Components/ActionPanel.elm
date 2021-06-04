@@ -34,7 +34,8 @@ type alias ActionPanel =
 
 
 type ActionPanelState
-    = ArchiveAction
+    = MoveAction
+    | ArchiveAction
     | UnarchiveAction
     | LeaveAction
     | NoAction
@@ -45,20 +46,80 @@ type ActionStep
     | StepAck
 
 
-action2str : ActionPanelState -> Maybe String
+action2str : ActionPanelState -> String
 action2str action =
     case action of
+        MoveAction ->
+            upH T.move
+
         ArchiveAction ->
-            Just (upH T.archive)
+            upH T.archive
 
         UnarchiveAction ->
-            Just (upH T.unarchive)
+            upH T.unarchive
 
         LeaveAction ->
-            Just (upH T.leave)
+            upH T.leaveRole
 
         NoAction ->
-            Nothing
+            "no action"
+
+
+action2header : ActionPanelState -> String
+action2header action =
+    case action of
+        MoveAction ->
+            "Move {{type}}: {{name}}"
+
+        ArchiveAction ->
+            "Archive {{type}}: {{name}}"
+
+        UnarchiveAction ->
+            "Unarchive {{type}}: {{name}}"
+
+        LeaveAction ->
+            "Leave {{type}}: {{name}}"
+
+        NoAction ->
+            "no implemented"
+
+
+action2post : ActionPanelState -> String
+action2post action =
+    case action of
+        MoveAction ->
+            T.moved
+
+        ArchiveAction ->
+            T.documentArchived
+
+        UnarchiveAction ->
+            T.documentUnarchived
+
+        LeaveAction ->
+            T.roleLeft
+
+        NoAction ->
+            "error: No action requested"
+
+
+action2color : ActionPanelState -> String
+action2color action =
+    case action of
+        MoveAction ->
+            ""
+
+        ArchiveAction ->
+            "warning"
+
+        UnarchiveAction ->
+            "warning"
+
+        LeaveAction ->
+            "danger"
+
+        NoAction ->
+            ""
 
 
 init : String -> UserState -> ActionPanel
@@ -136,6 +197,9 @@ setAction action data =
     let
         events =
             case action of
+                MoveAction ->
+                    [ TensionEvent.Moved ]
+
                 ArchiveAction ->
                     [ TensionEvent.BlobArchived ]
 
@@ -224,75 +288,23 @@ type alias Op msg =
     { tc : Maybe TensionCharac
     , isAdmin : Bool
     , hasRole : Bool
-    , isRight : Bool
+    , isRight : Bool -- view option
     , data : ActionPanel
     , onSubmit : (Time.Posix -> msg) -> msg
     , onOpenModal : ActionPanelState -> msg
     , onCloseModal : String -> msg
     , onNavigate : String -> msg
     , onActionSubmit : Time.Posix -> msg
+    , onActionMove : Time.Posix -> msg
     , onUpdatePost : String -> String -> msg
     }
 
 
 view : Op msg -> Html msg
 view op =
-    let
-        actionType_m =
-            Maybe.map (\c -> c.action_type) op.tc
-
-        form =
-            op.data.form
-    in
     div []
         [ if op.data.isEdit then
-            div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] <|
-                (if form.node.role_type /= Just RoleType.Guest then
-                    [ div
-                        [ class "dropdown-item button-light"
-                        , onClick
-                            (op.onNavigate
-                                ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid op.data.form.node.nameid, param2 = op.data.form.tid } |> toHref)
-                                    ++ "?v=edit"
-                                )
-                            )
-                        ]
-                        [ I.icon1 "icon-pen" (upH T.edit) ]
-                    , hr [ class "dropdown-divider" ] []
-                    ]
-
-                 else
-                    []
-                )
-                    ++ (if op.isAdmin then
-                            case actionType_m of
-                                Just EDIT ->
-                                    [ div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
-                                        [ I.icon1 "icon-archive" (upH T.archive) ]
-                                    ]
-
-                                Just ARCHIVE ->
-                                    [ div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
-                                        [ I.icon1 "icon-archive" (upH T.unarchive) ]
-                                    ]
-
-                                _ ->
-                                    [ div [] [ text "not implemented" ] ]
-
-                        else
-                            []
-                       )
-                    ++ (if op.hasRole then
-                            [ div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
-                                [ p []
-                                    [ I.icon1 "icon-log-out" (upH T.leaveRole) ]
-                                ]
-                            ]
-                                |> List.append [ hr [ class "dropdown-divider" ] [] ]
-
-                        else
-                            []
-                       )
+            viewPanel op
 
           else
             text ""
@@ -302,6 +314,70 @@ view op =
           else
             text ""
         ]
+
+
+viewPanel : Op msg -> Html msg
+viewPanel op =
+    div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] <|
+        (-- EDIT ACTION
+         if op.data.form.node.role_type /= Just RoleType.Guest then
+            [ div
+                [ class "dropdown-item button-light"
+                , onClick
+                    (op.onNavigate
+                        ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid op.data.form.node.nameid, param2 = op.data.form.tid } |> toHref)
+                            ++ "?v=edit"
+                        )
+                    )
+                ]
+                [ I.icon1 "icon-pen" (upH T.edit) ]
+            , hr [ class "dropdown-divider" ] []
+            ]
+
+         else
+            []
+        )
+            -- MOVE ACTION
+            ++ (if op.isAdmin then
+                    [ div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onActionMove) ]
+                        [ span [ class "right-arrow2 pl-0 pr-2" ] [], text (action2str MoveAction) ]
+                    , hr [ class "dropdown-divider" ] []
+                    ]
+
+                else
+                    []
+               )
+            -- ARCHIVE ACTION
+            ++ (if op.isAdmin then
+                    case Maybe.map (\c -> c.action_type) op.tc of
+                        Just EDIT ->
+                            [ div [ class "dropdown-item button-light is-warning", onClick (op.onOpenModal ArchiveAction) ]
+                                [ I.icon1 "icon-archive" (action2str ArchiveAction) ]
+                            ]
+
+                        Just ARCHIVE ->
+                            [ div [ class "dropdown-item button-light", onClick (op.onOpenModal UnarchiveAction) ]
+                                [ I.icon1 "icon-archive" (action2str UnarchiveAction) ]
+                            ]
+
+                        _ ->
+                            [ div [] [ text "not implemented" ] ]
+
+                else
+                    []
+               )
+            -- LEAVE ACTION
+            ++ (if op.hasRole then
+                    [ div [ class "dropdown-item button-light is-danger", onClick (op.onOpenModal LeaveAction) ]
+                        [ p []
+                            [ I.icon1 "icon-log-out" (action2str LeaveAction) ]
+                        ]
+                    ]
+                        |> List.append [ hr [ class "dropdown-divider" ] [] ]
+
+                else
+                    []
+               )
 
 
 viewModal : Op msg -> Html msg
@@ -340,30 +416,7 @@ viewModalContent op =
     in
     case op.data.step of
         StepOne ->
-            case op.data.state of
-                ArchiveAction ->
-                    let
-                        header =
-                            "Archive {{type}}: {{name}}"
-                    in
-                    viewStep1 ArchiveAction header "warning" op
-
-                UnarchiveAction ->
-                    let
-                        header =
-                            "Unarchive {{type}}: {{name}}"
-                    in
-                    viewStep1 UnarchiveAction header "warning" op
-
-                LeaveAction ->
-                    let
-                        header =
-                            "Leave {{type}}: {{name}}"
-                    in
-                    viewStep1 LeaveAction header "danger" op
-
-                NoAction ->
-                    text "no implemented"
+            viewStep1 op.data.state op
 
         StepAck ->
             case op.data.action_result of
@@ -371,18 +424,7 @@ viewModalContent op =
                     div
                         [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , case op.data.state of
-                            ArchiveAction ->
-                                textH T.documentArchived
-
-                            UnarchiveAction ->
-                                textH T.documentUnarchived
-
-                            LeaveAction ->
-                                textH T.roleLeft
-
-                            NoAction ->
-                                text "error: No action requested"
+                        , textH (action2post op.data.state)
                         ]
 
                 Failure err ->
@@ -396,9 +438,15 @@ viewModalContent op =
 --- Viewer
 
 
-viewStep1 : ActionPanelState -> String -> String -> Op msg -> Html msg
-viewStep1 action header color op =
+viewStep1 : ActionPanelState -> Op msg -> Html msg
+viewStep1 action op =
     let
+        header =
+            action2header action
+
+        color =
+            action2color action
+
         form =
             op.data.form
 
@@ -461,7 +509,7 @@ viewStep1 action header color op =
                          ]
                             ++ [ onClick (op.onSubmit <| op.onActionSubmit) ]
                         )
-                        [ action |> action2str |> withDefault "no action" |> text ]
+                        [ action |> action2str |> text ]
                     ]
                 ]
             ]

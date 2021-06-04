@@ -159,9 +159,7 @@ nodeEncoder node =
       , JEE.maybe JE.object <|
             Maybe.map
                 (\p ->
-                    [ ( "nameid", JE.string p.nameid )
-                    , ( "isPrivate", JE.bool p.isPrivate )
-                    ]
+                    [ ( "nameid", JE.string p.nameid ) ]
                 )
                 node.parent
       )
@@ -221,9 +219,7 @@ blobIdDecoder =
 
 nodeIdDecoder : JD.Decoder NodeId
 nodeIdDecoder =
-    JD.map2 NodeId
-        (JD.field "nameid" JD.string)
-        (JD.field "isPrivate" JD.bool)
+    JD.map NodeId (JD.field "nameid" JD.string)
 
 
 characDecoder : JD.Decoder NodeCharac
@@ -239,23 +235,21 @@ localGraphDecoder =
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
-                JD.map4 PNode
+                JD.map3 PNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "charac" characDecoder)
-                    (JD.field "isPrivate" JD.bool)
         )
         (JD.field "path"
             (JD.list <|
-                JD.map4 PNode
+                JD.map3 PNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
                     (JD.field "charac" characDecoder)
-                    (JD.field "isPrivate" JD.bool)
             )
         )
         (JD.field "focus" <|
-            JD.map6 FocusNode
+            JD.map5 FocusNode
                 (JD.field "name" JD.string)
                 (JD.field "nameid" JD.string)
                 (JD.field "type_" NodeType.decoder)
@@ -263,18 +257,16 @@ localGraphDecoder =
                 (JD.field "children"
                     (JD.list emitterOrReceiverDecoder)
                 )
-                (JD.field "isPrivate" JD.bool)
         )
 
 
 emitterOrReceiverDecoder : JD.Decoder EmitterOrReceiver
 emitterOrReceiverDecoder =
-    JD.map5 EmitterOrReceiver
+    JD.map4 EmitterOrReceiver
         (JD.field "name" JD.string)
         (JD.field "nameid" JD.string)
         (JD.maybe (JD.field "role_type" RoleType.decoder))
         (JD.field "charac" characDecoder)
-        (JD.field "isPrivate" JD.bool)
 
 
 

@@ -362,7 +362,7 @@ setTargetShort nameid data =
             data.form
 
         newForm =
-            { f | target = { name = nameid, nameid = nameid, isPrivate = False, charac = initCharac } }
+            { f | target = { name = nameid, nameid = nameid, charac = initCharac } }
     in
     { data | form = newForm }
 

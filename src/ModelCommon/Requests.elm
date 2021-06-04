@@ -61,7 +61,7 @@ fetchMembers url targetid msg =
 membersDecoder : JD.Decoder (List MemberNode)
 membersDecoder =
     JD.list <|
-        JD.map8 MemberNode
+        JD.map7 MemberNode
             (JD.field "createdAt" JD.string)
             (JD.field "name" JD.string)
             (JD.field "nameid" JD.string)
@@ -69,14 +69,13 @@ membersDecoder =
             (JD.field "role_type" RoleType.decoder |> JD.maybe)
             (JD.field "first_link" userDecoder |> JD.maybe)
             (JD.field "parent" nodeIdDecoder |> JD.maybe)
-            (JD.field "isPrivate" JD.bool)
 
 
 membersDecoder2 : WebData (List MemberNode) -> GqlData (List Member)
 membersDecoder2 input =
     let
         n2r n =
-            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent n.isPrivate
+            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent
     in
     case input of
         RemoteData.Success children ->

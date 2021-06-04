@@ -717,7 +717,6 @@ export const GraphPack = {
             nameid: node.data.nameid,
             name: node.data.name,
             charac: node.data.charac,
-            isPrivate: node.data.isPrivate,
         }
     },
 
@@ -742,10 +741,8 @@ export const GraphPack = {
                     nameid: n.data.nameid,
                     role_type: n.data.role_type,
                     charac: n.data.charac,
-                    isPrivate: n.data.isPrivate
                 }
             }) : [],
-            isPrivate: node.data.isPrivate
         };
 
         return {

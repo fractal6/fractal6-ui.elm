@@ -1,11 +1,4 @@
-module Extra.Events exposing
-    ( onClickPD
-    , onClickPD2
-    , onEnter
-    , onKeydown
-    , onLoad
-    , onTab
-    )
+module Extra.Events exposing (..)
 
 import Html
 import Html.Events exposing (custom, keyCode, on, preventDefaultOn, stopPropagationOn)
