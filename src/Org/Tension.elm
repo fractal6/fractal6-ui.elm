@@ -552,7 +552,7 @@ update global message model =
                 ackMsg =
                     case state of
                         MoveAction ->
-                            ArchiveDocAck
+                            \x -> NoMsg
 
                         ArchiveAction ->
                             ArchiveDocAck
@@ -2986,16 +2986,6 @@ mdFromTensionHead t =
         |> List.head
         |> Maybe.map (\h -> h.md)
         |> withDefault Nothing
-
-
-blobFromTensionHead : TensionHead -> Maybe Blob
-blobFromTensionHead th =
-    case th.blobs of
-        Just [ b ] ->
-            Just b
-
-        _ ->
-            Nothing
 
 
 eventFromForm : TensionEvent.TensionEvent -> TensionPatchForm -> Event

@@ -36,9 +36,13 @@ type alias Model =
     { user : UserState
     , isOpen : Bool
     , move_result : GqlData TensionId
-    , target : String -- keep origin target
-    , blob : Maybe Blob
+    , target : String -- keep origin target (receiverid)
     , form : MoveForm
+
+    -- Blob
+    , blob : Maybe Blob
+    , encoded_nid : String
+    , decoded_type_m : Maybe NodeType.NodeType
 
     -- Common
     , refresh_trial : Int
@@ -85,6 +89,8 @@ initModel user =
     , form = initForm user
     , target = ""
     , blob = Nothing
+    , encoded_nid = ""
+    , decoded_type_m = Nothing
 
     -- Common
     , refresh_trial = 0
@@ -111,8 +117,19 @@ open tid target blob_m model =
     let
         form =
             model.form
+
+        ( encoded_nid, decoded_type_m ) =
+            blob_m
+                |> Maybe.map
+                    (\b ->
+                        b.node
+                            |> Maybe.map
+                                (\n -> ( withDefault "" n.nameid, n.type_ ))
+                            |> withDefault ( "", Nothing )
+                    )
+                |> withDefault ( "", Nothing )
     in
-    { model | isOpen = True, target = target, blob = blob_m, form = { form | tid = tid } }
+    { model | isOpen = True, target = target, form = { form | tid = tid }, blob = blob_m, encoded_nid = encoded_nid, decoded_type_m = decoded_type_m }
 
 
 close : Model -> Model
@@ -193,7 +210,10 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, TensionId ) -- define what data is to be returned
+    , result : Maybe ( Bool, ( String, String, String ) ) --return True if it has a blob, and
+
+    -- in this case, returns (old_nameid, new_receiverid,  new_nameid).
+    -- if not, just (old_receiverid, new_receiverid, "")
     }
 
 
@@ -219,8 +239,7 @@ out2 cmds gcmds =
 
 update : Apis -> Msg -> State -> ( State, Out )
 update apis message (State model) =
-    update_ apis message model
-        |> Tuple.mapFirst State
+    update_ apis message model |> Tuple.mapFirst State
 
 
 update_ apis message model =
@@ -318,7 +337,24 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoMoveTension 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( data, out0 [ cmd ] )
+                    if cmd == Cmd.none && model.encoded_nid /= "" then
+                        -- Blob here
+                        let
+                            decoded_nid =
+                                nodeIdCodec model.target model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
+
+                            decoded_nid_new =
+                                nodeIdCodec model.form.target.nameid model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
+                        in
+                        ( data, Out [] [] (Just ( True, ( decoded_nid, model.form.target.nameid, decoded_nid_new ) )) )
+
+                    else if cmd == Cmd.none then
+                        -- simple tension here
+                        ( data, Out [] [] (Just ( True, ( model.target, model.form.target.nameid, "" ) )) )
+
+                    else
+                        -- Contract here
+                        ( data, out0 [ cmd ] )
 
                 NoAuth ->
                     ( data, noOut )
@@ -459,32 +495,18 @@ viewModalContent op (State model) =
                                 case op.orga_data of
                                     Success data ->
                                         let
-                                            ( self_, type_m ) =
-                                                model.blob
-                                                    |> Maybe.map
-                                                        (\b ->
-                                                            b.node
-                                                                |> Maybe.map
-                                                                    (\n ->
-                                                                        let
-                                                                            dr =
-                                                                                NodeType.Circle
-                                                                        in
-                                                                        ( nodeIdCodec model.target (withDefault "" n.nameid) (withDefault dr n.type_)
-                                                                        , n.type_
-                                                                        )
-                                                                    )
-                                                                |> withDefault ( "", Nothing )
-                                                        )
-                                                    |> withDefault ( "", Nothing )
-
                                             roleTest r_ =
-                                                case type_m of
-                                                    Just t ->
+                                                case model.decoded_type_m of
+                                                    Just _ ->
+                                                        -- keep circle
                                                         r_ == Nothing
 
                                                     Nothing ->
+                                                        -- filter special roles
                                                         List.member r_ [ Just RoleType.Member, Just RoleType.Guest ] == False
+
+                                            decoded_nid =
+                                                nodeIdCodec model.target model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
 
                                             targets =
                                                 Dict.values data
@@ -493,8 +515,8 @@ viewModalContent op (State model) =
                                                             (n.nameid /= model.form.target.nameid)
                                                                 && (n.nameid /= model.target)
                                                                 && roleTest n.role_type
-                                                                && (n.nameid /= self_)
-                                                                && (self_ /= (Maybe.map (\p -> p.nameid) n.parent |> withDefault ""))
+                                                                && (n.nameid /= decoded_nid)
+                                                                && (decoded_nid /= (Maybe.map (\p -> p.nameid) n.parent |> withDefault ""))
                                                         )
                                         in
                                         viewNodesSelector targets

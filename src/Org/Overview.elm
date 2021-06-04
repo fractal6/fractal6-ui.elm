@@ -24,6 +24,7 @@ import Components.Loading as Loading
         , withMaybeData
         , withMaybeDataMap
         )
+import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Debug
 import Dict exposing (Dict)
@@ -81,7 +82,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
-import Query.QueryTension exposing (queryAllTension)
+import Query.QueryTension exposing (getTensionHead, queryAllTension)
 import RemoteData exposing (RemoteData)
 import Task
 import Text as T exposing (textH, textT, upH)
@@ -162,6 +163,7 @@ type alias Model =
     -- Components
     , help : Help.State
     , tensionForm : NTF.State
+    , moveTension : MoveTension.State
     }
 
 
@@ -204,9 +206,13 @@ type Msg
     | CloseActionPanelModal String
       --| ActionStep1 XXX
     | ActionSubmit Time.Posix
+    | ActionMove Time.Posix
+    | GotTensionToMove (GqlData TensionHead)
     | ArchiveDocAck (GqlData ActionResult)
     | LeaveRoleAck (GqlData ActionResult)
     | UpdateActionPost String String
+      -- move tension
+    | DoMove TensionHead
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -218,7 +224,7 @@ type Msg
     | AddNodes (List Node)
     | UpdateNode (Maybe Node)
     | DelNodes (List String)
-    | MoveNode String
+    | MoveNode String String String
       -- GP JS Interop
     | NodeClicked String
     | NodeFocused LocalGraph
@@ -243,6 +249,7 @@ type Msg
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
+    | MoveTensionMsg MoveTension.Msg
 
 
 
@@ -290,6 +297,7 @@ init global flags =
             , node_data = fromMaybeData2 session.node_data Loading
             , init_tensions = True
             , init_data = True
+            , moveTension = MoveTension.init global.session.user
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
                 global.session.window_pos
@@ -381,7 +389,7 @@ update global message model =
                 ackMsg =
                     case state of
                         MoveAction ->
-                            ArchiveDocAck
+                            \x -> NoMsg
 
                         ArchiveAction ->
                             ArchiveDocAck
@@ -682,7 +690,7 @@ update global message model =
                     else if ActionPanel.isSuccess model.actionPanel then
                         [ case model.actionPanel.state of
                             MoveAction ->
-                                send (MoveNode model.actionPanel.form.node.nameid)
+                                Cmd.none
 
                             ArchiveAction ->
                                 send (DelNodes [ model.actionPanel.form.node.nameid ])
@@ -721,6 +729,32 @@ update global message model =
             in
             ( { model | actionPanel = panel }
             , send (PushAction panel.form panel.state)
+            , Cmd.none
+            )
+
+        ActionMove time ->
+            ( model, getTensionHead apis.gql model.actionPanel.form.tid GotTensionToMove, Cmd.none )
+
+        GotTensionToMove result ->
+            case result of
+                Success th ->
+                    ( model, Cmd.batch [ send (DoMove th), send CancelAction ], Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        DoMove t ->
+            let
+                ( newModel, cmd ) =
+                    case model.orga_data of
+                        NotAsked ->
+                            ( { model | orga_data = Loading }, send LoadOrga )
+
+                        _ ->
+                            ( model, Cmd.none )
+            in
+            ( model
+            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))), cmd ]
             , Cmd.none
             )
 
@@ -910,23 +944,19 @@ update global message model =
             , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
             )
 
-        MoveNode nameid ->
-            --let
-            --    ( ndata_, node ) =
-            --        hotNodePull [ nameid ] model.orga_data
-            --    newFocus =
-            --        getParentId nameid model.orga_data
-            --            |> withDefault model.node_focus.rootnameid
-            --    -- @todo overwrite node parent with the destination
-            --    ndata =
-            --        hotNodePush [node] (Success ndata_)
-            --in
-            --( { model | orga_data = Success ndata }
-            --  --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            --, Cmd.batch [ send (NodeClicked newFocus), send () ]
-            --, Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
-            --)
-            ( model, Cmd.none, Cmd.none )
+        MoveNode nameid_old parentid_new nameid_new ->
+            let
+                ( ndata, _ ) =
+                    hotNodePull [ nameid_old ] model.orga_data
+
+                newFocus =
+                    parentid_new
+            in
+            ( { model | orga_data = Success ndata }
+              --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
+            , Cmd.batch [ send (NodeClicked newFocus), send (FetchNewNode nameid_new) ]
+            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            )
 
         -- JS interop
         NodeClicked nameid ->
@@ -1094,6 +1124,32 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        MoveTensionMsg msg ->
+            let
+                ( data, out ) =
+                    MoveTension.update apis msg model.moveTension
+
+                cmd =
+                    out.result
+                        |> Maybe.map
+                            (\x ->
+                                if Tuple.first x then
+                                    let
+                                        ( nameid, parentid_new, nameid_new ) =
+                                            Tuple.second x
+                                    in
+                                    send (MoveNode nameid parentid_new nameid_new)
+
+                                else
+                                    Cmd.none
+                            )
+                        |> withDefault Cmd.none
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append (cmds ++ [ cmd ]) |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
@@ -1106,6 +1162,7 @@ subscriptions _ _ =
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 
 
@@ -1141,6 +1198,7 @@ view global model =
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
+        , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
         ]
     }
 
@@ -1335,7 +1393,7 @@ viewSearchBar us model =
                                                 , onCloseModal = CloseActionPanelModal
                                                 , onNavigate = Navigate
                                                 , onActionSubmit = ActionSubmit
-                                                , onActionMove = ActionSubmit
+                                                , onActionMove = ActionMove
                                                 , onUpdatePost = UpdateActionPost
                                                 }
                                         in

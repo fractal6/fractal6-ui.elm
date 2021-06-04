@@ -625,3 +625,17 @@ hotNodeUpdateName form odata =
 
         other ->
             Dict.empty
+
+
+
+-- Tension
+
+
+blobFromTensionHead : TensionHead -> Maybe Blob
+blobFromTensionHead th =
+    case th.blobs of
+        Just [ b ] ->
+            Just b
+
+        _ ->
+            Nothing
