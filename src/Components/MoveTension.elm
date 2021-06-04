@@ -476,7 +476,22 @@ viewModalContent op (State model) =
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ textH T.moveTension ]
+                [ case model.blob of
+                    Nothing ->
+                        textH T.moveTension
+
+                    Just blob ->
+                        if blob.node /= Nothing then
+                            blob.node
+                                |> Maybe.map
+                                    (\n ->
+                                        span [] [ textH (T.moveNode ++ ": "), span [ class "has-text-primary" ] [ text (withDefault "" n.name) ] ]
+                                    )
+                                |> withDefault (text "error: node is empty")
+
+                        else
+                            text "not implemented"
+                ]
             ]
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
@@ -564,7 +579,7 @@ viewModalContent op (State model) =
                          ]
                             ++ [ onClick (OnSubmit <| OnMove) ]
                         )
-                        [ textH T.moveTension ]
+                        [ textH T.move ]
                     ]
                 ]
             ]

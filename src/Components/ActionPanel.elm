@@ -69,16 +69,16 @@ action2header : ActionPanelState -> String
 action2header action =
     case action of
         MoveAction ->
-            "Move {{type}}: {{name}}"
+            "Move {{type}}: "
 
         ArchiveAction ->
-            "Archive {{type}}: {{name}}"
+            "Archive {{type}}: "
 
         UnarchiveAction ->
-            "Unarchive {{type}}: {{name}}"
+            "Unarchive {{type}}: "
 
         LeaveAction ->
-            "Leave {{type}}: {{name}}"
+            "Leave {{type}}: "
 
         NoAction ->
             "no implemented"
@@ -465,12 +465,15 @@ viewStep1 action op =
     in
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ header
-                |> Format.namedValue "type" type_
-                |> Format.namedValue "name" name
-                |> text
-                |> List.singleton
-                |> div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+                [ header
+                    |> Format.namedValue "type" type_
+                    --|> Format.namedValue "name" name
+                    |> text
+                    |> List.singleton
+                    |> span []
+                , span [ class "has-text-primary" ] [ text name ]
+                ]
             ]
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]

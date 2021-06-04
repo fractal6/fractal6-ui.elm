@@ -390,6 +390,11 @@ moveTension =
     "move tension"
 
 
+moveNode : String
+moveNode =
+    "move node"
+
+
 newContract : String
 newContract =
     "new contract"
