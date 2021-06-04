@@ -818,7 +818,7 @@ viewVersions blobsData =
 
 viewVerRow : Int -> Blob -> List (Html msg)
 viewVerRow i blob =
-    [ tr [ class "mediaBox", classList [ ( "is-active", i == 0 ) ] ]
+    [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
         [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text "\u{00A0}", byAt blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of

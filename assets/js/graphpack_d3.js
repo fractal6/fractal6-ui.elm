@@ -729,6 +729,7 @@ export const GraphPack = {
     },
 
     getNodeData(node) {
+        // @debug: LocalGraph/Node Encoder/Decoder
         var rootNode = this.getPNode(this.rootNode);
         var focusNode = {
             name: node.data.name,
@@ -743,6 +744,7 @@ export const GraphPack = {
                     charac: n.data.charac,
                 }
             }) : [],
+            source: node.data.source,
         };
 
         return {

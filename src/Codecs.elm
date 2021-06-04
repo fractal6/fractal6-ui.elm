@@ -177,7 +177,7 @@ nodeEncoder node =
       , JEE.maybe JE.object <|
             Maybe.map
                 (\p ->
-                    [ ( "id", JE.string p.id ) ]
+                    [ ( "id", JE.string p.id ), ( "tension", JE.object [ ( "id", JE.string p.tension.id ) ] ) ]
                 )
                 node.source
       )
@@ -190,7 +190,6 @@ nodeEncoder node =
 
 nodeDecoder : JD.Decoder Node
 nodeDecoder =
-    --JD.map9 Node
     JD.succeed Node
         |> JDE.andMap (JD.field "createdAt" JD.string)
         |> JDE.andMap (JD.field "name" JD.string)
@@ -231,7 +230,10 @@ characDecoder =
 
 localGraphDecoder : JD.Decoder LocalGraph
 localGraphDecoder =
-    -- @Debug: manually update the localGraph type in  nodeFocusedFromJs port
+    -- @Debug: manually update :
+    -- * the localGraph type in nodeFocusedFromJs port
+    -- * the nodeDecoder
+    -- * the nodeEncoder
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
@@ -249,14 +251,13 @@ localGraphDecoder =
             )
         )
         (JD.field "focus" <|
-            JD.map5 FocusNode
+            JD.map6 FocusNode
                 (JD.field "name" JD.string)
                 (JD.field "nameid" JD.string)
                 (JD.field "type_" NodeType.decoder)
                 (JD.field "charac" characDecoder)
-                (JD.field "children"
-                    (JD.list emitterOrReceiverDecoder)
-                )
+                (JD.field "children" (JD.list emitterOrReceiverDecoder))
+                (JD.maybe (JD.field "source" blobIdDecoder))
         )
 
 

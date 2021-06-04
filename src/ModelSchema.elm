@@ -111,6 +111,7 @@ type alias FocusNode =
     , type_ : NodeType.NodeType
     , charac : NodeCharac
     , children : List EmitterOrReceiver
+    , source : Maybe BlobId
     }
 
 

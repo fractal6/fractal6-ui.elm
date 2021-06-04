@@ -319,8 +319,7 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.first_link identity userPayload)
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
         |> with Fractal.Object.Node.isPrivate
-        |> with
-            (Fractal.Object.Node.source identity blobIdPayload)
+        |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
@@ -399,11 +398,12 @@ nidFilter nid a =
 
 focusDecoder : Maybe LocalNode -> Maybe FocusNode
 focusDecoder data =
-    data
-        |> Maybe.map
-            (\n ->
-                FocusNode n.name n.nameid n.type_ n.charac (n.children |> withDefault [])
-            )
+    data |> Maybe.map ln2fn
+
+
+ln2fn : LocalNode -> FocusNode
+ln2fn n =
+    FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.source
 
 
 queryFocusNode url nid msg =
@@ -428,6 +428,7 @@ type alias LocalNode =
     , type_ : NodeType.NodeType
     , charac : NodeCharac
     , children : Maybe (List EmitterOrReceiver)
+    , source : Maybe BlobId
     , parent : Maybe LocalRootNode
     }
 
@@ -458,7 +459,7 @@ lgDecoder data =
                     Just p ->
                         let
                             focus =
-                                FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children)
+                                ln2fn n
 
                             path =
                                 [ PNode p.name p.nameid p.charac, PNode n.name n.nameid n.charac ]
@@ -477,7 +478,7 @@ lgDecoder data =
                         -- Assume Root node
                         { root = PNode n.name n.nameid n.charac |> Just
                         , path = [ PNode n.name n.nameid n.charac ]
-                        , focus = FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children)
+                        , focus = ln2fn n
                         }
             )
 
@@ -498,10 +499,9 @@ lgPayload =
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.type_
         |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with
-            (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
-        |> with
-            (Fractal.Object.Node.parent identity lg2Payload)
+        |> with (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
+        |> with (Fractal.Object.Node.source identity blobIdPayload)
+        |> with (Fractal.Object.Node.parent identity lg2Payload)
 
 
 lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node

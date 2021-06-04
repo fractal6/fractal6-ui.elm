@@ -25,6 +25,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, target, type_, value)
@@ -34,7 +35,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchLabels, login)
 import ModelCommon.View exposing (roleColor, viewLabel)
 import ModelSchema exposing (..)
@@ -121,11 +122,12 @@ type alias Model =
 type MenuSettings
     = LabelsMenu
     | SecurityMenu
+    | EditMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, SecurityMenu ]
+    [ LabelsMenu, SecurityMenu, EditMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -136,6 +138,10 @@ menuEncoder menu =
 
         SecurityMenu ->
             "security"
+
+        EditMenu ->
+            --redirect
+            "labels"
 
 
 menuDecoder : String -> MenuSettings
@@ -160,6 +166,9 @@ menuToString menu =
         SecurityMenu ->
             upH T.security
 
+        EditMenu ->
+            upH "edit node"
+
 
 menuToIcon : MenuSettings -> String
 menuToIcon menu =
@@ -169,6 +178,10 @@ menuToIcon menu =
 
         SecurityMenu ->
             "icon-shield"
+
+        EditMenu ->
+            --"icon-pen"
+            "icon-edit"
 
 
 
@@ -405,12 +418,22 @@ update global message model =
             ( newModel, Cmd.none, Cmd.none )
 
         ChangeMenuFocus menu ->
-            let
-                query =
-                    queryBuilder
-                        [ ( "m", menuEncoder menu ) ]
-            in
-            ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
+            case menu of
+                EditMenu ->
+                    case getIdsFromPath model.path_data of
+                        Just ( nid, tid ) ->
+                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nid, param2 = tid }) ++ "?v=edit")), Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    let
+                        query =
+                            queryBuilder
+                                [ ( "m", menuEncoder menu ) ]
+                    in
+                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
 
         AddLabel ->
             -- Toggle Add Label Box
@@ -921,11 +944,19 @@ viewSettingsMenu model =
             (model.menuList
                 |> List.map
                     (\x ->
-                        li []
+                        [ case x of
+                            EditMenu ->
+                                hr [ class "dropdown-divider" ] []
+
+                            _ ->
+                                text ""
+                        , li []
                             [ a [ onClickPD (ChangeMenuFocus x), target "_blank", classList [ ( "is-active", x == model.menuFocus ) ] ]
                                 [ I.icon1 (menuToIcon x) (menuToString x) ]
                             ]
+                        ]
                     )
+                |> List.concat
             )
         ]
 
@@ -941,6 +972,10 @@ viewSettingsContent model =
 
         SecurityMenu ->
             div [] [ text "Work in progress" ]
+
+        EditMenu ->
+            -- redirection
+            div [] [ text "" ]
 
 
 viewLabels : Model -> Html Msg

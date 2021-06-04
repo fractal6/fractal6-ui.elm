@@ -115,7 +115,7 @@ mediaTension focus tension showStatus showRecip size navigate =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
     in
     div
-        [ class ("media mediaBox " ++ size)
+        [ class ("media mediaBox is-hoverable " ++ size)
         , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
         ]
         [ div [ class "media-left" ]

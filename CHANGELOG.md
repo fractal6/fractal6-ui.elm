@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - This changelog file
 - add a new tension sub-tab in the tensions mains tab. The circle view allow the tensions to be separated in the kanban like view.
 - A info message can now be passed to the ConfirmModal component.
+- New "edit node" entry in settings menu that redirect to node's tension.
 
 ### Changed
 - Improve the tension search bar filter

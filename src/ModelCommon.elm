@@ -550,6 +550,21 @@ getChildrenLeaf nid odata =
         |> withDefault []
 
 
+getIdsFromPath : GqlData LocalGraph -> Maybe ( String, String )
+getIdsFromPath data =
+    case data of
+        Success d ->
+            case d.focus.source of
+                Just blob ->
+                    Just ( d.focus.nameid, blob.tension.id )
+
+                Nothing ->
+                    Nothing
+
+        _ ->
+            Nothing
+
+
 getParentFragmentFromRole role =
     let
         l =

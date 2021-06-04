@@ -960,10 +960,6 @@ update global message model =
 
         -- JS interop
         NodeClicked nameid ->
-            let
-                f =
-                    Debug.log "noooo go" ""
-            in
             ( model
             , Cmd.none
             , ReplaceUrl (uriFromNameid OverviewBaseUri nameid) |> send

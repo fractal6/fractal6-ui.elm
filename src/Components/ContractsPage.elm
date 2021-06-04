@@ -493,7 +493,7 @@ viewRow d op model =
             d.createdBy.username == model.form.uctx.username
     in
     [ tr
-        [ class "mediaBox"
+        [ class "mediaBox is-hoverable"
         , classList [ ( "do-clear", isDeleted ) ]
         ]
         [ td [ onClick (DoClickContract d.id) ]
