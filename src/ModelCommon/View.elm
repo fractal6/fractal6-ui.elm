@@ -178,7 +178,7 @@ mediaTension focus tension showStatus showRecip size navigate =
                         ]
 
                   else
-                    span [] [ viewTensionDateAndUser "has-text-weight-light" tension.createdAt tension.createdBy ]
+                    span [] [ atBy "has-text-weight-light" tension.createdAt tension.createdBy ]
                 ]
 
             --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
@@ -312,6 +312,16 @@ byAt createdBy createdAt =
         , viewUsernameLink createdBy.username
         , text " the "
         , text (formatTime createdAt)
+        ]
+
+
+atBy : String -> String -> Username -> Html msg
+atBy cls createdAt createdBy =
+    span [ class cls ]
+        [ text " the "
+        , text (formatTime createdAt)
+        , text " by "
+        , viewUsernameLink createdBy.username
         ]
 
 

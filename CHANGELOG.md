@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     * coordinator of the source or target circle
     * assigness
 - fix how duplicate label are managed in the label settings page.
+- Tensions added when in the tensions tab view are now rendered in the list (circles view only).
 
 ## [0.4] - ...
 
