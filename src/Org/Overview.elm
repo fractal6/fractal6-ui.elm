@@ -149,6 +149,7 @@ type alias Model =
     , init_data : Bool
     , node_quickSearch : NodesQuickSearch
     , window_pos : WindowPos
+    , node_hovered : Maybe Node
 
     -- Node Action
     , actionPanel : ActionPanel
@@ -200,7 +201,7 @@ type Msg
       -- New Tension
     | DoCreateTension LocalGraph
       -- Node Settings
-    | DoActionEdit Node
+    | DoActionEdit String Node
     | CancelAction
     | OpenActionPanelModal ActionPanelState
     | CloseActionPanelModal String
@@ -227,6 +228,7 @@ type Msg
     | MoveNode String String String
       -- GP JS Interop
     | NodeClicked String
+    | NodeHovered String
     | NodeFocused LocalGraph
     | DoClearTooltip
     | ToggleGraphReverse
@@ -302,6 +304,7 @@ init global flags =
             , window_pos =
                 global.session.window_pos
                     |> withDefault { two = "doc", three = "activities" }
+            , node_hovered = Nothing
 
             -- Node Action
             , actionPanel = ActionPanel.init "" global.session.user
@@ -639,7 +642,7 @@ update global message model =
             ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
         -- Node Action
-        DoActionEdit node ->
+        DoActionEdit domid node ->
             if model.actionPanel.isEdit == False then
                 let
                     rootSource =
@@ -656,12 +659,12 @@ update global message model =
 
                     panel =
                         model.actionPanel
-                            |> ActionPanel.open bid
+                            |> ActionPanel.open domid bid
                             |> ActionPanel.setTid tid
                             |> ActionPanel.setNode node
                 in
                 ( { model | actionPanel = panel }
-                , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
+                , Ports.outsideClickClose "cancelActionFromJs" domid
                 , Cmd.none
                 )
 
@@ -669,7 +672,7 @@ update global message model =
                 ( model, send CancelAction, Cmd.none )
 
         CancelAction ->
-            ( { model | actionPanel = ActionPanel.close model.actionPanel }, Cmd.none, Cmd.none )
+            ( { model | actionPanel = ActionPanel.close model.actionPanel }, Cmd.none, Ports.click "body" )
 
         OpenActionPanelModal action ->
             let
@@ -898,7 +901,11 @@ update global message model =
                 Success nodes ->
                     ( model, send (AddNodes nodes), Cmd.none )
 
-                _ ->
+                o ->
+                    let
+                        g =
+                            Debug.log "eeror new node" o
+                    in
                     ( model, Cmd.none, Cmd.none )
 
         AddNodes nodes ->
@@ -908,7 +915,7 @@ update global message model =
             in
             ( { model | orga_data = Success ndata }
             , Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            , Cmd.batch [ sendSleep UpdateUserToken 300, send (UpdateSessionOrga (Just ndata)) ]
             )
 
         UpdateNode node_m ->
@@ -955,15 +962,24 @@ update global message model =
             ( { model | orga_data = Success ndata }
               --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
             , Cmd.batch [ send (NodeClicked newFocus), send (FetchNewNode nameid_new) ]
-            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            , Cmd.none
             )
 
         -- JS interop
         NodeClicked nameid ->
-            ( model
-            , Cmd.none
-            , ReplaceUrl (uriFromNameid OverviewBaseUri nameid) |> send
-            )
+            ( model, Cmd.none, ReplaceUrl (uriFromNameid OverviewBaseUri nameid) |> send )
+
+        NodeHovered nid ->
+            let
+                ( node, cmd ) =
+                    case getNode nid model.orga_data of
+                        Just n ->
+                            ( Just n, Cmd.none )
+
+                        Nothing ->
+                            ( Nothing, send CancelAction )
+            in
+            ( { model | node_hovered = node }, cmd, Cmd.none )
 
         NodeFocused path ->
             -- May change the node_focus var
@@ -1150,6 +1166,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ nodeClickedFromJs NodeClicked
+    , nodeHoveredFromJs NodeHovered
     , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
     , Ports.lgPD nodeDataFromJs LogErr DoCreateTension
     , Ports.lookupNodeFromJs ChangeNodeLookup
@@ -1167,6 +1184,9 @@ subscriptions _ _ =
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg
+
+
+port nodeHoveredFromJs : (String -> msg) -> Sub msg
 
 
 port nodeFocusedFromJs : (JD.Value -> msg) -> Sub msg
@@ -1351,59 +1371,21 @@ viewSearchBar us model =
              ]
                 ++ (case model.path_data of
                         Just p ->
+                            let
+                                node =
+                                    getNode p.focus.nameid model.orga_data |> withDefault initNode
+                            in
                             [ div [ class "control controlButtons" ]
                                 [ span
-                                    [ class "button is-small is-info is-ellipsis"
+                                    [ class "button is-small is-info is-wrapped"
                                     , attribute "data-modal" "actionModal"
                                     , onClick (DoCreateTension p)
                                     ]
-                                    [ span [ class "has-text-weight-bold is-ellipsis" ] [ text p.focus.name ]
-                                    , i [ class "icon-plus1 ellipsisArt" ] []
+                                    [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
+                                    , i [ class "icon-plus1 custom-style" ] []
                                     ]
                                 ]
-                            , case us of
-                                LoggedIn uctx ->
-                                    let
-                                        node =
-                                            Dict.get p.focus.nameid (withMaybeData model.orga_data |> withDefault Dict.empty) |> withDefault initNode
-
-                                        isAdmin =
-                                            List.length (getNodeRights uctx node model.orga_data) > 0
-
-                                        hasRole =
-                                            Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
-
-                                        hasConfig =
-                                            isAdmin || hasRole
-                                    in
-                                    if hasConfig then
-                                        let
-                                            panelData =
-                                                { tc = Just { action_type = EDIT, doc_type = NODE }
-                                                , isAdmin = isAdmin
-                                                , hasRole = hasRole
-                                                , isRight = True
-                                                , data = model.actionPanel
-                                                , onSubmit = Submit
-                                                , onOpenModal = OpenActionPanelModal
-                                                , onCloseModal = CloseActionPanelModal
-                                                , onNavigate = Navigate
-                                                , onActionSubmit = ActionSubmit
-                                                , onActionMove = ActionMove
-                                                , onUpdatePost = UpdateActionPost
-                                                }
-                                        in
-                                        div [ id "actionPanelContent", class "control" ]
-                                            [ span [ class "button is-small is-info", onClick (DoActionEdit node) ]
-                                                [ i [ class "icon-ellipsis-v" ] [] ]
-                                            , ActionPanel.view panelData
-                                            ]
-
-                                    else
-                                        text ""
-
-                                LoggedOut ->
-                                    text ""
+                            , viewActionPanel "actionPanelContent1" us node model.orga_data model.actionPanel
                             ]
 
                         _ ->
@@ -1413,6 +1395,55 @@ viewSearchBar us model =
         , div [ class "control" ]
             [ viewSearchList us model ]
         ]
+
+
+viewActionPanel : String -> UserState -> Node -> GqlData NodesData -> ActionPanel -> Html Msg
+viewActionPanel domid us node o actionPanel =
+    case us of
+        LoggedIn uctx ->
+            let
+                isAdmin =
+                    List.length (getNodeRights uctx node o) > 0
+
+                hasRole =
+                    Just uctx.username == Maybe.map (\fs -> fs.username) node.first_link
+
+                hasConfig =
+                    isAdmin || hasRole
+            in
+            if hasConfig then
+                let
+                    panelData =
+                        { tc = Just { action_type = EDIT, doc_type = NODE }
+                        , isAdmin = isAdmin
+                        , hasRole = hasRole
+                        , isRight = True
+                        , domid = domid
+                        , data = actionPanel
+                        , onSubmit = Submit
+                        , onOpenModal = OpenActionPanelModal
+                        , onCloseModal = CloseActionPanelModal
+                        , onNavigate = Navigate
+                        , onActionSubmit = ActionSubmit
+                        , onActionMove = ActionMove
+                        , onUpdatePost = UpdateActionPost
+                        }
+                in
+                span [ id domid, class "control actionPanelStyle" ]
+                    [ span
+                        [ class "button is-small is-info"
+                        , classList [ ( "is-light", domid == "actionPanelContent2" ) ]
+                        , onClick (DoActionEdit domid node)
+                        ]
+                        [ i [ class "icon-ellipsis-v" ] [] ]
+                    , ActionPanel.view panelData
+                    ]
+
+            else
+                text ""
+
+        LoggedOut ->
+            text ""
 
 
 viewSearchList : UserState -> Model -> Html Msg
@@ -1520,15 +1551,21 @@ viewCanvas us model =
             [ id "nodeTooltip"
             , class "is-invisible"
             , attribute "data-modal" "actionModal"
+            , attribute "data-event-click" "doTension"
+            , attribute "data-event-hover" "doAction"
             ]
-            [ span [] [ text "void" ] -- Node name
-            , i [ class "icon-plus1 ellipsisArt" ] []
+            [ span [ id "doTension" ]
+                [ span [] [ text "void" ] -- Node name
+                , i [ class "icon-plus1 custom-style" ] []
+                ]
+            , span [ id "doAction" ]
+                [ case model.node_hovered of
+                    Just node ->
+                        viewActionPanel "actionPanelContent2" us node model.orga_data model.actionPanel
 
-            --, div [ id "actionPanelContent", class "control" ]
-            --    [ span
-            --        [ class "button is-small is-info" ]
-            --        [ i [ class "icon-ellipsis-v" ] [] ]
-            --    ]
+                    Nothing ->
+                        text ""
+                ]
             ]
         ]
 

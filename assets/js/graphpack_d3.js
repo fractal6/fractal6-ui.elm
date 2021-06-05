@@ -179,13 +179,14 @@ export const GraphPack = {
     // y-axis offset for the top node
     nodeOffsetY: 0,
 
-    // Focus logics
+    // State
     colToCircle : {}, // Dataset to swich between color of a circle (in the hidden canvas) and the node data
     nextCol: 1,
     colorCircle : null,
     rootNode    : null, // The root node of the graph
     focusedNode : null, // The node that has the active focus
     hoveredNode : null, // The node that is curently hoovered
+    isFrozen    : false, // prevent mouse move glitching thing
 
     // Zooming
     ease: d3.easePolyInOut.exponent(4),
@@ -929,9 +930,9 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
         // == add tooltip
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
-        //$tooltip.textContent = node.data.name;
-        $tooltip.childNodes[0].textContent = node.data.name;
-        //$tooltip.dataset.nid = node.data.nameid;
+        var subId = this.$tooltip.dataset.eventClick;
+        var $subTooltip = document.getElementById(subId);
+        $subTooltip.childNodes[0].textContent = node.data.name;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
         // --
@@ -961,6 +962,7 @@ export const GraphPack = {
         }
         $tooltip.style.left = l + "px";
         $tooltip.style.top = t + "px";
+
         return
     },
 
@@ -971,6 +973,8 @@ export const GraphPack = {
             this.$tooltip.classList.add("fadeOut");
             //this.$tooltip.style.display = "none";
         }
+
+        this.nodeHoveredFromJs("");
         return
     },
 
@@ -1023,6 +1027,16 @@ export const GraphPack = {
     nodeClickedFromJs(node) {
         var nameid = node.data.nameid;
         this.app.ports.nodeClickedFromJs.send(nameid);
+    },
+
+    nodeHoveredFromJs(node) {
+        var nid;
+        if (!node) {
+            nid = ""
+        } else {
+            nid = node.data.nameid;
+        }
+        this.app.ports.nodeHoveredFromJs.send(nid);
     },
 
     nodeFocusedFromJs(node) {
@@ -1239,6 +1253,10 @@ export const GraphPack = {
             if (this.isZooming) {
                 return false
             }
+            if (this.isFrozen) {
+                this.isFrozen = false;
+                return true
+            }
             var node = this.getNodeUnderPointer(e);
             var isUpdated = false;
             if (node) {
@@ -1267,11 +1285,17 @@ export const GraphPack = {
             if (this.isZooming) {
                 return false
             }
+            if (this.isFrozen) {
+                return false
+            }
             var p = this.getPointerCtx(e);
             var node = this.getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
             var isInTooltip = false;
             if (this.hoveredNode) {
                 isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
+                if (isInTooltip) { // Send the data
+                    this.nodeHoveredFromJs(this.hoveredNode);
+                }
             }
 
             if (node) {
@@ -1285,12 +1309,16 @@ export const GraphPack = {
             } else {
                 this.drawNodeHover(this.focusedNode, true);
             }
+
             return false
         };
 
         // Listen for mouse entering canvas
         var canvasMouseEnterEvent = e => {
             if (this.isZooming) {
+                return false
+            }
+            if (this.isFrozen) {
                 return false
             }
             var p = this.getPointerCtx(e);
@@ -1312,8 +1340,16 @@ export const GraphPack = {
                 if (clearBorder) {
                     this.clearNodeHover(this.hoveredNode);
                 }
+            } else {
+                if (this.isFrozen) {
+                    return false
+                }
+                // In a tooltip
+                //isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
+                this.nodeHoveredFromJs(this.hoveredNode);
             }
 
+            this.isFrozen = false;
             return false
         };
 
@@ -1372,8 +1408,23 @@ export const GraphPack = {
         });
 
         // Node Tooltip events
-        this.$tooltip.addEventListener("mousedown", e => {
+        var subId = this.$tooltip.dataset.eventClick;
+        var $subTooltip = document.getElementById(subId);
+        $subTooltip.addEventListener("mousedown", e => {
+            if (this.isFrozen) {
+                this.isFrozen = false;
+                return false
+            }
             this.sendNodeDataFromJs(this.hoveredNode);
+            this.isFrozen = false;
+            return true
+        });
+
+        var subId = this.$tooltip.dataset.eventHover;
+        var $subTooltip = document.getElementById(subId);
+        $subTooltip.addEventListener("mousedown", e => {
+            this.isFrozen = true;
+            //this.sendNodeDataFromJs(this.hoveredNode);
             return true
         });
 

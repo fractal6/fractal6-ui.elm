@@ -233,6 +233,7 @@ const actions = {
     //
     'INIT_GRAPHPACK': (app, session, data) => {
         var gp = session.gp;
+        gp.isFrozen = false;
 
         // Loading empty canvas
         if (!data.data || data.data.length == 0 ) {

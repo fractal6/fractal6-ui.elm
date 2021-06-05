@@ -329,7 +329,7 @@ type Msg
       -- Labels
     | DoLabelEdit
       -- Action Edit
-    | DoActionEdit Blob
+    | DoActionEdit String Blob
     | CancelAction
     | OpenActionPanelModal ActionPanelState
     | CloseActionPanelModal String
@@ -1317,7 +1317,7 @@ update global message model =
             )
 
         -- Action
-        DoActionEdit blob ->
+        DoActionEdit domid blob ->
             if model.actionPanel.isEdit == False then
                 let
                     parentid =
@@ -1325,11 +1325,11 @@ update global message model =
 
                     panel =
                         model.actionPanel
-                            |> ActionPanel.open blob.id
+                            |> ActionPanel.open domid blob.id
                             |> ActionPanel.setNode (blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid)
                 in
                 ( { model | actionPanel = panel }
-                , Ports.outsideClickClose "cancelActionFromJs" "actionPanelContent"
+                , Ports.outsideClickClose "cancelActionFromJs" domid
                 , Cmd.none
                 )
 
@@ -2777,10 +2777,14 @@ viewSidePane u t model =
             [ div [ class "media-content" ] <|
                 (case u of
                     LoggedIn uctx ->
+                        let
+                            domid =
+                                "actionPanelContent"
+                        in
                         [ h2
                             [ class "subtitle is-h"
                             , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                            , Maybe.map (\b -> onClick (DoActionEdit b)) blob_m |> withDefault (onClick NoMsg)
+                            , Maybe.map (\b -> onClick (DoActionEdit domid b)) blob_m |> withDefault (onClick NoMsg)
                             ]
                             [ textH T.document
                             , if model.actionPanel.isEdit then
@@ -2792,8 +2796,7 @@ viewSidePane u t model =
                               else
                                 text ""
                             ]
-                        , div
-                            [ id "actionPanelContent" ]
+                        , div [ id domid, class "actionPanelStyle" ]
                             [ if hasBlobRight || hasRole then
                                 let
                                     panelData =
@@ -2801,6 +2804,7 @@ viewSidePane u t model =
                                         , isAdmin = hasBlobRight
                                         , hasRole = hasRole
                                         , isRight = False
+                                        , domid = domid
                                         , data = model.actionPanel
                                         , onSubmit = Submit
                                         , onOpenModal = OpenActionPanelModal

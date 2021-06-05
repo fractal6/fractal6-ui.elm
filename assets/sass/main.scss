@@ -983,7 +983,7 @@ html.has-modal-active, html.has-modal-active2 {
     &:hover {cursor: pointer; }
 }
 
-#actionPanelContent {
+.actionPanelStyle {
     .dropdown-content {
         position: absolute;
         z-index: 25;
@@ -1068,7 +1068,7 @@ html.has-modal-active, html.has-modal-active2 {
             &:hover { border-color: $grey; }
         }
 
-        .ellipsisArt {
+        .custom-style {
             margin-left: 5px !important;
             margin-right: 8px !important;
             color: $green-frac6 !important;
@@ -1079,7 +1079,7 @@ html.has-modal-active, html.has-modal-active2 {
         border: 1px solid $grey;
     }
 
-    #actionPanelContent > .button {
+    .actionPanelStyle > .button {
             border-left-color: $grey !important;
             border-left-width: 1px !important;
             border-left-style: solid;
@@ -1368,11 +1368,20 @@ a.actionLink {
         //transition: visibility 0s 1s, opacity 1s; // fadOut transition don't works ?
     }
 
-    .ellipsisArt {
+    .custom-style {
         margin-left: 5px !important;
         margin-right: 5px !important;
         color: $green !important;
         font-size: 16px !important;
+    }
+
+    .actionPanelStyle {
+        & > .button {
+            border-left-color: $grey !important;
+            border-left-width: 1px !important;
+            border-left-style: solid;
+            max-height: 1.5rem;
+        }
     }
 }
 
@@ -1835,7 +1844,7 @@ a.actionLink {
     }
 }
 
-.is-ellipsis {
+.is-wrapped {
     max-width: 100%;
     text-overflow: ellipsis;
     overflow: hidden;

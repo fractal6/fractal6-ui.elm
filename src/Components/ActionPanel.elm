@@ -26,6 +26,7 @@ import Time
 type alias ActionPanel =
     { isEdit : Bool
     , isModalActive : Bool
+    , domid : String -- allow multiple panel to coexists
     , form : ActionForm
     , state : ActionPanelState
     , step : ActionStep
@@ -130,6 +131,7 @@ init tid user =
     , state = NoAction
     , step = StepOne
     , action_result = NotAsked
+    , domid = ""
     }
 
 
@@ -137,13 +139,13 @@ init tid user =
 -- State controls
 
 
-open : String -> ActionPanel -> ActionPanel
-open bid data =
+open : String -> String -> ActionPanel -> ActionPanel
+open domid bid data =
     let
         f =
             data.form
     in
-    { data | isEdit = True, form = { f | bid = bid } }
+    { data | isEdit = True, form = { f | bid = bid }, domid = domid }
 
 
 close : ActionPanel -> ActionPanel
@@ -289,6 +291,7 @@ type alias Op msg =
     , isAdmin : Bool
     , hasRole : Bool
     , isRight : Bool -- view option
+    , domid : String
     , data : ActionPanel
     , onSubmit : (Time.Posix -> msg) -> msg
     , onOpenModal : ActionPanelState -> msg
@@ -303,7 +306,7 @@ type alias Op msg =
 view : Op msg -> Html msg
 view op =
     div []
-        [ if op.data.isEdit then
+        [ if op.data.isEdit && op.domid == op.data.domid then
             viewPanel op
 
           else
