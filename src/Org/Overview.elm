@@ -150,6 +150,7 @@ type alias Model =
     , node_quickSearch : NodesQuickSearch
     , window_pos : WindowPos
     , node_hovered : Maybe Node
+    , next_focus : Maybe String
 
     -- Node Action
     , actionPanel : ActionPanel
@@ -305,6 +306,7 @@ init global flags =
                 global.session.window_pos
                     |> withDefault { two = "doc", three = "activities" }
             , node_hovered = Nothing
+            , next_focus = Nothing
 
             -- Node Action
             , actionPanel = ActionPanel.init "" global.session.user
@@ -901,20 +903,22 @@ update global message model =
                 Success nodes ->
                     ( model, send (AddNodes nodes), Cmd.none )
 
-                o ->
-                    let
-                        g =
-                            Debug.log "eeror new node" o
-                    in
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         AddNodes nodes ->
             let
                 ndata =
                     hotNodePush nodes model.orga_data
+
+                cmds =
+                    model.next_focus
+                        |> Maybe.map
+                            (\nid -> [ send (NodeClicked nid) ])
+                        |> withDefault [ Cmd.none ]
             in
-            ( { model | orga_data = Success ndata }
-            , Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
+            ( { model | orga_data = Success ndata, next_focus = Nothing }
+            , Cmd.batch ([ Ports.addQuickSearchNodes nodes, List.map (\n -> n.first_link) nodes |> List.filterMap identity |> Ports.addQuickSearchUsers ] ++ cmds)
             , Cmd.batch [ sendSleep UpdateUserToken 300, send (UpdateSessionOrga (Just ndata)) ]
             )
 
@@ -955,13 +959,10 @@ update global message model =
             let
                 ( ndata, _ ) =
                     hotNodePull [ nameid_old ] model.orga_data
-
-                newFocus =
-                    parentid_new
             in
-            ( { model | orga_data = Success ndata }
+            ( { model | orga_data = Success ndata, next_focus = Just parentid_new }
               --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            , Cmd.batch [ send (NodeClicked newFocus), send (FetchNewNode nameid_new) ]
+            , Cmd.batch [ send (FetchNewNode nameid_new) ]
             , Cmd.none
             )
 
@@ -1150,7 +1151,7 @@ update global message model =
                                         ( nameid, parentid_new, nameid_new ) =
                                             Tuple.second x
                                     in
-                                    sendSleep (MoveNode nameid parentid_new nameid_new) 300
+                                    send (MoveNode nameid parentid_new nameid_new)
 
                                 else
                                     Cmd.none

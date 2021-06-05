@@ -963,6 +963,7 @@ export const GraphPack = {
         $tooltip.style.left = l + "px";
         $tooltip.style.top = t + "px";
 
+        this.nodeHoveredFromJs(node);
         return
     },
 
@@ -1293,9 +1294,8 @@ export const GraphPack = {
             var isInTooltip = false;
             if (this.hoveredNode) {
                 isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
-                if (isInTooltip) { // Send the data
-                    this.nodeHoveredFromJs(this.hoveredNode);
-                }
+                // Only show tooltip it on hoover
+                //if (isInTooltip) { this.nodeHoveredFromJs(this.hoveredNode); }
             }
 
             if (node) {
@@ -1344,9 +1344,8 @@ export const GraphPack = {
                 if (this.isFrozen) {
                     return false
                 }
-                // In a tooltip
-                //isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
-                this.nodeHoveredFromJs(this.hoveredNode);
+                // Only show tooltip it on hoover
+                //this.nodeHoveredFromJs(this.hoveredNode);
             }
 
             this.isFrozen = false;
@@ -1424,7 +1423,6 @@ export const GraphPack = {
         var $subTooltip = document.getElementById(subId);
         $subTooltip.addEventListener("mousedown", e => {
             this.isFrozen = true;
-            //this.sendNodeDataFromJs(this.hoveredNode);
             return true
         });
 

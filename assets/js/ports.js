@@ -147,6 +147,9 @@ const actions = {
     },
     'BULMA': (app, session, id) => {
         InitBulma(app, session, id);
+
+        // Unlock tooltip
+        session.gp.isFrozen = false;
     },
     'TOGGLE_TH': (app, session, message) => {
         var $tt = document.getElementById("themeButton_port");
@@ -233,7 +236,6 @@ const actions = {
     //
     'INIT_GRAPHPACK': (app, session, data) => {
         var gp = session.gp;
-        gp.isFrozen = false;
 
         // Loading empty canvas
         if (!data.data || data.data.length == 0 ) {
