@@ -179,6 +179,24 @@ hasData model =
     (isPostEmpty [ "message" ] model.form.post && model.form.target.nameid == "") == False
 
 
+buildOutResult : Model -> ( String, String, String )
+buildOutResult model =
+    if model.encoded_nid /= "" then
+        -- Blob here
+        let
+            decoded_nid =
+                nodeIdCodec model.target model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
+
+            decoded_nid_new =
+                nodeIdCodec model.form.target.nameid model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
+        in
+        ( decoded_nid, model.form.target.nameid, decoded_nid_new )
+
+    else
+        -- simple tension here
+        ( model.target, model.form.target.nameid, "" )
+
+
 
 -- ------------------------------
 -- U P D A T E
@@ -210,10 +228,12 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, ( String, String, String ) ) --return True if it has a blob, and
 
-    -- in this case, returns (old_nameid, new_receiverid,  new_nameid).
-    -- if not, just (old_receiverid, new_receiverid, "")
+    --Bool: return True data result has just been received
+    --      return False if data has been received (when closing modal typically)
+    -- Tuple: if it has a blob, and returns (old_nameid, new_receiverid,  new_nameid).
+    --        else (simple tension) just (old_receiverid, new_receiverid, "")
+    , result : Maybe ( Bool, ( String, String, String ) )
     }
 
 
@@ -257,7 +277,12 @@ update_ apis message model =
                 gcmds =
                     ternary (data.link /= "") [ DoNavigate data.link ] []
             in
-            ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
+            case model.move_result of
+                Success _ ->
+                    ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds (Just ( False, buildOutResult model )) )
+
+                _ ->
+                    ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
 
         OnReset ->
             ( reset model, noOut )
@@ -337,20 +362,8 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoMoveTension 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    if cmd == Cmd.none && model.encoded_nid /= "" then
-                        -- Blob here
-                        let
-                            decoded_nid =
-                                nodeIdCodec model.target model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
-
-                            decoded_nid_new =
-                                nodeIdCodec model.form.target.nameid model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
-                        in
-                        ( data, Out [] [] (Just ( True, ( decoded_nid, model.form.target.nameid, decoded_nid_new ) )) )
-
-                    else if cmd == Cmd.none then
-                        -- simple tension here
-                        ( data, Out [] [] (Just ( True, ( model.target, model.form.target.nameid, "" ) )) )
+                    if cmd == Cmd.none then
+                        ( data, Out [] [] (Just ( True, buildOutResult model )) )
 
                     else
                         -- Contract here

@@ -977,7 +977,7 @@ update global message model =
                         _ ->
                             ( model, Cmd.none )
             in
-            ( model
+            ( newModel
             , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))), cmd ]
             , Cmd.none
             )

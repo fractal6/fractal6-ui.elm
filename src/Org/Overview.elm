@@ -753,7 +753,7 @@ update global message model =
                         _ ->
                             ( model, Cmd.none )
             in
-            ( model
+            ( newModel
             , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))), cmd ]
             , Cmd.none
             )
@@ -1129,12 +1129,12 @@ update global message model =
                     out.result
                         |> Maybe.map
                             (\x ->
-                                if Tuple.first x then
+                                if Tuple.first x == False then
                                     let
                                         ( nameid, parentid_new, nameid_new ) =
                                             Tuple.second x
                                     in
-                                    send (MoveNode nameid parentid_new nameid_new)
+                                    sendSleep (MoveNode nameid parentid_new nameid_new) 300
 
                                 else
                                     Cmd.none
