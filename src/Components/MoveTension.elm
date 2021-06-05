@@ -423,7 +423,7 @@ subscriptions =
 
 
 type alias Op =
-    { orga_data : GqlData NodesData }
+    { orga_data : GqlData NodesDict }
 
 
 view : Op -> State -> Html Msg

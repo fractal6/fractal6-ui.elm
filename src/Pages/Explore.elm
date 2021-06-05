@@ -25,7 +25,6 @@ import ModelCommon.View exposing (getAvatar, viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneTension)
 import Query.QueryNode exposing (queryPublicOrga)
 import RemoteData exposing (RemoteData)
 import Task
@@ -93,7 +92,6 @@ type alias Model =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-    | PushTension TensionForm (GqlData Tension -> Msg)
     | LoadNodeExts
     | GotOrgas (GqlData (List NodeExt))
       -- Token refresh
@@ -154,9 +152,6 @@ update global message model =
             global.session.apis
     in
     case message of
-        PushTension form ack ->
-            ( model, addOneTension apis.gql form ack, Cmd.none )
-
         LoadNodeExts ->
             ( model, queryPublicOrga apis.gql GotOrgas, Cmd.none )
 

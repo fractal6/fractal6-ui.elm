@@ -86,9 +86,9 @@ type Msg
     | RedirectOnLoggedIn -- user is logged In !
     | UpdateSessionFocus (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
-    | UpdateSessionOrga (Maybe NodesData)
+    | UpdateSessionOrga (Maybe NodesDict)
     | UpdateSessionData (Maybe NodeData)
-    | UpdateSessionTensions (Maybe TensionsData)
+    | UpdateSessionTensions (Maybe TensionsList)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)

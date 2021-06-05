@@ -95,7 +95,6 @@ import ModelCommon.View
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch)
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
@@ -161,8 +160,8 @@ type alias Model =
     { -- Focus
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
-    , orga_data : GqlData NodesData
-    , users_data : GqlData UsersData
+    , orga_data : GqlData NodesDict
+    , users_data : GqlData UsersDict
     , lookup_users : List User
 
     -- Page
@@ -263,7 +262,6 @@ actionViewDecoder x =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | LoadOrga
-    | PushTension TensionForm (GqlData Tension -> Msg)
     | LoadTensionHead
     | LoadTensionComments
     | PushCommentPatch
@@ -276,7 +274,7 @@ type Msg
       -- Gql Data Queries
     | GotPath (GqlData LocalGraph)
     | GotPath2 (GqlData LocalGraph)
-    | GotOrga (GqlData NodesData)
+    | GotOrga (GqlData NodesDict)
       -- Page
     | GotTensionHead (GqlData TensionHead)
     | GotTensionComments (GqlData TensionComments)
@@ -515,9 +513,6 @@ update global message model =
     case message of
         LoadOrga ->
             ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
-
-        PushTension form ack ->
-            ( model, addOneTension apis.gql form ack, Cmd.none )
 
         PushGuest form ->
             ( model, actionRequest apis.gql form JoinAck, Cmd.none )

@@ -41,7 +41,6 @@ import ModelCommon.View exposing (roleColor, viewLabel)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneTension)
 import Query.PatchNode exposing (addOneLabel, removeOneLabel, updateOneLabel)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLabels, queryLocalGraph)
@@ -192,7 +191,6 @@ menuToIcon menu =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
-    | PushTension TensionForm (GqlData Tension -> Msg)
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
@@ -336,9 +334,6 @@ update global message model =
             global.session.apis
     in
     case message of
-        PushTension form ack ->
-            ( model, addOneTension apis.gql form ack, Cmd.none )
-
         PushGuest form ->
             ( model, actionRequest apis.gql form JoinAck, Cmd.none )
 

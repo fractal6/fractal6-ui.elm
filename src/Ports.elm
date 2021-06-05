@@ -26,7 +26,7 @@ import ModelSchema
         ( Label
         , LocalGraph
         , Node
-        , NodesData
+        , NodesDict
         , User
         , UserCtx
         )
@@ -171,7 +171,7 @@ toggle_theme =
 --
 
 
-initGraphPack : NodesData -> String -> Cmd msg
+initGraphPack : NodesDict -> String -> Cmd msg
 initGraphPack data focus =
     outgoing
         { action = "INIT_GRAPHPACK"
@@ -179,7 +179,7 @@ initGraphPack data focus =
         }
 
 
-redrawGraphPack : NodesData -> Cmd msg
+redrawGraphPack : NodesDict -> Cmd msg
 redrawGraphPack data =
     outgoing
         { action = "DRAW_GRAPHPACK"
@@ -187,7 +187,7 @@ redrawGraphPack data =
         }
 
 
-removeRedrawGraphPack : NodesData -> String -> Cmd msg
+removeRedrawGraphPack : NodesDict -> String -> Cmd msg
 removeRedrawGraphPack data nid =
     outgoing
         { action = "REMOVEDRAW_GRAPHPACK"
@@ -406,7 +406,7 @@ click target =
 --
 
 
-graphPackEncoder : NodesData -> String -> JE.Value
+graphPackEncoder : NodesDict -> String -> JE.Value
 graphPackEncoder data focus =
     JE.object
         [ ( "data", nodesEncoder data )

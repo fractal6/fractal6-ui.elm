@@ -20,7 +20,7 @@ import ModelSchema
         , NodeCharac
         , NodeFragment
         , NodeId
-        , NodesData
+        , NodesDict
         , User
         , UserCtx
         , UserRole

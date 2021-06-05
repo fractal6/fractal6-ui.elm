@@ -28,7 +28,6 @@ import ModelCommon.View exposing (getAvatar, roleColor, viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneTension)
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)
@@ -140,7 +139,6 @@ type alias Model =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-    | PushTension TensionForm (GqlData Tension -> Msg)
     | LoadNodes UserCtx
     | GotNodes (GqlData (List NodeExt))
     | GotUctx (GqlData UserCtx)
@@ -233,9 +231,6 @@ update global message model =
             global.session.apis
     in
     case message of
-        PushTension form ack ->
-            ( model, addOneTension apis.gql form ack, Cmd.none )
-
         LoadNodes uctx ->
             let
                 nameids =

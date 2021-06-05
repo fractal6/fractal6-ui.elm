@@ -26,15 +26,15 @@ import RemoteData exposing (RemoteData)
 --
 
 
-type alias NodesData =
+type alias NodesDict =
     Dict String Node
 
 
-type alias TensionsData =
+type alias TensionsList =
     List Tension
 
 
-type alias UsersData =
+type alias UsersDict =
     Dict String (List User)
 
 

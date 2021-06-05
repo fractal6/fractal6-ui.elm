@@ -237,7 +237,7 @@ type alias OrgaNodeData msg =
 
 type alias Op msg =
     { lookup : List User
-    , users_data : GqlData UsersData
+    , users_data : GqlData UsersDict
     , targets : List String
     , data : NodeDoc
 
@@ -877,7 +877,7 @@ getFirstLinks node =
                 |> withDefault []
 
 
-nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesData -> NodeFragment
+nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
 nodeFragmentFromOrga node_m nodeData c ndata =
     let
         children =

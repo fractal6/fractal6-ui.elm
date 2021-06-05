@@ -21,7 +21,7 @@ import ModelSchema
         , Node
         , NodeCharac
         , NodeId
-        , NodesData
+        , NodesDict
         , PNode
         , User
         , UserCtx
@@ -144,7 +144,7 @@ userEncoder u =
 -}
 
 
-nodesEncoder : NodesData -> JE.Value
+nodesEncoder : NodesDict -> JE.Value
 nodesEncoder nodes =
     JE.list JE.object <| List.map nodeEncoder <| Dict.values nodes
 

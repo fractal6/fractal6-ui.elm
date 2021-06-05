@@ -187,7 +187,7 @@ setPath_ p (State model) =
 
 
 
---setTargets_ : GqlData NodesData -> State -> State
+--setTargets_ : GqlData NodesDict -> State -> State
 --setTargets_ odata (State model) =
 --    let
 --        targets =
@@ -897,7 +897,7 @@ subscriptions =
 
 
 type alias Op =
-    { users_data : GqlData UsersData }
+    { users_data : GqlData UsersDict }
 
 
 view : Op -> State -> Html Msg

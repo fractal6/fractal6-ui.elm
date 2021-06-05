@@ -141,9 +141,9 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { node_focus : NodeFocus
     , path_data : Maybe LocalGraph
-    , orga_data : GqlData NodesData
-    , users_data : GqlData UsersData
-    , tensions_data : GqlData TensionsData
+    , orga_data : GqlData NodesDict
+    , users_data : GqlData UsersDict
+    , tensions_data : GqlData TensionsList
     , node_data : GqlData NodeData
     , init_tensions : Bool
     , init_data : Bool
@@ -186,8 +186,8 @@ type Msg
     | PushTension Tension
     | Submit (Time.Posix -> Msg) -- Get the current time
       -- Gql Data Queries
-    | GotOrga (GqlData NodesData)
-    | GotTensions (GqlData TensionsData)
+    | GotOrga (GqlData NodesDict)
+    | GotTensions (GqlData TensionsList)
     | GotData (GqlData NodeData)
       -- Page
     | SwitchWindow
@@ -890,8 +890,6 @@ update global message model =
             let
                 tensions =
                     hotTensionPush tension model.tensions_data
-
-                --
             in
             ( { model | tensions_data = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
 
@@ -1398,7 +1396,7 @@ viewSearchBar us model =
         ]
 
 
-viewActionPanel : String -> UserState -> Node -> GqlData NodesData -> ActionPanel -> Html Msg
+viewActionPanel : String -> UserState -> Node -> GqlData NodesDict -> ActionPanel -> Html Msg
 viewActionPanel domid us node o actionPanel =
     case us of
         LoggedIn uctx ->
@@ -1673,7 +1671,7 @@ viewActionStep model action =
             viewAuthNeeded DoCloseModal
 
 
-viewJoinOrgaStep : GqlData NodesData -> JoinStep ActionForm -> Html Msg
+viewJoinOrgaStep : GqlData NodesDict -> JoinStep ActionForm -> Html Msg
 viewJoinOrgaStep orga step =
     case step of
         JoinInit _ ->
@@ -1703,7 +1701,7 @@ viewJoinOrgaStep orga step =
 ---- Utils
 
 
-getNodeRights : UserCtx -> Node -> GqlData NodesData -> List UserRole
+getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole
 getNodeRights uctx target odata =
     let
         orgaRoles =

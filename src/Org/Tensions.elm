@@ -54,7 +54,6 @@ import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
@@ -94,6 +93,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
 
+                    DoPushTension tension ->
+                        ( send (PushTension tension), Cmd.none )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -111,9 +113,9 @@ type alias Model =
     , children : WebData (List NodeId)
 
     -- Pages
-    , tensions_int : GqlData TensionsData
-    , tensions_ext : GqlData TensionsData
-    , tensions_all : GqlData TensionsData
+    , tensions_int : GqlData TensionsList
+    , tensions_ext : GqlData TensionsList
+    , tensions_all : GqlData TensionsList
     , boardHeight : Maybe Float
     , offset : Int
     , load_more_int : Bool
@@ -408,16 +410,16 @@ type Msg
     = PassedSlowLoadTreshold -- timer
     | OnResize Int Int
     | FitBoard (Result Dom.Error Dom.Element)
-    | PushTension TensionForm (GqlData Tension -> Msg)
+    | PushTension Tension
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
     | GotPath (GqlData LocalGraph) -- GraphQL
     | GotPath2 (GqlData LocalGraph) -- GraphQL
     | GotChildren (WebData (List NodeId)) -- HTTP/Json
-    | GotTensionsInt Int (GqlData TensionsData) -- GraphQL
-    | GotTensionsExt (GqlData TensionsData) -- GraphQL
-    | GotTensionsAll (GqlData TensionsData) -- GraphQL
+    | GotTensionsInt Int (GqlData TensionsList) -- GraphQL
+    | GotTensionsExt (GqlData TensionsList) -- GraphQL
+    | GotTensionsAll (GqlData TensionsList) -- GraphQL
       -- Page Action
     | DoLoad Int -- query tensions
     | OnFilterClick
@@ -557,8 +559,12 @@ update global message model =
             global.session.apis
     in
     case message of
-        PushTension form ack ->
-            ( model, addOneTension apis.gql form ack, Cmd.none )
+        PushTension tension ->
+            let
+                tensions =
+                    hotTensionPush tension model.tensions_all
+            in
+            ( { model | tensions_all = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
 
         PushGuest form ->
             ( model, actionRequest apis.gql form JoinAck, Cmd.none )
@@ -1509,7 +1515,7 @@ viewCircleTensions model =
             div [ class "spinner" ] []
 
 
-viewTensions : NodeFocus -> Maybe String -> GqlData TensionsData -> TensionDirection -> Html Msg
+viewTensions : NodeFocus -> Maybe String -> GqlData TensionsList -> TensionDirection -> Html Msg
 viewTensions focus pattern tensionsData tensionDir =
     div [ class "box is-shrinked", classList [ ( "spinner", tensionsData == LoadingSlowly ) ] ]
         [ case tensionsData of

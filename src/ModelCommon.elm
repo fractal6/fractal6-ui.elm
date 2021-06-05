@@ -58,10 +58,10 @@ type alias Session =
     , token_data : WebData UserCtx
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
-    , orga_data : Maybe NodesData
-    , users_data : Maybe UsersData
+    , orga_data : Maybe NodesDict
+    , users_data : Maybe UsersDict
     , node_data : Maybe NodeData
-    , tensions_data : Maybe TensionsData
+    , tensions_data : Maybe TensionsList
     , tension_head : Maybe TensionHead
     , isAdmin : Maybe Bool
     , node_action : Maybe ActionState
@@ -164,7 +164,7 @@ fromLocalSession flags =
     )
 
 
-orgaToUsersData : NodesData -> UsersData
+orgaToUsersData : NodesDict -> UsersDict
 orgaToUsersData nd =
     nd
         |> Dict.toList
@@ -470,7 +470,7 @@ type InputViewMode
 --
 
 
-getNode : String -> GqlData NodesData -> Maybe Node
+getNode : String -> GqlData NodesDict -> Maybe Node
 getNode nameid orga =
     case orga of
         Success nodes ->
@@ -480,7 +480,7 @@ getNode nameid orga =
             Nothing
 
 
-getNodeName : String -> GqlData NodesData -> String
+getNodeName : String -> GqlData NodesDict -> String
 getNodeName nameid orga =
     let
         errMsg =
@@ -496,7 +496,7 @@ getNodeName nameid orga =
             errMsg
 
 
-getParentId : String -> GqlData NodesData -> Maybe String
+getParentId : String -> GqlData NodesDict -> Maybe String
 getParentId nameid odata =
     case odata of
         Success data ->
@@ -510,7 +510,7 @@ getParentId nameid odata =
             Nothing
 
 
-getParents : String -> GqlData NodesData -> List Node
+getParents : String -> GqlData NodesDict -> List Node
 getParents nameid odata =
     case odata of
         Success data ->
@@ -530,7 +530,7 @@ getParents nameid odata =
             []
 
 
-getChildren : String -> GqlData NodesData -> List Node
+getChildren : String -> GqlData NodesDict -> List Node
 getChildren nid odata =
     odata
         |> withMaybeDataMap
@@ -540,7 +540,7 @@ getChildren nid odata =
         |> withDefault []
 
 
-getChildrenLeaf : String -> GqlData NodesData -> List Node
+getChildrenLeaf : String -> GqlData NodesDict -> List Node
 getChildrenLeaf nid odata =
     odata
         |> withMaybeDataMap
@@ -575,7 +575,7 @@ getParentFragmentFromRole role =
     Array.get (Array.length l - 2) l |> withDefault ""
 
 
-hotNodeInsert : Node -> GqlData NodesData -> NodesData
+hotNodeInsert : Node -> GqlData NodesDict -> NodesDict
 hotNodeInsert node odata =
     -- Push a new node in the model if data is success
     case odata of
@@ -586,7 +586,7 @@ hotNodeInsert node odata =
             Dict.empty
 
 
-hotNodePush : List Node -> GqlData NodesData -> NodesData
+hotNodePush : List Node -> GqlData NodesDict -> NodesDict
 hotNodePush nodes odata =
     -- Push a new node in the model if data is success
     case odata of
@@ -597,7 +597,7 @@ hotNodePush nodes odata =
             Dict.empty
 
 
-hotNodePull : List String -> GqlData NodesData -> ( NodesData, Maybe Node )
+hotNodePull : List String -> GqlData NodesDict -> ( NodesDict, Maybe Node )
 hotNodePull nameids odata =
     -- Push a new node in the model if data is success
     -- return the first node removed
@@ -611,7 +611,7 @@ hotNodePull nameids odata =
             ( Dict.empty, Nothing )
 
 
-hotTensionPush : Tension -> GqlData TensionsData -> TensionsData
+hotTensionPush : Tension -> GqlData TensionsList -> TensionsList
 hotTensionPush tension tsData =
     -- Push a new tension in the model if data is success
     case tsData of
@@ -622,7 +622,7 @@ hotTensionPush tension tsData =
             []
 
 
-hotNodeUpdateName : TensionForm -> GqlData NodesData -> NodesData
+hotNodeUpdateName : TensionForm -> GqlData NodesDict -> NodesDict
 hotNodeUpdateName form odata =
     case odata of
         Success data ->
