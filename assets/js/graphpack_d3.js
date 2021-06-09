@@ -838,7 +838,7 @@ export const GraphPack = {
         }
     },
 
-    // Draw node border
+    // Draw node border + eventually tooltip
     drawNodeHover(node, doDrawTooltip) {
         var ctx2d = this.ctx2d;
         if (!node.ctx) {
@@ -926,12 +926,18 @@ export const GraphPack = {
 
     // Draw the node tooltip
     drawNodeTooltip(node) {
+        this.nodeHoveredFromJs(node);
+        // Add a timer, to wait the nodeHover elm render the toolip options.
+        // elm code.
+        setTimeout(() => {
+            this.drawNodeTooltip_(node);
+        }, 50);
+    },
+    drawNodeTooltip_(node) {
         var $tooltip = this.$tooltip
-        var r = this.$canvas.getBoundingClientRect();
         // == add tooltip
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
-        var subId = this.$tooltip.dataset.eventClick;
-        var $subTooltip = document.getElementById(subId);
+        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
         $subTooltip.childNodes[0].textContent = node.data.name;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
@@ -939,18 +945,19 @@ export const GraphPack = {
         var bodyRect = document.querySelector("body").getBoundingClientRect();
         var scrollLeft = bodyRect.left;
         var scrollTop = bodyRect.top;
-        var tw = ($tooltip.clientWidth);
+        var r = this.$canvas.getBoundingClientRect();
+        var tw = $tooltip.clientWidth;
+        var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
         if (node == this.focusedNode) {
             // below the circle
             var hw = (-$tooltip.clientHeight + 2*node.ctx.rayon);
-            var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
             var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
         } else {
             // above the circle
-            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon );
-            var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
+            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
             var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
         }
+
         if (l+tw/2-r.left < 0 || r.left+r.width-tw/2-l < 0 ) {
             // the tooltip overflow "too much" outside the canvas. (left/right
             this.clearNodeTooltip();
@@ -963,7 +970,6 @@ export const GraphPack = {
         $tooltip.style.left = l + "px";
         $tooltip.style.top = t + "px";
 
-        this.nodeHoveredFromJs(node);
         return
     },
 
@@ -1294,7 +1300,7 @@ export const GraphPack = {
             var isInTooltip = false;
             if (this.hoveredNode) {
                 isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
-                // Only show tooltip it on hoover
+                // Only show tooltip opion/ellipsis on hoover
                 //if (isInTooltip) { this.nodeHoveredFromJs(this.hoveredNode); }
             }
 
@@ -1302,12 +1308,13 @@ export const GraphPack = {
                 if (node !== this.hoveredNode && !isInTooltip) {
                     this.drawNodeHover(node, true);
                 }
-            } else if (this.hoveredNode) {
+            } else if (this.hoveredNode != this.focusedNode) {
                 // @DEBUG: there is a little dead zone between circle.
                 // When it happens, it goes there and focused node receive the hover...
                 if (!isInTooltip) this.drawNodeHover(this.focusedNode, true);
             } else {
-                this.drawNodeHover(this.focusedNode, true);
+                // When it happens ?
+                //this.drawNodeHover(this.focusedNode, true);
             }
 
             return false
@@ -1325,7 +1332,9 @@ export const GraphPack = {
             var node = this.getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
             var isInTooltip = false;
 
-            this.drawNodeHover(this.focusedNode, true);
+            if (node != this.hoveredNode) { // avoid redrawing
+                this.drawNodeHover(this.focusedNode, true);
+            }
 
             return false
         }
@@ -1335,16 +1344,18 @@ export const GraphPack = {
             var p = this.getPointerCtx(e);
             var isInCanvas = this.checkIf(p, "InCanvas", null); // purpose of that is possibliy linked to issue #9232dcd
             if (!isInCanvas) {
-                this.clearNodeTooltip();
+                // Remove the node hover and border
                 var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
                 if (clearBorder) {
                     this.clearNodeHover(this.hoveredNode);
                 }
+                // Set the hover by default on the focused node
+                this.drawNodeHover(this.focusedNode, true);
             } else {
                 if (this.isFrozen) {
                     return false
                 }
-                // Only show tooltip it on hoover
+                // Only show tooltip options/ellipsis on hoover
                 //this.nodeHoveredFromJs(this.hoveredNode);
             }
 
@@ -1407,8 +1418,7 @@ export const GraphPack = {
         });
 
         // Node Tooltip events
-        var subId = this.$tooltip.dataset.eventClick;
-        var $subTooltip = document.getElementById(subId);
+        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
         $subTooltip.addEventListener("mousedown", e => {
             if (this.isFrozen) {
                 this.isFrozen = false;
@@ -1419,8 +1429,7 @@ export const GraphPack = {
             return true
         });
 
-        var subId = this.$tooltip.dataset.eventHover;
-        var $subTooltip = document.getElementById(subId);
+        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventHover);
         $subTooltip.addEventListener("mousedown", e => {
             this.isFrozen = true;
             return true
