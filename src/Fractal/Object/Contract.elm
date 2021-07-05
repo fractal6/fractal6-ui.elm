@@ -102,6 +102,7 @@ candidates fillInOptionals object_ =
 
 type alias ParticipantsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.VoteFilter
+    , order : OptionalArgument Fractal.InputObject.VoteOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -114,10 +115,10 @@ participants :
 participants fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeVoteOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "participants" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
@@ -145,6 +146,11 @@ comments fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "comments" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+isValidator : SelectionSet (Maybe Bool) Fractal.Object.Contract
+isValidator =
+    Object.selectionForField "(Maybe Bool)" "isValidator" [] (Decode.bool |> Decode.nullable)
 
 
 type alias CandidatesAggregateOptionalArguments =

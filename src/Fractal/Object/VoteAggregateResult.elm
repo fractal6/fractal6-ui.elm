@@ -22,3 +22,43 @@ import Json.Decode as Decode
 count : SelectionSet (Maybe Int) Fractal.Object.VoteAggregateResult
 count =
     Object.selectionForField "(Maybe Int)" "count" [] (Decode.int |> Decode.nullable)
+
+
+createdAtMin : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.VoteAggregateResult
+createdAtMin =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "createdAtMin" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+createdAtMax : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.VoteAggregateResult
+createdAtMax =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "createdAtMax" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+updatedAtMin : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.VoteAggregateResult
+updatedAtMin =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAtMin" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+updatedAtMax : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.VoteAggregateResult
+updatedAtMax =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAtMax" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+messageMin : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
+messageMin =
+    Object.selectionForField "(Maybe String)" "messageMin" [] (Decode.string |> Decode.nullable)
+
+
+messageMax : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
+messageMax =
+    Object.selectionForField "(Maybe String)" "messageMax" [] (Decode.string |> Decode.nullable)
+
+
+voteIdMin : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
+voteIdMin =
+    Object.selectionForField "(Maybe String)" "voteIdMin" [] (Decode.string |> Decode.nullable)
+
+
+voteIdMax : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
+voteIdMax =
+    Object.selectionForField "(Maybe String)" "voteIdMax" [] (Decode.string |> Decode.nullable)

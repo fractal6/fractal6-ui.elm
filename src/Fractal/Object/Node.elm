@@ -358,6 +358,7 @@ role_type =
 
 type alias ContractsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.VoteFilter
+    , order : OptionalArgument Fractal.InputObject.VoteOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -370,10 +371,10 @@ contracts :
 contracts fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeVoteOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "contracts" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)

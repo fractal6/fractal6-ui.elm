@@ -21,6 +21,7 @@ import Json.Decode as Decode
 
 type alias VoteOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.VoteFilter
+    , order : OptionalArgument Fractal.InputObject.VoteOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -33,10 +34,10 @@ vote :
 vote fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeVoteOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "vote" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)

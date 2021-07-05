@@ -16,7 +16,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
+import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..), uctxFromUser)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddData exposing (getData)
@@ -60,13 +60,7 @@ type alias MyForm =
 
 initForm : UserState -> MyForm
 initForm user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                initUserctx
+    { uctx = uctxFromUser user
     , tid = "" -- example
     , target = "" -- example
     , events_type = Nothing

@@ -732,20 +732,31 @@ aggregateContract fillInOptionals object_ =
     Object.selectionForCompositeField "aggregateContract" optionalArgs object_ (identity >> Decode.nullable)
 
 
-type alias GetVoteRequiredArguments =
-    { id : Fractal.ScalarCodecs.Id }
+type alias GetVoteOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , voteId : OptionalArgument String
+    }
 
 
 getVote :
-    GetVoteRequiredArguments
+    (GetVoteOptionalArguments -> GetVoteOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Vote
     -> SelectionSet (Maybe decodesTo) RootQuery
-getVote requiredArgs object_ =
-    Object.selectionForCompositeField "getVote" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+getVote fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { id = Absent, voteId = Absent }
+
+        optionalArgs =
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "voteId" filledInOptionals.voteId Encode.string ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "getVote" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias QueryVoteOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.VoteFilter
+    , order : OptionalArgument Fractal.InputObject.VoteOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
@@ -758,10 +769,10 @@ queryVote :
 queryVote fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { filter = Absent, first = Absent, offset = Absent }
+            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeVoteOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "queryVote" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)

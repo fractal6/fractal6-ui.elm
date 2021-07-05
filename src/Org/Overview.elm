@@ -444,16 +444,7 @@ update global message model =
         GotOrga result ->
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    let
-                        uctx =
-                            case global.session.user of
-                                LoggedIn u ->
-                                    u
-
-                                LoggedOut ->
-                                    initUserctx
-                    in
-                    ( model, send (DoOpenAuthModal uctx), Cmd.none )
+                    ( model, send (DoOpenAuthModal (uctxFromUser global.session.user)), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
@@ -1699,54 +1690,3 @@ viewJoinOrgaStep orga step =
 
 
 ---- Utils
-
-
-getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole
-getNodeRights uctx target odata =
-    let
-        orgaRoles =
-            getOrgaRoles [ target.rootnameid ] uctx.roles
-    in
-    if List.length orgaRoles == 0 then
-        []
-
-    else if isOwner orgaRoles then
-        List.filter (\r -> r.role_type == RoleType.Owner) orgaRoles
-
-    else
-        let
-            childrenRoles =
-                getChildrenLeaf target.nameid odata
-
-            childrenCoordos =
-                List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
-
-            circleRoles =
-                getCircleRoles [ target.nameid ] orgaRoles
-
-            allCoordoRoles =
-                getCoordoRoles orgaRoles
-
-            coordoRoles =
-                getCoordoRoles circleRoles
-        in
-        case target.charac.mode of
-            NodeMode.Agile ->
-                case circleRoles of
-                    [] ->
-                        orgaRoles
-
-                    circleRoles_ ->
-                        circleRoles_
-
-            NodeMode.Coordinated ->
-                case coordoRoles of
-                    [] ->
-                        if List.length childrenCoordos == 0 && List.length allCoordoRoles > 0 then
-                            allCoordoRoles
-
-                        else
-                            []
-
-                    coordoRoles_ ->
-                        coordoRoles_

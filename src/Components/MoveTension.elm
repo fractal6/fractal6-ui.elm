@@ -338,7 +338,7 @@ update_ apis message model =
                     withMaybeDataMap
                         (\x ->
                             x.contracts
-                                |> Maybe.map (\y -> List.head y)
+                                |> Maybe.map (\y -> y |> List.filter (\c -> c.id == "") |> List.head)
                                 |> withDefault Nothing
                         )
                         result

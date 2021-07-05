@@ -60,7 +60,7 @@ contractsDecoder data =
 getContracts url form msg =
     makeGQLQuery url
         (Query.getTension { id = encodeId form.tid }
-            (tensionContractsPayload form)
+            (tensionContractsOpenPayload form)
         )
         (RemoteData.fromResult >> decodeResponse contractsDecoder >> msg)
 
@@ -68,7 +68,7 @@ getContracts url form msg =
 getContract url form msg =
     makeGQLQuery url
         (Query.getContract { id = encodeId form.cid }
-            contractPayload
+            contractFullPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -81,9 +81,9 @@ getContractComments url form msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-{-| tensionContractsPayload : SelectionSet TensionContracts Fractal.Object.Tension
+{-| tensionContractsOpenPayload : SelectionSet TensionContracts Fractal.Object.Tension
 -}
-tensionContractsPayload form =
+tensionContractsOpenPayload form =
     let
         first =
             form.page_len
@@ -101,7 +101,11 @@ tensionContractsPayload form =
                         , offset = Present offset
                         , order =
                             Input.buildContractOrder
-                                (\b -> { b | desc = Present ContractOrderable.CreatedAt })
+                                (\x -> { x | desc = Present ContractOrderable.CreatedAt })
+                                |> Present
+                        , filter =
+                            Input.buildContractFilter
+                                (\x -> { x | status = Present { eq = Present ContractStatus.Open, in_ = Absent } })
                                 |> Present
                     }
                 )
@@ -124,6 +128,23 @@ contractPayload =
         |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.participants identity votePayload)
         |> hardcoded Nothing
+
+
+contractFullPayload : SelectionSet ContractFull Fractal.Object.Contract
+contractFullPayload =
+    SelectionSet.succeed ContractFull
+        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
+        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Contract.tension identity tidPayload)
+        |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
+        |> with Fractal.Object.Contract.status
+        |> with Fractal.Object.Contract.contract_type
+        |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with (Fractal.Object.Contract.participants identity votePayload)
+        |> hardcoded Nothing
+        |> with Fractal.Object.Contract.isValidator
 
 
 eventFragmentPayload : SelectionSet EventFragment Fractal.Object.EventFragment

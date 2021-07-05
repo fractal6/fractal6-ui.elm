@@ -134,9 +134,7 @@ addTensionInputEncoder f =
                     , labels = buildLabels f
                 }
     in
-    { input =
-        [ Input.buildAddTensionInput inputReq inputOpt ]
-    }
+    { input = [ Input.buildAddTensionInput inputReq inputOpt ] }
 
 
 

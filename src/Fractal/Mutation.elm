@@ -488,16 +488,29 @@ deleteContract requiredArgs object_ =
     Object.selectionForCompositeField "deleteContract" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeContractFilter ] object_ (identity >> Decode.nullable)
 
 
+type alias AddVoteOptionalArguments =
+    { upsert : OptionalArgument Bool }
+
+
 type alias AddVoteRequiredArguments =
     { input : List Fractal.InputObject.AddVoteInput }
 
 
 addVote :
-    AddVoteRequiredArguments
+    (AddVoteOptionalArguments -> AddVoteOptionalArguments)
+    -> AddVoteRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddVotePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addVote requiredArgs object_ =
-    Object.selectionForCompositeField "addVote" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddVoteInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addVote fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { upsert = Absent }
+
+        optionalArgs =
+            [ Argument.optional "upsert" filledInOptionals.upsert Encode.bool ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "addVote" (optionalArgs ++ [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddVoteInput |> Encode.list) ]) object_ (identity >> Decode.nullable)
 
 
 type alias UpdateVoteRequiredArguments =

@@ -2,11 +2,19 @@ module ModelCommon exposing (..)
 
 import Array exposing (Array)
 import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
-import Components.Loading as Loading exposing (ErrorData, GqlData, RequestResult(..), WebData, withMaybeDataMap)
+import Components.Loading as Loading
+    exposing
+        ( ErrorData
+        , GqlData
+        , RequestResult(..)
+        , WebData
+        , withMaybeDataMap
+        )
 import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -15,7 +23,17 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nearestCircleid)
+import ModelCommon.Codecs
+    exposing
+        ( FractalBaseRoute(..)
+        , NodeFocus
+        , getCircleRoles
+        , getCoordoRoles
+        , getOrgaRoles
+        , isOwner
+        , nearestCircleid
+        , nid2rootid
+        )
 import ModelSchema exposing (..)
 import Ports
 import RemoteData
@@ -182,6 +200,16 @@ orgaToUsersData nd =
 type UserState
     = LoggedOut
     | LoggedIn UserCtx
+
+
+uctxFromUser : UserState -> UserCtx
+uctxFromUser user =
+    case user of
+        LoggedIn uctx ->
+            uctx
+
+        LoggedOut ->
+            initUserctx
 
 
 
@@ -540,16 +568,6 @@ getChildren nid odata =
         |> withDefault []
 
 
-getChildrenLeaf : String -> GqlData NodesDict -> List Node
-getChildrenLeaf nid odata =
-    odata
-        |> withMaybeDataMap
-            (\x ->
-                x |> Dict.values |> List.filter (\n -> n.type_ == NodeType.Role && Just (nearestCircleid nid) == Maybe.map (\m -> m.nameid) n.parent)
-            )
-        |> withDefault []
-
-
 getIdsFromPath : GqlData LocalGraph -> Maybe ( String, String )
 getIdsFromPath data =
     case data of
@@ -654,3 +672,118 @@ blobFromTensionHead th =
 
         _ ->
             Nothing
+
+
+
+{-
+   Auth
+-}
+
+
+getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole
+getNodeRights uctx target odata =
+    let
+        orgaRoles =
+            getOrgaRoles [ target.rootnameid ] uctx.roles
+    in
+    if List.length orgaRoles == 0 then
+        []
+
+    else if isOwner orgaRoles then
+        List.filter (\r -> r.role_type == RoleType.Owner) orgaRoles
+
+    else
+        let
+            childrenRoles =
+                getChildren target.nameid odata |> List.filter (\n -> n.type_ == NodeType.Role)
+
+            childrenCoordos =
+                List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
+
+            circleRoles =
+                getCircleRoles [ target.nameid ] orgaRoles
+
+            allCoordoRoles =
+                getCoordoRoles orgaRoles
+
+            coordoRoles =
+                getCoordoRoles circleRoles
+        in
+        case target.charac.mode of
+            NodeMode.Agile ->
+                case circleRoles of
+                    [] ->
+                        -- No member in this circle
+                        orgaRoles
+
+                    circleRoles_ ->
+                        circleRoles_
+
+            NodeMode.Coordinated ->
+                case coordoRoles of
+                    [] ->
+                        -- No coordo in this circle
+                        if List.length childrenCoordos == 0 && List.length allCoordoRoles > 0 then
+                            allCoordoRoles
+
+                        else
+                            []
+
+                    coordoRoles_ ->
+                        coordoRoles_
+
+
+getTensionRights : UserCtx -> GqlData TensionHead -> GqlData LocalGraph -> Bool
+getTensionRights uctx th_d path_d =
+    case th_d of
+        Success th ->
+            case path_d of
+                Success p ->
+                    let
+                        orgaRoles =
+                            getOrgaRoles [ nid2rootid p.focus.nameid ] uctx.roles
+
+                        childrenRoles =
+                            p.focus.children |> List.filter (\n -> n.role_type /= Nothing)
+
+                        childrenCoordos =
+                            List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
+
+                        circleRoles =
+                            getCircleRoles [ th.receiver.nameid, th.emitter.nameid ] orgaRoles
+
+                        coordoRoles =
+                            getCoordoRoles circleRoles
+                    in
+                    if List.member uctx.username (th.assignees |> withDefault [] |> List.map (\u -> u.username)) then
+                        -- assignee
+                        True
+                        --else if uctx.username == th.createdBy.username then
+                        --    -- Author
+                        --    True
+                        --
+
+                    else if isOwner orgaRoles then
+                        -- is Owner
+                        True
+
+                    else
+                        -- has role base autorization
+                        case p.focus.charac.mode of
+                            NodeMode.Agile ->
+                                -- Is a  Circle member
+                                (List.length circleRoles > 0)
+                                    || -- Or No member in this circle
+                                       (List.length orgaRoles > 0)
+
+                            NodeMode.Coordinated ->
+                                -- Is a circle coordo
+                                (List.length coordoRoles > 0)
+                                    || -- Or No coordo in this circle
+                                       (List.length childrenCoordos == 0 && List.length (getCoordoRoles orgaRoles) > 0)
+
+                _ ->
+                    False
+
+        _ ->
+            False

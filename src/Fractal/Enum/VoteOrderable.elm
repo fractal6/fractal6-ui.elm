@@ -2,36 +2,29 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.VoteHasFilter exposing (..)
+module Fractal.Enum.VoteOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type VoteHasFilter
-    = CreatedBy
-    | CreatedAt
+type VoteOrderable
+    = CreatedAt
     | UpdatedAt
     | Message
     | VoteId
-    | Contract
-    | Node
-    | Data
 
 
-list : List VoteHasFilter
+list : List VoteOrderable
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, VoteId, Contract, Node, Data ]
+    [ CreatedAt, UpdatedAt, Message, VoteId ]
 
 
-decoder : Decoder VoteHasFilter
+decoder : Decoder VoteOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "createdBy" ->
-                        Decode.succeed CreatedBy
-
                     "createdAt" ->
                         Decode.succeed CreatedAt
 
@@ -44,28 +37,16 @@ decoder =
                     "voteId" ->
                         Decode.succeed VoteId
 
-                    "contract" ->
-                        Decode.succeed Contract
-
-                    "node" ->
-                        Decode.succeed Node
-
-                    "data" ->
-                        Decode.succeed Data
-
                     _ ->
-                        Decode.fail ("Invalid VoteHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid VoteOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : VoteHasFilter -> String
+toString : VoteOrderable -> String
 toString enum =
     case enum of
-        CreatedBy ->
-            "createdBy"
-
         CreatedAt ->
             "createdAt"
 
@@ -77,15 +58,6 @@ toString enum =
 
         VoteId ->
             "voteId"
-
-        Contract ->
-            "contract"
-
-        Node ->
-            "node"
-
-        Data ->
-            "data"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -99,12 +71,9 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe VoteHasFilter
+fromString : String -> Maybe VoteOrderable
 fromString enumString =
     case enumString of
-        "createdBy" ->
-            Just CreatedBy
-
         "createdAt" ->
             Just CreatedAt
 
@@ -116,15 +85,6 @@ fromString enumString =
 
         "voteId" ->
             Just VoteId
-
-        "contract" ->
-            Just Contract
-
-        "node" ->
-            Just Node
-
-        "data" ->
-            Just Data
 
         _ ->
             Nothing

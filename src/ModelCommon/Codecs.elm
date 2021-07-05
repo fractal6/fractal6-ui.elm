@@ -1,7 +1,7 @@
 module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
-import Components.Loading exposing (GqlData, withMaybeData)
+import Components.Loading exposing (GqlData, RequestResult(..), withMaybeData)
 import Dict
 import Extra exposing (ternary)
 import Fractal.Enum.NodeMode as NodeMode
@@ -21,6 +21,7 @@ import ModelSchema
         , NodeFragment
         , NodeId
         , NodesDict
+        , TensionHead
         , User
         , UserCtx
         , UserRole
@@ -337,12 +338,6 @@ isOwner roles =
     List.any (\r -> r.role_type == RoleType.Owner) roles
 
 
-
-{-
-   Auth
--}
-
-
 userHasRole : UserCtx -> String -> Bool
 userHasRole uctx nameid =
     uctx.roles
@@ -357,20 +352,6 @@ userIsCoordo uctx nameid =
         |> List.filter (\r -> r.role_type == RoleType.Coordinator)
         |> List.map (\r -> nearestCircleid r.nameid)
         |> List.member nameid
-
-
-hasCoordoRole : UserCtx -> String -> NodeMode.NodeMode -> Bool
-hasCoordoRole uctx nameid mode =
-    let
-        nid =
-            nearestCircleid nameid
-    in
-    case mode of
-        NodeMode.Agile ->
-            userHasRole uctx nameid
-
-        NodeMode.Coordinated ->
-            userIsCoordo uctx nameid
 
 
 

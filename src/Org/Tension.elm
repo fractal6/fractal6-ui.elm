@@ -62,8 +62,6 @@ import ModelCommon.Codecs
         , FractalBaseRoute(..)
         , NodeFocus
         , focusState
-        , getCircleRoles
-        , getCoordoRoles
         , getOrgaRoles
         , getTensionCharac
         , isOwner
@@ -583,7 +581,7 @@ update global message model =
         GotPath result ->
             let
                 isAdmin =
-                    getTensionRights global.session.user model.tension_head result
+                    getTensionRights (uctxFromUser global.session.user) model.tension_head result
 
                 newModel =
                     { model | path_data = result, isTensionAdmin = isAdmin }
@@ -640,16 +638,7 @@ update global message model =
         GotOrga result ->
             case doRefreshToken result model.refresh_trial of
                 Authenticate ->
-                    let
-                        uctx =
-                            case global.session.user of
-                                LoggedIn u ->
-                                    u
-
-                                LoggedOut ->
-                                    initUserctx
-                    in
-                    ( model, send (DoOpenAuthModal uctx), Cmd.none )
+                    ( model, send (DoOpenAuthModal (uctxFromUser global.session.user)), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
@@ -1682,6 +1671,7 @@ update global message model =
                 th =
                     Maybe.map
                         (\r ->
+                            --withMapData (\x -> { x | contracts = Just (Tuple.second r) }) model.tension_head
                             withMapData (\x -> { x | contracts = Just [ { id = x.id } ] }) model.tension_head
                         )
                         out.result
@@ -1832,8 +1822,7 @@ viewTension u t model =
 
                         False ->
                             [ text t.title
-                            , if t.createdBy.username == username then
-                                -- @Debug check user rights
+                            , if model.isTensionAdmin then
                                 span
                                     [ class "button has-text-weight-normal is-pulled-right is-small tooltip"
                                     , attribute "data-tooltip" (upH T.editTitle)
@@ -2922,13 +2911,7 @@ viewJoinOrgaStep step =
 
 initCommentPatchForm : UserState -> CommentPatchForm
 initCommentPatchForm user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                initUserctx
+    { uctx = uctxFromUser user
     , id = ""
     , post = Dict.empty
     , viewMode = Write
@@ -2996,68 +2979,3 @@ eventFromForm event_type form =
     , old = Dict.get "old" form.post
     , new = Dict.get "new" form.post
     }
-
-
-getTensionRights : UserState -> GqlData TensionHead -> GqlData LocalGraph -> Bool
-getTensionRights user th_d path_d =
-    case user of
-        LoggedIn uctx ->
-            case th_d of
-                Success th ->
-                    case path_d of
-                        Success p ->
-                            let
-                                orgaRoles =
-                                    getOrgaRoles [ nid2rootid p.focus.nameid ] uctx.roles
-
-                                childrenRoles =
-                                    getChildrenLeaf th.receiver.nameid p.focus
-
-                                childrenCoordos =
-                                    List.filter (\n -> n.role_type == Just RoleType.Coordinator) childrenRoles
-
-                                circleRoles =
-                                    getCircleRoles [ th.receiver.nameid, th.emitter.nameid ] orgaRoles
-
-                                coordoRoles =
-                                    getCoordoRoles circleRoles
-                            in
-                            if List.member uctx.username (th.assignees |> withDefault [] |> List.map (\u -> u.username)) then
-                                -- assignee
-                                True
-                                --else if uctx.username == th.createdBy.username then
-                                --    -- Author
-                                --    True
-                                --
-
-                            else if isOwner orgaRoles then
-                                True
-
-                            else
-                                case p.focus.charac.mode of
-                                    NodeMode.Agile ->
-                                        -- Is a  Circle member
-                                        (List.length circleRoles > 0)
-                                            || -- Or No member in this circle
-                                               (List.length orgaRoles > 0)
-
-                                    NodeMode.Coordinated ->
-                                        -- Is a circle coordo
-                                        (List.length coordoRoles > 0)
-                                            || -- Or No coordo in this circe
-                                               (List.length childrenCoordos == 0 && List.length (getCoordoRoles orgaRoles) > 0)
-
-                        _ ->
-                            False
-
-                _ ->
-                    False
-
-        LoggedOut ->
-            False
-
-
-getChildrenLeaf : String -> FocusNode -> List EmitterOrReceiver
-getChildrenLeaf nid focus =
-    focus.children
-        |> List.filter (\n -> n.role_type /= Nothing)

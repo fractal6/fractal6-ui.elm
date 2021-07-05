@@ -24,6 +24,11 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
+voteId : SelectionSet String Fractal.Object.Vote
+voteId =
+    Object.selectionForField "String" "voteId" [] Decode.string
+
+
 type alias ContractOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.ContractFilter }
 
@@ -67,3 +72,38 @@ node fillInOptionals object_ =
 data : SelectionSet (Maybe (List Int)) Fractal.Object.Vote
 data =
     Object.selectionForField "(Maybe (List Int))" "data" [] (Decode.int |> Decode.list |> Decode.nullable)
+
+
+type alias CreatedByOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserFilter }
+
+
+createdBy :
+    (CreatedByOptionalArguments -> CreatedByOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.User
+    -> SelectionSet decodesTo Fractal.Object.Vote
+createdBy fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { filter = Absent }
+
+        optionalArgs =
+            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+
+
+createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Vote
+createdAt =
+    Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
+
+
+updatedAt : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.Vote
+updatedAt =
+    Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "updatedAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)
+
+
+message : SelectionSet (Maybe String) Fractal.Object.Vote
+message =
+    Object.selectionForField "(Maybe String)" "message" [] (Decode.string |> Decode.nullable)

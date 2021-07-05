@@ -13,6 +13,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.CommentOrderable as CommentOrderable
+import Fractal.Enum.ContractOrderable as ContractOrderable
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
@@ -454,7 +455,18 @@ moveTension url form msg =
                 Fractal.Object.UpdateTensionPayload.tension identity <|
                     SelectionSet.map2 TensionId
                         (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                        (Fractal.Object.Tension.contracts identity contractPayload)
+                        (Fractal.Object.Tension.contracts
+                            (\args ->
+                                { args
+                                    | first = Present 1
+                                    , order =
+                                        Input.buildContractOrder
+                                            (\x -> { x | desc = Present ContractOrderable.CreatedAt })
+                                            |> Present
+                                }
+                            )
+                            contractPayload
+                        )
             )
         )
         (RemoteData.fromResult >> decodeResponse tensionIdDecoder2 >> msg)

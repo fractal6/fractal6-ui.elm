@@ -21,12 +21,13 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, hasCoordoRole, memberIdDecodec, nid2eor, uriFromUsername)
+import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..), uctxFromUser)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, uriFromUsername)
 import ModelCommon.View exposing (byAt, contractEventToText, contractTypeToText, getAvatar, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)
+import Query.PatchContract exposing (sendVote)
 import Query.QueryContract exposing (getContract, getContractComments, getContracts)
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -39,10 +40,12 @@ type State
 type alias Model =
     { user : UserState
     , rootnameid : String
+    , form : ContractForm -- user inputs
     , contracts_result : GqlData Contracts -- result of any query
-    , contract_result : GqlData Contract
+    , contract_result : GqlData ContractFull
     , contract_result_del : GqlData IdPayload
-    , form : MyForm -- user inputs
+    , voteForm : VoteForm
+    , vote_result : GqlData ContractResult
     , activeView : ContractsPageView
 
     -- Common
@@ -63,7 +66,9 @@ initModel rootnameid user =
     , contracts_result = NotAsked
     , contract_result = NotAsked
     , contract_result_del = NotAsked
-    , form = initForm user
+    , vote_result = NotAsked
+    , form = initContractForm user
+    , voteForm = initVoteForm user
     , activeView = ContractsView
 
     -- Common
@@ -76,7 +81,7 @@ type alias Contracts =
     List Contract
 
 
-type alias MyForm =
+type alias ContractForm =
     { uctx : UserCtx
     , tid : String
     , cid : String
@@ -87,20 +92,33 @@ type alias MyForm =
     }
 
 
-initForm : UserState -> MyForm
-initForm user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                initUserctx
+initContractForm : UserState -> ContractForm
+initContractForm user =
+    { uctx = uctxFromUser user
     , tid = ""
     , cid = ""
     , page = 0
     , page_len = 10
     , events_type = Nothing
+    , post = Dict.empty
+    }
+
+
+type alias VoteForm =
+    { uctx : UserCtx
+    , cid : String
+    , rootnameid : String
+    , vote : Int
+    , post : Post
+    }
+
+
+initVoteForm : UserState -> VoteForm
+initVoteForm user =
+    { uctx = uctxFromUser user
+    , cid = ""
+    , rootnameid = ""
+    , vote = 0
     , post = Dict.empty
     }
 
@@ -132,7 +150,7 @@ setContractsResult result model =
     { model | contracts_result = result }
 
 
-setContractResult : GqlData Contract -> Model -> Model
+setContractResult : GqlData ContractFull -> Model -> Model
 setContractResult result model =
     { model | contract_result = result }
 
@@ -174,9 +192,11 @@ type Msg
     | DoQueryContractComments String
     | DoDeleteContract String
     | DoPopContract String
+    | DoVote Int Time.Posix
+    | OnVoteAck (GqlData ContractResult)
     | OnSubmit (Time.Posix -> Msg)
     | OnContractsAck (GqlData Contracts)
-    | OnContractAck (GqlData Contract)
+    | OnContractAck (GqlData ContractFull)
     | OnContractCommentsAck (GqlData ContractComments)
     | OnContractDeleteAck (GqlData IdPayload)
       -- Confirm Modal
@@ -191,7 +211,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, Contracts ) -- define what data is to be returned
+    , result : Maybe ( Bool, List IdPayload ) -- define what data is to be returned
     }
 
 
@@ -301,7 +321,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryContracts 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [] [] (Just ( True, d )) )
+                    ( data, Out [] [] (Just ( True, List.map (\c -> { id = c.id }) d )) )
 
                 NoAuth ->
                     ( data, noOut )
@@ -321,7 +341,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep (DoQueryContract model.form.cid) 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [ send (DoQueryContractComments d.id) ] [] (Just ( True, [ d ] )) )
+                    ( data, Out [ send (DoQueryContractComments d.id) ] [] (Just ( True, [ { id = d.id } ] )) )
 
                 NoAuth ->
                     ( data, noOut )
@@ -389,6 +409,43 @@ update_ apis message model =
                             )
             in
             ( setContractsResult result model, noOut )
+
+        DoVote v time ->
+            let
+                f =
+                    model.voteForm
+
+                form =
+                    { f
+                        | vote = v
+                        , cid = model.form.cid
+                        , rootnameid = model.rootnameid
+                        , post = Dict.insert "createdAt" (fromTime time) f.post
+                    }
+            in
+            ( { model | voteForm = form }, out0 [ sendVote apis.gql form OnVoteAck ] )
+
+        OnVoteAck result ->
+            let
+                data =
+                    { model | vote_result = result }
+            in
+            case doRefreshToken result data.refresh_trial of
+                Authenticate ->
+                    ( { model | vote_result = NotAsked }, out1 [ DoAuth data.form.uctx ] )
+
+                RefreshToken i ->
+                    ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
+
+                OkAuth d ->
+                    let
+                        l =
+                            Debug.log "vote" d
+                    in
+                    ( data, noOut )
+
+                NoAuth ->
+                    ( data, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -557,7 +614,7 @@ viewContract op model =
             text ""
 
 
-viewContractPage : Contract -> Op -> Model -> Html Msg
+viewContractPage : ContractFull -> Op -> Model -> Html Msg
 viewContractPage data op model =
     div []
         [ viewContractBox data op model
@@ -571,7 +628,7 @@ viewContractPage data op model =
         ]
 
 
-viewContractBox : Contract -> Op -> Model -> Html Msg
+viewContractBox : ContractFull -> Op -> Model -> Html Msg
 viewContractBox data op model =
     let
         uctx =
@@ -586,18 +643,8 @@ viewContractBox data op model =
         isParticipant =
             participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member uctx.username
 
-        --coordoRoles =
-        --    uctx.roles |> getOrgaRoles [ model.rootnameid ] |> getCoordoRoles |> List.map (\x -> x.nameid)
         isValidator =
-            case data.contract_type of
-                ContractType.AnyCoordoDual ->
-                    -- nedd charac -> make db request !!!
-                    hasCoordoRole uctx (withDefault "" data.event.old) NodeMode.Coordinated
-                        || hasCoordoRole uctx (withDefault "" data.event.new) NodeMode.Coordinated
-
-                _ ->
-                    -- @todo / not implemented
-                    False
+            withDefault False data.isValidator
     in
     div []
         [ form [ class "box is-light form" ]
@@ -634,8 +681,16 @@ viewContractBox data op model =
             ]
         , if (isValidator || isCandidate) && isParticipant == False then
             p [ class "buttons is-centered" ]
-                [ div [ class "button is-danger is-light is-rounded" ] [ span [ class "mx-4" ] [ textH "decline" ] ]
-                , div [ class "button is-success is-light is-rounded" ] [ span [ class "mx-4" ] [ textH "accept" ] ]
+                [ div
+                    [ class "button is-success is-light is-rounded"
+                    , onClick (OnSubmit <| DoVote 1)
+                    ]
+                    [ span [ class "mx-4" ] [ textH "accept" ] ]
+                , div
+                    [ class "button is-danger is-light is-rounded"
+                    , onClick (OnSubmit <| DoVote 0)
+                    ]
+                    [ span [ class "mx-4" ] [ textH "decline" ] ]
                 ]
 
           else

@@ -19,7 +19,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, TensionForm)
-import ModelCommon.Codecs exposing (memberIdCodec, nodeIdCodec)
+import ModelCommon.Codecs exposing (memberIdCodec, nid2rootid, nodeIdCodec)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildMandate, tensionFromForm)
 import Query.QueryNode exposing (blobIdPayload, nodeIdPayload, nodeOrgaPayload, userPayload)
@@ -104,6 +104,7 @@ addOneCircle url form msg =
     --@DEBUG: Infered type...
     makeGQLMutation url
         (Mutation.addNode
+            (\q -> { q | upsert = Absent })
             (addCircleInputEncoder form)
             (SelectionSet.map AddCirclePayload <|
                 Fractal.Object.AddNodePayload.node identity addOneCirclePayload
@@ -165,10 +166,13 @@ addCircleInputEncoder f =
             , type_ = type_
             , name = name
             , nameid = nameid
-            , rootnameid = f.target.rootnameid
-            , isPrivate = f.target.isPrivate
+            , rootnameid = nid2rootid f.target.nameid
             , isArchived = False
             , charac = { userCanJoin = Present charac.userCanJoin, mode = Present charac.mode, id = Absent }
+
+            -- default
+            , rights = 0
+            , isPrivate = True
             }
 
         nodeOptional =
@@ -237,12 +241,11 @@ getAddCircleOptionals f =
                                                 , first_link =
                                                     Input.buildUserRef (\u -> { u | username = us.username |> Present }) |> Present
                                                 , isRoot = False |> Present
-                                                , isPrivate = f.target.isPrivate |> Present
                                                 , type_ = NodeType.Role |> Present
                                                 , role_type = us.role_type |> Present
                                                 , name = "NOT IMPLEMENTED !" |> Present
                                                 , nameid = (nameid ++ "#" ++ "coordo" ++ String.fromInt i) |> Present
-                                                , rootnameid = f.target.rootnameid |> Present
+                                                , rootnameid = nid2rootid f.target.nameid |> Present
                                                 , charac = f.node.charac |> Maybe.map (\ch -> { userCanJoin = Present ch.userCanJoin, mode = Present ch.mode, id = Absent }) |> fromMaybe
                                             }
                                         )

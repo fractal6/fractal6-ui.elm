@@ -260,8 +260,36 @@ type alias Contract =
     , candidates : Maybe (List Username)
     , participants : Maybe (List Vote)
 
+    -- Maybe hardocoded
+    , comments : Maybe (List Comment)
+    }
+
+
+type alias ContractFull =
+    { id : String
+    , createdAt : String
+    , closedAt : Maybe String
+    , createdBy : Username
+    , tension : IdPayload
+    , event : EventFragment
+    , status : ContractStatus.ContractStatus
+    , contract_type : ContractType.ContractType
+
+    --, candidate:
+    , candidates : Maybe (List Username)
+    , participants : Maybe (List Vote)
+
     -- Maybe hardocded
     , comments : Maybe (List Comment)
+
+    -- Full
+    , isValidator : Maybe Bool
+    }
+
+
+type alias ContractResult =
+    { id : String
+    , status : ContractStatus.ContractStatus
     }
 
 

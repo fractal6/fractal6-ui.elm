@@ -20,11 +20,12 @@ type ContractHasFilter
     | Candidates
     | Participants
     | Comments
+    | IsValidator
 
 
 list : List ContractHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Participants, Comments ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Participants, Comments, IsValidator ]
 
 
 decoder : Decoder ContractHasFilter
@@ -68,6 +69,9 @@ decoder =
 
                     "comments" ->
                         Decode.succeed Comments
+
+                    "isValidator" ->
+                        Decode.succeed IsValidator
 
                     _ ->
                         Decode.fail ("Invalid ContractHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -114,6 +118,9 @@ toString enum =
 
         Comments ->
             "comments"
+
+        IsValidator ->
+            "isValidator"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -165,6 +172,9 @@ fromString enumString =
 
         "comments" ->
             Just Comments
+
+        "isValidator" ->
+            Just IsValidator
 
         _ ->
             Nothing

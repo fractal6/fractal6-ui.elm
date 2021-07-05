@@ -1307,15 +1307,6 @@ viewCircle op (State model) =
                         , div [ class "is-pulled-right" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button is-warning"
-                                     , classList
-                                        [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
-                                     , disabled (not isSendable || isLoading)
-                                     ]
-                                        ++ submitTension
-                                    )
-                                    [ textH txt.submit ]
-                                , button
                                     ([ class "button is-success"
                                      , classList
                                         [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
@@ -1324,6 +1315,15 @@ viewCircle op (State model) =
                                         ++ submitCloseTension
                                     )
                                     [ textH txt.close_submit ]
+                                , button
+                                    ([ class "button is-warning"
+                                     , classList
+                                        [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
+                                     , disabled (not isSendable || isLoading)
+                                     ]
+                                        ++ submitTension
+                                    )
+                                    [ textH txt.submit ]
                                 ]
                             ]
                         ]
