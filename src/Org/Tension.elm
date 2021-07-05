@@ -1835,10 +1835,14 @@ viewTension u t model =
                                     [ I.icon "icon-pen" ]
                             ]
                 , div [ class "tensionSubtitle" ]
-                    [ span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
-                        [ t.status |> TensionStatus.toString |> text ]
-                    , span [ class "tag is-rounded is-light" ]
+                    [ span [ class "tag is-rounded is-light" ]
                         [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
+                    , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
+                        span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
+                            [ t.status |> TensionStatus.toString |> text ]
+
+                      else
+                        text ""
                     , viewTensionDateAndUser "is-grey-light" t.createdAt t.createdBy
                     , viewTensionArrow "is-pulled-right" t.emitter t.receiver
 
