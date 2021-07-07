@@ -67,7 +67,7 @@ getContracts url form msg =
 
 getContract url form msg =
     makeGQLQuery url
-        (Query.getContract { id = encodeId form.cid }
+        (Query.getContract (\x -> { x | id = encodeId form.cid |> Present, contractid = Absent })
             contractFullPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
@@ -75,7 +75,7 @@ getContract url form msg =
 
 getContractComments url form msg =
     makeGQLQuery url
-        (Query.getContract { id = encodeId form.cid }
+        (Query.getContract (\x -> { x | id = encodeId form.cid |> Present, contractid = Absent })
             contractCommentsPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
@@ -125,6 +125,7 @@ contractPayload =
         |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
         |> with Fractal.Object.Contract.status
         |> with Fractal.Object.Contract.contract_type
+        |> with Fractal.Object.Contract.contractid
         |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.participants identity votePayload)
         |> hardcoded Nothing

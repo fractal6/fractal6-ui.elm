@@ -189,12 +189,13 @@ buildAddContractInput required fillOptionals =
             fillOptionals
                 { updatedAt = Absent, message = Absent, closedAt = Absent, candidates = Absent, participants = Absent, comments = Absent, isValidator = Absent }
     in
-    AddContractInput { createdBy = required.createdBy, createdAt = required.createdAt, updatedAt = optionals.updatedAt, message = optionals.message, tension = required.tension, status = required.status, contract_type = required.contract_type, closedAt = optionals.closedAt, event = required.event, candidates = optionals.candidates, participants = optionals.participants, comments = optionals.comments, isValidator = optionals.isValidator }
+    AddContractInput { createdBy = required.createdBy, createdAt = required.createdAt, updatedAt = optionals.updatedAt, message = optionals.message, contractid = required.contractid, tension = required.tension, status = required.status, contract_type = required.contract_type, closedAt = optionals.closedAt, event = required.event, candidates = optionals.candidates, participants = optionals.participants, comments = optionals.comments, isValidator = optionals.isValidator }
 
 
 type alias AddContractInputRequiredFields =
     { createdBy : UserRef
     , createdAt : Fractal.ScalarCodecs.DateTime
+    , contractid : String
     , tension : TensionRef
     , status : Fractal.Enum.ContractStatus.ContractStatus
     , contract_type : Fractal.Enum.ContractType.ContractType
@@ -223,6 +224,7 @@ type alias AddContractInputRaw =
     , createdAt : Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
+    , contractid : String
     , tension : TensionRef
     , status : Fractal.Enum.ContractStatus.ContractStatus
     , contract_type : Fractal.Enum.ContractType.ContractType
@@ -246,7 +248,7 @@ type AddContractInput
 encodeAddContractInput : AddContractInput -> Value
 encodeAddContractInput (AddContractInput input) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef input.tension |> Just ), ( "status", Encode.enum Fractal.Enum.ContractStatus.toString input.status |> Just ), ( "contract_type", Encode.enum Fractal.Enum.ContractType.toString input.contract_type |> Just ), ( "closedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.closedAt ), ( "event", encodeEventFragmentRef input.event |> Just ), ( "candidates", (encodeUserRef |> Encode.list) |> Encode.optional input.candidates ), ( "participants", (encodeVoteRef |> Encode.list) |> Encode.optional input.participants ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "isValidator", Encode.bool |> Encode.optional input.isValidator ) ]
+        [ ( "createdBy", encodeUserRef input.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "contractid", Encode.string input.contractid |> Just ), ( "tension", encodeTensionRef input.tension |> Just ), ( "status", Encode.enum Fractal.Enum.ContractStatus.toString input.status |> Just ), ( "contract_type", Encode.enum Fractal.Enum.ContractType.toString input.contract_type |> Just ), ( "closedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.closedAt ), ( "event", encodeEventFragmentRef input.event |> Just ), ( "candidates", (encodeUserRef |> Encode.list) |> Encode.optional input.candidates ), ( "participants", (encodeVoteRef |> Encode.list) |> Encode.optional input.participants ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "isValidator", Encode.bool |> Encode.optional input.isValidator ) ]
 
 
 buildAddEventFragmentInput :
@@ -1485,15 +1487,16 @@ buildContractFilter fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdAt = Absent, message = Absent, status = Absent, contract_type = Absent, closedAt = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, message = Absent, contractid = Absent, status = Absent, contract_type = Absent, closedAt = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    ContractFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, status = optionals.status, contract_type = optionals.contract_type, closedAt = optionals.closedAt, has = optionals.has, and = optionals.and, or = optionals.or, not = optionals.not }
+    ContractFilter { id = optionals.id, createdAt = optionals.createdAt, message = optionals.message, contractid = optionals.contractid, status = optionals.status, contract_type = optionals.contract_type, closedAt = optionals.closedAt, has = optionals.has, and = optionals.and, or = optionals.or, not = optionals.not }
 
 
 type alias ContractFilterOptionalFields =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
+    , contractid : OptionalArgument StringHashFilter
     , status : OptionalArgument ContractStatus_hash
     , contract_type : OptionalArgument ContractType_hash
     , closedAt : OptionalArgument DateTimeFilter
@@ -1513,6 +1516,7 @@ type alias ContractFilterRaw =
     { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
     , createdAt : OptionalArgument DateTimeFilter
     , message : OptionalArgument StringFullTextFilter
+    , contractid : OptionalArgument StringHashFilter
     , status : OptionalArgument ContractStatus_hash
     , contract_type : OptionalArgument ContractType_hash
     , closedAt : OptionalArgument DateTimeFilter
@@ -1534,7 +1538,7 @@ type ContractFilter
 encodeContractFilter : ContractFilter -> Value
 encodeContractFilter (ContractFilter input) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "status", encodeContractStatus_hash |> Encode.optional input.status ), ( "contract_type", encodeContractType_hash |> Encode.optional input.contract_type ), ( "closedAt", encodeDateTimeFilter |> Encode.optional input.closedAt ), ( "has", (Encode.enum Fractal.Enum.ContractHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input.has ), ( "and", (encodeContractFilter |> Encode.maybe |> Encode.list) |> Encode.optional input.and ), ( "or", (encodeContractFilter |> Encode.maybe |> Encode.list) |> Encode.optional input.or ), ( "not", encodeContractFilter |> Encode.optional input.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input.message ), ( "contractid", encodeStringHashFilter |> Encode.optional input.contractid ), ( "status", encodeContractStatus_hash |> Encode.optional input.status ), ( "contract_type", encodeContractType_hash |> Encode.optional input.contract_type ), ( "closedAt", encodeDateTimeFilter |> Encode.optional input.closedAt ), ( "has", (Encode.enum Fractal.Enum.ContractHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input.has ), ( "and", (encodeContractFilter |> Encode.maybe |> Encode.list) |> Encode.optional input.and ), ( "or", (encodeContractFilter |> Encode.maybe |> Encode.list) |> Encode.optional input.or ), ( "not", encodeContractFilter |> Encode.optional input.not ) ]
 
 
 buildContractOrder :
@@ -1654,9 +1658,9 @@ buildContractRef fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension = Absent, status = Absent, contract_type = Absent, closedAt = Absent, event = Absent, candidates = Absent, participants = Absent, comments = Absent, isValidator = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, contractid = Absent, tension = Absent, status = Absent, contract_type = Absent, closedAt = Absent, event = Absent, candidates = Absent, participants = Absent, comments = Absent, isValidator = Absent }
     in
-    ContractRef { id = optionals.id, createdBy = optionals.createdBy, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, message = optionals.message, tension = optionals.tension, status = optionals.status, contract_type = optionals.contract_type, closedAt = optionals.closedAt, event = optionals.event, candidates = optionals.candidates, participants = optionals.participants, comments = optionals.comments, isValidator = optionals.isValidator }
+    ContractRef { id = optionals.id, createdBy = optionals.createdBy, createdAt = optionals.createdAt, updatedAt = optionals.updatedAt, message = optionals.message, contractid = optionals.contractid, tension = optionals.tension, status = optionals.status, contract_type = optionals.contract_type, closedAt = optionals.closedAt, event = optionals.event, candidates = optionals.candidates, participants = optionals.participants, comments = optionals.comments, isValidator = optionals.isValidator }
 
 
 type alias ContractRefOptionalFields =
@@ -1665,6 +1669,7 @@ type alias ContractRefOptionalFields =
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
+    , contractid : OptionalArgument String
     , tension : OptionalArgument TensionRef
     , status : OptionalArgument Fractal.Enum.ContractStatus.ContractStatus
     , contract_type : OptionalArgument Fractal.Enum.ContractType.ContractType
@@ -1688,6 +1693,7 @@ type alias ContractRefRaw =
     , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , message : OptionalArgument String
+    , contractid : OptionalArgument String
     , tension : OptionalArgument TensionRef
     , status : OptionalArgument Fractal.Enum.ContractStatus.ContractStatus
     , contract_type : OptionalArgument Fractal.Enum.ContractType.ContractType
@@ -1711,7 +1717,7 @@ type ContractRef
 encodeContractRef : ContractRef -> Value
 encodeContractRef (ContractRef input) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "status", Encode.enum Fractal.Enum.ContractStatus.toString |> Encode.optional input.status ), ( "contract_type", Encode.enum Fractal.Enum.ContractType.toString |> Encode.optional input.contract_type ), ( "closedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.closedAt ), ( "event", encodeEventFragmentRef |> Encode.optional input.event ), ( "candidates", (encodeUserRef |> Encode.list) |> Encode.optional input.candidates ), ( "participants", (encodeVoteRef |> Encode.list) |> Encode.optional input.participants ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "isValidator", Encode.bool |> Encode.optional input.isValidator ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input.id ), ( "createdBy", encodeUserRef |> Encode.optional input.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.updatedAt ), ( "message", Encode.string |> Encode.optional input.message ), ( "contractid", Encode.string |> Encode.optional input.contractid ), ( "tension", encodeTensionRef |> Encode.optional input.tension ), ( "status", Encode.enum Fractal.Enum.ContractStatus.toString |> Encode.optional input.status ), ( "contract_type", Encode.enum Fractal.Enum.ContractType.toString |> Encode.optional input.contract_type ), ( "closedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input.closedAt ), ( "event", encodeEventFragmentRef |> Encode.optional input.event ), ( "candidates", (encodeUserRef |> Encode.list) |> Encode.optional input.candidates ), ( "participants", (encodeVoteRef |> Encode.list) |> Encode.optional input.participants ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input.comments ), ( "isValidator", Encode.bool |> Encode.optional input.isValidator ) ]
 
 
 buildContractStatus_hash :

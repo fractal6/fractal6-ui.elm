@@ -676,16 +676,26 @@ aggregateEventFragment fillInOptionals object_ =
     Object.selectionForCompositeField "aggregateEventFragment" optionalArgs object_ (identity >> Decode.nullable)
 
 
-type alias GetContractRequiredArguments =
-    { id : Fractal.ScalarCodecs.Id }
+type alias GetContractOptionalArguments =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , contractid : OptionalArgument String
+    }
 
 
 getContract :
-    GetContractRequiredArguments
+    (GetContractOptionalArguments -> GetContractOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Contract
     -> SelectionSet (Maybe decodesTo) RootQuery
-getContract requiredArgs object_ =
-    Object.selectionForCompositeField "getContract" [ Argument.required "id" requiredArgs.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object_ (identity >> Decode.nullable)
+getContract fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { id = Absent, contractid = Absent }
+
+        optionalArgs =
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "contractid" filledInOptionals.contractid Encode.string ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "getContract" optionalArgs object_ (identity >> Decode.nullable)
 
 
 type alias QueryContractOptionalArguments =

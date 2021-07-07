@@ -55,6 +55,7 @@ addOneContract url form msg =
     --@DEBUG: Infered type...
     makeGQLMutation url
         (Mutation.addContract
+            identity
             (addContractInputEncoder form)
             (SelectionSet.map ContractsPayload <|
                 Fractal.Object.AddContractPayload.contract identity contractPayload
@@ -94,6 +95,7 @@ addContractInputEncoder f =
                     )
             , status = f.status
             , contract_type = f.contract_type
+            , contractid = f.contractid
             }
 
         inputOpt =

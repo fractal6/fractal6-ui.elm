@@ -21,6 +21,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+contractid : SelectionSet String Fractal.Object.Contract
+contractid =
+    Object.selectionForField "String" "contractid" [] Decode.string
+
+
 type alias TensionOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

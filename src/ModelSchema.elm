@@ -255,6 +255,7 @@ type alias Contract =
     , event : EventFragment
     , status : ContractStatus.ContractStatus
     , contract_type : ContractType.ContractType
+    , contractid : String
 
     --, candidate:
     , candidates : Maybe (List Username)

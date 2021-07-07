@@ -12,6 +12,7 @@ type ContractHasFilter
     | CreatedAt
     | UpdatedAt
     | Message
+    | Contractid
     | Tension
     | Status
     | Contract_type
@@ -25,7 +26,7 @@ type ContractHasFilter
 
 list : List ContractHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Participants, Comments, IsValidator ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Contractid, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Participants, Comments, IsValidator ]
 
 
 decoder : Decoder ContractHasFilter
@@ -45,6 +46,9 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
+
+                    "contractid" ->
+                        Decode.succeed Contractid
 
                     "tension" ->
                         Decode.succeed Tension
@@ -94,6 +98,9 @@ toString enum =
 
         Message ->
             "message"
+
+        Contractid ->
+            "contractid"
 
         Tension ->
             "tension"
@@ -148,6 +155,9 @@ fromString enumString =
 
         "message" ->
             Just Message
+
+        "contractid" ->
+            Just Contractid
 
         "tension" ->
             Just Tension

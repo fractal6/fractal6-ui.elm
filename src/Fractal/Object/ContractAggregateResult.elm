@@ -54,6 +54,16 @@ messageMax =
     Object.selectionForField "(Maybe String)" "messageMax" [] (Decode.string |> Decode.nullable)
 
 
+contractidMin : SelectionSet (Maybe String) Fractal.Object.ContractAggregateResult
+contractidMin =
+    Object.selectionForField "(Maybe String)" "contractidMin" [] (Decode.string |> Decode.nullable)
+
+
+contractidMax : SelectionSet (Maybe String) Fractal.Object.ContractAggregateResult
+contractidMax =
+    Object.selectionForField "(Maybe String)" "contractidMax" [] (Decode.string |> Decode.nullable)
+
+
 closedAtMin : SelectionSet (Maybe Fractal.ScalarCodecs.DateTime) Fractal.Object.ContractAggregateResult
 closedAtMin =
     Object.selectionForField "(Maybe ScalarCodecs.DateTime)" "closedAtMin" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder |> Decode.nullable)

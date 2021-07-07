@@ -11,12 +11,13 @@ type ContractOrderable
     = CreatedAt
     | UpdatedAt
     | Message
+    | Contractid
     | ClosedAt
 
 
 list : List ContractOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, ClosedAt ]
+    [ CreatedAt, UpdatedAt, Message, Contractid, ClosedAt ]
 
 
 decoder : Decoder ContractOrderable
@@ -33,6 +34,9 @@ decoder =
 
                     "message" ->
                         Decode.succeed Message
+
+                    "contractid" ->
+                        Decode.succeed Contractid
 
                     "closedAt" ->
                         Decode.succeed ClosedAt
@@ -55,6 +59,9 @@ toString enum =
 
         Message ->
             "message"
+
+        Contractid ->
+            "contractid"
 
         ClosedAt ->
             "closedAt"
@@ -82,6 +89,9 @@ fromString enumString =
 
         "message" ->
             Just Message
+
+        "contractid" ->
+            Just Contractid
 
         "closedAt" ->
             Just ClosedAt

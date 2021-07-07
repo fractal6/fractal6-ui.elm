@@ -1392,6 +1392,27 @@ export const GraphPack = {
         this.$canvas.addEventListener("mouseenter", canvasMouseEnterEvent);
         this.$canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
         this.$canvas.addEventListener("click", nodeClickEvent);
+
+		//this.$canvas.addEventListener("wheel", e => { // or window.addEventListener("scroll"....
+        //    if (this.isZooming || this.isFrozen) { return e.preventDefault() }
+        //    if (e.deltaY < 0){
+        //        // upscroll code
+        //        var node = this.getNodeUnderPointer(e);
+        //        if (node && node != this.focusedNode) {
+        //            e.preventDefault()
+        //            nodeClickEvent(e)
+        //        }
+		//	} else if (e.deltaY > 0) {
+		//		// downscroll code
+        //        if (this.focusedNode && this.focusedNode.parent) {
+        //            e.preventDefault()
+        //            var node = this.focusedNode.parent;
+        //            this.clearNodeHover(node);
+        //            this.nodeClickedFromJs(node);
+        //        }
+		//	}
+		//}, false);
+
         // Canvas button events redirection
         // Review -- Better implementation ?
         this.$canvasButtons.addEventListener("mousedown", e => {

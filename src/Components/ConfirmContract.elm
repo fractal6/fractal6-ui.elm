@@ -69,6 +69,7 @@ type alias ContractForm =
     , status : ContractStatus.ContractStatus
     , contract_type : ContractType.ContractType
     , event : EventFragment
+    , contractid : String
 
     --, candidate:
     , participants : Maybe (List Vote)
@@ -89,6 +90,7 @@ initForm user =
     , status = ContractStatus.Open
     , contract_type = ContractType.AnyCoordoDual
     , event = initEventFragment
+    , contractid = ""
     , participants = Nothing
     , post = Dict.empty
     }
@@ -101,6 +103,7 @@ updateFormFromData c f =
         , status = c.status
         , contract_type = c.contract_type
         , event = c.event
+        , contractid = c.contractid
         , participants = c.participants
     }
 

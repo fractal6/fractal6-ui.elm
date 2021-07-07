@@ -438,10 +438,6 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    let
-                        l =
-                            Debug.log "vote" d
-                    in
                     ( data, noOut )
 
                 NoAuth ->

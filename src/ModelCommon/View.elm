@@ -653,7 +653,7 @@ contractTypeToText c =
         ContractType.AnyCoordoDual ->
             "dual coordinators"
 
-        ContractType.AnyParticipants ->
+        ContractType.AnyCandidates ->
             "poll"
 
         ContractType.AnyCoordoTarget ->

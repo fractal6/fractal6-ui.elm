@@ -452,16 +452,29 @@ deleteEventFragment requiredArgs object_ =
     Object.selectionForCompositeField "deleteEventFragment" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeEventFragmentFilter ] object_ (identity >> Decode.nullable)
 
 
+type alias AddContractOptionalArguments =
+    { upsert : OptionalArgument Bool }
+
+
 type alias AddContractRequiredArguments =
     { input : List Fractal.InputObject.AddContractInput }
 
 
 addContract :
-    AddContractRequiredArguments
+    (AddContractOptionalArguments -> AddContractOptionalArguments)
+    -> AddContractRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddContractPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addContract requiredArgs object_ =
-    Object.selectionForCompositeField "addContract" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddContractInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addContract fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { upsert = Absent }
+
+        optionalArgs =
+            [ Argument.optional "upsert" filledInOptionals.upsert Encode.bool ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "addContract" (optionalArgs ++ [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddContractInput |> Encode.list) ]) object_ (identity >> Decode.nullable)
 
 
 type alias UpdateContractRequiredArguments =
