@@ -24,9 +24,9 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-voteId : SelectionSet String Fractal.Object.Vote
-voteId =
-    Object.selectionForField "String" "voteId" [] Decode.string
+voteid : SelectionSet String Fractal.Object.Vote
+voteid =
+    Object.selectionForField "String" "voteid" [] Decode.string
 
 
 type alias ContractOptionalArguments =
@@ -69,9 +69,9 @@ node fillInOptionals object_ =
     Object.selectionForCompositeField "node" optionalArgs object_ identity
 
 
-data : SelectionSet (Maybe (List Int)) Fractal.Object.Vote
+data : SelectionSet (List Int) Fractal.Object.Vote
 data =
-    Object.selectionForField "(Maybe (List Int))" "data" [] (Decode.int |> Decode.list |> Decode.nullable)
+    Object.selectionForField "(List Int)" "data" [] (Decode.int |> Decode.list)
 
 
 type alias CreatedByOptionalArguments =

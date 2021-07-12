@@ -73,7 +73,8 @@ type alias ErrorAuth =
 
 type alias ErrorDebug =
     { message : String
-    , location : String
+    , location : Maybe String
+    , path : Maybe String
     }
 
 
@@ -116,15 +117,24 @@ expectJson toMsg decoder =
                             Err (BadBody (JD.errorToString err))
 
 
-errorDecoder : JD.Decoder ErrorAuth
-errorDecoder =
+errorsDecoder : JD.Decoder ErrorAuth
+errorsDecoder =
     JD.map ErrorAuth <|
         JD.field "errors" <|
-            (JD.list <|
-                JD.map2 ErrorDebug
-                    (JD.field "message" JD.string)
-                    (JD.field "location" JD.string)
-            )
+            JD.list errorDecoder
+
+
+errorsDecoder2 : JD.Decoder (List ErrorDebug)
+errorsDecoder2 =
+    JD.list <| errorDecoder
+
+
+errorDecoder : JD.Decoder ErrorDebug
+errorDecoder =
+    JD.map3 ErrorDebug
+        (JD.field "message" JD.string)
+        (JD.maybe <| JD.field "location" JD.string)
+        (JD.maybe <| JD.field "path" JD.string)
 
 
 errorHttpToString : HttpError String -> String
@@ -143,7 +153,7 @@ errorHttpToString httpError =
             if statusCode == 401 then
                 let
                     errMsg =
-                        case JD.decodeString errorDecoder body of
+                        case JD.decodeString errorsDecoder body of
                             Ok err ->
                                 err.errors |> List.map (\e -> e.message) |> String.join "\n"
 
@@ -178,7 +188,7 @@ errorGraphQLHttpToString httpError =
             if metadata.statusCode == 401 then
                 let
                     errMsg =
-                        case JD.decodeString errorDecoder body of
+                        case JD.decodeString errorsDecoder body of
                             Ok err ->
                                 err.errors |> List.map (\e -> e.message) |> String.join "\n"
 
@@ -238,7 +248,7 @@ viewGqlErrors errMsg =
             (\e ->
                 let
                     err =
-                        case JD.decodeString errorDecoder e of
+                        case JD.decodeString errorsDecoder e of
                             Ok err_ ->
                                 err_.errors
                                     |> List.head
@@ -246,7 +256,15 @@ viewGqlErrors errMsg =
                                     |> withDefault e
 
                             Err err_ ->
-                                e
+                                case JD.decodeString errorsDecoder2 e of
+                                    Ok err2_ ->
+                                        err2_
+                                            |> List.head
+                                            |> Maybe.map (\x -> upT x.message)
+                                            |> withDefault e
+
+                                    Err t ->
+                                        e
                 in
                 p [] [ text err ]
             )

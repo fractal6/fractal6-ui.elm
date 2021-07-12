@@ -259,7 +259,7 @@ type alias Contract =
 
     --, candidate:
     , candidates : Maybe (List Username)
-    , participants : Maybe (List Vote)
+    , participants : List Vote
 
     -- Maybe hardocoded
     , comments : Maybe (List Comment)
@@ -268,6 +268,7 @@ type alias Contract =
 
 type alias ContractFull =
     { id : String
+    , contractid : String
     , createdAt : String
     , closedAt : Maybe String
     , createdBy : Username
@@ -278,7 +279,7 @@ type alias ContractFull =
 
     --, candidate:
     , candidates : Maybe (List Username)
-    , participants : Maybe (List Vote)
+    , participants : List Vote
 
     -- Maybe hardocded
     , comments : Maybe (List Comment)
@@ -301,8 +302,9 @@ type alias ContractComments =
 
 
 type alias Vote =
-    { node : NameidPayload
-    , data : Maybe VoteData
+    { voteid : String
+    , node : NameidPayload
+    , data : VoteData
     }
 
 

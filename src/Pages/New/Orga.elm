@@ -1,6 +1,6 @@
 module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
-import Auth exposing (AuthState(..), doRefreshToken2, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr2, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Components.NodeDoc exposing (makeNewNodeId)
@@ -184,7 +184,7 @@ update global message model =
             )
 
         OrgaAck result ->
-            case doRefreshToken2 result model.refresh_trial of
+            case parseErr2 result model.refresh_trial of
                 Authenticate ->
                     ( { model | result = RemoteData.NotAsked }, send (DoOpenAuthModal model.form.uctx), Cmd.none )
 
@@ -197,7 +197,7 @@ update global message model =
                     , send UpdateUserToken
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | result = result }, Cmd.none, Cmd.none )
 
         ChangeNodePost field value ->

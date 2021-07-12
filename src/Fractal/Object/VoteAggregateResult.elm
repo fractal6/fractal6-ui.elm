@@ -54,11 +54,11 @@ messageMax =
     Object.selectionForField "(Maybe String)" "messageMax" [] (Decode.string |> Decode.nullable)
 
 
-voteIdMin : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
-voteIdMin =
-    Object.selectionForField "(Maybe String)" "voteIdMin" [] (Decode.string |> Decode.nullable)
+voteidMin : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
+voteidMin =
+    Object.selectionForField "(Maybe String)" "voteidMin" [] (Decode.string |> Decode.nullable)
 
 
-voteIdMax : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
-voteIdMax =
-    Object.selectionForField "(Maybe String)" "voteIdMax" [] (Decode.string |> Decode.nullable)
+voteidMax : SelectionSet (Maybe String) Fractal.Object.VoteAggregateResult
+voteidMax =
+    Object.selectionForField "(Maybe String)" "voteidMax" [] (Decode.string |> Decode.nullable)

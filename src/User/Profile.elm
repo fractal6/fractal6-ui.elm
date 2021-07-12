@@ -1,6 +1,6 @@
 module User.Profile exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar
@@ -249,7 +249,7 @@ update global message model =
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         GotNodes result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( model, send (DoOpenAuthModal (withDefault initUserctx model.uctx_my)), Cmd.none )
 
@@ -263,7 +263,7 @@ update global message model =
                 OkAuth data ->
                     ( { model | orgas = result }, Cmd.none, Cmd.none )
 
-                NoAuth ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         GotUctx result ->

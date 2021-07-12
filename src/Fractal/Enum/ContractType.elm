@@ -9,14 +9,14 @@ import Json.Decode as Decode exposing (Decoder)
 
 type ContractType
     = AnyCoordoDual
-    | AnyParticipants
+    | AnyCandidates
     | AnyCoordoSource
     | AnyCoordoTarget
 
 
 list : List ContractType
 list =
-    [ AnyCoordoDual, AnyParticipants, AnyCoordoSource, AnyCoordoTarget ]
+    [ AnyCoordoDual, AnyCandidates, AnyCoordoSource, AnyCoordoTarget ]
 
 
 decoder : Decoder ContractType
@@ -28,8 +28,8 @@ decoder =
                     "AnyCoordoDual" ->
                         Decode.succeed AnyCoordoDual
 
-                    "AnyParticipants" ->
-                        Decode.succeed AnyParticipants
+                    "AnyCandidates" ->
+                        Decode.succeed AnyCandidates
 
                     "AnyCoordoSource" ->
                         Decode.succeed AnyCoordoSource
@@ -50,8 +50,8 @@ toString enum =
         AnyCoordoDual ->
             "AnyCoordoDual"
 
-        AnyParticipants ->
-            "AnyParticipants"
+        AnyCandidates ->
+            "AnyCandidates"
 
         AnyCoordoSource ->
             "AnyCoordoSource"
@@ -77,8 +77,8 @@ fromString enumString =
         "AnyCoordoDual" ->
             Just AnyCoordoDual
 
-        "AnyParticipants" ->
-            Just AnyParticipants
+        "AnyCandidates" ->
+            Just AnyCandidates
 
         "AnyCoordoSource" ->
             Just AnyCoordoSource

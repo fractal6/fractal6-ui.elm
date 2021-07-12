@@ -12,7 +12,7 @@ type VoteHasFilter
     | CreatedAt
     | UpdatedAt
     | Message
-    | VoteId
+    | Voteid
     | Contract
     | Node
     | Data
@@ -20,7 +20,7 @@ type VoteHasFilter
 
 list : List VoteHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, VoteId, Contract, Node, Data ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Voteid, Contract, Node, Data ]
 
 
 decoder : Decoder VoteHasFilter
@@ -41,8 +41,8 @@ decoder =
                     "message" ->
                         Decode.succeed Message
 
-                    "voteId" ->
-                        Decode.succeed VoteId
+                    "voteid" ->
+                        Decode.succeed Voteid
 
                     "contract" ->
                         Decode.succeed Contract
@@ -75,8 +75,8 @@ toString enum =
         Message ->
             "message"
 
-        VoteId ->
-            "voteId"
+        Voteid ->
+            "voteid"
 
         Contract ->
             "contract"
@@ -114,8 +114,8 @@ fromString enumString =
         "message" ->
             Just Message
 
-        "voteId" ->
-            Just VoteId
+        "voteid" ->
+            Just Voteid
 
         "contract" ->
             Just Contract

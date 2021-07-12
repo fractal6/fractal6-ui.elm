@@ -1,6 +1,6 @@
 module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
@@ -373,7 +373,7 @@ update_ apis message model =
                 form =
                     model.formAsk
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResultAsk NotAsked model
                     , out1 [ DoAuth form.form.uctx ]
@@ -385,7 +385,7 @@ update_ apis message model =
                 OkAuth tension ->
                     ( setResultAsk result { model | formAsk = NT.resetPost model.formAsk }, noOut )
 
-                NoAuth ->
+                _ ->
                     ( setResultAsk result model, noOut )
 
         OnAskFeedback result ->
@@ -393,7 +393,7 @@ update_ apis message model =
                 form =
                     model.formFeedback
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResultFeedback NotAsked model
                     , out1 [ DoAuth form.form.uctx ]
@@ -405,7 +405,7 @@ update_ apis message model =
                 OkAuth tension ->
                     ( setResultFeedback result { model | formAsk = NT.resetPost model.formFeedback }, noOut )
 
-                NoAuth ->
+                _ ->
                     ( setResultFeedback result model, noOut )
 
         -- Confirm Modal

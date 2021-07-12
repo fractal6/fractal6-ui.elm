@@ -1,6 +1,6 @@
 module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Components.ConfirmContract as ConfirmContract
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -352,7 +352,7 @@ update_ apis message model =
                         Nothing ->
                             ( setMoveResult result model, Cmd.none )
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setMoveResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -369,7 +369,7 @@ update_ apis message model =
                         -- Contract here
                         ( data, out0 [ cmd ] )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         -- Confirm Modal

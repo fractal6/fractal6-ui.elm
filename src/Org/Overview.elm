@@ -1,7 +1,7 @@
 port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
@@ -442,7 +442,7 @@ update global message model =
 
         -- Data queries
         GotOrga result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( model, send (DoOpenAuthModal (uctxFromUser global.session.user)), Cmd.none )
 
@@ -466,7 +466,7 @@ update global message model =
                     else
                         ( { model | orga_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
 
-                NoAuth ->
+                _ ->
                     ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
 
         GotTensions result ->
@@ -761,7 +761,7 @@ update global message model =
                         |> ActionPanel.close
                         |> ActionPanel.setActionResult result
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
 
@@ -771,7 +771,7 @@ update global message model =
                 OkAuth t ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
-                NoAuth ->
+                _ ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         LeaveRoleAck result ->
@@ -784,7 +784,7 @@ update global message model =
                 gcmds =
                     [ Ports.click "body" ]
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
 
@@ -794,7 +794,7 @@ update global message model =
                 OkAuth t ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
-                NoAuth ->
+                _ ->
                     ( { model | actionPanel = panel }, Cmd.batch gcmds, Cmd.none )
 
         UpdateActionPost field value ->
@@ -857,7 +857,7 @@ update global message model =
         JoinAck result ->
             case model.node_action of
                 JoinOrga (JoinValidation form _) ->
-                    case doRefreshToken result model.refresh_trial of
+                    case parseErr result model.refresh_trial of
                         Authenticate ->
                             ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
 
@@ -870,7 +870,7 @@ update global message model =
                             , Cmd.none
                             )
 
-                        NoAuth ->
+                        _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->

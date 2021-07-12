@@ -135,6 +135,7 @@ contractFullPayload : SelectionSet ContractFull Fractal.Object.Contract
 contractFullPayload =
     SelectionSet.succeed ContractFull
         |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with Fractal.Object.Contract.contractid
         |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
         |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
@@ -159,6 +160,7 @@ eventFragmentPayload =
 votePayload : SelectionSet Vote Fractal.Object.Vote
 votePayload =
     SelectionSet.succeed Vote
+        |> with Fractal.Object.Vote.voteid
         |> with (Fractal.Object.Vote.node identity (SelectionSet.map NameidPayload Fractal.Object.Node.nameid))
         |> with Fractal.Object.Vote.data
 

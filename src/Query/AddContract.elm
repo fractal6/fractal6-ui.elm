@@ -96,30 +96,26 @@ addContractInputEncoder f =
             , status = f.status
             , contract_type = f.contract_type
             , contractid = f.contractid
+            , participants =
+                f.participants
+                    |> List.map
+                        (\p ->
+                            Input.buildVoteRef
+                                (\v ->
+                                    { v
+                                        | createdAt = Present cat
+                                        , createdBy = Present cby
+                                        , voteid = Present p.voteid
+                                        , node = Input.buildNodeRef (\n -> { n | nameid = Present p.node.nameid }) |> Present
+                                        , data = Present p.data
+                                    }
+                                )
+                        )
             }
 
         inputOpt =
             \x ->
-                { x
-                    | participants =
-                        f.participants
-                            |> Maybe.map
-                                (\ps ->
-                                    List.map
-                                        (\p ->
-                                            Input.buildVoteRef
-                                                (\v ->
-                                                    { v
-                                                        | node = Input.buildNodeRef (\n -> { n | nameid = Present p.node.nameid }) |> Present
-                                                        , data = fromMaybe p.data
-                                                    }
-                                                )
-                                        )
-                                        ps
-                                )
-                            |> fromMaybe
-                    , message = Dict.get "message" f.post |> fromMaybe
-                }
+                { x | message = Dict.get "message" f.post |> fromMaybe }
     in
     { input =
         [ Input.buildAddContractInput inputReq inputOpt ]

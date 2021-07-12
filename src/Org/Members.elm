@@ -1,7 +1,7 @@
 module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -371,7 +371,7 @@ update global message model =
         JoinAck result ->
             case model.node_action of
                 JoinOrga (JoinValidation form _) ->
-                    case doRefreshToken result model.refresh_trial of
+                    case parseErr result model.refresh_trial of
                         Authenticate ->
                             ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
 
@@ -384,7 +384,7 @@ update global message model =
                             , send UpdateUserToken
                             )
 
-                        NoAuth ->
+                        _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->

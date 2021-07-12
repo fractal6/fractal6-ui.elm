@@ -744,7 +744,7 @@ aggregateContract fillInOptionals object_ =
 
 type alias GetVoteOptionalArguments =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
-    , voteId : OptionalArgument String
+    , voteid : OptionalArgument String
     }
 
 
@@ -755,10 +755,10 @@ getVote :
 getVote fillInOptionals object_ =
     let
         filledInOptionals =
-            fillInOptionals { id = Absent, voteId = Absent }
+            fillInOptionals { id = Absent, voteid = Absent }
 
         optionalArgs =
-            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "voteId" filledInOptionals.voteId Encode.string ]
+            [ Argument.optional "id" filledInOptionals.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId), Argument.optional "voteid" filledInOptionals.voteid Encode.string ]
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "getVote" optionalArgs object_ (identity >> Decode.nullable)

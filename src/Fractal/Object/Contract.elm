@@ -116,7 +116,7 @@ type alias ParticipantsOptionalArguments =
 participants :
     (ParticipantsOptionalArguments -> ParticipantsOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Vote
-    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Contract
+    -> SelectionSet (List decodesTo) Fractal.Object.Contract
 participants fillInOptionals object_ =
     let
         filledInOptionals =
@@ -126,7 +126,7 @@ participants fillInOptionals object_ =
             [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeVoteFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeVoteOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
                 |> List.filterMap identity
     in
-    Object.selectionForCompositeField "participants" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "participants" optionalArgs object_ (identity >> Decode.list)
 
 
 type alias CommentsOptionalArguments =

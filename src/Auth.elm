@@ -1,6 +1,6 @@
-module Auth exposing (AuthState(..), ErrState(..), doRefreshToken, doRefreshToken2, parseErr, refreshAuthModal)
+module Auth exposing (ErrState(..), parseErr, parseErr2, refreshAuthModal)
 
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorDecoder, toErrorData, viewHttpErrors)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData, viewHttpErrors)
 import Components.Markdown exposing (renderMarkdown)
 import Dict
 import Extra.Events exposing (onKeydown)
@@ -14,26 +14,22 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (ModalAuth(..))
 import ModelSchema exposing (UserCtx)
 import RemoteData exposing (RemoteData)
-import String exposing (startsWith)
+import String exposing (contains, startsWith)
 import String.Extra as SE
 import Task
 
 
-type AuthState a
+type ErrState a
     = Authenticate
     | RefreshToken Int
     | OkAuth a
-    | NoAuth
-
-
-type ErrState
-    = DuplicateErr
-    | UnknownErr
     | NoErr
+    | DuplicateErr
+    | UnknownErr
 
 
-messageToAuthState : String -> Int -> AuthState a
-messageToAuthState message trial =
+messageToErrState : String -> Int -> ErrState a
+messageToErrState message trial =
     if startsWith "token is expired" message || startsWith "no token found" message then
         Authenticate
 
@@ -42,56 +38,16 @@ messageToAuthState message trial =
             RefreshToken (trial + 1)
 
         else
-            NoAuth
+            UnknownErr
 
-    else
-        NoAuth
+    else if startsWith "Duplicate error" message then
+        DuplicateErr
 
-
-messageToErrState : String -> ErrState
-messageToErrState message =
-    if startsWith "Duplicate error" message then
+    else if contains "already exists for field" message then
         DuplicateErr
 
     else
         UnknownErr
-
-
-parseErr : GqlData a -> ErrState
-parseErr data =
-    case data of
-        Failure err ->
-            if List.length err == 1 then
-                case List.head err of
-                    Just err_ ->
-                        let
-                            gqlErr =
-                                err_
-                                    |> String.replace "\n" ""
-                                    |> SE.rightOf "{"
-                                    |> SE.insertAt "{" 0
-                                    |> JD.decodeString errorDecoder
-                        in
-                        case gqlErr of
-                            Ok errGql ->
-                                case List.head errGql.errors of
-                                    Just e ->
-                                        messageToErrState e.message
-
-                                    Nothing ->
-                                        UnknownErr
-
-                            Err errJD ->
-                                messageToErrState err_
-
-                    Nothing ->
-                        NoErr
-
-            else
-                NoErr
-
-        _ ->
-            NoErr
 
 
 {-|
@@ -99,8 +55,8 @@ parseErr data =
     For GQL Response
 
 -}
-doRefreshToken : GqlData a -> Int -> AuthState a
-doRefreshToken data trial =
+parseErr : GqlData a -> Int -> ErrState a
+parseErr data trial =
     case data of
         Success d ->
             OkAuth d
@@ -115,28 +71,28 @@ doRefreshToken data trial =
                                     |> String.replace "\n" ""
                                     |> SE.rightOf "{"
                                     |> SE.insertAt "{" 0
-                                    |> JD.decodeString errorDecoder
+                                    |> JD.decodeString errorsDecoder
                         in
                         case gqlErr of
                             Ok errGql ->
                                 case List.head errGql.errors of
                                     Just e ->
-                                        messageToAuthState e.message trial
+                                        messageToErrState e.message trial
 
                                     Nothing ->
-                                        NoAuth
+                                        UnknownErr
 
                             Err errJD ->
-                                messageToAuthState err_ trial
+                                messageToErrState err_ trial
 
                     Nothing ->
-                        NoAuth
+                        UnknownErr
 
             else
-                NoAuth
+                UnknownErr
 
         _ ->
-            NoAuth
+            NoErr
 
 
 {-|
@@ -144,8 +100,8 @@ doRefreshToken data trial =
     For HTTP response
 
 -}
-doRefreshToken2 : WebData a -> Int -> AuthState a
-doRefreshToken2 data trial =
+parseErr2 : WebData a -> Int -> ErrState a
+parseErr2 data trial =
     case data of
         RemoteData.Success d ->
             OkAuth d
@@ -164,28 +120,28 @@ doRefreshToken2 data trial =
                                     |> String.replace "\n" ""
                                     |> SE.rightOf "{"
                                     |> SE.insertAt "{" 0
-                                    |> JD.decodeString errorDecoder
+                                    |> JD.decodeString errorsDecoder
                         in
                         case gqlErr of
                             Ok errGql ->
                                 case List.head errGql.errors of
                                     Just e ->
-                                        messageToAuthState e.message trial
+                                        messageToErrState e.message trial
 
                                     Nothing ->
-                                        NoAuth
+                                        UnknownErr
 
                             Err errJD ->
-                                messageToAuthState err_ trial
+                                messageToErrState err_ trial
 
                     Nothing ->
-                        NoAuth
+                        UnknownErr
 
             else
-                NoAuth
+                UnknownErr
 
         _ ->
-            NoAuth
+            NoErr
 
 
 

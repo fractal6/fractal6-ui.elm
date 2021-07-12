@@ -1,6 +1,6 @@
 module Components.LabelSearchPanel exposing (..)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
@@ -311,7 +311,7 @@ update_ apis message model =
                 data =
                     setClickResult result model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setClickResult NotAsked data
                     , out1 [ DoAuth data.form.uctx ]
@@ -323,7 +323,7 @@ update_ apis message model =
                 OkAuth _ ->
                     ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         OnSubmit next ->

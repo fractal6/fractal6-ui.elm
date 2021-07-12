@@ -1,6 +1,6 @@
 module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
@@ -636,7 +636,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         GotOrga result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( model, send (DoOpenAuthModal (uctxFromUser global.session.user)), Cmd.none )
 
@@ -660,12 +660,12 @@ update global message model =
                     else
                         ( { model | users_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
 
-                NoAuth ->
+                _ ->
                     ( model, Cmd.none, send (UpdateSessionOrga Nothing) )
 
         -- Page
         GotTensionHead result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( model, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
 
@@ -678,7 +678,7 @@ update global message model =
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | tension_head = result }
                     , Ports.bulma_driver ""
                     , send (UpdateSessionTensionHead (withMaybeData result))
@@ -745,7 +745,7 @@ update global message model =
             )
 
         CommentAck result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | tension_patch = NotAsked }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
 
@@ -799,7 +799,7 @@ update global message model =
                     , send (UpdateSessionTensionHead (withMaybeData tension_h))
                     )
 
-                NoAuth ->
+                _ ->
                     case result of
                         Failure _ ->
                             let
@@ -855,7 +855,7 @@ update global message model =
             ( { model | comment_form = newForm, comment_result = LoadingSlowly }, send PushCommentPatch, Cmd.none )
 
         CommentPatchAck result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | comment_result = NotAsked }, send (DoOpenAuthModal model.comment_form.uctx), Cmd.none )
 
@@ -893,7 +893,7 @@ update global message model =
                     in
                     ( { model | tension_comments = tension_c, comment_form = resetForm, comment_result = result }, Cmd.none, Ports.bulma_driver "" )
 
-                NoAuth ->
+                _ ->
                     ( { model | comment_result = result }, Cmd.none, Cmd.none )
 
         DoChangeTitle ->
@@ -923,7 +923,7 @@ update global message model =
             ( { model | tension_form = newForm, title_result = LoadingSlowly }, send PushTitle, Cmd.none )
 
         TitleAck result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | title_result = NotAsked }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
 
@@ -948,7 +948,7 @@ update global message model =
                     , send (UpdateSessionTensionHead (withMaybeData tension_h))
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | title_result = result }, Cmd.none, Cmd.none )
 
         DoMove t ->
@@ -1044,7 +1044,7 @@ update global message model =
                 newDoc =
                     NodeDoc.setResult result model.nodeDoc
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | nodeDoc = NodeDoc.setResult NotAsked model.nodeDoc }, send (DoOpenAuthModal newDoc.form.uctx), Cmd.none )
 
@@ -1076,7 +1076,7 @@ update global message model =
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | nodeDoc = newDoc }, Cmd.none, Cmd.none )
 
         CancelBlob ->
@@ -1109,7 +1109,7 @@ update global message model =
             )
 
         PushBlobAck result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | publish_result = NotAsked }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
 
@@ -1154,7 +1154,7 @@ update global message model =
                         _ ->
                             ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
-                NoAuth ->
+                _ ->
                     ( { model | publish_result = result }, Cmd.none, Cmd.none )
 
         -- User quick search
@@ -1374,7 +1374,7 @@ update global message model =
                         |> ActionPanel.close
                         |> ActionPanel.setActionResult result
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
 
@@ -1396,7 +1396,7 @@ update global message model =
                     , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTensionHead (withMaybeData th)) ]
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         LeaveRoleAck result ->
@@ -1406,7 +1406,7 @@ update global message model =
                         |> ActionPanel.close
                         |> ActionPanel.setActionResult result
             in
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
 
@@ -1419,7 +1419,7 @@ update global message model =
                     , send UpdateUserToken
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
         UpdateActionPost field value ->
@@ -1502,7 +1502,7 @@ update global message model =
         JoinAck result ->
             case model.node_action of
                 JoinOrga (JoinValidation form _) ->
-                    case doRefreshToken result model.refresh_trial of
+                    case parseErr result model.refresh_trial of
                         Authenticate ->
                             ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
 
@@ -1515,7 +1515,7 @@ update global message model =
                             , send UpdateUserToken
                             )
 
-                        NoAuth ->
+                        _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->

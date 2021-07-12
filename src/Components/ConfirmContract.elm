@@ -1,6 +1,6 @@
 module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
@@ -72,7 +72,7 @@ type alias ContractForm =
     , contractid : String
 
     --, candidate:
-    , participants : Maybe (List Vote)
+    , participants : List Vote
     , post : Post
     }
 
@@ -91,7 +91,7 @@ initForm user =
     , contract_type = ContractType.AnyCoordoDual
     , event = initEventFragment
     , contractid = ""
-    , participants = Nothing
+    , participants = []
     , post = Dict.empty
     }
 
@@ -304,7 +304,7 @@ update_ apis message model =
                 data =
                     setDataResult result model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -316,7 +316,10 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, Out [] [] (Just ( False, d )) )
 
-                NoAuth ->
+                DuplicateErr ->
+                    ( setDataResult (Failure [ "Duplicate error: a similar contract already exists, please check it out." ]) model, noOut )
+
+                _ ->
                     ( data, noOut )
 
         -- Confirm Modal

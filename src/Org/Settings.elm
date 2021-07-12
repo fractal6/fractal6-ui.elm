@@ -1,7 +1,7 @@
 module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
-import Auth exposing (AuthState(..), ErrState(..), doRefreshToken, parseErr, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -514,7 +514,7 @@ update global message model =
             ( { model | label_result_del = LoadingSlowly, label_form = newForm }, removeOneLabel apis.gql newForm GotLabelDel, Cmd.none )
 
         GotLabel result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | label_result = NotAsked }, send (DoOpenAuthModal model.label_form.uctx), Cmd.none )
 
@@ -552,33 +552,31 @@ update global message model =
                     , Cmd.none
                     )
 
-                NoAuth ->
-                    case parseErr result of
-                        DuplicateErr ->
-                            let
-                                label_name =
-                                    Dict.get "name" model.label_form.post |> withDefault ""
+                DuplicateErr ->
+                    let
+                        label_name =
+                            Dict.get "name" model.label_form.post |> withDefault ""
 
-                                here ln =
-                                    (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
-                                        > 0
+                        here ln =
+                            (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
+                                > 0
 
-                                form =
-                                    model.label_form
-                            in
-                            if model.label_add && (here label_name == False) then
-                                -- set the labels in the node labels list
-                                ( { model | label_result = LoadingSlowly, label_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
+                        form =
+                            model.label_form
+                    in
+                    if model.label_add && (here label_name == False) then
+                        -- set the labels in the node labels list
+                        ( { model | label_result = LoadingSlowly, label_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
 
-                            else
-                                -- trow error if the labels is in the list of labels
-                                ( { model | label_result = result }, Cmd.none, Cmd.none )
+                    else
+                        -- trow error if the labels is in the list of labels
+                        ( { model | label_result = result }, Cmd.none, Cmd.none )
 
-                        _ ->
-                            ( { model | label_result = result }, Cmd.none, Cmd.none )
+                _ ->
+                    ( { model | label_result = result }, Cmd.none, Cmd.none )
 
         GotLabelDel result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( { model | label_result_del = NotAsked }, send (DoOpenAuthModal model.label_form.uctx), Cmd.none )
 
@@ -598,7 +596,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                NoAuth ->
+                _ ->
                     ( { model | label_result_del = result }, Cmd.none, Cmd.none )
 
         -- New tension
@@ -678,7 +676,7 @@ update global message model =
         JoinAck result ->
             case model.node_action of
                 JoinOrga (JoinValidation form _) ->
-                    case doRefreshToken result model.refresh_trial of
+                    case parseErr result model.refresh_trial of
                         Authenticate ->
                             ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
 
@@ -691,7 +689,7 @@ update global message model =
                             , send UpdateUserToken
                             )
 
-                        NoAuth ->
+                        _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
                 default ->

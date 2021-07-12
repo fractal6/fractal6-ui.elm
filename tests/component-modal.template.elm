@@ -1,6 +1,6 @@
 module ${module_name} exposing (Msg(..), State, init, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
@@ -225,7 +225,7 @@ update_ apis message model =
                 data =
                     setDataResult result model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -237,7 +237,7 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, Out [] [] (Just ( True, d )) )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
 

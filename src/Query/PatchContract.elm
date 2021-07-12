@@ -81,20 +81,17 @@ voteInputDecoder form =
             , createdBy =
                 Input.buildUserRef
                     (\u -> { u | username = Present form.uctx.username })
-            , voteId = form.cid ++ "#" ++ nid
+            , voteid = form.contractid ++ "#" ++ nid
             , contract =
                 Input.buildContractRef
-                    (\x -> { x | id = Present (encodeId form.cid) })
+                    (\x -> { x | contractid = Present form.contractid })
             , node =
                 Input.buildNodeRef
                     (\x -> { x | nameid = Present nid })
+            , data = [ form.vote ]
             }
-
-        inputOpt =
-            \x ->
-                { x | data = Present [ form.vote ] }
     in
-    { input = [ Input.buildAddVoteInput inputReq inputOpt ] }
+    { input = [ Input.buildAddVoteInput inputReq identity ] }
 
 
 votePayload : SelectionSet VoteResult Fractal.Object.Vote

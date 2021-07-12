@@ -1,6 +1,6 @@
 module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, update, view)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -85,9 +85,9 @@ type alias ContractForm =
     { uctx : UserCtx
     , tid : String
     , cid : String
+    , contractid : String
     , page : Int
     , page_len : Int
-    , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
 
@@ -97,9 +97,9 @@ initContractForm user =
     { uctx = uctxFromUser user
     , tid = ""
     , cid = ""
+    , contractid = ""
     , page = 0
     , page_len = 10
-    , events_type = Nothing
     , post = Dict.empty
     }
 
@@ -107,6 +107,7 @@ initContractForm user =
 type alias VoteForm =
     { uctx : UserCtx
     , cid : String
+    , contractid : String
     , rootnameid : String
     , vote : Int
     , post : Post
@@ -117,6 +118,7 @@ initVoteForm : UserState -> VoteForm
 initVoteForm user =
     { uctx = uctxFromUser user
     , cid = ""
+    , contractid = ""
     , rootnameid = ""
     , vote = 0
     , post = Dict.empty
@@ -152,7 +154,19 @@ setContractsResult result model =
 
 setContractResult : GqlData ContractFull -> Model -> Model
 setContractResult result model =
-    { model | contract_result = result }
+    let
+        form =
+            model.form
+
+        newForm =
+            case result of
+                Success c ->
+                    { form | contractid = c.contractid }
+
+                _ ->
+                    form
+    in
+    { model | contract_result = result, form = newForm }
 
 
 setContractDelResult : GqlData IdPayload -> Model -> Model
@@ -311,7 +325,7 @@ update_ apis message model =
                 data =
                     setContractsResult result model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractsResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -323,7 +337,7 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, Out [] [] (Just ( True, List.map (\c -> { id = c.id }) d )) )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         OnContractAck result ->
@@ -331,7 +345,7 @@ update_ apis message model =
                 data =
                     setContractResult result model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -343,7 +357,7 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, Out [ send (DoQueryContractComments d.id) ] [] (Just ( True, [ { id = d.id } ] )) )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         OnContractCommentsAck result ->
@@ -359,7 +373,7 @@ update_ apis message model =
                 data =
                     setContractResult newResult model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -371,7 +385,7 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, Out [] [] (Just ( True, [] )) )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         OnContractDeleteAck result ->
@@ -379,7 +393,7 @@ update_ apis message model =
                 data =
                     setContractDelResult result model
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractDelResult NotAsked model
                     , out1 [ DoAuth data.form.uctx ]
@@ -391,7 +405,7 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, Out [ sendSleep (DoPopContract model.form.cid) 500 ] [] (Just ( True, [] )) )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         DoPopContract cid ->
@@ -419,6 +433,7 @@ update_ apis message model =
                     { f
                         | vote = v
                         , cid = model.form.cid
+                        , contractid = model.form.contractid
                         , rootnameid = model.rootnameid
                         , post = Dict.insert "createdAt" (fromTime time) f.post
                     }
@@ -430,7 +445,7 @@ update_ apis message model =
                 data =
                     { model | vote_result = result }
             in
-            case doRefreshToken result data.refresh_trial of
+            case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( { model | vote_result = NotAsked }, out1 [ DoAuth data.form.uctx ] )
 
@@ -440,7 +455,7 @@ update_ apis message model =
                 OkAuth d ->
                     ( data, noOut )
 
-                NoAuth ->
+                _ ->
                     ( data, noOut )
 
         -- Confirm Modal
@@ -633,11 +648,8 @@ viewContractBox data op model =
         isCandidate =
             data.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member uctx.username
 
-        participants =
-            data.participants |> withDefault []
-
         isParticipant =
-            participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member uctx.username
+            data.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member uctx.username
 
         isValidator =
             withDefault False data.isValidator
@@ -675,6 +687,12 @@ viewContractBox data op model =
                 ]
             , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ "\u{00A0}"), byAt data.createdBy data.createdAt ] ]
             ]
+        , case model.vote_result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
         , if (isValidator || isCandidate) && isParticipant == False then
             p [ class "buttons is-centered" ]
                 [ div

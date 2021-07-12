@@ -1,6 +1,6 @@
 module Form.NewTension exposing (..)
 
-import Auth exposing (AuthState(..), doRefreshToken)
+import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
@@ -770,7 +770,7 @@ update_ apis message model =
             )
 
         OnTensionAck result ->
-            case doRefreshToken result model.refresh_trial of
+            case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResult NotAsked model
                     , out1 [ DoAuth model.form.uctx ]
@@ -802,7 +802,10 @@ update_ apis message model =
                             in
                             ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
-                NoAuth ->
+                DuplicateErr ->
+                    ( setResult (Failure [ "Duplicate error: this name is already taken." ]) model, noOut )
+
+                _ ->
                     ( setResult result model, noOut )
 
         -- User Quick Search

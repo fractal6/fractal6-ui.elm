@@ -11,12 +11,12 @@ type VoteOrderable
     = CreatedAt
     | UpdatedAt
     | Message
-    | VoteId
+    | Voteid
 
 
 list : List VoteOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, VoteId ]
+    [ CreatedAt, UpdatedAt, Message, Voteid ]
 
 
 decoder : Decoder VoteOrderable
@@ -34,8 +34,8 @@ decoder =
                     "message" ->
                         Decode.succeed Message
 
-                    "voteId" ->
-                        Decode.succeed VoteId
+                    "voteid" ->
+                        Decode.succeed Voteid
 
                     _ ->
                         Decode.fail ("Invalid VoteOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -56,8 +56,8 @@ toString enum =
         Message ->
             "message"
 
-        VoteId ->
-            "voteId"
+        Voteid ->
+            "voteid"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -83,8 +83,8 @@ fromString enumString =
         "message" ->
             Just Message
 
-        "voteId" ->
-            Just VoteId
+        "voteid" ->
+            Just Voteid
 
         _ ->
             Nothing

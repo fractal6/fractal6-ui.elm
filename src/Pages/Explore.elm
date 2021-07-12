@@ -1,6 +1,6 @@
 module Pages.Explore exposing (Flags, Model, Msg, page)
 
-import Auth exposing (AuthState(..), doRefreshToken, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar

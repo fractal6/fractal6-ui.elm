@@ -270,8 +270,8 @@ buildNodeFragmentRef users nf =
             let
                 commonFields =
                     { n
-                        | name = fromMaybe nf.name
-                        , nameid = fromMaybe (Maybe.map (\nid -> String.toLower nid) nf.nameid)
+                        | name = fromMaybe (Maybe.map String.trim nf.name)
+                        , nameid = fromMaybe (Maybe.map (String.toLower >> String.trim) nf.nameid)
                         , type_ = fromMaybe nf.type_
                         , about = fromMaybe nf.about
                         , mandate = buildMandate nf.mandate
