@@ -307,15 +307,35 @@ defaultType =
 queryIsEmpty : Model -> Bool
 queryIsEmpty model =
     model.statusFilter
-        == OpenStatus
+        == defaultStatusFilter
         && model.typeFilter
-        == AllTypes
+        == defaultTypeFilter
         && model.depthFilter
-        == AllSubChildren
+        == defaultDepthFilter
         && model.authors
-        == []
+        == defaultAuthorsFilter
         && model.labels
-        == []
+        == defaultLabelsFilter
+
+
+defaultStatusFilter =
+    OpenStatus
+
+
+defaultTypeFilter =
+    AllTypes
+
+
+defaultDepthFilter =
+    AllSubChildren
+
+
+defaultAuthorsFilter =
+    []
+
+
+defaultLabelsFilter =
+    []
 
 
 
@@ -1327,7 +1347,11 @@ viewSearchBar model =
             , div [ class "column is-6 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
                     [ div [ class "control dropdown", onClick OnFilterClick ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ] [ textH T.status, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
+                            [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge" ] []) (text "")
+                            , textH T.status
+                            , i [ class "ml-3 icon-chevron-down icon-tiny" ] []
+                            ]
                         , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
@@ -1341,7 +1365,11 @@ viewSearchBar model =
                             ]
                         ]
                     , div [ class "control dropdown", onClick OnFilterClick ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ] [ textH T.type_, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
+                            [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge" ] []) (text "")
+                            , textH T.type_
+                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            ]
                         , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
@@ -1357,7 +1385,11 @@ viewSearchBar model =
                             ]
                         ]
                     , div [ class "control", onClick ChangeAuthor ]
-                        [ div [ class "is-small button" ] [ text "Author", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        [ div [ class "is-small button" ]
+                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge" ] []) (text "")
+                            , text "Author"
+                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            ]
                         , UserSearchPanel.view
                             { selectedAssignees = model.authors
                             , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
@@ -1366,7 +1398,11 @@ viewSearchBar model =
                             |> Html.map UserSearchPanelMsg
                         ]
                     , div [ class "control", onClick ChangeLabel ]
-                        [ div [ class "is-small button" ] [ text "Label", i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        [ div [ class "is-small button" ]
+                            [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge" ] []) (text "")
+                            , text "Label"
+                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            ]
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
                             , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
@@ -1375,7 +1411,11 @@ viewSearchBar model =
                             |> Html.map LabelSearchPanelMsg
                         ]
                     , div [ class "control dropdown", onClick OnFilterClick ]
-                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ] [ textH T.depth, i [ class "ml-2 icon-chevron-down icon-tiny" ] [] ]
+                        [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
+                            [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge" ] []) (text "")
+                            , textH T.depth
+                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            ]
                         , div [ id "depth-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]

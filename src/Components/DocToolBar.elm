@@ -1,12 +1,12 @@
 module Components.DocToolBar exposing (view)
 
 import Components.Doc exposing (ActionView(..))
-import Icon as I
 import Extra exposing (ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Icon as I
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromUsername)
 import ModelSchema exposing (..)
@@ -28,7 +28,7 @@ view op =
     in
     div [ class "field has-addons docToolbar" ]
         [ p
-            [ class "control tooltip"
+            [ class "control tooltip has-tooltip-arrow"
             , attribute "data-tooltip" (upH T.view)
             ]
             [ a
@@ -40,7 +40,7 @@ view op =
                 [ I.icon ("icon-eye " ++ iconOpts) ]
             ]
         , p
-            [ class "control tooltip"
+            [ class "control tooltip has-tooltip-arrow"
             , attribute "data-tooltip" (upH T.edit)
             ]
             [ a
@@ -52,7 +52,7 @@ view op =
                 [ I.icon ("icon-pen " ++ iconOpts) ]
             ]
         , p
-            [ class "control tooltip"
+            [ class "control tooltip has-tooltip-arrow"
             , attribute "data-tooltip" (upH T.revisions)
             ]
             [ a

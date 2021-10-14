@@ -988,7 +988,7 @@ viewSources (State model) nextStep =
                 List.map
                     (\r ->
                         button
-                            [ class ("button buttonRole tooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                            [ class ("button buttonRole tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
                             , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
                             , onClick (OnTensionStep nextStep)
                             ]

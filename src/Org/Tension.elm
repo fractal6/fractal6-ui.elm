@@ -1823,16 +1823,15 @@ viewTension u t model =
                         False ->
                             [ text t.title
                             , if model.isTensionAdmin then
-                                span
-                                    [ class "button has-text-weight-normal is-pulled-right is-small tooltip"
+                                div
+                                    [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
                                     , attribute "data-tooltip" (upH T.editTitle)
                                     , onClick DoChangeTitle
                                     ]
                                     [ I.icon "icon-pen" ]
 
                               else
-                                span [ class "button has-text-weight-normal is-pulled-right is-small", onClick DoChangeTitle ]
-                                    [ I.icon "icon-pen" ]
+                                text ""
                             ]
                 , div [ class "tensionSubtitle" ]
                     [ span [ class "tag is-rounded is-light" ]

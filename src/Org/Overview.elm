@@ -1531,7 +1531,7 @@ viewCanvas us model =
             -- Hidden class use in graphpack_d3.js
             [ div
                 [ id "invGraph_cvbtn"
-                , class "button buttonToggle tooltip has-tooltip-right"
+                , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.reverseTooltip)
                 , onClick ToggleGraphReverse
                 ]
@@ -1569,7 +1569,7 @@ viewActivies model =
                 [ class "level" ]
                 [ div [ class "level-left" ]
                     [ div
-                        [ class "tooltip"
+                        [ class "tooltip has-tooltip-arrow"
                         , case model.path_data of
                             Just p ->
                                 attribute "data-tooltip" ([ "Recent activities for the", NodeType.toString p.focus.type_, p.focus.name ] |> List.intersperse " " |> String.join "")

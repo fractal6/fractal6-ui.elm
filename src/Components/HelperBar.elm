@@ -231,7 +231,7 @@ viewTree baseUri uriQuery g =
 joinButton : msg -> Html msg
 joinButton msg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary toolti has-tooltip-bottom navbar-end"
+        [ class "button is-small has-text-weight-semibold is-primary toolti has-tooltip-arrow has-tooltip-bottom navbar-end"
         , attribute "data-modal" "actionModal"
 
         --, attribute "data-tooltip" "Join this organisation."
@@ -274,7 +274,7 @@ memberButtons roles_ op =
             (\i r ->
                 if (r.role_type /= RoleType.Member && r.role_type /= RoleType.Owner) || (r.role_type == RoleType.Owner && i == 0) then
                     [ a
-                        [ class ("button buttonRole is-small toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
+                        [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
                         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                         , href <| uriFromNameid op.baseUri r.nameid
                         ]

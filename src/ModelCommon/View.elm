@@ -120,7 +120,7 @@ mediaTension focus tension showStatus showRecip size navigate =
         ]
         [ div [ class "media-left" ]
             [ div
-                [ class "tooltip has-tooltip-top"
+                [ class "tooltip has-tooltip-arrow"
                 , attribute "data-tooltip" (TensionType.toString tension.type_)
                 ]
                 [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
@@ -151,7 +151,7 @@ mediaTension focus tension showStatus showRecip size navigate =
                             text ""
                     , if n_comments > 1 then
                         a
-                            [ class "tooltip has-tooltip-top level-item"
+                            [ class "tooltip has-tooltip-arrow level-item"
                             , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
                             , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                             ]
@@ -164,7 +164,7 @@ mediaTension focus tension showStatus showRecip size navigate =
             , span [ class "is-smaller" ]
                 [ if showStatus then
                     span
-                        [ class "tooltip has-tooltip-top"
+                        [ class "tooltip has-tooltip-arrow"
                         , attribute "data-tooltip" (TensionStatus.toString tension.status)
                         ]
                         [ I.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
@@ -420,7 +420,7 @@ viewOrgaMedia user root =
                                     |> List.map
                                         (\r ->
                                             a
-                                                [ class ("button buttonRole is-small has-text-weight-semibold toolti has-tooltip-bottom is-" ++ roleColor r.role_type)
+                                                [ class ("button buttonRole is-small has-text-weight-semibold tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
                                                 , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
                                                 , href <| uriFromNameid OverviewBaseUri r.nameid
                                                 ]
@@ -501,7 +501,7 @@ viewActionIconLink action org tid words cls =
             getTensionCharac action
     in
     a
-        [ class "actionLink tooltip"
+        [ class "actionLink tooltip has-tooltip-arrow"
         , classList [ ( "has-text-warning", charac.action_type == ARCHIVE ) ]
         , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
         , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)

@@ -823,8 +823,8 @@ viewVerRow i blob =
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
-                    span
-                        [ class "tooltip"
+                    div
+                        [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
                         , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatTime flag)
                         ]

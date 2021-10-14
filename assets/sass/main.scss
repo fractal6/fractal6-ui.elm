@@ -188,6 +188,16 @@ hr {
     }
 }
 
+.badge {
+    right: 6px;
+    top: 6px;
+    //
+    height: 8px;
+    border-radius: 8px;
+    min-width: 8px;
+    box-shadow: none;
+}
+
 .box.is-light, .modal-card-body  {
     a {
         color: $blue !important;

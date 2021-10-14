@@ -765,7 +765,7 @@ viewMemberRoles baseUri roles =
         List.map
             (\r ->
                 a
-                    [ class ("button buttonRole is-small tooltip has-tooltip-bottom is-" ++ roleColor r.role_type)
+                    [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
                     , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatTime r.createdAt ] |> String.join " ")
                     , href <| uriFromNameid baseUri r.nameid
                     ]

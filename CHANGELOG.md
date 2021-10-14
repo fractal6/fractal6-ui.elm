@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - add a new tension sub-tab in the tensions mains tab. The circle view allow the tensions to be separated in the kanban like view.
 - A info message can now be passed to the ConfirmModal component.
 - New "edit node" entry in settings menu that redirect to node's tension.
+- icon marker on tension's filter buttons if they are different then default settings.
 
 ### Changed
 - Improve the tension search bar filter
@@ -19,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - filter on tension labels (multiple selections)
     - filter on tension assigness (multiple selections)
     - search in all sub-circle/focused circle or just the focused one
+- upgrade Bulma extension to @creativebulma repos.
 
 ### Fixed
 - authorisation to edit tensions according are refinded given you are (see api)
