@@ -424,7 +424,7 @@ viewModalContent op (State model) =
             [ showMsg "0" "is-info" "icon-info" T.contractInfoHeader T.contractInfo
             , showContractForm model.form
             , div [ class "field" ]
-                [ div [ class "control" ]
+                [ div [ class "control submitFocus" ]
                     [ textarea
                         [ class "textarea in-modal"
                         , rows 3
@@ -454,7 +454,7 @@ viewModalContent op (State model) =
                     ]
                 , div [ class "is-pulled-right" ]
                     [ button
-                        ([ class "button is-light is-success"
+                        ([ class "button defaultSubmit is-light is-success"
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not isSendable || isLoading)
                          ]

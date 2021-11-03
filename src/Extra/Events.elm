@@ -49,16 +49,17 @@ onKeydown msg =
     on "keydown" <| JD.map (\key -> msg key) decodeKey
 
 
+onKeyup : (Int -> msg) -> Html.Attribute msg
+onKeyup msg =
+    let
+        decodeKey =
+            JD.andThen JD.succeed keyCode
+    in
+    on "keyup" <| JD.map (\key -> msg key) decodeKey
+
+
 onKeyCode : Int -> Bool -> Bool -> msg -> Html.Attribute msg
 onKeyCode expectedCode a b msg =
-    let
-        isExpectedCode currentCode =
-            if currentCode == expectedCode then
-                JD.succeed msg
-
-            else
-                JD.fail "silent failure"
-    in
     --on "keydown"
     custom "keydown" <|
         JD.map
@@ -68,27 +69,23 @@ onKeyCode expectedCode a b msg =
                 , preventDefault = b
                 }
             )
-            (JD.andThen isExpectedCode keyCode)
+            (JD.andThen
+                (\code ->
+                    if code == expectedCode then
+                        JD.succeed msg
+
+                    else
+                        JD.fail (String.fromInt code)
+                )
+                keyCode
+            )
 
 
-onEnter : Bool -> Bool -> msg -> Html.Attribute msg
-onEnter a b msg =
-    onKeyCode 13 a b msg
+onEnter : msg -> Html.Attribute msg
+onEnter msg =
+    onKeyCode 13 False False msg
 
 
-onTab : Bool -> Bool -> msg -> Html.Attribute msg
-onTab a b msg =
-    onKeyCode 9 a b msg
-
-
-
---
---onKeyup : Bool -> Bool -> msg -> Html.Attribute msg
---onKeyup a b msg =
---    onKeyCode 38 a b msg
---
---
---onKeydown : Bool -> Bool -> msg -> Html.Attribute msg
---onKeydown a b msg =
---    onKeyCode 40 a b msg
---
+onTab : msg -> Html.Attribute msg
+onTab msg =
+    onKeyCode 9 False False msg

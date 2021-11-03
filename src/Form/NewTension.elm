@@ -21,7 +21,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, required, rows, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, tabindex, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
@@ -980,7 +980,7 @@ viewStep op (State model) =
 
 viewSources : State -> TensionStep -> Html Msg
 viewSources (State model) nextStep =
-    div [ class "modal-card" ]
+    div [ class "modal-card submitFocus" ]
         [ div [ class "modal-card-head" ]
             [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.form.action |> text ] ]
         , div [ class "modal-card-body" ]
@@ -988,7 +988,7 @@ viewSources (State model) nextStep =
                 List.map
                     (\r ->
                         button
-                            [ class ("button buttonRole tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
+                            [ class ("button buttonRole tooltip has-tooltip-arrow defaultSubmit has-tooltip-bottom is-" ++ roleColor r.role_type)
                             , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
                             , onClick (OnTensionStep nextStep)
                             ]
@@ -1057,7 +1057,7 @@ viewTension op (State model) =
             viewSuccess txt res model
 
         other ->
-            div [ class "panel modal-card" ]
+            div [ class "panel modal-card submitFocus" ]
                 [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
@@ -1077,7 +1077,7 @@ viewTension op (State model) =
                                                 List.map
                                                     (\t ->
                                                         div
-                                                            [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
+                                                            [ class <| "dropdown-item button-light defaultSubmit" ++ tensionTypeColor "text" t
                                                             , onClick (OnChangeTensionType t)
                                                             ]
                                                             [ TensionType.toString t |> text ]
@@ -1172,7 +1172,7 @@ viewTension op (State model) =
                         , div [ class "is-pulled-right" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button is-success"
+                                    ([ class "button is-success defaultSubmit"
                                      , classList [ ( "is-loading", isLoading ) ]
                                      , disabled (not isSendable)
                                      ]
@@ -1237,7 +1237,7 @@ viewCircle op (State model) =
                     , onChangeUserPattern = OnChangeUserPattern
                     }
             in
-            div [ class "panel modal-card" ]
+            div [ class "panel modal-card submitFocus" ]
                 [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
@@ -1310,7 +1310,7 @@ viewCircle op (State model) =
                         , div [ class "is-pulled-right" ]
                             [ div [ class "buttons" ]
                                 [ button
-                                    ([ class "button is-success"
+                                    ([ class "button is-success defaultSubmit"
                                      , classList
                                         [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
                                      , disabled (not isSendable || isLoading)
@@ -1393,7 +1393,7 @@ viewSuccess txt res model =
         link =
             Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
     in
-    div [ class "box is-light" ]
+    div [ class "box is-light", tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ I.icon1 "icon-check icon-2x has-text-success" " "
         , textH txt.added
         , text " "

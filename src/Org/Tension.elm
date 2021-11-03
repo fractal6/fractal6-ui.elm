@@ -2134,12 +2134,12 @@ viewCommentInput uctx tension form result viewMode =
                     ]
                 , div [ class "message-body" ]
                     [ div [ class "field" ]
-                        [ div [ class "control" ]
+                        [ div [ class "control submitFocus" ]
                             [ case viewMode of
                                 Write ->
                                     textarea
                                         [ id "commentInput"
-                                        , class "textarea"
+                                        , class "textarea defaultSubmit"
                                         , rows 7
                                         , placeholder "Leave a comment"
                                         , value message
@@ -2210,12 +2210,12 @@ viewUpdateInput uctx comment form result =
             ]
         , div [ class "message-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ]
+                [ div [ class "control submitFocus" ]
                     [ case viewMode of
                         Write ->
                             textarea
                                 [ id "updateCommentInput"
-                                , class "textarea"
+                                , class "textarea defaultSubmit"
                                 , rows 7
                                 , placeholder (upH T.leaveComment)
                                 , value message

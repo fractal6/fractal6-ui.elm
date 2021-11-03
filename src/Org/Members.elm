@@ -2,7 +2,6 @@ module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, updat
 
 import Array
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
-import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)

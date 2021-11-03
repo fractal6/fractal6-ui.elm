@@ -27,6 +27,13 @@ export function catchEsc(e, fun, ...args) {
     }
 }
 
+export function catchEnter(e, fun, ...args) {
+    let evt = event || window.event;
+    if (evt.key === 'Enter') {
+        fun(e, ...args);
+    }
+}
+
 
 
 export function BulmaDriver(app, target, handlers) {
@@ -69,6 +76,9 @@ export function BulmaDriver(app, target, handlers) {
             if (evt === "esc") {
                 evt = "keydown" ;
                 _hdl_ = e => catchEsc(e, hdl, ...objs);
+            } else if (evt === "enter") {
+                evt = "keydown" ;
+                _hdl_ = e => catchEnter(e, hdl, ...objs);
             } else {
                 _hdl_ = e => hdl(e, ...objs);
             }
@@ -132,6 +142,19 @@ export function BulmaDriver(app, target, handlers) {
     }
 
     //
+    // Submit data
+    //
+    // * listen for ctrl+enter to submit data
+    //
+    const $submitFocuses = $doc.querySelectorAll('.submitFocus');
+    if ($submitFocuses.length > 0) {
+        $submitFocuses.forEach( el => {
+            // /!\ keypress won't capture TAB and some other keys.
+            setupHandler("keydown", submitFocus, el, el);
+        });
+    }
+
+    //
     // Follow focus
     //
     // * listen for enter to advanced the focus on textarea
@@ -139,7 +162,19 @@ export function BulmaDriver(app, target, handlers) {
     const $followFocuses = $doc.querySelectorAll('.followFocus');
     if ($followFocuses.length > 0) {
         $followFocuses.forEach( el => {
-            setupHandler("keypress", moveFocus, el, el);
+            setupHandler("keydown", moveFocus, el, el);
+        });
+    }
+
+    //
+    // "Rich Text" on textarea
+    //
+    // * Capture TAB to insert space
+    //
+    const $textareas = $doc.querySelectorAll('.textarea');
+    if ($textareas.length > 0) {
+        $textareas.forEach( el => {
+            setupHandler("keydown", richText, el, el);
         });
     }
 
@@ -260,15 +295,50 @@ export function BulmaDriver(app, target, handlers) {
 //
 
 function moveFocus(e, el) {
-    if (e.key == "Enter") {
+    if ((e.key == "Enter" || e.key == "Tab") && !e.ctrlKey) {
         var $target = document.getElementById(el.dataset.nextfocus);
         if ($target) {
+            e.preventDefault(); // prevent a line break on the next text area.
             $target.focus();
             return true
         }
     }
 }
 
+//
+// Submit methods
+//
+
+function submitFocus(e, el) {
+    if (e.key == "Enter" && e.ctrlKey) {
+        // submit focus.
+        var s = el.querySelector(".defaultSubmit")
+        if (s) {
+            e.preventDefault(); // prevent a line break on the text area
+            s.click();
+        }
+    }
+}
+
+//
+// """Rich Text"""
+//
+
+function richText(e, el) {
+    if (e.key == "Tab" && !e.ctrlKey && !e.shiftKey) {
+		e.preventDefault();
+		var start = el.selectionStart;
+		var end = el.selectionEnd;
+
+		// set textarea value to: text before caret + tab + text after caret
+		el.value = el.value.substring(0, start) +
+			"\t" + el.value.substring(end);
+
+		// put caret at right position again
+		el.selectionStart =
+			el.selectionEnd = start + 1;
+    }
+}
 
 //
 // Burgers methods

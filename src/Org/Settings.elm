@@ -2,7 +2,6 @@ module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, upda
 
 import Array
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
-import Browser.Events exposing (onKeyDown)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)

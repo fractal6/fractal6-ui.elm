@@ -480,7 +480,7 @@ viewStep1 action op =
             ]
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
-                [ div [ class "control" ]
+                [ div [ class "control submitFocus" ]
                     [ textarea
                         [ class "textarea in-modal"
                         , rows 3
@@ -510,7 +510,7 @@ viewStep1 action op =
                     ]
                 , div [ class "is-pulled-right" ]
                     [ button
-                        ([ class ("button is-light is-" ++ color)
+                        ([ class ("button defaultSubmit is-light is-" ++ color)
                          , classList [ ( "is-loading", isLoading ) ]
                          ]
                             ++ [ onClick (op.onSubmit <| op.onActionSubmit) ]
