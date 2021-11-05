@@ -60,8 +60,8 @@ onKeyup msg =
 
 onKeyCode : Int -> Bool -> Bool -> msg -> Html.Attribute msg
 onKeyCode expectedCode a b msg =
-    --on "keydown"
-    custom "keydown" <|
+    --on "keyup"
+    custom "keyup" <|
         JD.map
             (\x ->
                 { message = msg

@@ -215,6 +215,7 @@ export const GraphPack = {
     nodes: null,  // List of D3 nodes
     nodesDict: null, // Nodes mapping
     app: null, // elm app
+    uctx: null, // from localstorage
 
     /****************************************************/
     /*      Methods                                     */
@@ -382,6 +383,31 @@ export const GraphPack = {
             0, 2 * Math.PI, true);
         ctx2d.fill();
 
+
+        // If role is own by user, enlight the circle
+        if (this.uctx && type_ === NodeType.Role && this.uctx.username == node.data.first_link.username ) {
+            // Draw user pin
+            //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
+            //ctx2d.beginPath();
+            //ctx2d.fillStyle = "green";
+            //ctx2d.arc(node.ctx.centerX, node.ctx.centerY + node.ctx.rayon*3/4 , r,
+            //    0, 2 * Math.PI, true);
+            //ctx2d.fill();
+
+            // Draw user border
+            var hoverWidth = 2;
+            var hoverColor = "green";
+            ctx2d.beginPath();
+            ctx2d.setLineDash([5, 5]);
+            ctx2d.beginPath();
+            ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon-hoverWidth*0.5,
+                0, 2 * Math.PI, true);
+            ctx2d.lineWidth   = hoverWidth;
+            ctx2d.strokeStyle = hoverColor;
+            ctx2d.stroke();
+            ctx2d.setLineDash([]);
+        }
+
         if (!isHidden) {
             if (node === this.focusedNode) {
                 // Draw focused border
@@ -448,6 +474,8 @@ export const GraphPack = {
                         ctx2d.fill();
                     }
                 }
+
+
             } else {
                 //if (this.focusedNode.depth == node.depth || this.focusedNode.depth == node.depth-1 ) {
                 //    ctx2d.beginPath();
@@ -660,6 +688,8 @@ export const GraphPack = {
         this.nodes.forEach(n => this.nodesDict[n.data.nameid] = n);
         this.graph = graph;
         this.setFocus(focusid, true);
+
+        this.uctx = JSON.parse(localStorage.getItem("user_ctx"))
     },
 
     setFocus(n, setViewport) {

@@ -21,7 +21,6 @@ window.addEventListener('load', _ => {
             // Session Object
             var session = {
                 isInit: true,
-                user_ctx: null, // from localstorage
                 bulmaHandlers: [],
                 // Resizing
                 rtime: null,

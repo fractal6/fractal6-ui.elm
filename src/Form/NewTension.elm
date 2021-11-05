@@ -21,7 +21,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, list, placeholder, required, rows, tabindex, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, tabindex, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
@@ -1393,7 +1393,7 @@ viewSuccess txt res model =
         link =
             Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
     in
-    div [ class "box is-light", tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
+    div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ I.icon1 "icon-check icon-2x has-text-success" " "
         , textH txt.added
         , text " "

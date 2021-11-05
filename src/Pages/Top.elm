@@ -66,7 +66,7 @@ type Msg
     | ChangeUserPost String String
     | GotSignin (WebData UserCtx) -- use remotedata.
     | ChangeViewMode ViewMode
-    | SubmitKeyDown Int
+    | SubmitEnter Int
 
 
 
@@ -154,7 +154,7 @@ update global msg model =
             in
             ( { model | viewMode = viewMode, form = { form | result = RemoteData.NotAsked } }, Cmd.none, Ports.bulma_driver "" )
 
-        SubmitKeyDown key ->
+        SubmitEnter key ->
             case key of
                 13 ->
                     --ENTER
@@ -289,7 +289,7 @@ viewLogin model =
                             , attribute "autocomplete" "password"
                             , required True
                             , onInput (ChangeUserPost "password")
-                            , onKeydown SubmitKeyDown
+                            , onKeydown SubmitEnter
                             ]
                             []
                         ]
@@ -382,7 +382,7 @@ viewSignup model =
                             , attribute "autocomplete" "password"
                             , required True
                             , onInput (ChangeUserPost "password")
-                            , onKeydown SubmitKeyDown
+                            , onKeydown SubmitEnter
                             ]
                             []
                         , p [ class "help" ] [ text "Password must be 8 characters or longer." ]
