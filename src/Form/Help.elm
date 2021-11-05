@@ -687,6 +687,8 @@ viewFeedback op (State model) =
                         ]
                         [ textH T.checkItOut ]
                     ]
+                , span [ class "is-italic" ] [ text "Thank you for your feedback, we will get back to you shortly." ]
+                , br [] []
                 , a [ onClickPD (OnReset Feedback), target "_blank" ] [ textH T.giveAnotherFeedback ]
                 ]
 
