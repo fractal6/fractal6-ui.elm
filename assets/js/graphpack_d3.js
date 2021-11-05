@@ -968,6 +968,7 @@ export const GraphPack = {
         // == add tooltip
         // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
         var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
+        if (!$subTooltip) return
         $subTooltip.childNodes[0].textContent = node.data.name;
         $tooltip.classList.remove("fadeOut");
         $tooltip.classList.add("fadeIn");
@@ -1073,7 +1074,7 @@ export const GraphPack = {
         } else {
             nid = node.data.nameid;
         }
-        this.app.ports.nodeHoveredFromJs.send(nid);
+        if (this.app) this.app.ports.nodeHoveredFromJs.send(nid);
     },
 
     nodeFocusedFromJs(node) {

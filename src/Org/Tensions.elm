@@ -1430,11 +1430,20 @@ viewSearchBar model =
                 , clearFilter
                 ]
             ]
-        , div [ class "tabs is-md" ]
+        , div [ class "tabs no-overflow is-md" ]
             [ ul []
-                [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ] [ a [ onClickPD (GoView ListView), target "_blank" ] [ text "List" ] ]
-                , li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ] [ a [ onClickPD (GoView IntExtView), target "_blank" ] [ text "Internal/External" ] ]
-                , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ] [ a [ onClickPD (GoView CircleView), target "_blank" ] [ text "Circles" ] ]
+                [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
+                    [ a [ onClickPD (GoView ListView), target "_blank" ]
+                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" "Display tensions as List." ] [ text "List" ] ]
+                    ]
+                , li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
+                    [ a [ onClickPD (GoView IntExtView), target "_blank" ]
+                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" "Display indegenous and exogenous tensions in respect to the current circle. " ] [ text "Internal/External" ] ]
+                    ]
+                , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
+                    [ a [ onClickPD (GoView CircleView), target "_blank" ]
+                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" "Display tensions by (targeted) circles." ] [ text "Circles" ] ]
+                    ]
                 ]
             ]
         ]
@@ -1484,6 +1493,9 @@ viewCircleTensions model =
     case model.tensions_all of
         Success tensions ->
             let
+                --
+                -- Convert a list of tension into a Dict of tension by Receiverid
+                --
                 addParam : Tension -> Maybe (List Tension) -> Maybe (List Tension)
                 addParam value maybeValues =
                     case maybeValues of
@@ -1502,10 +1514,7 @@ viewCircleTensions model =
 
                 tensions_d =
                     tensions
-                        |> List.map
-                            (\x ->
-                                ( x.receiver.nameid, x )
-                            )
+                        |> List.map (\x -> ( x.receiver.nameid, x ))
                         |> toDict2
             in
             Dict.toList tensions_d
@@ -1528,8 +1537,7 @@ viewCircleTensions model =
                                             [ mediaTension model.node_focus t True False "is-size-6" Navigate ]
                                     )
                                 |> List.append []
-                                -- @DEBUG: 100% height overflow because the header height is ignored (not responsive)...
-                                |> div [ attribute "style" "height: 95%; overflow-y: auto;overflow-x: hidden;" ]
+                                |> div [ class "content" ]
                             ]
                         , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
                         ]
@@ -1538,7 +1546,7 @@ viewCircleTensions model =
                 |> (\x -> ternary (List.length x == 0) [ div [] [ text "No tensions here." ] ] x)
                 |> div
                     [ id "tensionsCircle"
-                    , class "columns is-fullwidth is-marginless"
+                    , class "columns is-fullwidth is-marginless is-mobile kb-board"
                     , attribute "style" <|
                         case model.boardHeight of
                             Just h ->

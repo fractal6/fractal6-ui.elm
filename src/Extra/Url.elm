@@ -17,6 +17,9 @@ queryParser url =
                 [] ->
                     []
 
+        --
+        -- Convert a list of option tuples (key, value) to a dict of value by key
+        --
         addParam : String -> Maybe (List String) -> Maybe (List String)
         addParam value maybeValues =
             case maybeValues of

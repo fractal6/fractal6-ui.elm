@@ -1005,16 +1005,25 @@ viewTensionTabs tab targ =
         type_ =
             nid2type targ.nameid
     in
-    div [ id "tensionTabTop", class "tabs is-boxed has-text-weight-medium" ]
+    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed has-text-weight-medium" ]
         [ ul []
-            [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ] [ a [ onClickPD (OnSwitchTab NewTensionTab), target "blank_" ] [ I.icon1 "icon-exchange" "Tension" ] ]
+            [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
+                [ a [ class "tootltip", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "blank_" ]
+                    [ I.icon1 "icon-exchange" "Tension" ]
+                ]
             , if type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewRoleTab), target "blank_" ] [ I.icon1 "icon-leaf" "Role" ] ]
+                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
+                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "blank_" ]
+                        [ I.icon1 "icon-leaf" "Role" ]
+                    ]
 
               else
                 text ""
             , if type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ] [ a [ onClickPD (OnSwitchTab NewCircleTab), target "blank_" ] [ I.icon1 "icon-git-branch" "Circle" ] ]
+                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
+                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "blank_" ]
+                        [ I.icon1 "icon-git-branch" "Circle" ]
+                    ]
 
               else
                 text ""
@@ -1077,7 +1086,7 @@ viewTension op (State model) =
                                                 List.map
                                                     (\t ->
                                                         div
-                                                            [ class <| "dropdown-item button-light defaultSubmit" ++ tensionTypeColor "text" t
+                                                            [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
                                                             , onClick (OnChangeTensionType t)
                                                             ]
                                                             [ TensionType.toString t |> text ]

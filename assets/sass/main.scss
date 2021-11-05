@@ -255,6 +255,10 @@ hr {
 html.has-modal-active, html.has-modal-active2 {
     overflow: hidden !important;
     padding-right: 14px; /* Avoid width reflow */
+
+    .tabs:not(.modal-content .tabs) {
+        overflow: hidden;
+    }
 }
 #navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
     .navbar {
@@ -276,6 +280,10 @@ html.has-modal-active, html.has-modal-active2 {
 			padding-left: 1rem !important;
 		}
     }
+}
+
+.no-overflow {
+    overflow: hidden !important;
 }
 
 .has-background-turquoise {
@@ -326,6 +334,13 @@ html.has-modal-active, html.has-modal-active2 {
     color: black;
 }
 
+.bulma-issue-33 { // found in the archived repo bulma-tooltip of wikiki
+    @include desktop {
+        &:hover {
+            overflow: visible !important;
+        }
+    }
+}
 
 /*
  *
@@ -1298,6 +1313,30 @@ a.actionLink {
     & + & {
         margin-top: 6rem;
     }
+}
+
+/*
+ * Boards
+ *
+ */
+
+.kb-board {
+
+    & > .column {
+        min-width: 220px;
+
+        @include mobile {
+            padding: 1px;
+        }
+
+        // @DEBUG: 100% height overflow because the header height is ignored (not responsive)...
+        & > .content {
+            height: 95%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    }
+
 }
 
 /*
