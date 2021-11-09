@@ -385,7 +385,7 @@ export const GraphPack = {
 
 
         // If role is own by user, enlight the circle
-        if (this.uctx && type_ === NodeType.Role && this.uctx.username == node.data.first_link.username ) {
+        if ( (this.uctx && node.data.first_link) && type_ === NodeType.Role && this.uctx.username == node.data.first_link.username ) {
             // Draw user pin
             //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
             //ctx2d.beginPath();

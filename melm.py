@@ -20,9 +20,9 @@ Examples:
 '''
 
 import os
+import re
 from string import Template
 from docopt import docopt
-import re
 from loguru import logger
 
 
