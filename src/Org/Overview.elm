@@ -303,7 +303,7 @@ init global flags =
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
                 global.session.window_pos
-                    |> withDefault { two = "doc", three = "activities" }
+                    |> withDefault { topRight = "doc", bottomLeft = "activities" }
             , node_hovered = Nothing
             , next_focus = Nothing
 
@@ -435,7 +435,7 @@ update global message model =
                     model.window_pos
 
                 newWin =
-                    { win | two = win.three, three = win.two }
+                    { win | bottomLeft = win.topRight, topRight = win.bottomLeft }
             in
             ( { model | window_pos = newWin }, Cmd.none, send (UpdateSessionWindow (Just newWin)) )
 
@@ -1283,14 +1283,14 @@ view_ global model =
                 [ viewSearchBar global.session.user model
                 , viewCanvas global.session.user model
                 , br [] []
-                , viewFromPos model.window_pos.two
+                , viewFromPos model.window_pos.bottomLeft
                 ]
             , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
             , div
                 [ class "column is-5-desktop is-5-widescreen is-5-fullhd" ]
                 [ div [ class "columns is-gapless" ]
                     [ div [ class "column is-12", id "nextToChart" ]
-                        [ viewFromPos model.window_pos.three ]
+                        [ viewFromPos model.window_pos.topRight ]
                     ]
                 ]
             ]

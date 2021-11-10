@@ -277,16 +277,16 @@ emitterOrReceiverDecoder =
 
 
 type alias WindowPos =
-    { two : String
-    , three : String
+    { bottomLeft : String
+    , topRight : String
     }
 
 
 windowDecoder : JD.Decoder WindowPos
 windowDecoder =
     JD.map2 WindowPos
-        (JD.field "two" JD.string)
-        (JD.field "three" JD.string)
+        (JD.field "bottomLeft" JD.string)
+        (JD.field "topRight" JD.string)
 
 
 
