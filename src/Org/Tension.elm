@@ -16,7 +16,6 @@ import Components.Loading as Loading
         , RequestResult(..)
         , WebData
         , fromMaybeData
-        , fromMaybeData2
         , loadingSpin
         , viewAuthNeeded
         , viewGqlErrors
@@ -406,14 +405,14 @@ init global flags =
 
         model =
             { node_focus = newFocus
-            , orga_data = fromMaybeData global.session.orga_data
-            , users_data = fromMaybeData global.session.users_data
+            , orga_data = fromMaybeData global.session.orga_data NotAsked
+            , users_data = fromMaybeData global.session.users_data NotAsked
             , lookup_users = []
             , tensionid = tid
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
-            , path_data = fromMaybeData2 global.session.path_data Loading
-            , tension_head = fromMaybeData2 global.session.tension_head Loading
+            , path_data = fromMaybeData global.session.path_data Loading
+            , tension_head = fromMaybeData global.session.tension_head Loading
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
@@ -1718,7 +1717,7 @@ view global model =
         [ view_ global model
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
         ]
     }

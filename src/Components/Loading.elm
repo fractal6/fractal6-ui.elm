@@ -380,15 +380,8 @@ withMapData resMap result =
             NotAsked
 
 
-fromMaybeData : Maybe a -> RequestResult e a
-fromMaybeData ma =
-    ma
-        |> Maybe.map (\x -> Success x)
-        |> withDefault NotAsked
-
-
-fromMaybeData2 : Maybe a -> RequestResult e a -> RequestResult e a
-fromMaybeData2 ma type_ =
+fromMaybeData : Maybe a -> RequestResult e a -> RequestResult e a
+fromMaybeData ma type_ =
     ma
         |> Maybe.map (\x -> Success x)
         |> withDefault type_

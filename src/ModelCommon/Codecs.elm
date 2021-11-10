@@ -119,14 +119,13 @@ focusState baseUri referer url maybeFocus newFocus =
 basePathChanged : FractalBaseRoute -> Maybe Url -> Bool
 basePathChanged loc url =
     let
-        path =
-            Maybe.map (\u -> u.path) url |> withDefault "/"
-
         baseRef =
-            toString loc |> String.dropLeft 1
+            loc |> toString |> String.dropLeft 1
 
         base =
-            path
+            url
+                |> Maybe.map (\u -> u.path)
+                |> withDefault "/"
                 |> String.dropLeft 1
                 |> String.split "/"
                 |> List.head

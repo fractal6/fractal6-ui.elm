@@ -89,6 +89,9 @@ type Msg
     | UpdateSessionOrga (Maybe NodesDict)
     | UpdateSessionData (Maybe NodeData)
     | UpdateSessionTensions (Maybe TensionsList)
+    | UpdateSessionTensionsInt (Maybe TensionsList)
+    | UpdateSessionTensionsExt (Maybe TensionsList)
+    | UpdateSessionTensionsAll (Maybe TensionsList)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
@@ -271,6 +274,27 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | tensions_data = data } }, Cmd.none )
+
+        UpdateSessionTensionsInt data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tensions_int = data } }, Cmd.none )
+
+        UpdateSessionTensionsExt data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tensions_ext = data } }, Cmd.none )
+
+        UpdateSessionTensionsAll data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tensions_all = data } }, Cmd.none )
 
         UpdateSessionAdmin data ->
             let

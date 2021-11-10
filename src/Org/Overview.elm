@@ -14,7 +14,6 @@ import Components.Loading as Loading
         , RequestResult(..)
         , WebData
         , fromMaybeData
-        , fromMaybeData2
         , isFailure
         , viewAuthNeeded
         , viewGqlErrors
@@ -294,10 +293,10 @@ init global flags =
         model =
             { node_focus = newFocus
             , path_data = ternary fs.orgChange Nothing global.session.path_data -- Loaded from GraphPack
-            , orga_data = fromMaybeData2 session.orga_data Loading
-            , users_data = fromMaybeData2 session.users_data Loading
-            , tensions_data = fromMaybeData2 session.tensions_data Loading
-            , node_data = fromMaybeData2 session.node_data Loading
+            , orga_data = fromMaybeData session.orga_data Loading
+            , users_data = fromMaybeData session.users_data Loading
+            , tensions_data = fromMaybeData session.tensions_data Loading
+            , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
             , init_data = True
             , moveTension = MoveTension.init global.session.user

@@ -15,7 +15,6 @@ import Components.Loading as Loading
         , RequestResult(..)
         , WebData
         , fromMaybeData
-        , fromMaybeData2
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
@@ -54,6 +53,7 @@ import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Process
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
@@ -444,6 +444,7 @@ type Msg
     | DoLoad Int -- query tensions
     | OnFilterClick
     | ChangePattern String
+    | ChangeViewFilter TensionsView
     | ChangeStatusFilter StatusFilter
     | ChangeTypeFilter TypeFilter
     | ChangeDepthFilter DepthFilter
@@ -451,6 +452,7 @@ type Msg
     | ChangeLabel
     | SearchKeyDown Int
     | OnClearFilter
+    | SubmitSearchReset
     | SubmitSearch
     | GoView TensionsView
       -- New Tension
@@ -515,11 +517,11 @@ init global flags =
         model =
             { node_focus = newFocus
             , screen = global.session.screen
-            , path_data = fromMaybeData2 global.session.path_data Loading
+            , path_data = fromMaybeData global.session.path_data Loading
             , children = RemoteData.Loading
-            , tensions_int = Loading
-            , tensions_ext = Loading
-            , tensions_all = Loading
+            , tensions_int = fromMaybeData global.session.tensions_int Loading
+            , tensions_ext = fromMaybeData global.session.tensions_ext Loading
+            , tensions_all = fromMaybeData global.session.tensions_all Loading
             , boardHeight = Nothing
             , offset = 0
             , load_more_int = False
@@ -546,25 +548,67 @@ init global flags =
             , url = global.url
             }
 
+        --
+        -- Refresh tensions only if a query different than the view changed
+        -- or if the page need a refresh (according to FocusState)
+        --
+        dataToLoad =
+            case model.viewMode of
+                ListView ->
+                    model.tensions_int
+
+                IntExtView ->
+                    model.tensions_int
+
+                CircleView ->
+                    model.tensions_all
+
+        refresh =
+            if dataToLoad == Loading || fs.refresh then
+                True
+
+            else
+                case global.session.referer of
+                    Just referer ->
+                        let
+                            oldQuery =
+                                queryParser referer
+                        in
+                        Dict.remove "v" oldQuery
+                            /= Dict.remove "v" query
+
+                    --|| Dict.get "v" oldQuery
+                    --== Dict.get "v" query
+                    Nothing ->
+                        True
+
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
-            , case model.depthFilter of
-                AllSubChildren ->
-                    fetchChildren apis.rest newFocus.nameid GotChildren
+            [ [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none ]
+            , if refresh then
+                case model.depthFilter of
+                    AllSubChildren ->
+                        [ fetchChildren apis.rest newFocus.nameid GotChildren ]
 
-                SelectedNode ->
-                    if fs.focusChange == False then
-                        send (DoLoad 0)
+                    SelectedNode ->
+                        if fs.focusChange == False then
+                            [ send (DoLoad 0) ]
 
-                    else
-                        Cmd.none
-            , sendSleep PassedSlowLoadTreshold 500
-            , sendSleep InitModals 400
+                        else
+                            [ Cmd.none ]
+
+              else if model.viewMode == CircleView then
+                [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
+
+              else
+                [ Cmd.none ]
+            , [ sendSleep PassedSlowLoadTreshold 500 ]
+            , [ sendSleep InitModals 400 ]
             ]
+                |> List.concat
     in
     ( model
     , Cmd.batch cmds
-    , send (UpdateSessionFocus (Just newFocus))
+    , Cmd.batch [ send (UpdateSessionFocus (Just newFocus)) ]
     )
 
 
@@ -720,7 +764,7 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_int = newTensions, load_more_int = load_more, offset = model.offset + i }, Cmd.none, Cmd.none )
+            ( { model | tensions_int = newTensions, load_more_int = load_more, offset = model.offset + i }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
 
         GotTensionsExt result ->
             let
@@ -745,10 +789,10 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_ext = newTensions, load_more_ext = load_more }, Cmd.none, Cmd.none )
+            ( { model | tensions_ext = newTensions, load_more_ext = load_more }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
 
         GotTensionsAll result ->
-            ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), Cmd.none )
+            ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData result)) )
 
         DoLoad inc ->
             -- if inc == 0, reset the offset
@@ -808,26 +852,33 @@ update global message model =
         ChangePattern value ->
             ( { model | pattern = Just value }, Cmd.none, Cmd.none )
 
+        ChangeViewFilter value ->
+            let
+                newModel =
+                    { model | viewMode = value }
+            in
+            ( newModel, send SubmitSearch, Cmd.none )
+
         ChangeStatusFilter value ->
             let
                 newModel =
                     { model | statusFilter = value }
             in
-            ( newModel, send SubmitSearch, Cmd.none )
+            ( newModel, send SubmitSearchReset, Cmd.none )
 
         ChangeTypeFilter value ->
             let
                 newModel =
                     { model | typeFilter = value }
             in
-            ( newModel, send SubmitSearch, Cmd.none )
+            ( newModel, send SubmitSearchReset, Cmd.none )
 
         ChangeDepthFilter value ->
             let
                 newModel =
                     { model | depthFilter = value }
             in
-            ( newModel, send SubmitSearch, Cmd.none )
+            ( newModel, send SubmitSearchReset, Cmd.none )
 
         ChangeAuthor ->
             let
@@ -847,7 +898,7 @@ update global message model =
             case key of
                 13 ->
                     --ENTER
-                    ( model, send SubmitSearch, Cmd.none )
+                    ( model, send SubmitSearchReset, Cmd.none )
 
                 27 ->
                     --ESC
@@ -863,7 +914,22 @@ update global message model =
                         [ ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) ) ]
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), Cmd.none )
+            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), Cmd.batch [ send (UpdateSessionTensionsInt Nothing), send (UpdateSessionTensionsAll Nothing) ] )
+
+        SubmitSearchReset ->
+            -- Reset the other results
+            ( model
+            , send SubmitSearch
+            , case model.viewMode of
+                ListView ->
+                    send (UpdateSessionTensionsAll Nothing)
+
+                IntExtView ->
+                    send (UpdateSessionTensionsAll Nothing)
+
+                CircleView ->
+                    send (UpdateSessionTensionsInt Nothing)
+            )
 
         SubmitSearch ->
             let
@@ -880,7 +946,7 @@ update global message model =
                         )
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query) )
+            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), Cmd.none )
 
         GoView viewMode ->
             let
@@ -1232,7 +1298,7 @@ view global model =
         [ view_ global model
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         ]
     }
 
@@ -1433,15 +1499,18 @@ viewSearchBar model =
         , div [ class "tabs no-overflow is-md" ]
             [ ul []
                 [ li [ classList [ ( "is-active", model.viewMode == ListView ) ] ]
-                    [ a [ onClickPD (GoView ListView), target "_blank" ]
+                    [ a [ onClickPD (ChangeViewFilter ListView), target "_blank" ]
+                        --[ a [ onClickPD (GoView ListView), target "_blank" ]
                         [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" "Display tensions as List." ] [ text "List" ] ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
-                    [ a [ onClickPD (GoView IntExtView), target "_blank" ]
+                    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
+                        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
                         [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" "Display indegenous and exogenous tensions in respect to the current circle. " ] [ text "Internal/External" ] ]
                     ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
-                    [ a [ onClickPD (GoView CircleView), target "_blank" ]
+                    [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
+                        --[ a [ onClickPD (GoView CircleView), target "_blank" ]
                         [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" "Display tensions by (targeted) circles." ] [ text "Circles" ] ]
                     ]
                 ]

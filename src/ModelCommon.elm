@@ -80,6 +80,9 @@ type alias Session =
     , users_data : Maybe UsersDict
     , node_data : Maybe NodeData
     , tensions_data : Maybe TensionsList
+    , tensions_int : Maybe TensionsList
+    , tensions_ext : Maybe TensionsList
+    , tensions_all : Maybe TensionsList
     , tension_head : Maybe TensionHead
     , isAdmin : Maybe Bool
     , node_action : Maybe ActionState
@@ -122,6 +125,9 @@ resetSession flags =
     , users_data = Nothing
     , node_data = Nothing
     , tensions_data = Nothing
+    , tensions_int = Nothing
+    , tensions_ext = Nothing
+    , tensions_all = Nothing
     , tension_head = Nothing
     , isAdmin = Nothing
     , node_action = Nothing
@@ -170,6 +176,9 @@ fromLocalSession flags =
       , users_data = Nothing
       , node_data = Nothing
       , tensions_data = Nothing
+      , tensions_int = Nothing
+      , tensions_ext = Nothing
+      , tensions_all = Nothing
       , tension_head = Nothing
       , isAdmin = Nothing
       , node_action = Nothing

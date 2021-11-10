@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### New
 - This changelog file
-- add a new tension sub-tab in the tensions mains tab. The circle view allow the tensions to be separated in the kanban like view.
+- add a new tension sub-tab in the tensions mains tab: The circle view, which allows the tensions to be separated in a kanban like view.
 - A info message can now be passed to the ConfirmModal component.
-- New "edit node" entry in settings menu that redirect to node's tension.
+- New "edit node" entry in settings menu that redirect to the node's [Governance] tension.
 - icon marker on tension's filter buttons if they are different then default settings.
 
 ### Changed
@@ -23,12 +23,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - upgrade Bulma extension to @creativebulma repos.
 
 ### Fixed
-- authorisation to edit tensions according are refinded given you are (see api)
+- authorisation to edit tensions are refined according who you are (see api)
     * creator of that tension
     * coordinator of the source or target circle
     * assigness
 - fix how duplicate label are managed in the label settings page.
 - Tensions added when in the tensions tab view are now rendered in the list (circles view only).
+- change the url according the chosen view in the tensions page.
 
 ## [0.4] - ...
 
