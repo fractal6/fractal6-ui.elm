@@ -13,6 +13,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
+import Logo exposing (welcome)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (login, signup)
@@ -201,7 +202,8 @@ viewHero model =
             [ div [ class "columns is-centered section" ]
                 [ div [ class "column is-6-desktop is-4-widescreen is-4-fullhd" ]
                     [ h1 [ class "title is-1" ]
-                        [ text "Build unstoppable organisations" ]
+                        --[ text "Build unstoppable organisations" ]
+                        [ text "Collective intelligence at work" ]
                     , h2
                         [ class "subtitle" ]
                       <|
@@ -253,7 +255,8 @@ viewSignBox model =
 viewLogin : Model -> Html Msg
 viewLogin model =
     div []
-        [ div [ class "field is-horizntl" ]
+        [ welcome
+        , div [ class "field is-horizntl" ]
             [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
@@ -323,8 +326,9 @@ viewLogin model =
 
 viewSignup : Model -> Html Msg
 viewSignup model =
-    div [ class "" ]
-        [ div [ class "field is-horizntl" ]
+    div []
+        [ welcome
+        , div [ class "field is-horizntl" ]
             [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]

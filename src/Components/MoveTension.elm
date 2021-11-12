@@ -18,12 +18,13 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
+import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (nid2type, nodeIdCodec)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
+import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 

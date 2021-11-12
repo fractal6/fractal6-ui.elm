@@ -28,6 +28,16 @@ import ModelSchema exposing (..)
 import Ports
 import Process
 import RemoteData exposing (RemoteData)
+import Session
+    exposing
+        ( LabelSearchPanelModel
+        , Screen
+        , Session
+        , SessionFlags
+        , UserSearchPanelModel
+        , fromLocalSession
+        , resetSession
+        )
 import Task
 import Time
 import Url exposing (Url)
@@ -86,6 +96,7 @@ type Msg
     | RedirectOnLoggedIn -- user is logged In !
     | UpdateSessionFocus (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
+    | UpdateSessionChildren (Maybe (List NodeId))
     | UpdateSessionOrga (Maybe NodesDict)
     | UpdateSessionData (Maybe NodeData)
     | UpdateSessionTensions (Maybe TensionsList)
@@ -96,6 +107,8 @@ type Msg
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionScreen Screen
+    | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
+    | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -229,12 +242,12 @@ update msg model =
         -- Update Session Data
         --
         UpdateSessionFocus data ->
-            -- Reset Tension Head @here, to avois glitch or bad UX when navigating tensions.
+            -- Reset Tensions data @here, to avois glitch or bad UX (seeing uncoherent tensions data) when navigating tensions and organisations.
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | node_focus = data, tension_head = Nothing } }, Cmd.none )
+            ( { model | session = { session | node_focus = data, tension_head = Nothing, tensions_int = Nothing, tensions_ext = Nothing, tensions_all = Nothing } }, Cmd.none )
 
         UpdateSessionPath data ->
             let
@@ -242,6 +255,13 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | path_data = data } }, Cmd.none )
+
+        UpdateSessionChildren data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | children = data } }, Cmd.none )
 
         UpdateSessionOrga data ->
             let
@@ -318,6 +338,20 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | screen = data } }, Cmd.none )
+
+        UpdateSessionAuthorsPanel data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | authorsPanel = data } }, Cmd.none )
+
+        UpdateSessionLabelsPanel data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | labelsPanel = data } }, Cmd.none )
 
 
 

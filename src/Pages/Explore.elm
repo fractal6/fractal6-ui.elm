@@ -27,6 +27,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryPublicOrga)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT)
 import Time

@@ -31,6 +31,7 @@ import Ports
 import Query.QueryNode exposing (queryNodeExt)
 import Query.QueryUser exposing (queryUctx)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT)
 import Time

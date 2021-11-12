@@ -16,10 +16,11 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..), uctxFromUser)
+import ModelCommon exposing (UserState(..), uctxFromUser)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddData exposing (getData)
+import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 
@@ -260,6 +261,7 @@ update_ apis message model =
 
 
 
+subscriptions :  List (Sub Msg)
 subscriptions =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose

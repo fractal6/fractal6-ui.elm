@@ -38,6 +38,7 @@ import Ports
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersTop)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -201,7 +202,11 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , send (UpdateSessionFocus (Just newFocus))
+    , if fs.focusChange || fs.refresh then
+        send (UpdateSessionFocus (Just newFocus))
+
+      else
+        Cmd.none
     )
 
 
@@ -528,11 +533,11 @@ update global message model =
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions global model =
+subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
-        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         |> Sub.batch
 
 

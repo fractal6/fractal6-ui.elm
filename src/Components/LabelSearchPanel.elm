@@ -1,9 +1,11 @@
 module Components.LabelSearchPanel exposing (..)
 
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Events as Events
 import Codecs exposing (LookupResult)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
+import Dom
 import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Global exposing (send, sendNow, sendSleep)
@@ -14,43 +16,34 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), LabelForm, UserState(..), initLabelForm)
+import ModelCommon exposing (LabelForm, UserState(..), initLabelForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
 import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)
 import Query.QueryNode exposing (queryLabelsUp)
+import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
+
+
+type alias Model =
+    Session.LabelSearchPanelModel
+
+
+type alias OnClickAction =
+    Session.LabelSearchPanelOnClickAction
 
 
 type State
     = State Model
 
 
-type alias Model =
-    { isOpen : Bool
-    , form : LabelForm
-    , click_result : GqlData IdPayload
-    , action : OnClickAction
-
-    -- Lookup
-    , lookup : List Label
-    , pattern : String -- search pattern
-    , labels_data : GqlData (List Label)
-
-    --, init_lookup : List Label -> Cmd Msg
-    --, search_lookup : String -> Cmd Msg
-    -- Common
-    , refresh_trial : Int
-    }
-
-
-type OnClickAction
-    = AssignLabel
-    | SelectLabel
+id_target_name : String
+id_target_name =
+    "labelsPanelContent"
 
 
 init : String -> OnClickAction -> UserState -> State
@@ -73,6 +66,21 @@ initModel tid action user =
     -- Common
     , refresh_trial = 0
     }
+
+
+load : Maybe Model -> UserState -> State
+load model user =
+    case model of
+        Just m ->
+            State m
+
+        Nothing ->
+            init "" SelectLabel user
+
+
+getModel : State -> Model
+getModel (State model) =
+    model
 
 
 
@@ -165,6 +173,7 @@ setPattern pattern data =
 type Msg
     = OnOpen (List String)
     | OnClose
+    | OnClose_
     | OnChangePattern String
     | ChangeLabelLookup (LookupResult Label)
     | OnLabelClick Label Bool Time.Posix
@@ -224,8 +233,7 @@ update_ apis message model =
                 in
                 ( open targets model
                 , out0 <|
-                    [ Ports.outsideClickClose "cancelLabelsFromJs" "labelsPanelContent"
-                    , Ports.inheritWith "labelSearchPanel"
+                    [ Ports.inheritWith "labelSearchPanel"
                     , Ports.focusOn "userInput"
                     ]
                         ++ cmd
@@ -235,17 +243,20 @@ update_ apis message model =
                 ( model, noOut )
 
         OnClose ->
+            -- The delay is used to be able to toggle (close) the panel on clicking the button.
+            ( model, out0 [ sendSleep OnClose_ 50 ] )
+
+        OnClose_ ->
             ( close model, noOut )
 
         OnGotLabels result ->
             ( { model | labels_data = result }
-            , out0 <|
-                case result of
-                    Success r ->
-                        [ Ports.initLabelSearch r ]
+            , case result of
+                Success r ->
+                    out0 [ Ports.initLabelSearch r ]
 
-                    _ ->
-                        []
+                _ ->
+                    noOut
             )
 
         OnChangePattern pattern ->
@@ -343,10 +354,18 @@ update_ apis message model =
             ( model, out1 [ DoModalAsk link onCloseTxt ] )
 
 
-subscriptions =
-    [ Ports.cancelLabelsFromJs (always OnClose)
-    , Ports.lookupLabelFromJs ChangeLabelLookup
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
+    [ Ports.lookupLabelFromJs ChangeLabelLookup
     ]
+        ++ (if model.isOpen then
+                [ Events.onMouseDown (Dom.outsideClickClose id_target_name OnClose)
+                , Events.onKeyUp (Dom.key "Escape" OnClose)
+                ]
+
+            else
+                []
+           )
 
 
 
@@ -478,7 +497,7 @@ viewLabelSelectors isInternal labels op model =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div [ id "labelsPanelContent" ]
+    div [ id id_target_name ]
         [ if model.isOpen then
             view_ False op (State model)
 
@@ -490,7 +509,7 @@ view op (State model) =
 viewNew : Op -> State -> Html Msg
 viewNew op (State model) =
     div []
-        [ div [ id "labelsPanelContent", class "is-reversed" ]
+        [ div [ id id_target_name, class "is-reversed" ]
             [ if model.isOpen then
                 view_ True op (State model)
 

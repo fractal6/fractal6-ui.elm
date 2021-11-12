@@ -7,7 +7,7 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading
     exposing
         ( GqlData
@@ -15,6 +15,7 @@ import Components.Loading as Loading
         , RequestResult(..)
         , WebData
         , fromMaybeData
+        , fromMaybeWebData
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
@@ -22,7 +23,7 @@ import Components.Loading as Loading
         , withMaybeData
         , withMaybeDataMap
         )
-import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
+import Components.UserSearchPanel as UserSearchPanel
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -58,6 +59,7 @@ import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph)
 import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
 import Task
 import Text as T exposing (textH, textT)
 import Time
@@ -118,8 +120,6 @@ type alias Model =
     , tensions_all : GqlData TensionsList
     , boardHeight : Maybe Float
     , offset : Int
-    , load_more_int : Bool
-    , load_more_ext : Bool
     , pattern : Maybe String
     , initPattern : Maybe String
     , viewMode : TensionsView
@@ -338,6 +338,16 @@ defaultLabelsFilter =
     []
 
 
+loadEncoder : Int -> String
+loadEncoder x =
+    String.fromInt x
+
+
+loadDecoder : String -> Int
+loadDecoder x =
+    String.toInt x |> withDefault 0
+
+
 
 {- Authors parameters -}
 
@@ -365,6 +375,16 @@ nfirstC : Int
 nfirstC =
     -- @debug message/warning if thera are more than nfirstC tensions
     1000
+
+
+hasLoadMore : GqlData TensionsList -> Int -> Bool
+hasLoadMore tensions offset =
+    case tensions of
+        Success ts ->
+            List.length ts == nfirstL * offset
+
+        other ->
+            False
 
 
 
@@ -441,8 +461,7 @@ type Msg
     | GotTensionsExt (GqlData TensionsList) -- GraphQL
     | GotTensionsAll (GqlData TensionsList) -- GraphQL
       -- Page Action
-    | DoLoad Int -- query tensions
-    | OnFilterClick
+    | DoLoad Bool -- query tensions
     | ChangePattern String
     | ChangeViewFilter TensionsView
     | ChangeStatusFilter StatusFilter
@@ -451,10 +470,12 @@ type Msg
     | ChangeAuthor
     | ChangeLabel
     | SearchKeyDown Int
+    | ResetData
     | OnClearFilter
     | SubmitSearchReset
     | SubmitSearch
     | GoView TensionsView
+    | SetOffset Int
       -- New Tension
     | DoCreateTension LocalGraph
       -- JoinOrga Action
@@ -518,14 +539,20 @@ init global flags =
             { node_focus = newFocus
             , screen = global.session.screen
             , path_data = fromMaybeData global.session.path_data Loading
-            , children = RemoteData.Loading
-            , tensions_int = fromMaybeData global.session.tensions_int Loading
-            , tensions_ext = fromMaybeData global.session.tensions_ext Loading
-            , tensions_all = fromMaybeData global.session.tensions_all Loading
+            , children = fromMaybeWebData global.session.children RemoteData.Loading
             , boardHeight = Nothing
-            , offset = 0
-            , load_more_int = False
-            , load_more_ext = False
+            , tensions_int = ternary (fs.focusChange || fs.refresh) Loading (fromMaybeData global.session.tensions_int Loading)
+            , tensions_ext = ternary (fs.focusChange || fs.refresh) Loading (fromMaybeData global.session.tensions_ext Loading)
+            , tensions_all = ternary (fs.focusChange || fs.refresh) Loading (fromMaybeData global.session.tensions_all Loading)
+            , offset = ternary (fs.focusChange || fs.refresh) 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
+            , authorsPanel =
+                ternary (fs.focusChange || fs.refresh)
+                    (UserSearchPanel.init "" SelectUser global.session.user)
+                    (UserSearchPanel.load global.session.authorsPanel global.session.user)
+            , labelsPanel =
+                ternary (fs.focusChange || fs.refresh)
+                    (LabelSearchPanel.init "" SelectLabel global.session.user)
+                    (LabelSearchPanel.load global.session.labelsPanel global.session.user)
             , pattern = Dict.get "q" query |> withDefault [] |> List.head
             , initPattern = Dict.get "q" query |> withDefault [] |> List.head
             , viewMode = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
@@ -533,9 +560,7 @@ init global flags =
             , typeFilter = Dict.get "t" query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
-            , authorsPanel = UserSearchPanel.init "" SelectUser global.session.user
             , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing)
-            , labelsPanel = LabelSearchPanel.init "" SelectLabel global.session.user
 
             -- Common
             , node_action = NoOp
@@ -549,8 +574,8 @@ init global flags =
             }
 
         --
-        -- Refresh tensions only if a query different than the view changed
-        -- or if the page need a refresh (according to FocusState)
+        -- Refresh tensions when data are in a Loading state or if
+        -- the query just changed (ie referer), regardless the "v" a "load" parameters.
         --
         dataToLoad =
             case model.viewMode of
@@ -564,7 +589,7 @@ init global flags =
                     model.tensions_all
 
         refresh =
-            if dataToLoad == Loading || fs.refresh then
+            if dataToLoad == Loading then
                 True
 
             else
@@ -574,8 +599,8 @@ init global flags =
                             oldQuery =
                                 queryParser referer
                         in
-                        Dict.remove "v" oldQuery
-                            /= Dict.remove "v" query
+                        (Dict.remove "v" oldQuery |> Dict.remove "load")
+                            /= (Dict.remove "v" query |> Dict.remove "load")
 
                     --|| Dict.get "v" oldQuery
                     --== Dict.get "v" query
@@ -591,13 +616,17 @@ init global flags =
 
                     SelectedNode ->
                         if fs.focusChange == False then
-                            [ send (DoLoad 0) ]
+                            [ send (DoLoad False) ]
 
                         else
                             [ Cmd.none ]
 
               else if model.viewMode == CircleView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
+
+              else if dataToLoad /= Loading && model.offset == 0 then
+                -- Assume data are already loaded, actualise offset.
+                [ send (SetOffset 1) ]
 
               else
                 [ Cmd.none ]
@@ -608,7 +637,11 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Cmd.batch [ send (UpdateSessionFocus (Just newFocus)) ]
+    , if fs.focusChange || fs.refresh then
+        send (UpdateSessionFocus (Just newFocus))
+
+      else
+        Cmd.none
     )
 
 
@@ -680,7 +713,7 @@ update global message model =
                         Just root ->
                             let
                                 cmd =
-                                    ternary (model.depthFilter == SelectedNode) (send (DoLoad 0)) Cmd.none
+                                    ternary (model.depthFilter == SelectedNode) (send (DoLoad False)) Cmd.none
                             in
                             ( newModel, cmd, send (UpdateSessionPath (Just path)) )
 
@@ -706,7 +739,7 @@ update global message model =
                                             { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                         cmd =
-                                            ternary (model.depthFilter == SelectedNode) (send (DoLoad 0)) Cmd.none
+                                            ternary (model.depthFilter == SelectedNode) (send (DoLoad False)) Cmd.none
                                     in
                                     ( { model | path_data = Success newPath }, cmd, send (UpdateSessionPath (Just newPath)) )
 
@@ -733,24 +766,13 @@ update global message model =
             in
             case result of
                 RemoteData.Success children ->
-                    ( newModel, send (DoLoad 0), Cmd.none )
+                    ( newModel, send (DoLoad False), send (UpdateSessionChildren (Just children)) )
 
                 _ ->
                     ( newModel, Cmd.none, Cmd.none )
 
         GotTensionsInt inc result ->
             let
-                i =
-                    ternary (inc == 0) 1 inc
-
-                load_more =
-                    case result of
-                        Success ts ->
-                            List.length ts == nfirstL
-
-                        other ->
-                            False
-
                 newTensions =
                     case model.tensions_int of
                         Success tsOld ->
@@ -764,18 +786,10 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_int = newTensions, load_more_int = load_more, offset = model.offset + i }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
+            ( { model | tensions_int = newTensions, offset = model.offset + inc }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
 
         GotTensionsExt result ->
             let
-                load_more =
-                    case result of
-                        Success ts ->
-                            List.length ts == nfirstL
-
-                        other ->
-                            False
-
                 newTensions =
                     case model.tensions_ext of
                         Success tsOld ->
@@ -789,13 +803,13 @@ update global message model =
                         other ->
                             result
             in
-            ( { model | tensions_ext = newTensions, load_more_ext = load_more }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
+            ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
 
         GotTensionsAll result ->
             ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData result)) )
 
-        DoLoad inc ->
-            -- if inc == 0, reset the offset
+        DoLoad reset ->
+            -- if reset, reset the offset
             -- else increments the results span
             let
                 nameids =
@@ -808,8 +822,16 @@ update global message model =
                     typeDecoder model.typeFilter
 
                 offset =
-                    -- In other words inc=0 reset the offset (used by  panel filter (User, Label, etc)
-                    ternary (inc == 0) 0 model.offset
+                    -- In other words reset=True, it resets the offset (used by  panel filter (User, Label, etc)
+                    ternary reset 0 model.offset
+
+                ( inc, first, skip ) =
+                    if offset > 1 && model.tensions_int == Loading && reset == False then
+                        -- load a bunch of data (do not increase offset here)
+                        ( 0, nfirstL * offset, 0 )
+
+                    else
+                        ( 1, nfirstL, offset * nfirstL )
             in
             if nameids == [] then
                 ( model, Cmd.none, Cmd.none )
@@ -821,30 +843,17 @@ update global message model =
                 )
 
             else if List.member model.viewMode [ ListView, IntExtView ] then
-                ( if inc == 0 then
+                ( if reset then
                     { model | offset = offset, tensions_int = LoadingSlowly, tensions_ext = LoadingSlowly }
 
                   else
                     model
                 , Cmd.batch
-                    --[ queryIntTension apis.gql nameids nfirstL (offset * nfirstL) model.pattern status model.authors [] type_ (GotTensionsInt inc)
-                    --, queryExtTension apis.gql nameids nfirstL (offset * nfirstL) model.pattern status model.authors [] type_ GotTensionsExt
-                    --]
-                    [ fetchTensionInt apis.rest nameids nfirstL (offset * nfirstL) model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
-                    , fetchTensionExt apis.rest nameids nfirstL (offset * nfirstL) model.pattern status model.authors model.labels type_ GotTensionsExt
+                    [ fetchTensionInt apis.rest nameids first skip model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
+                    , fetchTensionExt apis.rest nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
                     ]
                 , Ports.show "footBar"
                 )
-
-            else
-                ( model, Cmd.none, Cmd.none )
-
-        OnFilterClick ->
-            -- Fix component dropdowns close beaviour
-            if UserSearchPanel.isOpen_ model.authorsPanel || LabelSearchPanel.isOpen_ model.labelsPanel then
-                -- @debug: this one doesnt work every time (race condition ?)
-                --( model, Cmd.map UserSearchPanelMsg (send OnClose), Cmd.none )
-                ( model, Ports.click "body", Cmd.none )
 
             else
                 ( model, Cmd.none, Cmd.none )
@@ -907,6 +916,16 @@ update global message model =
                 other ->
                     ( model, Cmd.none, Cmd.none )
 
+        ResetData ->
+            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading }
+            , Cmd.none
+            , Cmd.batch
+                [ send (UpdateSessionTensionsInt Nothing)
+                , send (UpdateSessionTensionsExt Nothing)
+                , send (UpdateSessionTensionsAll Nothing)
+                ]
+            )
+
         OnClearFilter ->
             let
                 query =
@@ -914,21 +933,16 @@ update global message model =
                         [ ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) ) ]
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), Cmd.batch [ send (UpdateSessionTensionsInt Nothing), send (UpdateSessionTensionsAll Nothing) ] )
+            ( model
+            , Cmd.batch [ Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), send ResetData ]
+            , Cmd.none
+            )
 
         SubmitSearchReset ->
             -- Reset the other results
             ( model
-            , send SubmitSearch
-            , case model.viewMode of
-                ListView ->
-                    send (UpdateSessionTensionsAll Nothing)
-
-                IntExtView ->
-                    send (UpdateSessionTensionsAll Nothing)
-
-                CircleView ->
-                    send (UpdateSessionTensionsInt Nothing)
+            , Cmd.batch [ send SubmitSearch, send ResetData ]
+            , Cmd.none
             )
 
         SubmitSearch ->
@@ -940,6 +954,7 @@ update global message model =
                          , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                          , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
                          , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
+                         , ( "load", loadEncoder model.offset |> (\x -> ternary (x == "0" || x == "1") "" x) )
                          ]
                             ++ authorsEncoder model.authors
                             ++ labelsEncoder model.labels
@@ -966,16 +981,16 @@ update global message model =
                                 ( model.tensions_all, [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
             in
             ( newModel
-            , Cmd.batch (ternary (data_m == Nothing) [ send (DoLoad 0) ] [] ++ cmds)
+            , Cmd.batch (ternary (data_m == Nothing) [ send (DoLoad False) ] [] ++ cmds)
             , Cmd.none
             )
+
+        SetOffset v ->
+            ( { model | offset = v }, Cmd.none, Cmd.none )
 
         -- Authors
         UserSearchPanelMsg msg ->
             let
-                isAssigneeOpen1 =
-                    UserSearchPanel.isOpen_ model.authorsPanel
-
                 ( panel, out ) =
                     UserSearchPanel.update apis msg model.authorsPanel
 
@@ -996,25 +1011,19 @@ update global message model =
 
                 cmds =
                     if model.authors /= authors then
-                        let
-                            focusid =
-                                withMaybeDataMap (\p -> p.focus.nameid) model.path_data |> withDefault model.node_focus.nameid
-                        in
-                        cmds_ ++ [ send (DoLoad 0) ]
-                        -- @debug: We need to save locally the data and clean all after to avoid reloading everithing !!!
-                        --cmds_ ++ [ send (DoLoad 0), Nav.replaceUrl global.key (uriFromNameid TensionsBaseUri focusid ++ "?a=2") ]
+                        cmds_ ++ [ send SubmitSearchReset ]
 
                     else
                         cmds_
             in
-            ( { model | authorsPanel = panel, authors = authors }, out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | authorsPanel = panel, authors = authors }
+            , out.cmds |> List.map (\m -> Cmd.map UserSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ panel |> UserSearchPanel.getModel |> Just |> UpdateSessionAuthorsPanel |> send ])
+            )
 
         -- Labels
         LabelSearchPanelMsg msg ->
             let
-                isLabelOpen1 =
-                    LabelSearchPanel.isOpen_ model.labelsPanel
-
                 ( panel, out ) =
                     LabelSearchPanel.update apis msg model.labelsPanel
 
@@ -1035,12 +1044,15 @@ update global message model =
 
                 cmds =
                     if model.labels /= labels then
-                        cmds_ ++ [ send (DoLoad 0) ]
+                        cmds_ ++ [ send SubmitSearchReset ]
 
                     else
                         cmds_
             in
-            ( { model | labelsPanel = panel, labels = labels }, out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | labelsPanel = panel, labels = labels }
+            , out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ panel |> LabelSearchPanel.getModel |> Just |> UpdateSessionLabelsPanel |> send ])
+            )
 
         -- New tension
         DoCreateTension lg ->
@@ -1276,14 +1288,14 @@ update global message model =
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions global model =
+subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     , Events.onResize (\w h -> OnResize w h)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
-        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
-        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
-        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (UserSearchPanel.subscriptions model.authorsPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         |> Sub.batch
 
 
@@ -1350,9 +1362,9 @@ view_ global model =
                             [ text "Viewing only the 1000 more recent tensions" ]
                         ]
 
-                  else if model.viewMode /= CircleView && (model.load_more_int || model.load_more_ext) then
+                  else if model.viewMode /= CircleView && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
                     div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
-                        [ button [ class "button is-small", onClick (DoLoad 1) ]
+                        [ button [ class "button is-small", onClick (DoLoad False) ]
                             [ text "Load more" ]
                         ]
 
@@ -1412,7 +1424,7 @@ viewSearchBar model =
                 ]
             , div [ class "column is-6 flex-gap" ]
                 [ div [ class "field has-addons filterBar mb-0" ]
-                    [ div [ class "control dropdown", onClick OnFilterClick ]
+                    [ div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
                             [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge" ] []) (text "")
                             , textH T.status
@@ -1430,7 +1442,7 @@ viewSearchBar model =
                                 ]
                             ]
                         ]
-                    , div [ class "control dropdown", onClick OnFilterClick ]
+                    , div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
                             [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge" ] []) (text "")
                             , textH T.type_
@@ -1476,7 +1488,7 @@ viewSearchBar model =
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg
                         ]
-                    , div [ class "control dropdown", onClick OnFilterClick ]
+                    , div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
                             [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge" ] []) (text "")
                             , textH T.depth

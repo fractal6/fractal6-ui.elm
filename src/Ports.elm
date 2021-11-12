@@ -59,12 +59,6 @@ port closeModalConfirmFromJs : (JD.Value -> msg) -> Sub msg
 -- Panel
 
 
-port cancelAssigneesFromJs : (() -> msg) -> Sub msg
-
-
-port cancelLabelsFromJs : (() -> msg) -> Sub msg
-
-
 port cancelActionFromJs : (() -> msg) -> Sub msg
 
 

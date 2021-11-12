@@ -24,7 +24,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
+import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
 import ModelCommon.Requests exposing (getQuickDoc)
 import ModelCommon.View exposing (viewUser)
@@ -32,6 +32,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
 import RemoteData
+import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 

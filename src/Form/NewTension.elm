@@ -2,7 +2,7 @@ module Form.NewTension exposing (..)
 
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
-import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -27,12 +27,13 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
+import ModelCommon exposing (InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
 import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
+import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 
@@ -884,13 +885,14 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
 
-subscriptions =
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
     [ Ports.lookupUserFromJs OnChangeUserLookup
     , Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
     , Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
-        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
 
 
 

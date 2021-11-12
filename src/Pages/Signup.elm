@@ -12,6 +12,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
+import Logo exposing (welcome)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (signup)
@@ -173,7 +174,8 @@ viewSignup global model =
                     [ text "Signup" ]
                 ]
             , div [ class "card-content" ]
-                [ div [ class "field is-horizntl" ]
+                [ welcome
+                , div [ class "field is-horizntl" ]
                     [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]

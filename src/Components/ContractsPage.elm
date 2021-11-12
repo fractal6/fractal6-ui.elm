@@ -21,7 +21,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..), uctxFromUser)
+import ModelCommon exposing (UserState(..), uctxFromUser)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, uriFromUsername)
 import ModelCommon.View exposing (byAt, contractEventToText, contractTypeToText, getAvatar, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
 import ModelSchema exposing (..)
@@ -29,6 +29,7 @@ import Ports
 import Query.AddContract exposing (deleteOneContract)
 import Query.PatchContract exposing (sendVote)
 import Query.QueryContract exposing (getContract, getContractComments, getContracts)
+import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 

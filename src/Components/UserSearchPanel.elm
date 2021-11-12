@@ -1,12 +1,14 @@
 module Components.UserSearchPanel exposing (..)
 
 import Auth exposing (ErrState(..), parseErr)
+import Browser.Events as Events
 import Codecs exposing (LookupResult)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
+import Dom
 import Extra exposing (ternary)
 import Fractal.Enum.TensionEvent as TensionEvent
-import Global exposing (send, sendNow, sendSleep)
+import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -14,43 +16,35 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, AssigneeForm, GlobalCmd(..), UserState(..), initAssigneeForm)
+import ModelCommon exposing (AssigneeForm, UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
 import Ports
+import Process
 import Query.PatchTension exposing (setAssignee)
 import Query.QueryNode exposing (queryMembers)
+import Session exposing (Apis, GlobalCmd(..), UserSearchPanelOnClickAction(..))
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
+
+
+type alias Model =
+    Session.UserSearchPanelModel
+
+
+type alias OnClickAction =
+    Session.UserSearchPanelOnClickAction
 
 
 type State
     = State Model
 
 
-type alias Model =
-    { isOpen : Bool
-    , form : AssigneeForm
-    , click_result : GqlData IdPayload
-    , action : OnClickAction
-
-    -- Lookup
-    , lookup : List User
-    , pattern : String -- search pattern
-    , assignees_data : GqlData (List User)
-
-    --, init_lookup : List User -> Cmd Msg
-    --, search_lookup : String -> Cmd Msg
-    -- Common
-    , refresh_trial : Int
-    }
-
-
-type OnClickAction
-    = AssignUser
-    | SelectUser
+id_target_name : String
+id_target_name =
+    "usersPanelContent"
 
 
 init : String -> OnClickAction -> UserState -> State
@@ -73,6 +67,21 @@ initModel tid action user =
     -- Common
     , refresh_trial = 0
     }
+
+
+load : Maybe Model -> UserState -> State
+load model user =
+    case model of
+        Just m ->
+            State m
+
+        Nothing ->
+            init "" SelectUser user
+
+
+getModel : State -> Model
+getModel (State model) =
+    model
 
 
 
@@ -165,6 +174,7 @@ setPattern pattern data =
 type Msg
     = OnOpen (List String)
     | OnClose
+    | OnClose_
     | OnChangePattern String
     | ChangeAssigneeLookup (LookupResult User)
     | OnAssigneeClick User Bool Time.Posix
@@ -220,8 +230,7 @@ update_ apis message model =
                 in
                 ( open targets newModel
                 , out0 <|
-                    [ Ports.outsideClickClose "cancelAssigneesFromJs" "usersPanelContent"
-                    , Ports.inheritWith "usersSearchPanel"
+                    [ Ports.inheritWith "usersSearchPanel"
                     , Ports.focusOn "userInput"
                     ]
                         ++ cmd
@@ -231,17 +240,20 @@ update_ apis message model =
                 ( model, noOut )
 
         OnClose ->
+            -- The delay is used to be able to toggle (close) the panel on clicking the button.
+            ( model, out0 [ sendSleep OnClose_ 50 ] )
+
+        OnClose_ ->
             ( close model, noOut )
 
         OnGotAssignees result ->
             ( { model | assignees_data = result }
-            , out0 <|
-                case result of
-                    Success r ->
-                        [ Ports.initUserSearch r ]
+            , case result of
+                Success r ->
+                    out0 [ Ports.initUserSearch r ]
 
-                    _ ->
-                        []
+                _ ->
+                    noOut
             )
 
         OnChangePattern pattern ->
@@ -324,10 +336,18 @@ update_ apis message model =
             )
 
 
-subscriptions =
-    [ Ports.cancelAssigneesFromJs (always OnClose)
-    , Ports.lookupUserFromJs ChangeAssigneeLookup
+subscriptions : State -> List (Sub Msg)
+subscriptions (State model) =
+    [ Ports.lookupUserFromJs ChangeAssigneeLookup
     ]
+        ++ (if model.isOpen then
+                [ Events.onMouseDown (Dom.outsideClickClose id_target_name OnClose)
+                , Events.onKeyUp (Dom.key "Escape" OnClose)
+                ]
+
+            else
+                []
+           )
 
 
 
@@ -452,7 +472,7 @@ viewAssigneeSelectors users op model =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div [ id "usersPanelContent" ]
+    div [ id id_target_name ]
         [ if model.isOpen then
             view_ op (State model)
 

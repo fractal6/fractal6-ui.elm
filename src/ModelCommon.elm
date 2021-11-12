@@ -1,7 +1,6 @@
 module ModelCommon exposing (..)
 
 import Array exposing (Array)
-import Codecs exposing (WindowPos, userCtxDecoder, windowDecoder)
 import Components.Loading as Loading
     exposing
         ( ErrorData
@@ -21,12 +20,10 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs
     exposing
         ( FractalBaseRoute(..)
-        , NodeFocus
         , getCircleRoles
         , getCoordoRoles
         , getOrgaRoles
@@ -35,169 +32,7 @@ import ModelCommon.Codecs
         , nid2rootid
         )
 import ModelSchema exposing (..)
-import Ports
-import RemoteData
 import Set
-import Task
-import Time
-import Url exposing (Url)
-
-
-
---
--- Session / Global
--- @debug: rename this file Session ?
---
-
-
-type alias Apis =
-    { auth : String
-    , gql : String
-    , rest : String
-    , data : String
-    }
-
-
-type alias Screen =
-    { w : Int, h : Int }
-
-
-type alias SessionFlags =
-    { uctx : Maybe JD.Value
-    , window_pos : Maybe JD.Value
-    , apis : Apis
-    , screen : Screen
-    }
-
-
-type alias Session =
-    { user : UserState
-    , referer : Maybe Url
-    , token_data : WebData UserCtx
-    , node_focus : Maybe NodeFocus
-    , path_data : Maybe LocalGraph
-    , orga_data : Maybe NodesDict
-    , users_data : Maybe UsersDict
-    , node_data : Maybe NodeData
-    , tensions_data : Maybe TensionsList
-    , tensions_int : Maybe TensionsList
-    , tensions_ext : Maybe TensionsList
-    , tensions_all : Maybe TensionsList
-    , tension_head : Maybe TensionHead
-    , isAdmin : Maybe Bool
-    , node_action : Maybe ActionState
-    , node_quickSearch : Maybe NodesQuickSearch
-    , apis : Apis
-    , window_pos : Maybe WindowPos
-    , screen : Screen
-    }
-
-
-type GlobalCmd
-    = --| Delay msg1 Float
-      --| SubmitDelay Int
-      DoAuth UserCtx
-    | DoUpdateToken
-    | DoNavigate String
-    | DoReplaceUrl String
-    | DoModalAsk String String -- SafeClose
-      --
-    | DoFetchNode String
-    | DoPushTension Tension
-
-
-type alias NodesQuickSearch =
-    { pattern : String
-    , lookup : Array Node
-    , idx : Int
-    , visible : Bool
-    }
-
-
-resetSession : SessionFlags -> Session
-resetSession flags =
-    { referer = Nothing
-    , user = LoggedOut
-    , token_data = RemoteData.NotAsked
-    , node_focus = Nothing
-    , path_data = Nothing
-    , orga_data = Nothing
-    , users_data = Nothing
-    , node_data = Nothing
-    , tensions_data = Nothing
-    , tensions_int = Nothing
-    , tensions_ext = Nothing
-    , tensions_all = Nothing
-    , tension_head = Nothing
-    , isAdmin = Nothing
-    , node_action = Nothing
-    , node_quickSearch = Nothing
-    , window_pos = Nothing
-    , apis = flags.apis
-    , screen = flags.screen
-    }
-
-
-fromLocalSession : SessionFlags -> ( Session, List (Cmd msg) )
-fromLocalSession flags =
-    let
-        ( user, cmd1 ) =
-            case flags.uctx of
-                Just raw ->
-                    case JD.decodeValue userCtxDecoder raw of
-                        Ok uctx ->
-                            ( LoggedIn uctx, Cmd.none )
-
-                        Err err ->
-                            ( LoggedOut, Ports.logErr (JD.errorToString err) )
-
-                Nothing ->
-                    ( LoggedOut, Cmd.none )
-
-        ( window_pos, cmd2 ) =
-            case flags.window_pos of
-                Just raw ->
-                    case JD.decodeValue windowDecoder raw of
-                        Ok v ->
-                            ( Just v, Cmd.none )
-
-                        Err err ->
-                            ( Nothing, Ports.logErr (JD.errorToString err) )
-
-                Nothing ->
-                    ( Nothing, Cmd.none )
-    in
-    ( { referer = Nothing
-      , user = user
-      , token_data = RemoteData.NotAsked
-      , node_focus = Nothing
-      , path_data = Nothing
-      , orga_data = Nothing
-      , users_data = Nothing
-      , node_data = Nothing
-      , tensions_data = Nothing
-      , tensions_int = Nothing
-      , tensions_ext = Nothing
-      , tensions_all = Nothing
-      , tension_head = Nothing
-      , isAdmin = Nothing
-      , node_action = Nothing
-      , node_quickSearch = Nothing
-      , window_pos = window_pos
-      , apis = flags.apis
-      , screen = flags.screen
-      }
-    , [ cmd1, cmd2 ]
-    )
-
-
-orgaToUsersData : NodesDict -> UsersDict
-orgaToUsersData nd =
-    nd
-        |> Dict.toList
-        |> List.map (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
-        |> List.filterMap identity
-        |> toMapOfList
 
 
 
@@ -670,7 +505,7 @@ hotNodeUpdateName form odata =
 
 
 
--- Tension
+-- Data Utils
 
 
 blobFromTensionHead : TensionHead -> Maybe Blob
@@ -681,6 +516,15 @@ blobFromTensionHead th =
 
         _ ->
             Nothing
+
+
+orgaToUsersData : NodesDict -> UsersDict
+orgaToUsersData nd =
+    nd
+        |> Dict.toList
+        |> List.map (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
+        |> List.filterMap identity
+        |> toMapOfList
 
 
 

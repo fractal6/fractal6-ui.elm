@@ -20,12 +20,13 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Apis, GlobalCmd(..), UserState(..))
+import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (nid2eor, nid2rootid)
 import ModelCommon.View exposing (contractEventToText, contractTypeToText, viewTensionArrow)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
+import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 

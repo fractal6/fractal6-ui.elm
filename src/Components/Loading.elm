@@ -380,6 +380,13 @@ withMapData resMap result =
             NotAsked
 
 
+fromMaybeWebData : Maybe a -> RemoteData e a -> RemoteData e a
+fromMaybeWebData ma type_ =
+    ma
+        |> Maybe.map (\x -> RemoteData.Success x)
+        |> withDefault type_
+
+
 fromMaybeData : Maybe a -> RequestResult e a -> RequestResult e a
 fromMaybeData ma type_ =
     ma

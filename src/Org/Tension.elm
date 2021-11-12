@@ -8,7 +8,7 @@ import Components.ContractsPage as ContractsPage
 import Components.Doc exposing (ActionView(..))
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
-import Components.LabelSearchPanel as LabelSearchPanel exposing (OnClickAction(..))
+import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading
     exposing
         ( GqlData
@@ -27,7 +27,7 @@ import Components.Loading as Loading
 import Components.Markdown exposing (renderMarkdown)
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
-import Components.UserSearchPanel as UserSearchPanel exposing (OnClickAction(..))
+import Components.UserSearchPanel as UserSearchPanel
 import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary, toMapOfList)
@@ -96,6 +96,7 @@ import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, pub
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import Task
 import Text as T exposing (textH, textT, toText, upH)
@@ -1686,16 +1687,16 @@ update global message model =
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions global model =
+subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     , Ports.cancelActionFromJs (always CancelAction)
     , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
-        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
-        ++ (UserSearchPanel.subscriptions |> List.map (\s -> Sub.map UserSearchPanelMsg s))
-        ++ (LabelSearchPanel.subscriptions |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
+        ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 

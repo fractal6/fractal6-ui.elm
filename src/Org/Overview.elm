@@ -83,6 +83,7 @@ import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
 import Query.QueryTension exposing (getTensionHead, queryAllTension)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..), NodesQuickSearch)
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -370,7 +371,11 @@ init global flags =
     in
     ( model2
     , Cmd.batch cmds
-    , send (UpdateSessionFocus (Just newFocus))
+    , if fs.focusChange || fs.refresh then
+        send (UpdateSessionFocus (Just newFocus))
+
+      else
+        Cmd.none
     )
 
 
@@ -1153,7 +1158,7 @@ update global message model =
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions _ _ =
+subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
     , nodeHoveredFromJs NodeHovered
     , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
@@ -1163,7 +1168,7 @@ subscriptions _ _ =
     , Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
-        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         |> Sub.batch
 

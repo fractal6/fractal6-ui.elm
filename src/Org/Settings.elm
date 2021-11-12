@@ -44,6 +44,7 @@ import Query.PatchNode exposing (addOneLabel, removeOneLabel, updateOneLabel)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryLabels, queryLocalGraph)
 import RemoteData exposing (RemoteData)
+import Session exposing (Apis, GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -322,7 +323,11 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , send (UpdateSessionFocus (Just newFocus))
+    , if fs.focusChange || fs.refresh then
+        send (UpdateSessionFocus (Just newFocus))
+
+      else
+        Cmd.none
     )
 
 
@@ -871,13 +876,13 @@ update global message model =
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions _ _ =
+subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.cancelColorFromJs (always CloseColor)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
-        ++ (NTF.subscriptions |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         |> Sub.batch
 
 
@@ -1013,14 +1018,14 @@ viewLabels model =
                                             in
                                             [ td [] [ viewLabel "s-medium" (Label d.id d.name d.color) ]
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
-                                            , td [ class "" ]
+                                            , td [ attribute "style" "min-width: 9.4rem;" ]
                                                 [ if n_nodes > 1 then
                                                     span [ class "is-italic is-size-7" ] [ I.icon1 "icon-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
 
                                                   else
                                                     text ""
                                                 ]
-                                            , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6rem;" ]
+                                            , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
                                                 [ span [ class "button-light", onClick (EditLabel d) ] [ textH T.edit ]
                                                 , text " · "
                                                 , span
