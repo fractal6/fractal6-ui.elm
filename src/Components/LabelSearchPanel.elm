@@ -182,6 +182,7 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | OnGotLabels (GqlData (List Label))
     | SetLabel LabelForm
+    | ResetClickResult
       --
     | Navigate String
     | OnModalAsk String String
@@ -273,40 +274,50 @@ update_ apis message model =
                     ( model, out0 [ Ports.logErr err ] )
 
         OnLabelClick label isNew time ->
-            let
-                newModel =
-                    click label isNew model
-            in
-            case model.action of
-                AssignLabel ->
-                    let
-                        data =
-                            newModel
-                                |> updatePost "createdAt" (fromTime time)
-                                |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
-                                |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
-                                |> setClickResult LoadingSlowly
-                    in
-                    ( data
-                    , out0 [ send (SetLabel data.form) ]
-                    )
+            if model.click_result == LoadingSlowly then
+                -- wait here !
+                ( model, noOut )
 
-                SelectLabel ->
-                    let
-                        labels =
-                            withMaybeData model.labels_data
-                                |> withDefault []
-                                |> (\x ->
-                                        if isNew then
-                                            x ++ [ label ]
+            else
+                let
+                    newModel =
+                        click label isNew model
+                in
+                case model.action of
+                    AssignLabel ->
+                        let
+                            data =
+                                newModel
+                                    |> updatePost "createdAt" (fromTime time)
+                                    |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
+                                    |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
+                                    |> setClickResult LoadingSlowly
+                        in
+                        ( data
+                        , out0 [ send (SetLabel data.form) ]
+                        )
 
-                                        else
-                                            LE.remove label x
-                                   )
-                    in
-                    ( { newModel | labels_data = Success labels }
-                    , Out [] [] (Just ( newModel.form.isNew, newModel.form.label ))
-                    )
+                    SelectLabel ->
+                        let
+                            data =
+                                newModel
+                                    |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
+                                    |> setClickResult LoadingSlowly
+
+                            labels =
+                                withMaybeData model.labels_data
+                                    |> withDefault []
+                                    |> (\x ->
+                                            if isNew then
+                                                x ++ [ label ]
+
+                                            else
+                                                LE.remove label x
+                                       )
+                        in
+                        ( { data | labels_data = Success labels }
+                        , Out [ sendSleep ResetClickResult 333 ] [] (Just ( data.form.isNew, data.form.label ))
+                        )
 
         OnLabelClickInt label isNew time ->
             let
@@ -347,6 +358,9 @@ update_ apis message model =
             , out0 [ setLabel apis.gql form OnLabelAck ]
             )
 
+        ResetClickResult ->
+            ( setClickResult NotAsked model, noOut )
+
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
 
@@ -359,7 +373,7 @@ subscriptions (State model) =
     [ Ports.lookupLabelFromJs ChangeLabelLookup
     ]
         ++ (if model.isOpen then
-                [ Events.onMouseDown (Dom.outsideClickClose id_target_name OnClose)
+                [ Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
                 ]
 
@@ -467,6 +481,23 @@ viewLabelSelectors isInternal labels op model =
                                 isActive =
                                     List.member l op.selectedLabels
 
+                                -- Map label has atttribuyte (such has color, is lost when params
+                                -- object from url.
+                                l_ =
+                                    if isActive then
+                                        model.labels_data
+                                            |> withMaybeDataMap
+                                                (\labels_d ->
+                                                    labels_d
+                                                        |> List.filter (\x -> x.name == l.name)
+                                                        |> List.head
+                                                )
+                                            |> withDefault Nothing
+                                            |> withDefault l
+
+                                    else
+                                        l
+
                                 iconCls =
                                     ternary isActive "icon-check-square" "icon-square"
 
@@ -481,7 +512,7 @@ viewLabelSelectors isInternal labels op model =
                                     (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                                 ]
                                 [ span [ class "panel-icon" ] [ I.icon iconCls ]
-                                , viewLabel "" l
+                                , viewLabel "" l_
                                 , loadingSpin isLoading
                                 ]
                         )

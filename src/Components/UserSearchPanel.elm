@@ -182,6 +182,7 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | OnGotAssignees (GqlData (List User))
     | SetAssignee AssigneeForm
+    | ResetClickResult
 
 
 type alias Out =
@@ -270,40 +271,50 @@ update_ apis message model =
                     ( model, out0 [ Ports.logErr err ] )
 
         OnAssigneeClick assignee isNew time ->
-            let
-                newModel =
-                    click assignee isNew model
-            in
-            case model.action of
-                AssignUser ->
-                    let
-                        data =
-                            newModel
-                                |> updatePost "createdAt" (fromTime time)
-                                |> updatePost "new" assignee.username
-                                |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
-                                |> setClickResult LoadingSlowly
-                    in
-                    ( data
-                    , out0 [ send (SetAssignee data.form) ]
-                    )
+            if model.click_result == LoadingSlowly then
+                -- wait here !
+                ( model, noOut )
 
-                SelectUser ->
-                    let
-                        users =
-                            withMaybeData model.assignees_data
-                                |> withDefault []
-                                |> (\x ->
-                                        if isNew then
-                                            x ++ [ assignee ]
+            else
+                let
+                    newModel =
+                        click assignee isNew model
+                in
+                case model.action of
+                    AssignUser ->
+                        let
+                            data =
+                                newModel
+                                    |> updatePost "createdAt" (fromTime time)
+                                    |> updatePost "new" assignee.username
+                                    |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
+                                    |> setClickResult LoadingSlowly
+                        in
+                        ( data
+                        , out0 [ send (SetAssignee data.form) ]
+                        )
 
-                                        else
-                                            LE.remove assignee x
-                                   )
-                    in
-                    ( { newModel | assignees_data = Success users, click_result = LoadingSlowly }
-                    , Out [] [] (Just ( newModel.form.isNew, newModel.form.assignee ))
-                    )
+                    SelectUser ->
+                        let
+                            data =
+                                newModel
+                                    |> updatePost "new" assignee.username
+                                    |> setClickResult LoadingSlowly
+
+                            users =
+                                withMaybeData model.assignees_data
+                                    |> withDefault []
+                                    |> (\x ->
+                                            if isNew then
+                                                x ++ [ assignee ]
+
+                                            else
+                                                LE.remove assignee x
+                                       )
+                        in
+                        ( { data | assignees_data = Success users }
+                        , Out [ sendSleep ResetClickResult 333 ] [] (Just ( data.form.isNew, data.form.assignee ))
+                        )
 
         OnAssigneeAck result ->
             let
@@ -335,13 +346,16 @@ update_ apis message model =
             , out0 [ setAssignee apis.gql form OnAssigneeAck ]
             )
 
+        ResetClickResult ->
+            ( setClickResult NotAsked model, noOut )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.lookupUserFromJs ChangeAssigneeLookup
     ]
         ++ (if model.isOpen then
-                [ Events.onMouseDown (Dom.outsideClickClose id_target_name OnClose)
+                [ Events.onMouseUp (Dom.outsideClickClose id_target_name OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
                 ]
 

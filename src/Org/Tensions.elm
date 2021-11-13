@@ -971,7 +971,8 @@ update global message model =
 
                 cmds =
                     if model.authors /= authors then
-                        cmds_ ++ [ send SubmitSearchReset ]
+                        -- Without sendSleep, the loadingSpin doesnt got activated (race condition with SessionUpdate)
+                        cmds_ ++ [ sendSleep SubmitSearchReset 100 ]
 
                     else
                         cmds_
@@ -1004,7 +1005,8 @@ update global message model =
 
                 cmds =
                     if model.labels /= labels then
-                        cmds_ ++ [ send SubmitSearchReset ]
+                        -- Without sendSleep, the loadingSpin doesnt got activated (race condition with SessionUpdate)
+                        cmds_ ++ [ sendSleep SubmitSearchReset 100 ]
 
                     else
                         cmds_
