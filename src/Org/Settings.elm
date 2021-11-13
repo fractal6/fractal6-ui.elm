@@ -194,8 +194,7 @@ type Msg
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
-    | GotPath (GqlData LocalGraph)
-    | GotPath2 (GqlData LocalGraph)
+    | GotPath Bool (GqlData LocalGraph)
       -- Page
     | GotLabels (GqlData (List LabelFull))
     | GotLabelsSub (WebData (List LabelFull))
@@ -307,7 +306,7 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none
+            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             ]
@@ -323,7 +322,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , if fs.focusChange || fs.refresh then
+    , if fs.refresh then
         send (UpdateSessionFocus (Just newFocus))
 
       else
@@ -352,55 +351,37 @@ update global message model =
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         -- Data queries
-        GotPath result ->
-            let
-                newModel =
-                    { model | path_data = result }
-            in
+        GotPath isInit result ->
             case result of
                 Success path ->
+                    let
+                        prevPath =
+                            if isInit then
+                                { path | path = [] }
+
+                            else
+                                withDefaultData path model.path_data
+                    in
                     case path.root of
                         Just root ->
-                            ( newModel, Cmd.none, send (UpdateSessionPath (Just path)) )
+                            let
+                                newPath =
+                                    { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+                            in
+                            ( { model | path_data = Success newPath }, Cmd.none, send (UpdateSessionPath (Just newPath)) )
 
                         Nothing ->
                             let
+                                newPath =
+                                    { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( newModel, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
+                            ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid (GotPath False), Cmd.none )
 
                 _ ->
-                    ( newModel, Cmd.none, Cmd.none )
-
-        GotPath2 result ->
-            case model.path_data of
-                Success prevPath ->
-                    case result of
-                        Success path ->
-                            case path.root of
-                                Just root ->
-                                    let
-                                        newPath =
-                                            { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
-                                    in
-                                    ( { model | path_data = Success newPath }, Cmd.none, send (UpdateSessionPath (Just newPath)) )
-
-                                Nothing ->
-                                    let
-                                        nameid =
-                                            List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
-
-                                        newPath =
-                                            { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
-                                    in
-                                    ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
-
-                        _ ->
-                            ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         GotLabels result ->
             let

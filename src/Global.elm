@@ -242,12 +242,28 @@ update msg model =
         -- Update Session Data
         --
         UpdateSessionFocus data ->
-            -- Reset Tensions data @here, to avois glitch or bad UX (seeing uncoherent tensions data) when navigating tensions and organisations.
+            -- @here @warning: this Msg has side effect. It reset some session data, in order
+            -- to avoid glitch or bad UX (seeing uncoherent tensions data) when navigating app.
+            -- * teset tensions data,
+            -- * reset panel data
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | node_focus = data, tension_head = Nothing, tensions_int = Nothing, tensions_ext = Nothing, tensions_all = Nothing } }, Cmd.none )
+            ( { model
+                | session =
+                    { session
+                        | node_focus = data
+                        , tension_head = Nothing
+                        , tensions_int = Nothing
+                        , tensions_ext = Nothing
+                        , tensions_all = Nothing
+                        , authorsPanel = Nothing
+                        , labelsPanel = Nothing
+                    }
+              }
+            , Cmd.none
+            )
 
         UpdateSessionPath data ->
             let

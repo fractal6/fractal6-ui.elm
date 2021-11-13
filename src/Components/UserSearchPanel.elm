@@ -73,7 +73,7 @@ load : Maybe Model -> UserState -> State
 load model user =
     case model of
         Just m ->
-            State m
+            State { m | click_result = NotAsked }
 
         Nothing ->
             init "" SelectUser user
@@ -301,7 +301,7 @@ update_ apis message model =
                                             LE.remove assignee x
                                    )
                     in
-                    ( { newModel | assignees_data = Success users }
+                    ( { newModel | assignees_data = Success users, click_result = LoadingSlowly }
                     , Out [] [] (Just ( newModel.form.isNew, newModel.form.assignee ))
                     )
 
@@ -483,7 +483,7 @@ view op (State model) =
 
 {-|
 
-     @Debug: put this in User quicsearch module
+     @Debug: put this in User quicksearch module
 
 -}
 viewUserSelectors i pattern op =

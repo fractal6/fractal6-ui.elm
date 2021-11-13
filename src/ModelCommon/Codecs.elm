@@ -67,6 +67,7 @@ type alias FocusState =
     , orgChange : Bool
     , focusChange : Bool
     , paramsChange : Bool
+    , menuChange : Bool
     , refresh : Bool
     }
 
@@ -107,12 +108,25 @@ focusState baseUri referer url maybeFocus newFocus =
 
         isInit =
             maybeFocus == Nothing
+
+        orgChange =
+            newFocus.rootnameid /= oldFocus.rootnameid || isInit
+
+        focusChange =
+            newFocus.nameid /= oldFocus.nameid || isInit
+
+        paramsChange =
+            (referer |> Maybe.map (\r -> r.query /= url.query) |> withDefault False) || orgChange
+
+        menuChange =
+            basePathChanged baseUri referer || orgChange
     in
     { isInit = isInit
-    , orgChange = (newFocus.rootnameid /= oldFocus.rootnameid) || isInit
-    , focusChange = (newFocus.nameid /= oldFocus.nameid) || isInit
-    , paramsChange = referer |> Maybe.map (\r -> r.query /= url.query) |> withDefault False
-    , refresh = basePathChanged baseUri referer || isInit
+    , orgChange = orgChange
+    , focusChange = focusChange
+    , paramsChange = paramsChange
+    , menuChange = menuChange
+    , refresh = focusChange || menuChange
     }
 
 

@@ -284,7 +284,7 @@ init global flags =
         fs =
             { fs_ | isInit = fs_.isInit || isInit }
 
-        --d1 = Debug.log "isInit, orgChange, focuChange, refresh" [ fs.isInit, fs.orgChange, fs.focusChange, fs.refresh ]
+        --d1 = Debug.log "isInit, orgChange, focuChange, menuChange" [ fs.isInit, fs.orgChange, fs.focusChange, fs.menuChange ]
         --d2 = Debug.log "newfocus" [ newFocus ]
         -- QuickSearch
         qs =
@@ -335,7 +335,7 @@ init global flags =
 
                 --queryCircleTension apis.gql newFocus.nameid GotTensions
                 ]
-                    ++ (if fs.refresh then
+                    ++ (if fs.menuChange then
                             case session.orga_data of
                                 Just ndata ->
                                     [ send LoadOrga
@@ -349,7 +349,7 @@ init global flags =
                             [ Ports.focusGraphPack newFocus.nameid ]
                        )
 
-            else if fs.refresh then
+            else if fs.menuChange then
                 [ send LoadOrga
                 , Ports.initGraphPack Dict.empty "" --canvas loading effect
 
@@ -371,7 +371,7 @@ init global flags =
     in
     ( model2
     , Cmd.batch cmds
-    , if fs.focusChange || fs.refresh then
+    , if fs.refresh then
         send (UpdateSessionFocus (Just newFocus))
 
       else

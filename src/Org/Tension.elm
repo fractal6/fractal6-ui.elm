@@ -20,6 +20,7 @@ import Components.Loading as Loading
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
+        , withDefaultData
         , withMapData
         , withMaybeData
         , withMaybeDataMap
@@ -60,6 +61,7 @@ import ModelCommon.Codecs
         , DocType(..)
         , FractalBaseRoute(..)
         , NodeFocus
+        , focusFromNameid
         , focusState
         , getOrgaRoles
         , getTensionCharac
@@ -270,8 +272,7 @@ type Msg
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Gql Data Queries
-    | GotPath (GqlData LocalGraph)
-    | GotPath2 (GqlData LocalGraph)
+    | GotPath Bool (GqlData LocalGraph)
     | GotOrga (GqlData NodesDict)
       -- Page
     | GotTensionHead (GqlData TensionHead)
@@ -490,7 +491,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , if fs.focusChange || fs.refresh then
+    , if fs.refresh then
         send (UpdateSessionFocus (Just newFocus))
 
       else
@@ -578,62 +579,50 @@ update global message model =
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         -- Data queries
-        GotPath result ->
-            let
-                isAdmin =
-                    getTensionRights (uctxFromUser global.session.user) model.tension_head result
-
-                newModel =
-                    { model | path_data = result, isTensionAdmin = isAdmin }
-            in
+        GotPath isInit result ->
             case result of
                 Success path ->
                     let
-                        gcmd =
-                            send (UpdateSessionAdmin (Just isAdmin))
+                        prevPath =
+                            if isInit then
+                                { path | path = [] }
+
+                            else
+                                withDefaultData path model.path_data
                     in
                     case path.root of
                         Just root ->
-                            ( newModel, Cmd.none, Cmd.batch [ send (UpdateSessionPath (Just path)), gcmd ] )
+                            let
+                                newPath =
+                                    { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
+                                isAdmin =
+                                    getTensionRights (uctxFromUser global.session.user) model.tension_head result
+                            in
+                            ( { model | path_data = Success newPath, isTensionAdmin = isAdmin }
+                            , Cmd.none
+                            , Cmd.batch
+                                [ send (UpdateSessionPath (Just newPath))
+                                , send (UpdateSessionAdmin (Just isAdmin))
+                                , send (UpdateSessionFocus (focusFromNameid newPath.focus.nameid |> Just))
+                                ]
+                            )
 
                         Nothing ->
                             let
+                                newPath =
+                                    { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( newModel, queryLocalGraph apis.gql nameid GotPath2, gcmd )
+                            ( { model | path_data = Success newPath }
+                            , queryLocalGraph apis.gql nameid (GotPath False)
+                            , Cmd.none
+                            )
 
                 _ ->
-                    ( newModel, Cmd.none, Cmd.none )
-
-        GotPath2 result ->
-            case model.path_data of
-                Success prevPath ->
-                    case result of
-                        Success path ->
-                            case path.root of
-                                Just root ->
-                                    let
-                                        newPath =
-                                            { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
-                                    in
-                                    ( { model | path_data = Success newPath }, Cmd.none, send (UpdateSessionPath (Just newPath)) )
-
-                                Nothing ->
-                                    let
-                                        nameid =
-                                            List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
-
-                                        newPath =
-                                            { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
-                                    in
-                                    ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
-
-                        _ ->
-                            ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         GotOrga result ->
             case parseErr result model.refresh_trial of
@@ -674,7 +663,7 @@ update global message model =
 
                 OkAuth th ->
                     ( { model | tension_head = result }
-                    , Cmd.batch [ Ports.bulma_driver "", queryLocalGraph apis.gql th.receiver.nameid GotPath ]
+                    , Cmd.batch [ queryLocalGraph apis.gql th.receiver.nameid (GotPath True), Ports.bulma_driver "" ]
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 

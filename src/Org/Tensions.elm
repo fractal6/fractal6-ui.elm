@@ -454,13 +454,13 @@ type Msg
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
-    | GotPath (GqlData LocalGraph) -- GraphQL
-    | GotPath2 (GqlData LocalGraph) -- GraphQL
+    | GotPath Bool (GqlData LocalGraph) -- GraphQL
     | GotChildren (WebData (List NodeId)) -- HTTP/Json
     | GotTensionsInt Int (GqlData TensionsList) -- GraphQL
     | GotTensionsExt (GqlData TensionsList) -- GraphQL
     | GotTensionsAll (GqlData TensionsList) -- GraphQL
       -- Page Action
+    | DoLoadInit
     | DoLoad Bool -- query tensions
     | ChangePattern String
     | ChangeViewFilter TensionsView
@@ -541,18 +541,14 @@ init global flags =
             , path_data = fromMaybeData global.session.path_data Loading
             , children = fromMaybeWebData global.session.children RemoteData.Loading
             , boardHeight = Nothing
-            , tensions_int = ternary (fs.focusChange || fs.refresh) Loading (fromMaybeData global.session.tensions_int Loading)
-            , tensions_ext = ternary (fs.focusChange || fs.refresh) Loading (fromMaybeData global.session.tensions_ext Loading)
-            , tensions_all = ternary (fs.focusChange || fs.refresh) Loading (fromMaybeData global.session.tensions_all Loading)
-            , offset = ternary (fs.focusChange || fs.refresh) 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
+            , offset = ternary fs.refresh 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
+            , tensions_int = fromMaybeData global.session.tensions_int Loading
+            , tensions_ext = fromMaybeData global.session.tensions_ext Loading
+            , tensions_all = fromMaybeData global.session.tensions_all Loading
             , authorsPanel =
-                ternary (fs.focusChange || fs.refresh)
-                    (UserSearchPanel.init "" SelectUser global.session.user)
-                    (UserSearchPanel.load global.session.authorsPanel global.session.user)
+                UserSearchPanel.load global.session.authorsPanel global.session.user
             , labelsPanel =
-                ternary (fs.focusChange || fs.refresh)
-                    (LabelSearchPanel.init "" SelectLabel global.session.user)
-                    (LabelSearchPanel.load global.session.labelsPanel global.session.user)
+                LabelSearchPanel.load global.session.labelsPanel global.session.user
             , pattern = Dict.get "q" query |> withDefault [] |> List.head
             , initPattern = Dict.get "q" query |> withDefault [] |> List.head
             , viewMode = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> viewModeDecoder
@@ -589,37 +585,32 @@ init global flags =
                     model.tensions_all
 
         refresh =
-            if dataToLoad == Loading then
-                True
+            (fs.refresh || dataToLoad == Loading)
+                || (case global.session.referer of
+                        Just referer ->
+                            let
+                                oldQuery =
+                                    queryParser referer
+                            in
+                            (Dict.remove "v" oldQuery |> Dict.remove "load")
+                                /= (Dict.remove "v" query |> Dict.remove "load")
 
-            else
-                case global.session.referer of
-                    Just referer ->
-                        let
-                            oldQuery =
-                                queryParser referer
-                        in
-                        (Dict.remove "v" oldQuery |> Dict.remove "load")
-                            /= (Dict.remove "v" query |> Dict.remove "load")
-
-                    --|| Dict.get "v" oldQuery
-                    --== Dict.get "v" query
-                    Nothing ->
-                        True
+                        --|| Dict.get "v" oldQuery
+                        --== Dict.get "v" query
+                        Nothing ->
+                            True
+                   )
 
         cmds =
-            [ [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid GotPath) Cmd.none ]
-            , if refresh then
-                case model.depthFilter of
-                    AllSubChildren ->
-                        [ fetchChildren apis.rest newFocus.nameid GotChildren ]
+            [ if fs.focusChange then
+                [ queryLocalGraph apis.gql newFocus.nameid (GotPath True), send ResetData ]
 
-                    SelectedNode ->
-                        if fs.focusChange == False then
-                            [ send (DoLoad False) ]
+              else if getTargets model == [] then
+                -- path of children has not been loaded
+                [ send DoLoadInit ]
 
-                        else
-                            [ Cmd.none ]
+              else if refresh then
+                [ send (DoLoad False) ]
 
               else if model.viewMode == CircleView then
                 [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ]
@@ -629,7 +620,7 @@ init global flags =
                 [ send (SetOffset 1) ]
 
               else
-                [ Cmd.none ]
+                []
             , [ sendSleep PassedSlowLoadTreshold 500 ]
             , [ sendSleep InitModals 400 ]
             ]
@@ -637,7 +628,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , if fs.focusChange || fs.refresh then
+    , if fs.refresh then
         send (UpdateSessionFocus (Just newFocus))
 
       else
@@ -702,74 +693,51 @@ update global message model =
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         -- Data queries
-        GotPath result ->
-            let
-                newModel =
-                    { model | path_data = result }
-            in
+        GotPath isInit result ->
             case result of
                 Success path ->
+                    let
+                        prevPath =
+                            if isInit then
+                                { path | path = [] }
+
+                            else
+                                withDefaultData path model.path_data
+                    in
                     case path.root of
                         Just root ->
                             let
-                                cmd =
-                                    ternary (model.depthFilter == SelectedNode) (send (DoLoad False)) Cmd.none
+                                newPath =
+                                    { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
                             in
-                            ( newModel, cmd, send (UpdateSessionPath (Just path)) )
+                            ( { model | path_data = Success newPath }
+                            , send DoLoadInit
+                            , send (UpdateSessionPath (Just newPath))
+                            )
 
                         Nothing ->
                             let
+                                newPath =
+                                    { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( newModel, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
+                            ( { model | path_data = Success newPath }
+                            , queryLocalGraph apis.gql nameid (GotPath False)
+                            , Cmd.none
+                            )
 
                 _ ->
-                    ( newModel, Cmd.none, Cmd.none )
-
-        GotPath2 result ->
-            case model.path_data of
-                Success prevPath ->
-                    case result of
-                        Success path ->
-                            case path.root of
-                                Just root ->
-                                    let
-                                        newPath =
-                                            { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
-
-                                        cmd =
-                                            ternary (model.depthFilter == SelectedNode) (send (DoLoad False)) Cmd.none
-                                    in
-                                    ( { model | path_data = Success newPath }, cmd, send (UpdateSessionPath (Just newPath)) )
-
-                                Nothing ->
-                                    let
-                                        nameid =
-                                            List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
-
-                                        newPath =
-                                            { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
-                                    in
-                                    ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid GotPath2, Cmd.none )
-
-                        _ ->
-                            ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
+                    ( { model | path_data = result }, Cmd.none, Cmd.none )
 
         GotChildren result ->
-            let
-                newModel =
-                    { model | children = result }
-            in
             case result of
                 RemoteData.Success children ->
-                    ( newModel, send (DoLoad False), send (UpdateSessionChildren (Just children)) )
+                    ( { model | children = result }, send (DoLoad False), send (UpdateSessionChildren (Just children)) )
 
                 _ ->
-                    ( newModel, Cmd.none, Cmd.none )
+                    ( { model | children = result }, Cmd.none, Cmd.none )
 
         GotTensionsInt inc result ->
             let
@@ -807,6 +775,17 @@ update global message model =
 
         GotTensionsAll result ->
             ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData result)) )
+
+        DoLoadInit ->
+            ( model
+            , case model.depthFilter of
+                AllSubChildren ->
+                    fetchChildren apis.rest model.node_focus.nameid GotChildren
+
+                SelectedNode ->
+                    send (DoLoad False)
+            , Cmd.none
+            )
 
         DoLoad reset ->
             -- if reset, reset the offset
@@ -862,32 +841,16 @@ update global message model =
             ( { model | pattern = Just value }, Cmd.none, Cmd.none )
 
         ChangeViewFilter value ->
-            let
-                newModel =
-                    { model | viewMode = value }
-            in
-            ( newModel, send SubmitSearch, Cmd.none )
+            ( { model | viewMode = value }, send SubmitSearch, Cmd.none )
 
         ChangeStatusFilter value ->
-            let
-                newModel =
-                    { model | statusFilter = value }
-            in
-            ( newModel, send SubmitSearchReset, Cmd.none )
+            ( { model | statusFilter = value }, send SubmitSearchReset, Cmd.none )
 
         ChangeTypeFilter value ->
-            let
-                newModel =
-                    { model | typeFilter = value }
-            in
-            ( newModel, send SubmitSearchReset, Cmd.none )
+            ( { model | typeFilter = value }, send SubmitSearchReset, Cmd.none )
 
         ChangeDepthFilter value ->
-            let
-                newModel =
-                    { model | depthFilter = value }
-            in
-            ( newModel, send SubmitSearchReset, Cmd.none )
+            ( { model | depthFilter = value }, send SubmitSearchReset, Cmd.none )
 
         ChangeAuthor ->
             let
@@ -917,7 +880,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         ResetData ->
-            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading }
+            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, path_data = Loading }
             , Cmd.none
             , Cmd.batch
                 [ send (UpdateSessionTensionsInt Nothing)
@@ -965,9 +928,6 @@ update global message model =
 
         GoView viewMode ->
             let
-                newModel =
-                    { model | viewMode = viewMode }
-
                 ( data_m, cmds ) =
                     Tuple.mapFirst (\x -> withMaybeData x) <|
                         case viewMode of
@@ -980,7 +940,7 @@ update global message model =
                             CircleView ->
                                 ( model.tensions_all, [ Ports.hide "footBar", Task.attempt FitBoard (Dom.getElement "tensionsCircle") ] )
             in
-            ( newModel
+            ( { model | viewMode = viewMode }
             , Cmd.batch (ternary (data_m == Nothing) [ send (DoLoad False) ] [] ++ cmds)
             , Cmd.none
             )
