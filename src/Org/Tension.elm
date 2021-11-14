@@ -461,6 +461,10 @@ init global flags =
         cmds =
             --[ if tensionChanged global.session.referer global.url || model.tension_head == Loading then
             [ if tensionChanged2 model.tension_head global.url || model.tension_head == Loading then
+                let
+                    k =
+                        Debug.log "hey" ( tensionChanged2 model.tension_head global.url, model.tension_head == Loading )
+                in
                 send LoadTensionHead
 
               else
@@ -604,7 +608,7 @@ update global message model =
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
                                 , send (UpdateSessionAdmin (Just isAdmin))
-                                , send (UpdateSessionFocus (focusFromNameid newPath.focus.nameid |> Just))
+                                , send (UpdateSessionFocusOnly (focusFromNameid newPath.focus.nameid |> Just))
                                 ]
                             )
 

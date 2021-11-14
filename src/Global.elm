@@ -95,6 +95,7 @@ type Msg
     | LoggedOutUserOk
     | RedirectOnLoggedIn -- user is logged In !
     | UpdateSessionFocus (Maybe NodeFocus)
+    | UpdateSessionFocusOnly (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionChildren (Maybe (List NodeId))
     | UpdateSessionOrga (Maybe NodesDict)
@@ -264,6 +265,13 @@ update msg model =
               }
             , Cmd.none
             )
+
+        UpdateSessionFocusOnly data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | node_focus = data } }, Cmd.none )
 
         UpdateSessionPath data ->
             let
