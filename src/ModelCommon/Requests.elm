@@ -13,7 +13,7 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Count, Label, LabelFull, Member, NodeId, Post, Tension, User, UserCtx, UserRoleExtended, Username)
+import ModelSchema exposing (Count, Label, LabelFull, Member, NodeId, Post, Tension, TensionsCount, User, UserCtx, UserRoleExtended, Username)
 import Query.QueryNode exposing (MemberNode)
 import RemoteData exposing (RemoteData)
 
@@ -204,6 +204,18 @@ fetchTensionAll url targetids first offset query_ status_ authors labels type_ m
         , url = url ++ "/tensions_all"
         , body = Http.jsonBody <| fetchTensionEncoder targetids first offset query_ status_ authors labels type_
         , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+fetchTensionCount url targetids query_ authors labels type_ msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/tensions_count"
+        , body = Http.jsonBody <| fetchTensionEncoder targetids 0 0 query_ Nothing authors labels type_
+        , expect = expectJson (fromResult >> msg) <| JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int)
         , timeout = Nothing
         , tracker = Nothing
         }

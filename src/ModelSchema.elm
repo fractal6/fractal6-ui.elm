@@ -154,6 +154,10 @@ type alias Tension =
     }
 
 
+type alias TensionsCount =
+    { open : Int, closed : Int }
+
+
 type alias Count =
     { count : Maybe Int }
 

@@ -49,7 +49,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
-import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
 import ModelCommon.View exposing (mediaTension, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -128,6 +128,7 @@ type alias Model =
     , depthFilter : DepthFilter
     , authors : List User
     , labels : List Label
+    , tensions_count : GqlData TensionsCount
 
     -- Common
     , node_action : ActionState
@@ -459,6 +460,7 @@ type Msg
     | GotTensionsInt Int (GqlData TensionsList) -- GraphQL
     | GotTensionsExt (GqlData TensionsList) -- GraphQL
     | GotTensionsAll (GqlData TensionsList) -- GraphQL
+    | GotTensionsCount (GqlData TensionsCount)
       -- Page Action
     | DoLoadInit
     | DoLoad Bool -- query tensions
@@ -557,6 +559,7 @@ init global flags =
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing)
+            , tensions_count = fromMaybeData global.session.tensions_count Loading
 
             -- Common
             , node_action = NoOp
@@ -664,8 +667,14 @@ update global message model =
 
                 tensions_ext =
                     ternary (model.tensions_ext == Loading) LoadingSlowly model.tensions_ext
+
+                tensions_all =
+                    ternary (model.tensions_all == Loading) LoadingSlowly model.tensions_all
+
+                tensions_count =
+                    ternary (model.tensions_count == Loading) LoadingSlowly model.tensions_count
             in
-            ( { model | tensions_int = tensions_int, tensions_ext = tensions_ext }, Cmd.none, Cmd.none )
+            ( { model | tensions_int = tensions_int, tensions_ext = tensions_ext, tensions_all = tensions_all, tensions_count = tensions_count }, Cmd.none, Cmd.none )
 
         OnResize w h ->
             let
@@ -776,6 +785,9 @@ update global message model =
         GotTensionsAll result ->
             ( { model | tensions_all = result }, Task.attempt FitBoard (Dom.getElement "tensionsCircle"), send (UpdateSessionTensionsAll (withMaybeData result)) )
 
+        GotTensionsCount result ->
+            ( { model | tensions_count = result }, Cmd.none, send (UpdateSessionTensionsCount (withMaybeData result)) )
+
         DoLoadInit ->
             ( model
             , case model.depthFilter of
@@ -830,6 +842,7 @@ update global message model =
                 , Cmd.batch
                     [ fetchTensionInt apis.rest nameids first skip model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
                     , fetchTensionExt apis.rest nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
+                    , fetchTensionCount apis.rest nameids model.pattern model.authors model.labels type_ GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )
@@ -880,7 +893,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         ResetData ->
-            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, path_data = Loading }
+            ( { model | offset = 0, tensions_int = Loading, tensions_ext = Loading, tensions_all = Loading, tensions_count = Loading, path_data = Loading }
             , Cmd.none
             , Cmd.batch
                 [ send (UpdateSessionTensionsInt Nothing)
@@ -1492,6 +1505,42 @@ viewSearchBar model =
         ]
 
 
+viewTensionsCount : Model -> Html Msg
+viewTensionsCount model =
+    case model.tensions_count of
+        Success c ->
+            let
+                activeCls =
+                    "has-background-grey-darker is-selected is-hovered"
+
+                inactiveCls =
+                    "has-background-grey-dark"
+            in
+            div [ class "buttons has-addons mb-1" ]
+                [ div
+                    [ class "button is-rounded is-small"
+                    , classList [ ( activeCls, model.statusFilter == OpenStatus ), ( inactiveCls, model.statusFilter /= OpenStatus ) ]
+                    , onClick <| ChangeStatusFilter OpenStatus
+                    ]
+                    [ span [] [ c.open |> String.fromInt |> text ], text "\u{00A0}Open" ]
+                , div
+                    [ class "button is-rounded is-small"
+                    , classList [ ( activeCls, model.statusFilter == ClosedStatus ), ( inactiveCls, model.statusFilter /= ClosedStatus ) ]
+                    , onClick <| ChangeStatusFilter ClosedStatus
+                    ]
+                    [ c.closed |> String.fromInt |> text, text "\u{00A0}Closed" ]
+                ]
+
+        LoadingSlowly ->
+            div [ class "buttons has-addons mb-1" ]
+                [ button [ class "button is-rounded is-small" ] [ text "Open" ]
+                , button [ class "button is-rounded is-small" ] [ text "Closed" ]
+                ]
+
+        _ ->
+            div [] []
+
+
 viewListTensions : Model -> Html Msg
 viewListTensions model =
     let
@@ -1511,7 +1560,8 @@ viewListTensions model =
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-10-desktop is-10-fullhd" ]
-            [ viewTensions model.node_focus model.initPattern tensions_d ListTension
+            [ viewTensionsCount model
+            , viewTensions model.node_focus model.initPattern tensions_d ListTension
             ]
         ]
 

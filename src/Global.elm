@@ -104,6 +104,7 @@ type Msg
     | UpdateSessionTensionsInt (Maybe TensionsList)
     | UpdateSessionTensionsExt (Maybe TensionsList)
     | UpdateSessionTensionsAll (Maybe TensionsList)
+    | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
@@ -339,6 +340,13 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | tensions_all = data } }, Cmd.none )
+
+        UpdateSessionTensionsCount data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tensions_count = data } }, Cmd.none )
 
         UpdateSessionAdmin data ->
             let

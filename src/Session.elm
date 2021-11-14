@@ -57,6 +57,7 @@ type alias Session =
     , tensions_int : Maybe TensionsList
     , tensions_ext : Maybe TensionsList
     , tensions_all : Maybe TensionsList
+    , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
     , isAdmin : Maybe Bool
     , node_action : Maybe ActionState
@@ -105,6 +106,7 @@ resetSession flags =
     , tensions_int = Nothing
     , tensions_ext = Nothing
     , tensions_all = Nothing
+    , tensions_count = Nothing
     , tension_head = Nothing
     , isAdmin = Nothing
     , node_action = Nothing
@@ -159,6 +161,7 @@ fromLocalSession flags =
       , tensions_int = Nothing
       , tensions_ext = Nothing
       , tensions_all = Nothing
+      , tensions_count = Nothing
       , tension_head = Nothing
       , isAdmin = Nothing
       , node_action = Nothing
