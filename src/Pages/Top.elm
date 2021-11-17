@@ -199,14 +199,12 @@ viewHero : Model -> Html Msg
 viewHero model =
     div [ id "welcome", class "hero is-dark is-bold" ]
         [ div [ class "hero-body" ]
-            [ div [ class "columns is-centered section" ]
-                [ div [ class "column is-6-desktop is-4-widescreen is-4-fullhd" ]
+            [ div [ class "columns  is-centered section" ]
+                [ div [ class "column is-6-desktop is-6-widescreen is-5-fullhd" ]
                     [ h1 [ class "title is-1" ]
                         --[ text "Build unstoppable organisations" ]
                         [ text "Collective intelligence at work" ]
-                    , h2
-                        [ class "subtitle" ]
-                      <|
+                    , h2 [ class "subtitle" ] <|
                         List.intersperse (text " ")
                             [ span [ class "has-text-weight-semibold" ] [ text "Fractale" ]
                             , text "is a collaborative platform inspired by"
@@ -215,7 +213,7 @@ viewHero model =
                             , text "open source culture. Join a network that enact collective intelligence to build transparent and resilient organisation."
                             ]
                     ]
-                , div [ class "column is-6-desktop is-4-widescreen is-3-fullhd" ]
+                , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd" ]
                     [ viewSignBox model ]
                 ]
             ]

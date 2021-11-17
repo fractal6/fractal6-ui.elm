@@ -1312,15 +1312,14 @@ view_ global model =
         [ HelperBar.view helperData
         , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
             [ div [ class "column is-10-desktop is-10-widescreen is-11-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
-                [ div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
+                [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
                     [ div [ class "column is-10-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
-                , div [] <|
-                    case model.children of
-                        RemoteData.Failure err ->
-                            [ viewHttpErrors err ]
+                , case model.children of
+                    RemoteData.Failure err ->
+                        viewHttpErrors err
 
-                        other ->
-                            []
+                    _ ->
+                        text ""
                 , case model.viewMode of
                     ListView ->
                         viewListTensions model

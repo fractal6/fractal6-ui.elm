@@ -63,6 +63,7 @@ window.addEventListener('load', _ => {
 
         }
     }
+
 })
 
 // Elm outgoing Ports Actions.

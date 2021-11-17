@@ -32,4 +32,5 @@ window.addEventListener('load', _ => {
             screen: { w: window.innerWidth, h: window.innerHeight }
         }
     }));
+
 });
