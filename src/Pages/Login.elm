@@ -244,7 +244,7 @@ viewLogin global model =
                 RemoteData.Failure err ->
                     viewHttpErrors err
 
-                default ->
+                _ ->
                     text ""
             ]
         ]

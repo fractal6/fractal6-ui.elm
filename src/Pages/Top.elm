@@ -301,7 +301,7 @@ viewLogin model =
         , div [ attribute "style" "width: 225px;" ]
             [ a [ class "is-size-7 is-pulled-left mb-2", onClickPD (ChangeViewMode Signup), target "_blank" ]
                 [ textH T.createAccount ]
-            , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Login) ]
+            , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.PasswordReset) ]
                 [ textH T.passwordForgotten ]
             ]
         , div [ class "field is-grouped is-grouped-right" ]

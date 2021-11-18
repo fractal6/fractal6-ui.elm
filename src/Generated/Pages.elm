@@ -15,6 +15,7 @@ import Pages.Explore
 import Pages.Login
 import Pages.Logout
 import Pages.NotFound
+import Pages.PasswordReset
 import Pages.Signup
 import Pages.Dynamic
 import Pages.New.Orga
@@ -47,6 +48,7 @@ type Model
     | Login_Model Pages.Login.Model
     | Logout_Model Pages.Logout.Model
     | NotFound_Model Pages.NotFound.Model
+    | PasswordReset_Model Pages.PasswordReset.Model
     | Signup_Model Pages.Signup.Model
     | Dynamic_Model Pages.Dynamic.Model
     | New_Orga_Model Pages.New.Orga.Model
@@ -75,6 +77,7 @@ type Msg
     | Login_Msg Pages.Login.Msg
     | Logout_Msg Pages.Logout.Msg
     | NotFound_Msg Pages.NotFound.Msg
+    | PasswordReset_Msg Pages.PasswordReset.Msg
     | Signup_Msg Pages.Signup.Msg
     | Dynamic_Msg Pages.Dynamic.Msg
     | New_Orga_Msg Pages.New.Orga.Msg
@@ -114,6 +117,7 @@ type alias UpgradedPages =
     , login : UpgradedPage Pages.Login.Flags Pages.Login.Model Pages.Login.Msg
     , logout : UpgradedPage Pages.Logout.Flags Pages.Logout.Model Pages.Logout.Msg
     , notFound : UpgradedPage Pages.NotFound.Flags Pages.NotFound.Model Pages.NotFound.Msg
+    , passwordReset : UpgradedPage Pages.PasswordReset.Flags Pages.PasswordReset.Model Pages.PasswordReset.Msg
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
     , dynamic : UpgradedPage Pages.Dynamic.Flags Pages.Dynamic.Model Pages.Dynamic.Msg
     , new_orga : UpgradedPage Pages.New.Orga.Flags Pages.New.Orga.Model Pages.New.Orga.Msg
@@ -144,6 +148,7 @@ pages =
     , login = Pages.Login.page |> Page.upgrade Login_Model Login_Msg
     , logout = Pages.Logout.page |> Page.upgrade Logout_Model Logout_Msg
     , notFound = Pages.NotFound.page |> Page.upgrade NotFound_Model NotFound_Msg
+    , passwordReset = Pages.PasswordReset.page |> Page.upgrade PasswordReset_Model PasswordReset_Msg
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
     , dynamic = Pages.Dynamic.page |> Page.upgrade Dynamic_Model Dynamic_Msg
     , new_orga = Pages.New.Orga.page |> Page.upgrade New_Orga_Model New_Orga_Msg
@@ -188,6 +193,9 @@ init route =
         
         Route.NotFound ->
             pages.notFound.init ()
+        
+        Route.PasswordReset ->
+            pages.passwordReset.init ()
         
         Route.Signup ->
             pages.signup.init ()
@@ -271,6 +279,9 @@ update bigMsg bigModel =
         
         ( NotFound_Msg msg, NotFound_Model model ) ->
             pages.notFound.update msg model
+        
+        ( PasswordReset_Msg msg, PasswordReset_Model model ) ->
+            pages.passwordReset.update msg model
         
         ( Signup_Msg msg, Signup_Model model ) ->
             pages.signup.update msg model
@@ -357,6 +368,9 @@ bundle bigModel =
         
         NotFound_Model model ->
             pages.notFound.bundle model
+        
+        PasswordReset_Model model ->
+            pages.passwordReset.bundle model
         
         Signup_Model model ->
             pages.signup.bundle model

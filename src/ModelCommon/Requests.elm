@@ -1,5 +1,6 @@
 module ModelCommon.Requests exposing (..)
 
+import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, expectJson, fromResult, toErrorData)
 import Dict exposing (Dict)
@@ -8,6 +9,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Http
+import Image exposing (Image)
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
@@ -248,31 +250,10 @@ tensionDecoder =
         |> JDE.andMap (JD.field "receiver" emitterOrReceiverDecoder)
         |> JDE.andMap (JD.maybe <| JD.field "action" TensionAction.decoder)
         |> JDE.andMap (JD.field "status" TensionStatus.decoder)
-        --|> JDE.andMap commentsAggDecoder
         |> JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int)
 
 
-{-| Decode count into a Aggregage collections
--}
-commentsAggDecoder : JD.Decoder (Maybe Count)
-commentsAggDecoder =
-    JD.map (\x -> Just { count = x }) (JD.maybe <| JD.field "n_comments" JD.int)
 
-
-
---|> tt (JDE.andMap (JD.maybe <| JD.field "n_comments" JD.int))
-
-
-tt c x =
-    { c | comments_aggr = { count = x } }
-
-
-
---|> JDE.andMap
---    (JD.maybe <|
---        JD.field "comments_agg"
---            (JD.map Count (JD.maybe <| JD.field "count" JD.int))
---    )
 --
 -- User management
 --
@@ -314,6 +295,53 @@ tokenack url msg =
         , url = url ++ "/tokenack"
         , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+resetPasswordChallenge url msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/resetpasswordchallenge"
+        , body = Http.emptyBody
+
+        -- see https://github.com/justgook/elm-image/issues/9
+        , expect = Http.expectBytesResponse (RemoteData.fromResult >> msg) httpReponseToImage
+
+        --, expect = Http.expectJson (RemoteData.fromResult >> msg) File.decoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+httpReponseToImage : Http.Response Bytes -> Result Http.Error (Maybe Image)
+httpReponseToImage response =
+    case response of
+        Http.GoodStatus_ _ body ->
+            Ok <| Image.decode body
+
+        Http.BadUrl_ url ->
+            Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata _ ->
+            Err (Http.BadStatus metadata.statusCode)
+
+
+resetPassword url post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/resetpassword"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
         , timeout = Nothing
         , tracker = Nothing
         }

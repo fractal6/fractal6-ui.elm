@@ -387,6 +387,30 @@ fromMaybeData ma type_ =
         |> withDefault type_
 
 
+
+-- Idem but for WebData ...:S
+--
+
+
+withMapWebData :
+    (a -> b)
+    -> RemoteData e a
+    -> RemoteData e b --withMapWebData : (a -> b) -> WebData a -> WebData b
+withMapWebData resMap result =
+    case result of
+        RemoteData.Success d ->
+            RemoteData.Success (resMap d)
+
+        RemoteData.Failure err ->
+            RemoteData.Failure err
+
+        RemoteData.Loading ->
+            RemoteData.Loading
+
+        RemoteData.NotAsked ->
+            RemoteData.NotAsked
+
+
 fromMaybeWebData : Maybe a -> RemoteData e a -> RemoteData e a
 fromMaybeWebData ma type_ =
     ma

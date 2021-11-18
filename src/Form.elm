@@ -1,4 +1,4 @@
-module Form exposing (isLoginSendable, isPostEmpty, isPostSendable, isSignupSendable)
+module Form exposing (..)
 
 import Dict
 import ModelSchema exposing (Post)
@@ -36,3 +36,8 @@ isLoginSendable post =
 isSignupSendable : Post -> Bool
 isSignupSendable post =
     isPostSendable [ "username", "email", "password" ] post
+
+
+isPasswordResetSendable : Post -> Bool
+isPasswordResetSendable post =
+    isPostSendable [ "email", "challenge" ] post
