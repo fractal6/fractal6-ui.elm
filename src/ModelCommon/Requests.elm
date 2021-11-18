@@ -300,6 +300,42 @@ tokenack url msg =
         }
 
 
+uuidCheck url post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/uuidcheck"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+resetPassword url post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/resetpassword"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+resetPassword2 url post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/resetpassword2"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 resetPasswordChallenge url msg =
     Http.riskyRequest
         { method = "POST"
@@ -333,18 +369,6 @@ httpReponseToImage response =
 
         Http.BadStatus_ metadata _ ->
             Err (Http.BadStatus metadata.statusCode)
-
-
-resetPassword url post msg =
-    Http.riskyRequest
-        { method = "POST"
-        , headers = []
-        , url = url ++ "/resetpassword"
-        , body = Http.jsonBody <| JE.dict identity JE.string post
-        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
-        , timeout = Nothing
-        , tracker = Nothing
-        }
 
 
 

@@ -41,3 +41,8 @@ isSignupSendable post =
 isPasswordResetSendable : Post -> Bool
 isPasswordResetSendable post =
     isPostSendable [ "email", "challenge" ] post
+
+
+isPasswordReset2Sendable : Post -> Bool
+isPasswordReset2Sendable post =
+    isPostSendable [ "password", "password2" ] post

@@ -411,6 +411,16 @@ withMapWebData resMap result =
             RemoteData.NotAsked
 
 
+withMaybeWebData : RemoteData e a -> Maybe a
+withMaybeWebData result =
+    case result of
+        RemoteData.Success d ->
+            Just d
+
+        _ ->
+            Nothing
+
+
 fromMaybeWebData : Maybe a -> RemoteData e a -> RemoteData e a
 fromMaybeWebData ma type_ =
     ma
