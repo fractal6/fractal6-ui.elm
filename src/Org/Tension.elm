@@ -98,6 +98,7 @@ import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, pub
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
+import Scroll
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
 import String.Extra as SE
 import Task
@@ -361,6 +362,7 @@ type Msg
     | ChangeUpdateViewMode InputViewMode
     | ExpandRoles
     | CollapseRoles
+    | ScrollToElement String
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
@@ -1632,6 +1634,9 @@ update global message model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
+        ScrollToElement did ->
+            ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
+
         -- Help
         HelpMsg msg ->
             let
@@ -1827,10 +1832,12 @@ viewTension u t model =
                                 text ""
                             ]
                 , div [ class "tensionSubtitle" ]
-                    [ span [ class "tag is-rounded is-light" ]
+                    [ span [ class "is-w tag is-rounded is-light" ]
                         [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
                     , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
-                        span [ class ("tag is-rounded is-" ++ statusColor t.status) ]
+                        -- As Governance tension get automatically closed when there are created,
+                        -- there status is not relevant, I can cause confusion to user as the object exists.
+                        span [ class ("is-w tag is-rounded is-" ++ statusColor t.status), onClick (ScrollToElement "tensionCommentInput") ]
                             [ t.status |> TensionStatus.toString |> text ]
 
                       else
@@ -2082,101 +2089,6 @@ viewComment c model =
         ]
 
 
-viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html Msg
-viewCommentInput uctx tension form result viewMode =
-    let
-        message =
-            Dict.get "message" form.post |> withDefault ""
-
-        isLoading =
-            result == LoadingSlowly
-
-        isSendable =
-            isPostSendable [ "message" ] form.post
-
-        doSubmit =
-            ternary isSendable [ onClick (Submit <| SubmitComment Nothing) ] []
-
-        submitCloseOpenTension =
-            case tension.status of
-                TensionStatus.Open ->
-                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Closed)) ]
-
-                TensionStatus.Closed ->
-                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Open)) ]
-
-        closeOpenText =
-            case tension.status of
-                TensionStatus.Open ->
-                    ternary (message == "") "Close tension" "Close and comment"
-
-                TensionStatus.Closed ->
-                    ternary (message == "") "Reopen tension" "Reopen and comment"
-    in
-    div [ class "media section is-paddingless tensionCommentInput" ]
-        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri uctx.username) ] [ getAvatar uctx.username ] ]
-        , div [ class "media-content" ]
-            [ div [ class "message" ]
-                [ div [ class "message-header" ]
-                    [ div [ class "tabs is-boxed is-small" ]
-                        [ ul []
-                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
-                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
-                            ]
-                        ]
-                    ]
-                , div [ class "message-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control submitFocus" ]
-                            [ case viewMode of
-                                Write ->
-                                    textarea
-                                        [ id "commentInput"
-                                        , class "textarea defaultSubmit"
-                                        , rows 7
-                                        , placeholder "Leave a comment"
-                                        , value message
-                                        , onInput (ChangeTensionPost "message")
-                                        ]
-                                        []
-
-                                Preview ->
-                                    div [] [ renderMarkdown "is-light mt-4 mx-3" message, hr [] [] ]
-                            ]
-                        ]
-                    , case result of
-                        Failure err ->
-                            viewGqlErrors err
-
-                        _ ->
-                            text ""
-                    , div [ class "field is-grouped is-grouped-right" ]
-                        [ div [ class "control" ]
-                            [ div [ class "buttons" ]
-                                [ button
-                                    ([ class "button"
-                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
-                                     ]
-                                        ++ submitCloseOpenTension
-                                    )
-                                    [ text closeOpenText ]
-                                , button
-                                    ([ class "button is-success"
-                                     , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
-                                     , disabled (not isSendable)
-                                     ]
-                                        ++ doSubmit
-                                    )
-                                    [ text "Comment" ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-
 viewUpdateInput : UserCtx -> Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
 viewUpdateInput uctx comment form result =
     let
@@ -2241,6 +2153,101 @@ viewUpdateInput uctx comment form result =
                             , onClick (Submit <| SubmitCommentPatch)
                             ]
                             [ textH T.updateComment ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+
+viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html Msg
+viewCommentInput uctx tension form result viewMode =
+    let
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
+        isLoading =
+            result == LoadingSlowly
+
+        isSendable =
+            isPostSendable [ "message" ] form.post
+
+        doSubmit =
+            ternary isSendable [ onClick (Submit <| SubmitComment Nothing) ] []
+
+        submitCloseOpenTension =
+            case tension.status of
+                TensionStatus.Open ->
+                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Closed)) ]
+
+                TensionStatus.Closed ->
+                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Open)) ]
+
+        closeOpenText =
+            case tension.status of
+                TensionStatus.Open ->
+                    ternary (message == "") "Close tension" "Close and comment"
+
+                TensionStatus.Closed ->
+                    ternary (message == "") "Reopen tension" "Reopen and comment"
+    in
+    div [ id "tensionCommentInput", class "media section is-paddingless tensionCommentInput" ]
+        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri uctx.username) ] [ getAvatar uctx.username ] ]
+        , div [ class "media-content" ]
+            [ div [ class "message" ]
+                [ div [ class "message-header" ]
+                    [ div [ class "tabs is-boxed is-small" ]
+                        [ ul []
+                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
+                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
+                            ]
+                        ]
+                    ]
+                , div [ class "message-body" ]
+                    [ div [ class "field" ]
+                        [ div [ class "control submitFocus" ]
+                            [ case viewMode of
+                                Write ->
+                                    textarea
+                                        [ id "commentInput"
+                                        , class "textarea defaultSubmit"
+                                        , rows 7
+                                        , placeholder "Leave a comment"
+                                        , value message
+                                        , onInput (ChangeTensionPost "message")
+                                        ]
+                                        []
+
+                                Preview ->
+                                    div [] [ renderMarkdown "is-light mt-4 mx-3" message, hr [] [] ]
+                            ]
+                        ]
+                    , case result of
+                        Failure err ->
+                            viewGqlErrors err
+
+                        _ ->
+                            text ""
+                    , div [ class "field is-grouped is-grouped-right" ]
+                        [ div [ class "control" ]
+                            [ div [ class "buttons" ]
+                                [ button
+                                    ([ class "button"
+                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
+                                     ]
+                                        ++ submitCloseOpenTension
+                                    )
+                                    [ text closeOpenText ]
+                                , button
+                                    ([ class "button is-success"
+                                     , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ doSubmit
+                                    )
+                                    [ text "Comment" ]
+                                ]
+                            ]
                         ]
                     ]
                 ]

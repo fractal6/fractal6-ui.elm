@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - A info message can now be passed to the ConfirmModal component.
 - New "edit node" entry in settings menu that redirect to the node's [Governance] tension.
 - icon marker on tension's filter buttons if they are different then default settings.
+- add the reset password page.
 
 ### Changed
 - Improve the tension search bar filter

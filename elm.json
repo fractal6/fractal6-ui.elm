@@ -21,6 +21,7 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/dict-extra": "2.4.0",
+            "elm-community/easing-functions": "2.0.0",
             "elm-community/json-extra": "4.2.0",
             "elm-community/list-extra": "8.2.3",
             "elm-community/string-extra": "4.0.1",
