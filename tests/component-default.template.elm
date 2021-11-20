@@ -168,7 +168,7 @@ update_ apis message model =
     case message of
         -- Data
         OnLoad ->
-            (model, out0 [ OnSubmit OnDataQuery ])
+            (model, out0 [send <| OnSubmit OnDataQuery ])
 
         OnChangePost field value ->
             ( updatePost field value model, noOut )

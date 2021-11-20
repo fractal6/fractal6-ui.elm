@@ -20,6 +20,7 @@ import Components.Loading as Loading
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
+        , viewMaybeErrors
         , withDefaultData
         , withMapData
         , withMaybeData
@@ -28,6 +29,7 @@ import Components.Loading as Loading
 import Components.Markdown exposing (renderMarkdown)
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
+import Components.SelectType as SelectType
 import Components.UserSearchPanel as UserSearchPanel
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -94,7 +96,7 @@ import ModelCommon.View
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchTension exposing (actionRequest, patchComment, patchTitle, publishBlob, pushTensionPatch)
+import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import RemoteData exposing (RemoteData)
@@ -180,7 +182,7 @@ type alias Model =
 
     -- Title Result
     , isTitleEdit : Bool
-    , title_result : GqlData String
+    , title_result : GqlData IdPayload
 
     -- Comment Edit
     , comment_form : CommentPatchForm
@@ -211,6 +213,7 @@ type alias Model =
     , labelsPanel : LabelSearchPanel.State
     , moveTension : MoveTension.State
     , contractsPage : ContractsPage.State
+    , selectType : SelectType.State
     }
 
 
@@ -297,7 +300,7 @@ type Msg
     | DoChangeTitle
     | CancelTitle
     | SubmitTitle Time.Posix
-    | TitleAck (GqlData String)
+    | TitleAck (GqlData IdPayload)
       -- move tension
     | DoMove TensionHead
       -- Blob control
@@ -370,6 +373,7 @@ type Msg
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | MoveTensionMsg MoveTension.Msg
     | ContractsPageMsg ContractsPage.Msg
+    | SelectTypeMsg SelectType.Msg
 
 
 
@@ -458,15 +462,12 @@ init global flags =
             , refresh_trial = 0
             , moveTension = MoveTension.init global.session.user
             , contractsPage = ContractsPage.init rootnameid global.session.user
+            , selectType = SelectType.init tid global.session.user
             }
 
         cmds =
             --[ if tensionChanged global.session.referer global.url || model.tension_head == Loading then
             [ if tensionChanged2 model.tension_head global.url || model.tension_head == Loading then
-                let
-                    k =
-                        Debug.log "hey" ( tensionChanged2 model.tension_head global.url, model.tension_head == Loading )
-                in
                 send LoadTensionHead
 
               else
@@ -532,7 +533,7 @@ update global message model =
             ( model, patchComment apis.gql model.comment_form CommentPatchAck, Cmd.none )
 
         PushTitle ->
-            ( model, patchTitle apis.gql model.tension_form TitleAck, Cmd.none )
+            ( model, patchLiteral apis.gql model.tension_form TitleAck, Cmd.none )
 
         PushBlob_ form ->
             ( model, pushTensionPatch apis.gql form BlobAck, Cmd.none )
@@ -905,7 +906,7 @@ update global message model =
                 newForm =
                     { form
                         | post =
-                            Dict.insert "createdAt" (fromTime time) form.post
+                            form.post
                                 |> Dict.union
                                     (Dict.fromList
                                         [ ( "old", model.tension_head |> withMaybeDataMap (\x -> x.title) |> withDefault "" )
@@ -925,12 +926,12 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PushTitle 500, send UpdateUserToken )
 
-                OkAuth title ->
+                OkAuth _ ->
                     let
                         tension_h =
                             case model.tension_head of
                                 Success t ->
-                                    Success { t | title = title }
+                                    Success { t | title = Dict.get "title" model.tension_form.post |> withDefault "" }
 
                                 other ->
                                     other
@@ -1683,6 +1684,27 @@ update global message model =
             , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
             )
 
+        SelectTypeMsg msg ->
+            let
+                ( data, out ) =
+                    SelectType.update apis msg model.selectType
+
+                th =
+                    out.result
+                        |> Maybe.map
+                            (\( _, r ) ->
+                                withMapData (\x -> { x | type_ = r }) model.tension_head
+                            )
+                        |> withDefault model.tension_head
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | selectType = data, tension_head = th }
+            , out.cmds |> List.map (\m -> Cmd.map SelectTypeMsg m) |> List.append cmds |> Cmd.batch
+            , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
+            )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1696,6 +1718,7 @@ subscriptions _ model =
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
+        ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         |> Sub.batch
 
 
@@ -1718,6 +1741,7 @@ view global model =
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
+        , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
         ]
     }
 
@@ -1767,7 +1791,7 @@ viewTension u t model =
     in
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
-            -- @DEBUG: width correpsoding to is-9 is hard-coded in modal-content (below) to
+            -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9" ]
                 [ h1 [ class "title tensionTitle" ] <|
@@ -1810,12 +1834,7 @@ viewTension u t model =
                                         [ textH T.updateTitle ]
                                     ]
                                 ]
-                            , case model.title_result of
-                                Failure err ->
-                                    viewGqlErrors err
-
-                                _ ->
-                                    text ""
+                            , viewMaybeErrors model.title_result
                             ]
 
                         False ->
@@ -1832,7 +1851,11 @@ viewTension u t model =
                                 text ""
                             ]
                 , div [ class "tensionSubtitle" ]
-                    [ span [ class "is-w tag is-rounded is-light" ]
+                    [ span
+                        [ class "tag is-rounded is-light"
+                        , classList [ ( "is-w", model.isTensionAdmin ) ]
+                        , ternary model.isTensionAdmin (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
+                        ]
                         [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
                     , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
                         -- As Governance tension get automatically closed when there are created,

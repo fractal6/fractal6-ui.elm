@@ -1280,9 +1280,9 @@ view_ global model =
                 _ ->
                     text "Wrong position"
     in
-    -- [div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
     div [ id "mainPane" ]
-        [ HelperBar.view helperData
+        [ --div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+          HelperBar.view helperData
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-6-desktop is-5-widescreen is-5-fullhd" ]
                 [ viewSearchBar global.session.user model

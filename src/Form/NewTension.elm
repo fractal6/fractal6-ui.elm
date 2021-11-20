@@ -940,6 +940,7 @@ viewStep : Op -> State -> Html Msg
 viewStep op (State model) =
     case model.step of
         TensionTypes ->
+            -- See also Components.SelectType
             div [ class "modal-card" ]
                 [ div [ class "modal-card-head" ]
                     [ span [ class "has-text-weight-medium" ] [ text "Choose the type of tension to communicate:" ] ]

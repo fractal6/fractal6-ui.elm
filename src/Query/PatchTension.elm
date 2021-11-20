@@ -2,7 +2,7 @@ module Query.PatchTension exposing
     ( actionRequest
     , moveTension
     , patchComment
-    , patchTitle
+    , patchLiteral
     , publishBlob
     , pushTensionPatch
     , setAssignee
@@ -172,41 +172,16 @@ patchTensionInputEncoder f =
 -}
 
 
-type alias PatchTitlePayload =
-    { tension : Maybe (List (Maybe TensionTitle)) }
-
-
-type alias TensionTitle =
-    { title : String }
-
-
-titlePatchDecoder : Maybe PatchTitlePayload -> Maybe String
-titlePatchDecoder data =
-    case data of
-        Just d ->
-            d.tension
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-                |> Maybe.map (\t -> t.title)
-
-        Nothing ->
-            Nothing
-
-
-patchTitle url form msg =
+patchLiteral url form msg =
+    -- Can patch more than literal in reality...
     makeGQLMutation url
         (Mutation.updateTension
             (patchTensionInputEncoder form)
-            (SelectionSet.map PatchTitlePayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map TensionTitle Fractal.Object.Tension.title
+            (SelectionSet.map TensionIdPayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse titlePatchDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
 
 
 

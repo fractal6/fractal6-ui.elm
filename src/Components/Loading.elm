@@ -278,6 +278,26 @@ viewHttpErrors httpErr =
         |> viewGqlErrors
 
 
+viewMaybeErrors : GqlData a -> Html msg
+viewMaybeErrors data =
+    case data of
+        Failure err ->
+            viewGqlErrors err
+
+        _ ->
+            text ""
+
+
+viewMaybeWebErrors : WebData a -> Html msg
+viewMaybeWebErrors data =
+    case data of
+        RemoteData.Failure err ->
+            viewHttpErrors err
+
+        _ ->
+            text ""
+
+
 viewAuthNeeded : (ModalData -> msg) -> Html msg
 viewAuthNeeded forward =
     div [ class "modal-card" ]

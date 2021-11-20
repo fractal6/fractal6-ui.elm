@@ -521,6 +521,7 @@ type alias NameidPayload =
 
 
 type alias TensionId =
+    -- To use when there is possibly a contract to catch
     { id : String
     , contracts : Maybe (List Contract)
     }

@@ -1,4 +1,4 @@
-module ${module_name} exposing (Msg(..), State, init, subscriptions, update, view)
+module Components.SelectType exposing (Msg(..), State, init, subscriptions, update, view)
 
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
@@ -8,90 +8,88 @@ import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
+import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), uctxFromUser)
+import ModelCommon exposing (TensionPatchForm, UserState(..), initTensionPatchForm, uctxFromUser)
+import ModelCommon.View exposing (tensionTypeColor)
 import ModelSchema exposing (..)
 import Ports
-import Query.AddData exposing (getData)
+import Query.PatchTension exposing (patchLiteral)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
 
+
 type State
     = State Model
+
 
 type alias Model =
     { user : UserState
     , isOpen : Bool
-    , data_result : GqlData MyData -- result of any query
-    , form : MyForm -- user inputs
+    , type_orig : TensionType.TensionType
+    , data_result : GqlData IdPayload -- result of any query
+    , form : TensionPatchForm -- user inputs
+
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
     }
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : String -> UserState -> Model
+initModel tid user =
     { user = user
     , isOpen = False
     , data_result = NotAsked
-    , form = initForm user
+    , type_orig = TensionType.Operational
+    , form = initTensionPatchForm tid user
+
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     }
 
-type alias MyData = String
 
-type alias MyForm =
-    { uctx : UserCtx
-    , tid : String
-    , target : String
-    , events_type : Maybe (List TensionEvent.TensionEvent)
-    , post : Post
-    }
+init : String -> UserState -> State
+init tid user =
+    initModel tid user |> State
 
-initForm : UserState -> MyForm
-initForm user =
-    { uctx = uctxFromUser user
-    , tid = "" -- example
-    , target = "" -- example
-    , events_type = Nothing
-    , post = Dict.empty
-    }
-
-init : UserState -> State
-init user =
-    initModel user |> State
 
 
 -- Global methods
+
 
 isOpen_ : State -> Bool
 isOpen_ (State model) =
     model.isOpen
 
+
+
 --- State Controls
 
-open : Model -> Model
-open model =
-    { model | isOpen = True}
+
+open : TensionType.TensionType -> Model -> Model
+open type_ model =
+    { model | isOpen = True, type_orig = type_ }
+
 
 close : Model -> Model
 close model =
     { model | isOpen = False }
 
+
 reset : Model -> Model
 reset model =
-    initModel model.user
+    initModel "" model.user
+
 
 updatePost : String -> String -> Model -> Model
 updatePost field value model =
@@ -101,9 +99,12 @@ updatePost field value model =
     in
     { model | form = { form | post = Dict.insert field value form.post } }
 
-setDataResult : GqlData MyData -> Model -> Model
+
+setDataResult : GqlData IdPayload -> Model -> Model
 setDataResult result model =
     { model | data_result = result }
+
+
 
 -- utils
 
@@ -111,19 +112,19 @@ setDataResult result model =
 canExitSafe : Model -> Bool
 canExitSafe model =
     -- Condition to close safely (e.g. empty form data)
-    (hasData model && withMaybeData model.data_result == Nothing) == False
+    not (hasData model && withMaybeData model.data_result == Nothing)
 
 
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    (isPostEmpty [ "message" ] model.form.post) == False
+    not (isPostEmpty [ "type_" ] model.form.post || Dict.get "type_" model.form.post == Just (TensionType.toString model.type_orig))
 
 
 isSendable : Model -> Bool
 isSendable model =
     -- when the form can be submited
-    False
+    Dict.get "type_" model.form.post /= Just (TensionType.toString model.type_orig) && (Dict.get "type_" model.form.post /= Nothing)
 
 
 
@@ -133,16 +134,16 @@ isSendable model =
 
 
 type Msg
-    = OnOpen
+    = OnOpen TensionType.TensionType
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
-    -- Data
+      -- Data
     | OnChangePost String String
-    | DoQueryData
+    | DoPatchData
     | OnSubmit (Time.Posix -> Msg)
-    | OnDataQuery Time.Posix
-    | OnDataAck (GqlData MyData)
+    | OnDataPatch Time.Posix
+    | OnDataAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -155,7 +156,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe ( Bool, MyData ) -- define what data is to be returned
+    , result : Maybe ( Bool, TensionType.TensionType ) -- define what data is to be returned
     }
 
 
@@ -173,9 +174,11 @@ out1 : List GlobalCmd -> Out
 out1 cmds =
     Out [] cmds Nothing
 
+
 out2 : List (Cmd Msg) -> List GlobalCmd -> Out
 out2 cmds gcmds =
     Out cmds gcmds Nothing
+
 
 update : Apis -> Msg -> State -> ( State, Out )
 update apis message (State model) =
@@ -185,9 +188,9 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen ->
-            ( open model
-            , out0 [ Ports.open_modal "${module_basename}Modal" ]
+        OnOpen type_ ->
+            ( open type_ model
+            , out0 [ Ports.open_modal "SelectTypeModal" ]
             )
 
         OnClose data ->
@@ -209,24 +212,41 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) {message=Nothing , txts=[ ( upH T.confirmUnsaved, onCloseTxt ) ]}) ]
+                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
                 )
 
         -- Data
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
-        DoQueryData ->
-            -- Adapt your query
-            (model, out0 [getData apis.gql model.form OnDataAck])
+        DoPatchData ->
+            let
+                form =
+                    model.form
+
+                newForm =
+                    { form
+                        | post =
+                            model.form.post
+                                |> Dict.union
+                                    (Dict.fromList
+                                        [ ( "old", TensionType.toString model.type_orig )
+                                        , ( "new", Dict.get "type_" form.post |> withDefault "" )
+                                        ]
+                                    )
+                        , events_type = Just [ TensionEvent.TitleUpdated ]
+                    }
+            in
+            ( { model | form = newForm }, out0 [ patchLiteral apis.gql newForm OnDataAck ] )
 
         OnSubmit next ->
             ( model
             , out0 [ sendNow next ]
             )
-        OnDataQuery time ->
-            (setDataResult LoadingSlowly model
-            , out0 [ send DoQueryData ]
+
+        OnDataPatch time ->
+            ( setDataResult LoadingSlowly model
+            , out0 [ send DoPatchData ]
             )
 
         OnDataAck result ->
@@ -241,14 +261,25 @@ update_ apis message model =
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryData 500 ] [ DoUpdateToken ] )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep DoPatchData 500 ] [ DoUpdateToken ] )
 
-                OkAuth d ->
-                    ( data, Out [] [] (Just ( True, d )) )
+                OkAuth _ ->
+                    ( data
+                    , Out []
+                        []
+                        (Just
+                            ( True
+                            , model.form.post
+                                |> Dict.get "type_"
+                                |> withDefault ""
+                                |> TensionType.fromString
+                                |> withDefault TensionType.Operational
+                            )
+                        )
+                    )
 
                 _ ->
                     ( data, noOut )
-
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -268,12 +299,13 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
 
-
-subscriptions :  List (Sub Msg)
+subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
+
+
 
 -- ------------------------------
 -- V I E W
@@ -295,26 +327,29 @@ view op (State model) =
 viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
-        [ id "${module_basename}Modal"
+        [ id "SelectTypeModal"
         , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
-            , attribute "data-modal" "${module_basename}Modal"
+            , attribute "data-modal" "SelectTypeModal"
             , onClick (OnCloseSafe "" "")
             ]
             []
-        , div [ class "modal-content" ] [
-            case model.data_result of
+        , div [ class "modal-content" ]
+            [ case model.data_result of
                 Success data ->
                     let
-                        link = data.id -- example @tofix
+                        link =
+                            data.id
+
+                        -- example @tofix
                     in
-                    div [ class "box is-light"]
+                    div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , text "data queried..."
+                        , text "Tension type changed."
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })
@@ -322,11 +357,13 @@ viewModal op (State model) =
                             ]
                             [ textH T.checkItOut ]
                         ]
+
                 _ ->
                     viewModalContent op (State model)
-                ]
+            ]
         , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
+
 
 viewModalContent : Op -> State -> Html Msg
 viewModalContent op (State model) =
@@ -336,31 +373,41 @@ viewModalContent op (State model) =
 
         isLoading =
             model.data_result == LoadingSlowly
-
     in
     div [ class "modal-card" ]
         [ div [ class "modal-card-head" ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ textH "EditMe" ]
+                [ textH "Change the tension Type" ]
             ]
         , div [ class "modal-card-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control" ]
-                    [ span [] [ text "EditMe" ] ]
-                ]
-            , div [ class "field" ]
-                [ div [ class "control" ]
-                    [ textarea
-                        [ class "textarea in-modal"
-                        , rows 5
-                        , placeholder (upH T.leaveCommentOpt)
-                        , value message
-                        , onInput <| OnChangePost "message"
-                        ]
-                        []
-                    ]
-                , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
-                ]
+            [ div [ class "level buttonRadio" ] <|
+                List.map
+                    (\tensionType ->
+                        let
+                            type_ =
+                                TensionType.toString tensionType
+
+                            isActive =
+                                Just type_ == Dict.get "type_" model.form.post
+
+                            style =
+                                if isActive then
+                                    attribute "style" "outline: 4px solid;outline-style: outset;outline-offset: 3px;"
+
+                                else
+                                    attribute "style" ""
+                        in
+                        div [ class "level-item" ]
+                            [ div
+                                [ class <| "button " ++ tensionTypeColor "background" tensionType
+                                , classList [ ( "is-active", isActive ) ]
+                                , style
+                                , onClick (OnChangePost "type_" type_)
+                                ]
+                                [ text type_ ]
+                            ]
+                    )
+                    TensionType.list
             ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
             [ case model.data_result of
@@ -381,11 +428,11 @@ viewModalContent op (State model) =
                     [ button
                         ([ class "button is-light is-success"
                          , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not isSendable || isLoading)
+                         , disabled (not (isSendable model) || isLoading)
                          ]
-                            ++ [ onClick (OnSubmit <| OnDataQuery ) ]
+                            ++ [ onClick (OnSubmit <| OnDataPatch) ]
                         )
-                        [ textH T.submit ]
+                        [ textH "change type" ]
                     ]
                 ]
             ]
