@@ -216,16 +216,19 @@ update_ apis message model =
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
+        OnSubmit next ->
+            ( model , out0 [ sendNow next ])
+
         DoQueryData ->
             -- Adapt your query
-            (model, out0 [getData apis.gql model.form OnDataAck])
-
-        OnSubmit next ->
-            ( model
-            , out0 [ sendNow next ]
+            ( setDataResult LoadingSlowly model
+            , out0 [getData apis.gql model.form OnDataAck]
             )
+
+
         OnDataQuery time ->
-            (setDataResult LoadingSlowly model
+            -- setup your form
+            (model
             , out0 [ send DoQueryData ]
             )
 
@@ -315,6 +318,7 @@ viewModal op (State model) =
                     div [ class "box is-light"]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text "data queried..."
+                        , text " "
                         , a
                             [ href link
                             , onClickPD (OnClose { reset = True, link = link })

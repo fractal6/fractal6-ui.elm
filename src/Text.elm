@@ -355,6 +355,11 @@ updatedTitle =
     "updated title"
 
 
+updatedType : String
+updatedType =
+    "updated type"
+
+
 confirmUnsaved : String
 confirmUnsaved =
     "you have unsaved data, please confirm to exit."

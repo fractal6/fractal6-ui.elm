@@ -96,7 +96,7 @@ addTensionInputEncoder f =
                 Input.buildUserRef
                     (\x -> { x | username = Present f.uctx.username })
             , title = title
-            , type_ = f.tension_type
+            , type_ = f.type_
             , status = f.status
             , emitter =
                 Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
@@ -161,7 +161,7 @@ tensionFromForm f =
                     (\x -> { x | username = Present f.uctx.username })
                     |> Present
             , title = title |> Present
-            , type_ = f.tension_type |> Present
+            , type_ = f.type_ |> Present
             , status = f.status |> Present
             , action = f.action |> fromMaybe
             , emitter =

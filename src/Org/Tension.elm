@@ -907,6 +907,7 @@ update global message model =
                     { form
                         | post =
                             form.post
+                                |> Dict.insert "createdAt" (fromTime time)
                                 |> Dict.union
                                     (Dict.fromList
                                         [ ( "old", model.tension_head |> withMaybeDataMap (\x -> x.title) |> withDefault "" )
@@ -1783,6 +1784,11 @@ view_ global model =
         ]
 
 
+viewTypeBadge : TensionType.TensionType -> Html Msg
+viewTypeBadge type_ =
+    span [] [ span [ class <| "Circle " ++ tensionTypeColor "text" type_ ] [ text "\u{00A0}" ], type_ |> TensionType.toString |> text ]
+
+
 viewTension : UserState -> TensionHead -> Model -> Html Msg
 viewTension u t model =
     let
@@ -1856,7 +1862,7 @@ viewTension u t model =
                         , classList [ ( "is-w", model.isTensionAdmin ) ]
                         , ternary model.isTensionAdmin (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
                         ]
-                        [ div [ class <| "Circle " ++ tensionTypeColor "text" t.type_ ] [ text "\u{00A0}" ], t.type_ |> TensionType.toString |> text ]
+                        [ viewTypeBadge t.type_ ]
                     , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
                         -- As Governance tension get automatically closed when there are created,
                         -- there status is not relevant, I can cause confusion to user as the object exists.
@@ -2304,6 +2310,9 @@ viewEvent event t =
         TensionEvent.TitleUpdated ->
             viewEventTitle event
 
+        TensionEvent.TypeUpdated ->
+            viewEventType event
+
         TensionEvent.AssigneeAdded ->
             viewEventAssignee event True
 
@@ -2374,6 +2383,28 @@ viewEventTitle event =
                 [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
                 , span [ class "right-arrow" ] []
                 , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
+                ]
+            ]
+        ]
+
+
+viewEventType : Event -> Html Msg
+viewEventType event =
+    let
+        icon =
+            I.icon "icon-pen"
+
+        actionText =
+            T.updatedType
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ icon ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatTime event.createdAt) ]
+            , span [ class "section" ]
+                [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
+                , span [ class "right-arrow" ] []
+                , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
                 ]
             ]
         ]

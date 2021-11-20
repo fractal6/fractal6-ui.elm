@@ -118,13 +118,13 @@ canExitSafe model =
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    not (isPostEmpty [ "type_" ] model.form.post || Dict.get "type_" model.form.post == Just (TensionType.toString model.type_orig))
+    model.form.type_ /= Nothing && model.form.type_ /= Just model.type_orig
 
 
 isSendable : Model -> Bool
 isSendable model =
     -- when the form can be submited
-    Dict.get "type_" model.form.post /= Just (TensionType.toString model.type_orig) && (Dict.get "type_" model.form.post /= Nothing)
+    hasData model
 
 
 
@@ -140,9 +140,10 @@ type Msg
     | OnReset
       -- Data
     | OnChangePost String String
+    | OnSetType TensionType.TensionType
     | DoPatchData
     | OnSubmit (Time.Posix -> Msg)
-    | OnDataPatch Time.Posix
+    | OnPatchData Time.Posix
     | OnDataAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -219,7 +220,14 @@ update_ apis message model =
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
-        DoPatchData ->
+        OnSetType type_ ->
+            let
+                form =
+                    model.form
+            in
+            ( { model | form = { form | type_ = Just type_ } }, noOut )
+
+        OnPatchData time ->
             let
                 form =
                     model.form
@@ -228,25 +236,28 @@ update_ apis message model =
                     { form
                         | post =
                             model.form.post
+                                |> Dict.insert "createdAt" (fromTime time)
                                 |> Dict.union
                                     (Dict.fromList
                                         [ ( "old", TensionType.toString model.type_orig )
-                                        , ( "new", Dict.get "type_" form.post |> withDefault "" )
+                                        , ( "new", model.form.type_ |> withDefault TensionType.Operational |> TensionType.toString )
                                         ]
                                     )
-                        , events_type = Just [ TensionEvent.TitleUpdated ]
+                        , events_type = Just [ TensionEvent.TypeUpdated ]
                     }
             in
-            ( { model | form = newForm }, out0 [ patchLiteral apis.gql newForm OnDataAck ] )
+            ( { model | form = newForm }
+            , out0 [ send DoPatchData ]
+            )
 
         OnSubmit next ->
             ( model
             , out0 [ sendNow next ]
             )
 
-        OnDataPatch time ->
+        DoPatchData ->
             ( setDataResult LoadingSlowly model
-            , out0 [ send DoPatchData ]
+            , out0 [ patchLiteral apis.gql model.form OnDataAck ]
             )
 
         OnDataAck result ->
@@ -265,17 +276,7 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( data
-                    , Out []
-                        []
-                        (Just
-                            ( True
-                            , model.form.post
-                                |> Dict.get "type_"
-                                |> withDefault ""
-                                |> TensionType.fromString
-                                |> withDefault TensionType.Operational
-                            )
-                        )
+                    , Out [] [] (Just ( True, withDefault TensionType.Operational model.form.type_ ))
                     )
 
                 _ ->
@@ -341,21 +342,9 @@ viewModal op (State model) =
         , div [ class "modal-content" ]
             [ case model.data_result of
                 Success data ->
-                    let
-                        link =
-                            data.id
-
-                        -- example @tofix
-                    in
                     div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text "Tension type changed."
-                        , a
-                            [ href link
-                            , onClickPD (OnClose { reset = True, link = link })
-                            , target "_blank"
-                            ]
-                            [ textH T.checkItOut ]
                         ]
 
                 _ ->
@@ -384,11 +373,8 @@ viewModalContent op (State model) =
                 List.map
                     (\tensionType ->
                         let
-                            type_ =
-                                TensionType.toString tensionType
-
                             isActive =
-                                Just type_ == Dict.get "type_" model.form.post
+                                Just tensionType == model.form.type_
 
                             style =
                                 if isActive then
@@ -402,9 +388,9 @@ viewModalContent op (State model) =
                                 [ class <| "button " ++ tensionTypeColor "background" tensionType
                                 , classList [ ( "is-active", isActive ) ]
                                 , style
-                                , onClick (OnChangePost "type_" type_)
+                                , onClick (OnSetType tensionType)
                                 ]
-                                [ text type_ ]
+                                [ text (TensionType.toString tensionType) ]
                             ]
                     )
                     TensionType.list
@@ -430,7 +416,7 @@ viewModalContent op (State model) =
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not (isSendable model) || isLoading)
                          ]
-                            ++ [ onClick (OnSubmit <| OnDataPatch) ]
+                            ++ [ onClick (OnSubmit <| OnPatchData) ]
                         )
                         [ textH "change type" ]
                     ]

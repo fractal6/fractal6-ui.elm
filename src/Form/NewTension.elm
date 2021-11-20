@@ -124,7 +124,7 @@ initTensionTab model =
 
         newForm =
             { form
-                | tension_type = TensionType.Operational
+                | type_ = TensionType.Operational
                 , action = Nothing
                 , blob_type = Nothing
                 , node = initNodeFragment Nothing
@@ -145,7 +145,7 @@ initCircleTab type_ model =
 
         newForm =
             { form
-                | tension_type = TensionType.Governance
+                | type_ = TensionType.Governance
                 , blob_type = Just BlobType.OnNode
                 , node = { node | charac = Just form.target.charac } -- inherit charac
                 , users = [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
@@ -327,7 +327,7 @@ setTensionType type_ data =
             data.form
 
         newForm =
-            { form | tension_type = type_ }
+            { form | type_ = type_ }
     in
     { data | form = newForm }
 
@@ -1080,8 +1080,8 @@ viewTension op (State model) =
                                     , span [ class "dropdown" ]
                                         [ span [ class "dropdown-trigger button-light" ]
                                             [ span [ attribute "aria-controls" "type-menu" ]
-                                                [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.tension_type ]
-                                                    [ text (TensionType.toString form.tension_type), span [ class "ml-2 arrow down" ] [] ]
+                                                [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.type_ ]
+                                                    [ text (TensionType.toString form.type_), span [ class "ml-2 arrow down" ] [] ]
                                                 ]
                                             ]
                                         , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
@@ -1258,8 +1258,8 @@ viewCircle op (State model) =
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
                                     , span
-                                        [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.tension_type ]
-                                        [ text (TensionType.toString form.tension_type) ]
+                                        [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.type_ ]
+                                        [ text (TensionType.toString form.type_) ]
                                     ]
                                 ]
                         , viewRecipients model

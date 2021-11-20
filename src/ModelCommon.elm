@@ -96,7 +96,7 @@ type alias TensionForm =
     , source : UserRole
     , target : PNode
     , status : TensionStatus.TensionStatus
-    , tension_type : TensionType.TensionType
+    , type_ : TensionType.TensionType
     , labels : List Label
     , action : Maybe TensionAction.TensionAction
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc
@@ -115,7 +115,7 @@ type alias TensionPatchForm =
     { id : String
     , uctx : UserCtx
     , status : Maybe TensionStatus.TensionStatus
-    , tension_type : Maybe TensionType.TensionType
+    , type_ : Maybe TensionType.TensionType
     , action : Maybe TensionAction.TensionAction
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
@@ -219,7 +219,7 @@ initTensionForm user =
     , source = UserRole "" "" "" RoleType.Guest
     , target = initPNode
     , status = TensionStatus.Open
-    , tension_type = TensionType.Operational
+    , type_ = TensionType.Operational
     , labels = []
     , action = Nothing
     , post = Dict.empty
@@ -241,7 +241,7 @@ initTensionPatchForm tid user =
                 initUserctx
     , id = tid
     , status = Nothing
-    , tension_type = Nothing
+    , type_ = Nothing
     , action = Nothing
     , emitter = Nothing
     , receiver = Nothing

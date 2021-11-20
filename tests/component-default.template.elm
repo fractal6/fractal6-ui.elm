@@ -173,15 +173,17 @@ update_ apis message model =
         OnChangePost field value ->
             ( updatePost field value model, noOut )
 
+        OnSubmit next ->
+            ( model , out0 [ sendNow next ])
+
         DoQueryData ->
             -- Adapt your query
-            (model, out0 [getData apis.gql model.form OnDataAck])
-
-        OnSubmit next ->
-            ( model
-            , out0 [ sendNow next ]
+            ( setDataResult LoadingSlowly model
+            , out0 [getData apis.gql model.form OnDataAck]
             )
+
         OnDataQuery time ->
+            -- setup your form
             (model
             , out0 [ send DoQueryData ]
             )
