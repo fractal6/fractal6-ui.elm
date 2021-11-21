@@ -76,8 +76,6 @@ import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View
     exposing
         ( actionNameStr
-        , blobTypeStr
-        , getAvatar
         , statusColor
         , tensionTypeColor
         , viewActionIcon
@@ -89,7 +87,7 @@ import ModelCommon.View
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
         , viewUpdated
-        , viewUser
+        , viewUser2
         , viewUsernameLink
         , viewUsers
         )
@@ -2068,7 +2066,7 @@ viewComments u t model =
 viewComment : Comment -> Model -> Html Msg
 viewComment c model =
     div [ class "media section is-paddingless" ]
-        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri c.createdBy.username) ] [ getAvatar c.createdBy.username ] ]
+        [ div [ class "media-left" ] [ viewUser2 c.createdBy.username ]
         , div
             [ class "media-content"
             , attribute "style" "width: 66.66667%;"
@@ -2221,7 +2219,7 @@ viewCommentInput uctx tension form result viewMode =
                     ternary (message == "") "Reopen tension" "Reopen and comment"
     in
     div [ id "tensionCommentInput", class "media section is-paddingless tensionCommentInput" ]
-        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri uctx.username) ] [ getAvatar uctx.username ] ]
+        [ div [ class "media-left" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
                 [ div [ class "message-header" ]

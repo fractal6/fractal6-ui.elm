@@ -120,7 +120,10 @@ export const GraphPack = {
     // Background Colors
     //backgroundColor: "#f1fdff",
     //backgroundColor: "#f0fff0",
+    //--
     backgroundColor: "#edfcff",
+    //--
+    //backgroundColor: "#3e4957",
 
     // Graph Colors
     //colorCircleRange: ['#d9d9d9','#838383','#4c4c4c','#1c1c1c', '#000000'],

@@ -24,7 +24,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nid2rootid, uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
-import ModelCommon.View exposing (getAvatar, roleColor, viewOrgaMedia)
+import ModelCommon.View exposing (getAvatar3, roleColor, viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -444,7 +444,7 @@ view_ global model uctx =
 viewProfileLeft : Model -> UserCtx -> Html Msg
 viewProfileLeft model uctx =
     div []
-        [ div [ class "content image circleBase circle3" ] [ getAvatar uctx.username ]
+        [ div [ class "content image circleBase circle3" ] [ getAvatar3 uctx.username ]
         , div [ class "content" ]
             [ case uctx.name of
                 Just name ->

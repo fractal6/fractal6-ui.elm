@@ -158,6 +158,12 @@ hr {
     font-style: italic !important;
 }
 
+.has-text-weight-light {
+    a:hover {
+        font-weight: initial;
+    }
+}
+
 
 .is-smaller {
     font-size: 88% !important;
@@ -851,6 +857,7 @@ html.has-modal-active, html.has-modal-active2 {
             .message-body {
                 padding: 1rem 0.9rem !important;
                 font-size: 15px;
+                line-height: 1.66;
             }
         }
 
@@ -1351,7 +1358,7 @@ a.actionLink {
 
 #canvasOrga {
     border-radius: 7px 7px 7px 7px !important;
-    box-shadow: 0 0px 2px 1px #22101087;
+    box-shadow: 0 0px 1px 1px #22101087;
     //background-image: linear-gradient(white, black) ;
 }
 
@@ -1922,7 +1929,8 @@ a.actionLink {
 .circle0 {
     width: 38px;
     height: 38px;
-    background: $blue;
+    background: #00000052;
+    //background: #2e3641;
     border: 1px solid #000;
     // Text centering
     text-align: center;
@@ -1933,7 +1941,7 @@ a.actionLink {
 .circle1 {
     width: 45px;
     height: 45px;
-    background: $blue;
+    background: #00000052;
     border: 1px solid #000;
     // Text centering
     text-align: center;
@@ -1954,7 +1962,7 @@ a.actionLink {
 .circle3 {
     width: 200px;
     height: 200px;
-    background: #575c64;
+    background: #00000052;
     border: 1px solid #000;
     // Text centering
     text-align: center;

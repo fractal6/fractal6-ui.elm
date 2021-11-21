@@ -31,7 +31,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembers, getQuickDoc, login)
-import ModelCommon.View exposing (roleColor)
+import ModelCommon.View exposing (roleColor, viewUser)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -597,7 +597,8 @@ viewMembers data focus =
                         , div [ class "table is-fullwidth" ]
                             [ thead []
                                 [ tr []
-                                    [ th [] [ textH T.username ]
+                                    [ th [] []
+                                    , th [] [ textH T.username ]
                                     , th [] [ textH T.name ]
                                     , th [ class "" ] [ textH T.roles ]
                                     ]
@@ -606,9 +607,10 @@ viewMembers data focus =
                                 List.indexedMap
                                     (\i m ->
                                         tr []
-                                            [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                            , td [] [ m.name |> withDefault "--" |> text ]
-                                            , td [] [ viewMemberRoles OverviewBaseUri m.roles ]
+                                            [ td [ class "pr-0" ] [ viewUser True m.username ]
+                                            , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                            , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
+                                            , td [ class "pt-3" ] [ viewMemberRoles OverviewBaseUri m.roles ]
                                             ]
                                     )
                                     mbs
@@ -653,7 +655,8 @@ viewMembersSub data focus =
                         , div [ class "table is-fullwidth" ]
                             [ thead []
                                 [ tr []
-                                    [ th [] [ textH T.username ]
+                                    [ th [] []
+                                    , th [] [ textH T.username ]
                                     , th [] [ textH T.name ]
                                     , th [ class "" ] [ textH T.roles ]
                                     ]
@@ -662,9 +665,10 @@ viewMembersSub data focus =
                                 List.indexedMap
                                     (\i m ->
                                         tr []
-                                            [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                            , td [] [ m.name |> withDefault "--" |> text ]
-                                            , td [] [ viewMemberRoles OverviewBaseUri m.roles ]
+                                            [ td [ class "pr-0" ] [ viewUser True m.username ]
+                                            , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                            , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
+                                            , td [ class "pt-3" ] [ viewMemberRoles OverviewBaseUri m.roles ]
                                             ]
                                     )
                                     mbs

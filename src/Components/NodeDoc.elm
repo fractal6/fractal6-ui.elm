@@ -20,7 +20,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getAvatar, getNodeTextFromNodeType, roleColor, viewUser)
+import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
 import Text as T exposing (textH, textT, upH)

@@ -21,7 +21,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
-import ModelCommon.View exposing (getAvatar, viewOrgaMedia)
+import ModelCommon.View exposing (viewOrgaMedia)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

@@ -13,10 +13,11 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global
-import Html exposing (Html, a, br, button, div, hr, i, p, span, text)
+import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
 import Icon as I
+import Identicon
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs
@@ -229,8 +230,7 @@ viewLabel cls label =
             label.color
                 |> Maybe.map
                     (\c ->
-                        [ attribute "style" ("background-color:" ++ c ++ "; color:" ++ colorToTextColor c ++ ";")
-                        ]
+                        [ attribute "style" ("background-color:" ++ c ++ "; color:" ++ colorToTextColor c ++ ";") ]
                     )
                 |> withDefault []
     in
@@ -244,14 +244,30 @@ viewUsers users =
 
 viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
+    let
+        circleCls =
+            "image circleBaseInline circle0"
+    in
     if isLinked then
         span [ class "mr-1" ]
-            [ a [ class "image circleBaseInline circle0", href (uriFromUsername UsersBaseUri username) ]
+            [ a [ class circleCls, href (uriFromUsername UsersBaseUri username) ]
                 [ getAvatar username ]
             ]
 
     else
-        span [ class "mr-1" ] [ div [ class "image circleBaseInline circle0" ] [ getAvatar username ] ]
+        span [ class "mr-1" ] [ div [ class circleCls ] [ getAvatar username ] ]
+
+
+viewUser2 : String -> Html msg
+viewUser2 username =
+    let
+        circleCls =
+            "image circleBaseInline circle1"
+    in
+    span [ class "mr-1" ]
+        [ a [ class circleCls, href (uriFromUsername UsersBaseUri username) ]
+            [ getAvatar2 username ]
+        ]
 
 
 viewUsernameLink : String -> Html msg
@@ -371,7 +387,7 @@ viewOrgaMedia user root =
                 [ class "image circleBase circle2"
                 , href (uriFromNameid OverviewBaseUri root.nameid)
                 ]
-                [ getAvatar root.name ]
+                [ getAvatarOrga root.name ]
             ]
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
@@ -438,23 +454,58 @@ viewOrgaMedia user root =
 
 
 {-
-   User
+   Avatar
 -}
 
 
 getAvatar : String -> Html msg
 getAvatar username =
+    Identicon.identicon "18px" username
+
+
+getAvatar2 : String -> Html msg
+getAvatar2 username =
+    Identicon.identicon "22px" username
+
+
+getAvatar3 : String -> Html msg
+getAvatar3 username =
+    Identicon.identicon "108px" username
+
+
+
+--let
+--    initial =
+--        username
+--            |> String.slice 0 1
+--            |> String.toUpper
+--in
+--span []
+--    [ text initial
+--    , username
+--        |> String.slice 1 3
+--        |> String.toLower
+--        |> text
+--        |> List.singleton
+--        |> sub [ attribute "style" "font-size: 75% !important;" ]
+--    ]
+
+
+getAvatarOrga : String -> Html msg
+getAvatarOrga name =
     let
         initial =
-            username
+            name
                 |> String.slice 0 1
                 |> String.toUpper
     in
-    username
-        |> String.slice 1 3
-        |> String.toLower
-        |> String.append initial
-        |> text
+    span []
+        [ text initial
+        , name
+            |> String.slice 1 3
+            |> String.toLower
+            |> text
+        ]
 
 
 

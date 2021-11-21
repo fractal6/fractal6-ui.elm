@@ -73,7 +73,7 @@ import ModelCommon.Codecs
         , uriFromUsername
         )
 import ModelCommon.Requests exposing (login)
-import ModelCommon.View exposing (getAvatar, mediaTension, tensionTypeColor, viewUsernameLink)
+import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports

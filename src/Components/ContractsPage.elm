@@ -23,7 +23,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, uriFromUsername)
-import ModelCommon.View exposing (byAt, contractEventToText, contractTypeToText, getAvatar, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUsernameLink)
+import ModelCommon.View exposing (byAt, contractEventToText, contractTypeToText, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUser2, viewUsernameLink)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)
@@ -749,7 +749,7 @@ viewContractBox data op model =
 viewComment : Comment -> Bool -> Html Msg
 viewComment c isAuthor =
     div [ class "media section is-paddingless" ]
-        [ div [ class "media-left" ] [ a [ class "image circleBase circle1", href (uriFromUsername UsersBaseUri c.createdBy.username) ] [ getAvatar c.createdBy.username ] ]
+        [ div [ class "media-left" ] [ viewUser2 c.createdBy.username ]
         , div
             [ class "media-content"
             , attribute "style" "width: 66.66667%;"
