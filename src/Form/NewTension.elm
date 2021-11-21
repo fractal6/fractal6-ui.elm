@@ -127,7 +127,6 @@ initTensionTab model =
                 | type_ = TensionType.Operational
                 , action = Nothing
                 , blob_type = Nothing
-                , node = initNodeFragment Nothing
                 , users = []
             }
     in
@@ -141,15 +140,16 @@ initCircleTab type_ model =
             model.form
 
         node =
-            initNodeFragment (Just type_)
+            form.node
 
         newForm =
             { form
                 | type_ = TensionType.Governance
                 , blob_type = Just BlobType.OnNode
-                , node = { node | charac = Just form.target.charac } -- inherit charac
+                , node = { node | charac = Just form.target.charac, type_ = Just type_ } -- inherit charac
                 , users = [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
             }
+                |> NodeDoc.updateNodeForm "name" (withDefault "" node.name)
     in
     case type_ of
         NodeType.Role ->
@@ -742,6 +742,17 @@ update_ apis message model =
 
         OnSubmitTension doClose time ->
             let
+                newModel =
+                    if model.activeTab == NewTensionTab then
+                        let
+                            form =
+                                model.form
+                        in
+                        { model | form = { form | node = initNodeFragment Nothing } }
+
+                    else
+                        model
+
                 events =
                     case model.activeTab of
                         NewTensionTab ->
@@ -761,7 +772,7 @@ update_ apis message model =
                             else
                                 [ TensionEvent.Created, TensionEvent.BlobCreated ]
             in
-            ( model
+            ( newModel
                 |> post "createdAt" (fromTime time)
                 |> setEvents events
                 |> setStatus (ternary (doClose == True) TensionStatus.Closed TensionStatus.Open)
