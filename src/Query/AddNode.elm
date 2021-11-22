@@ -58,42 +58,41 @@ type alias AddCirclePayload =
 
 circleDecoder : Maybe AddCirclePayload -> Maybe (List Node)
 circleDecoder a =
-    case a of
-        Just b ->
-            b.node
-                |> Maybe.map
-                    (\x ->
-                        case List.head x of
-                            Just (Just n) ->
-                                let
-                                    children =
-                                        n.children |> withDefault []
+    a
+        |> Maybe.andThen
+            (\b ->
+                b.node
+                    |> Maybe.map
+                        (\x ->
+                            case List.head x of
+                                Just (Just n) ->
+                                    let
+                                        children =
+                                            n.children |> withDefault []
 
-                                    node =
-                                        { createdAt = .createdAt n
-                                        , name = .name n
-                                        , nameid = .nameid n
-                                        , rootnameid = .rootnameid n
-                                        , parent = .parent n
-                                        , type_ = .type_ n
-                                        , role_type = .role_type n
-                                        , first_link = .first_link n
-                                        , charac = .charac n
-                                        , isPrivate = .isPrivate n
-                                        , source = .source n
-                                        }
-                                in
-                                [ node ]
-                                    ++ children
-                                    |> Just
+                                        node =
+                                            { createdAt = .createdAt n
+                                            , name = .name n
+                                            , nameid = .nameid n
+                                            , rootnameid = .rootnameid n
+                                            , parent = .parent n
+                                            , type_ = .type_ n
+                                            , role_type = .role_type n
+                                            , first_link = .first_link n
+                                            , charac = .charac n
+                                            , isPrivate = .isPrivate n
+                                            , source = .source n
+                                            }
+                                    in
+                                    [ node ]
+                                        ++ children
+                                        |> Just
 
-                            _ ->
-                                Nothing
-                    )
-                |> Maybe.withDefault Nothing
-
-        Nothing ->
-            Nothing
+                                _ ->
+                                    Nothing
+                        )
+                    |> Maybe.withDefault Nothing
+            )
 
 
 

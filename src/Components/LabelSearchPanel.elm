@@ -112,10 +112,6 @@ open targets data =
 
 close : Model -> Model
 close data =
-    let
-        form =
-            data.form
-    in
     { data | isOpen = False, click_result = NotAsked, pattern = "" }
 
 
@@ -157,10 +153,6 @@ updatePost field value data =
 
 setPattern : String -> Model -> Model
 setPattern pattern data =
-    let
-        form =
-            data.form
-    in
     { data | pattern = pattern }
 
 
@@ -177,7 +169,7 @@ type Msg
     | OnChangePattern String
     | ChangeLabelLookup (LookupResult Label)
     | OnLabelClick Label Bool Time.Posix
-    | OnLabelClickInt Label Bool Time.Posix
+    | OnLabelClickInt Label Bool
     | OnLabelAck (GqlData IdPayload)
     | OnSubmit (Time.Posix -> Msg)
     | OnGotLabels (GqlData (List Label))
@@ -232,7 +224,7 @@ update_ apis message model =
                             ( { model | labels_data = LoadingSlowly }, [ queryLabelsUp apis.gql targets OnGotLabels ] )
                             ( model, [] )
                 in
-                ( open targets model
+                ( open targets newModel
                 , out0 <|
                     [ Ports.inheritWith "labelSearchPanel"
                     , Ports.focusOn "userInput"
@@ -319,7 +311,7 @@ update_ apis message model =
                         , Out [ sendSleep ResetClickResult 333 ] [] (Just ( data.form.isNew, data.form.label ))
                         )
 
-        OnLabelClickInt label isNew time ->
+        OnLabelClickInt label isNew ->
             let
                 data =
                     click label isNew model
@@ -508,7 +500,7 @@ viewLabelSelectors isInternal labels op model =
                                 [ class "panel-block"
                                 , classList [ ( "is-active", isActive ) ]
                                 , ternary isInternal
-                                    (onClick (OnSubmit <| OnLabelClickInt l (isActive == False)))
+                                    (onClick (OnLabelClickInt l (isActive == False)))
                                     (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                                 ]
                                 [ span [ class "panel-icon" ] [ I.icon iconCls ]

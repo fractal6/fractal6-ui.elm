@@ -66,7 +66,7 @@ view op =
 helpButton : Op -> Html msg
 helpButton op =
     case op.user of
-        LoggedIn uctx ->
+        LoggedIn _ ->
             div
                 [ class "navbar-item" ]
                 [ div
@@ -81,7 +81,7 @@ helpButton op =
 newButton : Op -> Html msg
 newButton op =
     case op.user of
-        LoggedIn uctx ->
+        LoggedIn _ ->
             div
                 [ class "navbar-item has-dropdown mx-2"
                 , attribute "style" "align-items: center !important;"

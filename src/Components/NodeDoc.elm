@@ -1,8 +1,7 @@
 module Components.NodeDoc exposing (..)
 
-import Components.Doc exposing (ActionView(..))
+import Components.DocToolBar exposing (ActionView(..))
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
-import Components.Markdown exposing (renderMarkdown)
 import Components.UserSearchPanel exposing (viewUserSelectors)
 import Date exposing (formatTime)
 import Dict
@@ -17,6 +16,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
 import List.Extra as LE
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
@@ -277,7 +277,7 @@ view data op_m =
                 Success tid ->
                     view_ tid data op_m
 
-                other ->
+                _ ->
                     text ""
             ]
         ]
@@ -287,7 +287,7 @@ view_ : String -> OrgaNodeData msg -> Maybe (Op msg) -> Html msg
 view_ tid data op_m =
     let
         type_ =
-            data.node.type_ |> withDefault NodeType.Role
+            withDefault NodeType.Role data.node.type_
 
         isLinksHidden =
             if type_ == NodeType.Circle && data.source == TensionBaseUri then
@@ -878,38 +878,27 @@ getFirstLinks node =
 
 
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
-nodeFragmentFromOrga node_m nodeData c ndata =
+nodeFragmentFromOrga node_m nodeData children_eo ndata =
     let
         children =
-            node_m
-                |> Maybe.map
-                    (\node ->
-                        case node.type_ of
-                            NodeType.Circle ->
-                                c
-                                    |> List.map (\n -> Dict.get n.nameid ndata)
-                                    |> List.filterMap identity
-                                    |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
-                                    |> List.map
-                                        (\n ->
-                                            { name = Just n.name
-                                            , nameid = Just n.nameid
-                                            , type_ = Just n.type_
-                                            , isPrivate = Just n.isPrivate
-                                            , charac = Just n.charac
-                                            , role_type = n.role_type
-                                            , about = Nothing
-                                            , mandate = Nothing
-                                            , first_link = n.first_link |> Maybe.map (\u -> u.username)
-                                            }
-                                        )
-                                    |> Just
-
-                            --|> List.map (\n -> n.first_link)
-                            --|> List.filterMap identity
-                            NodeType.Role ->
-                                Nothing
+            children_eo
+                |> List.map (\n -> Dict.get n.nameid ndata)
+                |> List.filterMap identity
+                |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
+                |> List.map
+                    (\n ->
+                        { name = Just n.name
+                        , nameid = Just n.nameid
+                        , type_ = Just n.type_
+                        , isPrivate = Just n.isPrivate
+                        , charac = Just n.charac
+                        , role_type = n.role_type
+                        , about = Nothing
+                        , mandate = Nothing
+                        , first_link = n.first_link |> Maybe.map (\u -> u.username)
+                        }
                     )
+                |> Just
     in
     { name = Maybe.map (\n -> n.name) node_m
     , nameid = Maybe.map (\n -> n.nameid) node_m
@@ -920,7 +909,7 @@ nodeFragmentFromOrga node_m nodeData c ndata =
     , about = Maybe.map (\n -> n.about) (withMaybeData nodeData) |> withDefault Nothing
     , mandate = Maybe.map (\n -> n.mandate) (withMaybeData nodeData) |> withDefault Nothing
     , first_link = Maybe.map (\n -> n.first_link |> Maybe.map (\u -> u.username)) node_m |> withDefault Nothing
-    , children = children |> withDefault Nothing
+    , children = children
     }
 
 
@@ -979,7 +968,7 @@ updateNodeForm field value form =
                     else
                         { form | node = { node | name = Just value } }
 
-        other ->
+        _ ->
             -- title, message...
             { form | post = Dict.insert field value form.post }
 

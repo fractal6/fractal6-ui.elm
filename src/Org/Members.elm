@@ -322,7 +322,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                other ->
+                _ ->
                     ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
 
         DoJoinOrga3 node time ->
@@ -437,7 +437,7 @@ update global message model =
                     , send (UpdateUserSession uctx)
                     )
 
-                other ->
+                _ ->
                     case model.modalAuth of
                         Active form ->
                             ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
@@ -623,7 +623,7 @@ viewMembers data focus =
         LoadingSlowly ->
             div [ class "spinner" ] []
 
-        other ->
+        _ ->
             text ""
 
 
@@ -681,7 +681,7 @@ viewMembersSub data focus =
         LoadingSlowly ->
             div [ class "spinner" ] []
 
-        other ->
+        _ ->
             text ""
 
 

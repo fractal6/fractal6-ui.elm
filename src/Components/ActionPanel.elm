@@ -298,7 +298,7 @@ type alias Op msg =
     , onCloseModal : String -> msg
     , onNavigate : String -> msg
     , onActionSubmit : Time.Posix -> msg
-    , onActionMove : Time.Posix -> msg
+    , onActionMove : msg
     , onUpdatePost : String -> String -> msg
     }
 
@@ -342,7 +342,7 @@ viewPanel op =
         )
             -- MOVE ACTION
             ++ (if op.isAdmin then
-                    [ div [ class "dropdown-item button-light", onClick (op.onSubmit <| op.onActionMove) ]
+                    [ div [ class "dropdown-item button-light", onClick op.onActionMove ]
                         [ span [ class "right-arrow2 pl-0 pr-2" ] [], text (action2str MoveAction) ]
                     , hr [ class "dropdown-divider" ] []
                     ]
@@ -404,26 +404,13 @@ viewModal op =
 
 viewModalContent : Op msg -> Html msg
 viewModalContent op =
-    let
-        form =
-            op.data.form
-
-        name =
-            form.node.name
-
-        type_ =
-            form.node.type_
-
-        isLoading =
-            op.data.action_result == LoadingSlowly
-    in
     case op.data.step of
         StepOne ->
             viewStep1 op.data.state op
 
         StepAck ->
             case op.data.action_result of
-                Success t ->
+                Success _ ->
                     div
                         [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "

@@ -1,47 +1,48 @@
 .content.markdown {
-    //font-family: Georgia, Palatino, serif;
+  //font-family: Georgia, Palatino, serif;
+  font-size: 15px;
 }
 
 .content.markdown.is-light {
-    pre, code {
-        background-color: $code-color !important;
-    }
+  pre, code {
+    background-color: $code-color !important;
+  }
 
-	a {
-		color: lighten($info, 15) !important;
-		text-decoration: none !important;
-	}
-	a:hover {
-		text-decoration: underline !important;
-	}
-	a:visited {
-		color: darken($info, 5);
-	}
+  a {
+    color: lighten($info, 15) !important;
+    text-decoration: none !important;
+  }
+  a:hover {
+    text-decoration: underline !important;
+  }
+  a:visited {
+    color: darken($info, 5);
+  }
 }
 
 .content.markdown.is-dark {
+  color: #111 !important;
+
+  h1, h2, h3, h4, h5, h6, strong {
     color: #111 !important;
+  }
+  pre, code {
+    background-color: $code-color !important;
+  }
+  pre, code, blockquote {
+    color: #fff !important;
+  }
 
-    h1, h2, h3, h4, h5, h6, strong {
-        color: #111 !important;
-    }
-    pre, code {
-        background-color: $code-color !important;
-    }
-    pre, code, blockquote {
-        color: #fff !important;
-    }
-
-	a {
-		color: $info !important;
-		text-decoration: none !important;
-	}
-	a:hover {
-		text-decoration: underline !important;
-	}
-	a:visited {
-		color: darken($info, 5);
-	}
+  a {
+    color: $info !important;
+    text-decoration: none !important;
+  }
+  a:hover {
+    text-decoration: underline !important;
+  }
+  a:visited {
+    color: darken($info, 5);
+  }
 }
 
 

@@ -457,10 +457,6 @@ update global message model =
             )
 
         CancelLabel ->
-            let
-                f =
-                    model.label_form
-            in
             ( { model
                 | label_add = False
                 , label_edit = Nothing
@@ -482,13 +478,13 @@ update global message model =
             in
             ( { model | label_form = newForm }, Cmd.none, Cmd.none )
 
-        SubmitAddLabel time ->
+        SubmitAddLabel _ ->
             ( { model | label_result = LoadingSlowly }, addOneLabel apis.gql model.label_form GotLabel, Cmd.none )
 
-        SubmitEditLabel time ->
+        SubmitEditLabel _ ->
             ( { model | label_result = LoadingSlowly }, updateOneLabel apis.gql model.label_form GotLabel, Cmd.none )
 
-        SubmitDeleteLabel id time ->
+        SubmitDeleteLabel id _ ->
             let
                 f =
                     model.label_form
@@ -568,7 +564,7 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteLabel model.label_form.id) 500, send UpdateUserToken )
 
-                OkAuth label ->
+                OkAuth _ ->
                     let
                         d =
                             withMaybeData model.labels |> withDefault []
@@ -613,7 +609,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                LoggedIn uctx ->
+                LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
                     , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
@@ -668,7 +664,7 @@ update global message model =
                         RefreshToken i ->
                             ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
 
-                        OkAuth n ->
+                        OkAuth _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , Cmd.none
                             , send UpdateUserToken
@@ -964,12 +960,11 @@ viewLabels model =
             , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ textT T.newLabel ]
             , br [] []
             ]
-        , case model.label_add of
-            True ->
-                viewLabelAddBox model
+        , if model.label_add then
+            viewLabelAddBox model
 
-            False ->
-                text ""
+          else
+            text ""
         , case model.labels of
             Success labels ->
                 if List.length labels == 0 then
@@ -986,8 +981,8 @@ viewLabels model =
                                 ]
                             ]
                         , labels
-                            |> List.indexedMap
-                                (\i d ->
+                            |> List.map
+                                (\d ->
                                     [ tr [] <|
                                         if model.label_edit == Just d then
                                             [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
@@ -1058,8 +1053,8 @@ viewLabelsSub model =
                 div [ class "mt-6" ]
                     [ text "Labels also present in sub-circles "
                     , labels
-                        |> List.indexedMap
-                            (\i d ->
+                        |> List.map
+                            (\d ->
                                 viewLabel "ml-2" (Label d.id d.name d.color)
                             )
                         |> span []

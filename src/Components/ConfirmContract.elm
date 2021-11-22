@@ -109,8 +109,8 @@ updateFormFromData c f =
     }
 
 
-init : String -> UserState -> State
-init target user =
+init : UserState -> State
+init user =
     initModel user |> State
 
 

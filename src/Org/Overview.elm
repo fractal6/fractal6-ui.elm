@@ -208,7 +208,7 @@ type Msg
     | CloseActionPanelModal String
       --| ActionStep1 XXX
     | ActionSubmit Time.Posix
-    | ActionMove Time.Posix
+    | ActionMove
     | GotTensionToMove (GqlData TensionHead)
     | ArchiveDocAck (GqlData ActionResult)
     | LeaveRoleAck (GqlData ActionResult)
@@ -337,7 +337,7 @@ init global flags =
                 ]
                     ++ (if fs.menuChange then
                             case session.orga_data of
-                                Just ndata ->
+                                Just _ ->
                                     [ send LoadOrga
                                     , Ports.initGraphPack Dict.empty "" --canvas loading effect
                                     ]
@@ -398,7 +398,7 @@ update global message model =
                 ackMsg =
                     case state of
                         MoveAction ->
-                            \x -> NoMsg
+                            \_ -> NoMsg
 
                         ArchiveAction ->
                             ArchiveDocAck
@@ -410,7 +410,7 @@ update global message model =
                             LeaveRoleAck
 
                         NoAction ->
-                            \x -> NoMsg
+                            \_ -> NoMsg
             in
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
@@ -478,7 +478,7 @@ update global message model =
                 Success data ->
                     ( { model | tensions_data = result, init_tensions = False }, Cmd.none, send (UpdateSessionTensions (Just data)) )
 
-                other ->
+                _ ->
                     ( { model | tensions_data = result }, Cmd.none, send (UpdateSessionTensions Nothing) )
 
         GotData result ->
@@ -486,7 +486,7 @@ update global message model =
                 Success data ->
                     ( { model | node_data = result, init_data = False }, Cmd.none, send (UpdateSessionData (Just data)) )
 
-                other ->
+                _ ->
                     ( { model | node_data = result }, Cmd.none, Cmd.none )
 
         -- Search
@@ -732,7 +732,7 @@ update global message model =
             , Cmd.none
             )
 
-        ActionMove time ->
+        ActionMove ->
             ( model, getTensionHead apis.gql model.actionPanel.form.tid GotTensionToMove, Cmd.none )
 
         GotTensionToMove result ->
@@ -772,7 +772,7 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
-                OkAuth t ->
+                OkAuth _ ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
                 _ ->
@@ -795,7 +795,7 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
-                OkAuth t ->
+                OkAuth _ ->
                     ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
 
                 _ ->
@@ -813,7 +813,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                LoggedIn uctx ->
+                LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
                     , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
@@ -827,7 +827,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                other ->
+                _ ->
                     ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
 
         DoJoinOrga3 node time ->
@@ -868,7 +868,7 @@ update global message model =
                         RefreshToken i ->
                             ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
 
-                        OkAuth n ->
+                        OkAuth _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , queryNodesSub apis.gql (memberIdCodec form.node.nameid form.uctx.username) NewNodesAck
                             , Cmd.none
@@ -877,7 +877,7 @@ update global message model =
                         _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
-                default ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         -- Graphpack
@@ -1083,7 +1083,7 @@ update global message model =
                     , send (UpdateUserSession uctx)
                     )
 
-                other ->
+                _ ->
                     case model.modalAuth of
                         Active form ->
                             ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
@@ -1226,7 +1226,7 @@ view_ global model =
             focus_m |> Maybe.map (\n -> n.role_type) |> withDefault Nothing
 
         nodeData_ =
-            { data = withMapData (\x -> tid) model.node_data
+            { data = withMapData (\_ -> tid) model.node_data
             , node = initNodeFragment Nothing
             , isLazy = model.init_data
             , source = OverviewBaseUri
@@ -1253,7 +1253,7 @@ view_ global model =
                         Nothing ->
                             nodeData_
 
-                other ->
+                _ ->
                     nodeData_
 
         helperData =
@@ -1441,7 +1441,7 @@ viewActionPanel domid us node o actionPanel =
 
 
 viewSearchList : UserState -> Model -> Html Msg
-viewSearchList us model =
+viewSearchList _ model =
     let
         qs =
             model.node_quickSearch
@@ -1654,7 +1654,7 @@ viewActionStep : Model -> ActionState -> Html Msg
 viewActionStep model action =
     case action of
         JoinOrga step ->
-            viewJoinOrgaStep model.orga_data step
+            viewJoinOrgaStep step
 
         NoOp ->
             text ""
@@ -1666,8 +1666,8 @@ viewActionStep model action =
             viewAuthNeeded DoCloseModal
 
 
-viewJoinOrgaStep : GqlData NodesDict -> JoinStep ActionForm -> Html Msg
-viewJoinOrgaStep orga step =
+viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
+viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
             div [ class "box spinner" ] [ text "" ]

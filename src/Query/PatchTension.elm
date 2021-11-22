@@ -57,18 +57,17 @@ type alias PatchTensionPayload =
 
 tensionPushDecoder : Maybe PatchTensionPayload -> Maybe PatchTensionPayloadID
 tensionPushDecoder data =
-    case data of
-        Just d ->
-            d.tension
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-
-        Nothing ->
-            Nothing
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.tension
+                    |> Maybe.map
+                        (\items ->
+                            List.filterMap identity items
+                        )
+                    |> withDefault []
+                    |> List.head
+            )
 
 
 pushTensionPatch url form msg =
@@ -144,7 +143,7 @@ patchTensionInputEncoder f =
             }
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set =
                     Input.buildTensionPatch
                         (\s ->
@@ -240,7 +239,7 @@ patchCommentInputEncoder form =
             }
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set =
                     Input.buildCommentPatch
                         (\s ->
@@ -328,7 +327,7 @@ setAssigneeEncoder f =
             Input.buildTensionPatch (\s -> { s | history = events }) |> Present
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set = ternary f.isNew patch historyPatch
                 , remove = ternary (f.isNew == False) patch Absent
                 }
@@ -388,7 +387,7 @@ setLabelEncoder f =
             Input.buildTensionPatch (\s -> { s | history = events }) |> Present
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set = ternary f.isNew patch historyPatch
                 , remove = ternary (f.isNew == False) patch Absent
                 }
@@ -480,7 +479,7 @@ setMoveEncoder f =
                 |> Present
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set = patch, remove = Absent }
     in
     { input = Input.buildUpdateTensionInput inputReq inputOpt }
@@ -567,7 +566,7 @@ publishBlobInputEncoder bid f =
             }
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set =
                     Input.buildTensionPatch
                         (\s ->
@@ -650,7 +649,7 @@ actionInputEncoder f =
             }
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set =
                     Input.buildTensionPatch
                         (\s ->

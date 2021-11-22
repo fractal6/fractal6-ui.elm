@@ -1,6 +1,5 @@
-module Components.DocToolBar exposing (view)
+module Components.DocToolBar exposing (ActionView(..), view)
 
-import Components.Doc exposing (ActionView(..))
 import Extra exposing (ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
@@ -18,6 +17,13 @@ type alias Op =
     , tid : String
     , actionView : Maybe ActionView
     }
+
+
+type ActionView
+    = DocView
+    | DocEdit
+    | DocVersion
+    | NoView
 
 
 view : Op -> Html msg

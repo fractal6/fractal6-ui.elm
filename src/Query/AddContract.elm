@@ -40,15 +40,14 @@ type alias ContractsPayload =
 
 contractDecoder : Maybe ContractsPayload -> Maybe Contract
 contractDecoder a =
-    case a of
-        Just b ->
-            b.contract
-                |> Maybe.map (\x -> List.head x)
-                |> Maybe.withDefault Nothing
-                |> Maybe.withDefault Nothing
-
-        Nothing ->
-            Nothing
+    a
+        |> Maybe.andThen
+            (\b ->
+                b.contract
+                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
 
 
 addOneContract url form msg =
@@ -134,15 +133,14 @@ type alias ContractsPayloadId =
 
 contractIdDecoder : Maybe ContractsPayloadId -> Maybe IdPayload
 contractIdDecoder a =
-    case a of
-        Just b ->
-            b.contract
-                |> Maybe.map (\x -> List.head x)
-                |> Maybe.withDefault Nothing
-                |> Maybe.withDefault Nothing
-
-        Nothing ->
-            Nothing
+    a
+        |> Maybe.andThen
+            (\b ->
+                b.contract
+                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
 
 
 deleteOneContract url form msg =

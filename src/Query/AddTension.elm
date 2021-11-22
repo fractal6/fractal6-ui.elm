@@ -51,15 +51,14 @@ type alias TensionsPayload =
 
 tensionDecoder : Maybe TensionsPayload -> Maybe Tension
 tensionDecoder a =
-    case a of
-        Just b ->
-            b.tension
-                |> Maybe.map (\x -> List.head x)
-                |> Maybe.withDefault Nothing
-                |> Maybe.withDefault Nothing
-
-        Nothing ->
-            Nothing
+    a
+        |> Maybe.andThen
+            (\b ->
+                b.tension
+                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
 
 
 addOneTension url form msg =
@@ -291,8 +290,8 @@ buildNodeFragmentRef users nf =
                     { commonFields
                         | children =
                             users
-                                |> List.indexedMap
-                                    (\i us ->
+                                |> List.map
+                                    (\us ->
                                         Input.buildNodeFragmentRef
                                             (\c ->
                                                 { c

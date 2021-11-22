@@ -1,7 +1,7 @@
 module Auth exposing (ErrState(..), parseErr, parseErr2, refreshAuthModal)
 
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData, viewHttpErrors)
-import Components.Markdown exposing (renderMarkdown)
+import Markdown exposing (renderMarkdown)
 import Dict
 import Extra.Events exposing (onKeydown)
 import Form

@@ -44,16 +44,15 @@ type alias VoteResult =
 
 voteDecoder : Maybe VotePayload -> Maybe ContractResult
 voteDecoder data =
-    case data of
-        Just d ->
-            d.vote
-                |> Maybe.map (\x -> List.head x)
-                |> Maybe.withDefault Nothing
-                |> Maybe.withDefault Nothing
-                |> Maybe.map (\x -> x.contract)
-
-        Nothing ->
-            Nothing
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.vote
+                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.map (\x -> x.contract)
+            )
 
 
 sendVote url form msg =

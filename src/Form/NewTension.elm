@@ -4,7 +4,6 @@ import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
-import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
 import Dict
@@ -26,6 +25,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
@@ -873,10 +873,12 @@ update_ apis message model =
                         out.result
                         |> withDefault model
 
-                ( cmds, gcmds ) =
+                ( cmds, _ ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { newModel | labelsPanel = panel }, out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds )
+            ( { newModel | labelsPanel = panel }
+            , out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds
+            )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -1238,9 +1240,6 @@ viewCircle op (State model) =
             let
                 message =
                     Dict.get "message" form.post |> withDefault ""
-
-                nameid =
-                    form.node.nameid |> withDefault ""
 
                 --@Debug: NodeDoc has not its full State yet
                 op_ =

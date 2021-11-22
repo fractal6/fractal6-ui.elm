@@ -39,15 +39,14 @@ type alias LabelsFullPayload =
 
 labelFullDecoder : Maybe LabelsFullPayload -> Maybe LabelFull
 labelFullDecoder data =
-    case data of
-        Just d ->
-            d.label
-                |> Maybe.map (\x -> List.head x)
-                |> Maybe.withDefault Nothing
-                |> Maybe.withDefault Nothing
-
-        Nothing ->
-            Nothing
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.label
+                    |> Maybe.map (\x -> List.head x)
+                    |> Maybe.withDefault Nothing
+                    |> Maybe.withDefault Nothing
+            )
 
 
 addOneLabel url form msg =
@@ -131,7 +130,7 @@ updateLabelInputEncoder form =
                 form.post |> Dict.update "name" (\x -> Maybe.map (\n -> String.toLower n) x)
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set =
                     Input.buildLabelPatch
                         (\i ->
@@ -176,7 +175,7 @@ removeLabelInputEncoder form =
             }
 
         inputOpt =
-            \x ->
+            \_ ->
                 { set = Absent
                 , remove =
                     Input.buildLabelPatch

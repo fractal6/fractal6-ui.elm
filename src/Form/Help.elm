@@ -3,7 +3,6 @@ module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
-import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -23,6 +22,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
@@ -88,14 +88,6 @@ init user =
 initModel : UserState -> Model
 initModel user =
     let
-        uctx =
-            case user of
-                LoggedIn u ->
-                    u
-
-                LoggedOut ->
-                    initUserctx
-
         form =
             NT.initModel user
                 |> NT.setTargetShort "f6#feedback"
@@ -383,7 +375,7 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskAck) 500 ] [ DoUpdateToken ] )
 
-                OkAuth tension ->
+                OkAuth _ ->
                     ( setResultAsk result { model | formAsk = NT.resetPost model.formAsk }, noOut )
 
                 _ ->
@@ -403,7 +395,7 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension form OnAskFeedback) 500 ] [ DoUpdateToken ] )
 
-                OkAuth tension ->
+                OkAuth _ ->
                     ( setResultFeedback result { model | formAsk = NT.resetPost model.formFeedback }, noOut )
 
                 _ ->
@@ -427,6 +419,7 @@ update_ apis message model =
             ( model, out0 [ Ports.logErr err ] )
 
 
+subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.triggerHelpFromJs (always OnOpen)
     , Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose

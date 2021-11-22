@@ -469,7 +469,7 @@ hotNodePull nameids odata =
             , List.head nameids |> Maybe.map (\nid -> Dict.get nid data) |> withDefault Nothing
             )
 
-        other ->
+        _ ->
             ( Dict.empty, Nothing )
 
 
@@ -491,16 +491,11 @@ hotNodeUpdateName form odata =
             form.node.name
                 |> Maybe.map
                     (\name ->
-                        case odata of
-                            Success ndata ->
-                                Dict.update form.target.nameid (\nm -> nm |> Maybe.map (\n -> { n | name = name })) ndata
-
-                            other ->
-                                Dict.empty
+                        Dict.update form.target.nameid (\nm -> nm |> Maybe.map (\n -> { n | name = name })) data
                     )
                 |> withDefault Dict.empty
 
-        other ->
+        _ ->
             Dict.empty
 
 

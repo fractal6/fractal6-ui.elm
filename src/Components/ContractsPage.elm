@@ -2,7 +2,6 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
-import Components.Markdown exposing (renderMarkdown)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Date exposing (formatTime)
 import Dict exposing (Dict)
@@ -20,6 +19,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), uctxFromUser)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, uriFromUsername)
@@ -403,7 +403,7 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { data | refresh_trial = i }, out2 [ sendSleep (DoDeleteContract model.form.cid) 500 ] [ DoUpdateToken ] )
 
-                OkAuth d ->
+                OkAuth _ ->
                     ( data, Out [ sendSleep (DoPopContract model.form.cid) 500 ] [] (Just ( True, [] )) )
 
                 _ ->
@@ -453,7 +453,7 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
 
-                OkAuth d ->
+                OkAuth _ ->
                     ( data, noOut )
 
                 _ ->

@@ -261,7 +261,7 @@ update global message model =
                     in
                     ( { model | refresh_trial = i }, sendSleep (LoadNodes uctx) 500, send UpdateUserToken )
 
-                OkAuth data ->
+                OkAuth _ ->
                     ( { model | orgas = result }, Cmd.none, Cmd.none )
 
                 _ ->
@@ -318,7 +318,7 @@ update global message model =
                     , send (UpdateUserSession uctx)
                     )
 
-                other ->
+                _ ->
                     case model.modalAuth of
                         Active form ->
                             ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
@@ -385,7 +385,7 @@ update global message model =
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
-subscriptions global model =
+subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
@@ -428,7 +428,7 @@ view global model =
 
 
 view_ : Global.Model -> Model -> UserCtx -> Html Msg
-view_ global model uctx =
+view_ _ model uctx =
     div [ id "profile", class "section" ]
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
@@ -442,7 +442,7 @@ view_ global model uctx =
 
 
 viewProfileLeft : Model -> UserCtx -> Html Msg
-viewProfileLeft model uctx =
+viewProfileLeft _ uctx =
     div []
         [ div [ class "content image circleBase circle3" ] [ getAvatar3 uctx.username ]
         , div [ class "content" ]

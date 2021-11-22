@@ -113,10 +113,6 @@ open targets data =
 
 close : Model -> Model
 close data =
-    let
-        form =
-            data.form
-    in
     { data | isOpen = False, click_result = NotAsked, pattern = "" }
 
 
@@ -158,10 +154,6 @@ updatePost field value data =
 
 setPattern : String -> Model -> Model
 setPattern pattern data =
-    let
-        form =
-            data.form
-    in
     { data | pattern = pattern }
 
 

@@ -341,7 +341,7 @@ viewModal op (State model) =
             []
         , div [ class "modal-content" ]
             [ case model.data_result of
-                Success data ->
+                Success _ ->
                     div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
                         , text "Tension type changed."
@@ -357,9 +357,6 @@ viewModal op (State model) =
 viewModalContent : Op -> State -> Html Msg
 viewModalContent op (State model) =
     let
-        message =
-            Dict.get "message" model.form.post |> withDefault ""
-
         isLoading =
             model.data_result == LoadingSlowly
     in

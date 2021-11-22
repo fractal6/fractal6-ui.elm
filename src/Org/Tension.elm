@@ -5,8 +5,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
 import Components.ContractsPage as ContractsPage
-import Components.Doc exposing (ActionView(..))
-import Components.DocToolBar as DocToolBar
+import Components.DocToolBar as DocToolBar exposing (ActionView(..))
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading
@@ -26,7 +25,6 @@ import Components.Loading as Loading
         , withMaybeData
         , withMaybeDataMap
         )
-import Components.Markdown exposing (renderMarkdown)
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.SelectType as SelectType
@@ -55,6 +53,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs
@@ -334,7 +333,7 @@ type Msg
     | CloseActionPanelModal String
       --| ActionStep1 XXX
     | ActionSubmit Time.Posix
-    | ActionMove Time.Posix
+    | ActionMove
     | ArchiveDocAck (GqlData ActionResult)
     | LeaveRoleAck (GqlData ActionResult)
     | UpdateActionPost String String
@@ -551,7 +550,7 @@ update global message model =
                 ackMsg =
                     case state of
                         MoveAction ->
-                            \x -> NoMsg
+                            \_ -> NoMsg
 
                         ArchiveAction ->
                             ArchiveDocAck
@@ -563,7 +562,7 @@ update global message model =
                             LeaveRoleAck
 
                         NoAction ->
-                            \x -> NoMsg
+                            \_ -> NoMsg
             in
             ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
@@ -1354,7 +1353,7 @@ update global message model =
             , Cmd.none
             )
 
-        ActionMove time ->
+        ActionMove ->
             case model.tension_head of
                 Success th ->
                     ( model, Cmd.batch [ send (DoMove th), send CancelAction ], Cmd.none )
@@ -1408,7 +1407,7 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
 
-                OkAuth t ->
+                OkAuth _ ->
                     ( { model | actionPanel = panel }
                     , Cmd.none
                     , send UpdateUserToken
@@ -1449,7 +1448,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                LoggedIn uctx ->
+                LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
                     , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
@@ -1504,7 +1503,7 @@ update global message model =
                         RefreshToken i ->
                             ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
 
-                        OkAuth n ->
+                        OkAuth _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , Cmd.none
                             , send UpdateUserToken
@@ -1653,9 +1652,6 @@ update global message model =
                 ( data, out ) =
                     MoveTension.update apis msg model.moveTension
 
-                res =
-                    out.result
-
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
@@ -1789,71 +1785,66 @@ viewTypeBadge type_ =
 
 viewTension : UserState -> TensionHead -> Model -> Html Msg
 viewTension u t model =
-    let
-        username =
-            model.tension_form.uctx.username
-    in
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9" ]
                 [ h1 [ class "title tensionTitle" ] <|
-                    case model.isTitleEdit of
-                        True ->
-                            let
-                                title =
-                                    Dict.get "title" model.tension_form.post |> withDefault t.title
+                    if model.isTitleEdit then
+                        let
+                            title =
+                                Dict.get "title" model.tension_form.post |> withDefault t.title
 
-                                isLoading =
-                                    model.title_result == LoadingSlowly
+                            isLoading =
+                                model.title_result == LoadingSlowly
 
-                                isSendable =
-                                    title /= t.title
+                            isSendable =
+                                title /= t.title
 
-                                doSubmit =
-                                    ternary isSendable [ onClick (Submit <| SubmitTitle) ] []
-                            in
-                            [ div [ class "field is-grouped" ]
-                                [ p [ class "control is-expanded" ]
-                                    [ input
-                                        [ id "titleInput"
-                                        , class "input"
-                                        , type_ "text"
-                                        , placeholder "Title*"
-                                        , value title
-                                        , onInput (ChangeTensionPost "title")
-                                        ]
-                                        []
+                            doSubmit =
+                                ternary isSendable [ onClick (Submit <| SubmitTitle) ] []
+                        in
+                        [ div [ class "field is-grouped" ]
+                            [ p [ class "control is-expanded" ]
+                                [ input
+                                    [ id "titleInput"
+                                    , class "input"
+                                    , type_ "text"
+                                    , placeholder "Title*"
+                                    , value title
+                                    , onInput (ChangeTensionPost "title")
                                     ]
-                                , p [ class "control buttons" ]
-                                    [ button [ class "button is-small", onClick CancelTitle ] [ textH T.cancel ]
-                                    , button
-                                        ([ class "button is-success is-small"
-                                         , classList [ ( "is-loading", isLoading ) ]
-                                         , disabled (not isSendable)
-                                         ]
-                                            ++ doSubmit
-                                        )
-                                        [ textH T.updateTitle ]
-                                    ]
+                                    []
                                 ]
-                            , viewMaybeErrors model.title_result
+                            , p [ class "control buttons" ]
+                                [ button [ class "button is-small", onClick CancelTitle ] [ textH T.cancel ]
+                                , button
+                                    ([ class "button is-success is-small"
+                                     , classList [ ( "is-loading", isLoading ) ]
+                                     , disabled (not isSendable)
+                                     ]
+                                        ++ doSubmit
+                                    )
+                                    [ textH T.updateTitle ]
+                                ]
                             ]
+                        , viewMaybeErrors model.title_result
+                        ]
 
-                        False ->
-                            [ text t.title
-                            , if model.isTensionAdmin then
-                                div
-                                    [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
-                                    , attribute "data-tooltip" (upH T.editTitle)
-                                    , onClick DoChangeTitle
-                                    ]
-                                    [ I.icon "icon-pen" ]
+                    else
+                        [ text t.title
+                        , if model.isTensionAdmin then
+                            div
+                                [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
+                                , attribute "data-tooltip" (upH T.editTitle)
+                                , onClick DoChangeTitle
+                                ]
+                                [ I.icon "icon-pen" ]
 
-                              else
-                                text ""
-                            ]
+                          else
+                            text ""
+                        ]
                 , div [ class "tensionSubtitle" ]
                     [ span
                         [ class "tag is-rounded is-light"
@@ -1947,7 +1938,7 @@ viewComments u t model =
                 viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
                 viewCommentOrEvent e =
                     case e.type_ of
-                        Just event_type ->
+                        Just _ ->
                             case LE.getAt e.i t.history of
                                 Just event ->
                                     viewEvent event t
@@ -2478,12 +2469,11 @@ viewEventArchived event action_m isArchived =
             withDefault TensionAction.NewRole action_m
 
         ( icon, txt ) =
-            case isArchived of
-                True ->
-                    ( I.icon "icon-archive", T.archived )
+            if isArchived then
+                ( I.icon "icon-archive", T.archived )
 
-                False ->
-                    ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived )
+            else
+                ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2496,9 +2486,6 @@ viewEventArchived event action_m isArchived =
 viewEventUserJoined : Event -> Maybe TensionAction.TensionAction -> Html Msg
 viewEventUserJoined event action_m =
     let
-        action =
-            withDefault TensionAction.NewRole action_m
-
         action_txt =
             "the organisation"
     in
@@ -2609,7 +2596,7 @@ viewDocument u t b model =
             -- Markdown Document
             case model.actionView of
                 _ ->
-                    div [] [ text "todo show markdown" ]
+                    div [] [ text "@todo show markdown" ]
 
           else
             -- Node Document
@@ -2735,7 +2722,7 @@ viewSidePane u t model =
             ]
             [ div [ class "media-content" ] <|
                 (case u of
-                    LoggedIn uctx ->
+                    LoggedIn _ ->
                         [ h2
                             [ class "subtitle is-h" ]
                             [ textH T.assignees
@@ -2777,7 +2764,7 @@ viewSidePane u t model =
             ]
             [ div [ class "media-content" ] <|
                 (case u of
-                    LoggedIn uctx ->
+                    LoggedIn _ ->
                         [ h2 [ class "subtitle is-h" ]
                             [ textH T.labels
                             , if model.isLabelOpen then
@@ -2815,7 +2802,7 @@ viewSidePane u t model =
             [ class "media" ]
             [ div [ class "media-content" ] <|
                 (case u of
-                    LoggedIn uctx ->
+                    LoggedIn _ ->
                         let
                             domid =
                                 "actionPanelContent"

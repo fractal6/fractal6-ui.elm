@@ -16,7 +16,7 @@ formatTime timePosix =
                 Ok v ->
                     v
 
-                default ->
+                _ ->
                     Time.millisToPosix 0
 
         --dt =  DateTime.fromPosix t

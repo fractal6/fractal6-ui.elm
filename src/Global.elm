@@ -180,10 +180,6 @@ update msg model =
             )
 
         UpdateUserToken ->
-            let
-                session =
-                    model.session
-            in
             ( model
             , tokenack apis.auth UpdateUserTokenAck
             )
@@ -202,7 +198,7 @@ update msg model =
                     , send <| UpdateUserSession uctx
                     )
 
-                default ->
+                _ ->
                     ( newModel, Cmd.none )
 
         RedirectOnLoggedIn ->
@@ -391,7 +387,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ loggedOutOkFromJs (always LoggedOutUserOk)
         ]

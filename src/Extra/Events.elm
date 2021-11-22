@@ -18,7 +18,7 @@ onClickPD2 : msg -> Html.Attribute msg
 onClickPD2 msg =
     custom "click" <|
         JD.map
-            (\x ->
+            (\_ ->
                 { message = msg
                 , stopPropagation = True
                 , preventDefault = True
@@ -63,7 +63,7 @@ onKeyCode expectedCode a b msg =
     --on "keyup"
     custom "keyup" <|
         JD.map
-            (\x ->
+            (\_ ->
                 { message = msg
                 , stopPropagation = a
                 , preventDefault = b

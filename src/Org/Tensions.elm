@@ -1058,7 +1058,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                LoggedIn uctx ->
+                LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
                     , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
@@ -1113,7 +1113,7 @@ update global message model =
                         RefreshToken i ->
                             ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
 
-                        OkAuth n ->
+                        OkAuth _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
                             , Cmd.none
                             , send UpdateUserToken
@@ -1611,7 +1611,7 @@ viewCircleTensions model =
             in
             Dict.toList tensions_d
                 |> List.map
-                    (\( k, ts ) ->
+                    (\( _, ts ) ->
                         [ div [ class "column is-3" ]
                             [ div [ class "subtitle is-aligned-center mb-3" ]
                                 [ ts

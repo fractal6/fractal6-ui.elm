@@ -1,4 +1,4 @@
-module Components.Markdown exposing (renderMarkdown)
+module Markdown exposing (renderMarkdown)
 
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class)

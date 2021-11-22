@@ -335,8 +335,6 @@ viewModal op (State model) =
 viewModalContent : Op -> State -> Html Msg
 viewModalContent op (State model) =
     let
-        message =
-            Dict.get "message" model.form.post |> withDefault ""
 
         isLoading =
             model.data_result == LoadingSlowly

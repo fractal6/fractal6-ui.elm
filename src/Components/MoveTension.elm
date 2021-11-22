@@ -96,7 +96,7 @@ initModel user =
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    , confirmContract = ConfirmContract.init "" user
+    , confirmContract = ConfirmContract.init user
     }
 
 

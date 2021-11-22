@@ -752,10 +752,12 @@ noTensionCircle =
     "no tensions for this Circle yet."
 
 
+internalTensions : String
 internalTensions =
     "internal Tensions"
 
 
+externalTensions : String
 externalTensions =
     "external Tensions"
 

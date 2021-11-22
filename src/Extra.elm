@@ -6,12 +6,12 @@ import String
 
 
 ternary test positive negative =
-    case test of
-        True ->
-            positive
+    -- Save som line ;)
+    if test then
+        positive
 
-        False ->
-            negative
+    else
+        negative
 
 
 
