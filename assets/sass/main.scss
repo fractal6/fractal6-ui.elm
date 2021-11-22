@@ -159,8 +159,17 @@ hr {
 }
 
 .has-text-weight-light {
+    // @debug: doesn't work in chrome !
+    // https://stackoverflow.com/questions/22001035/font-weight-ignored-in-chrome
+    filter: brightness(80%);
+    font-weight: 500;
+    a {
+        filter: brightness(80%);
+        font-weight: 500;
+    }
     a:hover {
-        font-weight: initial;
+        filter: brightness(100%);
+        font-weight: 500;
     }
 }
 
@@ -345,6 +354,21 @@ html.has-modal-active, html.has-modal-active2 {
         &:hover {
             overflow: visible !important;
         }
+    }
+}
+
+.scrollbar-thin {
+    // @debug see : https://bugzilla.mozilla.org/show_bug.cgi?id=1460109
+    scrollbar-width: thin;
+    scrollbar-color: grey $body-background-color;
+    &::-webkit-scrollbar {
+        width: 6px;
+        color: grey;
+        //background: darken(grey, 15);
+    }
+    &::-webkit-scrollbar-thumb {
+        border-radius: 20px;
+        background: grey;
     }
 }
 

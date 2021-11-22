@@ -1629,7 +1629,7 @@ viewCircleTensions model =
                                             [ mediaTension model.node_focus t True False "is-size-6" Navigate ]
                                     )
                                 |> List.append []
-                                |> div [ class "content" ]
+                                |> div [ class "content scrollbar-thin" ]
                             ]
                         , div [ class "divider is-vertical2 is-small is-hidden-mobile" ] []
                         ]

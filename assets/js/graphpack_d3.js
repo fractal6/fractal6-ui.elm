@@ -478,7 +478,6 @@ export const GraphPack = {
                     }
                 }
 
-
             } else {
                 //if (this.focusedNode.depth == node.depth || this.focusedNode.depth == node.depth-1 ) {
                 //    ctx2d.beginPath();
@@ -572,8 +571,8 @@ export const GraphPack = {
                 this.isZooming = false;
                 this.drawCanvas();
                 this.drawCanvas(true);
-                if (!elmHasBeenUpdated) this.nodeFocusedFromJs(this.focusedNode); // INIT
                 this.drawNodeHover(this.focusedNode, true);
+                if (!elmHasBeenUpdated) this.nodeFocusedFromJs(this.focusedNode); // INIT
                 t.stop();
             }
         });
@@ -850,8 +849,6 @@ export const GraphPack = {
                     if (textWidth-textHeight > n.ctx.rayon*2.5) {
                         text = text.split("·").map(s => s.substring(0, 1)).join("·")
                     }
-                } else {
-                    //text = text
                 }
 
                 fontSize = this.fontsizeCircle_start;
@@ -918,8 +915,10 @@ export const GraphPack = {
         // Update global context
         this.hoveredNode = node; //@debug: use globCtx
 
-        // rewrite circle child name
-        this.drawCircleNames(this.focusedNode);
+        // Rewrite circle child name.
+        // Whithout it, name of circle can be altered  by the circle border drawing
+        this.drawCircleNames(this.focusedNode)
+
         return
     },
 
