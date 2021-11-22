@@ -3,9 +3,9 @@ module Components.NodeDoc exposing (..)
 import Components.DocToolBar exposing (ActionView(..))
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.UserSearchPanel exposing (viewUserSelectors)
-import Date exposing (formatTime)
 import Dict
 import Extra exposing (clean, ternary)
+import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -787,8 +787,8 @@ blobButtonsView isSendable isLoading op =
 -- Versions view
 
 
-viewVersions : GqlData TensionBlobs -> Html msg
-viewVersions blobsData =
+viewVersions : Time.Posix -> GqlData TensionBlobs -> Html msg
+viewVersions now blobsData =
     case blobsData of
         Success tblobs ->
             let
@@ -801,7 +801,7 @@ viewVersions blobsData =
                     ]
                 , tblobs.blobs
                     |> withDefault []
-                    |> List.indexedMap (\i d -> viewVerRow i d)
+                    |> List.indexedMap (\i d -> viewVerRow now i d)
                     |> List.concat
                     |> tbody []
                 ]
@@ -816,17 +816,17 @@ viewVersions blobsData =
             text ""
 
 
-viewVerRow : Int -> Blob -> List (Html msg)
-viewVerRow i blob =
+viewVerRow : Time.Posix -> Int -> Blob -> List (Html msg)
+viewVerRow now i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text "\u{00A0}", byAt blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text "\u{00A0}", byAt now blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatTime flag)
+                        , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatDate now flag)
                         ]
                         [ I.icon "icon-flag" ]
 

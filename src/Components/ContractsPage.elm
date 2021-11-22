@@ -3,9 +3,9 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.ContractType as ContractType
@@ -492,6 +492,7 @@ type alias Op =
     { emitterid : String
     , receiverid : String
     , isAdmin : Bool
+    , now : Time.Posix
     }
 
 
@@ -572,7 +573,7 @@ viewRow d op model =
             ]
         , td [ onClick (DoClickContract d.id) ] [ span [] [ textH (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-light" ] [ viewUsernameLink d.createdBy.username ]
-        , td [] [ text (formatTime d.createdAt) ]
+        , td [] [ text (formatDate op.now d.createdAt) ]
 
         -- participant
         -- n comments icons
@@ -686,7 +687,7 @@ viewContractBox data op model =
                         _ ->
                             [ text "not implemented" ]
                 ]
-            , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ "\u{00A0}"), byAt data.createdBy data.createdAt ] ]
+            , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ "\u{00A0}"), byAt op.now data.createdBy data.createdAt ] ]
             ]
         , case model.vote_result of
             Failure err ->
@@ -741,13 +742,13 @@ viewContractBox data op model =
 --                    isAuthor =
 --                        c.createdBy.username == model.form.uctx.username
 --                in
---                viewComment c isAuthor
+--                viewComment op c isAuthor
 --            )
 --        |> div []
 
 
-viewComment : Comment -> Bool -> Html Msg
-viewComment c isAuthor =
+viewComment : Op -> Comment -> Bool -> Html Msg
+viewComment op c isAuthor =
     div [ class "media section is-paddingless" ]
         [ div [ class "media-left" ] [ viewUser2 c.createdBy.username ]
         , div
@@ -762,10 +763,10 @@ viewComment c isAuthor =
               else
                 div [ class "message" ]
                     [ div [ class "message-header" ]
-                        [ viewTensionDateAndUserC c.createdAt c.createdBy
+                        [ viewTensionDateAndUserC op.now c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
-                                viewUpdated updatedAt
+                                viewUpdated op.now updatedAt
 
                             Nothing ->
                                 text ""

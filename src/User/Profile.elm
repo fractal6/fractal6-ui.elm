@@ -5,7 +5,6 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withMaybeData)
-import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)

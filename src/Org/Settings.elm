@@ -8,7 +8,6 @@ import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
@@ -623,7 +622,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                other ->
+                _ ->
                     ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
 
         DoJoinOrga3 node time ->
@@ -673,7 +672,7 @@ update global message model =
                         _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
-                default ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         -- Token Refresh
@@ -738,7 +737,7 @@ update global message model =
                     , send (UpdateUserSession uctx)
                     )
 
-                other ->
+                _ ->
                     case model.modalAuth of
                         Active form ->
                             ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
@@ -1037,7 +1036,7 @@ viewLabels model =
             LoadingSlowly ->
                 div [ class "spinner" ] []
 
-            other ->
+            _ ->
                 text ""
         ]
 
@@ -1066,7 +1065,7 @@ viewLabelsSub model =
         RemoteData.Loading ->
             div [ class "spinner" ] []
 
-        other ->
+        _ ->
             text ""
 
 
@@ -1226,5 +1225,5 @@ viewJoinOrgaStep step =
                 Failure err ->
                     viewGqlErrors err
 
-                default ->
+                _ ->
                     div [ class "box spinner" ] []

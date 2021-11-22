@@ -6,9 +6,9 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
-import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -96,6 +96,7 @@ type alias Model =
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     , refresh_trial : Int
+    , now : Time.Posix
 
     -- Components
     , help : Help.State
@@ -189,6 +190,7 @@ init global flags =
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
+            , now = global.now
             }
 
         cmds =
@@ -372,7 +374,7 @@ update global message model =
                         _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
-                default ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         -- Token Refresh
@@ -558,19 +560,19 @@ view_ global model =
         , div [ class "columns is-centered" ]
             [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
                 [ div [ class "columns" ]
-                    [ viewMembers model.members_top model.node_focus ]
+                    [ viewMembers model.now model.members_top model.node_focus ]
                 , div [ class "columns" ]
-                    [ viewMembersSub model.members_sub model.node_focus ]
+                    [ viewMembersSub model.now model.members_sub model.node_focus ]
                 , div [ class "columns" ]
-                    [ viewGuest model.members_top T.guest model.node_focus ]
+                    [ viewGuest model.now model.members_top T.guest model.node_focus ]
                 ]
             ]
         , setupActionModal model.isModalActive model.node_action
         ]
 
 
-viewMembers : GqlData (List Member) -> NodeFocus -> Html Msg
-viewMembers data focus =
+viewMembers : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
+viewMembers now data focus =
     case data of
         Success members_ ->
             let
@@ -610,7 +612,7 @@ viewMembers data focus =
                                             [ td [ class "pr-0" ] [ viewUser True m.username ]
                                             , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
                                             , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-                                            , td [ class "pt-3" ] [ viewMemberRoles OverviewBaseUri m.roles ]
+                                            , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
                                             ]
                                     )
                                     mbs
@@ -627,8 +629,8 @@ viewMembers data focus =
             text ""
 
 
-viewMembersSub : GqlData (List Member) -> NodeFocus -> Html Msg
-viewMembersSub data focus =
+viewMembersSub : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
+viewMembersSub now data focus =
     case data of
         Success members_ ->
             let
@@ -668,7 +670,7 @@ viewMembersSub data focus =
                                             [ td [ class "pr-0" ] [ viewUser True m.username ]
                                             , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
                                             , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-                                            , td [ class "pt-3" ] [ viewMemberRoles OverviewBaseUri m.roles ]
+                                            , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
                                             ]
                                     )
                                     mbs
@@ -685,8 +687,8 @@ viewMembersSub data focus =
             text ""
 
 
-viewGuest : GqlData (List Member) -> String -> NodeFocus -> Html Msg
-viewGuest members_d title focus =
+viewGuest : Time.Posix -> GqlData (List Member) -> String -> NodeFocus -> Html Msg
+viewGuest now members_d title focus =
     let
         guests =
             members_d
@@ -748,14 +750,14 @@ memberRolesFilter focus roles =
         |> List.concat
 
 
-viewMemberRoles : FractalBaseRoute -> List UserRoleExtended -> Html msg
-viewMemberRoles baseUri roles =
+viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html msg
+viewMemberRoles now baseUri roles =
     div [ class "buttons" ] <|
         List.map
             (\r ->
                 a
                     [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-                    , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatTime r.createdAt ] |> String.join " ")
+                    , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
                     , href <| uriFromNameid baseUri r.nameid
                     ]
                     [ if r.role_type == RoleType.Guest then
@@ -833,5 +835,5 @@ viewJoinOrgaStep step =
                 Failure err ->
                     viewGqlErrors err
 
-                default ->
+                _ ->
                     div [ class "box spinner" ] [ text "" ]

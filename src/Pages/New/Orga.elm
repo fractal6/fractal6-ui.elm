@@ -278,7 +278,7 @@ update global message model =
                     , send (UpdateUserSession uctx)
                     )
 
-                other ->
+                _ ->
                     case model.modalAuth of
                         Active form ->
                             let

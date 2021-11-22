@@ -917,6 +917,26 @@ tensionRoleCloseSubmit =
     "create Role"
 
 
+opened : String
+opened =
+    "opened"
+
+
+updated : String
+updated =
+    "updated"
+
+
+edited : String
+edited =
+    "edited"
+
+
+commented : String
+commented =
+    "commented"
+
+
 openedThe : String
 openedThe =
     "opened the"

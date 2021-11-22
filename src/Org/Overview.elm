@@ -161,6 +161,7 @@ type alias Model =
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     , refresh_trial : Int
+    , now : Time.Posix
 
     -- Components
     , help : Help.State
@@ -319,6 +320,7 @@ init global flags =
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
+            , now = global.now
             }
 
         cmds_ =
@@ -1597,7 +1599,7 @@ viewActivies model =
             [ case model.tensions_data of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> mediaTension model.node_focus t False True "is-size-7" Navigate) tensions
+                        List.map (\t -> mediaTension model.now model.node_focus t False True "is-size-7" Navigate) tensions
                             ++ ternary (List.length tensions > 5)
                                 [ div [ class "is-aligned-center mt-1 mb-2" ]
                                     [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
@@ -1685,7 +1687,7 @@ viewJoinOrgaStep step =
                 Failure err ->
                     viewGqlErrors err
 
-                default ->
+                _ ->
                     div [ class "box  spinner" ] [ text "" ]
 
         JoinNotAuthorized errMsg ->

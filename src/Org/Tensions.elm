@@ -24,7 +24,6 @@ import Components.Loading as Loading
         , withMaybeDataMap
         )
 import Components.UserSearchPanel as UserSearchPanel
-import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
@@ -138,6 +137,7 @@ type alias Model =
     , helperBar : HelperBar
     , refresh_trial : Int
     , url : Url
+    , now : Time.Posix
 
     -- Components
     , help : Help.State
@@ -296,7 +296,7 @@ typeFilterDecoder x =
         "help" ->
             HelpType
 
-        default ->
+        _ ->
             AllTypes
 
 
@@ -384,7 +384,7 @@ hasLoadMore tensions offset =
         Success ts ->
             List.length ts == nfirstL * offset
 
-        other ->
+        _ ->
             False
 
 
@@ -570,6 +570,7 @@ init global flags =
             , tensionForm = NTF.init global.session.user
             , refresh_trial = 0
             , url = global.url
+            , now = global.now
             }
 
         --
@@ -757,10 +758,10 @@ update global message model =
                                 Success ts ->
                                     tsOld ++ ts |> Success
 
-                                other ->
+                                _ ->
                                     tsOld |> Success
 
-                        other ->
+                        _ ->
                             result
             in
             ( { model | tensions_int = newTensions, offset = model.offset + inc }, Cmd.none, send (UpdateSessionTensionsInt (withMaybeData newTensions)) )
@@ -774,10 +775,10 @@ update global message model =
                                 Success ts ->
                                     tsOld ++ ts |> Success
 
-                                other ->
+                                _ ->
                                     tsOld |> Success
 
-                        other ->
+                        _ ->
                             result
             in
             ( { model | tensions_ext = newTensions }, Cmd.none, send (UpdateSessionTensionsExt (withMaybeData newTensions)) )
@@ -889,7 +890,7 @@ update global message model =
                     --ESC
                     ( model, send (ChangePattern ""), Cmd.none )
 
-                other ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         ResetData ->
@@ -1072,7 +1073,7 @@ update global message model =
                     , Cmd.none
                     )
 
-                other ->
+                _ ->
                     ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
 
         DoJoinOrga3 node time ->
@@ -1122,7 +1123,7 @@ update global message model =
                         _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
 
-                default ->
+                _ ->
                     ( model, Cmd.none, Cmd.none )
 
         -- Token Refresh
@@ -1187,7 +1188,7 @@ update global message model =
                     , send (UpdateUserSession uctx)
                     )
 
-                other ->
+                _ ->
                     case model.modalAuth of
                         Active form ->
                             ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
@@ -1560,7 +1561,7 @@ viewListTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-10-desktop is-10-fullhd" ]
             [ viewTensionsCount model
-            , viewTensions model.node_focus model.initPattern tensions_d ListTension
+            , viewTensions model.now model.node_focus model.initPattern tensions_d ListTension
             ]
         ]
 
@@ -1570,12 +1571,12 @@ viewIntExtTensions model =
     div [ class "columns is-centered" ]
         [ div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.internalTensions ]
-            , viewTensions model.node_focus model.initPattern model.tensions_int InternalTension
+            , viewTensions model.now model.node_focus model.initPattern model.tensions_int InternalTension
             ]
         , div [ class "vline" ] []
         , div [ class "column is-6-desktop is-5-fullhd" ]
             [ h2 [ class "subtitle has-text-weight-semibold has-text-centered" ] [ textH T.externalTensions ]
-            , viewTensions model.node_focus model.initPattern model.tensions_ext ExternalTension
+            , viewTensions model.now model.node_focus model.initPattern model.tensions_ext ExternalTension
             ]
         ]
 
@@ -1626,7 +1627,7 @@ viewCircleTensions model =
                                 |> List.map
                                     (\t ->
                                         div [ class "box is-shrinked2 mb-2 mx-2" ]
-                                            [ mediaTension model.node_focus t True False "is-size-6" Navigate ]
+                                            [ mediaTension model.now model.node_focus t True False "is-size-6" Navigate ]
                                     )
                                 |> List.append []
                                 |> div [ class "content scrollbar-thin" ]
@@ -1655,14 +1656,14 @@ viewCircleTensions model =
             div [ class "spinner" ] []
 
 
-viewTensions : NodeFocus -> Maybe String -> GqlData TensionsList -> TensionDirection -> Html Msg
-viewTensions focus pattern tensionsData tensionDir =
+viewTensions : Time.Posix -> NodeFocus -> Maybe String -> GqlData TensionsList -> TensionDirection -> Html Msg
+viewTensions now focus pattern tensionsData tensionDir =
     div [ class "box is-shrinked", classList [ ( "spinner", tensionsData == LoadingSlowly ) ] ]
         [ case tensionsData of
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension focus t True True "is-size-6" Navigate)
+                        |> List.map (\t -> mediaTension now focus t True True "is-size-6" Navigate)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then
@@ -1758,5 +1759,5 @@ viewJoinOrgaStep step =
                 Failure err ->
                     viewGqlErrors err
 
-                default ->
+                _ ->
                     div [ class "box spinner" ] [ text "" ]

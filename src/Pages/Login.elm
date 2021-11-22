@@ -118,7 +118,7 @@ update global msg model =
                             , sendSleep RedirectOnLoggedIn 300
                             ]
 
-                        default ->
+                        _ ->
                             []
 
                 form =

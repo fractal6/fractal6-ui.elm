@@ -1,8 +1,8 @@
 module ModelCommon.View exposing (..)
 
-import Date exposing (formatTime)
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
+import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
@@ -32,6 +32,7 @@ import ModelCommon.Codecs
         )
 import ModelSchema exposing (EmitterOrReceiver, Label, NodeExt, Post, Tension, User, UserCtx, Username)
 import Text as T exposing (textH, textT, upH)
+import Time
 
 
 
@@ -105,8 +106,8 @@ tensionTypeSpan type_ =
     span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" type_ ] [ text (TensionType.toString type_), span [ class "ml-2 arrow down" ] [] ]
 
 
-mediaTension : NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
-mediaTension focus tension showStatus showRecip size navigate =
+mediaTension : Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension now focus tension showStatus showRecip size navigate =
     let
         n_comments =
             --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
@@ -175,11 +176,12 @@ mediaTension focus tension showStatus showRecip size navigate =
                 , if showRecip then
                     span []
                         [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver
-                        , span [] [ viewTensionDateAndUser "has-text-weight-light is-pulled-right" tension.createdAt tension.createdBy ]
+                        , span [] [ viewTensionDateAndUser now "has-text-weight-light is-pulled-right" tension.createdAt tension.createdBy ]
                         ]
 
                   else
-                    span [] [ atBy "has-text-weight-light" tension.createdAt tension.createdBy ]
+                    --span [] [ atBy now "has-text-weight-light" tension.createdAt tension.createdBy ]
+                    span [] [ span [ class "is-invisible" ] [ text "fixme" ], span [ class "has-text-weight-light is-pulled-right" ] [ text "by ", viewUsernameLink tension.createdBy.username ] ]
                 ]
 
             --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
@@ -189,7 +191,7 @@ mediaTension focus tension showStatus showRecip size navigate =
             --            viewActionIconLink action focus.rootnameid tension.id "" "is-small"
             --        Nothing ->
             --            text ""
-            --    , span [ class "is-pulled-right" ] [ viewTensionDateAndUser tension.createdAt tension.createdBy ]
+            --    , span [ class "is-pulled-right" ] [ viewTensionDateAndUser now tension.createdAt tension.createdBy ]
             --    ]
             --]
             ]
@@ -275,67 +277,67 @@ viewUsernameLink username =
     a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
 
 
-viewOpenedDate : String -> Html msg
-viewOpenedDate date =
+viewOpenedDate : Time.Posix -> String -> Html msg
+viewOpenedDate now date =
     span []
-        [ span [] [ text T.openedThe ]
+        [ span [] [ text T.opened ]
         , text " "
-        , text (formatTime date)
+        , text (formatDate now date)
         ]
 
 
-viewUpdated : String -> Html msg
-viewUpdated date =
+viewUpdated : Time.Posix -> String -> Html msg
+viewUpdated now date =
     span [ class "is-grey-light" ]
         [ text " · "
-        , span [] [ text T.editedThe ]
+        , span [] [ text T.edited ]
         , text " "
-        , text (formatTime date)
+        , text (formatDate now date)
         ]
 
 
-viewCommentedDate : String -> Html msg
-viewCommentedDate date =
+viewCommentedDate : Time.Posix -> String -> Html msg
+viewCommentedDate now date =
     span [ class "is-grey-light" ]
-        [ span [ class "is-itali" ] [ text T.commentedThe ]
+        [ span [ class "is-itali" ] [ text T.commented ]
         , text " "
-        , text (formatTime date)
+        , text (formatDate now date)
         ]
 
 
-viewTensionDateAndUser : String -> String -> Username -> Html msg
-viewTensionDateAndUser cls createdAt createdBy =
+viewTensionDateAndUser : Time.Posix -> String -> String -> Username -> Html msg
+viewTensionDateAndUser now cls createdAt createdBy =
     span [ class cls ]
-        [ viewOpenedDate createdAt
+        [ viewOpenedDate now createdAt
         , text (" " ++ T.by ++ " ")
         , viewUsernameLink createdBy.username
         ]
 
 
-viewTensionDateAndUserC : String -> Username -> Html msg
-viewTensionDateAndUserC createdAt createdBy =
+viewTensionDateAndUserC : Time.Posix -> String -> Username -> Html msg
+viewTensionDateAndUserC now createdAt createdBy =
     span []
         [ viewUsernameLink createdBy.username
         , text " "
-        , viewCommentedDate createdAt
+        , viewCommentedDate now createdAt
         ]
 
 
-byAt : Username -> String -> Html msg
-byAt createdBy createdAt =
+byAt : Time.Posix -> Username -> String -> Html msg
+byAt now createdBy createdAt =
     span []
         [ text " by "
         , viewUsernameLink createdBy.username
         , text " the "
-        , text (formatTime createdAt)
+        , text (formatDate now createdAt)
         ]
 
 
-atBy : String -> String -> Username -> Html msg
-atBy cls createdAt createdBy =
+atBy : Time.Posix -> String -> String -> Username -> Html msg
+atBy now cls createdAt createdBy =
     span [ class cls ]
         [ text " the "
-        , text (formatTime createdAt)
+        , text (formatDate now createdAt)
         , text " by "
         , viewUsernameLink createdBy.username
         ]

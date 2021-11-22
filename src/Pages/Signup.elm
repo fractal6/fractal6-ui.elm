@@ -117,7 +117,7 @@ update global msg model =
                             , sendSleep RedirectOnLoggedIn 300
                             ]
 
-                        default ->
+                        _ ->
                             []
 
                 form =
@@ -266,7 +266,7 @@ viewSignup global model =
                 RemoteData.Failure err ->
                     viewHttpErrors err
 
-                default ->
+                _ ->
                     text ""
             ]
         ]

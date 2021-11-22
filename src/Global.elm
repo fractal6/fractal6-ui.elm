@@ -60,6 +60,7 @@ type alias Model =
     , url : Url
     , key : Nav.Key
     , session : Session
+    , now : Time.Posix
     }
 
 
@@ -69,11 +70,12 @@ init flags url key =
         ( session, cmds ) =
             fromLocalSession flags
     in
-    ( Model flags url key session
+    ( Model flags url key session (Time.millisToPosix 0)
     , Cmd.batch
         ([ Ports.log "Hello!"
          , Ports.toggle_theme
          , Ports.bulma_driver ""
+         , now
          ]
             ++ cmds
         )
@@ -87,6 +89,7 @@ init flags url key =
 type Msg
     = Navigate Route
     | ReplaceUrl String
+    | SetTime Time.Posix
     | UpdateReferer Url
     | UpdateUserSession UserCtx -- user is logged In !
     | UpdateUserTokenAck (WebData UserCtx)
@@ -125,6 +128,9 @@ update msg model =
 
         ReplaceUrl url ->
             ( model, Nav.replaceUrl model.key url )
+
+        SetTime time ->
+            ( { model | now = time }, Cmd.none )
 
         UpdateReferer url ->
             let
@@ -410,6 +416,11 @@ view { page, global, toMsg } =
 
 
 -- COMMANDS
+
+
+now : Cmd Msg
+now =
+    Task.perform SetTime Time.now
 
 
 send : msg -> Cmd msg
