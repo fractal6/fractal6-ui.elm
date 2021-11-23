@@ -968,7 +968,7 @@ export const GraphPack = {
     drawNodeTooltip_(node) {
         var $tooltip = this.$tooltip
         // == add tooltip
-        // @DEBUG: tooltip neeed to be displayed to get its clientWidth.
+        // @warning: tooltip neeed to be displayed to get its clientWidth.
         var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
         if (!$subTooltip) return
         $subTooltip.childNodes[0].textContent = node.data.name;

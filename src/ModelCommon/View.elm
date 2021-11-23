@@ -166,7 +166,7 @@ mediaTension now focus tension showStatus showRecip size navigate =
             , span [ class "is-smaller" ]
                 [ if showStatus then
                     span
-                        [ class "tooltip has-tooltip-arrow"
+                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
                         , attribute "data-tooltip" (TensionStatus.toString tension.status)
                         ]
                         [ I.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]

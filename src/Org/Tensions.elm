@@ -1614,7 +1614,7 @@ viewCircleTensions model =
                 |> List.map
                     (\( _, ts ) ->
                         [ div [ class "column is-3" ]
-                            [ div [ class "subtitle is-aligned-center mb-3" ]
+                            [ div [ class "subtitle is-aligned-center mb-0 pb-3" ]
                                 [ ts
                                     |> List.head
                                     |> Maybe.map (\h -> h.receiver.name)

@@ -277,11 +277,12 @@ update msg model =
             ( { model | session = { session | node_focus = data } }, Cmd.none )
 
         UpdateSessionPath data ->
+            -- Update also children. Children are used to account for the depth of tensions search.
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | path_data = data } }, Cmd.none )
+            ( { model | session = { session | path_data = data, children = Maybe.map (\d -> List.map (\n -> { nameid = n.nameid }) d.focus.children) data } }, Cmd.none )
 
         UpdateSessionChildren data ->
             let

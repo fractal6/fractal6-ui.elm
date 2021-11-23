@@ -1359,6 +1359,13 @@ a.actionLink {
             height: 95%;
             overflow-y: auto;
             overflow-x: hidden;
+
+            .box:first-child {
+                margin-top: 7px;
+            }
+        }
+        & > .subtitle {
+            border-bottom: 1px solid $grey;
         }
     }
 

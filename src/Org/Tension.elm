@@ -464,9 +464,11 @@ init global flags =
             , now = global.now
             }
 
+        refresh =
+            tensionChanged2 model.tension_head global.url || model.tension_head == Loading
+
         cmds =
-            --[ if tensionChanged global.session.referer global.url || model.tension_head == Loading then
-            [ if tensionChanged2 model.tension_head global.url || model.tension_head == Loading then
+            [ if refresh then
                 send LoadTensionHead
 
               else
@@ -497,7 +499,8 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , if fs.refresh then
+    , if fs.menuChange || refresh then
+        -- No refresh here because all the focus is not encoded in the tension URL.
         send (UpdateSessionFocus (Just newFocus))
 
       else
