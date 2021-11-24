@@ -162,7 +162,7 @@ export const GraphPack = {
     // Nodes/Circles geometry
     centerX: null,
     centerY: null,
-    diameter: null,
+    rayon: null,
     zoomCtx: null,
     circlesPadding: 8, // 1.8
     fontsizeCircle_start: 19,
@@ -172,9 +172,9 @@ export const GraphPack = {
     isLoading: true,
     minZoomDuration: 350, // 1250
     zoomFactorRoot: 2.02,
-    zoomFactorCircle: 2.4,
-    zoomFactorRole: 4,
-    zoomFactorGuest: 5,
+    zoomFactorCircle: 2.02,
+    zoomFactorRole: 6,
+    zoomFactorGuest: 6,
     // rayon size of the node in the canvas
     rayonFactorRole: 0.95,
     rayonFactorGuest: 0.75,
@@ -275,7 +275,7 @@ export const GraphPack = {
         this.height = Math.max(this.computedHeight, this.minHeight); //(computedHeight > computedWidth ?  computedWidth: computedHeight );
         this.mobileSize = (window.innerWidth < 768 ? true : false);
 
-        this.diameter = Math.min(this.width*0.97, this.height*0.97);
+        this.rayon = (Math.min(this.width*0.97, this.height*0.97)) / 2;
         this.centerX = this.width/2;
         this.centerY = this.height/2;
         this.zoomCtx = {
@@ -340,23 +340,23 @@ export const GraphPack = {
             this.addNodeCtx(node);
         }
 
-        // If the hidden canvas was send into this function and it does not yet have a color,
-        // generate a unique one.
+        // Get the circle Color
         if(isHidden) {
+            // On the hidden canvas each rectangle gets a unique color.
             if(node.color === undefined) {
-                // If we have never drawn the node to the hidden canvas get a new color for it and put it in the dictionary.
+                // If the hidden canvas was send into this function and it does not yet have a color,
+                // generate a unique one.
                 node.color = this.genColor();
                 this.colToCircle[node.color] = node;
             }
-            // On the hidden canvas each rectangle gets a unique color.
             circleColor = node.color;
         } else {
             var grd = ctx2d.createRadialGradient(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*0.1, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*2);
             // opacity level
             var opac = "";
-            // @DEBUG: compute this only one time when choosing the focusedNode
-            if (node !== this.rootNode && !this.gPack.path(node).map(n => n.data.nameid).includes(this.focusedNode.data.nameid)) {
-                opac = "55";
+            // @DEBUG: we compute (or precompute) that faster ?
+            if (!this.gPack.path(node).map(n => n.data.nameid).includes(this.focusedNode.data.nameid)) {
+                opac = "75";
             }
             if (type_ === NodeType.Circle) {
                 grd.addColorStop(0.25, this.colorCircle(node.depth)+opac);
@@ -547,7 +547,7 @@ export const GraphPack = {
 
                 this.zoomCtx.centerX = interpolator(t)[0];
                 this.zoomCtx.centerY = interpolator(t)[1];
-                this.zoomCtx.scale = this.diameter / interpolator(t)[2];
+                this.zoomCtx.scale = (this.rayon * 2) / interpolator(t)[2];
 
                 if (timeElapsed >= duration) {
                     return true
@@ -678,7 +678,7 @@ export const GraphPack = {
         // Compute circle packing
         this.gPack = d3.pack()
             .padding(this.circlesPadding)
-            .size([this.diameter, this.diameter])
+            .size([this.rayon*2, this.rayon*2])
         (d3.hierarchy(graph)
             .sum(d => this.nodeSize(d, this.gStats))
             .sort(nodeOrder));
@@ -812,9 +812,9 @@ export const GraphPack = {
     },
 
     // Get the node under cursor in the canvas
-    getNodeUnderPointer(e) {
+    getNodeUnderPointer(e, p) {
         //Figure out where the mouse click occurred.
-        var p = this.getPointerCtx(e);
+        if (!p) p = this.getPointerCtx(e);
         var hiddenCtx2d = this.hiddenCtx2d;
 
         // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
@@ -1019,7 +1019,10 @@ export const GraphPack = {
     },
 
     // check geometrical condition
-    checkIf(p, cond, nodeOrElt) {
+    // p: the mouse pointer
+    // n: node pr element currently hovering
+    // cond: what to test
+    checkIf(p, cond, n) {
         var test;
         switch(cond) {
             case 'InCanvas':
@@ -1029,9 +1032,8 @@ export const GraphPack = {
                 test = (p.mouseX > 0) && (p.mouseY > 0) && (p.mouseX < x2) && (p.mouseY < y2);
                 break
             case "InButtons":
-                var $btn = nodeOrElt;
                 var r = this.$canvas.getBoundingClientRect();
-                var rBtn = $btn.getBoundingClientRect();
+                var rBtn = n.getBoundingClientRect();
                 var x1 = rBtn.left - r.left;
                 var y1 = rBtn.top - r.top;
                 var x2 = x1 + rBtn.width;
@@ -1039,7 +1041,6 @@ export const GraphPack = {
                 test = (p.mouseX > x1) && (p.mouseY > y1) && (p.mouseX < x2) && (p.mouseY < y2);
                 break
             case 'InTooltip':
-                var n = nodeOrElt;
                 var h = this.$tooltip.clientHeight +12;
                 var w = this.$tooltip.clientWidth/2 +6;
                 var x1 = n.ctx.centerX - w;
@@ -1053,6 +1054,11 @@ export const GraphPack = {
                 }
                 test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 break
+            case 'InFocus':
+                var x = p.mouseX - this.focusedNode.ctx.centerX;
+                var y = p.mouseY - this.focusedNode.ctx.centerY;
+                test = x**2 + y**2 <= (this.focusedNode.ctx.rayon)**2 ;
+                break
             default:
                 console.error("Unknown condition: %s", cond)
         }
@@ -1065,6 +1071,7 @@ export const GraphPack = {
     //
 
     nodeClickedFromJs(node) {
+        this.clearNodeHover(node);
         var nameid = node.data.nameid;
         this.app.ports.nodeClickedFromJs.send(nameid);
     },
@@ -1297,7 +1304,15 @@ export const GraphPack = {
                 this.isFrozen = false;
                 return true
             }
-            var node = this.getNodeUnderPointer(e);
+
+            var p = this.getPointerCtx(e);
+            if (!this.checkIf(p, "InFocus")) {
+                // Go to parent
+                this.nodeClickedFromJs(this.focusedNode.parent);
+                return
+            }
+
+            var node = this.getNodeUnderPointer(e, p);
             var isUpdated = false;
             if (node) {
                 isUpdated = true;
@@ -1312,8 +1327,6 @@ export const GraphPack = {
             }
 
             if (isUpdated) {
-                //this.clearNodeTooltip();
-                this.clearNodeHover(node);
                 this.nodeClickedFromJs(node);
             }
 
@@ -1329,7 +1342,7 @@ export const GraphPack = {
                 return false
             }
             var p = this.getPointerCtx(e);
-            var node = this.getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
+            var node = this.getNodeUnderPointer(e, p);        // @Warning, it updates ctx attributes.
             var isInTooltip = false;
             if (this.hoveredNode) {
                 isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
@@ -1338,13 +1351,13 @@ export const GraphPack = {
             }
 
             if (node) {
-                if (node !== this.hoveredNode && !isInTooltip) {
+                if (node !== this.hoveredNode && !isInTooltip && this.checkIf(p, "InFocus")) {
                     this.drawNodeHover(node, true);
                 }
             } else if (this.hoveredNode != this.focusedNode) {
                 // @DEBUG: there is a little dead zone between circle.
                 // When it happens, it goes there and focused node receive the hover...
-                if (!isInTooltip) this.drawNodeHover(this.focusedNode, true);
+                if (!isInTooltip && this.checkIf(p, "InFocus")) this.drawNodeHover(this.focusedNode, true);
             } else {
                 // When it happens ?
                 //this.drawNodeHover(this.focusedNode, true);
@@ -1361,10 +1374,7 @@ export const GraphPack = {
             if (this.isFrozen) {
                 return false
             }
-            var p = this.getPointerCtx(e);
             var node = this.getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
-            var isInTooltip = false;
-
             if (node != this.hoveredNode) { // avoid redrawing
                 this.drawNodeHover(this.focusedNode, true);
             }
@@ -1440,7 +1450,6 @@ export const GraphPack = {
         //        if (this.focusedNode && this.focusedNode.parent) {
         //            e.preventDefault()
         //            var node = this.focusedNode.parent;
-        //            this.clearNodeHover(node);
         //            this.nodeClickedFromJs(node);
         //        }
 		//	}

@@ -1364,10 +1364,10 @@ viewRecipients model =
     in
     div [ class "level-right has-text-weight-medium" ]
         [ span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid white;" ]
+            [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid black;" ]
                 [ span [ attribute "aria-controls" "source-menu" ]
                     [ span
-                        [ class "button is-small is-light is-inverted is-static" ]
+                        [ class "button is-small is-static has-text-black" ]
                         [ text form.source.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                     ]
                 ]
@@ -1386,10 +1386,10 @@ viewRecipients model =
             ]
         , span [ class "right-arrow" ] []
         , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid white;" ]
+            [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid black;" ]
                 [ span [ attribute "aria-controls" "target-menu" ]
                     [ span
-                        [ class "button is-small is-light is-inverted is-static" ]
+                        [ class "button is-small is-static has-text-black" ]
                         [ text form.target.name, span [ class "ml-2 icon-chevron-down" ] [] ]
                     ]
                 ]

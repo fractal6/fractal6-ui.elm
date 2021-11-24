@@ -1047,3 +1047,8 @@ contractInfoHeader =
 contractInfo : String
 contractInfo =
     "By creating a contract, it will notify the organisation roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
+
+
+goRoot : String
+goRoot =
+    "Go to root circle"

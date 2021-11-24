@@ -88,7 +88,7 @@ close model =
 
 reset : Model -> Model
 reset model =
-    initModel "" model.user
+    initModel model.form.id model.user
 
 
 updatePost : String -> String -> Model -> Model

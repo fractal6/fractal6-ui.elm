@@ -608,7 +608,7 @@ update global message model =
                                 isAdmin =
                                     getTensionRights (uctxFromUser global.session.user) model.tension_head result
                             in
-                            ( { model | path_data = Success newPath, isTensionAdmin = isAdmin }
+                            ( { model | path_data = Success newPath, isTensionAdmin = True }
                             , Cmd.none
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
@@ -1790,6 +1790,18 @@ viewTypeBadge type_ =
 
 viewTension : UserState -> TensionHead -> Model -> Html Msg
 viewTension u t model =
+    let
+        uctx_m =
+            case u of
+                LoggedIn uctx ->
+                    Just uctx
+
+                LoggedOut ->
+                    Nothing
+
+        isAuthor =
+            Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False
+    in
     div [ id "tensionPage" ]
         [ div [ class "columns" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
@@ -1839,7 +1851,7 @@ viewTension u t model =
 
                     else
                         [ text t.title
-                        , if model.isTensionAdmin then
+                        , if model.isTensionAdmin || isAuthor then
                             div
                                 [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
                                 , attribute "data-tooltip" (upH T.editTitle)
@@ -1853,8 +1865,8 @@ viewTension u t model =
                 , div [ class "tensionSubtitle" ]
                     [ span
                         [ class "tag is-rounded is-light"
-                        , classList [ ( "is-w", model.isTensionAdmin ) ]
-                        , ternary model.isTensionAdmin (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
+                        , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
+                        , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
                         ]
                         [ viewTypeBadge t.type_ ]
                     , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
@@ -2091,7 +2103,7 @@ viewComment c model =
                                         [ I.icon "icon-ellipsis-v" ]
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
-                                    [ div [ class "dropdown-content" ]
+                                    [ div [ class "dropdown-content p-0" ]
                                         [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ textH T.edit ] ] ]
                                     ]
                                 ]
@@ -2102,7 +2114,7 @@ viewComment c model =
                     , div [ class "message-body" ]
                         [ case c.message of
                             "" ->
-                                div [ class "is-italic" ] [ text "No description provided." ]
+                                div [ class "is-italic" ] [ text "No message provided." ]
 
                             message ->
                                 renderMarkdown "is-light" message
@@ -2717,10 +2729,16 @@ viewSidePane u t model =
 
         hasBlobRight =
             isAdmin && actionType_m /= Just NEW && blob_m /= Nothing
+
+        g1 =
+            Debug.log "author" isAuthor
+
+        g2 =
+            Debug.log "admin" isAdmin
     in
     div [ class "tensionSidePane" ] <|
-        -- Assignees/User select
-        [ div
+        [ -- Assignees/User select
+          div
             [ class "media"
             , classList [ ( "is-w", hasAssigneeRight ) ]
             , ternary hasAssigneeRight (onClick DoAssigneeEdit) (onClick NoMsg)
@@ -2869,21 +2887,24 @@ viewSidePane u t model =
         ]
             ++ (if isAdmin || isAuthor then
                     [ hr [ class "has-background-grey" ] [] ]
+                        ++ [ div
+                                [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                , onClick (DoMove t)
+                                ]
+                                [ span [ class "right-arrow2 pl-0 pr-2" ] [], textH T.moveTension ]
+                           , div
+                                [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
+                                ]
+                                [ I.icon "icon-disc mr-1", text "Change type" ]
+                           ]
                         ++ (if isAdmin then
-                                [ div
-                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
-                                    , onClick (DoMove t)
-                                    ]
-                                    [ span [ class "right-arrow2 pl-0 pr-2" ] [], textH T.moveTension ]
-
-                                --, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ I.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
+                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ I.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
                                 ]
 
                             else
                                 []
                            )
-                        ++ []
-                    --, div [ class "is-smaller2 has-text-weight-semibold button-light is-link" ] [ I.icon "icon-lock icon-disc mr-1", text "Change type" ]
 
                 else
                     []

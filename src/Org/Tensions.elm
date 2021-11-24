@@ -655,8 +655,11 @@ update global message model =
             let
                 tensions =
                     hotTensionPush tension model.tensions_all
+
+                tensions_int =
+                    hotTensionPush tension model.tensions_int
             in
-            ( { model | tensions_all = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
+            ( { model | tensions_int = Success tensions_int }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
 
         PushGuest form ->
             ( model, actionRequest apis.gql form JoinAck, Cmd.none )

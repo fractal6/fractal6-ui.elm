@@ -42,7 +42,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, style, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
@@ -1536,6 +1536,13 @@ viewCanvas us model =
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             -- Hidden class use in graphpack_d3.js
             [ div
+                [ id "root_cvbtn"
+                , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
+                , attribute "data-tooltip" (upH T.goRoot)
+                , onClick ToggleGraphReverse
+                ]
+                [ I.icon "icon-chevrons-right icon-xs" ]
+            , div
                 [ id "invGraph_cvbtn"
                 , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.reverseTooltip)
