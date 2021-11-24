@@ -42,21 +42,23 @@ formatDate now timePosix =
         formatPriorYear time
 
 
-{-| Format date as "18 Dec"
+{-| Format date as "the 18 Dec"
 -}
 formatCurrentYear : Posix -> String
 formatCurrentYear date =
-    [ Time.toDay utc date |> String.fromInt
+    [ "the"
+    , Time.toDay utc date |> String.fromInt
     , Time.toMonth utc date |> toShortMonth
     ]
         |> String.join " "
 
 
-{-| Format date as "18 Dec, 2042"
+{-| Format date as "the 18 Dec, 2042"
 -}
 formatPriorYear : Posix -> String
 formatPriorYear date =
-    [ Time.toDay utc date |> String.fromInt
+    [ "the"
+    , Time.toDay utc date |> String.fromInt
     , (Time.toMonth utc date |> toShortMonth) ++ ","
     , Time.toYear utc date |> String.fromInt
     ]

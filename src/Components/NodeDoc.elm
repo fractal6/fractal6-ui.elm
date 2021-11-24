@@ -333,10 +333,7 @@ view_ tid data op_m =
             div [ class "aboutDoc" ]
                 [ div [ class "media subtitle" ]
                     [ div [ class "media-left" ]
-                        [ I.icon "icon-info icon-1half"
-
-                        --span [ class "fa-stack", attribute "style" "font-size: 0.6em;" ] [ i [ class "icon-info fa-stack-1x" ] [] , i [ class "far fa-circle fa-stack-2x" ] [] ]
-                        ]
+                        [ I.icon "icon-info icon-1half" ]
                     , div [ class "media-content nodeName" ]
                         [ (if data.hasBeenPushed && data.source == TensionBaseUri then
                             let
@@ -747,7 +744,7 @@ doEditView op_m btype =
                     [ class "button has-text-weight-normal is-pulled-right is-small"
                     , onClick (op.onBlobEdit btype)
                     ]
-                    [ I.icon "icon-pen" ]
+                    [ I.icon "icon-edit-2" ]
 
         Nothing ->
             span [] []
@@ -826,7 +823,7 @@ viewVerRow now i blob =
                     div
                         [ class "tooltip has-tooltip-arrow"
                         , attribute "style" "cursor: inherit;"
-                        , attribute "data-tooltip" (upH T.publishedThe ++ " " ++ formatDate now flag)
+                        , attribute "data-tooltip" (upH T.published ++ " " ++ formatDate now flag)
                         ]
                         [ I.icon "icon-flag" ]
 

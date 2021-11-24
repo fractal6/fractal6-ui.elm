@@ -1406,7 +1406,7 @@ viewSearchBar model =
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
                             [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge" ] []) (text "")
                             , textH T.status
-                            , i [ class "ml-3 icon-chevron-down icon-tiny" ] []
+                            , i [ class "ml-3 icon-chevron-down1 icon-tiny" ] []
                             ]
                         , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
@@ -1424,7 +1424,7 @@ viewSearchBar model =
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
                             [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge" ] []) (text "")
                             , textH T.type_
-                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                             ]
                         , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
@@ -1444,7 +1444,7 @@ viewSearchBar model =
                         [ div [ class "is-small button" ]
                             [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge" ] []) (text "")
                             , text "Author"
-                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                             ]
                         , UserSearchPanel.view
                             { selectedAssignees = model.authors
@@ -1457,7 +1457,7 @@ viewSearchBar model =
                         [ div [ class "is-small button" ]
                             [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge" ] []) (text "")
                             , text "Label"
-                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
@@ -1470,7 +1470,7 @@ viewSearchBar model =
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
                             [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge" ] []) (text "")
                             , textH T.depth
-                            , i [ class "ml-2 icon-chevron-down icon-tiny" ] []
+                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
                             ]
                         , div [ id "depth-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div

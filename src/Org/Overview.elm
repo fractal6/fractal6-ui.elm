@@ -1335,15 +1335,12 @@ viewLeftPane model =
 
 viewSearchBar : UserState -> Model -> Html Msg
 viewSearchBar us model =
-    let
-        qs =
-            model.node_quickSearch
-    in
     div
         [ id "searchBarOverview" ]
         [ div
             [ class "field has-addons searchBar"
-            , onMouseEnter DoClearTooltip
+
+            --, onMouseEnter DoClearTooltip
             ]
             ([ div [ class "control has-icons-left is-expanded" ]
                 [ input
@@ -1351,10 +1348,8 @@ viewSearchBar us model =
                     , type_ "search"
                     , autocomplete False
                     , placeholder (upH T.phQS)
-                    , value qs.pattern
+                    , value model.node_quickSearch.pattern
                     , onInput ChangePattern
-
-                    --, onFocus (LookupFocus qs.pattern)
                     , onClick ToggleLookup
                     , onBlur LookupBlur
                     , onKeydown SearchKeyDown
@@ -1537,18 +1532,34 @@ viewCanvas us model =
             -- Hidden class use in graphpack_d3.js
             [ div
                 [ id "root_cvbtn"
-                , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
+                , class "button tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.goRoot)
-                , onClick ToggleGraphReverse
+                , onClick (NodeClicked model.node_focus.rootnameid)
                 ]
-                [ I.icon "icon-chevrons-right icon-xs" ]
+                [ I.icon "icon-chevrons-up" ]
+            , div
+                [ id "root_cvbtn"
+                , class "button tooltip has-tooltip-arrow has-tooltip-right"
+                , attribute "data-tooltip" (upH T.goParent)
+                , case model.path_data of
+                    Just g ->
+                        LE.getAt 1 (List.reverse g.path)
+                            |> Maybe.map (\x -> x.nameid)
+                            |> withDefault g.focus.nameid
+                            |> NodeClicked
+                            |> onClick
+
+                    Nothing ->
+                        onClick NoMsg
+                ]
+                [ I.icon "icon-chevron-up" ]
             , div
                 [ id "invGraph_cvbtn"
                 , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.reverseTooltip)
                 , onClick ToggleGraphReverse
                 ]
-                [ I.icon "icon-sort-amount-desc icon-xs" ]
+                [ span [ style "padding" "2px" ] [ I.icon "icon-sort-amount-desc icon-xs" ] ]
             ]
         , div
             [ id "nodeTooltip"

@@ -323,18 +323,33 @@ export const GraphPack = {
         }
 
         if (!isHidden) {
-            this.drawCircleNames(focus)
+            //
+            // Draw focused border
+            //
+            var hoverWidth = this.focusCircleWidth;
+            var hoverColor = this.focusCircleColor;
+            // Draw border
+            ctx2d.beginPath();
+            ctx2d.arc(focus.ctx.centerX, focus.ctx.centerY, focus.ctx.rayon+0.1+hoverWidth*0.5,
+                0, 2 * Math.PI, true);
+            ctx2d.lineWidth   = hoverWidth;
+            ctx2d.strokeStyle = hoverColor;
+            ctx2d.stroke();
+
+            //
+            // Draw names when zooming in/out
+            //
+            // @debug: passing ctx2d for better performance ?
+            this.drawNodeNames(focus)
         }
 
     },
 
     drawNode(isHidden, ctx2d, node) {
-        var _name = node.data.name;
-        var type_ = node.data.type_;
-        var role_type = node.data.role_type;
         var circleColor = "#";
+        var opac = "#";
 
-        if (type_ === "Hidden") {
+        if (node.data.type_ === "Hidden") {
             return
         } else {
             this.addNodeCtx(node);
@@ -352,20 +367,20 @@ export const GraphPack = {
             circleColor = node.color;
         } else {
             var grd = ctx2d.createRadialGradient(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*0.1, node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*2);
+            opac = "";
             // opacity level
-            var opac = "";
             // @DEBUG: we compute (or precompute) that faster ?
             if (!this.gPack.path(node).map(n => n.data.nameid).includes(this.focusedNode.data.nameid)) {
                 opac = "75";
             }
-            if (type_ === NodeType.Circle) {
+            if (node.data.type_ === NodeType.Circle) {
                 grd.addColorStop(0.25, this.colorCircle(node.depth)+opac);
                 grd.addColorStop(1, this.colorCircle(node.depth+1)+opac);
-            } else if (type_ === NodeType.Role) {
+            } else if (node.data.type_ === NodeType.Role) {
                 // Check role type code color
-                if (role_type === RoleType.Guest) {
+                if (node.data.role_type === RoleType.Guest) {
                     circleColor = this.guestColor;
-                } else if (role_type == RoleType.Coordinator) {
+                } else if (node.data.role_type == RoleType.Coordinator) {
                     circleColor = this.coordinatorRoleColor;
                 } else {
                     circleColor = this.peerRoleColor;
@@ -373,7 +388,7 @@ export const GraphPack = {
                 grd.addColorStop(0, circleColor+opac);
                 grd.addColorStop(1, shadeColor(circleColor, -5)+opac);
             } else {
-                console.warn("Node type unknonw", type_);
+                console.warn("Node type unknonw", node.data.type_);
             }
 
             circleColor = grd;
@@ -386,9 +401,10 @@ export const GraphPack = {
             0, 2 * Math.PI, true);
         ctx2d.fill();
 
-
-        // If role is own by user, enlight the circle
-        if ( (this.uctx && node.data.first_link) && type_ === NodeType.Role && this.uctx.username == node.data.first_link.username ) {
+        //
+        // Drown owned Role
+        //
+        if ((opac == "" && this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
             // Draw user pin
             //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
             //ctx2d.beginPath();
@@ -397,7 +413,7 @@ export const GraphPack = {
             //    0, 2 * Math.PI, true);
             //ctx2d.fill();
 
-            // Draw user border
+            // Draw user dashed border
             var hoverWidth = 2;
             var hoverColor = "green";
             ctx2d.beginPath();
@@ -411,85 +427,271 @@ export const GraphPack = {
             ctx2d.setLineDash([]);
         }
 
-        if (!isHidden) {
-            if (node === this.focusedNode) {
-                // Draw focused border
-                var hoverWidth = this.focusCircleWidth;
-                var hoverColor = this.focusCircleColor;
-                // Draw border
-                ctx2d.beginPath();
-                ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon+0.1+hoverWidth*0.5,
-                    0, 2 * Math.PI, true);
-                ctx2d.lineWidth   = hoverWidth;
-                ctx2d.strokeStyle = hoverColor;
-                ctx2d.stroke();
-            }
+    },
 
-            var text = null;
-            var user = null;
-            var fontSize = this.fontsizeCircle_start;
-            if (type_ === NodeType.Role && opac === "") {
-                // Show Role name
-                var textLong = _name;
-                var textShort = _name.substring(0, 3);
-                //var textShort = _name.substring(0, 3).replace(/./,x=>x.toUpperCase());
-                if (node.data.first_link) {
-                    user = "@"+node.data.first_link.username;
-                }
+    drawNodeNames(node) {
+        var n;
+        for (var i=0; i < node.data.children.length; i++) {
+            n = node.children[i];
+            if (!n.ctx || node.depth !== n.depth-1) continue
 
-                // Name
-                ctx2d.font = fontSize + "px " + this.fontstyleCircle;
-                var textWidth = ctx2d.measureText(textLong).width;
-                var textHeight = fontSize/3;
-                var paddingBelow = 0;
-                if (textWidth+textHeight < node.ctx.rayon*2) {
-                    text = textLong;
-                } else if (ctx2d.measureText(textShort).width+5 < node.ctx.rayon*2) {
-                    text = textShort;
-                } else {
-                    fontSize = fontSize - 2;
-                }
-
-                // Username
-                var text_username = null;
-                var text_username_short = "@";
-                if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
-                    text_username = user;
-                    paddingBelow = 4*textHeight;
-                } else if (user && ctx2d.measureText(text_username_short).width+5 < node.ctx.rayon*2 - 2*textHeight) {
-                    text_username = text_username_short;
-                    paddingBelow = 3*textHeight;
-                }
-
-                if (text) {
-                    ctx2d.beginPath();
-                    ctx2d.fillStyle = "black";
-                    ctx2d.textAlign = "center";
-                    ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY+textHeight);
-                    //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
-                    ctx2d.fill();
-
-                    if (text_username) {
-                        ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
-                        ctx2d.beginPath();
-                        ctx2d.fillStyle = this.usernameColor;
-                        ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + paddingBelow);
-                        ctx2d.fill();
-                    }
-                }
-
+            // Draw names
+            if (n.data.type_ === NodeType.Circle) {
+                this.drawCircleName(n)
             } else {
-                //if (this.focusedNode.depth == node.depth || this.focusedNode.depth == node.depth-1 ) {
-                //    ctx2d.beginPath();
-                //    ctx2d.fillStyle = "white";
-                //    ctx2d.fillCircleText(_name,
-                //        node.ctx.centerX, node.ctx.centerY,
-                //        node.ctx.rayon, -Math.PI*0.7);
-                //    ctx2d.fill()
-                //}
+                this.drawRoleName(n)
             }
         }
     },
+
+    drawCircleName(node) {
+        var ctx2d = this.ctx2d
+        var fontSize = this.fontsizeCircle_start;
+        var text, textWidth, textHeight;
+        text = node.data.name;
+        textWidth = ctx2d.measureText(text).width;
+        textHeight = fontSize/3;
+        if (textWidth-textHeight > (node.ctx.rayon)*2.5) {
+            text = text.split(" ").map(s => s.substring(0, 3)).join("·")
+            textWidth = ctx2d.measureText(text).width;
+            if (textWidth-textHeight > node.ctx.rayon*2.5) {
+                text = text.split("·").map(s => s.substring(0, 1)).join("·")
+            }
+        }
+
+        fontSize = this.fontsizeCircle_start;
+        ctx2d.font = "bold " + (fontSize) + "px " + this.fontstyleCircle;
+        //ctx2d.font = "bold " + fontSize + "px " + "Courier New"; // serif, sans-serif, Verdana, Georgia
+        ctx2d.beginPath();
+        ctx2d.textAlign = "center";
+        ctx2d.fillStyle = "#172335ff";
+        ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
+        //ctx2d.lineWidth = 0.2;
+        //ctx2d.strokeStyle = "black";
+        //ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
+        //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+        ctx2d.fill();
+        ctx2d.stroke();
+
+        // Alternative bended name...need some polished to be used...
+        //ctx2d.beginPath();
+        //ctx2d.fillStyle = "white";
+        //ctx2d.fillCircleText(node.data.name,
+        //    node.ctx.centerX, node.ctx.centerY,
+        //    node.ctx.rayon, -Math.PI*0.7);
+        //ctx2d.fill()
+    },
+
+    drawRoleName(node) {
+        var ctx2d = this.ctx2d
+        //
+        // Draw name and username
+        //
+        var fontSize = this.fontsizeCircle_start;
+        var name = node.data.name;
+        var text = null;
+        var user = null;
+        var textLong = name;
+        var textShort = name.substring(0, 3);
+        //var textShort = name.substring(0, 3).replace(/./,x=>x.toUpperCase());
+
+        if (node.data.first_link) {
+            user = "@"+node.data.first_link.username;
+        }
+
+        // Name
+        ctx2d.font = fontSize + "px " + this.fontstyleCircle;
+        var textWidth = ctx2d.measureText(textLong).width;
+        var textHeight = fontSize/3;
+        var paddingBelow = 0;
+        if (textWidth+textHeight < node.ctx.rayon*2) {
+            text = textLong;
+        } else if (ctx2d.measureText(textShort).width+5 < node.ctx.rayon*2) {
+            text = textShort;
+        } else {
+            fontSize = fontSize - 2;
+        }
+
+        // Username
+        var text_username = null;
+        var text_username_short = "@";
+        if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
+            text_username = user;
+            paddingBelow = 4*textHeight;
+        } else if (user && ctx2d.measureText(text_username_short).width+5 < node.ctx.rayon*2 - 2*textHeight) {
+            text_username = text_username_short;
+            paddingBelow = 3*textHeight;
+        }
+
+        if (text) {
+            ctx2d.beginPath();
+            ctx2d.fillStyle = "black";
+            ctx2d.textAlign = "center";
+            ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY+textHeight);
+            //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+            ctx2d.fill();
+
+            if (text_username) {
+                ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
+                ctx2d.beginPath();
+                ctx2d.fillStyle = this.usernameColor;
+                ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + paddingBelow);
+                ctx2d.fill();
+            }
+        }
+    },
+
+
+    // Draw node border + eventually tooltip
+    drawNodeHover(node, doDrawTooltip) {
+        var ctx2d = this.ctx2d;
+        if (!node.ctx) {
+            // Wait for the canvas to render before drawing border.
+            // If not, focus border won be draw if another circle in hover before rendering.
+            return false
+        }
+
+        // Clear Border
+        var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
+        if (clearBorder) {
+            this.clearNodeHover(this.hoveredNode);
+        }
+
+        // Draw Border (on hoover)
+        if (node != this.hoveredNode && node != this.focusedNode) {
+            var hoverColor,
+                hoverWidth,
+                offset_r = 0;
+            if (node == this.focusedNode) {
+                hoverColor = this.focusCircleColor;
+                hoverWidth = this.focusCircleWidth;
+            } else {
+                hoverColor = this.hoverCircleColor;
+                hoverWidth = this.hoverCircleWidth;
+                if (node.data.type_ == NodeType.Circle) offset_r = -0.5;
+                else if (node.data.type_ == NodeType.Role) offset_r = 0.1;
+            }
+
+            // Draw Circle border
+            ctx2d.beginPath();
+            ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
+                node.ctx.rayon+offset_r+hoverWidth*0.5, 0, 2 * Math.PI, true);
+            ctx2d.lineWidth = hoverWidth;
+            ctx2d.strokeStyle = hoverColor;
+            ctx2d.stroke();
+        }
+
+        // Draw tooltip
+        if (doDrawTooltip) {
+            this.drawNodeTooltip(node);
+        }
+
+        // Update global context
+        this.hoveredNode = node; //@debug: use globCtx
+
+        // Rewrite circle child name.
+        // Whithout it, name of circle can be altered  by the circle border drawing
+        this.drawNodeNames(this.focusedNode)
+
+        return
+    },
+
+    // Clean node hovering
+    clearNodeHover(node) {
+        var ctx2d = this.ctx2d;
+        //if (!node.ctx) {
+        //    this.addNodeCtx(node)
+        //}
+
+        var hoverWidth;
+        if (node == this.focusedNode) {
+            hoverWidth = this.focusCircleWidth;
+        } else {
+            hoverWidth = this.hoverCircleWidth;
+        }
+
+        // cant get the original colors !?!
+        //var pixel = ctx2d.getImageData(node.ctx.centerX+node.r+hoverWidth*30, node.ctx.centerY, 1, 1).data;
+        //var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ","+ pixel[3] + ")";
+
+        // Clear Circle Border
+        ctx2d.beginPath();
+        ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
+            node.ctx.rayon+0.1+hoverWidth/2, 0, 2 * Math.PI, true);
+        ctx2d.lineWidth = hoverWidth*1.75;
+        ctx2d.strokeStyle = ((node.depth == 0)? this.backgroundColor : this.colorCircle(node.depth-1));
+        ctx2d.stroke();
+
+        // Clear node tooltip
+        this.clearNodeTooltip();
+
+        // Update context
+        this.hoveredNode = null; //@debug: use globCtx
+        return
+    },
+
+    // Draw the node tooltip
+    drawNodeTooltip(node) {
+        this.nodeHoveredFromJs(node);
+        // Add a timer, to wait the nodeHover elm render the toolip options.
+        // elm code.
+        setTimeout(() => {
+            this.drawNodeTooltip_(node);
+        }, 50);
+    },
+    drawNodeTooltip_(node) {
+        var $tooltip = this.$tooltip
+        // == add tooltip
+        // @warning: tooltip neeed to be displayed to get its clientWidth.
+        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
+        if (!$subTooltip) return
+        $subTooltip.childNodes[0].textContent = node.data.name;
+        $tooltip.classList.remove("fadeOut");
+        $tooltip.classList.add("fadeIn");
+        // --
+        var bodyRect = document.querySelector("body").getBoundingClientRect();
+        var scrollLeft = bodyRect.left;
+        var scrollTop = bodyRect.top;
+        var r = this.$canvas.getBoundingClientRect();
+        var tw = $tooltip.clientWidth;
+        var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
+        if (node == this.focusedNode) {
+            // below the circle
+            var hw = (-$tooltip.clientHeight + 2*node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+        } else {
+            // above the circle
+            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+        }
+
+        if (l+tw/2-r.left < 0 || r.left+r.width-tw/2-l < 0 ) {
+            // the tooltip overflow "too much" outside the canvas. (left/right
+            this.clearNodeTooltip();
+            return
+        } else if ( t+$tooltip.clientHeight/3-r.top < 0) {
+            // Overflow on top
+            var hw = (-$tooltip.clientHeight/2 + 2*node.ctx.rayon);
+            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
+        }
+        $tooltip.style.left = l + "px";
+        $tooltip.style.top = t + "px";
+
+        return
+    },
+
+    // Clear node tooltip.
+    clearNodeTooltip() {
+        if (this.$tooltip) {
+            this.$tooltip.classList.remove("fadeIn");
+            this.$tooltip.classList.add("fadeOut");
+            //this.$tooltip.style.display = "none";
+        }
+
+        this.nodeHoveredFromJs("");
+        return
+    },
+
 
     // Create the interpolation function between current view and the clicked on node.
     // It firsts zoom to get the circles to the right location
@@ -525,11 +727,17 @@ export const GraphPack = {
         var oldFocus = this.focusedNode;
         this.focusedNode = focus;
         this.drawNodeHover(this.focusedNode, false);
+        var zoomTo;
+        if (focus.data.children === null || focus.data.children.length == 0) {
+            zoomTo = focus.parent;
+        } else {
+            zoomTo = focus;
+        }
 
-        var zoomFactor = this.getZoomFactor(this.focusedNode);
+        var zoomFactor = this.getZoomFactor(zoomTo);
 
         // Configre interpolator
-        var vp = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * zoomFactor]; //The center and width of the new "viewport"
+        var vp = [zoomTo.x, zoomTo.y, zoomTo.r * zoomFactor]; //The center and width of the new "viewport"
         delay = (delay === undefined ? 0 : delay*this.minZoomDuration);
         var maxDuration = this.minZoomDuration*2;
         var interpolator = d3.interpolateZoom(this.vpOld, vp); //Create interpolation between current and new "viewport"
@@ -743,6 +951,25 @@ export const GraphPack = {
         return {mouseX, mouseY}
     },
 
+    // Get the node under cursor in the canvas
+    getNodeUnderPointer(e, p) {
+        //Figure out where the mouse click occurred.
+        if (!p) p = this.getPointerCtx(e);
+        var hiddenCtx2d = this.hiddenCtx2d;
+
+        // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
+        // This will return that pixel's color
+        var pixel = hiddenCtx2d.getImageData(p.mouseX, p.mouseY, 1, 1).data;
+        //Our map uses these rgb strings as keys to nodes.
+        var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ")";
+        var node = this.colToCircle[color];
+        if (node) {
+            this.addNodeCtx(node);
+        }
+        return node;
+    },
+
+
 
     // Returns a PNode from a Node
     getPNode(node) {
@@ -808,213 +1035,6 @@ export const GraphPack = {
         rayon *= (zoomCtx.scale);
         //rayon *= (zoomCtx.scale + node.depth*0.1);
         node.ctx = {centerX, centerY, rayon};
-        return
-    },
-
-    // Get the node under cursor in the canvas
-    getNodeUnderPointer(e, p) {
-        //Figure out where the mouse click occurred.
-        if (!p) p = this.getPointerCtx(e);
-        var hiddenCtx2d = this.hiddenCtx2d;
-
-        // Get the corresponding pixel color on the hidden canvas and look up the node in our map.
-        // This will return that pixel's color
-        var pixel = hiddenCtx2d.getImageData(p.mouseX, p.mouseY, 1, 1).data;
-        //Our map uses these rgb strings as keys to nodes.
-        var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ")";
-        var node = this.colToCircle[color];
-        if (node) {
-            this.addNodeCtx(node);
-        }
-        return node;
-    },
-
-    drawCircleNames(node) {
-        var ctx2d = this.ctx2d
-        var n;
-        for (var i=0; i < node.data.children.length; i++) {
-            n = node.children[i];
-            if (!n.ctx) continue
-            var fontSize = this.fontsizeCircle_start;
-            var text, textWidth , textHeight;
-
-            if (n.data.type_ === NodeType.Circle && node.depth == n.depth-1 ) {
-                // Show Circle name
-                text = n.data.name;
-                textWidth = ctx2d.measureText(text).width;
-                textHeight = fontSize/3;
-                if (textWidth-textHeight > (n.ctx.rayon)*2.5) {
-                    text = text.split(" ").map(s => s.substring(0, 3)).join("·")
-                    textWidth = ctx2d.measureText(text).width;
-                    if (textWidth-textHeight > n.ctx.rayon*2.5) {
-                        text = text.split("·").map(s => s.substring(0, 1)).join("·")
-                    }
-                }
-
-                fontSize = this.fontsizeCircle_start;
-                ctx2d.font = "bold " + (fontSize) + "px " + this.fontstyleCircle;
-                //ctx2d.font = "bold " + fontSize + "px " + "Courier New"; // serif, sans-serif, Verdana, Georgia
-                ctx2d.beginPath();
-                ctx2d.textAlign = "center";
-                ctx2d.fillStyle = "#172335ff";
-                ctx2d.fillText(text, n.ctx.centerX, n.ctx.centerY-n.ctx.rayon/2+textHeight);
-                //ctx2d.lineWidth = 0.2;
-                //ctx2d.strokeStyle = "black";
-                //ctx2d.strokeText(text, n.ctx.centerX, n.ctx.centerY-n.ctx.rayon/2+textHeight);
-                //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
-                ctx2d.fill();
-                ctx2d.stroke();
-            }
-        }
-    },
-
-    // Draw node border + eventually tooltip
-    drawNodeHover(node, doDrawTooltip) {
-        var ctx2d = this.ctx2d;
-        if (!node.ctx) {
-            // Wait for the canvas to render before drawing border.
-            // If not, focus border won be draw if another circle in hover before rendering.
-            return false
-        }
-
-        // Clear Border
-        var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
-        if (clearBorder) {
-            this.clearNodeHover(this.hoveredNode);
-        }
-
-        // Draw Border (on hoover)
-        if (node != this.hoveredNode && node != this.focusedNode) {
-            var hoverColor,
-                hoverWidth,
-                offset_r = 0;
-            if (node == this.focusedNode) {
-                hoverColor = this.focusCircleColor;
-                hoverWidth = this.focusCircleWidth;
-            } else {
-                hoverColor = this.hoverCircleColor;
-                hoverWidth = this.hoverCircleWidth;
-                if (node.data.type_ == NodeType.Circle) offset_r = -0.5;
-                else if (node.data.type_ == NodeType.Role) offset_r = 0.1;
-            }
-
-            // Draw Circle border
-            ctx2d.beginPath();
-            ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-                node.ctx.rayon+offset_r+hoverWidth*0.5, 0, 2 * Math.PI, true);
-            ctx2d.lineWidth = hoverWidth;
-            ctx2d.strokeStyle = hoverColor;
-            ctx2d.stroke();
-        }
-
-        // Draw tooltip
-        if (doDrawTooltip) {
-            this.drawNodeTooltip(node);
-        }
-
-        // Update global context
-        this.hoveredNode = node; //@debug: use globCtx
-
-        // Rewrite circle child name.
-        // Whithout it, name of circle can be altered  by the circle border drawing
-        this.drawCircleNames(this.focusedNode)
-
-        return
-    },
-
-    // Clean node hovering
-    clearNodeHover(node) {
-        var ctx2d = this.ctx2d;
-        //if (!node.ctx) {
-        //    this.addNodeCtx(node)
-        //}
-
-        var hoverWidth;
-        if (node == this.focusedNode) {
-            hoverWidth = this.focusCircleWidth;
-        } else {
-            hoverWidth = this.hoverCircleWidth;
-        }
-
-        // cant get the original colors !?!
-        //var pixel = ctx2d.getImageData(node.ctx.centerX+node.r+hoverWidth*30, node.ctx.centerY, 1, 1).data;
-        //var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ","+ pixel[3] + ")";
-
-        // Clear Circle Border
-        ctx2d.beginPath();
-        ctx2d.arc(node.ctx.centerX, node.ctx.centerY,
-            node.ctx.rayon+0.1+hoverWidth/2, 0, 2 * Math.PI, true);
-        ctx2d.lineWidth = hoverWidth*1.75;
-        ctx2d.strokeStyle = ((node.depth == 0)? this.backgroundColor : this.colorCircle(node.depth-1));
-        ctx2d.stroke();
-
-        // Clear node tooltip
-        this.clearNodeTooltip();
-
-        // Update context
-        this.hoveredNode = null; //@debug: use globCtx
-        return
-    },
-
-    // Draw the node tooltip
-    drawNodeTooltip(node) {
-        this.nodeHoveredFromJs(node);
-        // Add a timer, to wait the nodeHover elm render the toolip options.
-        // elm code.
-        setTimeout(() => {
-            this.drawNodeTooltip_(node);
-        }, 50);
-    },
-    drawNodeTooltip_(node) {
-        var $tooltip = this.$tooltip
-        // == add tooltip
-        // @warning: tooltip neeed to be displayed to get its clientWidth.
-        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
-        if (!$subTooltip) return
-        $subTooltip.childNodes[0].textContent = node.data.name;
-        $tooltip.classList.remove("fadeOut");
-        $tooltip.classList.add("fadeIn");
-        // --
-        var bodyRect = document.querySelector("body").getBoundingClientRect();
-        var scrollLeft = bodyRect.left;
-        var scrollTop = bodyRect.top;
-        var r = this.$canvas.getBoundingClientRect();
-        var tw = $tooltip.clientWidth;
-        var l = (node.ctx.centerX + r.left - scrollLeft - (tw/2 + 1));
-        if (node == this.focusedNode) {
-            // below the circle
-            var hw = (-$tooltip.clientHeight + 2*node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
-        } else {
-            // above the circle
-            var hw = ($tooltip.clientHeight + 2*node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
-        }
-
-        if (l+tw/2-r.left < 0 || r.left+r.width-tw/2-l < 0 ) {
-            // the tooltip overflow "too much" outside the canvas. (left/right
-            this.clearNodeTooltip();
-            return
-        } else if ( t+$tooltip.clientHeight/3-r.top < 0) {
-            // Overflow on top
-            var hw = (-$tooltip.clientHeight/2 + 2*node.ctx.rayon);
-            var t = (node.ctx.centerY + r.top  - scrollTop  - (hw/2 + 23));
-        }
-        $tooltip.style.left = l + "px";
-        $tooltip.style.top = t + "px";
-
-        return
-    },
-
-    // Clear node tooltip.
-    clearNodeTooltip() {
-        if (this.$tooltip) {
-            this.$tooltip.classList.remove("fadeIn");
-            this.$tooltip.classList.add("fadeOut");
-            //this.$tooltip.style.display = "none";
-        }
-
-        this.nodeHoveredFromJs("");
         return
     },
 
@@ -1514,11 +1534,16 @@ export const GraphPack = {
 
                 if (this.hoveredNode) this.clearNodeHover(this.hoveredNode);
 
+                var focus = this.focusedNode
+
                 this.resetGraphPack(this.graph, false);
                 this.clearCanvas(this.ctx2d);
                 this.clearCanvas(this.hiddenCtx2d);
-                this.zoomToNode(this.rootNode, 0.9);
 
+                this.zoomToNode(this.rootNode, 0.9);
+                setTimeout(() => {
+                    this.zoomToNode(this.nodesDict[focus.data.nameid]);
+                }, 50)
             });
 
         }

@@ -333,7 +333,7 @@ viewPanel op =
                         )
                     )
                 ]
-                [ I.icon1 "icon-pen" (upH T.edit) ]
+                [ I.icon1 "icon-edit-2" (upH T.edit) ]
             , hr [ class "dropdown-divider" ] []
             ]
 

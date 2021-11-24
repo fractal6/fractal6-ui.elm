@@ -361,6 +361,7 @@ html.has-modal-active, html.has-modal-active2 {
     // @debug see : https://bugzilla.mozilla.org/show_bug.cgi?id=1460109
     scrollbar-width: thin;
     scrollbar-color: grey $body-background-color;
+    //scrollbar-color: $grey-darker darken($body-background-color, 5) ;
     &::-webkit-scrollbar {
         width: 6px;
         color: grey;
@@ -668,6 +669,7 @@ html.has-modal-active, html.has-modal-active2 {
 
 .docToolbar {
     .button {
+        //background: $grey-light2;
         &.is-active {
             color: $blue !important;
         }

@@ -195,11 +195,6 @@ published =
     "published"
 
 
-publishedThe : String
-publishedThe =
-    "published the"
-
-
 revisionNotPublished : String
 revisionNotPublished =
     "revision not published"
@@ -1052,3 +1047,8 @@ contractInfo =
 goRoot : String
 goRoot =
     "Go to root circle"
+
+
+goParent : String
+goParent =
+    "Go to parent circle"

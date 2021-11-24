@@ -178,7 +178,6 @@ menuToIcon menu =
             "icon-shield"
 
         EditMenu ->
-            --"icon-pen"
             "icon-edit"
 
 

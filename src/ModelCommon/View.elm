@@ -181,7 +181,10 @@ mediaTension now focus tension showStatus showRecip size navigate =
 
                   else
                     --span [] [ atBy now "has-text-weight-light" tension.createdAt tension.createdBy ]
-                    span [] [ span [ class "is-invisible" ] [ text "fixme" ], span [ class "has-text-weight-light is-pulled-right" ] [ text "by ", viewUsernameLink tension.createdBy.username ] ]
+                    span []
+                        [ -- span [ class "is-invisible" ] [ text "fixme" ]
+                          span [ class "has-text-weight-light is-pulled-righ" ] [ text (T.by ++ " "), viewUsernameLink tension.createdBy.username ]
+                        ]
                 ]
 
             --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
@@ -279,68 +282,69 @@ viewUsernameLink username =
 
 viewOpenedDate : Time.Posix -> String -> Html msg
 viewOpenedDate now date =
-    span []
-        [ span [] [ text T.opened ]
-        , text " "
-        , text (formatDate now date)
-        ]
+    span [] <|
+        List.intersperse (text " ") <|
+            [ span [] [ text T.opened ]
+            , text (formatDate now date)
+            ]
 
 
 viewUpdated : Time.Posix -> String -> Html msg
 viewUpdated now date =
-    span [ class "is-grey-light" ]
-        [ text " · "
-        , span [] [ text T.edited ]
-        , text " "
-        , text (formatDate now date)
-        ]
+    span [ class "is-grey-light" ] <|
+        List.intersperse (text " ") <|
+            [ text "·"
+            , span [] [ text T.edited ]
+            , text (formatDate now date)
+            ]
 
 
 viewCommentedDate : Time.Posix -> String -> Html msg
 viewCommentedDate now date =
-    span [ class "is-grey-light" ]
-        [ span [ class "is-itali" ] [ text T.commented ]
-        , text " "
-        , text (formatDate now date)
-        ]
+    span [ class "is-grey-light" ] <|
+        List.intersperse (text " ") <|
+            [ span [ class "is-itali" ] [ text T.commented ]
+            , text (formatDate now date)
+            ]
 
 
 viewTensionDateAndUser : Time.Posix -> String -> String -> Username -> Html msg
 viewTensionDateAndUser now cls createdAt createdBy =
-    span [ class cls ]
-        [ viewOpenedDate now createdAt
-        , text (" " ++ T.by ++ " ")
-        , viewUsernameLink createdBy.username
-        ]
+    span [ class cls ] <|
+        List.intersperse (text " ") <|
+            [ viewOpenedDate now createdAt
+            , text T.by
+            , viewUsernameLink createdBy.username
+            ]
 
 
 viewTensionDateAndUserC : Time.Posix -> String -> Username -> Html msg
 viewTensionDateAndUserC now createdAt createdBy =
-    span []
-        [ viewUsernameLink createdBy.username
-        , text " "
-        , viewCommentedDate now createdAt
-        ]
+    span [] <|
+        List.intersperse (text " ") <|
+            [ viewUsernameLink createdBy.username
+            , viewCommentedDate now createdAt
+            ]
 
 
 byAt : Time.Posix -> Username -> String -> Html msg
 byAt now createdBy createdAt =
-    span []
-        [ text " by "
-        , viewUsernameLink createdBy.username
-        , text " the "
-        , text (formatDate now createdAt)
-        ]
+    span [] <|
+        List.intersperse (text " ") <|
+            [ text "by"
+            , viewUsernameLink createdBy.username
+            , text (formatDate now createdAt)
+            ]
 
 
 atBy : Time.Posix -> String -> String -> Username -> Html msg
 atBy now cls createdAt createdBy =
-    span [ class cls ]
-        [ text " the "
-        , text (formatDate now createdAt)
-        , text " by "
-        , viewUsernameLink createdBy.username
-        ]
+    span [ class cls ] <|
+        List.intersperse (text " ") <|
+            [ text (formatDate now createdAt)
+            , text "by"
+            , viewUsernameLink createdBy.username
+            ]
 
 
 

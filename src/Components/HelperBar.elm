@@ -225,7 +225,7 @@ viewTree baseUri uriQuery g =
     in
     div [ class "dropdown" ]
         [ div [ class "dropdown-trigger px-2 button-light" ]
-            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down" ]
+            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down1" ]
             ]
         , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content" ] <|

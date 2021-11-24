@@ -516,7 +516,7 @@ viewModalContent op (State model) =
                             [ span [ attribute "aria-controls" "target-menu" ]
                                 [ span
                                     [ class "button is-small is-light is-inverted is-static" ]
-                                    [ text target, span [ class "ml-2 icon-chevron-down" ] [] ]
+                                    [ text target, span [ class "ml-2 icon-chevron-down1" ] [] ]
                                 ]
                             ]
                         , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]

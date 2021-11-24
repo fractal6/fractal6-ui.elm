@@ -457,7 +457,7 @@ viewLabelSelectors isInternal labels op model =
                   else
                     onClick (Navigate (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")))
                 ]
-                [ I.icon1 "icon-pen" <| upH T.editLabels ]
+                [ I.icon1 "icon-edit-2" <| upH T.editLabels ]
     in
     div []
         [ ternary isInternal viewEdit (text "")

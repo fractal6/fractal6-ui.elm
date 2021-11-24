@@ -55,7 +55,7 @@ view op =
                 , href
                     ((Route.Tension_Dynamic_Dynamic_Action { param1 = op.focus.rootnameid, param2 = op.tid } |> toHref) ++ "?v=edit")
                 ]
-                [ I.icon ("icon-pen " ++ iconOpts) ]
+                [ I.icon ("icon-edit-2 " ++ iconOpts) ]
             ]
         , p
             [ class "control tooltip has-tooltip-arrow"

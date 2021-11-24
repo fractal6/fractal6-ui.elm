@@ -1857,7 +1857,7 @@ viewTension u t model =
                                 , attribute "data-tooltip" (upH T.editTitle)
                                 , onClick DoChangeTitle
                                 ]
-                                [ I.icon "icon-pen" ]
+                                [ I.icon "icon-edit-2" ]
 
                           else
                             text ""
@@ -2367,7 +2367,7 @@ viewEventStatus now event status =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2376,7 +2376,7 @@ viewEventTitle : Time.Posix -> Event -> Html Msg
 viewEventTitle now event =
     let
         icon =
-            I.icon "icon-pen"
+            I.icon "icon-edit-2"
 
         actionText =
             T.updatedTitle
@@ -2384,7 +2384,7 @@ viewEventTitle now event =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text (formatDate now event.createdAt) ]
             , span [ class "section" ]
                 [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
                 , span [ class "right-arrow" ] []
@@ -2398,7 +2398,7 @@ viewEventType : Time.Posix -> Event -> Html Msg
 viewEventType now event =
     let
         icon =
-            I.icon "icon-pen"
+            I.icon "icon-edit-2"
 
         actionText =
             T.updatedType
@@ -2406,7 +2406,7 @@ viewEventType now event =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text (formatDate now event.createdAt) ]
             , span [ class "section" ]
                 [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
                 , span [ class "right-arrow" ] []
@@ -2434,7 +2434,7 @@ viewEventAssignee now event isNew =
         , div [ class "media-content" ]
             [ span [] <|
                 List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], event.new |> withDefault "" |> viewUsernameLink, text T.the, text (formatDate now event.createdAt) ]
+                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], event.new |> withDefault "" |> viewUsernameLink, text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2460,7 +2460,7 @@ viewEventLabel now event isNew =
         , div [ class "media-content" ]
             [ span [] <|
                 List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text T.the, text (formatDate now event.createdAt) ]
+                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2474,7 +2474,7 @@ viewEventPushed now event action_m =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon "icon-share" ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2495,7 +2495,7 @@ viewEventArchived now event action_m isArchived =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2509,7 +2509,7 @@ viewEventUserJoined now event action_m =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon "icon-log-in" ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2536,7 +2536,7 @@ viewEventUserLeft now event action_m =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon "icon-log-out" ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text T.the, text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2559,7 +2559,6 @@ viewEventMoved now event =
                     , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
                     , text T.to
                     , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                    , text T.the
                     , text (formatDate now event.createdAt)
                     ]
             ]
@@ -2576,7 +2575,7 @@ viewBlobToolBar u t b model =
                 [ case b.pushedFlag of
                     Just flag ->
                         div [ class "has-text-success text-status" ]
-                            [ textH (T.publishedThe ++ " " ++ formatDate model.now flag) ]
+                            [ textH (T.published ++ " " ++ formatDate model.now flag) ]
 
                     Nothing ->
                         let
