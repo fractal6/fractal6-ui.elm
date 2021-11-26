@@ -139,15 +139,17 @@ export const GraphPack = {
         '#101010',
         '#000000',
     ],
+    roleColors: {
+        [RoleType.Guest]: "#f4fdf5", // ~yellow
+        [RoleType.Coordinator]: "#ffdaa1", // ~orange
+        "_default_": "#a2b9df", // "#edf5ff"// "#f0fff0", // "#FFFFF9"
+    },
     usernameColor: "#8282cc",
     nameColor: "#172335",
-    coordinatorRoleColor: "#ffdaa1", // ~orange
-    peerRoleColor: "#edf5ff",// "#f0fff0", // "#FFFFF9"
-    guestColor: "#f4fdf5", // ~yellow
     focusCircleColor: "#4a79ac", // blue>"#368ed3"
+    focusCircleWidth: 6, // warning, can break stroke with canvas drawing.
     hoverCircleColor: "#555", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 2,
-    focusCircleWidth: 5, // warning, can break stroke with canvas drawing.
     outsideZoomOpacity: "85",
 
     // Html element ID
@@ -318,22 +320,20 @@ export const GraphPack = {
 
     },
 
-    drawOutside(isHidden, ctx) {
-        // Separator between the opaque nodes and the other.
-        var z = this.focusedNode;
+    drawOutside(b, isHidden, ctx) {
         // list of nodes to draw.
         var tree;
-        if (z.parent) {
+        if (b.parent) {
             // No more than X ancestors (more will cause deep node to be to dark...)
-            tree = z.parent.ancestors().slice(0, 2).reverse();
-            if (z.parent.children) {
+            tree = b.parent.ancestors().slice(0, 2).reverse();
+            if (b.parent.children) {
                 if (this.zoomedNode == this.focusedNode) {
-                    tree.push(...z.parent.children.filter(x => x.data.nameid !== z.data.nameid));
+                    tree.push(...b.parent.children.filter(x => x.data.nameid !== b.data.nameid));
                 } else {
-                    tree.push(...z.parent.children);
+                    tree.push(...b.parent.children);
                 }
             } else {
-                tree.push(z.parent);
+                tree.push(b.parent);
             }
             // It's slightly faster than .forEach()
             for (var i = 0; i < tree.length; i++) {
@@ -342,44 +342,44 @@ export const GraphPack = {
         }
     },
 
-    drawInside(isHidden, ctx) {
+    drawInside(b, isHidden, ctx) {
         // list of nodes to draw.
-        var tree = this.focusedNode.descendants();
+        var tree = b.descendants();
         for (var i = 0; i < tree.length; i++) {
             let d = tree[i].depth - this.focusedNode.depth
             if (d >= 0 && d < 4 || tree[i].depth == 0)
                 this.drawNode(tree[i], isHidden, ctx);
         }
-    },
-
-    drawCurrent(isHidden, ctx) {
-
-        // First draw the node above the zoomedNode and their children (opacity)
-        this.drawOutside(isHidden, ctx);
-
-        // Then draw the zoomedNode/focusedNode and descendends
-        this.drawInside(isHidden, ctx);
 
         if (!isHidden) {
-            //
             // Draw focused border
-            //
-            var focus = this.focusedNode;
             var w = this.focusCircleWidth;
             var color = this.focusCircleColor;
             // Draw border
             ctx.beginPath();
-            ctx.arc(focus.ctx.centerX, focus.ctx.centerY, focus.ctx.rayon+0.1+ w*0.5,
+            ctx.arc(b.ctx.centerX, b.ctx.centerY, b.ctx.rayon+0.1+ w*0.5,
                 0, 2 * Math.PI, true);
             ctx.lineWidth = w;
             ctx.strokeStyle = color;
             ctx.stroke();
-
-            //
-            // Draw names when zooming in/out
-            //
-            this.drawNodeNames(this.zoomedNode)
         }
+
+    },
+
+    drawCurrent(isHidden, ctx) {
+        // Separator between the opaque nodes and the other.
+        var boundary = this.focusedNode;
+
+        // First draw the node above the zoomedNode and their children (opacity)
+        this.drawOutside(boundary, isHidden, ctx);
+
+        // Then draw the zoomedNode/focusedNode and descendends
+        this.drawInside(boundary, isHidden, ctx);
+
+        if (!isHidden)
+            // Draw names when zooming in/out
+            this.drawNodeNames(this.zoomedNode)
+
     },
 
     drawNode(node, isHidden, ctx, opac) {
@@ -459,7 +459,7 @@ export const GraphPack = {
 
     drawCircleName(node, opac) {
         var ctx2d = this.ctx2d
-        var fontSize = this.fontsizeCircle_start;
+        var fontSize = this.fontsizeCircle_start+3;
         var text, textWidth, textHeight;
         text = node.data.name;
         textWidth = ctx2d.measureText(text).width;
@@ -472,17 +472,18 @@ export const GraphPack = {
             }
         }
 
-        fontSize = this.fontsizeCircle_start;
-        ctx2d.font = "bold " + (fontSize) + "px " + this.fontstyleCircle;
-        //ctx2d.font = "bold " + fontSize + "px " + "Courier New"; // serif, sans-serif, Verdana, Georgia
         ctx2d.beginPath();
+        ctx2d.font = "bold " + (fontSize) + "px " + this.fontstyleCircle;
         ctx2d.textAlign = "center";
+        if (node.depth <= 1)
+            ctx2d.lineWidth = 1;
+        else
+            ctx2d.lineWidth = 2;
+        ctx2d.strokeStyle = "#5e6d6f" + opac;
+        //ctx2d.shadowColor = "#999"; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
         ctx2d.fillStyle = this.nameColor + opac;
         ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
-        //ctx2d.lineWidth = 0.2;
-        //ctx2d.strokeStyle = "black";
-        //ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
-        //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
         ctx2d.fill();
         ctx2d.stroke();
 
@@ -570,12 +571,6 @@ export const GraphPack = {
         if (node != this.hoveredNode && node != this.focusedNode) {
             var ctx2d = this.ctx2d;
 
-            if (this.focusedNode == this.zoomedNode)
-                // protect names to be written multiple times
-                // when moving cursor, which makes it ugly.
-                this.drawInside(false, this.ctx2d);
-            this.drawNodeNames(this.focusedNode);
-
             var color, w;
             if (node == this.focusedNode) {
                 color = this.focusCircleColor;
@@ -594,9 +589,6 @@ export const GraphPack = {
             //ctx2d.save();
 
 
-        } else if (node != this.hoveredNode && this.zoomedNode == this.focusedNode) {
-            // Rewrite circle child name.
-            // Whithout it, name of circle can be altered by the circle border drawing
         }
 
         // Draw tooltip
@@ -623,6 +615,19 @@ export const GraphPack = {
         this.ctx2d.strokeStyle = this.getNodeColor(node.parent || this.rootNode);
         this.ctx2d.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon+0.1 + w/2, 0, 2 * Math.PI, true);
         this.ctx2d.stroke();
+
+        // Fix canvas alteration (text cutted and opacity stacked)
+        if (this.focusedNode == this.zoomedNode)
+            this.drawInside(this.focusedNode, false, this.ctx2d);
+        else {
+            var tree = [this.zoomedNode, ...this.zoomedNode.children]
+            for (var i = 0; i < tree.length; i++) {
+                this.drawNode(tree[i], false, this.ctx2d, this.outsideZoomOpacity);
+            }
+
+            this.drawInside(this.focusedNode, false, this.ctx2d);
+        }
+        this.drawNodeNames(this.zoomedNode);
 
         // Clear node tooltip
         this.clearNodeTooltip();
@@ -844,25 +849,20 @@ export const GraphPack = {
     getNodeColor(node, opac) {
         var z = this.zoomedNode || this.focusedNode;
         var color, depth;
-        opac = opac || "";
         var depth = z.depth > 2 ? node.depth - z.depth + 2 : node.depth;
+        opac = opac || "";
 
-        var grd = this.ctx2d.createRadialGradient(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*0.1,
-            node.ctx.centerX, node.ctx.centerY, node.ctx.rayon*1.5);
+        // See doc here: https://www.w3resource.com/html5-canvas/html5-canvas-gradients-patterns.php
+        var grd = this.ctx2d.createRadialGradient(node.ctx.centerX-node.ctx.rayon/4, node.ctx.centerY-node.ctx.rayon/2, 0,
+            node.ctx.centerX, node.ctx.centerY, node.ctx.rayon);
         if (node.data.type_ === NodeType.Circle) {
+            grd.addColorStop(0, shadeColor(this.colorCircle(depth), 10) + opac);
             grd.addColorStop(0.2, this.colorCircle(depth) + opac);
             grd.addColorStop(1, this.colorCircle(depth+1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
-            // Check role type code color
-            if (node.data.role_type === RoleType.Guest) {
-                color = this.guestColor;
-            } else if (node.data.role_type == RoleType.Coordinator) {
-                color = this.coordinatorRoleColor;
-            } else {
-                color = this.peerRoleColor;
-            }
+            color = this.roleColors[node.data.role_type] || this.roleColors["_default_"];
             grd.addColorStop(0, color+opac);
-            grd.addColorStop(1, shadeColor(color, -5)+opac);
+            grd.addColorStop(1, shadeColor(color, -20)+opac);
         } else {
             console.warn("Node type unknonw", node.data.type_);
         }
@@ -1456,15 +1456,13 @@ export const GraphPack = {
             if (!isInCanvas) {
                 // Remove the node hover and border
                 var clearBorder = this.hoveredNode && (this.hoveredNode != this.focusedNode);
-                if (clearBorder) {
-                    this.clearNodeHover();
-                }
+                if (clearBorder) this.clearNodeHover();
+
                 // Set the hover by default on the focused node
                 this.drawNodeHover(this.focusedNode, true);
             } else {
-                if (this.isFrozen) {
-                    return false
-                }
+                if (this.isFrozen) return false
+
                 // Only show tooltip options/ellipsis on hoover
                 //this.nodeHoveredFromJs(this.hoveredNode);
             }
