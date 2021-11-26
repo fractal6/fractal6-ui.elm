@@ -140,8 +140,8 @@ export const GraphPack = {
         '#000000',
     ],
     roleColors: {
-        [RoleType.Guest]: "#f4fdf5", // ~yellow
         [RoleType.Coordinator]: "#ffdaa1", // ~orange
+        [RoleType.Guest]: "#f4fdf5", // ~yellow
         "_default_": "#a2b9df", // "#edf5ff"// "#f0fff0", // "#FFFFF9"
     },
     usernameColor: "#8282cc",
@@ -169,7 +169,8 @@ export const GraphPack = {
     rayon: null,
     zoomCtx: null,
     circlesPadding: 8, // 1.8
-    fontsizeCircle_start: 19,
+    fontsizeCircle_start: 22,
+    fontsizeRole_start: 19,
     fontstyleCircle: "Arial",
 
     // Graph fx settings
@@ -458,8 +459,9 @@ export const GraphPack = {
     },
 
     drawCircleName(node, opac) {
+        // Draw circle names.
         var ctx2d = this.ctx2d
-        var fontSize = this.fontsizeCircle_start+3;
+        var fontSize = this.fontsizeCircle_start;
         var text, textWidth, textHeight;
         text = node.data.name;
         textWidth = ctx2d.measureText(text).width;
@@ -497,38 +499,34 @@ export const GraphPack = {
     },
 
     drawRoleName(node, opac) {
+        // Draw Role name and username
         var ctx2d = this.ctx2d
-        //
-        // Draw name and username
-        //
-        var fontSize = this.fontsizeCircle_start;
-        var name = node.data.name;
-        var text = null;
-        var user = null;
-        var textLong = name;
-        var textShort = name.substring(0, 3);
-        //var textShort = name.substring(0, 3).replace(/./,x=>x.toUpperCase());
-
-        if (node.data.first_link) {
-            user = "@"+node.data.first_link.username;
-        }
+        var fontSize = this.fontsizeRole_start;
+        var text, textWidth, textHeight;
 
         // Name
-        ctx2d.font = fontSize + "px " + this.fontstyleCircle;
-        var textWidth = ctx2d.measureText(textLong).width;
+        if (node.data.role_type == RoleType.Guest) return
+        textWidth = ctx2d.measureText(text).width;
+        textHeight = fontSize/3;
+        text = node.data.name;
+        var textWidth = ctx2d.measureText(text).width;
         var textHeight = fontSize/3;
-        var paddingBelow = 0;
-        if (textWidth+textHeight < node.ctx.rayon*2) {
-            text = textLong;
-        } else if (ctx2d.measureText(textShort).width+5 < node.ctx.rayon*2) {
-            text = textShort;
-        } else {
-            fontSize = fontSize - 2;
+        if (textWidth-textHeight > (node.ctx.rayon)*2.25) {
+            text = text.split(" ").map(s => s.substring(0, 3)).join("·")
+            textWidth = ctx2d.measureText(text).width;
+            if (textWidth-textHeight > node.ctx.rayon*2.25) {
+                text = text.split("·").map(s => s.substring(0, 3))
+            }
         }
 
         // Username
+        var user = null;
+        var paddingBelow = 0;
         var text_username = null;
         var text_username_short = "@";
+        if (node.data.first_link) {
+            user = "@"+node.data.first_link.username;
+        }
         if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
             text_username = user;
             paddingBelow = 4*textHeight;
@@ -539,6 +537,7 @@ export const GraphPack = {
 
         if (text) {
             ctx2d.beginPath();
+            ctx2d.font = fontSize + "px " + this.fontstyleCircle;
             ctx2d.fillStyle = this.nameColor + opac;
             ctx2d.textAlign = "center";
             ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY+textHeight);
@@ -546,8 +545,8 @@ export const GraphPack = {
             ctx2d.fill();
 
             if (text_username) {
-                ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
                 ctx2d.beginPath();
+                ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
                 ctx2d.fillStyle = this.usernameColor;
                 ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + paddingBelow);
                 ctx2d.fill();
@@ -979,9 +978,7 @@ export const GraphPack = {
     // Get the mouse coordinate whithin the canvas reference.
     getPointerCtx(e) {
         var r = this.$canvas.getBoundingClientRect();
-        var mouseX = (e.clientX - r.left);
-        var mouseY = (e.clientY - r.top);
-        return {mouseX, mouseY}
+        return {mouseX: (e.clientX - r.left) , mouseY: (e.clientY - r.top)}
     },
 
     // Get the node under cursor in the canvas
@@ -1107,14 +1104,16 @@ export const GraphPack = {
                 //}
                 //test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 // --
+
                 var w = this.$tooltip.clientWidth/2 +12;
                 var r = n.ctx.rayon
-                var f = r/4;
-                var x = {x: p.mouseX, y: p.mouseY+f}
+                var x = {x: p.mouseX, y: p.mouseY}
                 var a = {x: n.ctx.centerX, y: n.ctx.centerY}
                 var b = {x: a.x - w, y: a.y - r-6}
                 var c = {x: a.x + w, y: a.y - r-6}
-                test = ptInTriangle(x, a, b, c)
+                // First verify that the pointer is bear the border circle
+                test = ((p.mouseX-n.ctx.centerX)**2 + (p.mouseY-n.ctx.centerY)**2 >= r**2)
+                    && ptInTriangle(x, a, b, c)
                 break
             case 'InFocus':
                 var x = p.mouseX - this.focusedNode.ctx.centerX;
@@ -1404,26 +1403,18 @@ export const GraphPack = {
             if (this.isFrozen) return false
             var p = this.getPointerCtx(e);
             var node = this.getNodeUnderPointer(e, p);        // @Warning, it updates ctx attributes.
-            if (node && node == this.hoveredNode) return
 
-            var isInTooltip = false;
-            if (this.hoveredNode) {
-                isInTooltip = this.checkIf(p, "InTooltip", this.hoveredNode);
-                // Only show tooltip opion/ellipsis on hoover
-                //if (isInTooltip) { this.nodeHoveredFromJs(this.hoveredNode); }
-            }
-
-            var inZoomed = this.checkIf(p, "InZoomed");
             if (node) {
-                if (node !== this.hoveredNode && !isInTooltip && inZoomed)
+                if (node == this.hoveredNode) return
+                if (node !== this.hoveredNode && this.checkIf(p, "InZoomed") && !this.checkIf(p, "InTooltip", this.hoveredNode))
                     this.drawNodeHover(node, true);
-                else if (node !== this.hoveredNode && !inZoomed)
+                else if (node !== this.hoveredNode && !this.checkIf(p, "InZoomed"))
                     this.drawNodeHover(this.focusedNode, true);
             } else if (this.hoveredNode != this.focusedNode) {
                 // @DEBUG: there is a little dead zone between circle.
                 // When it happens, it goes there and focused node receive the hover...
                 // Or when not in the zoomed area
-                if (!isInTooltip && inZoomed || !inZoomed)
+                if (!this.checkIf(p, "InZoomed") || !this.checkIf(p, "InTooltip", this.hoveredNode))
                     this.drawNodeHover(this.focusedNode, true);
             } else {
                 // nothing

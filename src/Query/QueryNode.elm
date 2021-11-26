@@ -273,7 +273,9 @@ nodeOrgaFilter rootid a =
                 (\b ->
                     { b
                         | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
-                        , not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired ] }) |> Present
+                        , not =
+                            Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Guest, RoleType.Pending, RoleType.Retired ] })
+                                |> Present
                     }
                 )
                 |> Present
@@ -578,6 +580,8 @@ membersFilter rootid a =
                     { c
                         | rootnameid = Present { eq = Present rootid, in_ = Absent, regexp = Absent }
                         , and = matchAnyRoleType [ RoleType.Member, RoleType.Owner, RoleType.Guest ]
+
+                        -- @todo pending members
                     }
                 )
                 |> Present
