@@ -57,7 +57,7 @@ const formatGraph = dataset =>  {
 
     dataset.forEach( aData => {
         // Filter Speciale Role nodes
-        if (aData.role_type == RoleType.Member || aData.role_type == RoleType.Owner || aData.role_type == RoleType.Bot ) {
+        if (aData.role_type == RoleType.Member || aData.role_type == RoleType.Owner) {
             delete dataDict[aData.nameid]
             return
         }
@@ -140,9 +140,12 @@ export const GraphPack = {
         '#000000',
     ],
     roleColors: {
-        [RoleType.Coordinator]: "#ffdaa1", // ~orange
-        [RoleType.Guest]: "#f4fdf5", // ~yellow
-        "_default_": "#a2b9df", // "#edf5ff"// "#f0fff0", // "#FFFFF9"
+        [RoleType.Coordinator]: "#ffdaa1",
+        [RoleType.Guest]: "#f4fdf5",
+        [RoleType.Bot]: "#eeeeee",
+        //[RoleType.Bot]: "#81b987",
+        //[RoleType.Bot]: "rgb(0,0,0,0)", // transparent
+        "_default_": "#a2b9df" // "#edf5ff"// "#f0fff0", // "#FFFFF9"
     },
     usernameColor: "#8282cc",
     nameColor: "#172335",
@@ -183,6 +186,7 @@ export const GraphPack = {
     // rayon size of the node in the canvas
     rayonFactorRole: 0.95,
     rayonFactorGuest: 0.75,
+    rayonFactorBot: 0.5,
     guestSizeDivider: 7,
     // y-axis offset for the top node
     nodeOffsetY: 0,
@@ -385,9 +389,9 @@ export const GraphPack = {
 
     drawNode(node, isHidden, ctx, opac) {
         var circleColor;
+
         if (node.data.type_ === "Hidden") return
         else this.addNodeCtx(node);
-
 
         // Get the circle Color
         if(isHidden) {
@@ -397,18 +401,13 @@ export const GraphPack = {
             circleColor = this.getNodeColor(node, opac);
         }
 
-        //
         // Draw node
-        //
         ctx.beginPath();
         ctx.fillStyle = circleColor;
-        ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon,
-            0, 2 * Math.PI, true);
+        ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon, 0, 2 * Math.PI, true);
         ctx.fill();
 
-        //
         // Draw owned Role
-        //
         if ((!isHidden && this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
             // Draw user pin
             //var r =  Math.max(10 - (node.depth - this.focusedNode.depth) , 1)/4
@@ -462,14 +461,15 @@ export const GraphPack = {
         // Draw circle names.
         var ctx2d = this.ctx2d
         var fontSize = this.fontsizeCircle_start;
-        var text, textWidth, textHeight;
+        var text, textWidth;
+
+        // Name
         text = node.data.name;
         textWidth = ctx2d.measureText(text).width;
-        textHeight = fontSize/3;
-        if (textWidth-textHeight > (node.ctx.rayon)*2.5) {
+        if (textWidth > node.ctx.rayon*2.5) {
             text = text.split(" ").map(s => s.substring(0, 3)).join("·")
             textWidth = ctx2d.measureText(text).width;
-            if (textWidth-textHeight > node.ctx.rayon*2.5) {
+            if (textWidth > node.ctx.rayon*2.5) {
                 text = text.split("·").map(s => s.substring(0, 1)).join("·")
             }
         }
@@ -482,15 +482,15 @@ export const GraphPack = {
         else
             ctx2d.lineWidth = 2;
         ctx2d.strokeStyle = "#5e6d6f" + opac;
-        //ctx2d.shadowColor = "#999"; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
-        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
+        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fillStyle = this.nameColor + opac;
-        ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY-node.ctx.rayon/2+textHeight);
+        ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fill();
         ctx2d.stroke();
 
         // Alternative bended name...need some polished to be used...
         //ctx2d.beginPath();
+        //ctx2d.shadowColor = "#999"; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
         //ctx2d.fillStyle = "white";
         //ctx2d.fillCircleText(node.data.name,
         //    node.ctx.centerX, node.ctx.centerY,
@@ -502,53 +502,46 @@ export const GraphPack = {
         // Draw Role name and username
         var ctx2d = this.ctx2d
         var fontSize = this.fontsizeRole_start;
-        var text, textWidth, textHeight;
+        var text, textWidth, textHeight = ctx2d.measureText('M').width;
 
         // Name
         if (node.data.role_type == RoleType.Guest) return
-        textWidth = ctx2d.measureText(text).width;
-        textHeight = fontSize/3;
+
         text = node.data.name;
         var textWidth = ctx2d.measureText(text).width;
-        var textHeight = fontSize/3;
-        if (textWidth-textHeight > (node.ctx.rayon)*2.25) {
+        if (textWidth+textHeight/2 > node.ctx.rayon*2) {
             text = text.split(" ").map(s => s.substring(0, 3)).join("·")
             textWidth = ctx2d.measureText(text).width;
-            if (textWidth-textHeight > node.ctx.rayon*2.25) {
-                text = text.split("·").map(s => s.substring(0, 3))
+            if (textWidth+textHeight/2 > node.ctx.rayon*2) {
+                text = text.split("·").map(s => s.substring(0, 1)).join("·")
             }
         }
 
-        // Username
-        var user = null;
-        var paddingBelow = 0;
-        var text_username = null;
-        var text_username_short = "@";
-        if (node.data.first_link) {
-            user = "@"+node.data.first_link.username;
-        }
-        if (user && ctx2d.measureText(user).width+1 < node.ctx.rayon*2 - 2*textHeight) {
-            text_username = user;
-            paddingBelow = 4*textHeight;
-        } else if (user && ctx2d.measureText(text_username_short).width+5 < node.ctx.rayon*2 - 2*textHeight) {
-            text_username = text_username_short;
-            paddingBelow = 3*textHeight;
-        }
-
+        // final
         if (text) {
             ctx2d.beginPath();
             ctx2d.font = fontSize + "px " + this.fontstyleCircle;
-            ctx2d.fillStyle = this.nameColor + opac;
             ctx2d.textAlign = "center";
-            ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY+textHeight);
-            //ctx2d.shadowColor = '#999'; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+            ctx2d.fillStyle = this.nameColor + opac;
+            ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY);
+            if (node.data.role_type == RoleType.Bot) {
+                ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY+node.ctx.rayon*0.7);
+            }
             ctx2d.fill();
 
-            if (text_username) {
-                ctx2d.beginPath();
+
+            // Username
+            if (node.data.first_link) {
+                var text_username = null;
                 ctx2d.font = fontSize-7 + "px " + this.fontstyleCircle;
+                text_username = "@"+node.data.first_link.username;
+                textWidth = ctx2d.measureText(text_username).width;
+                if (textWidth > node.ctx.rayon*2)
+                    text_username = "@"
+
+                ctx2d.beginPath();
                 ctx2d.fillStyle = this.usernameColor;
-                ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + paddingBelow);
+                ctx2d.fillText(text_username, node.ctx.centerX, node.ctx.centerY + node.ctx.rayon*0.4);
                 ctx2d.fill();
             }
         }
@@ -855,16 +848,22 @@ export const GraphPack = {
         var grd = this.ctx2d.createRadialGradient(node.ctx.centerX-node.ctx.rayon/4, node.ctx.centerY-node.ctx.rayon/2, 0,
             node.ctx.centerX, node.ctx.centerY, node.ctx.rayon);
         if (node.data.type_ === NodeType.Circle) {
-            grd.addColorStop(0, shadeColor(this.colorCircle(depth), 10) + opac);
-            grd.addColorStop(0.2, this.colorCircle(depth) + opac);
+            color = this.colorCircle(depth);
+            grd.addColorStop(0, shadeColor(color, 10) + opac);
+            grd.addColorStop(0.2, color + opac);
             grd.addColorStop(1, this.colorCircle(depth+1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
             color = this.roleColors[node.data.role_type] || this.roleColors["_default_"];
-            grd.addColorStop(0, color+opac);
-            grd.addColorStop(1, shadeColor(color, -20)+opac);
+            if (color.substring(0, 1) == "r") {
+                grd = color;
+            } else {
+                grd.addColorStop(0, color+opac);
+                grd.addColorStop(1, shadeColor(color, -20)+opac);
+            }
         } else {
             console.warn("Node type unknonw", node.data.type_);
         }
+
         return grd
     },
 
@@ -996,8 +995,6 @@ export const GraphPack = {
         return node;
     },
 
-
-
     // Returns a PNode from a Node
     getPNode(node) {
         return {
@@ -1051,8 +1048,9 @@ export const GraphPack = {
         if (node.data.type_ === NodeType.Role) {
             if (node.data.role_type === RoleType.Guest) {
                 rayon = node.r * this.rayonFactorGuest;
+            } else if (node.data.role_type === RoleType.Bot) {
+                rayon = node.r * this.rayonFactorBot;
             } else {
-                // Regular member
                 rayon = node.r * this.rayonFactorRole;
             }
         } else {
@@ -1105,12 +1103,13 @@ export const GraphPack = {
                 //test = (p.mouseX > x1) && (p.mouseX < x2) && (p.mouseY > y1) && (p.mouseY < y2);
                 // --
 
-                var w = this.$tooltip.clientWidth/2 +12;
-                var r = n.ctx.rayon
+                var h = this.$tooltip.clientHeight;
+                var w = this.$tooltip.clientWidth/2 + h;
+                var r = n.ctx.rayon;
                 var x = {x: p.mouseX, y: p.mouseY}
-                var a = {x: n.ctx.centerX, y: n.ctx.centerY}
-                var b = {x: a.x - w, y: a.y - r-6}
-                var c = {x: a.x + w, y: a.y - r-6}
+                var a = {x: n.ctx.centerX, y: n.ctx.centerY + r}
+                var b = {x: n.ctx.centerX - w, y: n.ctx.centerY - r - h}
+                var c = {x: n.ctx.centerX + w, y: n.ctx.centerY - r - h}
                 // First verify that the pointer is bear the border circle
                 test = ((p.mouseX-n.ctx.centerX)**2 + (p.mouseY-n.ctx.centerY)**2 >= r**2)
                     && ptInTriangle(x, a, b, c)
@@ -1124,6 +1123,12 @@ export const GraphPack = {
                 var x = p.mouseX - this.zoomedNode.ctx.centerX;
                 var y = p.mouseY - this.zoomedNode.ctx.centerY;
                 test = x**2 + y**2 <= (this.zoomedNode.ctx.rayon)**2 ;
+                break
+            case 'InVoid':
+                var x = p.mouseX - this.rootNode.ctx.centerX;
+                var y = p.mouseY - this.rootNode.ctx.centerY;
+                // Security margin when movin to a tooltip that is outside the anchor
+                test = x**2 + y**2 > (this.rootNode.ctx.rayon+10)**2 ;
                 break
             default:
                 console.error("Unknown condition: %s", cond)
@@ -1402,7 +1407,7 @@ export const GraphPack = {
             if (this.isZooming) return false
             if (this.isFrozen) return false
             var p = this.getPointerCtx(e);
-            var node = this.getNodeUnderPointer(e, p);        // @Warning, it updates ctx attributes.
+            var node = this.getNodeUnderPointer(e, p);
 
             if (node) {
                 if (node == this.hoveredNode) return
@@ -1414,7 +1419,9 @@ export const GraphPack = {
                 // @DEBUG: there is a little dead zone between circle.
                 // When it happens, it goes there and focused node receive the hover...
                 // Or when not in the zoomed area
-                if (!this.checkIf(p, "InZoomed") || !this.checkIf(p, "InTooltip", this.hoveredNode))
+                //if (!this.checkIf(p, "InZoomed") || !this.checkIf(p, "InTooltip", this.hoveredNode))
+                //    this.drawNodeHover(this.focusedNode, true);
+                if (this.checkIf(p, "InVoid"))
                     this.drawNodeHover(this.focusedNode, true);
             } else {
                 // nothing
@@ -1431,7 +1438,7 @@ export const GraphPack = {
             if (this.isFrozen) {
                 return false
             }
-            var node = this.getNodeUnderPointer(e);        // @Warning, it updates ctx attributes.
+            var node = this.getNodeUnderPointer(e);
             // Avoid redrawing and avoid glitch when leaving tooltip.
             if (node != this.hoveredNode && !this.checkIf(this.getPointerCtx(e), "InTooltip", this.hoveredNode)) {
                 this.drawNodeHover(this.focusedNode, true);
