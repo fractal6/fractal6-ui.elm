@@ -58,3 +58,19 @@ const toggleTheme = () => {
 export function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
+
+
+// Analylitic solution to the barycentric coordinates, to determine
+// if a point is in a triangle.
+// https://stackoverflow.com/a/34093754/4223749
+export function ptInTriangle(p, p0, p1, p2) {
+    var dX = p.x-p2.x;
+    var dY = p.y-p2.y;
+    var dX21 = p2.x-p1.x;
+    var dY12 = p1.y-p2.y;
+    var D = dY12*(p0.x-p2.x) + dX21*(p0.y-p2.y);
+    var s = dY12*dX + dX21*dY;
+    var t = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY;
+    if (D<0) return s<=0 && t<=0 && s+t>=D;
+    return s>=0 && t>=0 && s+t<=D;
+}
