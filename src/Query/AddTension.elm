@@ -262,7 +262,7 @@ buildNodeFragmentRef : List UserForm -> NodeFragment -> OptionalArgument Input.N
 buildNodeFragmentRef users nf =
     let
         type_ =
-            nf.type_ |> withDefault NodeType.Role
+            withDefault NodeType.Role nf.type_
     in
     Input.buildNodeFragmentRef
         (\n ->

@@ -1373,7 +1373,9 @@ viewSearchBar us model =
                                     , onClick (DoCreateTension p)
                                     ]
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
-                                    , i [ class "icon-plus1 custom-style" ] []
+
+                                    --, i [ class "icon-plus1 custom-style" ] []
+                                    , i [ class "icon-send custom-style" ] []
                                     ]
                                 ]
                             , viewActionPanel "actionPanelContent1" us node model.orga_data model.actionPanel
@@ -1570,7 +1572,9 @@ viewCanvas us model =
             ]
             [ span [ id "doTension" ]
                 [ span [] [ text "void" ] -- Node name
-                , i [ class "icon-plus1 custom-style" ] []
+
+                --, i [ class "icon-plus1 custom-style" ] []
+                , i [ class "icon-send custom-style" ] []
                 ]
             , span [ id "doAction" ]
                 [ case model.node_hovered of
