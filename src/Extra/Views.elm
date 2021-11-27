@@ -4,6 +4,7 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li,
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Icon as I
+import Markdown exposing (renderMarkdown)
 import Text as T exposing (textH, textT, upH)
 
 
@@ -14,15 +15,22 @@ showMsg id_ color icon header message =
             "acc" ++ id_
     in
     if message == "" then
-        div [ class "notification is-info is-light p-4 m-0 mb-2 is-size-7" ] [ I.icon1 icon (upH header) ]
+        div [ class ("notification is-light p-4 m-0 mb-2 is-size-7 " ++ color) ] [ I.icon1 icon (upH header) ]
 
     else
         div [ class "accordion arrows-right" ]
             [ input [ id did, name "accordion", type_ "radio" ] []
-            , section [ class ("acc message is-info is-small  " ++ color) ]
-                [ label [ class "acc-title message-header", for did ] [ I.icon1 icon (upH header) ]
+            , section [ class ("acc message is-small is-light " ++ color) ]
+                [ label
+                    [ class "acc-title message-header"
+                    , attribute "title" T.clickMe
+                    , for did
+                    ]
+                    [ I.icon1 icon (upH header) ]
                 , label [ class "acc-close", for "acc-close" ] []
-                , div [ class "acc-content message-body" ] [ textH message ]
+                , div [ class "acc-content message-body" ]
+                    [ renderMarkdown "is-light" message
+                    ]
                 ]
             , input [ id "acc-close", name "accordion", type_ "radio" ] []
             ]

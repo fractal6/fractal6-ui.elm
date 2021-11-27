@@ -6,6 +6,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
+import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
@@ -366,7 +367,8 @@ viewModalContent op (State model) =
                 [ textH "Change the tension Type" ]
             ]
         , div [ class "modal-card-body" ]
-            [ div [ class "level buttonRadio" ] <|
+            [ showMsg "selectType-0" "is-info" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
+            , div [ class "level buttonRadio" ] <|
                 List.map
                     (\tensionType ->
                         let

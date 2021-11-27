@@ -2366,6 +2366,18 @@ input:checked + section.acc .acc-title:before {
     }
 }
 
+// ----
+
+.accordion {
+    .message-header {
+        border-radius: 5px;
+    }
+
+    .message.is-light {
+        opacity: 0.7;
+    }
+}
+
 /*
  *
  * Ugly focus management

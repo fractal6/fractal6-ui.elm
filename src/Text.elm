@@ -1023,9 +1023,24 @@ nodeNotExist =
     "Sorry, this node doesn't exist yet."
 
 
+goRoot : String
+goRoot =
+    "Go to root circle"
+
+
+goParent : String
+goParent =
+    "Go to parent circle"
+
+
+clickMe : String
+clickMe =
+    "Click me"
+
+
 
 --
--- Info
+-- Info / Doc
 --
 
 
@@ -1044,11 +1059,15 @@ contractInfo =
     "By creating a contract, it will notify the organisation roles with the authority level able to validate your request. The action will be performed once the contract has been validated"
 
 
-goRoot : String
-goRoot =
-    "Go to root circle"
+tensionTypeHeader : String
+tensionTypeHeader =
+    "Select the right category to help finding and solving tensions."
 
 
-goParent : String
-goParent =
-    "Go to parent circle"
+tensionTypeDoc : String
+tensionTypeDoc =
+    """ There is three main categories of tension:
+* **Operational**: A general category of tension which can be a task, an issue or whatever that need to be share in the organisation.
+* **Governance**: concerning the structure of the organisation its mandates etc.
+* **Help**: for help requests, questions or clarifications.
+    """

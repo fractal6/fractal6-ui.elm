@@ -2729,11 +2729,10 @@ viewSidePane u t model =
         hasBlobRight =
             isAdmin && actionType_m /= Just NEW && blob_m /= Nothing
 
-        g1 =
-            Debug.log "author" isAuthor
-
-        g2 =
-            Debug.log "admin" isAdmin
+        --g1 =
+        --    Debug.log "author" isAuthor
+        --g2 =
+        --    Debug.log "admin" isAdmin
     in
     div [ class "tensionSidePane" ] <|
         [ -- Assignees/User select
