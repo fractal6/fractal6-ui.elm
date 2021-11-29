@@ -59,19 +59,8 @@ initBlob blobType nf data =
         links =
             getFirstLinks nf
 
-        users =
-            if List.length links == 0 then
-                [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
-
-            else
-                links
-
         newForm =
-            { form
-                | blob_type = Just blobType
-                , node = nf
-                , users = users
-            }
+            { form | blob_type = Just blobType, node = nf }
     in
     { data | form = newForm, result = NotAsked }
 
@@ -402,37 +391,18 @@ view_ tid data op_m =
                                 [ text "No description for this node."
                                 , doEditView op_m BlobType.OnMandate
                                 ]
-        , ternary isLinksHidden (text "") (hr [ class "has-background-grey-light" ] [])
-        , if blobTypeEdit == Just BlobType.OnFirstLink then
-            op_m
-                |> Maybe.map
-                    (\op ->
-                        let
-                            isSendable =
-                                op.data.form.users /= links
-                        in
-                        div []
-                            [ nodeLinksInputView txt op.data.form op.data op
-                            , blobButtonsView isSendable isLoading op
-                            ]
-                    )
-                |> withDefault (text "")
-
-          else if isLinksHidden then
-            text ""
-
-          else
+        , if op_m == Nothing && not isLinksHidden then
             let
                 links_ =
                     List.filter (\x -> x.username /= "") links
             in
             div [ class "linksDoc" ]
-                [ div [ class "subtitle is-5" ]
+                [ hr [ class "has-background-grey-light" ] []
+                , div [ class "subtitle is-5" ]
                     [ I.icon1 "icon-users icon-1half" (upH T.links)
                     , links_
                         |> List.map (\l -> viewUser True l.username)
                         |> span [ attribute "style" "margin-left:20px;" ]
-                    , doEditView op_m BlobType.OnFirstLink
                     ]
                 , if List.length links_ == 0 then
                     span [ class "is-italic" ] [ textH txt.noFirstLinks ]
@@ -440,6 +410,9 @@ view_ tid data op_m =
                   else
                     text ""
                 ]
+
+          else
+            text ""
         ]
 
 

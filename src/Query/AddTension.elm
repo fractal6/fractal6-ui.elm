@@ -282,6 +282,8 @@ buildNodeFragmentRef users nf =
                     -- Role
                     { commonFields
                         | first_link = users |> List.filter (\u -> u.username /= "") |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe
+
+                        --, role_type = fromMaybe nf.role_type
                         , role_type = users |> List.head |> Maybe.map (\us -> us.role_type) |> fromMaybe
                     }
 

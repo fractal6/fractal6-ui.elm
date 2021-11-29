@@ -11,13 +11,12 @@ type BlobType
     = OnNode
     | OnAbout
     | OnMandate
-    | OnFirstLink
     | OnDoc
 
 
 list : List BlobType
 list =
-    [ OnNode, OnAbout, OnMandate, OnFirstLink, OnDoc ]
+    [ OnNode, OnAbout, OnMandate, OnDoc ]
 
 
 decoder : Decoder BlobType
@@ -34,9 +33,6 @@ decoder =
 
                     "OnMandate" ->
                         Decode.succeed OnMandate
-
-                    "OnFirstLink" ->
-                        Decode.succeed OnFirstLink
 
                     "OnDoc" ->
                         Decode.succeed OnDoc
@@ -59,9 +55,6 @@ toString enum =
 
         OnMandate ->
             "OnMandate"
-
-        OnFirstLink ->
-            "OnFirstLink"
 
         OnDoc ->
             "OnDoc"
@@ -89,9 +82,6 @@ fromString enumString =
 
         "OnMandate" ->
             Just OnMandate
-
-        "OnFirstLink" ->
-            Just OnFirstLink
 
         "OnDoc" ->
             Just OnDoc

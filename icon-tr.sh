@@ -3,7 +3,8 @@
 # Get the number of icons
 #   cat assets/icons/selection.json |jq '.icons | length'
 
-# fa -> feather
+# font Awesome to font Feather translation.
+
 # icon-circle-o -> icon role ?
 # icon-circle -> icon role ?
 rg src/ -l -e "icon-share-square" | xargs sed -i "s/icon-share-square/icon-share/g"

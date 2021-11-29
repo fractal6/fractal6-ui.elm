@@ -635,6 +635,42 @@ action2SourceStr action_m =
                     "archived this document"
 
 
+archiveActionToggle : Maybe TensionAction.TensionAction -> Maybe TensionAction.TensionAction
+archiveActionToggle action_m =
+    action_m
+        |> Maybe.map
+            (\action ->
+                case action of
+                    TensionAction.EditCircle ->
+                        Just TensionAction.ArchivedCircle
+
+                    TensionAction.ArchivedCircle ->
+                        Just TensionAction.EditCircle
+
+                    TensionAction.EditRole ->
+                        Just TensionAction.ArchivedRole
+
+                    TensionAction.ArchivedRole ->
+                        Just TensionAction.EditRole
+
+                    TensionAction.EditMd ->
+                        Just TensionAction.ArchivedMd
+
+                    TensionAction.ArchivedMd ->
+                        Just TensionAction.EditMd
+
+                    TensionAction.NewCircle ->
+                        Nothing
+
+                    TensionAction.NewRole ->
+                        Nothing
+
+                    TensionAction.NewMd ->
+                        Nothing
+            )
+        |> withDefault Nothing
+
+
 
 {-
    Blob
@@ -649,9 +685,6 @@ blobTypeStr btype =
 
         BlobType.OnAbout ->
             "Description edited"
-
-        BlobType.OnFirstLink ->
-            "First link edited"
 
         BlobType.OnMandate ->
             "Mandate edited"

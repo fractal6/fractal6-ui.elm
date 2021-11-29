@@ -3,7 +3,7 @@ module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subs
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
-import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..), archiveActionToggle)
+import Components.ActionPanel as ActionPanel
 import Components.ContractsPage as ContractsPage
 import Components.DocToolBar as DocToolBar exposing (ActionView(..))
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -75,6 +75,7 @@ import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View
     exposing
         ( actionNameStr
+        , archiveActionToggle
         , statusColor
         , tensionTypeColor
         , viewActionIcon
@@ -193,7 +194,6 @@ type alias Model =
     , isTensionAdmin : Bool
     , isAssigneeOpen : Bool
     , isLabelOpen : Bool
-    , actionPanel : ActionPanel
 
     -- Common
     , node_action : ActionState
@@ -209,6 +209,7 @@ type alias Model =
     , tensionForm : NTF.State
     , assigneesPanel : UserSearchPanel.State
     , labelsPanel : LabelSearchPanel.State
+    , actionPanel : ActionPanel.State
     , moveTension : MoveTension.State
     , contractsPage : ContractsPage.State
     , selectType : SelectType.State
@@ -270,7 +271,6 @@ type Msg
     | PushTitle
     | PushBlob_ TensionPatchForm
     | PublishBlob
-    | PushAction ActionForm ActionPanelState
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Gql Data Queries
@@ -299,8 +299,6 @@ type Msg
     | CancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
-      -- move tension
-    | DoMove TensionHead
       -- Blob control
     | DoBlobEdit BlobType.BlobType
     | CancelBlob
@@ -327,17 +325,10 @@ type Msg
     | DoAssigneeEdit
       -- Labels
     | DoLabelEdit
-      -- Action Edit
+      -- move tension
+    | DoMove TensionHead
+      -- Node Action
     | DoActionEdit String Blob
-    | CancelAction
-    | OpenActionPanelModal ActionPanelState
-    | CloseActionPanelModal String
-      --| ActionStep1 XXX
-    | ActionSubmit Time.Posix
-    | ActionMove
-    | ArchiveDocAck (GqlData ActionResult)
-    | LeaveRoleAck (GqlData ActionResult)
-    | UpdateActionPost String String
       -- New Tension
     | DoCreateTension LocalGraph
       -- JoinOrga Action
@@ -372,6 +363,7 @@ type Msg
     | MoveTensionMsg MoveTension.Msg
     | ContractsPageMsg ContractsPage.Msg
     | SelectTypeMsg SelectType.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 
@@ -447,7 +439,6 @@ init global flags =
             , assigneesPanel = UserSearchPanel.init tid AssignUser global.session.user
             , isLabelOpen = False
             , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
-            , actionPanel = ActionPanel.init tid global.session.user
 
             -- Common
             , node_action = NoOp
@@ -461,6 +452,7 @@ init global flags =
             , moveTension = MoveTension.init global.session.user
             , contractsPage = ContractsPage.init rootnameid global.session.user
             , selectType = SelectType.init tid global.session.user
+            , actionPanel = ActionPanel.init global.session.user
             , now = global.now
             }
 
@@ -549,27 +541,6 @@ update global message model =
                     Dict.get "new" form.post |> withDefault ""
             in
             ( model, publishBlob apis.gql bid form PushBlobAck, Cmd.none )
-
-        PushAction form state ->
-            let
-                ackMsg =
-                    case state of
-                        MoveAction ->
-                            \_ -> NoMsg
-
-                        ArchiveAction ->
-                            ArchiveDocAck
-
-                        UnarchiveAction ->
-                            ArchiveDocAck
-
-                        LeaveAction ->
-                            LeaveRoleAck
-
-                        NoAction ->
-                            \_ -> NoMsg
-            in
-            ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -1299,130 +1270,22 @@ update global message model =
             , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
             )
 
-        -- Action
+        -- Node Action
         DoActionEdit domid blob ->
-            if model.actionPanel.isEdit == False then
-                let
-                    parentid =
-                        model.tension_head |> withMaybeDataMap (\th -> th.receiver.nameid) |> withDefault ""
-
-                    panel =
-                        model.actionPanel
-                            |> ActionPanel.open domid blob.id
-                            |> ActionPanel.setNode (blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid)
-                in
-                ( { model | actionPanel = panel }
-                , Ports.outsideClickClose "cancelActionFromJs" domid
-                , Cmd.none
-                )
-
-            else
-                ( model, Cmd.none, Cmd.none )
-
-        CancelAction ->
-            ( { model | actionPanel = ActionPanel.close model.actionPanel }, Cmd.none, Cmd.none )
-
-        CloseActionPanelModal link ->
             let
-                gcmd =
-                    if link /= "" then
-                        send (Navigate link)
+                parentid =
+                    model.tension_head |> withMaybeDataMap (\th -> th.receiver.nameid) |> withDefault ""
 
-                    else
-                        Cmd.none
+                tid =
+                    model.tensionid
+
+                bid =
+                    blob.id
+
+                node =
+                    blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid
             in
-            ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, gcmd, Ports.close_modal )
-
-        OpenActionPanelModal action ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.activateModal
-                        |> ActionPanel.setAction action
-                        |> ActionPanel.setStep StepOne
-            in
-            ( { model | actionPanel = panel }
-            , Ports.open_modal "actionPanelModal"
-            , Cmd.none
-            )
-
-        ActionSubmit time ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.updatePost "createdAt" (fromTime time)
-                        |> ActionPanel.setActionResult LoadingSlowly
-            in
-            ( { model | actionPanel = panel }
-            , send (PushAction panel.form panel.state)
-            , Cmd.none
-            )
-
-        ActionMove ->
-            case model.tension_head of
-                Success th ->
-                    ( model, Cmd.batch [ send (DoMove th), send CancelAction ], Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        ArchiveDocAck result ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.close
-                        |> ActionPanel.setActionResult result
-            in
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
-
-                OkAuth _ ->
-                    let
-                        th =
-                            withMapData
-                                (\t ->
-                                    -- @debug t.action not sync
-                                    { t | action = archiveActionToggle t.action }
-                                )
-                                model.tension_head
-                    in
-                    ( { model | actionPanel = panel, tension_head = th }
-                    , Cmd.none
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTensionHead (withMaybeData th)) ]
-                    )
-
-                _ ->
-                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
-
-        LeaveRoleAck result ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.close
-                        |> ActionPanel.setActionResult result
-            in
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
-
-                OkAuth _ ->
-                    ( { model | actionPanel = panel }
-                    , Cmd.none
-                    , send UpdateUserToken
-                    )
-
-                _ ->
-                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
-
-        UpdateActionPost field value ->
-            ( { model | actionPanel = model.actionPanel |> ActionPanel.updatePost field value }, Cmd.none, Cmd.none )
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
 
         -- New tension
         DoCreateTension lg ->
@@ -1641,7 +1504,7 @@ update global message model =
         ScrollToElement did ->
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
-        -- Help
+        -- Components
         HelpMsg msg ->
             let
                 ( help, out ) =
@@ -1705,11 +1568,20 @@ update global message model =
             , Cmd.batch (gcmds ++ [ send (UpdateSessionTensionHead (withMaybeData th)) ])
             )
 
+        ActionPanelMsg msg ->
+            let
+                ( data, out ) =
+                    ActionPanel.update apis msg model.actionPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
-    , Ports.cancelActionFromJs (always CancelAction)
     , Ports.lookupUserFromJs ChangeUserLookup
     , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
@@ -1719,6 +1591,7 @@ subscriptions _ model =
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
+        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         |> Sub.batch
 
 
@@ -2474,7 +2347,7 @@ viewEventPushed now event action_m =
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ I.icon "icon-share" ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text (actionNameStr action), text (formatDate now event.createdAt) ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2828,44 +2701,39 @@ viewSidePane u t model =
                             domid =
                                 "actionPanelContent"
                         in
-                        [ h2
-                            [ class "subtitle is-h"
-                            , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                            , Maybe.map (\b -> onClick (DoActionEdit domid b)) blob_m |> withDefault (onClick NoMsg)
-                            ]
-                            [ textH T.document
-                            , if model.actionPanel.isEdit then
-                                I.icon "icon-x is-pulled-right"
+                        [ div [ id domid ]
+                            [ h2
+                                [ class "subtitle is-h"
+                                , classList [ ( "is-w", hasBlobRight || hasRole ) ]
+                                , Maybe.map (\b -> onClick (DoActionEdit domid b)) blob_m |> withDefault (onClick NoMsg)
+                                ]
+                                [ textH T.document
+                                , if ActionPanel.isOpen_ model.actionPanel then
+                                    I.icon "icon-x is-pulled-right"
 
-                              else if hasBlobRight || hasRole then
-                                I.icon "icon-settings is-pulled-right"
+                                  else if hasBlobRight || hasRole then
+                                    I.icon "icon-settings is-pulled-right"
 
-                              else
-                                text ""
-                            ]
-                        , div [ id domid, class "actionPanelStyle" ]
-                            [ if hasBlobRight || hasRole then
-                                let
-                                    panelData =
-                                        { tc = tc
-                                        , isAdmin = hasBlobRight
-                                        , hasRole = hasRole
-                                        , isRight = False
-                                        , domid = domid
-                                        , data = model.actionPanel
-                                        , onSubmit = Submit
-                                        , onOpenModal = OpenActionPanelModal
-                                        , onCloseModal = CloseActionPanelModal
-                                        , onNavigate = Navigate
-                                        , onActionSubmit = ActionSubmit
-                                        , onActionMove = ActionMove
-                                        , onUpdatePost = UpdateActionPost
-                                        }
-                                in
-                                ActionPanel.view panelData
+                                  else
+                                    text ""
+                                ]
+                            , div [ class "actionPanelStyle" ]
+                                [ if hasBlobRight || hasRole then
+                                    let
+                                        panelData =
+                                            { tc = tc
+                                            , isAdmin = hasBlobRight
+                                            , hasRole = hasRole
+                                            , isRight = False
+                                            , domid = domid
+                                            , orga_data = model.orga_data
+                                            }
+                                    in
+                                    ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
 
-                              else
-                                text ""
+                                  else
+                                    text ""
+                                ]
                             ]
                         ]
 

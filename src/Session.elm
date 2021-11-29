@@ -81,6 +81,10 @@ type GlobalCmd
       --
     | DoFetchNode String
     | DoPushTension Tension
+    | DoAddNodes (List Node)
+    | DoUpdateNode String (Node -> Node)
+    | DoDelNodes (List String)
+    | DoMoveNode String String String
 
 
 type alias NodesQuickSearch =

@@ -293,7 +293,6 @@ type alias ActionForm =
     , node : Node
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
-    , moveTo : String
     }
 
 
@@ -311,7 +310,6 @@ initActionForm tid user =
     , node = initNode
     , events_type = Nothing
     , post = Dict.empty
-    , moveTo = ""
     }
 
 

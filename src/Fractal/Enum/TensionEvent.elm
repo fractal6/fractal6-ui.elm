@@ -25,12 +25,15 @@ type TensionEvent
     | BlobUnarchived
     | UserJoined
     | UserLeft
+    | MemberLinked
+    | MemberUnlinked
+    | NodeAuth
     | Moved
 
 
 list : List TensionEvent
 list =
-    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, Moved ]
+    [ Created, Reopened, Closed, TitleUpdated, TypeUpdated, CommentPushed, AssigneeAdded, AssigneeRemoved, LabelAdded, LabelRemoved, BlobCreated, BlobCommitted, BlobPushed, BlobArchived, BlobUnarchived, UserJoined, UserLeft, MemberLinked, MemberUnlinked, NodeAuth, Moved ]
 
 
 decoder : Decoder TensionEvent
@@ -89,6 +92,15 @@ decoder =
 
                     "UserLeft" ->
                         Decode.succeed UserLeft
+
+                    "MemberLinked" ->
+                        Decode.succeed MemberLinked
+
+                    "MemberUnlinked" ->
+                        Decode.succeed MemberUnlinked
+
+                    "NodeAuth" ->
+                        Decode.succeed NodeAuth
 
                     "Moved" ->
                         Decode.succeed Moved
@@ -153,6 +165,15 @@ toString enum =
 
         UserLeft ->
             "UserLeft"
+
+        MemberLinked ->
+            "MemberLinked"
+
+        MemberUnlinked ->
+            "MemberUnlinked"
+
+        NodeAuth ->
+            "NodeAuth"
 
         Moved ->
             "Moved"
@@ -222,6 +243,15 @@ fromString enumString =
 
         "UserLeft" ->
             Just UserLeft
+
+        "MemberLinked" ->
+            Just MemberLinked
+
+        "MemberUnlinked" ->
+            Just MemberUnlinked
+
+        "NodeAuth" ->
+            Just NodeAuth
 
         "Moved" ->
             Just Moved

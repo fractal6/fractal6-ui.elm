@@ -4,7 +4,7 @@ import Array
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
-import Components.ActionPanel as ActionPanel exposing (ActionPanel, ActionPanelState(..), ActionStep(..))
+import Components.ActionPanel as ActionPanel
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading
@@ -23,7 +23,6 @@ import Components.Loading as Loading
         , withMaybeData
         , withMaybeDataMap
         )
-import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
 import Debug
 import Dict exposing (Dict)
@@ -81,7 +80,7 @@ import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)
-import Query.QueryTension exposing (getTensionHead, queryAllTension)
+import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), NodesQuickSearch)
 import Task
@@ -128,6 +127,18 @@ mapGlobalOutcmds gcmds =
                     DoPushTension tension ->
                         ( send (PushTension tension), Cmd.none )
 
+                    DoAddNodes nodes ->
+                        ( send (AddNodes nodes), Cmd.none )
+
+                    DoUpdateNode nameid fun ->
+                        ( send (UpdateNode nameid fun), Cmd.none )
+
+                    DoDelNodes nameids ->
+                        ( send (DelNodes nameids), Cmd.none )
+
+                    DoMoveNode a b c ->
+                        ( send (MoveNode a b c), Cmd.none )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -152,9 +163,6 @@ type alias Model =
     , node_hovered : Maybe Node
     , next_focus : Maybe String
 
-    -- Node Action
-    , actionPanel : ActionPanel
-
     -- common
     , node_action : ActionState
     , isModalActive : Bool
@@ -166,7 +174,7 @@ type alias Model =
     -- Components
     , help : Help.State
     , tensionForm : NTF.State
-    , moveTension : MoveTension.State
+    , actionPanel : ActionPanel.State
     }
 
 
@@ -182,7 +190,6 @@ nfirstTensions =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | LoadOrga
-    | PushAction ActionForm ActionPanelState
     | PushGuest ActionForm
     | PushTension Tension
     | Submit (Time.Posix -> Msg) -- Get the current time
@@ -202,20 +209,8 @@ type Msg
     | SearchKeyDown Int
       -- New Tension
     | DoCreateTension LocalGraph
-      -- Node Settings
+      -- Node Action
     | DoActionEdit String Node
-    | CancelAction
-    | OpenActionPanelModal ActionPanelState
-    | CloseActionPanelModal String
-      --| ActionStep1 XXX
-    | ActionSubmit Time.Posix
-    | ActionMove
-    | GotTensionToMove (GqlData TensionHead)
-    | ArchiveDocAck (GqlData ActionResult)
-    | LeaveRoleAck (GqlData ActionResult)
-    | UpdateActionPost String String
-      -- move tension
-    | DoMove TensionHead
       -- JoinOrga Action
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
@@ -225,7 +220,7 @@ type Msg
     | FetchNewNode String
     | NewNodesAck (GqlData (List Node))
     | AddNodes (List Node)
-    | UpdateNode (Maybe Node)
+    | UpdateNode String (Node -> Node)
     | DelNodes (List String)
     | MoveNode String String String
       -- GP JS Interop
@@ -253,7 +248,7 @@ type Msg
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
-    | MoveTensionMsg MoveTension.Msg
+    | ActionPanelMsg ActionPanel.Msg
 
 
 
@@ -301,7 +296,6 @@ init global flags =
             , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
             , init_data = True
-            , moveTension = MoveTension.init global.session.user
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
                 global.session.window_pos
@@ -310,8 +304,6 @@ init global flags =
             , next_focus = Nothing
 
             -- Node Action
-            , actionPanel = ActionPanel.init "" global.session.user
-
             -- Common
             , node_action = withDefault NoOp global.session.node_action
             , isModalActive = False
@@ -319,6 +311,7 @@ init global flags =
             , helperBar = HelperBar.create
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
+            , actionPanel = ActionPanel.init global.session.user
             , refresh_trial = 0
             , now = global.now
             }
@@ -394,27 +387,6 @@ update global message model =
     case message of
         LoadOrga ->
             ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
-
-        PushAction form state ->
-            let
-                ackMsg =
-                    case state of
-                        MoveAction ->
-                            \_ -> NoMsg
-
-                        ArchiveAction ->
-                            ArchiveDocAck
-
-                        UnarchiveAction ->
-                            ArchiveDocAck
-
-                        LeaveAction ->
-                            LeaveRoleAck
-
-                        NoAction ->
-                            \_ -> NoMsg
-            in
-            ( model, actionRequest apis.gql form ackMsg, Cmd.none )
 
         PushGuest form ->
             ( model, actionRequest apis.gql form JoinAck, Cmd.none )
@@ -629,182 +601,22 @@ update global message model =
             in
             ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
 
-        -- New tension
-        NewTensionMsg msg ->
-            let
-                ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
-
-                ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
         -- Node Action
         DoActionEdit domid node ->
-            if model.actionPanel.isEdit == False then
-                let
-                    rootSource =
-                        getNode node.rootnameid model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
-
-                    ( tid, bid ) =
-                        node.source
-                            |> Maybe.map (\b -> ( b.tension.id, b.id ))
-                            |> withDefault
-                                (rootSource
-                                    |> Maybe.map (\b -> ( b.tension.id, b.id ))
-                                    |> withDefault ( "", "" )
-                                )
-
-                    panel =
-                        model.actionPanel
-                            |> ActionPanel.open domid bid
-                            |> ActionPanel.setTid tid
-                            |> ActionPanel.setNode node
-                in
-                ( { model | actionPanel = panel }
-                , Ports.outsideClickClose "cancelActionFromJs" domid
-                , Cmd.none
-                )
-
-            else
-                ( model, send CancelAction, Cmd.none )
-
-        CancelAction ->
-            ( { model | actionPanel = ActionPanel.close model.actionPanel }, Cmd.none, Ports.click "body" )
-
-        OpenActionPanelModal action ->
             let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.activateModal
-                        |> ActionPanel.setAction action
-                        |> ActionPanel.setStep StepOne
+                rootSource =
+                    getNode node.rootnameid model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
+
+                ( tid, bid ) =
+                    node.source
+                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                        |> withDefault
+                            (rootSource
+                                |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                                |> withDefault ( "", "" )
+                            )
             in
-            ( { model | actionPanel = panel }, Ports.open_modal "actionPanelModal", Cmd.none )
-
-        CloseActionPanelModal link ->
-            let
-                gcmds =
-                    if link /= "" then
-                        [ send (Navigate link) ]
-
-                    else if ActionPanel.isSuccess model.actionPanel then
-                        [ case model.actionPanel.state of
-                            MoveAction ->
-                                Cmd.none
-
-                            ArchiveAction ->
-                                send (DelNodes [ model.actionPanel.form.node.nameid ])
-
-                            UnarchiveAction ->
-                                Cmd.none
-
-                            LeaveAction ->
-                                let
-                                    newNode =
-                                        getNode model.actionPanel.form.node.nameid model.orga_data
-                                            |> Maybe.map (\n -> { n | first_link = Nothing })
-                                in
-                                case newNode |> Maybe.map (\n -> n.role_type) |> withDefault Nothing of
-                                    Just RoleType.Guest ->
-                                        send (DelNodes [ model.actionPanel.form.node.nameid ])
-
-                                    _ ->
-                                        send (UpdateNode newNode)
-
-                            NoAction ->
-                                Cmd.none
-                        ]
-
-                    else
-                        [ Cmd.none ]
-            in
-            ( { model | actionPanel = ActionPanel.terminate model.actionPanel }, Cmd.batch gcmds, Ports.close_modal )
-
-        ActionSubmit time ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.updatePost "createdAt" (fromTime time)
-                        |> ActionPanel.setActionResult LoadingSlowly
-            in
-            ( { model | actionPanel = panel }
-            , send (PushAction panel.form panel.state)
-            , Cmd.none
-            )
-
-        ActionMove ->
-            ( model, getTensionHead apis.gql model.actionPanel.form.tid GotTensionToMove, Cmd.none )
-
-        GotTensionToMove result ->
-            case result of
-                Success th ->
-                    ( model, Cmd.batch [ send (DoMove th), send CancelAction ], Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        DoMove t ->
-            let
-                ( newModel, cmd ) =
-                    case model.orga_data of
-                        NotAsked ->
-                            ( { model | orga_data = Loading }, send LoadOrga )
-
-                        _ ->
-                            ( model, Cmd.none )
-            in
-            ( newModel
-            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))), cmd ]
-            , Cmd.none
-            )
-
-        ArchiveDocAck result ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.close
-                        |> ActionPanel.setActionResult result
-            in
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
-
-                OkAuth _ ->
-                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
-
-        LeaveRoleAck result ->
-            let
-                panel =
-                    model.actionPanel
-                        |> ActionPanel.close
-                        |> ActionPanel.setActionResult result
-
-                gcmds =
-                    [ Ports.click "body" ]
-            in
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( { model | actionPanel = ActionPanel.setActionResult NotAsked model.actionPanel }, send (DoOpenAuthModal panel.form.uctx), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (PushAction panel.form panel.state) 500, send UpdateUserToken )
-
-                OkAuth _ ->
-                    ( { model | actionPanel = panel }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( { model | actionPanel = panel }, Cmd.batch gcmds, Cmd.none )
-
-        UpdateActionPost field value ->
-            ( { model | actionPanel = model.actionPanel |> ActionPanel.updatePost field value }, Cmd.none, Cmd.none )
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
 
         -- Join
         DoJoinOrga rootnameid ->
@@ -917,7 +729,12 @@ update global message model =
             , Cmd.batch [ sendSleep UpdateUserToken 300, send (UpdateSessionOrga (Just ndata)) ]
             )
 
-        UpdateNode node_m ->
+        UpdateNode nameid fun ->
+            let
+                node_m =
+                    getNode nameid model.orga_data
+                        |> Maybe.map fun
+            in
             case node_m of
                 Just n ->
                     let
@@ -973,7 +790,7 @@ update global message model =
                             ( Just n, Cmd.none )
 
                         Nothing ->
-                            ( Nothing, send CancelAction )
+                            ( Nothing, Cmd.map ActionPanelMsg (send ActionPanel.OnClose) )
             in
             ( { model | node_hovered = node }, cmd, Cmd.none )
 
@@ -1121,7 +938,7 @@ update global message model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
-        -- Help
+        -- Components
         HelpMsg msg ->
             let
                 ( help, out ) =
@@ -1132,31 +949,25 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
-        MoveTensionMsg msg ->
+        NewTensionMsg msg ->
             let
-                ( data, out ) =
-                    MoveTension.update apis msg model.moveTension
-
-                cmd =
-                    out.result
-                        |> Maybe.map
-                            (\x ->
-                                if Tuple.first x == False then
-                                    let
-                                        ( nameid, parentid_new, nameid_new ) =
-                                            Tuple.second x
-                                    in
-                                    send (MoveNode nameid parentid_new nameid_new)
-
-                                else
-                                    Cmd.none
-                            )
-                        |> withDefault Cmd.none
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | moveTension = data }, out.cmds |> List.map (\m -> Cmd.map MoveTensionMsg m) |> List.append (cmds ++ [ cmd ]) |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
+        ActionPanelMsg msg ->
+            let
+                ( data, out ) =
+                    ActionPanel.update apis msg model.actionPanel
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1166,12 +977,11 @@ subscriptions _ model =
     , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
     , Ports.lgPD nodeDataFromJs LogErr DoCreateTension
     , Ports.lookupNodeFromJs ChangeNodeLookup
-    , Ports.cancelActionFromJs (always CancelAction)
     , Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
-        ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
+        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         |> Sub.batch
 
 
@@ -1210,7 +1020,6 @@ view global model =
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
-        , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
         ]
     }
 
@@ -1390,7 +1199,7 @@ viewSearchBar us model =
         ]
 
 
-viewActionPanel : String -> UserState -> Node -> GqlData NodesDict -> ActionPanel -> Html Msg
+viewActionPanel : String -> UserState -> Node -> GqlData NodesDict -> ActionPanel.State -> Html Msg
 viewActionPanel domid us node o actionPanel =
     case us of
         LoggedIn uctx ->
@@ -1412,14 +1221,7 @@ viewActionPanel domid us node o actionPanel =
                         , hasRole = hasRole
                         , isRight = True
                         , domid = domid
-                        , data = actionPanel
-                        , onSubmit = Submit
-                        , onOpenModal = OpenActionPanelModal
-                        , onCloseModal = CloseActionPanelModal
-                        , onNavigate = Navigate
-                        , onActionSubmit = ActionSubmit
-                        , onActionMove = ActionMove
-                        , onUpdatePost = UpdateActionPost
+                        , orga_data = o
                         }
                 in
                 span [ id domid, class "control actionPanelStyle" ]
@@ -1429,7 +1231,7 @@ viewActionPanel domid us node o actionPanel =
                         , onClick (DoActionEdit domid node)
                         ]
                         [ i [ class "icon-ellipsis-v" ] [] ]
-                    , ActionPanel.view panelData
+                    , ActionPanel.view panelData actionPanel |> Html.map ActionPanelMsg
                     ]
 
             else
