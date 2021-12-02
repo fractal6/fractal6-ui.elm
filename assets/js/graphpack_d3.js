@@ -40,6 +40,11 @@ const RoleType = {
     Peer: "Peer",
 }
 
+const NodeVisibility = {
+    Public: "Public",
+    Private: "Private",
+    Secret: "Secret",
+}
 
 // Flat list of nodes (unordered) to nested tree structure
 // from: https://stackoverflow.com/questions/18017869/build-tree-array-from-flat-array-in-javascript/40732240#40732240
@@ -174,7 +179,7 @@ export const GraphPack = {
     circlesPadding: 8, // 1.8
     fontsizeCircle_start: 22,
     fontsizeRole_start: 19,
-    fontstyleCircle: "Arial",
+    fontstyleCircle: "Arial, fractaleicon",
 
     // Graph fx settings
     isLoading: true,
@@ -475,26 +480,29 @@ export const GraphPack = {
         }
 
         ctx2d.beginPath();
-        ctx2d.font = "bold " + (fontSize) + "px " + this.fontstyleCircle;
+        ctx2d.font = "bold " + fontSize + "px " + this.fontstyleCircle;
         ctx2d.textAlign = "center";
         if (node.depth <= 1)
             ctx2d.lineWidth = 1;
         else
             ctx2d.lineWidth = 2;
         ctx2d.strokeStyle = "#5e6d6f" + opac;
-        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fillStyle = this.nameColor + opac;
+        if (node.data.visibility == NodeVisibility.Secret) {
+            text = "\ue930 " + text;
+        }
+        ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fill();
         ctx2d.stroke();
 
-        // Alternative bended name...need some polished to be used...
+        // Set some text around the circle
         //ctx2d.beginPath();
-        //ctx2d.shadowColor = "#999"; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
-        //ctx2d.fillStyle = "white";
-        //ctx2d.fillCircleText(node.data.name,
-        //    node.ctx.centerX, node.ctx.centerY,
-        //    node.ctx.rayon, -Math.PI*0.7);
+        //ctx2d.font = "12px " + this.fontstyleCircle;
+        //var h = ctx2d.measureText('M').width;
+        ////ctx2d.shadowColor = "#999"; //ctx2d.shadowBlur = 10; //ctx2d.shadowOffsetX = 1; //ctx2d.shadowOffsetY = 1;
+        //ctx2d.fillStyle = "dark";
+        //ctx2d.fillText("\ue960", node.ctx.centerX, node.ctx.centerY + node.ctx.rayon - h/3);
         //ctx2d.fill()
     },
 
@@ -528,7 +536,6 @@ export const GraphPack = {
                 ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY+node.ctx.rayon*0.7);
             }
             ctx2d.fill();
-
 
             // Username
             if (node.data.first_link) {
@@ -725,7 +732,7 @@ export const GraphPack = {
         this.focusedNode = focus;
         this.drawNodeHover(this.focusedNode, false); // why this one ?
         var zoomTo;
-        if (focus.data.children === null || focus.data.children.length == 0) {
+        if (focus.parent && (focus.data.children === null || focus.data.children.length == 0)) {
             zoomTo = focus.parent;
         } else {
             zoomTo = focus;
@@ -995,12 +1002,20 @@ export const GraphPack = {
         return node;
     },
 
+    // Returns a RNode from a Node
+    getRNode(node) {
+        return {
+            name: node.data.name,
+            nameid: node.data.nameid,
+            useCanJoin: node.data.userCanJoin
+        }
+    },
+
     // Returns a PNode from a Node
     getPNode(node) {
         return {
-            nameid: node.data.nameid,
             name: node.data.name,
-            charac: node.data.charac,
+            nameid: node.data.nameid
         }
     },
 
@@ -1014,18 +1029,18 @@ export const GraphPack = {
 
     getNodeData(node) {
         // @debug: LocalGraph/Node Encoder/Decoder
-        var rootNode = this.getPNode(this.rootNode);
+        var rootNode = this.getRNode(this.rootNode);
         var focusNode = {
             name: node.data.name,
             nameid: node.data.nameid,
             type_: node.data.type_,
-            charac: node.data.charac,
+            visibility: node.data.visibility,
+            mode: node.data.mode,
             children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
                 return {
                     name: n.data.name,
                     nameid: n.data.nameid,
-                    role_type: n.data.role_type,
-                    charac: n.data.charac,
+                    role_type: n.data.role_type
                 }
             }) : [],
             source: node.data.source,
@@ -1603,6 +1618,7 @@ export const GraphPack = {
         //stats.domElement.style.left = '0px';
         //stats.domElement.style.top = '0px';
         //document.body.appendChild( stats.domElement );
+
         return true
 
     },

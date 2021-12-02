@@ -90,13 +90,8 @@ initModel user =
     let
         form =
             NT.initModel user
+                |> NT.setSourceShort "f6#feedback#help-bot"
                 |> NT.setTargetShort "f6#feedback"
-                |> NT.setSource
-                    { rootnameid = "f6"
-                    , nameid = "f6#feedback#help-bot"
-                    , name = "Help Bot"
-                    , role_type = RoleType.Bot
-                    }
 
         formAsk =
             initFormAsk form

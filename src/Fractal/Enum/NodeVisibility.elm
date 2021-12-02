@@ -2,48 +2,55 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.NodeCharacHasFilter exposing (..)
+module Fractal.Enum.NodeVisibility exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type NodeCharacHasFilter
-    = UserCanJoin
-    | Mode
+type NodeVisibility
+    = Public
+    | Private
+    | Secret
 
 
-list : List NodeCharacHasFilter
+list : List NodeVisibility
 list =
-    [ UserCanJoin, Mode ]
+    [ Public, Private, Secret ]
 
 
-decoder : Decoder NodeCharacHasFilter
+decoder : Decoder NodeVisibility
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "userCanJoin" ->
-                        Decode.succeed UserCanJoin
+                    "Public" ->
+                        Decode.succeed Public
 
-                    "mode" ->
-                        Decode.succeed Mode
+                    "Private" ->
+                        Decode.succeed Private
+
+                    "Secret" ->
+                        Decode.succeed Secret
 
                     _ ->
-                        Decode.fail ("Invalid NodeCharacHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid NodeVisibility type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : NodeCharacHasFilter -> String
+toString : NodeVisibility -> String
 toString enum =
     case enum of
-        UserCanJoin ->
-            "userCanJoin"
+        Public ->
+            "Public"
 
-        Mode ->
-            "mode"
+        Private ->
+            "Private"
+
+        Secret ->
+            "Secret"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -57,14 +64,17 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe NodeCharacHasFilter
+fromString : String -> Maybe NodeVisibility
 fromString enumString =
     case enumString of
-        "userCanJoin" ->
-            Just UserCanJoin
+        "Public" ->
+            Just Public
 
-        "mode" ->
-            Just Mode
+        "Private" ->
+            Just Private
+
+        "Secret" ->
+            Just Secret
 
         _ ->
             Nothing

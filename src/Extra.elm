@@ -52,6 +52,22 @@ clean c s =
 
 
 
+-- Maybe
+
+
+{-| Returns the first value that is present, like the boolean `||`.
+-}
+mor : Maybe a -> Maybe a -> Maybe a
+mor ma mb =
+    case ma of
+        Nothing ->
+            mb
+
+        Just _ ->
+            ma
+
+
+
 -- Colors
 
 

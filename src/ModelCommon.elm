@@ -291,6 +291,7 @@ type alias ActionForm =
     , tid : String
     , bid : String
     , node : Node
+    , fragment : NodeFragment
     , events_type : Maybe (List TensionEvent.TensionEvent)
     , post : Post
     }
@@ -308,6 +309,7 @@ initActionForm tid user =
     , tid = tid
     , bid = ""
     , node = initNode
+    , fragment = initNodeFragment Nothing
     , events_type = Nothing
     , post = Dict.empty
     }
@@ -555,7 +557,7 @@ getNodeRights uctx target odata =
             coordoRoles =
                 getCoordoRoles circleRoles
         in
-        case target.charac.mode of
+        case target.mode of
             NodeMode.Agile ->
                 case circleRoles of
                     [] ->
@@ -615,7 +617,7 @@ getTensionRights uctx th_d path_d =
 
                     else
                         -- has role base autorization
-                        case p.focus.charac.mode of
+                        case p.focus.mode of
                             NodeMode.Agile ->
                                 -- Is a  Circle member
                                 (List.length circleRoles > 0)

@@ -140,42 +140,6 @@ deleteMandate requiredArgs object_ =
     Object.selectionForCompositeField "deleteMandate" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeMandateFilter ] object_ (identity >> Decode.nullable)
 
 
-type alias AddNodeCharacRequiredArguments =
-    { input : List Fractal.InputObject.AddNodeCharacInput }
-
-
-addNodeCharac :
-    AddNodeCharacRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddNodeCharacPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-addNodeCharac requiredArgs object_ =
-    Object.selectionForCompositeField "addNodeCharac" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddNodeCharacInput |> Encode.list) ] object_ (identity >> Decode.nullable)
-
-
-type alias UpdateNodeCharacRequiredArguments =
-    { input : Fractal.InputObject.UpdateNodeCharacInput }
-
-
-updateNodeCharac :
-    UpdateNodeCharacRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateNodeCharacPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-updateNodeCharac requiredArgs object_ =
-    Object.selectionForCompositeField "updateNodeCharac" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateNodeCharacInput ] object_ (identity >> Decode.nullable)
-
-
-type alias DeleteNodeCharacRequiredArguments =
-    { filter : Fractal.InputObject.NodeCharacFilter }
-
-
-deleteNodeCharac :
-    DeleteNodeCharacRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteNodeCharacPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-deleteNodeCharac requiredArgs object_ =
-    Object.selectionForCompositeField "deleteNodeCharac" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeCharacFilter ] object_ (identity >> Decode.nullable)
-
-
 type alias AddOrgaAggRequiredArguments =
     { input : List Fractal.InputObject.AddOrgaAggInput }
 

@@ -510,7 +510,7 @@ viewModalContent op (State model) =
         , div [ class "modal-card-body" ]
             [ div [ class "field" ]
                 [ div [ class "control" ]
-                    [ span [] [ text "New receiver: " ]
+                    [ span [] [ textH (T.newReceiver ++ ": ") ]
                     , span [ class "dropdown" ]
                         [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid white;" ]
                             [ span [ attribute "aria-controls" "target-menu" ]

@@ -5,8 +5,10 @@
 
 # Creating new components
 
-A components is reusable piece of code use in [page](see elm-spa page) to implement a given functionality. 
-A lot of boilerplate is involved when creating component with elm (for the best!) that maintain their own state.
+A components is a reusable piece of code use in a application to implement a given functionality. 
+For simple components that have complex states ans so a few msg, they cna be implemented by getting the msg from the main page, as it is done
+in `Components/ColorPicker.elm` for example.
+For more complex components, a lot of boilerplate is involved when creating component with elm (for the best!) that maintain their own state.
 To help building new components that are relevant with the framework developed the repo, and without coding again and again the same thing,
 we provide a script to generate template code for your new component called `melm.py`.
 

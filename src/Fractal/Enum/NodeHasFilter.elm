@@ -23,13 +23,14 @@ type NodeHasFilter
     | Mandate
     | Docs
     | Source
+    | Labels
+    | Visibility
+    | Mode
+    | Rights
+    | IsArchived
     | IsRoot
     | IsPersonal
-    | IsPrivate
-    | IsArchived
-    | Charac
-    | Rights
-    | Labels
+    | UserCanJoin
     | First_link
     | Second_link
     | Skills
@@ -40,7 +41,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, IsRoot, IsPersonal, IsPrivate, IsArchived, Charac, Rights, Labels, First_link, Second_link, Skills, Role_type, Contracts, Orga_agg ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, Labels, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, First_link, Second_link, Skills, Role_type, Contracts, Orga_agg ]
 
 
 decoder : Decoder NodeHasFilter
@@ -94,26 +95,29 @@ decoder =
                     "source" ->
                         Decode.succeed Source
 
+                    "labels" ->
+                        Decode.succeed Labels
+
+                    "visibility" ->
+                        Decode.succeed Visibility
+
+                    "mode" ->
+                        Decode.succeed Mode
+
+                    "rights" ->
+                        Decode.succeed Rights
+
+                    "isArchived" ->
+                        Decode.succeed IsArchived
+
                     "isRoot" ->
                         Decode.succeed IsRoot
 
                     "isPersonal" ->
                         Decode.succeed IsPersonal
 
-                    "isPrivate" ->
-                        Decode.succeed IsPrivate
-
-                    "isArchived" ->
-                        Decode.succeed IsArchived
-
-                    "charac" ->
-                        Decode.succeed Charac
-
-                    "rights" ->
-                        Decode.succeed Rights
-
-                    "labels" ->
-                        Decode.succeed Labels
+                    "userCanJoin" ->
+                        Decode.succeed UserCanJoin
 
                     "first_link" ->
                         Decode.succeed First_link
@@ -188,26 +192,29 @@ toString enum =
         Source ->
             "source"
 
+        Labels ->
+            "labels"
+
+        Visibility ->
+            "visibility"
+
+        Mode ->
+            "mode"
+
+        Rights ->
+            "rights"
+
+        IsArchived ->
+            "isArchived"
+
         IsRoot ->
             "isRoot"
 
         IsPersonal ->
             "isPersonal"
 
-        IsPrivate ->
-            "isPrivate"
-
-        IsArchived ->
-            "isArchived"
-
-        Charac ->
-            "charac"
-
-        Rights ->
-            "rights"
-
-        Labels ->
-            "labels"
+        UserCanJoin ->
+            "userCanJoin"
 
         First_link ->
             "first_link"
@@ -287,26 +294,29 @@ fromString enumString =
         "source" ->
             Just Source
 
+        "labels" ->
+            Just Labels
+
+        "visibility" ->
+            Just Visibility
+
+        "mode" ->
+            Just Mode
+
+        "rights" ->
+            Just Rights
+
+        "isArchived" ->
+            Just IsArchived
+
         "isRoot" ->
             Just IsRoot
 
         "isPersonal" ->
             Just IsPersonal
 
-        "isPrivate" ->
-            Just IsPrivate
-
-        "isArchived" ->
-            Just IsArchived
-
-        "charac" ->
-            Just Charac
-
-        "rights" ->
-            Just Rights
-
-        "labels" ->
-            Just Labels
+        "userCanJoin" ->
+            Just UserCanJoin
 
         "first_link" ->
             Just First_link

@@ -618,6 +618,12 @@ actionDecoder data =
             Nothing
 
 
+{-| Just push a new event accompagned of a maybe
+
+  - a comment
+  - a blob id that point the blob to work on
+
+-}
 actionRequest url form msg =
     makeGQLMutation url
         (Mutation.updateTension
@@ -643,9 +649,7 @@ actionInputEncoder f =
         inputReq =
             { filter =
                 Input.buildTensionFilter
-                    (\ft ->
-                        { ft | id = Present [ encodeId f.tid ] }
-                    )
+                    (\ft -> { ft | id = Present [ encodeId f.tid ] })
             }
 
         inputOpt =

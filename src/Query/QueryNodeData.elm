@@ -12,7 +12,6 @@ import Fractal.Object
 import Fractal.Object.AddNodePayload
 import Fractal.Object.Mandate
 import Fractal.Object.Node
-import Fractal.Object.NodeCharac
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Query as Query

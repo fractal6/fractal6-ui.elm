@@ -146,7 +146,7 @@ initCircleTab type_ model =
             { form
                 | type_ = TensionType.Governance
                 , blob_type = Just BlobType.OnNode
-                , node = { node | charac = Just form.target.charac, type_ = Just type_ } -- inherit charac
+                , node = { node | type_ = Just type_ }
                 , users = [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
             }
                 |> NodeDoc.updateNodeForm "name" (withDefault "" node.name)
@@ -356,6 +356,18 @@ setTarget target data =
     { data | form = newForm }
 
 
+setSourceShort : String -> Model -> Model
+setSourceShort nameid data =
+    let
+        f =
+            data.form
+
+        newForm =
+            { f | target = { nameid = nameid, name = "" } }
+    in
+    { data | form = newForm }
+
+
 setTargetShort : String -> Model -> Model
 setTargetShort nameid data =
     let
@@ -363,7 +375,7 @@ setTargetShort nameid data =
             data.form
 
         newForm =
-            { f | target = { name = nameid, nameid = nameid, charac = initCharac } }
+            { f | target = { nameid = nameid, name = "" } }
     in
     { data | form = newForm }
 
@@ -1363,7 +1375,8 @@ viewRecipients model =
             model.form
     in
     div [ class "level-right has-text-weight-medium" ]
-        [ span [ class "dropdown" ]
+        [ span [ class "has-text-weight-light is-size-6" ] [ textH (T.from ++ ": ") ]
+        , span [ class "dropdown" ]
             [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid black;" ]
                 [ span [ attribute "aria-controls" "source-menu" ]
                     [ span
@@ -1384,7 +1397,8 @@ viewRecipients model =
                         (List.filter (\n -> n.nameid /= model.form.source.nameid) model.sources)
                 ]
             ]
-        , span [ class "right-arrow" ] []
+        , span [ class "right-arro mx-3" ] []
+        , span [ class "has-text-weight-light is-size-6" ] [ textH (T.to ++ ": ") ]
         , span [ class "dropdown" ]
             [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid black;" ]
                 [ span [ attribute "aria-controls" "target-menu" ]

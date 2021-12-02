@@ -6,7 +6,6 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Node
-import Fractal.Object.NodeCharac
 import Fractal.Object.User
 import Fractal.Object.UserRights
 import Fractal.Query as Query
@@ -38,7 +37,6 @@ type alias UserRoleX =
     , nameid : String
     , rootnameid : String
     , role_type : RoleType.RoleType
-    , isPrivate : Bool
     }
 
 
@@ -84,23 +82,24 @@ uctxPayload =
                     Fractal.Object.UserRights.type_
             )
         |> with
-            (Fractal.Object.User.roles pubFilter
-                (SelectionSet.map5 UserRoleX
+            (Fractal.Object.User.roles identity
+                (SelectionSet.map4 UserRoleX
                     Fractal.Object.Node.name
                     Fractal.Object.Node.nameid
                     Fractal.Object.Node.rootnameid
                     (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
-                    Fractal.Object.Node.isPrivate
                 )
                 |> SelectionSet.map (\x -> withDefault [] x)
             )
 
 
-pubFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-pubFilter a =
-    { a
-        | filter =
-            Input.buildNodeFilter
-                (\b -> { b | isPrivate = Present False })
-                |> Present
-    }
+
+-- Purpose: was here ebefore @auth directive to filter....
+--pubFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+--pubFilter a =
+--    { a
+--        | filter =
+--            Input.buildNodeFilter
+--                (\b -> { b | isPrivate = Present False })
+--                |> Present
+--    }

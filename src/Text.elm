@@ -230,9 +230,34 @@ moved =
     "moved"
 
 
+changed : String
+changed =
+    "changed"
+
+
 move : String
 move =
     "move"
+
+
+visibility : String
+visibility =
+    "visibility"
+
+
+governance : String
+governance =
+    "governance"
+
+
+authority : String
+authority =
+    "authority"
+
+
+changeLink : String
+changeLink =
+    "invite or Unlink"
 
 
 left : String
@@ -1043,6 +1068,11 @@ clickMe =
     "Click me"
 
 
+newReceiver : String
+newReceiver =
+    "new destination"
+
+
 
 --
 -- Info / Doc
@@ -1076,3 +1106,50 @@ tensionTypeDoc =
 * **Governance**: concerning the structure of the organisation its mandates etc.
 * **Help**: for help requests, questions or clarifications.
     """
+
+
+visibilityInfoHeader : String
+visibilityInfoHeader =
+    "The change will only apply on the current circle, not recursively on the sub-circles."
+
+
+visibilityPublic : String
+visibilityPublic =
+    "The entire world can see it."
+
+
+visibilityPrivate : String
+visibilityPrivate =
+    "Only member of the organisation can see it."
+
+
+visibilitySeccret : String
+visibilitySeccret =
+    "Only roles below this circle can see it."
+
+
+circleAuthorityHeader : String
+circleAuthorityHeader =
+    "The governance authority is characterized by the right to do a set of actions."
+
+
+circleAuthorityDoc : String
+circleAuthorityDoc =
+    """
+* Create and edit roles and circles
+* Edit tensions (Title, assignees etc)
+* Edit mandates
+* invite new members
+
+Note: To edit mandates you need to publish the modifications done in the corresponding (governance) tension.
+    """
+
+
+authCoordinated : String
+authCoordinated =
+    "Where Coordinator roles (orange) have the governance authority."
+
+
+authAgile : String
+authAgile =
+    "Where all roles have equal governance authority."

@@ -6,6 +6,7 @@ import Dict
 import Extra exposing (ternary)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Generated.Route as Route exposing (Route)
@@ -17,7 +18,6 @@ import ModelSchema
         , FocusNode
         , LocalGraph
         , Node
-        , NodeCharac
         , NodeFragment
         , NodeId
         , NodesDict
@@ -25,7 +25,6 @@ import ModelSchema
         , User
         , UserCtx
         , UserRole
-        , initCharac
         )
 import Url exposing (Url)
 
@@ -266,7 +265,6 @@ nid2eor nid =
     { nameid = nid
     , name = name
     , role_type = Nothing
-    , charac = initCharac
     }
 
 
@@ -430,8 +428,9 @@ nodeFromFragment parentid f =
     , parent = Nothing
     , type_ = withDefault NodeType.Circle f.type_
     , role_type = f.role_type
-    , charac = withDefault initCharac f.charac
     , first_link = Maybe.map (\fs -> User fs Nothing) f.first_link
-    , isPrivate = withDefault False f.isPrivate
+    , visibility = withDefault NodeVisibility.Private f.visibility
+    , mode = withDefault NodeMode.Coordinated f.mode
     , source = Nothing
+    , userCanJoin = Nothing
     }

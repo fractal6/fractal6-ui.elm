@@ -6,6 +6,7 @@ import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -40,63 +41,6 @@ import Time
    @DEBUG: Factor this file to appropriate places in Component.{Tension, Node, User ,Color...}
 -}
 {-
-   Color
--}
-
-
-statusColor : TensionStatus.TensionStatus -> String
-statusColor s =
-    case s of
-        TensionStatus.Open ->
-            "success"
-
-        TensionStatus.Closed ->
-            "danger"
-
-
-tensionTypeColor : String -> TensionType.TensionType -> String
-tensionTypeColor elt tt =
-    case tt of
-        TensionType.Operational ->
-            "has-" ++ elt ++ "-success"
-
-        TensionType.Governance ->
-            "has-" ++ elt ++ "-info"
-
-        TensionType.Help ->
-            "has-" ++ elt ++ "-warning"
-
-
-roleColor : RoleType.RoleType -> String
-roleColor rt =
-    case rt of
-        RoleType.Owner ->
-            "orange"
-
-        RoleType.Member ->
-            "primary"
-
-        RoleType.Coordinator ->
-            "orange"
-
-        RoleType.Peer ->
-            "primary"
-
-        RoleType.Bot ->
-            "link"
-
-        RoleType.Guest ->
-            "primary"
-
-        RoleType.Retired ->
-            "primary"
-
-        RoleType.Pending ->
-            "primary"
-
-
-
-{-
    Tension
 -}
 
@@ -130,8 +74,6 @@ mediaTension now focus tension showStatus showRecip size navigate =
         , div [ class "media-content" ]
             [ div
                 [ class "content mb-0"
-
-                --, onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
                 ]
                 [ a
                     [ class "has-text-weight-semibold"
@@ -347,6 +289,29 @@ atBy now cls createdAt createdBy =
             ]
 
 
+statusColor : TensionStatus.TensionStatus -> String
+statusColor s =
+    case s of
+        TensionStatus.Open ->
+            "success"
+
+        TensionStatus.Closed ->
+            "danger"
+
+
+tensionTypeColor : String -> TensionType.TensionType -> String
+tensionTypeColor elt tt =
+    case tt of
+        TensionType.Operational ->
+            "has-" ++ elt ++ "-success"
+
+        TensionType.Governance ->
+            "has-" ++ elt ++ "-info"
+
+        TensionType.Help ->
+            "has-" ++ elt ++ "-warning"
+
+
 
 {-
    Node
@@ -425,7 +390,7 @@ viewOrgaMedia user root =
                 ]
              , div [ id "icons", class "level is-mobile" ]
                 [ div [ class "level-left" ]
-                    [ if root.isPrivate then
+                    [ if root.visibility == NodeVisibility.Private then
                         span [ class "level-item" ] [ I.icon "icon-lock" ]
 
                       else
@@ -456,6 +421,34 @@ viewOrgaMedia user root =
                    )
             )
         ]
+
+
+roleColor : RoleType.RoleType -> String
+roleColor rt =
+    case rt of
+        RoleType.Owner ->
+            "orange"
+
+        RoleType.Member ->
+            "primary"
+
+        RoleType.Coordinator ->
+            "orange"
+
+        RoleType.Peer ->
+            "primary"
+
+        RoleType.Bot ->
+            "link"
+
+        RoleType.Guest ->
+            "primary"
+
+        RoleType.Retired ->
+            "primary"
+
+        RoleType.Pending ->
+            "primary"
 
 
 

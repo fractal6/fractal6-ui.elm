@@ -46,7 +46,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nidFilter, nodeCharacPayload, nodeDecoder, tidPayload, userPayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nidFilter, nodeDecoder, tidPayload, userPayload)
 import Query.QueryNodeData exposing (mandatePayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
@@ -233,10 +233,10 @@ nodeFragmentPayload =
         |> with Fractal.Object.NodeFragment.nameid
         |> with Fractal.Object.NodeFragment.type_
         |> with Fractal.Object.NodeFragment.role_type
+        |> with Fractal.Object.NodeFragment.visibility
+        |> with Fractal.Object.NodeFragment.mode
         |> with Fractal.Object.NodeFragment.about
         |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
-        |> with Fractal.Object.NodeFragment.isPrivate
-        |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
         |> with Fractal.Object.NodeFragment.first_link
         |> with
             (Fractal.Object.NodeFragment.children identity
@@ -245,10 +245,10 @@ nodeFragmentPayload =
                     |> with Fractal.Object.NodeFragment.nameid
                     |> with Fractal.Object.NodeFragment.type_
                     |> with Fractal.Object.NodeFragment.role_type
+                    |> with Fractal.Object.NodeFragment.visibility
+                    |> with Fractal.Object.NodeFragment.mode
                     |> with Fractal.Object.NodeFragment.about
                     |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
-                    |> with Fractal.Object.NodeFragment.isPrivate
-                    |> with (Fractal.Object.NodeFragment.charac identity nodeCharacPayload)
                     |> with Fractal.Object.NodeFragment.first_link
                 )
             )

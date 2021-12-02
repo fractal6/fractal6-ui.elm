@@ -20,6 +20,7 @@ $chbc: lighten($hbc, 2);
 $text: $white-1;
 $text-light: lighten($text, 10);
 $text-strong: darken($text, 5);
+$text-inverted: #111;
 
 $border-color: $grey;
 $border-width: 1px;

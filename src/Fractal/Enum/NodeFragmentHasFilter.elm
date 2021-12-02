@@ -11,10 +11,10 @@ type NodeFragmentHasFilter
     = Name
     | Nameid
     | Type_
-    | IsPrivate
-    | Charac
     | About
     | Mandate
+    | Visibility
+    | Mode
     | Children
     | First_link
     | Second_link
@@ -24,7 +24,7 @@ type NodeFragmentHasFilter
 
 list : List NodeFragmentHasFilter
 list =
-    [ Name, Nameid, Type_, IsPrivate, Charac, About, Mandate, Children, First_link, Second_link, Skills, Role_type ]
+    [ Name, Nameid, Type_, About, Mandate, Visibility, Mode, Children, First_link, Second_link, Skills, Role_type ]
 
 
 decoder : Decoder NodeFragmentHasFilter
@@ -42,17 +42,17 @@ decoder =
                     "type_" ->
                         Decode.succeed Type_
 
-                    "isPrivate" ->
-                        Decode.succeed IsPrivate
-
-                    "charac" ->
-                        Decode.succeed Charac
-
                     "about" ->
                         Decode.succeed About
 
                     "mandate" ->
                         Decode.succeed Mandate
+
+                    "visibility" ->
+                        Decode.succeed Visibility
+
+                    "mode" ->
+                        Decode.succeed Mode
 
                     "children" ->
                         Decode.succeed Children
@@ -88,17 +88,17 @@ toString enum =
         Type_ ->
             "type_"
 
-        IsPrivate ->
-            "isPrivate"
-
-        Charac ->
-            "charac"
-
         About ->
             "about"
 
         Mandate ->
             "mandate"
+
+        Visibility ->
+            "visibility"
+
+        Mode ->
+            "mode"
 
         Children ->
             "children"
@@ -139,17 +139,17 @@ fromString enumString =
         "type_" ->
             Just Type_
 
-        "isPrivate" ->
-            Just IsPrivate
-
-        "charac" ->
-            Just Charac
-
         "about" ->
             Just About
 
         "mandate" ->
             Just Mandate
+
+        "visibility" ->
+            Just Visibility
+
+        "mode" ->
+            Just Mode
 
         "children" ->
             Just Children

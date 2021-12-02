@@ -127,7 +127,7 @@ addTensionInputEncoder f =
         inputOpt =
             \x ->
                 { x
-                    | action = f.action |> fromMaybe
+                    | action = fromMaybe f.action
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                     , labels = buildLabels f
@@ -274,7 +274,8 @@ buildNodeFragmentRef users nf =
                         , type_ = fromMaybe nf.type_
                         , about = fromMaybe nf.about
                         , mandate = buildMandate nf.mandate
-                        , charac = nf.charac |> Maybe.map (\c -> { userCanJoin = Present c.userCanJoin, mode = Present c.mode, id = Absent }) |> fromMaybe
+                        , visibility = fromMaybe nf.visibility
+                        , mode = fromMaybe nf.mode
                     }
             in
             case type_ of

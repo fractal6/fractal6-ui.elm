@@ -7,7 +7,6 @@ import Fractal.Object
 import Fractal.Object.AddLabelPayload
 import Fractal.Object.DeleteLabelPayload
 import Fractal.Object.Node
-import Fractal.Object.NodeCharac
 import Fractal.Object.UpdateLabelPayload
 import Fractal.Object.UpdateNodePayload
 import Fractal.Object.User

@@ -4,6 +4,7 @@ import Components.Loading exposing (ModalData)
 import Dict
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.UserType as UserType
 import Json.Decode as JD
@@ -19,10 +20,10 @@ import ModelSchema
         , Label
         , LocalGraph
         , Node
-        , NodeCharac
         , NodeId
         , NodesDict
         , PNode
+        , RNode
         , User
         , UserCtx
         , UserRights
@@ -158,29 +159,25 @@ nodeEncoder node =
     , ( "parent"
       , JEE.maybe JE.object <|
             Maybe.map
-                (\p ->
-                    [ ( "nameid", JE.string p.nameid ) ]
-                )
+                (\p -> [ ( "nameid", JE.string p.nameid ) ])
                 node.parent
       )
     , ( "type_", JE.string <| NodeType.toString node.type_ )
     , ( "role_type", JEE.maybe JE.string <| Maybe.map (\t -> RoleType.toString t) node.role_type )
     , ( "first_link", JEE.maybe JE.object <| Maybe.map (\fs -> userEncoder fs) node.first_link )
-    , ( "charac"
-      , JE.object
-            [ ( "userCanJoin", JE.bool node.charac.userCanJoin )
-            , ( "mode", JE.string <| NodeMode.toString node.charac.mode )
-            ]
-      )
-    , ( "isPrivate", JE.bool node.isPrivate )
+    , ( "visibility", JE.string <| NodeVisibility.toString node.visibility )
+    , ( "mode", JE.string <| NodeMode.toString node.mode )
     , ( "source"
       , JEE.maybe JE.object <|
             Maybe.map
                 (\p ->
-                    [ ( "id", JE.string p.id ), ( "tension", JE.object [ ( "id", JE.string p.tension.id ) ] ) ]
+                    [ ( "id", JE.string p.id )
+                    , ( "tension", JE.object [ ( "id", JE.string p.tension.id ) ] )
+                    ]
                 )
                 node.source
       )
+    , ( "userCanJoin", JEE.maybe JE.bool node.userCanJoin )
     ]
 
 
@@ -199,9 +196,10 @@ nodeDecoder =
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))
         |> JDE.andMap (JD.maybe (JD.field "first_link" userDecoder))
-        |> JDE.andMap (JD.field "charac" characDecoder)
-        |> JDE.andMap (JD.field "isPrivate" JD.bool)
+        |> JDE.andMap (JD.field "visibility" NodeVisibility.decoder)
+        |> JDE.andMap (JD.field "mode" NodeMode.decoder)
         |> JDE.andMap (JD.maybe (JD.field "source" blobIdDecoder))
+        |> JDE.andMap (JD.maybe (JD.field "userCanJoin" JD.bool))
 
 
 idDecoder : JD.Decoder IdPayload
@@ -221,13 +219,6 @@ nodeIdDecoder =
     JD.map NodeId (JD.field "nameid" JD.string)
 
 
-characDecoder : JD.Decoder NodeCharac
-characDecoder =
-    JD.map2 NodeCharac
-        (JD.field "userCanJoin" JD.bool)
-        (JD.field "mode" NodeMode.decoder)
-
-
 localGraphDecoder : JD.Decoder LocalGraph
 localGraphDecoder =
     -- @Debug: manually update :
@@ -237,25 +228,25 @@ localGraphDecoder =
     JD.map3 LocalGraph
         (JD.maybe <|
             JD.field "root" <|
-                JD.map3 PNode
+                JD.map3 RNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
-                    (JD.field "charac" characDecoder)
+                    (JD.maybe (JD.field "userCanJoin" JD.bool))
         )
         (JD.field "path"
             (JD.list <|
-                JD.map3 PNode
+                JD.map2 PNode
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
-                    (JD.field "charac" characDecoder)
             )
         )
         (JD.field "focus" <|
-            JD.map6 FocusNode
+            JD.map7 FocusNode
                 (JD.field "name" JD.string)
                 (JD.field "nameid" JD.string)
                 (JD.field "type_" NodeType.decoder)
-                (JD.field "charac" characDecoder)
+                (JD.field "visibility" NodeVisibility.decoder)
+                (JD.field "mode" NodeMode.decoder)
                 (JD.field "children" (JD.list emitterOrReceiverDecoder))
                 (JD.maybe (JD.field "source" blobIdDecoder))
         )
@@ -263,11 +254,10 @@ localGraphDecoder =
 
 emitterOrReceiverDecoder : JD.Decoder EmitterOrReceiver
 emitterOrReceiverDecoder =
-    JD.map4 EmitterOrReceiver
+    JD.map3 EmitterOrReceiver
         (JD.field "name" JD.string)
         (JD.field "nameid" JD.string)
         (JD.maybe (JD.field "role_type" RoleType.decoder))
-        (JD.field "charac" characDecoder)
 
 
 

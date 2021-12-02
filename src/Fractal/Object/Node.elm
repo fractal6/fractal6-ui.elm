@@ -4,7 +4,9 @@
 
 module Fractal.Object.Node exposing (..)
 
+import Fractal.Enum.NodeMode
 import Fractal.Enum.NodeType
+import Fractal.Enum.NodeVisibility
 import Fractal.Enum.RoleType
 import Fractal.InputObject
 import Fractal.Interface
@@ -237,51 +239,6 @@ source fillInOptionals object_ =
     Object.selectionForCompositeField "source" optionalArgs object_ (identity >> Decode.nullable)
 
 
-isRoot : SelectionSet Bool Fractal.Object.Node
-isRoot =
-    Object.selectionForField "Bool" "isRoot" [] Decode.bool
-
-
-isPersonal : SelectionSet (Maybe Bool) Fractal.Object.Node
-isPersonal =
-    Object.selectionForField "(Maybe Bool)" "isPersonal" [] (Decode.bool |> Decode.nullable)
-
-
-isPrivate : SelectionSet Bool Fractal.Object.Node
-isPrivate =
-    Object.selectionForField "Bool" "isPrivate" [] Decode.bool
-
-
-isArchived : SelectionSet Bool Fractal.Object.Node
-isArchived =
-    Object.selectionForField "Bool" "isArchived" [] Decode.bool
-
-
-type alias CharacOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
-
-
-charac :
-    (CharacOptionalArguments -> CharacOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.NodeCharac
-    -> SelectionSet decodesTo Fractal.Object.Node
-charac fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "charac" optionalArgs object_ identity
-
-
-rights : SelectionSet Int Fractal.Object.Node
-rights =
-    Object.selectionForField "Int" "rights" [] Decode.int
-
-
 type alias LabelsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.LabelFilter
     , order : OptionalArgument Fractal.InputObject.LabelOrder
@@ -304,6 +261,41 @@ labels fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "labels" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+
+
+visibility : SelectionSet Fractal.Enum.NodeVisibility.NodeVisibility Fractal.Object.Node
+visibility =
+    Object.selectionForField "Enum.NodeVisibility.NodeVisibility" "visibility" [] Fractal.Enum.NodeVisibility.decoder
+
+
+mode : SelectionSet Fractal.Enum.NodeMode.NodeMode Fractal.Object.Node
+mode =
+    Object.selectionForField "Enum.NodeMode.NodeMode" "mode" [] Fractal.Enum.NodeMode.decoder
+
+
+rights : SelectionSet Int Fractal.Object.Node
+rights =
+    Object.selectionForField "Int" "rights" [] Decode.int
+
+
+isArchived : SelectionSet Bool Fractal.Object.Node
+isArchived =
+    Object.selectionForField "Bool" "isArchived" [] Decode.bool
+
+
+isRoot : SelectionSet Bool Fractal.Object.Node
+isRoot =
+    Object.selectionForField "Bool" "isRoot" [] Decode.bool
+
+
+isPersonal : SelectionSet (Maybe Bool) Fractal.Object.Node
+isPersonal =
+    Object.selectionForField "(Maybe Bool)" "isPersonal" [] (Decode.bool |> Decode.nullable)
+
+
+userCanJoin : SelectionSet (Maybe Bool) Fractal.Object.Node
+userCanJoin =
+    Object.selectionForField "(Maybe Bool)" "userCanJoin" [] (Decode.bool |> Decode.nullable)
 
 
 type alias FirstLinkOptionalArguments =

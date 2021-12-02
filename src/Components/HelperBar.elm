@@ -2,6 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
@@ -13,7 +14,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2type, uriFromNameid)
 import ModelCommon.View exposing (roleColor)
-import ModelSchema exposing (LocalGraph, Node, NodeCharac, UserRole, initNode)
+import ModelSchema exposing (LocalGraph, UserRole)
 import Ports
 import Text as T exposing (textH, textT)
 
@@ -59,10 +60,10 @@ type alias Op msg =
 view : Op msg -> Html msg
 view op =
     let
-        ( focusid, rootnameid, charac ) =
+        ( rootnameid, focusid, userCanJoin ) =
             case op.path_data of
                 Just path ->
-                    ( path.focus.nameid, path.root |> Maybe.map (\r -> r.nameid) |> withDefault "", Just path.focus.charac )
+                    ( path.root |> Maybe.map (\r -> r.nameid) |> withDefault "", path.focus.nameid, path.root |> Maybe.map (\r -> r.userCanJoin) |> withDefault Nothing )
 
                 Nothing ->
                     ( "", "", Nothing )
@@ -96,30 +97,16 @@ view op =
                                         memberButtons roles { op | baseUri = OverviewBaseUri }
 
                                     else
-                                        charac
-                                            |> Maybe.map
-                                                (\c ->
-                                                    if c.userCanJoin then
-                                                        joinButton op.onJoin
-
-                                                    else
-                                                        text ""
-                                                )
+                                        userCanJoin
+                                            |> Maybe.map (\ucj -> joinButton op.onJoin)
                                             |> withDefault (text "")
 
                                 Nothing ->
                                     div [ class "navbar-end ph-button-1" ] []
 
                         LoggedOut ->
-                            charac
-                                |> Maybe.map
-                                    (\c ->
-                                        if c.userCanJoin then
-                                            joinButton op.onJoin
-
-                                        else
-                                            text ""
-                                    )
+                            userCanJoin
+                                |> Maybe.map (\ucj -> joinButton op.onJoin)
                                 |> withDefault (text "")
                     ]
                 ]
@@ -214,6 +201,12 @@ viewPath baseUri uriQuery maybePath =
 
             Nothing ->
                 div [ class "ph-line is-1" ] []
+        , case maybePath of
+            Just p ->
+                span [ class "tag is-rounded" ] [ text (NodeVisibility.toString p.focus.visibility) ]
+
+            Nothing ->
+                text ""
         ]
 
 

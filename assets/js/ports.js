@@ -391,6 +391,7 @@ const actions = {
 
     },
     'CLICK': (app, session, target) => {
-        document.getElementById(target).click();
+        var elt = document.getElementById(target);
+        if (elt) elt.click();
     },
 }

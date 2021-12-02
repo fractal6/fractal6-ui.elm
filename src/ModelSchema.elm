@@ -7,6 +7,7 @@ import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -53,13 +54,14 @@ type alias Node =
     , name : String
     , nameid : String
     , rootnameid : String
-    , parent : Maybe NodeId -- see issue with recursive structure
+    , parent : Maybe NodeId
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe User
-    , charac : NodeCharac
-    , isPrivate : Bool
+    , visibility : NodeVisibility.NodeVisibility
+    , mode : NodeMode.NodeMode
     , source : Maybe BlobId
+    , userCanJoin : Maybe Bool -- Only here because we reconstruct the LocalGraph from the node list in the graphpack code in assets/js.
     }
 
 
@@ -69,12 +71,11 @@ type alias NodeExt =
     , name : String
     , nameid : String
     , rootnameid : String
-    , parent : Maybe NodeId -- see issue with recursive structure
+    , parent : Maybe NodeId
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe Username
-    , charac : NodeCharac
-    , isPrivate : Bool
+    , visibility : NodeVisibility.NodeVisibility
     , about : Maybe String
 
     -- aggregate
@@ -88,18 +89,12 @@ type alias OrgaAgg =
     }
 
 
-type alias NodeCharac =
-    { userCanJoin : Bool
-    , mode : NodeMode.NodeMode
-    }
-
-
 type alias NodeId =
     { nameid : String }
 
 
 type alias LocalGraph =
-    { root : Maybe PNode
+    { root : Maybe RNode
     , path : List PNode
     , focus : FocusNode
     }
@@ -109,16 +104,23 @@ type alias FocusNode =
     { name : String
     , nameid : String
     , type_ : NodeType.NodeType
-    , charac : NodeCharac
+    , visibility : NodeVisibility.NodeVisibility
+    , mode : NodeMode.NodeMode
     , children : List EmitterOrReceiver
     , source : Maybe BlobId
+    }
+
+
+type alias RNode =
+    { name : String
+    , nameid : String
+    , userCanJoin : Maybe Bool
     }
 
 
 type alias PNode =
     { name : String
     , nameid : String
-    , charac : NodeCharac
     }
 
 
@@ -126,7 +128,6 @@ type alias EmitterOrReceiver =
     { name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
-    , charac : NodeCharac
     }
 
 
@@ -321,10 +322,10 @@ type alias NodeFragment =
     , nameid : Maybe String
     , type_ : Maybe NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
+    , visibility : Maybe NodeVisibility.NodeVisibility
+    , mode : Maybe NodeMode.NodeMode
     , about : Maybe String
     , mandate : Maybe Mandate
-    , isPrivate : Maybe Bool
-    , charac : Maybe NodeCharac
     , first_link : Maybe String
     , children : Maybe (List SubNodeFragment)
     }
@@ -335,10 +336,10 @@ type alias SubNodeFragment =
     , nameid : Maybe String
     , type_ : Maybe NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
+    , visibility : Maybe NodeVisibility.NodeVisibility
+    , mode : Maybe NodeMode.NodeMode
     , about : Maybe String
     , mandate : Maybe Mandate
-    , isPrivate : Maybe Bool
-    , charac : Maybe NodeCharac
     , first_link : Maybe String
     }
 
@@ -391,9 +392,10 @@ initNode =
     , type_ = NodeType.Circle
     , role_type = Nothing
     , first_link = Nothing
-    , charac = initCharac
-    , isPrivate = False
+    , visibility = NodeVisibility.Public
+    , mode = NodeMode.Coordinated
     , source = Nothing
+    , userCanJoin = Nothing
     }
 
 
@@ -403,10 +405,9 @@ initPNode =
 
 
 shrinkNode n =
-    --shrinkNode : node -> PNode
+    --shrinkNode : n -> PNode
     { name = n.name
     , nameid = n.nameid
-    , charac = n.charac
     }
 
 
@@ -418,11 +419,6 @@ initMandate =
 initNodeFragment : Maybe NodeType.NodeType -> NodeFragment
 initNodeFragment nt =
     NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing
-
-
-initCharac : NodeCharac
-initCharac =
-    { userCanJoin = False, mode = NodeMode.Coordinated }
 
 
 initEventFragment : EventFragment

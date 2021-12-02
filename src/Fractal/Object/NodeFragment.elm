@@ -4,7 +4,9 @@
 
 module Fractal.Object.NodeFragment exposing (..)
 
+import Fractal.Enum.NodeMode
 import Fractal.Enum.NodeType
+import Fractal.Enum.NodeVisibility
 import Fractal.Enum.RoleType
 import Fractal.InputObject
 import Fractal.Interface
@@ -41,31 +43,6 @@ type_ =
     Object.selectionForField "(Maybe Enum.NodeType.NodeType)" "type_" [] (Fractal.Enum.NodeType.decoder |> Decode.nullable)
 
 
-isPrivate : SelectionSet (Maybe Bool) Fractal.Object.NodeFragment
-isPrivate =
-    Object.selectionForField "(Maybe Bool)" "isPrivate" [] (Decode.bool |> Decode.nullable)
-
-
-type alias CharacOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.NodeCharacFilter }
-
-
-charac :
-    (CharacOptionalArguments -> CharacOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.NodeCharac
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
-charac fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
-
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeCharacFilter ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "charac" optionalArgs object_ (identity >> Decode.nullable)
-
-
 about : SelectionSet (Maybe String) Fractal.Object.NodeFragment
 about =
     Object.selectionForField "(Maybe String)" "about" [] (Decode.string |> Decode.nullable)
@@ -89,6 +66,16 @@ mandate fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
+
+
+visibility : SelectionSet (Maybe Fractal.Enum.NodeVisibility.NodeVisibility) Fractal.Object.NodeFragment
+visibility =
+    Object.selectionForField "(Maybe Enum.NodeVisibility.NodeVisibility)" "visibility" [] (Fractal.Enum.NodeVisibility.decoder |> Decode.nullable)
+
+
+mode : SelectionSet (Maybe Fractal.Enum.NodeMode.NodeMode) Fractal.Object.NodeFragment
+mode =
+    Object.selectionForField "(Maybe Enum.NodeMode.NodeMode)" "mode" [] (Fractal.Enum.NodeMode.decoder |> Decode.nullable)
 
 
 type alias ChildrenOptionalArguments =

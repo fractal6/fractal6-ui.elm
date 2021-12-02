@@ -33,10 +33,6 @@ type AddMandatePayload
     = AddMandatePayload
 
 
-type AddNodeCharacPayload
-    = AddNodeCharacPayload
-
-
 type AddNodeFragmentPayload
     = AddNodeFragmentPayload
 
@@ -117,10 +113,6 @@ type DeleteMandatePayload
     = DeleteMandatePayload
 
 
-type DeleteNodeCharacPayload
-    = DeleteNodeCharacPayload
-
-
 type DeleteNodeFragmentPayload
     = DeleteNodeFragmentPayload
 
@@ -197,14 +189,6 @@ type NodeAggregateResult
     = NodeAggregateResult
 
 
-type NodeCharac
-    = NodeCharac
-
-
-type NodeCharacAggregateResult
-    = NodeCharacAggregateResult
-
-
 type NodeFragment
     = NodeFragment
 
@@ -275,10 +259,6 @@ type UpdateLabelPayload
 
 type UpdateMandatePayload
     = UpdateMandatePayload
-
-
-type UpdateNodeCharacPayload
-    = UpdateNodeCharacPayload
 
 
 type UpdateNodeFragmentPayload

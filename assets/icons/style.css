@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?5nhce4');
-  src:  url('fonts/fractaleicon.eot?5nhce4#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?5nhce4') format('truetype'),
-    url('fonts/fractaleicon.woff?5nhce4') format('woff'),
-    url('fonts/fractaleicon.svg?5nhce4#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?3vivnc');
+  src:  url('fonts/fractaleicon.eot?3vivnc#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?3vivnc') format('truetype'),
+    url('fonts/fractaleicon.woff?3vivnc') format('woff'),
+    url('fonts/fractaleicon.svg?3vivnc#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -49,6 +49,9 @@
 .icon-minus1:before {
   content: "\f068";
 }
+.icon-check-square-o:before {
+  content: "\f046";
+}
 .icon-chevron-left1:before {
   content: "\f053";
 }
@@ -78,9 +81,6 @@
 }
 .icon-circle1:before {
   content: "\f111";
-}
-.icon-frown-o:before {
-  content: "\f119";
 }
 .icon-ellipsis-h:before {
   content: "\f141";
@@ -214,6 +214,9 @@
 .icon-gitlab:before {
   content: "\e923";
 }
+.icon-globe:before {
+  content: "\e960";
+}
 .icon-grid:before {
   content: "\e924";
 }
@@ -234,6 +237,9 @@
 }
 .icon-info:before {
   content: "\e92a";
+}
+.icon-key:before {
+  content: "\e95f";
 }
 .icon-layers:before {
   content: "\e92b";

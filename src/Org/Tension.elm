@@ -1821,8 +1821,9 @@ viewComments u t model =
                         |> withDefault []
 
                 allEvts =
-                    List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
-                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) t.history
+                    -- When event and comment are created at the same time, show the event first.
+                    List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) t.history
+                        ++ List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
                         |> List.sortBy .createdAt
 
                 viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg

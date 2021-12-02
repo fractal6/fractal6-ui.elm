@@ -374,19 +374,11 @@ viewModalContent op (State model) =
                         let
                             isActive =
                                 Just tensionType == model.form.type_
-
-                            style =
-                                if isActive then
-                                    attribute "style" "outline: 4px solid;outline-style: outset;outline-offset: 3px;"
-
-                                else
-                                    attribute "style" ""
                         in
                         div [ class "level-item" ]
                             [ div
                                 [ class <| "button " ++ tensionTypeColor "background" tensionType
-                                , classList [ ( "is-active", isActive ) ]
-                                , style
+                                , classList [ ( "is-active", isActive ), ( "is-selected", isActive ) ]
                                 , onClick (OnSetType tensionType)
                                 ]
                                 [ text (TensionType.toString tensionType) ]

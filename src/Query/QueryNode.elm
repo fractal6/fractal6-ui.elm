@@ -6,7 +6,6 @@ module Query.QueryNode exposing
     , labelFullPayload
     , labelPayload
     , nidFilter
-    , nodeCharacPayload
     , nodeDecoder
     , nodeIdPayload
     , nodeOrgaPayload
@@ -26,7 +25,9 @@ module Query.QueryNode exposing
 
 import Dict exposing (Dict)
 import Fractal.Enum.LabelOrderable as LabelOrderable
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
@@ -34,7 +35,6 @@ import Fractal.Object.Blob
 import Fractal.Object.Label
 import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
-import Fractal.Object.NodeCharac
 import Fractal.Object.OrgaAgg
 import Fractal.Object.Tension
 import Fractal.Object.User
@@ -107,7 +107,7 @@ publicOrgaFilter a =
                 (\b ->
                     { b
                         | isRoot = Present True
-                        , isPrivate = Present False
+                        , visibility = Present { eq = Present NodeVisibility.Public, in_ = Absent }
                         , not = Input.buildNodeFilter (\c -> { c | isPersonal = Present True }) |> Present
                     }
                 )
@@ -147,8 +147,7 @@ nodeOrgaExtPayload =
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with Fractal.Object.Node.isPrivate
+        |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.about
         |> with
             (Fractal.Object.Node.orga_agg identity <|
@@ -319,9 +318,10 @@ nodeOrgaPayload =
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
         |> with (Fractal.Object.Node.first_link identity userPayload)
-        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with Fractal.Object.Node.isPrivate
+        |> with Fractal.Object.Node.visibility
+        |> with Fractal.Object.Node.mode
         |> with (Fractal.Object.Node.source identity blobIdPayload)
+        |> with Fractal.Object.Node.userCanJoin
 
 
 nodeIdPayload : SelectionSet NodeId Fractal.Object.Node
@@ -342,13 +342,6 @@ userPayload =
     SelectionSet.map2 User
         Fractal.Object.User.username
         Fractal.Object.User.name
-
-
-nodeCharacPayload : SelectionSet NodeCharac Fractal.Object.NodeCharac
-nodeCharacPayload =
-    SelectionSet.map2 NodeCharac
-        Fractal.Object.NodeCharac.userCanJoin
-        Fractal.Object.NodeCharac.mode
 
 
 tidPayload : SelectionSet IdPayload Fractal.Object.Tension
@@ -405,7 +398,7 @@ focusDecoder data =
 
 ln2fn : LocalNode -> FocusNode
 ln2fn n =
-    FocusNode n.name n.nameid n.type_ n.charac (withDefault [] n.children) n.source
+    FocusNode n.name n.nameid n.type_ n.visibility n.mode (withDefault [] n.children) n.source
 
 
 queryFocusNode url nid msg =
@@ -428,7 +421,9 @@ type alias LocalNode =
     { name : String
     , nameid : String
     , type_ : NodeType.NodeType
-    , charac : NodeCharac
+    , visibility : NodeVisibility.NodeVisibility
+    , mode : NodeMode.NodeMode
+    , userCanJoin : Maybe Bool
     , children : Maybe (List EmitterOrReceiver)
     , source : Maybe BlobId
     , parent : Maybe LocalRootNode
@@ -436,10 +431,10 @@ type alias LocalNode =
 
 
 type alias LocalRootNode =
-    { name : String
+    { isRoot : Bool
+    , name : String
     , nameid : String
-    , charac : NodeCharac
-    , isRoot : Bool
+    , userCanJoin : Maybe Bool
     }
 
 
@@ -449,7 +444,6 @@ emiterOrReceiverPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
-        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
 
 
 lgDecoder : Maybe LocalNode -> Maybe LocalGraph
@@ -464,10 +458,10 @@ lgDecoder data =
                                 ln2fn n
 
                             path =
-                                [ PNode p.name p.nameid p.charac, PNode n.name n.nameid n.charac ]
+                                [ PNode p.name p.nameid, PNode n.name n.nameid ]
                         in
                         if p.isRoot then
-                            { root = PNode p.name p.nameid p.charac |> Just
+                            { root = RNode p.name p.nameid p.userCanJoin |> Just
                             , path = path
                             , focus = focus
                             }
@@ -478,8 +472,8 @@ lgDecoder data =
 
                     Nothing ->
                         -- Assume Root node
-                        { root = PNode n.name n.nameid n.charac |> Just
-                        , path = [ PNode n.name n.nameid n.charac ]
+                        { root = RNode n.name n.nameid n.userCanJoin |> Just
+                        , path = [ PNode n.name n.nameid ]
                         , focus = ln2fn n
                         }
             )
@@ -500,7 +494,9 @@ lgPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.type_
-        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
+        |> with Fractal.Object.Node.visibility
+        |> with Fractal.Object.Node.mode
+        |> with Fractal.Object.Node.userCanJoin
         |> with (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with (Fractal.Object.Node.parent identity lg2Payload)
@@ -509,10 +505,14 @@ lgPayload =
 lg2Payload : SelectionSet LocalRootNode Fractal.Object.Node
 lg2Payload =
     SelectionSet.succeed LocalRootNode
+        |> with Fractal.Object.Node.isRoot
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with (Fractal.Object.Node.charac identity nodeCharacPayload)
-        |> with Fractal.Object.Node.isRoot
+        |> with Fractal.Object.Node.userCanJoin
+
+
+
+--|> with Fractal.Object.Node.userCanJoin
 
 
 nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments

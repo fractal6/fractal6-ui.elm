@@ -1514,7 +1514,7 @@ viewTensionsCount model =
         Success c ->
             let
                 activeCls =
-                    "has-background-grey-darker is-selected is-hovered"
+                    "has-background-grey-darker is-hovered"
 
                 inactiveCls =
                     "has-background-grey-dark"
