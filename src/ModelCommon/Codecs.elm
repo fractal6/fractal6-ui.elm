@@ -326,7 +326,7 @@ getOrgaRoles nameids roles =
         rootnameids =
             List.map (\nid -> nid2rootid nid) nameids
     in
-    List.filter (\r -> List.member r.rootnameid rootnameids) roles
+    List.filter (\r -> List.member (nid2rootid r.nameid) rootnameids) roles
 
 
 getCircleRoles : List String -> List UserRole -> List UserRole
@@ -424,7 +424,6 @@ nodeFromFragment parentid f =
     { createdAt = ""
     , name = withDefault "" f.name
     , nameid = nodeIdCodec parentid (withDefault "" f.nameid) (withDefault NodeType.Circle f.type_)
-    , rootnameid = nid2rootid parentid
     , parent = Nothing
     , type_ = withDefault NodeType.Circle f.type_
     , role_type = f.role_type

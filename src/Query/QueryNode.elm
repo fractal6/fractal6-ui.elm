@@ -5,6 +5,7 @@ module Query.QueryNode exposing
     , fetchNode
     , labelFullPayload
     , labelPayload
+    , membersNodeDecoder
     , nidFilter
     , nodeDecoder
     , nodeIdPayload
@@ -15,7 +16,7 @@ module Query.QueryNode exposing
     , queryLabelsUp
     , queryLocalGraph
     , queryMembers
-    , queryMembersTop
+    , queryMembersLocal
     , queryNodeExt
     , queryNodesSub
     , queryPublicOrga
@@ -142,7 +143,6 @@ nodeOrgaExtPayload =
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.rootnameid
         |> with (Fractal.Object.Node.parent identity nodeIdPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
@@ -313,7 +313,6 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.rootnameid
         |> with (Fractal.Object.Node.parent identity nodeIdPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
@@ -511,10 +510,6 @@ lg2Payload =
         |> with Fractal.Object.Node.userCanJoin
 
 
-
---|> with Fractal.Object.Node.userCanJoin
-
-
 nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
 nArchivedFilter a =
     { a
@@ -601,16 +596,15 @@ membersPayload =
 
 
 {-
-   Query Top  Members
+   Query Local Members
 -}
 --- Response decoder
 
 
-type alias TopMemberNode =
+type alias LocalMemberNode =
     { createdAt : String
     , name : String
     , nameid : String
-    , rootnameid : String
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe User
     , parent : Maybe NodeId
@@ -622,59 +616,25 @@ type alias MemberNode =
     { createdAt : String
     , name : String
     , nameid : String
-    , rootnameid : String
     , role_type : Maybe RoleType.RoleType
     , first_link : Maybe User
     , parent : Maybe NodeId
     }
 
 
-membersTopDecoder : Maybe TopMemberNode -> Maybe (List Member)
-membersTopDecoder data =
-    let
-        n2r n =
-            UserRoleExtended n.name n.nameid n.rootnameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent
-    in
+membersLocalDecoder : Maybe LocalMemberNode -> Maybe (List Member)
+membersLocalDecoder data =
     data
         |> Maybe.map
             (\n ->
                 case n.first_link of
                     Just first_link ->
-                        Just [ Member first_link.username first_link.name [ n2r n ] ]
+                        Just [ Member first_link.username first_link.name [ node2role n ] ]
 
                     Nothing ->
                         case n.children of
                             Just children ->
-                                let
-                                    toTuples : MemberNode -> List ( String, Member )
-                                    toTuples m =
-                                        case m.first_link of
-                                            Just fs ->
-                                                [ ( fs.username, Member fs.username fs.name [ n2r m ] ) ]
-
-                                            Nothing ->
-                                                []
-
-                                    toDict : List ( String, Member ) -> Dict String Member
-                                    toDict inputs =
-                                        List.foldl
-                                            (\( k, v ) dict -> Dict.update k (addParam v) dict)
-                                            Dict.empty
-                                            inputs
-
-                                    addParam : Member -> Maybe Member -> Maybe Member
-                                    addParam m maybeMember =
-                                        case maybeMember of
-                                            Just member ->
-                                                Just { member | roles = member.roles ++ m.roles }
-
-                                            Nothing ->
-                                                Just m
-                                in
-                                List.concatMap toTuples children
-                                    |> toDict
-                                    |> Dict.values
-                                    |> Just
+                                Just <| membersNodeDecoder children
 
                             Nothing ->
                                 Nothing
@@ -682,22 +642,59 @@ membersTopDecoder data =
         |> withDefault Nothing
 
 
-queryMembersTop url nid msg =
+node2role n =
+    -- n -> UserRoleExtended
+    UserRoleExtended n.name n.nameid (withDefault RoleType.Guest n.role_type) n.createdAt n.parent
+
+
+membersNodeDecoder : List MemberNode -> List Member
+membersNodeDecoder nodes =
+    let
+        toTuples : MemberNode -> List ( String, Member )
+        toTuples m =
+            case m.first_link of
+                Just fs ->
+                    [ ( fs.username, Member fs.username fs.name [ node2role m ] ) ]
+
+                Nothing ->
+                    []
+
+        toDict : List ( String, Member ) -> Dict String Member
+        toDict inputs =
+            List.foldl
+                (\( k, v ) dict -> Dict.update k (addParam v) dict)
+                Dict.empty
+                inputs
+
+        addParam : Member -> Maybe Member -> Maybe Member
+        addParam m maybeMember =
+            case maybeMember of
+                Just member ->
+                    Just { member | roles = member.roles ++ m.roles }
+
+                Nothing ->
+                    Just m
+    in
+    List.concatMap toTuples nodes
+        |> toDict
+        |> Dict.values
+
+
+queryMembersLocal url nid msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
-            membersTopPayload
+            membersLocalPayload
         )
-        (RemoteData.fromResult >> decodeResponse membersTopDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse membersLocalDecoder >> msg)
 
 
-membersTopPayload : SelectionSet TopMemberNode Fractal.Object.Node
-membersTopPayload =
-    SelectionSet.succeed TopMemberNode
+membersLocalPayload : SelectionSet LocalMemberNode Fractal.Object.Node
+membersLocalPayload =
+    SelectionSet.succeed LocalMemberNode
         |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
-        |> with Fractal.Object.Node.rootnameid
         |> with Fractal.Object.Node.role_type
         |> with
             (Fractal.Object.Node.first_link identity <|
@@ -712,7 +709,6 @@ membersTopPayload =
                     |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
-                    |> with Fractal.Object.Node.rootnameid
                     |> with Fractal.Object.Node.role_type
                     |> with
                         (Fractal.Object.Node.first_link identity <|

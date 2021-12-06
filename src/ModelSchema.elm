@@ -53,7 +53,6 @@ type alias Node =
     { createdAt : String
     , name : String
     , nameid : String
-    , rootnameid : String
     , parent : Maybe NodeId
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
@@ -70,7 +69,6 @@ type alias NodeExt =
     , createdAt : String
     , name : String
     , nameid : String
-    , rootnameid : String
     , parent : Maybe NodeId
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
@@ -387,7 +385,6 @@ initNode =
     { createdAt = ""
     , name = ""
     , nameid = ""
-    , rootnameid = ""
     , parent = Nothing
     , type_ = NodeType.Circle
     , role_type = Nothing
@@ -440,7 +437,7 @@ type alias User =
     { username : String
     , name : Maybe String
 
-    -- logo
+    -- avatar ?
     }
 
 
@@ -480,7 +477,6 @@ type alias UserRights =
 type alias UserRole =
     { name : String
     , nameid : String
-    , rootnameid : String
     , role_type : RoleType.RoleType
     }
 
@@ -488,7 +484,6 @@ type alias UserRole =
 type alias UserRoleExtended =
     { name : String
     , nameid : String
-    , rootnameid : String
     , role_type : RoleType.RoleType
 
     --

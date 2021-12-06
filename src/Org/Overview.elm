@@ -605,7 +605,7 @@ update global message model =
         DoActionEdit domid node ->
             let
                 rootSource =
-                    getNode node.rootnameid model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
+                    getNode (nid2rootid node.nameid) model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
 
                 ( tid, bid ) =
                     node.source

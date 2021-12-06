@@ -363,7 +363,8 @@ setSourceShort nameid data =
             data.form
 
         newForm =
-            { f | target = { nameid = nameid, name = "" } }
+            -- onlmy nameid is used
+            { f | source = { nameid = nameid, name = "", role_type = RoleType.Bot } }
     in
     { data | form = newForm }
 
@@ -375,6 +376,7 @@ setTargetShort nameid data =
             data.form
 
         newForm =
+            -- onlmy nameid is used
             { f | target = { nameid = nameid, name = "" } }
     in
     { data | form = newForm }

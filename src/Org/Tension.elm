@@ -2646,7 +2646,7 @@ viewSidePane u t model =
                                 viewUsers assignees
 
                               else
-                                div [ class "is-italic" ] [ textH T.noLabels ]
+                                div [ class "is-italic" ] [ textH T.noneYet ]
                             ]
                        ]
             ]
@@ -2687,7 +2687,7 @@ viewSidePane u t model =
                                 viewLabels labels
 
                               else
-                                div [ class "is-italic" ] [ textH T.noLabels ]
+                                div [ class "is-italic" ] [ textH T.noneYet ]
                             ]
                        ]
             ]

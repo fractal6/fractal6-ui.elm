@@ -549,11 +549,6 @@ nodeNotFound =
 --Canvas
 
 
-reverseTooltip : String
-reverseTooltip =
-    "reverse the organisation graph."
-
-
 security : String
 security =
     "security"
@@ -747,8 +742,8 @@ assignees =
     "assignees"
 
 
-noLabels : String
-noLabels =
+noneYet : String
+noneYet =
     "none yet"
 
 
@@ -1071,6 +1066,67 @@ clickMe =
 newReceiver : String
 newReceiver =
     "new destination"
+
+
+noLabels : String
+noLabels =
+    "No label yet"
+
+
+noLabelsSub : String
+noLabelsSub =
+    "No new sub-circle label yet"
+
+
+noLabelsTop : String
+noLabelsTop =
+    "No new parent label yet"
+
+
+labelsSub : String
+labelsSub =
+    "Labels in sub-circles"
+
+
+labelsTop : String
+labelsTop =
+    "Labels in parent circles"
+
+
+rolesSub : String
+rolesSub =
+    "Roles in sub-circles"
+
+
+rolesTop : String
+rolesTop =
+    "Roles in parent circles"
+
+
+
+--
+-- Tooltip
+--
+
+
+reverseTooltip : String
+reverseTooltip =
+    "Reverse the organisation graph."
+
+
+tensionsListTooltip : String
+tensionsListTooltip =
+    "Display tensions as List."
+
+
+tensionsIntExtTooltip : String
+tensionsIntExtTooltip =
+    "Display indegenous and exogenous tensions with respect to the focused circle."
+
+
+tensionsCircleTooltip : String
+tensionsCircleTooltip =
+    "Display tensions by (targeted) circles."
 
 
 

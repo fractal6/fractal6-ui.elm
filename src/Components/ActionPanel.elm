@@ -322,6 +322,11 @@ setStep step data =
 
 setAction : PanelState -> Model -> Model
 setAction action data =
+    { data | state = action }
+
+
+setActionForm : Model -> Model
+setActionForm data =
     let
         node =
             data.form.node
@@ -330,7 +335,7 @@ setAction action data =
             data.form.fragment
 
         ( newData, events ) =
-            case action of
+            case data.state of
                 MoveAction ->
                     ( data, [ TensionEvent.Moved ] )
 
@@ -381,8 +386,7 @@ setAction action data =
                 NoAction ->
                     ( data, [] )
     in
-    { newData | state = action }
-        |> setEvents events
+    newData |> setEvents events
 
 
 updatePost : String -> String -> Model -> Model
@@ -658,6 +662,7 @@ update_ apis message model =
                 data =
                     model
                         |> updatePost "createdAt" (fromTime time)
+                        |> setActionForm
                         |> setActionResult LoadingSlowly
             in
             ( data, out0 [ send (PushAction data.form data.state) ] )
@@ -1098,15 +1103,16 @@ viewRoleAuthority op model =
         [ -- Show the help information
           --showMsg "roleAuthority-0" "is-info" "icon-info" T.roleAuthorityHeader ""
           -- Show the choices as card.
-          RoleType.list
+          --RoleType.list
+          [ ( RoleType.Peer, "Basic Role with restricted authorization." ), ( RoleType.Coordinator, "Role with administration rights at the circle level." ) ]
             |> List.map
-                (\x ->
+                (\( x, description ) ->
                     let
                         isActive =
                             Just x == mor model.form.fragment.role_type model.form.node.role_type
 
-                        ( icon, description ) =
-                            ( "icon-user has-text-" ++ roleColor x, "@todo: get the role description !!!" )
+                        icon =
+                            "icon-user has-text-" ++ roleColor x
                     in
                     div
                         [ class "card column is-paddingless m-3 is-w"

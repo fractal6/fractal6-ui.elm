@@ -67,6 +67,12 @@ const formatGraph = dataset =>  {
             return
         }
 
+        // Filter hidden node
+        if (!aData.parent && aData.nameid.split("#").length > 1) {
+            delete dataDict[aData.nameid]
+            return
+        }
+
         if(aData.parent) {
             dataDict[aData.parent.nameid].children.push(dataDict[aData.nameid])
         } else {
@@ -330,6 +336,22 @@ export const GraphPack = {
 
     },
 
+    drawCurrent(isHidden, ctx) {
+        // Separator between the opaque nodes and the other.
+        var boundary = this.focusedNode;
+
+        // First draw the node above the zoomedNode and their children (opacity)
+        this.drawOutside(boundary, isHidden, ctx);
+
+        // Then draw the zoomedNode/focusedNode and descendends
+        this.drawInside(boundary, isHidden, ctx);
+
+        if (!isHidden)
+            // Draw names when zooming in/out
+            this.drawNodeNames(this.zoomedNode)
+
+    },
+
     drawOutside(b, isHidden, ctx) {
         // list of nodes to draw.
         var tree;
@@ -376,22 +398,6 @@ export const GraphPack = {
 
     },
 
-    drawCurrent(isHidden, ctx) {
-        // Separator between the opaque nodes and the other.
-        var boundary = this.focusedNode;
-
-        // First draw the node above the zoomedNode and their children (opacity)
-        this.drawOutside(boundary, isHidden, ctx);
-
-        // Then draw the zoomedNode/focusedNode and descendends
-        this.drawInside(boundary, isHidden, ctx);
-
-        if (!isHidden)
-            // Draw names when zooming in/out
-            this.drawNodeNames(this.zoomedNode)
-
-    },
-
     drawNode(node, isHidden, ctx, opac) {
         var circleColor;
 
@@ -402,6 +408,9 @@ export const GraphPack = {
         if(isHidden) {
             // On the hidden canvas each rectangle gets a unique color.
             circleColor = node.colorid;
+        } else if (opac && (opac[0] == "#" || !opac.length)) {
+            // Given color OR given colorGradient (ot length)
+            circleColor = opac;
         } else {
             circleColor = this.getNodeColor(node, opac);
         }
@@ -619,6 +628,19 @@ export const GraphPack = {
         if (this.focusedNode == this.zoomedNode)
             this.drawInside(this.focusedNode, false, this.ctx2d);
         else {
+            // Redraw zommed node with the color of its parent.
+            //1) This allow opacity color to be consitent !
+            var p = this.zoomedNode.parent;
+            // First reset the node colors
+            this.drawNode(this.zoomedNode, false, this.ctx2d, this.backgroundColor);
+            //2) Then redraw the inner circle with its parents colors.
+            for (var j=0; j < this.zoomedNode.depth; j++) {
+                var color = this.getNodeColor(p, this.outsideZoomOpacity);
+                this.drawNode(this.zoomedNode, false, this.ctx2d, color);
+                parent = p.parent;
+            }
+
+            // Redraw the zommed node before redrawing names
             var tree = [this.zoomedNode, ...this.zoomedNode.children]
             for (var i = 0; i < tree.length; i++) {
                 this.drawNode(tree[i], false, this.ctx2d, this.outsideZoomOpacity);
@@ -731,13 +753,7 @@ export const GraphPack = {
         var oldFocus = this.focusedNode;
         this.focusedNode = focus;
         this.drawNodeHover(this.focusedNode, false); // why this one ?
-        var zoomTo;
-        if (focus.parent && (focus.data.children === null || focus.data.children.length == 0)) {
-            zoomTo = focus.parent;
-        } else {
-            zoomTo = focus;
-        }
-        this.zoomedNode = zoomTo;
+        var zoomTo = this.setZoomed();
 
         // Configre interpolator
         var zoomFactor = this.getZoomFactor(zoomTo);
@@ -954,11 +970,25 @@ export const GraphPack = {
             this.focusedNode = n;
         }
 
+        this.setZoomed();
+
         if (setViewport) {
-            this.vpOld = [this.focusedNode.x, this.focusedNode.y, this.focusedNode.r * this.getZoomFactor(this.focusedNode)];
+            this.vpOld = [this.zoomedNode.x, this.zoomedNode.y, this.zoomedNode.r * this.getZoomFactor(this.zoomedNode)];
         }
 
         return this.focusedNode
+    },
+
+    setZoomed() {
+        var zoomTo;
+        var focus = this.focusedNode;
+        if (focus.parent && (focus.data.children === null || focus.data.children.length == 0)) {
+            zoomTo = focus.parent;
+        } else {
+            zoomTo = focus;
+        }
+        this.zoomedNode = zoomTo;
+        return this.zoomedNode
     },
 
     //

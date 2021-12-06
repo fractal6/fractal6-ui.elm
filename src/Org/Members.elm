@@ -30,13 +30,13 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchMembers, getQuickDoc, login)
+import ModelCommon.Requests exposing (fetchMembersSub, getQuickDoc, login)
 import ModelCommon.View exposing (roleColor, viewUser)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersTop)
+import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersLocal)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
@@ -117,7 +117,7 @@ type Msg
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Page
-    | GotMembersTop (GqlData (List Member)) -- GraphQL
+    | GotMembers (GqlData (List Member)) -- GraphQL
     | GotMembersSub (GqlData (List Member)) -- Rest
       -- New Tension
     | DoCreateTension LocalGraph
@@ -195,8 +195,8 @@ init global flags =
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid (GotPath True)) Cmd.none
-            , queryMembersTop apis.gql newFocus.nameid GotMembersTop
-            , fetchMembers apis.rest newFocus.nameid GotMembersSub
+            , queryMembersLocal apis.gql newFocus.nameid GotMembers
+            , fetchMembersSub apis.rest newFocus.nameid GotMembersSub
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             ]
@@ -267,7 +267,7 @@ update global message model =
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
-        GotMembersTop result ->
+        GotMembers result ->
             let
                 newModel =
                     { model | members_top = result }

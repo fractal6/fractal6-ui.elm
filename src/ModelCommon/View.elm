@@ -403,7 +403,7 @@ viewOrgaMedia user root =
                             [ hr [] []
                             , div [ class "buttons" ] <|
                                 (uctx.roles
-                                    |> List.filter (\r -> r.role_type /= RoleType.Member && nid2rootid r.nameid == root.rootnameid)
+                                    |> List.filter (\r -> r.role_type /= RoleType.Member && nid2rootid r.nameid == root.nameid)
                                     |> List.map
                                         (\r ->
                                             a

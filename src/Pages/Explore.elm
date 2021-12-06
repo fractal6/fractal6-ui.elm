@@ -137,7 +137,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Cmd.none
+    , send (UpdateSessionFocus Nothing)
     )
 
 

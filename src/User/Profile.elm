@@ -9,8 +9,6 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Fractal.Enum.NodeType as NodeType
-import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
@@ -94,45 +92,6 @@ type alias Model =
 
 
 
---type alias UserDict =
---    Dict String UserData
---
---
---{-| User organisation media
----}
---type alias UserData =
---    { root : GqlData NodeExt
---    , roles : List UserRole
---    }
---
---
---buildUserDict : UserCtx -> UserDict
---buildUserDict uctx =
---    let
---        toTuples : UserRole -> List ( String, UserData )
---        toTuples role =
---            [ ( role.rootnameid, UserData NotAsked [ role ] ) ]
---
---        toDict : List ( String, UserData ) -> Dict String UserData
---        toDict tupleList =
---            List.foldl
---                (\( k, v ) dict -> Dict.update k (addParam v) dict)
---                Dict.empty
---                tupleList
---
---        addParam : UserData -> Maybe UserData -> Maybe UserData
---        addParam value maybeData =
---            case maybeData of
---                Just data ->
---                    Just { data | roles = data.roles ++ value.roles }
---
---                Nothing ->
---                    Just (UserData NotAsked value.roles)
---    in
---    uctx.roles
---        |> List.concatMap toTuples
---        |> toDict
---
 ---- MSG ----
 
 
@@ -216,7 +175,7 @@ init global flags =
     in
     ( model
     , Cmd.batch cmds
-    , Cmd.none
+    , send (UpdateSessionFocus Nothing)
     )
 
 
@@ -233,10 +192,10 @@ update global message model =
     case message of
         LoadNodes uctx ->
             let
-                nameids =
+                rootids =
                     uctx.roles |> List.map (\r -> nid2rootid r.nameid) |> LE.unique
             in
-            ( model, queryNodeExt apis.gql nameids GotNodes, Cmd.none )
+            ( model, queryNodeExt apis.gql rootids GotNodes, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let

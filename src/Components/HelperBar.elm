@@ -12,7 +12,7 @@ import Icon as I
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2type, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (LocalGraph, UserRole)
 import Ports
@@ -91,7 +91,7 @@ view op =
                                 Just path ->
                                     let
                                         roles =
-                                            List.filter (\r -> r.rootnameid == rootnameid) uctx.roles
+                                            List.filter (\r -> nid2rootid r.nameid == rootnameid) uctx.roles
                                     in
                                     if List.length roles > 0 then
                                         memberButtons roles { op | baseUri = OverviewBaseUri }
@@ -203,7 +203,7 @@ viewPath baseUri uriQuery maybePath =
                 div [ class "ph-line is-1" ] []
         , case maybePath of
             Just p ->
-                span [ class "tag is-rounded" ] [ text (NodeVisibility.toString p.focus.visibility) ]
+                span [ class "tag is-rounded ml-1" ] [ text (NodeVisibility.toString p.focus.visibility) ]
 
             Nothing ->
                 text ""

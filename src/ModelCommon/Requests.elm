@@ -2,7 +2,7 @@ module ModelCommon.Requests exposing (..)
 
 import Bytes exposing (Bytes)
 import Codecs exposing (emitterOrReceiverDecoder, nodeIdDecoder, quickDocDecoder, userCtxDecoder, userDecoder)
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, expectJson, fromResult, toErrorData)
+import Components.Loading as Loading exposing (expectJson, fromResult, mapWeb2Data)
 import Dict exposing (Dict)
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -16,13 +16,21 @@ import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
 import ModelSchema exposing (Count, Label, LabelFull, Member, NodeId, Post, Tension, TensionsCount, User, UserCtx, UserRoleExtended, Username)
-import Query.QueryNode exposing (MemberNode)
+import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData exposing (RemoteData)
 
 
 
 {-
    riskyRequest are needed to set cookies on the client through CORS.
+-}
+{-
+   Why the data should be requested here instead of different Graphql Request ?
+   Because one of the following raison
+   - Recursive queries are handle trough DQL requests.
+   - either data are not directlty related to the Graph database such as
+      * security request (get or reset a password
+      * query some docs
 -}
 
 
@@ -35,7 +43,7 @@ fetchChildren url targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/sub_children"
+        , url = url ++ "/sub_nodes"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list nodeIdDecoder
         , timeout = Nothing
@@ -48,13 +56,13 @@ fetchChildren url targetid msg =
     Get all member ** Nodes ** below the given node (role with first link) recursively
 
 -}
-fetchMembers url targetid msg =
+fetchMembersSub url targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
         , url = url ++ "/sub_members"
         , body = Http.jsonBody <| JE.string targetid
-        , expect = expectJson (RemoteData.fromResult >> membersDecoder2 >> msg) membersDecoder
+        , expect = expectJson (RemoteData.fromResult >> mapWeb2Data membersNodeDecoder >> msg) membersDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -63,63 +71,30 @@ fetchMembers url targetid msg =
 membersDecoder : JD.Decoder (List MemberNode)
 membersDecoder =
     JD.list <|
-        JD.map7 MemberNode
+        JD.map6 MemberNode
             (JD.field "createdAt" JD.string)
             (JD.field "name" JD.string)
             (JD.field "nameid" JD.string)
-            (JD.field "rootnameid" JD.string)
             (JD.field "role_type" RoleType.decoder |> JD.maybe)
             (JD.field "first_link" userDecoder |> JD.maybe)
             (JD.field "parent" nodeIdDecoder |> JD.maybe)
 
 
-membersDecoder2 : WebData (List MemberNode) -> GqlData (List Member)
-membersDecoder2 input =
-    let
-        n2r n =
-            UserRoleExtended n.name n.nameid n.rootnameid (n.role_type |> withDefault RoleType.Guest) n.createdAt n.parent
-    in
-    case input of
-        RemoteData.Success children ->
-            let
-                toTuples : MemberNode -> List ( String, Member )
-                toTuples m =
-                    case m.first_link of
-                        Just fs ->
-                            [ ( fs.username, Member fs.username fs.name [ n2r m ] ) ]
+{-|
 
-                        Nothing ->
-                            []
+    Get all ** Labels ** from the parent, unril the root node
 
-                toDict : List ( String, Member ) -> Dict String Member
-                toDict inputs =
-                    List.foldl
-                        (\( k, v ) dict -> Dict.update k (addParam v) dict)
-                        Dict.empty
-                        inputs
-
-                addParam : Member -> Maybe Member -> Maybe Member
-                addParam m maybeMember =
-                    case maybeMember of
-                        Just member ->
-                            Just { member | roles = member.roles ++ m.roles }
-
-                        Nothing ->
-                            Just m
-            in
-            List.concatMap toTuples children
-                |> toDict
-                |> Dict.values
-                |> Success
-
-        RemoteData.Loading ->
-            Loading
-
-        RemoteData.NotAsked ->
-            NotAsked
-
-        RemoteData.Failure err ->
-            Failure (toErrorData err)
+-}
+fetchLabelsTop url targetid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/top_labels"
+        , body = Http.jsonBody <| JE.string targetid
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelFullDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 {-|
@@ -127,7 +102,7 @@ membersDecoder2 input =
     Get all ** Labels ** below the given node recursively
 
 -}
-fetchLabels url targetid msg =
+fetchLabelsSub url targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
@@ -255,6 +230,24 @@ tensionDecoder =
 
 
 --
+-- Organisation management
+--
+
+
+createOrga url post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = url ++ "/createorga"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+
+--
 -- User management
 --
 
@@ -369,24 +362,6 @@ httpReponseToImage response =
 
         Http.BadStatus_ metadata _ ->
             Err (Http.BadStatus metadata.statusCode)
-
-
-
---
--- Organisation management
---
-
-
-createOrga url post msg =
-    Http.riskyRequest
-        { method = "POST"
-        , headers = []
-        , url = url ++ "/createorga"
-        , body = Http.jsonBody <| JE.dict identity JE.string post
-        , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
 
 
 

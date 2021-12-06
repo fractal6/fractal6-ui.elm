@@ -216,7 +216,7 @@ initTensionForm user =
 
             LoggedOut ->
                 initUserctx
-    , source = UserRole "" "" "" RoleType.Guest
+    , source = UserRole "" "" RoleType.Guest
     , target = initPNode
     , status = TensionStatus.Open
     , type_ = TensionType.Operational
@@ -532,7 +532,7 @@ getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole
 getNodeRights uctx target odata =
     let
         orgaRoles =
-            getOrgaRoles [ target.rootnameid ] uctx.roles
+            getOrgaRoles [ target.nameid ] uctx.roles
     in
     if List.length orgaRoles == 0 then
         []
@@ -589,7 +589,7 @@ getTensionRights uctx th_d path_d =
                 Success p ->
                     let
                         orgaRoles =
-                            getOrgaRoles [ nid2rootid p.focus.nameid ] uctx.roles
+                            getOrgaRoles [ p.focus.nameid ] uctx.roles
 
                         childrenRoles =
                             p.focus.children |> List.filter (\n -> n.role_type /= Nothing)

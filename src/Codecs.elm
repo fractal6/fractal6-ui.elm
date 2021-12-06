@@ -81,10 +81,9 @@ userCtxDecoder =
         --(JD.maybe <|
         (JD.field "roles"
             (JD.list <|
-                JD.map4 UserRole
+                JD.map3 UserRole
                     (JD.field "name" JD.string)
                     (JD.field "nameid" JD.string)
-                    (JD.field "rootnameid" JD.string)
                     (JD.field "role_type" <| RoleType.decoder)
              --@DEBUG/BUG: fail silently if role_type is not present in Role !
             )
@@ -108,8 +107,7 @@ userCtxEncoder userCtx =
           , JE.list JE.object <|
                 List.map
                     (\r ->
-                        [ ( "rootnameid", JE.string r.rootnameid )
-                        , ( "nameid", JE.string r.nameid )
+                        [ ( "nameid", JE.string r.nameid )
                         , ( "name", JE.string r.name )
                         , ( "role_type", JE.string <| RoleType.toString r.role_type )
                         ]
@@ -155,7 +153,6 @@ nodeEncoder node =
     [ ( "createdAt", JE.string node.createdAt )
     , ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
-    , ( "rootnameid", JE.string node.rootnameid )
     , ( "parent"
       , JEE.maybe JE.object <|
             Maybe.map
@@ -191,7 +188,6 @@ nodeDecoder =
         |> JDE.andMap (JD.field "createdAt" JD.string)
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "nameid" JD.string)
-        |> JDE.andMap (JD.field "rootnameid" JD.string)
         |> JDE.andMap (JD.maybe (JD.field "parent" nodeIdDecoder))
         |> JDE.andMap (JD.field "type_" NodeType.decoder)
         |> JDE.andMap (JD.maybe (JD.field "role_type" RoleType.decoder))

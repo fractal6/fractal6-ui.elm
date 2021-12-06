@@ -34,7 +34,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchLabels, login)
+import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, login)
 import ModelCommon.View exposing (roleColor, viewLabel)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -93,6 +93,7 @@ type alias Model =
 
     -- Page
     , labels : GqlData (List LabelFull)
+    , labels_top : WebData (List LabelFull)
     , labels_sub : WebData (List LabelFull)
     , menuFocus : MenuSettings
     , menuList : List MenuSettings
@@ -195,6 +196,7 @@ type Msg
     | GotPath Bool (GqlData LocalGraph)
       -- Page
     | GotLabels (GqlData (List LabelFull))
+    | GotLabelsTop (WebData (List LabelFull))
     | GotLabelsSub (WebData (List LabelFull))
     | ChangeMenuFocus MenuSettings
     | AddLabel
@@ -282,6 +284,7 @@ init global flags =
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
             , labels = Loading
+            , labels_top = RemoteData.Loading
             , labels_sub = RemoteData.Loading
             , menuFocus = menu
             , menuList = menuList
@@ -311,7 +314,8 @@ init global flags =
                 ++ (case menu of
                         LabelsMenu ->
                             [ queryLabels apis.gql newFocus.nameid GotLabels
-                            , fetchLabels apis.rest newFocus.nameid GotLabelsSub
+                            , fetchLabelsTop apis.rest newFocus.nameid GotLabelsTop
+                            , fetchLabelsSub apis.rest newFocus.nameid GotLabelsSub
                             ]
 
                         _ ->
@@ -385,6 +389,13 @@ update global message model =
             let
                 newModel =
                     { model | labels = result }
+            in
+            ( newModel, Cmd.none, Cmd.none )
+
+        GotLabelsTop result ->
+            let
+                newModel =
+                    { model | labels_top = result }
             in
             ( newModel, Cmd.none, Cmd.none )
 
@@ -935,11 +946,16 @@ viewSettingsMenu model =
 
 viewSettingsContent : Model -> Html Msg
 viewSettingsContent model =
+    let
+        isRoot =
+            model.node_focus.nameid == model.node_focus.rootnameid
+    in
     case model.menuFocus of
         LabelsMenu ->
             div []
                 [ viewLabels model
-                , viewLabelsSub model
+                , viewLabelsExt T.labelsTop (ternary isRoot "" T.noLabelsTop) model.labels model.labels_top
+                , viewLabelsExt T.labelsSub T.noLabelsSub model.labels model.labels_sub
                 ]
 
         SecurityMenu ->
@@ -966,7 +982,7 @@ viewLabels model =
         , case model.labels of
             Success labels ->
                 if List.length labels == 0 then
-                    div [ class "" ] [ text "No label yet" ]
+                    div [ class "" ] [ textH T.noLabels ]
 
                 else
                     table [ class "table is-fullwidth" ]
@@ -1040,17 +1056,22 @@ viewLabels model =
         ]
 
 
-viewLabelsSub : Model -> Html Msg
-viewLabelsSub model =
-    case model.labels_sub of
+viewLabelsExt : String -> String -> GqlData (List LabelFull) -> WebData (List LabelFull) -> Html Msg
+viewLabelsExt txt_yes text_no labels_d labels_ext_d =
+    case labels_ext_d of
         RemoteData.Success labels ->
             if List.length labels == 0 then
-                div [ class "mt-6" ] [ text "No sub-circle label yet" ]
+                div [ class "mt-6" ] [ textH text_no ]
 
             else
+                let
+                    circle_labels =
+                        withDefaultData [] labels_d
+                in
                 div [ class "mt-6" ]
-                    [ text "Labels also present in sub-circles "
+                    [ textH (txt_yes ++ " ")
                     , labels
+                        |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_labels)))
                         |> List.map
                             (\d ->
                                 viewLabel "ml-2" (Label d.id d.name d.color)

@@ -259,6 +259,7 @@ update msg model =
                     { session
                         | node_focus = data
                         , tension_head = Nothing
+                        , tensions_data = Nothing
                         , tensions_int = Nothing
                         , tensions_ext = Nothing
                         , tensions_all = Nothing

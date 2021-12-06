@@ -429,6 +429,22 @@ withMapWebData resMap result =
             RemoteData.NotAsked
 
 
+mapWeb2Data : (a -> b) -> WebData a -> GqlData b
+mapWeb2Data fun input =
+    case input of
+        RemoteData.Success data ->
+            Success <| fun data
+
+        RemoteData.Loading ->
+            Loading
+
+        RemoteData.NotAsked ->
+            NotAsked
+
+        RemoteData.Failure err ->
+            Failure (toErrorData err)
+
+
 withMaybeWebData : RemoteData e a -> Maybe a
 withMaybeWebData result =
     case result of

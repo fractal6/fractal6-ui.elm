@@ -69,7 +69,10 @@ init global flags =
             { form = { post = Dict.empty, result = RemoteData.NotAsked }
             }
     in
-    ( model, Cmd.none, gcmd )
+    ( model
+    , Cmd.none
+    , Cmd.batch [ gcmd, send (UpdateSessionFocus Nothing) ]
+    )
 
 
 

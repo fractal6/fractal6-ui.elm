@@ -195,6 +195,14 @@ hr {
     font-size: 120% !important;
 }
 
+.is-selectable {
+  -webkit-touch-callout: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
 // Tooltip
 
 .tooltip.has-tooltip-multiline::before {

@@ -90,7 +90,10 @@ init global flags =
             , viewMode = Login
             }
     in
-    ( model, Cmd.none, gcmd )
+    ( model
+    , Cmd.none
+    , Cmd.batch [ gcmd, send (UpdateSessionFocus Nothing) ]
+    )
 
 
 
