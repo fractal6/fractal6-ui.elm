@@ -352,7 +352,22 @@ export const GraphPack = {
 
     },
 
-    drawOutside(b, isHidden, ctx) {
+    // Not ready...Doesn't work.
+    drawCanvasLight() {
+        this.clearCanvas(this.ctx2d);
+
+        // Separator between the opaque nodes and the other.
+        var boundary = this.focusedNode;
+
+        // First draw the node above the zoomedNode and their children (opacity)
+        this.drawOutside(boundary, false, this.ctx2d, 100);
+
+        // Then draw the zoomedNode/focusedNode and descendends
+        this.drawInside(boundary, false, this.ctx2d, 100);
+    },
+
+
+    drawOutside(b, isHidden, ctx, max_draw) {
         // list of nodes to draw.
         var tree;
         if (b.parent) {
@@ -370,20 +385,25 @@ export const GraphPack = {
             // It's slightly faster than .forEach()
             for (var i = 0; i < tree.length; i++) {
                 this.drawNode(tree[i], isHidden, ctx, this.outsideZoomOpacity);
+                if (i > max_draw) break
             }
         }
     },
 
-    drawInside(b, isHidden, ctx) {
+    drawInside(b, isHidden, ctx, max_draw) {
         // list of nodes to draw.
         var tree = b.descendants();
+        var cpt = 0;
         for (var i = 0; i < tree.length; i++) {
             let d = tree[i].depth - this.focusedNode.depth
-            if (d >= 0 && d < 4 || tree[i].depth == 0)
+            if (d >= 0 && d < 4 || tree[i].depth == 0) {
                 this.drawNode(tree[i], isHidden, ctx);
+                if (i > max_draw) break
+                cpt++;
+            }
         }
 
-        if (!isHidden) {
+        if (!isHidden && !max_draw) {
             // Draw focused border
             var w = this.focusCircleWidth;
             var color = this.focusCircleColor;
@@ -462,9 +482,9 @@ export const GraphPack = {
             } else {
                 opac = "80";
             }
-            if (n.data.type_ === NodeType.Circle) {
+            if (n.data.type_ === NodeType.Circle && this.circles_len < 100 ) {
                 this.drawCircleName(n, opac)
-            } else {
+            } else if (this.roles_len < 100) {
                 this.drawRoleName(n, opac)
             }
         }
@@ -794,6 +814,7 @@ export const GraphPack = {
             var finished = interpolateZoom(elapsed - dt);
             dt = elapsed;
             this.drawCanvas();
+            //this.drawCanvasLight();
             //stats.end();
             if (finished) {
                 this.isZooming = false;
@@ -942,6 +963,8 @@ export const GraphPack = {
 
         this.nodesDict = Object.create(null);
         this.nodes = this.gPack.descendants(graph);
+        this.circles_len = this.nodes.filter(x => x.data.type_ === NodeType.Circle).length
+        this.roles_len = this.nodes.filter(x => x.data.type_ === NodeType.Role).length
         this.rootNode = this.nodes[0];
         this.hoveredNode = null;
         this.nodes.forEach(n => {

@@ -1166,7 +1166,7 @@ tensionTypeDoc =
 
 visibilityInfoHeader : String
 visibilityInfoHeader =
-    "The change will only apply on the current circle, not recursively on the sub-circles."
+    "The change will only apply on the current circle and its roles, not recursively on the sub-circles."
 
 
 visibilityPublic : String
