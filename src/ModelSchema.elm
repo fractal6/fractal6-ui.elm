@@ -197,14 +197,12 @@ type alias TensionHead =
 type alias TensionComments =
     { id : String
     , comments : Maybe (List Comment)
-    , receiver : EmitterOrReceiver
     }
 
 
 type alias TensionBlobs =
     { id : String
     , blobs : Maybe (List Blob)
-    , receiver : EmitterOrReceiver
     }
 
 

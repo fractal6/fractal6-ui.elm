@@ -438,6 +438,7 @@ function closeModal(e, modal, app) {
         btn.classList.remove('is-active');
     });
 
+    // Defined like so: `attribute "data-modal-close" "closeMyModalFromJs"`
     var closeMsg = modal.dataset.modalClose;
     // Elm compatibility
     if (closeMsg) {

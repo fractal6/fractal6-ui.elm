@@ -1151,13 +1151,10 @@ html.has-modal-active, html.has-modal-active2 {
 
     .button {
         border: 1px solid $grey;
-    }
-
-    .actionPanelStyle > .button {
-            border-left-color: $grey !important;
-            border-left-width: 1px !important;
-            border-left-style: solid;
-            &:hover { border-color: $grey; }
+        border-right: 0;
+        &:last-child {
+            border-right: 1px solid $grey;
+        }
     }
 }
 
@@ -1417,7 +1414,7 @@ a.actionLink {
 
     // Content
     color: black;
-    background-color: $node-tooltip-background;
+    background-color: rgba($node-tooltip-background, 0.9);
 
     // Box style
     padding: 2px 0px 1px 8px;
@@ -1453,24 +1450,25 @@ a.actionLink {
     cursor: pointer;
     &:hover {
         box-shadow: 0 0 1px 2px $node-tooltip-shadow;
-        opacity: 1 !important;
+        background-color: rgba($node-tooltip-background, 1);
     }
 
     // Animate the tooltip
-    //transition: visibility 1s, opacity 1s;
     &.fadeIn {
         visibility: inherit;
-        opacity: 0.9;
-        transition: opacity 0.444s;
+        background-color: rgba($node-tooltip-background, 0.9);
+        transition: background-color 0.3s;
+        opacity: 1;
+        transition: opacity 0.3s;
         &:hover {
-            transition: opacity 0s;
+            background-color: rgba($node-tooltip-background, 1);
+            transition: background-color 0s;
         }
     }
 
     &.fadeOut {
         visibility: hidden;
         opacity: 0;
-        //transition: visibility 0s 1s, opacity 1s; // fadOut transition don't works ?
     }
 
     .custom-style {
@@ -1480,13 +1478,11 @@ a.actionLink {
         font-size: 16px !important;
     }
 
-    .actionPanelStyle {
-        & > .button {
-            border-left-color: $grey !important;
-            border-left-width: 1px !important;
-            border-left-style: solid;
-            max-height: 1.5rem;
-        }
+    #doAction > span > span > .button {
+        border-left-color: $grey !important;
+        border-left-width: 1px !important;
+        border-left-style: solid;
+        max-height: 1.5rem;
     }
 }
 
@@ -1514,6 +1510,7 @@ a.actionLink {
 .modal {
     display: flex;
     visibility: hidden;
+    cursor: initial; // when modal nested in a button for example (the case for Tooltip Action Panel)
 
     .modal-background {
         opacity: 0;
@@ -1527,6 +1524,7 @@ a.actionLink {
 
     &.is-active {
         visibility: visible;
+        z-index: 40; // default
         .modal-background {
             opacity: 1;
             transition: all $modal-in-duration;
@@ -1791,12 +1789,6 @@ a.actionLink {
     }
     .modal-background {
         background-color: $grey-light;
-    }
-}
-
-#actionPanelModal {
-    &.modal.is-active {
-        z-index: 40 !important;
     }
 }
 

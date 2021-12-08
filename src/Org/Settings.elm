@@ -1010,7 +1010,7 @@ viewLabels model =
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                             , td [ attribute "style" "min-width: 9.4rem;" ]
                                                 [ if n_nodes > 1 then
-                                                    span [ class "is-italic is-size-7" ] [ I.icon1 "icon-exclamation-circle" "Present in ", n_nodes |> String.fromInt |> text, text " circles." ]
+                                                    span [ class "is-italic is-size-7" ] [ I.icon1 "icon-exclamation-circle" "Defined in ", n_nodes |> String.fromInt |> text, text " circles." ]
 
                                                   else
                                                     text ""

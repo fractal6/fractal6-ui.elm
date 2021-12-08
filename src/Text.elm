@@ -255,9 +255,24 @@ authority =
     "authority"
 
 
-changeLink : String
-changeLink =
-    "invite or Unlink"
+linkAction : String
+linkAction =
+    "Invite a first-link for the role"
+
+
+unlinkAction : String
+unlinkAction =
+    "Unlink the first-link for the role"
+
+
+invite : String
+invite =
+    "invite"
+
+
+unlink : String
+unlink =
+    "unlink"
 
 
 left : String

@@ -1573,10 +1573,27 @@ update global message model =
                 ( data, out ) =
                     ActionPanel.update apis msg model.actionPanel
 
+                -- Update NodeFragment locally
+                th =
+                    Maybe.map
+                        (\r ->
+                            withMapData
+                                (\x ->
+                                    let
+                                        blobs =
+                                            Maybe.map (\y -> List.map (\b -> { b | node = Just r }) y) x.blobs
+                                    in
+                                    { x | blobs = blobs }
+                                )
+                                model.tension_head
+                        )
+                        out.result
+                        |> withDefault model.tension_head
+
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
             in
-            ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | actionPanel = data, tension_head = th }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -2718,23 +2735,21 @@ viewSidePane u t model =
                                   else
                                     text ""
                                 ]
-                            , div [ class "actionPanelStyle" ]
-                                [ if hasBlobRight || hasRole then
-                                    let
-                                        panelData =
-                                            { tc = tc
-                                            , isAdmin = hasBlobRight
-                                            , hasRole = hasRole
-                                            , isRight = False
-                                            , domid = domid
-                                            , orga_data = model.orga_data
-                                            }
-                                    in
-                                    ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+                            , if hasBlobRight || hasRole then
+                                let
+                                    panelData =
+                                        { tc = tc
+                                        , isAdmin = hasBlobRight
+                                        , hasRole = hasRole
+                                        , isRight = False
+                                        , domid = domid
+                                        , orga_data = model.orga_data
+                                        }
+                                in
+                                ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
 
-                                  else
-                                    text ""
-                                ]
+                              else
+                                text ""
                             ]
                         ]
 

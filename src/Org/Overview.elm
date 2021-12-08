@@ -1186,8 +1186,8 @@ viewSearchBar us model =
                                     --, i [ class "icon-plus1 custom-style" ] []
                                     , i [ class "icon-send custom-style" ] []
                                     ]
+                                , viewActionPanel "actionPanelContentSearchBar" us node model.orga_data model.actionPanel
                                 ]
-                            , viewActionPanel "actionPanelContent1" us node model.orga_data model.actionPanel
                             ]
 
                         _ ->
@@ -1219,18 +1219,20 @@ viewActionPanel domid us node o actionPanel =
                         { tc = Just { action_type = EDIT, doc_type = NODE }
                         , isAdmin = isAdmin
                         , hasRole = hasRole
-                        , isRight = True
+                        , isRight = domid == "actionPanelContentTooltip"
                         , domid = domid
                         , orga_data = o
                         }
                 in
-                span [ id domid, class "control actionPanelStyle" ]
-                    [ span
-                        [ class "button is-small is-info"
-                        , classList [ ( "is-light", domid == "actionPanelContent2" ) ]
-                        , onClick (DoActionEdit domid node)
+                span []
+                    [ span [ id domid ]
+                        [ span
+                            [ class "button is-small is-info"
+                            , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
+                            , onClick (DoActionEdit domid node)
+                            ]
+                            [ i [ class "icon-ellipsis-v" ] [] ]
                         ]
-                        [ i [ class "icon-ellipsis-v" ] [] ]
                     , ActionPanel.view panelData actionPanel |> Html.map ActionPanelMsg
                     ]
 
@@ -1381,7 +1383,7 @@ viewCanvas us model =
             , span [ id "doAction" ]
                 [ case model.node_hovered of
                     Just node ->
-                        viewActionPanel "actionPanelContent2" us node model.orga_data model.actionPanel
+                        viewActionPanel "actionPanelContentTooltip" us node model.orga_data model.actionPanel
 
                     Nothing ->
                         text ""

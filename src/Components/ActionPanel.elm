@@ -67,6 +67,7 @@ type PanelState
     | VisibilityAction
     | AuthorityAction
     | LinkAction
+    | UnLinkAction
     | ArchiveAction
     | UnarchiveAction
     | LeaveAction
@@ -114,7 +115,10 @@ action2str action =
             upH T.authority
 
         LinkAction ->
-            upH T.changeLink
+            upH T.invite
+
+        UnLinkAction ->
+            upH T.unlink
 
         ArchiveAction ->
             upH T.archive
@@ -152,7 +156,10 @@ action2submitstr action =
             upH T.submit
 
         LinkAction ->
-            upH T.changeLink
+            upH T.invite
+
+        UnLinkAction ->
+            upH T.unlink
 
         ArchiveAction ->
             upH T.archive
@@ -185,7 +192,10 @@ action2header action type_ =
                     "Change Authority of: "
 
         LinkAction ->
-            "Change first link of: "
+            "Invite a first-link for: "
+
+        UnLinkAction ->
+            "Unlink the first-link of: "
 
         ArchiveAction ->
             "Archive {{type}}: "
@@ -215,6 +225,9 @@ action2post action =
         LinkAction ->
             "@todo: invited or unlinked"
 
+        UnLinkAction ->
+            "@todo: invited or unlinked"
+
         ArchiveAction ->
             T.documentArchived
 
@@ -237,8 +250,14 @@ action2color action =
         AuthorityAction ->
             "warning"
 
-        UnarchiveAction ->
+        ArchiveAction ->
             "warning"
+
+        LinkAction ->
+            "link"
+
+        UnLinkAction ->
+            "danger"
 
         LeaveAction ->
             "danger"
@@ -296,18 +315,18 @@ setActionResult result data =
     { data | action_result = result, isModalActive = isModalActive, step = step }
 
 
-activateModal : Model -> Model
-activateModal data =
+openModal : Model -> Model
+openModal data =
     { data | isModalActive = True }
 
 
-deactivateModal : Model -> Model
-deactivateModal data =
+closeModal : Model -> Model
+closeModal data =
     { data | isModalActive = False }
 
 
-terminate : Model -> Model
-terminate data =
+reset : Model -> Model
+reset data =
     let
         f =
             data.form
@@ -363,12 +382,18 @@ setActionForm data =
                             )
 
                 LinkAction ->
-                    case data.form.node.first_link of
-                        Just _ ->
-                            ( data, [ TensionEvent.MemberLinked ] )
+                    ( data
+                        |> updatePost "old" (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
+                        |> updatePost "new" (mor frag.first_link (node.first_link |> Maybe.map (\x -> x.username)) |> withDefault "")
+                    , [ TensionEvent.MemberLinked ]
+                    )
 
-                        Nothing ->
-                            ( data, [ TensionEvent.MemberUnlinked ] )
+                UnLinkAction ->
+                    ( data
+                        |> updatePost "old" (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
+                        |> updatePost "new" ""
+                    , [ TensionEvent.MemberUnlinked ]
+                    )
 
                 ArchiveAction ->
                     ( data, [ TensionEvent.BlobArchived ] )
@@ -450,7 +475,29 @@ setEvents events data =
 canExitSafe : Model -> Bool
 canExitSafe model =
     -- Condition to close safely (e.g. empty form data)
-    (hasData model && withMaybeData model.action_result == Nothing) == False
+    (hasData model
+        == False
+        && (case model.state of
+                VisibilityAction ->
+                    List.member model.form.fragment.visibility [ Just model.form.node.visibility, Nothing ]
+
+                AuthorityAction ->
+                    case model.form.node.type_ of
+                        NodeType.Circle ->
+                            List.member model.form.fragment.mode [ Just model.form.node.mode, Nothing ]
+
+                        NodeType.Role ->
+                            List.member model.form.fragment.role_type [ model.form.node.role_type, Nothing ]
+
+                LinkAction ->
+                    model.form.fragment.first_link /= Nothing
+
+                _ ->
+                    True
+           )
+    )
+        || withMaybeData model.action_result
+        /= Nothing
 
 
 hasData : Model -> Bool
@@ -487,10 +534,12 @@ type Msg
     = -- Data
       OnOpen String String String Node
     | OnClose
+    | OnReset
     | PushAction ActionForm PanelState
     | OnSubmit (Time.Posix -> Msg)
     | OnOpenModal PanelState
-    | OnCloseModal String
+    | OnCloseModal ModalData
+    | OnCloseModalSafe String String
     | OnUpdatePost String String
     | OnChangeVisibility NodeVisibility.NodeVisibility
     | OnChangeMode NodeMode.NodeMode
@@ -518,7 +567,7 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
-    , result : Maybe Bool -- define what data is to be returned
+    , result : Maybe NodeFragment
     }
 
 
@@ -556,10 +605,16 @@ update_ apis message model =
                 ( open domid tid bid node model, noOut )
 
             else
-                ( model, out0 [ send OnClose ] )
+                -- Ports.click: unlock canvas Tooltip. when clickinb back.
+                ( close model
+                , out0 [ ternary (model.domid == "actionPanelContentTooltip") (Ports.click "canvasOrga") Cmd.none ]
+                )
 
         OnClose ->
             ( close model, noOut )
+
+        OnReset ->
+            ( reset model, noOut )
 
         PushAction form state ->
             let
@@ -583,17 +638,20 @@ update_ apis message model =
             let
                 newModel =
                     model
-                        |> activateModal
+                        |> openModal
                         |> setAction action
                         |> setStep StepOne
             in
-            ( newModel, out0 [ Ports.open_modal "actionPanelModal" ] )
+            ( newModel, out0 [ Ports.open_modal ("actionPanelModal" ++ model.domid) ] )
 
-        OnCloseModal link ->
+        OnCloseModal data ->
             let
+                cmds =
+                    ternary data.reset [ sendSleep OnReset 333 ] []
+
                 gcmds =
-                    if link /= "" then
-                        [ DoNavigate link ]
+                    if data.link /= "" then
+                        [ DoNavigate data.link ]
 
                     else if withMaybeData model.action_result /= Nothing then
                         case model.state of
@@ -624,8 +682,14 @@ update_ apis message model =
                                         [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
 
                             LinkAction ->
-                                -- @TODO
-                                []
+                                let
+                                    fs =
+                                        Just { username = withDefault "" model.form.fragment.first_link, name = Nothing }
+                                in
+                                [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
+
+                            UnLinkAction ->
+                                [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
 
                             ArchiveAction ->
                                 [ DoDelNodes [ model.form.node.nameid ] ]
@@ -643,7 +707,13 @@ update_ apis message model =
                     else
                         []
             in
-            ( terminate model, out2 [ Ports.close_modal, Ports.click "canvasOrga" ] gcmds )
+            ( closeModal model
+              -- Ports.click: unock the tooltip if click from the tooltip, else avoid id as the click will move to the parent node
+            , Out
+                (cmds ++ [ Ports.close_modal, ternary (model.domid == "actionPanelContentTooltip") (Ports.click "canvasOrga") Cmd.none ])
+                gcmds
+                (Just model.form.fragment)
+            )
 
         OnUpdatePost field value ->
             ( updatePost field value model, noOut )
@@ -673,7 +743,7 @@ update_ apis message model =
         GotTensionToMove result ->
             case result of
                 Success th ->
-                    ( model, out0 [ send (DoMove th), send OnClose ] )
+                    ( model, out0 [ send (DoMove th) ] )
 
                 _ ->
                     ( model, noOut )
@@ -692,10 +762,10 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushAction model.form model.state) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( model |> close |> setActionResult result, Out [] [] (Just True) )
+                    ( model |> setActionResult result, noOut )
 
                 _ ->
-                    ( model |> close |> setActionResult result, out0 [ Ports.click "body" ] )
+                    ( model |> setActionResult result, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -717,39 +787,60 @@ update_ apis message model =
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
 
+        OnCloseModalSafe link onCloseTxt ->
+            if canExitSafe model then
+                ( model, out0 [ send (OnCloseModal { reset = True, link = link }) ] )
+
+            else
+                ( model
+                , out0 [ send (DoModalConfirmOpen (OnCloseModal { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                )
+
         -- Components
         MoveTensionMsg msg ->
             let
                 ( data, out ) =
                     MoveTension.update apis msg model.moveTension
 
-                gcmds =
+                ( cmds, gcmds ) =
                     out.result
                         |> Maybe.map
                             (\x ->
-                                if Tuple.first x == False then
+                                let
+                                    closing =
+                                        Tuple.first x
+                                in
+                                if closing && Tuple.second x /= Nothing then
                                     let
                                         ( nameid, parentid_new, nameid_new ) =
-                                            Tuple.second x
+                                            Tuple.second x |> withDefault ( "", "", "" )
                                     in
-                                    [ DoMoveNode nameid parentid_new nameid_new ]
+                                    ( [], [ DoMoveNode nameid parentid_new nameid_new ] )
+
+                                else if closing && (model.domid == "actionPanelContentTooltip") then
+                                    ( [ Ports.click "canvasOrga" ], [] )
 
                                 else
-                                    []
+                                    ( [], [] )
                             )
-                        |> withDefault []
+                        |> withDefault ( [], [] )
             in
-            ( { model | moveTension = data }, out2 (List.map (\m -> Cmd.map MoveTensionMsg m) out.cmds) (out.gcmds ++ gcmds) )
+            ( { model | moveTension = data }, out2 (List.map (\m -> Cmd.map MoveTensionMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
 
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    [ --Ports.mcPD Ports.closeActionPanelModalFromJs LogErr OnCloseModal
+      Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (if model.isOpen then
                 [ Events.onMouseUp (Dom.outsideClickClose model.domid OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
+                ]
+
+            else if model.isModalActive then
+                [ Events.onKeyUp (Dom.key "Escape" (OnCloseModal { reset = False, link = "" }))
                 ]
 
             else
@@ -775,116 +866,123 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ if model.isOpen && model.domid == op.domid then
-            viewPanel op model
+    div [] <|
+        if model.domid == op.domid then
+            [ if model.isOpen then
+                viewPanel op model
 
-          else
-            text ""
-        , if model.isModalActive then
-            viewModal op model
+              else
+                text ""
+            ]
+                ++ [ viewModal op model
+                   , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+                   , MoveTension.view { orga_data = op.orga_data } model.moveTension |> Html.map MoveTensionMsg
+                   ]
 
-          else
-            text ""
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        , MoveTension.view { orga_data = op.orga_data } model.moveTension |> Html.map MoveTensionMsg
-        ]
+        else
+            []
 
 
 viewPanel : Op -> Model -> Html Msg
 viewPanel op model =
-    div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] <|
-        (-- EDIT ACTION
-         if model.form.node.role_type /= Just RoleType.Guest then
-            [ div
-                [ class "dropdown-item button-light"
-                , onClick
-                    (Navigate
-                        ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
-                            ++ "?v=edit"
+    div [ class "actionPanelStyle" ]
+        [ div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] <|
+            (-- EDIT ACTION
+             if model.form.node.role_type /= Just RoleType.Guest then
+                [ div
+                    [ class "dropdown-item button-light"
+                    , onClick
+                        (Navigate
+                            ((Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
+                                ++ "?v=edit"
+                            )
                         )
-                    )
+                    ]
+                    [ I.icon1 "icon-edit-2" (upH T.edit) ]
+                , hr [ class "dropdown-divider" ] []
                 ]
-                [ I.icon1 "icon-edit-2" (upH T.edit) ]
-            , hr [ class "dropdown-divider" ] []
-            ]
 
-         else
-            []
-        )
-            -- ACTION
-            ++ (if op.isAdmin then
-                    [ -- Move Action
-                      div [ class "dropdown-item button-light", onClick OnActionMove ]
-                        [ span [ class "right-arrow2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
+             else
+                []
+            )
+                -- ACTION
+                ++ (if op.isAdmin then
+                        [ -- Move Action
+                          div [ class "dropdown-item button-light", onClick OnActionMove ]
+                            [ span [ class "right-arrow2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
 
-                    -- Authority Action
-                    , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
-                        [ I.icon1 "icon-key" (auth2str model.form.node.type_) ]
+                        -- Authority Action
+                        , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
+                            [ I.icon1 "icon-key" (auth2str model.form.node.type_) ]
+                        , case model.form.node.type_ of
+                            -- Visibility Action
+                            NodeType.Circle ->
+                                div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
+                                    [ I.icon1 "icon-lock" (action2str VisibilityAction) ]
 
-                    -- Visibility Action
-                    , case model.form.node.type_ of
-                        NodeType.Circle ->
-                            div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
-                                [ I.icon1 "icon-lock" (action2str VisibilityAction) ]
+                            -- Link/Unlink Action
+                            NodeType.Role ->
+                                case model.form.node.first_link of
+                                    Just user ->
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal UnLinkAction) ]
+                                            [ I.icon1 "icon-user-plus" (action2str UnLinkAction) ]
 
-                        NodeType.Role ->
-                            text ""
+                                    Nothing ->
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal LinkAction) ]
+                                            [ I.icon1 "icon-user-plus" (action2str LinkAction) ]
 
-                    -- Link Action
-                    , div [ class "dropdown-item button-light", onClick (OnOpenModal LinkAction) ]
-                        [ I.icon1 "icon-user-plus" (action2str LinkAction) ]
+                        --
+                        , hr [ class "dropdown-divider" ] []
 
-                    --
-                    , hr [ class "dropdown-divider" ] []
+                        -- Archive Action
+                        , case Maybe.map (\c -> c.action_type) op.tc of
+                            Just EDIT ->
+                                div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
+                                    [ I.icon1 "icon-archive" (action2str ArchiveAction) ]
 
-                    -- Archive Action
-                    , case Maybe.map (\c -> c.action_type) op.tc of
-                        Just EDIT ->
-                            div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
-                                [ I.icon1 "icon-archive" (action2str ArchiveAction) ]
+                            Just ARCHIVE ->
+                                div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
+                                    [ I.icon1 "icon-archive" (action2str UnarchiveAction) ]
 
-                        Just ARCHIVE ->
-                            div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
-                                [ I.icon1 "icon-archive" (action2str UnarchiveAction) ]
-
-                        _ ->
-                            div [] [ text "not implemented" ]
-                    ]
-
-                else
-                    []
-               )
-            -- LEAVE ACTION
-            ++ (if op.hasRole then
-                    [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
-                        [ p []
-                            [ I.icon1 "icon-log-out" (action2str LeaveAction) ]
+                            _ ->
+                                div [] [ text "not implemented" ]
                         ]
-                    ]
-                        |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
-                else
-                    []
-               )
+                    else
+                        []
+                   )
+                -- LEAVE ACTION
+                ++ (if op.hasRole then
+                        [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
+                            [ p []
+                                [ I.icon1 "icon-log-out" (action2str LeaveAction) ]
+                            ]
+                        ]
+                            |> List.append [ hr [ class "dropdown-divider" ] [] ]
+
+                    else
+                        []
+                   )
+        ]
 
 
 viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
-        [ id "actionPanelModal"
+        [ id ("actionPanelModal" ++ model.domid)
         , class "modal modal-fx-fadeIn"
         , classList [ ( "is-active", model.isModalActive ) ]
-        , attribute "data-modal-close" "closeActionPanelModalFromJs"
+
+        --, attribute "data-modal-close" "closeActionPanelModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
-            , attribute "data-modal" "actionPanelModal"
-            , onClick (OnCloseModal "")
+            , attribute "data-modal" ("actionPanelModal" ++ model.domid)
+            , onClick (OnCloseModalSafe "" "")
             ]
             []
         , div [ class "modal-content" ] [ viewModalContent op model ]
-        , button [ class "modal-close is-large", onClick (OnCloseModal "") ] []
+        , button [ class "modal-close is-large", onClick (OnCloseModalSafe "" "") ] []
         ]
 
 
@@ -972,7 +1070,7 @@ viewStep1 op model =
                 [ div [ class "is-pulled-left" ]
                     [ button
                         [ class "button is-light"
-                        , onClick (OnCloseModal "")
+                        , onClick (OnCloseModalSafe "" "")
                         ]
                         [ textH T.cancel ]
                     ]

@@ -173,7 +173,6 @@ tensionBlobsPayload =
                 )
                 blobPayload
             )
-        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
 tensionCommentsPayload : SelectionSet TensionComments Fractal.Object.Tension
@@ -185,7 +184,6 @@ tensionCommentsPayload =
                 (\args -> { args | first = Present nCommentPerTension })
                 commentPayload
             )
-        |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
 
 
 commentPayload : SelectionSet Comment Fractal.Object.Comment

@@ -230,11 +230,10 @@ type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
 
-    --Bool: return True data result has just been received
-    --      return False if data has been received (when closing modal typically)
-    -- Tuple: if it has a blob, and returns (old_nameid, new_receiverid,  new_nameid).
+    --Bool: return True if modal is to be closed
+    --Tuple: if it has a blob, and returns (old_nameid, new_receiverid,  new_nameid).
     --        else (simple tension) just (old_receiverid, new_receiverid, "")
-    , result : Maybe ( Bool, ( String, String, String ) )
+    , result : Maybe ( Bool, Maybe ( String, String, String ) )
     }
 
 
@@ -280,10 +279,10 @@ update_ apis message model =
             in
             case model.move_result of
                 Success _ ->
-                    ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds (Just ( False, buildOutResult model )) )
+                    ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds (Just ( True, Just <| buildOutResult model )) )
 
                 _ ->
-                    ( close model, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
+                    ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds (Just ( True, Nothing )) )
 
         OnReset ->
             ( reset model, noOut )
@@ -364,7 +363,7 @@ update_ apis message model =
 
                 OkAuth _ ->
                     if cmd == Cmd.none then
-                        ( data, Out [] [] (Just ( True, buildOutResult model )) )
+                        ( data, Out [] [] (Just ( False, Just <| buildOutResult model )) )
 
                     else
                         -- Contract here

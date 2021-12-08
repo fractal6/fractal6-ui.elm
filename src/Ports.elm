@@ -49,10 +49,13 @@ port triggerHelpFromJs : (() -> msg) -> Sub msg
 port closeModalFromJs : (JD.Value -> msg) -> Sub msg
 
 
+port closeModalConfirmFromJs : (JD.Value -> msg) -> Sub msg
+
+
 port closeModalTensionFromJs : (JD.Value -> msg) -> Sub msg
 
 
-port closeModalConfirmFromJs : (JD.Value -> msg) -> Sub msg
+port closeActionPanelModalFromJs : (JD.Value -> msg) -> Sub msg
 
 
 
