@@ -855,32 +855,10 @@ nodeFragmentFromOrga node_m nodeData children_eo ndata =
                 |> List.map (\n -> Dict.get n.nameid ndata)
                 |> List.filterMap identity
                 |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
-                |> List.map
-                    (\n ->
-                        { name = Just n.name
-                        , nameid = Just n.nameid
-                        , type_ = Just n.type_
-                        , visibility = Just n.visibility
-                        , mode = Just n.mode
-                        , role_type = n.role_type
-                        , about = Nothing
-                        , mandate = Nothing
-                        , first_link = n.first_link |> Maybe.map (\u -> u.username)
-                        }
-                    )
+                |> List.map node2SubNodeFragment
                 |> Just
     in
-    { name = Maybe.map (\n -> n.name) node_m
-    , nameid = Maybe.map (\n -> n.nameid) node_m
-    , type_ = Maybe.map (\n -> n.type_) node_m
-    , visibility = Maybe.map (\n -> n.visibility) node_m
-    , mode = Maybe.map (\n -> n.mode) node_m
-    , role_type = Maybe.map (\n -> n.role_type) node_m |> withDefault Nothing
-    , about = Maybe.map (\n -> n.about) (withMaybeData nodeData) |> withDefault Nothing
-    , mandate = Maybe.map (\n -> n.mandate) (withMaybeData nodeData) |> withDefault Nothing
-    , first_link = Maybe.map (\n -> n.first_link |> Maybe.map (\u -> u.username)) node_m |> withDefault Nothing
-    , children = children
-    }
+    node2NodeFragment node_m children (withMaybeData nodeData)
 
 
 {-| updateNodeForm : String -> String -> TensionForm/Patch -> TensionForm/Patch

@@ -1570,7 +1570,7 @@ update global message model =
                                 (\x ->
                                     let
                                         blobs =
-                                            Maybe.map (\y -> List.map (\b -> { b | node = Just r }) y) x.blobs
+                                            Maybe.map (\y -> List.map (\b -> { b | node = Just <| nodeFragmentUpdate b.node r }) y) x.blobs
                                     in
                                     { x | blobs = blobs }
                                 )

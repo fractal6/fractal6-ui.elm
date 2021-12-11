@@ -281,12 +281,11 @@ update_ apis message model =
                             data =
                                 newModel
                                     |> updatePost "createdAt" (fromTime time)
-                                    |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
                                     |> setEvents
                                         [ ternary
                                             isNew
-                                            (Ev TensionEvent.LabelAdded "" label.name)
-                                            (Ev TensionEvent.LabelRemoved label.name "")
+                                            (Ev TensionEvent.LabelAdded "" (label.name ++ "§" ++ withDefault "" label.color))
+                                            (Ev TensionEvent.LabelRemoved (label.name ++ "§" ++ withDefault "" label.color) "")
                                         ]
                                     |> setClickResult LoadingSlowly
                         in
@@ -298,7 +297,6 @@ update_ apis message model =
                         let
                             data =
                                 newModel
-                                    |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
                                     |> setClickResult LoadingSlowly
 
                             labels =
@@ -320,8 +318,6 @@ update_ apis message model =
             let
                 data =
                     click label isNew model
-                        |> updatePost "new" (label.name ++ "§" ++ withDefault "" label.color)
-                        |> setEvents [ Ev TensionEvent.LabelAdded "" label.name ]
             in
             ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
 

@@ -2,6 +2,7 @@ module ModelSchema exposing (..)
 
 import Components.Loading exposing (ErrorData, RequestResult(..), errorGraphQLHttpToString)
 import Dict exposing (Dict)
+import Extra exposing (mor)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
@@ -338,6 +339,55 @@ type alias SubNodeFragment =
     , mandate : Maybe Mandate
     , first_link : Maybe String
     }
+
+
+node2NodeFragment : Maybe Node -> Maybe (List SubNodeFragment) -> Maybe NodeData -> NodeFragment
+node2NodeFragment node_m children nData =
+    { name = Maybe.map (\n -> n.name) node_m
+    , nameid = Maybe.map (\n -> n.nameid) node_m
+    , type_ = Maybe.map (\n -> n.type_) node_m
+    , visibility = Maybe.map (\n -> n.visibility) node_m
+    , mode = Maybe.map (\n -> n.mode) node_m
+    , role_type = Maybe.map (\n -> n.role_type) node_m |> withDefault Nothing
+    , about = Maybe.map (\n -> n.about) nData |> withDefault Nothing
+    , mandate = Maybe.map (\n -> n.mandate) nData |> withDefault Nothing
+    , first_link = Maybe.map (\n -> n.first_link |> Maybe.map (\u -> u.username)) node_m |> withDefault Nothing
+    , children = children
+    }
+
+
+node2SubNodeFragment : Node -> SubNodeFragment
+node2SubNodeFragment n =
+    { name = Just n.name
+    , nameid = Just n.nameid
+    , type_ = Just n.type_
+    , visibility = Just n.visibility
+    , mode = Just n.mode
+    , role_type = n.role_type
+    , about = Nothing
+    , mandate = Nothing
+    , first_link = n.first_link |> Maybe.map (\u -> u.username)
+    }
+
+
+nodeFragmentUpdate : Maybe NodeFragment -> NodeFragment -> NodeFragment
+nodeFragmentUpdate n_m n =
+    Maybe.map
+        (\nf ->
+            { name = mor n.name nf.name
+            , nameid = mor n.nameid nf.nameid
+            , type_ = mor n.type_ nf.type_
+            , visibility = mor n.visibility nf.visibility
+            , mode = mor n.mode nf.mode
+            , role_type = mor n.role_type nf.role_type
+            , about = mor n.about nf.about
+            , mandate = mor n.mandate nf.mandate
+            , first_link = mor n.first_link nf.first_link
+            , children = mor n.children nf.children
+            }
+        )
+        n_m
+        |> withDefault n
 
 
 type alias PatchTensionPayloadID =

@@ -2,7 +2,7 @@ module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscript
 
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Dict exposing (Dict)
@@ -491,8 +491,7 @@ canExitSafe model =
                     True
            )
     )
-        || withMaybeData model.action_result
-        /= Nothing
+        || isSuccess model.action_result
 
 
 hasData : Model -> Bool
@@ -648,7 +647,7 @@ update_ apis message model =
                     if data.link /= "" then
                         [ DoNavigate data.link ]
 
-                    else if withMaybeData model.action_result /= Nothing then
+                    else if isSuccess model.action_result then
                         case model.state of
                             MoveAction ->
                                 []
@@ -707,7 +706,10 @@ update_ apis message model =
             , Out
                 (cmds ++ [ Ports.close_modal, ternary (model.domid == "actionPanelContentTooltip") (Ports.click "canvasOrga") Cmd.none ])
                 gcmds
-                (Just model.form.fragment)
+                (ternary (isSuccess model.action_result)
+                    (Just model.form.fragment)
+                    Nothing
+                )
             )
 
         OnUpdatePost field value ->
