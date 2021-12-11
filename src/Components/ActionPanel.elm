@@ -26,7 +26,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, UserState(..), blobFromTensionHead, initActionForm)
+import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, initActionForm)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nid2rootid)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (..)
@@ -353,65 +353,60 @@ setActionForm data =
         frag =
             data.form.fragment
 
-        ( newData, events ) =
+        events =
             case data.state of
                 MoveAction ->
-                    ( data, [ TensionEvent.Moved ] )
+                    [ Ev TensionEvent.Moved "" "" ]
 
+                -- @see MoveTension.elm
                 VisibilityAction ->
-                    ( data
-                        |> updatePost "old" (node.visibility |> NodeVisibility.toString)
-                        |> updatePost "new" (frag.visibility |> withDefault node.visibility |> NodeVisibility.toString)
-                    , [ TensionEvent.Visibility ]
-                    )
+                    [ Ev TensionEvent.Visibility
+                        (node.visibility |> NodeVisibility.toString)
+                        (frag.visibility |> withDefault node.visibility |> NodeVisibility.toString)
+                    ]
 
                 AuthorityAction ->
                     case node.type_ of
                         NodeType.Circle ->
-                            ( data
-                                |> updatePost "old" (node.mode |> NodeMode.toString)
-                                |> updatePost "new" (frag.mode |> withDefault node.mode |> NodeMode.toString)
-                            , [ TensionEvent.Authority ]
-                            )
+                            [ Ev TensionEvent.Authority
+                                (node.mode |> NodeMode.toString)
+                                (frag.mode |> withDefault node.mode |> NodeMode.toString)
+                            ]
 
                         NodeType.Role ->
-                            ( data
-                                |> updatePost "old" (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
-                                |> updatePost "new" (mor frag.role_type node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
-                            , [ TensionEvent.Authority ]
-                            )
+                            [ Ev TensionEvent.Authority
+                                (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
+                                (mor frag.role_type node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
+                            ]
 
                 LinkAction ->
-                    ( data
-                        |> updatePost "old" (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
-                        |> updatePost "new" (mor frag.first_link (node.first_link |> Maybe.map (\x -> x.username)) |> withDefault "")
-                    , [ TensionEvent.MemberLinked ]
-                    )
+                    [ Ev TensionEvent.MemberLinked
+                        (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
+                        (mor frag.first_link (node.first_link |> Maybe.map (\x -> x.username)) |> withDefault "")
+                    ]
 
                 UnLinkAction ->
-                    ( data
-                        |> updatePost "old" (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
-                        |> updatePost "new" ""
-                    , [ TensionEvent.MemberUnlinked ]
-                    )
+                    [ Ev TensionEvent.MemberUnlinked
+                        (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
+                        ""
+                    ]
 
                 ArchiveAction ->
-                    ( data, [ TensionEvent.BlobArchived ] )
+                    [ Ev TensionEvent.BlobArchived "" "" ]
 
                 UnarchiveAction ->
-                    ( data, [ TensionEvent.BlobUnarchived ] )
+                    [ Ev TensionEvent.BlobUnarchived "" "" ]
 
                 LeaveAction ->
-                    ( data
-                        |> updatePost "old" (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
-                        |> updatePost "new" node.nameid
-                    , [ TensionEvent.UserLeft ]
-                    )
+                    [ Ev TensionEvent.UserLeft
+                        (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
+                        node.nameid
+                    ]
 
                 NoAction ->
-                    ( data, [] )
+                    []
     in
-    newData |> setEvents events
+    data |> setEvents events
 
 
 updatePost : String -> String -> Model -> Model
@@ -459,13 +454,13 @@ setFragment fun data =
     { data | form = { f | fragment = fun f.fragment } }
 
 
-setEvents : List TensionEvent.TensionEvent -> Model -> Model
+setEvents : List Ev -> Model -> Model
 setEvents events data =
     let
         f =
             data.form
     in
-    { data | form = { f | events_type = Just events } }
+    { data | form = { f | events = events } }
 
 
 

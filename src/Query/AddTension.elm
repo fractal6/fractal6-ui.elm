@@ -13,7 +13,6 @@ import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
@@ -29,7 +28,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionForm, UserForm)
+import ModelCommon exposing (Ev, TensionForm, UserForm)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
@@ -104,10 +103,9 @@ addTensionInputEncoder f =
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
             , history =
-                f.events_type
-                    |> withDefault [ TensionEvent.Created ]
+                f.events
                     |> List.map
-                        (\event_type ->
+                        (\{ event_type, old, new } ->
                             Input.buildEventRef
                                 (\x ->
                                     { x
@@ -117,8 +115,8 @@ addTensionInputEncoder f =
                                                 (\u -> { u | username = Present f.uctx.username })
                                                 |> Present
                                         , event_type = Present event_type
-                                        , old = Present ""
-                                        , new = Present ""
+                                        , old = Present old
+                                        , new = Present new
                                     }
                                 )
                         )
@@ -171,7 +169,7 @@ tensionFromForm f =
             , receiverid = f.target.nameid |> Present
             , comments = buildComment createdAt f.uctx.username (Just message)
             , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
-            , history = buildEvents createdAt f.uctx.username f.events_type f.post
+            , history = buildEvents createdAt f.uctx.username f.events
         }
 
 
@@ -232,30 +230,26 @@ buildBlob createdAt username blob_type_m users node post =
         |> fromMaybe
 
 
-buildEvents : String -> String -> Maybe (List TensionEvent.TensionEvent) -> Post -> OptionalArgument (List Input.EventRef)
-buildEvents createdAt username events_type_m post =
-    events_type_m
-        |> Maybe.map
-            (\events_type ->
-                events_type
-                    |> List.map
-                        (\event_type ->
-                            Input.buildEventRef
-                                (\x ->
-                                    { x
-                                        | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
-                                        , createdBy =
-                                            Input.buildUserRef
-                                                (\u -> { u | username = Present username })
-                                                |> Present
-                                        , event_type = Present event_type
-                                        , old = Dict.get "old" post |> fromMaybe
-                                        , new = Dict.get "new" post |> fromMaybe
-                                    }
-                                )
-                        )
+buildEvents : String -> String -> List Ev -> OptionalArgument (List Input.EventRef)
+buildEvents createdAt username events =
+    events
+        |> List.map
+            (\{ event_type, old, new } ->
+                Input.buildEventRef
+                    (\x ->
+                        { x
+                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            , createdBy =
+                                Input.buildUserRef
+                                    (\u -> { u | username = Present username })
+                                    |> Present
+                            , event_type = Present event_type
+                            , old = Present old
+                            , new = Present new
+                        }
+                    )
             )
-        |> fromMaybe
+        |> Present
 
 
 buildNodeFragmentRef : List UserForm -> NodeFragment -> OptionalArgument Input.NodeFragmentRef

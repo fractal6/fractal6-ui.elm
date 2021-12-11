@@ -18,7 +18,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (Ev, UserState(..))
 import ModelCommon.Codecs exposing (nid2type, nodeIdCodec)
 import ModelCommon.View exposing (roleColor)
 import ModelSchema exposing (..)
@@ -56,7 +56,7 @@ type alias MoveForm =
     { uctx : UserCtx
     , tid : String
     , target : Node
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , events : List Ev
     , post : Post
     }
 
@@ -72,7 +72,7 @@ initForm user =
                 initUserctx
     , tid = ""
     , target = initNode
-    , events_type = Just [ TensionEvent.Moved ]
+    , events = []
     , post = Dict.empty
     }
 
@@ -318,14 +318,8 @@ update_ apis message model =
 
                 newForm =
                     { form
-                        | post =
-                            Dict.insert "createdAt" (fromTime time) form.post
-                                |> Dict.union
-                                    (Dict.fromList
-                                        [ ( "old", model.target )
-                                        , ( "new", form.target.nameid )
-                                        ]
-                                    )
+                        | post = Dict.insert "createdAt" (fromTime time) form.post
+                        , events = [ Ev TensionEvent.Moved model.target form.target.nameid ]
                     }
             in
             ( { model | form = newForm }

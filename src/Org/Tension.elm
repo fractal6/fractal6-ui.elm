@@ -538,7 +538,11 @@ update global message model =
                     model.tension_form
 
                 bid =
-                    Dict.get "new" form.post |> withDefault ""
+                    form.events
+                        |> List.filter (\x -> x.event_type == TensionEvent.BlobPushed)
+                        |> List.head
+                        |> Maybe.map .new
+                        |> withDefault ""
             in
             ( model, publishBlob apis.gql bid form PushBlobAck, Cmd.none )
 
@@ -685,7 +689,7 @@ update global message model =
                 eventComment =
                     case Dict.get "message" form.post of
                         Just _ ->
-                            [ TensionEvent.CommentPushed ]
+                            [ Ev TensionEvent.CommentPushed "" "" ]
 
                         Nothing ->
                             []
@@ -693,10 +697,10 @@ update global message model =
                 eventStatus =
                     case status_m of
                         Just TensionStatus.Open ->
-                            [ TensionEvent.Reopened ]
+                            [ Ev TensionEvent.Reopened "Closed" "Open" ]
 
                         Just TensionStatus.Closed ->
-                            [ TensionEvent.Closed ]
+                            [ Ev TensionEvent.Closed "Open" "Closed" ]
 
                         Nothing ->
                             []
@@ -705,7 +709,7 @@ update global message model =
                     { form
                         | post = Dict.insert "createdAt" (fromTime time) form.post
                         , status = status_m
-                        , events_type = Just (eventComment ++ eventStatus)
+                        , events = eventComment ++ eventStatus
                     }
             in
             ( { model | tension_form = newForm, tension_patch = LoadingSlowly }
@@ -724,7 +728,7 @@ update global message model =
                 OkAuth tp ->
                     let
                         events =
-                            model.tension_form.events_type |> withDefault []
+                            model.tension_form.events
 
                         tension_h =
                             case model.tension_head of
@@ -735,7 +739,7 @@ update global message model =
                                             , history =
                                                 t.history
                                                     ++ (events
-                                                            |> List.filter (\e -> e /= TensionEvent.CommentPushed)
+                                                            |> List.filter (\e -> e.event_type /= TensionEvent.CommentPushed)
                                                             |> List.map (\e -> eventFromForm e model.tension_form)
                                                        )
                                         }
@@ -744,7 +748,7 @@ update global message model =
                                     other
 
                         tension_c =
-                            if List.member TensionEvent.CommentPushed events then
+                            if List.member TensionEvent.CommentPushed (List.map .event_type events) then
                                 case model.tension_comments of
                                     Success t ->
                                         Success { t | comments = Just ((t.comments |> withDefault []) ++ (tp.comments |> withDefault [])) }
@@ -881,13 +885,11 @@ update global message model =
                         | post =
                             form.post
                                 |> Dict.insert "createdAt" (fromTime time)
-                                |> Dict.union
-                                    (Dict.fromList
-                                        [ ( "old", model.tension_head |> withMaybeDataMap (\x -> x.title) |> withDefault "" )
-                                        , ( "new", Dict.get "title" form.post |> withDefault "" )
-                                        ]
-                                    )
-                        , events_type = Just [ TensionEvent.TitleUpdated ]
+                        , events =
+                            [ Ev TensionEvent.TitleUpdated
+                                (model.tension_head |> withMaybeDataMap (\x -> x.title) |> withDefault "")
+                                (Dict.get "title" form.post |> withDefault "")
+                            ]
                     }
             in
             ( { model | tension_form = newForm, title_result = LoadingSlowly }, send PushTitle, Cmd.none )
@@ -1004,7 +1006,7 @@ update global message model =
                 newDoc =
                     data
                         |> NodeDoc.updatePost "createdAt" (fromTime time)
-                        |> NodeDoc.setEvents [ TensionEvent.BlobCommitted ]
+                        |> NodeDoc.setEvents [ Ev TensionEvent.BlobCommitted "" "" ]
                         |> NodeDoc.setResult LoadingSlowly
             in
             ( { model | nodeDoc = newDoc }, send (PushBlob_ newDoc.form), Cmd.none )
@@ -1031,9 +1033,8 @@ update global message model =
                                             | blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs
                                             , history =
                                                 t.history
-                                                    ++ (model.tension_form.events_type
-                                                            |> withDefault []
-                                                            |> List.filter (\e -> e /= TensionEvent.CommentPushed)
+                                                    ++ (model.tension_form.events
+                                                            |> List.filter (\e -> e.event_type /= TensionEvent.CommentPushed)
                                                             |> List.map (\e -> eventFromForm e model.tension_form)
                                                        )
                                         }
@@ -1062,15 +1063,8 @@ update global message model =
 
                 newForm =
                     { form
-                        | events_type = Just [ TensionEvent.BlobPushed ]
-                        , post =
-                            Dict.fromList [ ( "createdAt", fromTime time ) ]
-                                |> Dict.union
-                                    (Dict.fromList
-                                        [ ( "old", "" )
-                                        , ( "new", bid )
-                                        ]
-                                    )
+                        | events = [ Ev TensionEvent.BlobPushed "" bid ]
+                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                     }
             in
             ( { model | tension_form = newForm, publish_result = LoadingSlowly }
@@ -1346,13 +1340,8 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoined ]
-                        , post =
-                            Dict.fromList
-                                [ ( "createdAt", fromTime time )
-                                , ( "old", f.uctx.username )
-                                , ( "new", node.nameid )
-                                ]
+                        , events = [ Ev TensionEvent.UserJoined f.uctx.username node.nameid ]
+                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                         , node = node
                     }
             in
@@ -2920,12 +2909,12 @@ mdFromTensionHead t =
         |> withDefault Nothing
 
 
-eventFromForm : TensionEvent.TensionEvent -> TensionPatchForm -> Event
-eventFromForm event_type form =
+eventFromForm : Ev -> TensionPatchForm -> Event
+eventFromForm event form =
     { id = ""
     , createdAt = Dict.get "createdAt" form.post |> withDefault ""
     , createdBy = Username form.uctx.username
-    , event_type = event_type
-    , old = Dict.get "old" form.post
-    , new = Dict.get "new" form.post
+    , event_type = event.event_type
+    , old = Just event.old
+    , new = Just event.new
     }

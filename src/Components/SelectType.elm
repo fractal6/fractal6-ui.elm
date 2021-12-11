@@ -18,7 +18,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionPatchForm, UserState(..), initTensionPatchForm, uctxFromUser)
+import ModelCommon exposing (Ev, TensionPatchForm, UserState(..), initTensionPatchForm, uctxFromUser)
 import ModelCommon.View exposing (tensionTypeColor)
 import ModelSchema exposing (..)
 import Ports
@@ -238,13 +238,11 @@ update_ apis message model =
                         | post =
                             model.form.post
                                 |> Dict.insert "createdAt" (fromTime time)
-                                |> Dict.union
-                                    (Dict.fromList
-                                        [ ( "old", TensionType.toString model.type_orig )
-                                        , ( "new", model.form.type_ |> withDefault TensionType.Operational |> TensionType.toString )
-                                        ]
-                                    )
-                        , events_type = Just [ TensionEvent.TypeUpdated ]
+                        , events =
+                            [ Ev TensionEvent.TypeUpdated
+                                (TensionType.toString model.type_orig)
+                                (model.form.type_ |> withDefault TensionType.Operational |> TensionType.toString)
+                            ]
                     }
             in
             ( { model | form = newForm }

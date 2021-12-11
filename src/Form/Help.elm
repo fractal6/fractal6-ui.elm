@@ -24,7 +24,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (Ev, UserState(..))
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), NodeFocus, TensionCharac, nearestCircleid, nid2rootid)
 import ModelCommon.Requests exposing (getQuickDoc)
 import ModelCommon.View exposing (viewUser)
@@ -116,7 +116,7 @@ initFormAsk : NT.Model -> NT.Model
 initFormAsk form =
     form
         |> NT.setTensionType TensionType.Help
-        |> NT.setEvents [ TensionEvent.Created ]
+        |> NT.setEvents [ Ev TensionEvent.Created "" "" ]
         |> NT.setResult NotAsked
         |> NT.resetPost
 
@@ -125,7 +125,7 @@ initFormFeedback : NT.Model -> NT.Model
 initFormFeedback form =
     form
         |> NT.setTensionType TensionType.Operational
-        |> NT.setEvents [ TensionEvent.Created ]
+        |> NT.setEvents [ Ev TensionEvent.Created "" "" ]
         |> NT.setResult NotAsked
         |> NT.resetPost
 

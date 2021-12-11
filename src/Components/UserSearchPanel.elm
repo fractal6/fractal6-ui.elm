@@ -16,7 +16,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (AssigneeForm, UserState(..), initAssigneeForm)
+import ModelCommon exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelCommon.View exposing (viewUser)
 import ModelSchema exposing (..)
@@ -134,13 +134,13 @@ setClickResult result data =
 -- Update Form
 
 
-setEvents : List TensionEvent.TensionEvent -> Model -> Model
+setEvents : List Ev -> Model -> Model
 setEvents events data =
     let
         f =
             data.form
     in
-    { data | form = { f | events_type = Just events } }
+    { data | form = { f | events = events } }
 
 
 updatePost : String -> String -> Model -> Model
@@ -279,7 +279,12 @@ update_ apis message model =
                                 newModel
                                     |> updatePost "createdAt" (fromTime time)
                                     |> updatePost "new" assignee.username
-                                    |> setEvents [ ternary isNew TensionEvent.AssigneeAdded TensionEvent.AssigneeRemoved ]
+                                    |> setEvents
+                                        [ ternary
+                                            isNew
+                                            (Ev TensionEvent.AssigneeAdded "" assignee.username)
+                                            (Ev TensionEvent.AssigneeRemoved assignee.username "")
+                                        ]
                                     |> setClickResult LoadingSlowly
                         in
                         ( data

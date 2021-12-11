@@ -149,12 +149,8 @@ patchTensionInputEncoder f =
                         (\s ->
                             { s
                                 | updatedAt = fromMaybe updatedAt
-                                , title = fromMaybe title
-                                , status = fromMaybe f.status
-                                , action = fromMaybe f.action
-                                , type_ = fromMaybe f.type_
                                 , comments = buildComment createdAt f.uctx.username message
-                                , history = buildEvents createdAt f.uctx.username f.events_type f.post
+                                , history = buildEvents createdAt f.uctx.username f.events
                                 , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                             }
                         )
@@ -299,7 +295,7 @@ setAssigneeEncoder f =
             Dict.get "createdAt" f.post |> withDefault ""
 
         events =
-            buildEvents createdAt f.uctx.username f.events_type f.post
+            buildEvents createdAt f.uctx.username f.events
 
         inputReq =
             { filter =
@@ -359,7 +355,7 @@ setLabelEncoder f =
             Dict.get "createdAt" f.post |> withDefault ""
 
         events =
-            buildEvents createdAt f.uctx.username f.events_type f.post
+            buildEvents createdAt f.uctx.username f.events
 
         inputReq =
             { filter =
@@ -458,7 +454,7 @@ setMoveEncoder f =
             Dict.get "message" f.post
 
         events =
-            buildEvents createdAt f.uctx.username f.events_type f.post
+            buildEvents createdAt f.uctx.username f.events
 
         inputReq =
             { filter =
@@ -580,7 +576,7 @@ publishBlobInputEncoder bid f =
                                         )
                                     ]
                                         |> Present
-                                , history = buildEvents createdAt f.uctx.username f.events_type f.post
+                                , history = buildEvents createdAt f.uctx.username f.events
                             }
                         )
                         |> Present
@@ -659,7 +655,7 @@ actionInputEncoder f =
                         (\s ->
                             { s
                                 | comments = buildComment createdAt f.uctx.username message
-                                , history = buildEvents createdAt f.uctx.username f.events_type f.post
+                                , history = buildEvents createdAt f.uctx.username f.events
                                 , blobs =
                                     if f.bid /= "" then
                                         [ Input.buildBlobRef (\b -> { b | id = Present (encodeId f.bid) }) ] |> Present

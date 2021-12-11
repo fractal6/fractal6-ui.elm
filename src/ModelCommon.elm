@@ -91,6 +91,13 @@ type ActionState
 -- Tension Form
 
 
+type alias Ev =
+    { event_type : TensionEvent.TensionEvent
+    , old : String
+    , new : String
+    }
+
+
 type alias TensionForm =
     { uctx : UserCtx
     , source : UserRole
@@ -105,7 +112,7 @@ type alias TensionForm =
     , users : List UserForm
 
     -- data
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , events : List Ev
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     }
@@ -125,7 +132,7 @@ type alias TensionPatchForm =
     , users : List UserForm
 
     -- data
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , events : List Ev
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     , md : Maybe String
@@ -150,7 +157,7 @@ type alias AssigneeForm =
     , targets : List String -- Where the labels come from
     , assignee : User -- selected/unselected item
     , isNew : Bool -- to add or remove item
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , events : List Ev
     , post : Post
     }
 
@@ -168,7 +175,7 @@ initAssigneeForm tid user =
     , targets = []
     , assignee = User "" Nothing
     , isNew = False
-    , events_type = Nothing
+    , events = []
     , post = Dict.empty
     }
 
@@ -179,7 +186,7 @@ type alias LabelForm =
     , targets : List String -- Where the items come from
     , label : Label -- selected/unselected item
     , isNew : Bool -- to add or remove item
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , events : List Ev
     , post : Post
     }
 
@@ -197,7 +204,7 @@ initLabelForm tid user =
     , targets = []
     , label = Label "" "" Nothing
     , isNew = False
-    , events_type = Nothing
+    , events = []
     , post = Dict.empty
     }
 
@@ -224,7 +231,7 @@ initTensionForm user =
     , action = Nothing
     , post = Dict.empty
     , users = []
-    , events_type = Nothing
+    , events = []
     , blob_type = Nothing
     , node = initNodeFragment Nothing
     }
@@ -247,7 +254,7 @@ initTensionPatchForm tid user =
     , receiver = Nothing
     , post = Dict.empty
     , users = []
-    , events_type = Nothing
+    , events = []
     , blob_type = Nothing
     , node = initNodeFragment Nothing
     , md = Nothing
@@ -292,7 +299,7 @@ type alias ActionForm =
     , bid : String
     , node : Node
     , fragment : NodeFragment
-    , events_type : Maybe (List TensionEvent.TensionEvent)
+    , events : List Ev
     , post : Post
     }
 
@@ -310,7 +317,7 @@ initActionForm tid user =
     , bid = ""
     , node = initNode
     , fragment = initNodeFragment Nothing
-    , events_type = Nothing
+    , events = []
     , post = Dict.empty
     }
 

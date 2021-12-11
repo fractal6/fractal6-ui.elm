@@ -340,13 +340,8 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoined ]
-                        , post =
-                            Dict.fromList
-                                [ ( "createdAt", fromTime time )
-                                , ( "old", f.uctx.username )
-                                , ( "new", node.nameid )
-                                ]
+                        , events = [ Ev TensionEvent.UserJoined f.uctx.username node.nameid ]
+                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                         , node = node
                     }
             in

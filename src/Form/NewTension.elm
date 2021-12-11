@@ -27,7 +27,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
+import ModelCommon exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
 import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
@@ -394,14 +394,14 @@ setStatus status data =
     { data | form = newForm }
 
 
-setEvents : List TensionEvent.TensionEvent -> Model -> Model
+setEvents : List Ev -> Model -> Model
 setEvents events data =
     let
         f =
             data.form
 
         newForm =
-            { f | events_type = Just events }
+            { f | events = events }
     in
     { data | form = newForm }
 
@@ -770,21 +770,21 @@ update_ apis message model =
                 events =
                     case model.activeTab of
                         NewTensionTab ->
-                            [ TensionEvent.Created ]
+                            [ Ev TensionEvent.Created "" "" ]
 
                         NewRoleTab ->
                             if doClose == True then
-                                [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
+                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
 
                             else
-                                [ TensionEvent.Created, TensionEvent.BlobCreated ]
+                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
 
                         NewCircleTab ->
                             if doClose == True then
-                                [ TensionEvent.Created, TensionEvent.BlobCreated, TensionEvent.BlobPushed ]
+                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "", Ev TensionEvent.BlobPushed "" "" ]
 
                             else
-                                [ TensionEvent.Created, TensionEvent.BlobCreated ]
+                                [ Ev TensionEvent.Created "" "", Ev TensionEvent.BlobCreated "" "" ]
             in
             ( newModel
                 |> post "createdAt" (fromTime time)

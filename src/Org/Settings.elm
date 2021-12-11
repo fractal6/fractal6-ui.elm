@@ -425,16 +425,20 @@ update global message model =
                     ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
 
         AddLabel ->
-            -- Toggle Add Label Box
-            ( { model
-                | label_add = ternary (model.label_add == True) False True
-                , label_edit = Nothing
-                , colorPicker = ColorPicker.setColor Nothing model.colorPicker
-                , label_form = initLabelNodeForm global.session.user model.node_focus.nameid
-              }
-            , Cmd.none
-            , Cmd.none
-            )
+            if model.label_add then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                -- Toggle Add Label Box
+                ( { model
+                    | label_add = ternary (model.label_add == True) False True
+                    , label_edit = Nothing
+                    , colorPicker = ColorPicker.setColor Nothing model.colorPicker
+                    , label_form = initLabelNodeForm global.session.user model.node_focus.nameid
+                  }
+                , Cmd.none
+                , Cmd.none
+                )
 
         EditLabel label ->
             let
@@ -648,13 +652,8 @@ update global message model =
                 form =
                     { f
                         | bid = "" -- do no set bid to pass the backend
-                        , events_type = Just [ TensionEvent.UserJoined ]
-                        , post =
-                            Dict.fromList
-                                [ ( "createdAt", fromTime time )
-                                , ( "old", f.uctx.username )
-                                , ( "new", node.nameid )
-                                ]
+                        , events = [ Ev TensionEvent.UserJoined f.uctx.username node.nameid ]
+                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
                         , node = node
                     }
             in

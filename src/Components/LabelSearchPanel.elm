@@ -16,7 +16,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (LabelForm, UserState(..), initLabelForm)
+import ModelCommon exposing (Ev, LabelForm, UserState(..), initLabelForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
 import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
@@ -133,13 +133,13 @@ setClickResult result data =
 -- Update Form
 
 
-setEvents : List TensionEvent.TensionEvent -> Model -> Model
+setEvents : List Ev -> Model -> Model
 setEvents events data =
     let
         f =
             data.form
     in
-    { data | form = { f | events_type = Just events } }
+    { data | form = { f | events = events } }
 
 
 updatePost : String -> String -> Model -> Model
@@ -282,7 +282,12 @@ update_ apis message model =
                                 newModel
                                     |> updatePost "createdAt" (fromTime time)
                                     |> updatePost (ternary isNew "new" "old") (label.name ++ "§" ++ withDefault "" label.color)
-                                    |> setEvents [ ternary isNew TensionEvent.LabelAdded TensionEvent.LabelRemoved ]
+                                    |> setEvents
+                                        [ ternary
+                                            isNew
+                                            (Ev TensionEvent.LabelAdded "" label.name)
+                                            (Ev TensionEvent.LabelRemoved label.name "")
+                                        ]
                                     |> setClickResult LoadingSlowly
                         in
                         ( data
@@ -316,7 +321,7 @@ update_ apis message model =
                 data =
                     click label isNew model
                         |> updatePost "new" (label.name ++ "§" ++ withDefault "" label.color)
-                        |> setEvents [ TensionEvent.LabelAdded ]
+                        |> setEvents [ Ev TensionEvent.LabelAdded "" label.name ]
             in
             ( data, Out [] [] (Just ( data.form.isNew, data.form.label )) )
 

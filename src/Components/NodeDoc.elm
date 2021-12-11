@@ -18,7 +18,7 @@ import Icon as I
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
+import ModelCommon exposing (Ev, TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
@@ -108,14 +108,14 @@ addPolicies data =
 -- Update Form
 
 
-setEvents : List TensionEvent.TensionEvent -> NodeDoc -> NodeDoc
+setEvents : List Ev -> NodeDoc -> NodeDoc
 setEvents events data =
     let
         f =
             data.form
 
         newForm =
-            { f | events_type = Just events }
+            { f | events = events }
     in
     { data | form = newForm }
 
