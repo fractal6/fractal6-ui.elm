@@ -246,6 +246,16 @@ nid2type nameid =
         NodeType.Circle
 
 
+isRole : String -> Bool
+isRole nid =
+    nid2type nid == NodeType.Role
+
+
+isCircle : String -> Bool
+isCircle nid =
+    nid2type nid == NodeType.Circle
+
+
 nid2eor : String -> EmitterOrReceiver
 nid2eor nid =
     let

@@ -41,7 +41,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.PatchNode exposing (addOneLabel, removeOneLabel, updateOneLabel)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, queryLabels, queryLocalGraph)
+import Query.QueryNode exposing (fetchNode, getLabels, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis, GlobalCmd(..))
 import Task
@@ -313,7 +313,7 @@ init global flags =
             ]
                 ++ (case menu of
                         LabelsMenu ->
-                            [ queryLabels apis.gql newFocus.nameid GotLabels
+                            [ getLabels apis.gql newFocus.nameid GotLabels
                             , fetchLabelsTop apis.rest newFocus.nameid GotLabelsTop
                             , fetchLabelsSub apis.rest newFocus.nameid GotLabelsSub
                             ]

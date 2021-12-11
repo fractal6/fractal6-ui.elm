@@ -1224,9 +1224,9 @@ update global message model =
         DoLabelEdit ->
             let
                 targets =
-                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                    getTargets model.path_data Nothing
             in
-            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets)), Cmd.none )
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets False)), Cmd.none )
 
         LabelSearchPanelMsg msg ->
             let
@@ -2679,7 +2679,7 @@ viewSidePane u t model =
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = t.labels |> withDefault []
-                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , targets = model.path_data |> withMaybeDataMap (\x -> [ shrinkNode x.focus ]) |> withDefault []
                             }
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg

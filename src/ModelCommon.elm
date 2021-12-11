@@ -27,6 +27,7 @@ import ModelCommon.Codecs
         , getCircleRoles
         , getCoordoRoles
         , getOrgaRoles
+        , isCircle
         , isOwner
         , nearestCircleid
         , nid2rootid
@@ -349,6 +350,27 @@ type InputViewMode
 --
 
 
+getTargets : GqlData LocalGraph -> Maybe (List RoleType.RoleType) -> List PNode
+getTargets lg exclude_role_type_m =
+    case lg of
+        Success path ->
+            case exclude_role_type_m of
+                Just exclude_role_types_ ->
+                    -- Exclude the roles givens in the list
+                    let
+                        exclude_role_types =
+                            List.map (\x -> Just x) exclude_role_types_
+                    in
+                    path.path ++ (path.focus.children |> List.filter (\x -> not (List.member x.role_type exclude_role_types)) |> List.map shrinkNode)
+
+                Nothing ->
+                    -- Keep only circle
+                    path.path ++ (path.focus.children |> List.filter (\x -> isCircle x.nameid) |> List.map shrinkNode)
+
+        _ ->
+            []
+
+
 getNode : String -> GqlData NodesDict -> Maybe Node
 getNode nameid orga =
     case orga of
@@ -442,6 +464,12 @@ getParentFragmentFromRole role =
                 |> Array.fromList
     in
     Array.get (Array.length l - 2) l |> withDefault ""
+
+
+
+--
+-- Setters
+--
 
 
 hotNodeInsert : Node -> GqlData NodesDict -> NodesDict

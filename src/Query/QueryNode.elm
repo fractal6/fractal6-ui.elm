@@ -3,6 +3,7 @@ module Query.QueryNode exposing
     , blobIdPayload
     , emiterOrReceiverPayload
     , fetchNode
+    , getLabels
     , labelFullPayload
     , labelPayload
     , membersNodeDecoder
@@ -13,7 +14,7 @@ module Query.QueryNode exposing
     , queryFocusNode
     , queryGraphPack
     , queryLabels
-    , queryLabelsUp
+    , queryLabelsDown
     , queryLocalGraph
     , queryMembers
     , queryMembersLocal
@@ -731,23 +732,23 @@ type alias NodeLabelsFull =
     { labels : Maybe (List LabelFull) }
 
 
-labelsDecoder : Maybe NodeLabelsFull -> Maybe (List LabelFull)
-labelsDecoder data =
+labelsFullDecoder : Maybe NodeLabelsFull -> Maybe (List LabelFull)
+labelsFullDecoder data =
     data
         |> Maybe.map (\d -> withDefault [] d.labels)
 
 
-queryLabels url nid msg =
+getLabels url nid msg =
     makeGQLQuery url
         (Query.getNode
             (nidFilter nid)
-            nodeLabelsPayload
+            nodeLabelsFullPayload
         )
-        (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse labelsFullDecoder >> msg)
 
 
-nodeLabelsPayload : SelectionSet NodeLabelsFull Fractal.Object.Node
-nodeLabelsPayload =
+nodeLabelsFullPayload : SelectionSet NodeLabelsFull Fractal.Object.Node
+nodeLabelsFullPayload =
     SelectionSet.map NodeLabelsFull
         (Fractal.Object.Node.labels
             (\args ->
@@ -759,14 +760,6 @@ nodeLabelsPayload =
             )
             labelFullPayload
         )
-
-
-labelPayload : SelectionSet Label Fractal.Object.Label
-labelPayload =
-    SelectionSet.map3 Label
-        (Fractal.Object.Label.id |> SelectionSet.map decodedId)
-        Fractal.Object.Label.name
-        Fractal.Object.Label.color
 
 
 labelFullPayload : SelectionSet LabelFull Fractal.Object.Label
@@ -784,7 +777,7 @@ labelFullPayload =
 
 
 {-
-   Query Labels (Up)
+   Query Labels
 -}
 
 
@@ -792,8 +785,8 @@ type alias NodeLabels =
     { labels : Maybe (List Label) }
 
 
-labelsUpDecoder : Maybe (List (Maybe NodeLabels)) -> Maybe (List Label)
-labelsUpDecoder data =
+labelsDecoder : Maybe (List (Maybe NodeLabels)) -> Maybe (List Label)
+labelsDecoder data =
     data
         |> Maybe.map
             (\d ->
@@ -810,17 +803,30 @@ labelsUpDecoder data =
         |> withDefault Nothing
 
 
-queryLabelsUp url nids msg =
+{-| Fetch the given node
+-}
+queryLabels url nids msg =
     makeGQLQuery url
         (Query.queryNode
-            (nidUpFilter nids)
-            nodeLabelsUpPayload
+            (nidsFilter nids)
+            nodeLabelsPayload
         )
-        (RemoteData.fromResult >> decodeResponse labelsUpDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
 
 
-nidUpFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
-nidUpFilter nids a =
+{-| Fetch all children node
+-}
+queryLabelsDown url nids msg =
+    makeGQLQuery url
+        (Query.queryNode
+            (nidsDownFilter nids)
+            nodeLabelsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
+
+
+nidsFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nidsFilter nids a =
     let
         nameidsRegxp =
             nids
@@ -838,8 +844,27 @@ nidUpFilter nids a =
     }
 
 
-nodeLabelsUpPayload : SelectionSet NodeLabels Fractal.Object.Node
-nodeLabelsUpPayload =
+nidsDownFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nidsDownFilter nids a =
+    let
+        nameidsRegxp =
+            nids
+                |> List.map (\n -> "^" ++ n)
+                |> String.join "|"
+                |> SE.surround "/"
+    in
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\c ->
+                    { c | nameid = Present { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } }
+                )
+                |> Present
+    }
+
+
+nodeLabelsPayload : SelectionSet NodeLabels Fractal.Object.Node
+nodeLabelsPayload =
     SelectionSet.map NodeLabels
         (Fractal.Object.Node.labels
             (\args ->
@@ -851,3 +876,11 @@ nodeLabelsUpPayload =
             )
             labelPayload
         )
+
+
+labelPayload : SelectionSet Label Fractal.Object.Label
+labelPayload =
+    SelectionSet.map3 Label
+        (Fractal.Object.Label.id |> SelectionSet.map decodedId)
+        Fractal.Object.Label.name
+        Fractal.Object.Label.color

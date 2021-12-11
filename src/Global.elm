@@ -283,7 +283,7 @@ update msg model =
                 session =
                     model.session
             in
-            ( { model | session = { session | path_data = data, children = Maybe.map (\d -> List.map (\n -> { nameid = n.nameid }) d.focus.children) data } }, Cmd.none )
+            ( { model | session = { session | path_data = data, children = Nothing } }, Cmd.none )
 
         UpdateSessionChildren data ->
             let

@@ -22,7 +22,7 @@ import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (setLabel)
-import Query.QueryNode exposing (queryLabelsUp)
+import Query.QueryNode exposing (queryLabels, queryLabelsDown)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Task
 import Text as T exposing (textH, textT, upH)
@@ -163,7 +163,7 @@ setPattern pattern data =
 
 
 type Msg
-    = OnOpen (List String)
+    = OnOpen (List PNode) Bool
     | OnClose
     | OnClose_
     | OnChangePattern String
@@ -216,15 +216,29 @@ update apis message (State model) =
 update_ : Apis -> Msg -> Model -> ( Model, Out )
 update_ apis message model =
     case message of
-        OnOpen targets ->
+        OnOpen targets isDepth ->
+            -- if isDepth
+            --   * fetch label recurcively in children
+            --   * else stick to given targets (focus like behaviour)
             if model.isOpen == False then
                 let
+                    nameids =
+                        List.map (\x -> x.nameid) targets
+
+                    hasChanged =
+                        nameids /= model.form.targets
+
                     ( newModel, cmd ) =
-                        ternary (targets /= model.form.targets)
-                            ( { model | labels_data = LoadingSlowly }, [ queryLabelsUp apis.gql targets OnGotLabels ] )
+                        if hasChanged && isDepth then
+                            ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis.gql nameids OnGotLabels ] )
+
+                        else if hasChanged && not isDepth then
+                            ( { model | labels_data = LoadingSlowly }, [ queryLabels apis.gql nameids OnGotLabels ] )
+
+                        else
                             ( model, [] )
                 in
-                ( open targets newModel
+                ( open nameids newModel
                 , out0 <|
                     [ Ports.inheritWith "labelSearchPanel"
                     , Ports.focusOn "userInput"
@@ -383,7 +397,7 @@ subscriptions (State model) =
 
 type alias Op =
     { selectedLabels : List Label
-    , targets : List String
+    , targets : List PNode
     }
 
 
@@ -453,10 +467,10 @@ viewLabelSelectors isInternal labels op model =
                 [ class "panel-block is-md"
                 , attribute "style" "border-top: 1px solid;"
                 , if isInternal then
-                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")) "")
+                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")) "")
 
                   else
-                    onClick (Navigate (uriFromNameid SettingsBaseUri (List.head op.targets |> withDefault "")))
+                    onClick (Navigate (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")))
                 ]
                 [ I.icon1 "icon-edit-2" <| upH T.editLabels ]
     in
@@ -540,7 +554,10 @@ viewNew op (State model) =
               else
                 text ""
             ]
-        , div [ class "button is-small is-primary mr-2", onClick (OnOpen op.targets) ]
+        , div
+            [ class "button is-small is-primary mr-2"
+            , onClick (OnOpen op.targets False)
+            ]
             [ I.icon1 "icon-1x icon-plus" "", text "Label" ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels

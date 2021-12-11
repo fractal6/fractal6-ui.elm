@@ -394,8 +394,8 @@ hasLoadMore tensions offset =
 --
 
 
-getTargets : Model -> List String
-getTargets model =
+getTargetsHere : Model -> List String
+getTargetsHere model =
     case model.depthFilter of
         AllSubChildren ->
             case model.children of
@@ -609,7 +609,7 @@ init global flags =
             [ if fs.focusChange then
                 [ queryLocalGraph apis.gql newFocus.nameid (GotPath True), send ResetData ]
 
-              else if getTargets model == [] then
+              else if getTargetsHere model == [] then
                 -- path of children has not been loaded
                 [ send DoLoadInit ]
 
@@ -808,7 +808,7 @@ update global message model =
             -- else increments the results span
             let
                 nameids =
-                    getTargets model
+                    getTargetsHere model
 
                 status =
                     statusDecoder model.statusFilter
@@ -879,9 +879,9 @@ update global message model =
         ChangeLabel ->
             let
                 targets =
-                    model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                    getTargets model.path_data Nothing
             in
-            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets)), Cmd.none )
+            ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets True)), Cmd.none )
 
         SearchKeyDown key ->
             case key of
@@ -1456,7 +1456,7 @@ viewSearchBar model =
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
-                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , targets = model.path_data |> withMaybeDataMap (\x -> [ shrinkNode x.focus ]) |> withDefault []
                             }
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg

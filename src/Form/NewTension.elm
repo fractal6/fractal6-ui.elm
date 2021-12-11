@@ -27,7 +27,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, initTensionForm)
+import ModelCommon exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, getTargets, initTensionForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
 import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
 import ModelSchema exposing (..)
@@ -172,17 +172,11 @@ setUser_ user (State model) =
 setPath_ : LocalGraph -> State -> State
 setPath_ p (State model) =
     let
-        ( target, targets ) =
-            let
-                f =
-                    shrinkNode p.focus
-            in
-            ( f
-            , p.path ++ [ f ] ++ (p.focus.children |> List.filter (\x -> List.member x.role_type [ Just RoleType.Guest, Just RoleType.Member ] == False) |> List.map shrinkNode)
-            )
+        targets =
+            getTargets (Success p) (Just [ RoleType.Guest, RoleType.Member ])
 
         newModel =
-            setTarget target model
+            setTarget (shrinkNode p.focus) model
     in
     { newModel | path_data = Just p, targets = targets } |> State
 
@@ -1186,7 +1180,7 @@ viewTension op (State model) =
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
                                 { selectedLabels = form.labels
-                                , targets = model.targets |> List.map (\n -> n.nameid)
+                                , targets = model.targets
                                 }
                                 model.labelsPanel
                                 |> Html.map LabelSearchPanelMsg
