@@ -12,28 +12,27 @@ type TensionHasFilter
     | CreatedAt
     | UpdatedAt
     | Message
-    | Emitterid
     | Emitter
-    | Receiverid
+    | Emitterid
     | Receiver
-    | Nth
+    | Receiverid
     | Title
     | Type_
     | Status
+    | Action
+    | Comments
     | Assignees
     | Labels
-    | Comments
-    | Action
     | Blobs
-    | Contracts
     | History
+    | Contracts
     | N_comments
     | N_open_contracts
 
 
 list : List TensionHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitterid, Emitter, Receiverid, Receiver, Nth, Title, Type_, Status, Assignees, Labels, Comments, Action, Blobs, Contracts, History, N_comments, N_open_contracts ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Action, Comments, Assignees, Labels, Blobs, History, Contracts, N_comments, N_open_contracts ]
 
 
 decoder : Decoder TensionHasFilter
@@ -54,20 +53,17 @@ decoder =
                     "message" ->
                         Decode.succeed Message
 
-                    "emitterid" ->
-                        Decode.succeed Emitterid
-
                     "emitter" ->
                         Decode.succeed Emitter
 
-                    "receiverid" ->
-                        Decode.succeed Receiverid
+                    "emitterid" ->
+                        Decode.succeed Emitterid
 
                     "receiver" ->
                         Decode.succeed Receiver
 
-                    "nth" ->
-                        Decode.succeed Nth
+                    "receiverid" ->
+                        Decode.succeed Receiverid
 
                     "title" ->
                         Decode.succeed Title
@@ -78,26 +74,26 @@ decoder =
                     "status" ->
                         Decode.succeed Status
 
+                    "action" ->
+                        Decode.succeed Action
+
+                    "comments" ->
+                        Decode.succeed Comments
+
                     "assignees" ->
                         Decode.succeed Assignees
 
                     "labels" ->
                         Decode.succeed Labels
 
-                    "comments" ->
-                        Decode.succeed Comments
-
-                    "action" ->
-                        Decode.succeed Action
-
                     "blobs" ->
                         Decode.succeed Blobs
 
-                    "contracts" ->
-                        Decode.succeed Contracts
-
                     "history" ->
                         Decode.succeed History
+
+                    "contracts" ->
+                        Decode.succeed Contracts
 
                     "n_comments" ->
                         Decode.succeed N_comments
@@ -113,8 +109,8 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : TensionHasFilter -> String
-toString enum =
-    case enum of
+toString enum____ =
+    case enum____ of
         CreatedBy ->
             "createdBy"
 
@@ -127,20 +123,17 @@ toString enum =
         Message ->
             "message"
 
-        Emitterid ->
-            "emitterid"
-
         Emitter ->
             "emitter"
 
-        Receiverid ->
-            "receiverid"
+        Emitterid ->
+            "emitterid"
 
         Receiver ->
             "receiver"
 
-        Nth ->
-            "nth"
+        Receiverid ->
+            "receiverid"
 
         Title ->
             "title"
@@ -151,26 +144,26 @@ toString enum =
         Status ->
             "status"
 
+        Action ->
+            "action"
+
+        Comments ->
+            "comments"
+
         Assignees ->
             "assignees"
 
         Labels ->
             "labels"
 
-        Comments ->
-            "comments"
-
-        Action ->
-            "action"
-
         Blobs ->
             "blobs"
 
-        Contracts ->
-            "contracts"
-
         History ->
             "history"
+
+        Contracts ->
+            "contracts"
 
         N_comments ->
             "n_comments"
@@ -191,8 +184,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe TensionHasFilter
-fromString enumString =
-    case enumString of
+fromString enumString____ =
+    case enumString____ of
         "createdBy" ->
             Just CreatedBy
 
@@ -205,20 +198,17 @@ fromString enumString =
         "message" ->
             Just Message
 
-        "emitterid" ->
-            Just Emitterid
-
         "emitter" ->
             Just Emitter
 
-        "receiverid" ->
-            Just Receiverid
+        "emitterid" ->
+            Just Emitterid
 
         "receiver" ->
             Just Receiver
 
-        "nth" ->
-            Just Nth
+        "receiverid" ->
+            Just Receiverid
 
         "title" ->
             Just Title
@@ -229,26 +219,26 @@ fromString enumString =
         "status" ->
             Just Status
 
+        "action" ->
+            Just Action
+
+        "comments" ->
+            Just Comments
+
         "assignees" ->
             Just Assignees
 
         "labels" ->
             Just Labels
 
-        "comments" ->
-            Just Comments
-
-        "action" ->
-            Just Action
-
         "blobs" ->
             Just Blobs
 
-        "contracts" ->
-            Just Contracts
-
         "history" ->
             Just History
+
+        "contracts" ->
+            Just Contracts
 
         "n_comments" ->
             Just N_comments

@@ -32,16 +32,16 @@ addNode :
     -> AddNodeRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddNodePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addNode fillInOptionals requiredArgs object_ =
+addNode fillInOptionals____ requiredArgs____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { upsert = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
 
-        optionalArgs =
-            [ Argument.optional "upsert" filledInOptionals.upsert Encode.bool ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "addNode" (optionalArgs ++ [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddNodeInput |> Encode.list) ]) object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "addNode" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddNodeInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateNodeRequiredArguments =
@@ -52,8 +52,8 @@ updateNode :
     UpdateNodeRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateNodePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateNode requiredArgs object_ =
-    Object.selectionForCompositeField "updateNode" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateNodeInput ] object_ (identity >> Decode.nullable)
+updateNode requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateNode" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateNodeInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteNodeRequiredArguments =
@@ -64,8 +64,8 @@ deleteNode :
     DeleteNodeRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteNodePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteNode requiredArgs object_ =
-    Object.selectionForCompositeField "deleteNode" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeFilter ] object_ (identity >> Decode.nullable)
+deleteNode requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteNode" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeNodeFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddNodeFragmentRequiredArguments =
@@ -76,8 +76,8 @@ addNodeFragment :
     AddNodeFragmentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddNodeFragmentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addNodeFragment requiredArgs object_ =
-    Object.selectionForCompositeField "addNodeFragment" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddNodeFragmentInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addNodeFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "addNodeFragment" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddNodeFragmentInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateNodeFragmentRequiredArguments =
@@ -88,8 +88,8 @@ updateNodeFragment :
     UpdateNodeFragmentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateNodeFragmentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateNodeFragment requiredArgs object_ =
-    Object.selectionForCompositeField "updateNodeFragment" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateNodeFragmentInput ] object_ (identity >> Decode.nullable)
+updateNodeFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateNodeFragment" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateNodeFragmentInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteNodeFragmentRequiredArguments =
@@ -100,8 +100,8 @@ deleteNodeFragment :
     DeleteNodeFragmentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteNodeFragmentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteNodeFragment requiredArgs object_ =
-    Object.selectionForCompositeField "deleteNodeFragment" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeNodeFragmentFilter ] object_ (identity >> Decode.nullable)
+deleteNodeFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteNodeFragment" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeNodeFragmentFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddMandateRequiredArguments =
@@ -112,8 +112,8 @@ addMandate :
     AddMandateRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddMandatePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addMandate requiredArgs object_ =
-    Object.selectionForCompositeField "addMandate" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddMandateInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addMandate requiredArgs____ object____ =
+    Object.selectionForCompositeField "addMandate" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddMandateInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateMandateRequiredArguments =
@@ -124,8 +124,8 @@ updateMandate :
     UpdateMandateRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateMandatePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateMandate requiredArgs object_ =
-    Object.selectionForCompositeField "updateMandate" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateMandateInput ] object_ (identity >> Decode.nullable)
+updateMandate requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateMandate" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateMandateInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteMandateRequiredArguments =
@@ -136,104 +136,8 @@ deleteMandate :
     DeleteMandateRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteMandatePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteMandate requiredArgs object_ =
-    Object.selectionForCompositeField "deleteMandate" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeMandateFilter ] object_ (identity >> Decode.nullable)
-
-
-type alias AddOrgaAggRequiredArguments =
-    { input : List Fractal.InputObject.AddOrgaAggInput }
-
-
-addOrgaAgg :
-    AddOrgaAggRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddOrgaAggPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-addOrgaAgg requiredArgs object_ =
-    Object.selectionForCompositeField "addOrgaAgg" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddOrgaAggInput |> Encode.list) ] object_ (identity >> Decode.nullable)
-
-
-type alias UpdateOrgaAggRequiredArguments =
-    { input : Fractal.InputObject.UpdateOrgaAggInput }
-
-
-updateOrgaAgg :
-    UpdateOrgaAggRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateOrgaAggPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-updateOrgaAgg requiredArgs object_ =
-    Object.selectionForCompositeField "updateOrgaAgg" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateOrgaAggInput ] object_ (identity >> Decode.nullable)
-
-
-type alias DeleteOrgaAggRequiredArguments =
-    { filter : Fractal.InputObject.OrgaAggFilter }
-
-
-deleteOrgaAgg :
-    DeleteOrgaAggRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteOrgaAggPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-deleteOrgaAgg requiredArgs object_ =
-    Object.selectionForCompositeField "deleteOrgaAgg" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeOrgaAggFilter ] object_ (identity >> Decode.nullable)
-
-
-type alias UpdatePostRequiredArguments =
-    { input : Fractal.InputObject.UpdatePostInput }
-
-
-updatePost :
-    UpdatePostRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdatePostPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-updatePost requiredArgs object_ =
-    Object.selectionForCompositeField "updatePost" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdatePostInput ] object_ (identity >> Decode.nullable)
-
-
-type alias DeletePostRequiredArguments =
-    { filter : Fractal.InputObject.PostFilter }
-
-
-deletePost :
-    DeletePostRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeletePostPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-deletePost requiredArgs object_ =
-    Object.selectionForCompositeField "deletePost" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodePostFilter ] object_ (identity >> Decode.nullable)
-
-
-type alias AddTensionRequiredArguments =
-    { input : List Fractal.InputObject.AddTensionInput }
-
-
-addTension :
-    AddTensionRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddTensionPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-addTension requiredArgs object_ =
-    Object.selectionForCompositeField "addTension" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddTensionInput |> Encode.list) ] object_ (identity >> Decode.nullable)
-
-
-type alias UpdateTensionRequiredArguments =
-    { input : Fractal.InputObject.UpdateTensionInput }
-
-
-updateTension :
-    UpdateTensionRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateTensionPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-updateTension requiredArgs object_ =
-    Object.selectionForCompositeField "updateTension" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateTensionInput ] object_ (identity >> Decode.nullable)
-
-
-type alias DeleteTensionRequiredArguments =
-    { filter : Fractal.InputObject.TensionFilter }
-
-
-deleteTension :
-    DeleteTensionRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteTensionPayload
-    -> SelectionSet (Maybe decodesTo) RootMutation
-deleteTension requiredArgs object_ =
-    Object.selectionForCompositeField "deleteTension" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeTensionFilter ] object_ (identity >> Decode.nullable)
+deleteMandate requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteMandate" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeMandateFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddLabelRequiredArguments =
@@ -244,8 +148,8 @@ addLabel :
     AddLabelRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddLabelPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addLabel requiredArgs object_ =
-    Object.selectionForCompositeField "addLabel" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddLabelInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addLabel requiredArgs____ object____ =
+    Object.selectionForCompositeField "addLabel" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddLabelInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateLabelRequiredArguments =
@@ -256,8 +160,8 @@ updateLabel :
     UpdateLabelRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateLabelPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateLabel requiredArgs object_ =
-    Object.selectionForCompositeField "updateLabel" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateLabelInput ] object_ (identity >> Decode.nullable)
+updateLabel requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateLabel" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateLabelInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteLabelRequiredArguments =
@@ -268,8 +172,140 @@ deleteLabel :
     DeleteLabelRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteLabelPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteLabel requiredArgs object_ =
-    Object.selectionForCompositeField "deleteLabel" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeLabelFilter ] object_ (identity >> Decode.nullable)
+deleteLabel requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteLabel" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeLabelFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddRoleExtRequiredArguments =
+    { input : List Fractal.InputObject.AddRoleExtInput }
+
+
+addRoleExt :
+    AddRoleExtRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddRoleExtPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addRoleExt requiredArgs____ object____ =
+    Object.selectionForCompositeField "addRoleExt" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddRoleExtInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateRoleExtRequiredArguments =
+    { input : Fractal.InputObject.UpdateRoleExtInput }
+
+
+updateRoleExt :
+    UpdateRoleExtRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateRoleExtPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateRoleExt requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateRoleExt" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateRoleExtInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteRoleExtRequiredArguments =
+    { filter : Fractal.InputObject.RoleExtFilter }
+
+
+deleteRoleExt :
+    DeleteRoleExtRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteRoleExtPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteRoleExt requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteRoleExt" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeRoleExtFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddOrgaAggRequiredArguments =
+    { input : List Fractal.InputObject.AddOrgaAggInput }
+
+
+addOrgaAgg :
+    AddOrgaAggRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddOrgaAggPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addOrgaAgg requiredArgs____ object____ =
+    Object.selectionForCompositeField "addOrgaAgg" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddOrgaAggInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateOrgaAggRequiredArguments =
+    { input : Fractal.InputObject.UpdateOrgaAggInput }
+
+
+updateOrgaAgg :
+    UpdateOrgaAggRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateOrgaAggPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateOrgaAgg requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateOrgaAgg" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateOrgaAggInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteOrgaAggRequiredArguments =
+    { filter : Fractal.InputObject.OrgaAggFilter }
+
+
+deleteOrgaAgg :
+    DeleteOrgaAggRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteOrgaAggPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteOrgaAgg requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteOrgaAgg" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeOrgaAggFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdatePostRequiredArguments =
+    { input : Fractal.InputObject.UpdatePostInput }
+
+
+updatePost :
+    UpdatePostRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdatePostPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updatePost requiredArgs____ object____ =
+    Object.selectionForCompositeField "updatePost" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdatePostInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeletePostRequiredArguments =
+    { filter : Fractal.InputObject.PostFilter }
+
+
+deletePost :
+    DeletePostRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeletePostPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deletePost requiredArgs____ object____ =
+    Object.selectionForCompositeField "deletePost" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodePostFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddTensionRequiredArguments =
+    { input : List Fractal.InputObject.AddTensionInput }
+
+
+addTension :
+    AddTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddTensionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "addTension" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddTensionInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateTensionRequiredArguments =
+    { input : Fractal.InputObject.UpdateTensionInput }
+
+
+updateTension :
+    UpdateTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateTensionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateTension" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateTensionInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteTensionRequiredArguments =
+    { filter : Fractal.InputObject.TensionFilter }
+
+
+deleteTension :
+    DeleteTensionRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteTensionPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteTension requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteTension" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeTensionFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddCommentRequiredArguments =
@@ -280,8 +316,8 @@ addComment :
     AddCommentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddCommentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addComment requiredArgs object_ =
-    Object.selectionForCompositeField "addComment" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddCommentInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addComment requiredArgs____ object____ =
+    Object.selectionForCompositeField "addComment" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddCommentInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateCommentRequiredArguments =
@@ -292,8 +328,8 @@ updateComment :
     UpdateCommentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateCommentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateComment requiredArgs object_ =
-    Object.selectionForCompositeField "updateComment" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateCommentInput ] object_ (identity >> Decode.nullable)
+updateComment requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateComment" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateCommentInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteCommentRequiredArguments =
@@ -304,8 +340,8 @@ deleteComment :
     DeleteCommentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteCommentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteComment requiredArgs object_ =
-    Object.selectionForCompositeField "deleteComment" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeCommentFilter ] object_ (identity >> Decode.nullable)
+deleteComment requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteComment" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeCommentFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddBlobRequiredArguments =
@@ -316,8 +352,8 @@ addBlob :
     AddBlobRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddBlobPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addBlob requiredArgs object_ =
-    Object.selectionForCompositeField "addBlob" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddBlobInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addBlob requiredArgs____ object____ =
+    Object.selectionForCompositeField "addBlob" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddBlobInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateBlobRequiredArguments =
@@ -328,8 +364,8 @@ updateBlob :
     UpdateBlobRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateBlobPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateBlob requiredArgs object_ =
-    Object.selectionForCompositeField "updateBlob" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateBlobInput ] object_ (identity >> Decode.nullable)
+updateBlob requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateBlob" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateBlobInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteBlobRequiredArguments =
@@ -340,8 +376,8 @@ deleteBlob :
     DeleteBlobRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteBlobPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteBlob requiredArgs object_ =
-    Object.selectionForCompositeField "deleteBlob" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeBlobFilter ] object_ (identity >> Decode.nullable)
+deleteBlob requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteBlob" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeBlobFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddEventRequiredArguments =
@@ -352,8 +388,8 @@ addEvent :
     AddEventRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddEventPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addEvent requiredArgs object_ =
-    Object.selectionForCompositeField "addEvent" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddEventInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "addEvent" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddEventInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateEventRequiredArguments =
@@ -364,8 +400,8 @@ updateEvent :
     UpdateEventRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateEventPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateEvent requiredArgs object_ =
-    Object.selectionForCompositeField "updateEvent" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateEventInput ] object_ (identity >> Decode.nullable)
+updateEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateEvent" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateEventInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteEventRequiredArguments =
@@ -376,8 +412,8 @@ deleteEvent :
     DeleteEventRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteEventPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteEvent requiredArgs object_ =
-    Object.selectionForCompositeField "deleteEvent" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeEventFilter ] object_ (identity >> Decode.nullable)
+deleteEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteEvent" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeEventFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddEventFragmentRequiredArguments =
@@ -388,8 +424,8 @@ addEventFragment :
     AddEventFragmentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddEventFragmentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addEventFragment requiredArgs object_ =
-    Object.selectionForCompositeField "addEventFragment" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddEventFragmentInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addEventFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "addEventFragment" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddEventFragmentInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateEventFragmentRequiredArguments =
@@ -400,8 +436,8 @@ updateEventFragment :
     UpdateEventFragmentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateEventFragmentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateEventFragment requiredArgs object_ =
-    Object.selectionForCompositeField "updateEventFragment" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateEventFragmentInput ] object_ (identity >> Decode.nullable)
+updateEventFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateEventFragment" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateEventFragmentInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteEventFragmentRequiredArguments =
@@ -412,8 +448,8 @@ deleteEventFragment :
     DeleteEventFragmentRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteEventFragmentPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteEventFragment requiredArgs object_ =
-    Object.selectionForCompositeField "deleteEventFragment" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeEventFragmentFilter ] object_ (identity >> Decode.nullable)
+deleteEventFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteEventFragment" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeEventFragmentFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddContractOptionalArguments =
@@ -429,16 +465,16 @@ addContract :
     -> AddContractRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddContractPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addContract fillInOptionals requiredArgs object_ =
+addContract fillInOptionals____ requiredArgs____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { upsert = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
 
-        optionalArgs =
-            [ Argument.optional "upsert" filledInOptionals.upsert Encode.bool ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "addContract" (optionalArgs ++ [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddContractInput |> Encode.list) ]) object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "addContract" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddContractInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateContractRequiredArguments =
@@ -449,8 +485,8 @@ updateContract :
     UpdateContractRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateContractPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateContract requiredArgs object_ =
-    Object.selectionForCompositeField "updateContract" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateContractInput ] object_ (identity >> Decode.nullable)
+updateContract requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateContract" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateContractInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteContractRequiredArguments =
@@ -461,8 +497,8 @@ deleteContract :
     DeleteContractRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteContractPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteContract requiredArgs object_ =
-    Object.selectionForCompositeField "deleteContract" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeContractFilter ] object_ (identity >> Decode.nullable)
+deleteContract requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteContract" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeContractFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddVoteOptionalArguments =
@@ -478,16 +514,16 @@ addVote :
     -> AddVoteRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddVotePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addVote fillInOptionals requiredArgs object_ =
+addVote fillInOptionals____ requiredArgs____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { upsert = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
 
-        optionalArgs =
-            [ Argument.optional "upsert" filledInOptionals.upsert Encode.bool ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "addVote" (optionalArgs ++ [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddVoteInput |> Encode.list) ]) object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "addVote" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddVoteInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateVoteRequiredArguments =
@@ -498,8 +534,8 @@ updateVote :
     UpdateVoteRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateVotePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateVote requiredArgs object_ =
-    Object.selectionForCompositeField "updateVote" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateVoteInput ] object_ (identity >> Decode.nullable)
+updateVote requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateVote" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateVoteInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteVoteRequiredArguments =
@@ -510,8 +546,8 @@ deleteVote :
     DeleteVoteRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteVotePayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteVote requiredArgs object_ =
-    Object.selectionForCompositeField "deleteVote" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeVoteFilter ] object_ (identity >> Decode.nullable)
+deleteVote requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteVote" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeVoteFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddUserOptionalArguments =
@@ -527,16 +563,16 @@ addUser :
     -> AddUserRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddUserPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addUser fillInOptionals requiredArgs object_ =
+addUser fillInOptionals____ requiredArgs____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { upsert = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
 
-        optionalArgs =
-            [ Argument.optional "upsert" filledInOptionals.upsert Encode.bool ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "addUser" (optionalArgs ++ [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddUserInput |> Encode.list) ]) object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "addUser" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddUserInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateUserRequiredArguments =
@@ -547,8 +583,8 @@ updateUser :
     UpdateUserRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateUserPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateUser requiredArgs object_ =
-    Object.selectionForCompositeField "updateUser" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateUserInput ] object_ (identity >> Decode.nullable)
+updateUser requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateUser" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateUserInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteUserRequiredArguments =
@@ -559,8 +595,8 @@ deleteUser :
     DeleteUserRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteUserPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteUser requiredArgs object_ =
-    Object.selectionForCompositeField "deleteUser" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeUserFilter ] object_ (identity >> Decode.nullable)
+deleteUser requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteUser" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddUserRightsRequiredArguments =
@@ -571,8 +607,8 @@ addUserRights :
     AddUserRightsRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddUserRightsPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addUserRights requiredArgs object_ =
-    Object.selectionForCompositeField "addUserRights" [ Argument.required "input" requiredArgs.input (Fractal.InputObject.encodeAddUserRightsInput |> Encode.list) ] object_ (identity >> Decode.nullable)
+addUserRights requiredArgs____ object____ =
+    Object.selectionForCompositeField "addUserRights" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddUserRightsInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdateUserRightsRequiredArguments =
@@ -583,8 +619,8 @@ updateUserRights :
     UpdateUserRightsRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.UpdateUserRightsPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateUserRights requiredArgs object_ =
-    Object.selectionForCompositeField "updateUserRights" [ Argument.required "input" requiredArgs.input Fractal.InputObject.encodeUpdateUserRightsInput ] object_ (identity >> Decode.nullable)
+updateUserRights requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateUserRights" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateUserRightsInput ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias DeleteUserRightsRequiredArguments =
@@ -595,5 +631,5 @@ deleteUserRights :
     DeleteUserRightsRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.DeleteUserRightsPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteUserRights requiredArgs object_ =
-    Object.selectionForCompositeField "deleteUserRights" [ Argument.required "filter" requiredArgs.filter Fractal.InputObject.encodeUserRightsFilter ] object_ (identity >> Decode.nullable)
+deleteUserRights requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteUserRights" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserRightsFilter ] object____ (Basics.identity >> Decode.nullable)

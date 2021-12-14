@@ -83,6 +83,9 @@ class ElmSpa(object):
             print(s)
 
     def push_subcomponent(self, module_name_source, module_name_target):
+        push_in_submodule = False
+        if "Components" in module_name_target.split('.'):
+            push_in_submodule = True
 
         import_spec = [
             dict(
@@ -141,19 +144,19 @@ class ElmSpa(object):
                     let
                         ( data, out ) = ${module_basename}.update apis msg model.${module_basename_lower1}
 
-                        (res1, res2) = out.result
-
-                        ( cmds, gcmds ) = mapGlobalOutcmds out.gcmds
+                        ( cmds, gcmds ) = %s
                     in
-                    ( {model | ${module_basename_lower1} = data}, out.cmds |> List.map (\m -> Cmd.map ${module_basename}Msg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-                '''
+                    ( %s )
+                ''' % ('mapGlobalOutcmds out.gcmds' if not push_in_submodule else '([], [])'
+                    ,"{model | ${module_basename_lower1} = data}, out.cmds |> List.map (\m -> Cmd.map ${module_basename}Msg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds" if not push_in_submodule else
+                    "{ model | ${module_basename_lower1} = data }, out2 (List.map (\m -> Cmd.map ${module_basename}Msg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds)")
             ),
         ]
         subscriptions_spec = [
             dict(
                 reg =  r"^subscriptions .*?=.*?\n\n\n",
                 pos = 0,
-                t = "|> Sub.batch"
+                t = "|> Sub.batch" if not push_in_submodule else ""
             ),
             dict(
                 reg =  r"\n",

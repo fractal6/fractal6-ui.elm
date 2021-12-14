@@ -1,4 +1,4 @@
-module Query.QueryUser exposing (queryUctx)
+module Query.QueryUser exposing (queryUctx, queryUser)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -16,10 +16,12 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, w
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import RemoteData exposing (RemoteData)
+import String.Extra as SE
 
 
 
 {-
+
    Query UserCtx
 -}
 
@@ -62,12 +64,63 @@ uctxPayload =
 
 
 
--- Purpose: was here ebefore @auth directive to filter....
---pubFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
---pubFilter a =
---    { a
---        | filter =
---            Input.buildNodeFilter
---                (\b -> { b | isPrivate = Present False })
---                |> Present
---    }
+{-
+   Query Users
+-}
+
+
+usersDecoder : Maybe (List (Maybe user)) -> Maybe (List user)
+usersDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                d
+                    |> List.filterMap identity
+                    |> Just
+            )
+        |> withDefault Nothing
+
+
+queryUser url userfrag msg =
+    makeGQLQuery url
+        (Query.queryUser
+            (userFilter userfrag)
+            userPayload
+        )
+        (RemoteData.fromResult >> decodeResponse usersDecoder >> msg)
+
+
+userFilter : String -> Query.QueryUserOptionalArguments -> Query.QueryUserOptionalArguments
+userFilter userfrag a =
+    let
+        userreg =
+            "^"
+                ++ userfrag
+                |> SE.surround "/"
+    in
+    { a
+        | first = Present 30
+        , filter =
+            Input.buildUserFilter
+                (\b ->
+                    { b
+                        | username = { regexp = Present userreg, eq = Absent, in_ = Absent } |> Present
+                        , or =
+                            Present
+                                [ Input.buildUserFilter
+                                    (\c ->
+                                        { c | name = { regexp = Present userreg } |> Present }
+                                    )
+                                    |> Just
+                                ]
+                    }
+                )
+                |> Present
+    }
+
+
+userPayload : SelectionSet User Fractal.Object.User
+userPayload =
+    SelectionSet.succeed User
+        |> with Fractal.Object.User.username
+        |> with Fractal.Object.User.name

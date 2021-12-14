@@ -420,7 +420,7 @@ matchAllUsers alls =
                                     Nothing
                     in
                     { d
-                        | username = Present { eq = Present x.username, in_ = Absent }
+                        | username = Present { eq = Present x.username, regexp = Absent, in_ = Absent }
                         , and = Present [ f ]
                     }
                 )

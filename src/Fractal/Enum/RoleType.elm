@@ -61,8 +61,8 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : RoleType -> String
-toString enum =
-    case enum of
+toString enum____ =
+    case enum____ of
         Owner ->
             "Owner"
 
@@ -100,8 +100,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe RoleType
-fromString enumString =
-    case enumString of
+fromString enumString____ =
+    case enumString____ of
         "Owner" ->
             Just Owner
 

@@ -1,9 +1,16 @@
-module Extra.Date exposing (formatDate)
+module Extra.Date exposing (diffTime, formatDate)
 
 import Date
 import Iso8601 exposing (toTime)
-import Time exposing (Posix, utc)
+import Time exposing (Posix, posixToMillis, utc)
 import Time.Distance as Distance
+
+
+{-| Return the delta in milli seconds
+-}
+diffTime : Time.Posix -> Time.Posix -> Int
+diffTime new old =
+    posixToMillis new - posixToMillis old
 
 
 

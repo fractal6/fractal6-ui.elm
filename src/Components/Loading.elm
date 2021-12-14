@@ -233,7 +233,16 @@ loadingDiv =
 loadingSpin : Bool -> Html msg
 loadingSpin isLoading =
     if isLoading then
-        span [ class "spinner2 is-small" ] []
+        span [ class "mx-5 spinner2 is-small" ] []
+
+    else
+        text ""
+
+
+loadingSpinRight : Bool -> Html msg
+loadingSpinRight isLoading =
+    if isLoading then
+        span [ class "mx-5 is-pulled-right spinner2 is-small" ] []
 
     else
         text ""

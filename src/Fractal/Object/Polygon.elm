@@ -22,5 +22,5 @@ import Json.Decode as Decode
 coordinates :
     SelectionSet decodesTo Fractal.Object.PointList
     -> SelectionSet (List decodesTo) Fractal.Object.Polygon
-coordinates object_ =
-    Object.selectionForCompositeField "coordinates" [] object_ (identity >> Decode.list)
+coordinates object____ =
+    Object.selectionForCompositeField "coordinates" [] object____ (Basics.identity >> Decode.list)

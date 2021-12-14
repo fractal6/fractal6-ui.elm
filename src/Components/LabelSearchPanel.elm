@@ -441,7 +441,7 @@ view_ isInternal op (State model) =
                                 viewGqlErrors err
 
                             _ ->
-                                div [] []
+                                text ""
                         , viewLabelSelectors isInternal labels op model
                         ]
 
@@ -452,7 +452,7 @@ view_ isInternal op (State model) =
                 div [ class "spinner" ] [ text "" ]
 
             NotAsked ->
-                div [] []
+                text ""
 
             Failure err ->
                 viewGqlErrors err
@@ -464,7 +464,7 @@ viewLabelSelectors isInternal labels op model =
     let
         viewEdit =
             p
-                [ class "panel-block is-md"
+                [ class "panel-block is-md is-w"
                 , attribute "style" "border-top: 1px solid;"
                 , if isInternal then
                     onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")) "")

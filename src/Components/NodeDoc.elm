@@ -2,7 +2,6 @@ module Components.NodeDoc exposing (..)
 
 import Components.DocToolBar exposing (ActionView(..))
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
-import Components.UserSearchPanel exposing (viewUserSelectors)
 import Dict
 import Extra exposing (clean, ternary)
 import Extra.Date exposing (formatDate)
@@ -55,9 +54,6 @@ initBlob blobType nf data =
     let
         form =
             data.form
-
-        links =
-            getFirstLinks nf
 
         newForm =
             { form | blob_type = Just blobType, node = nf }
@@ -167,18 +163,6 @@ updateUserPattern pos pattern data =
     { data | form = newForm }
 
 
-updateUserRole : Int -> String -> NodeDoc -> NodeDoc
-updateUserRole pos role data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = updateUserRole_ pos role f.users }
-    in
-    { data | form = newForm }
-
-
 selectUser : Int -> String -> NodeDoc -> NodeDoc
 selectUser pos username data =
     let
@@ -244,7 +228,6 @@ type alias Op msg =
 
     -- User search and change
     , onChangeUserPattern : Int -> String -> msg
-    , onChangeUserRole : Int -> String -> msg
     , onSelectUser : Int -> String -> msg
     , onCancelUser : Int -> msg
     , onShowLookupFs : msg
@@ -278,18 +261,13 @@ view_ tid data op_m =
         type_ =
             withDefault NodeType.Role data.node.type_
 
-        isLinksHidden =
-            if type_ == NodeType.Circle && data.source == TensionBaseUri then
-                data.hasBeenPushed
-
-            else
-                False
-
+        --isLinksHidden =
+        --    if type_ == NodeType.Circle && data.source == TensionBaseUri then
+        --        data.hasBeenPushed
+        --    else
+        --        False
         txt =
             getNodeTextFromNodeType type_
-
-        links =
-            getFirstLinks data.node
 
         -- Function of Op
         blobTypeEdit =
@@ -340,7 +318,7 @@ view_ tid data op_m =
                         ]
                     , case data.toolbar of
                         Just tb ->
-                            -- from OverviewBaseUri: show toolbar that is links to the tension id.
+                            -- from OverviewBaseUri: show toolbar that is linked to the tension id.
                             div [ class "media-right is-marginless buttonsToolbar" ] [ tb ]
 
                         Nothing ->
@@ -391,28 +369,27 @@ view_ tid data op_m =
                                 [ text "No description for this node."
                                 , doEditView op_m BlobType.OnMandate
                                 ]
-        , if op_m == Nothing && not isLinksHidden then
-            let
-                links_ =
-                    List.filter (\x -> x.username /= "") links
-            in
-            div [ class "linksDoc" ]
-                [ hr [ class "has-background-grey-light" ] []
-                , div [ class "subtitle is-5" ]
-                    [ I.icon1 "icon-users icon-1half" (upH T.links)
-                    , links_
-                        |> List.map (\l -> viewUser True l.username)
-                        |> span [ attribute "style" "margin-left:20px;" ]
-                    ]
-                , if List.length links_ == 0 then
-                    span [ class "is-italic" ] [ textH txt.noFirstLinks ]
 
-                  else
-                    text ""
-                ]
-
-          else
-            text ""
+        --, if op_m == Nothing && not isLinksHidden then
+        --    let
+        --        links_ =
+        --            List.filter (\x -> x.username /= "") links
+        --    in
+        --    div [ class "linksDoc" ]
+        --        [ hr [ class "has-background-grey-light" ] []
+        --        , div [ class "subtitle is-5" ]
+        --            [ I.icon1 "icon-users icon-1half" (upH T.links)
+        --            , links_
+        --                |> List.map (\l -> viewUser True l.username)
+        --                |> span [ attribute "style" "margin-left:20px;" ]
+        --            ]
+        --        , if List.length links_ == 0 then
+        --            span [ class "is-italic" ] [ textH txt.noFirstLinks ]
+        --          else
+        --            text ""
+        --        ]
+        --  else
+        --    text ""
         ]
 
 
@@ -502,85 +479,6 @@ nodeAboutInputView hasBeenPushed source txt node op =
             , br [] []
             ]
         ]
-
-
-nodeLinksInputView txt form data op =
-    let
-        nodeType =
-            form.node.type_ |> withDefault NodeType.Role
-    in
-    div []
-        (List.indexedMap
-            (\i u ->
-                let
-                    rt =
-                        u.role_type
-
-                    rtStr =
-                        RoleType.toString rt
-
-                    userSelected =
-                        u.username /= ""
-                in
-                div []
-                    [ div [ class "field is-horizontal" ]
-                        [ div [ class "field-label is-md has-text-grey-darker control" ]
-                            [ case nodeType of
-                                NodeType.Circle ->
-                                    div [ class ("select is-" ++ roleColor rt) ]
-                                        [ select [ class "has-text-dark" ]
-                                            [ option [ selected True, value rtStr ] [ text rtStr ] ]
-                                        ]
-
-                                NodeType.Role ->
-                                    div [ class ("select is-" ++ roleColor rt) ]
-                                        [ [ RoleType.Coordinator, RoleType.Peer ]
-                                            -- @debug: separate concerns in role type ?
-                                            |> List.map
-                                                (\r ->
-                                                    option [ selected (r == rt), value (RoleType.toString r) ]
-                                                        [ text (RoleType.toString r) ]
-                                                )
-                                            |> select [ class "has-text-dark", onInput (op.onChangeUserRole i) ]
-                                        ]
-                            ]
-                        , div [ class "field-body" ]
-                            [ div
-                                [ class "tagsinput field is-grouped is-grouped-multiline input" ]
-                                [ if userSelected then
-                                    div [ class "control" ]
-                                        [ div [ class "tags has-addons" ]
-                                            [ span [ class "tag is-primary" ] [ text u.username ]
-                                            , span [ class "tag is-delete is-light", onClick (op.onCancelUser i) ] []
-                                            ]
-                                        ]
-
-                                  else
-                                    span [] []
-                                , input
-                                    [ type_ "text"
-                                    , class "is-expanded"
-                                    , placeholder (ternary (u.username == "") (upH T.searchUsers) "")
-                                    , value u.pattern
-                                    , onInput (op.onChangeUserPattern i)
-                                    , onClick op.onShowLookupFs
-                                    , disabled userSelected
-                                    ]
-                                    []
-                                ]
-                            ]
-                        ]
-                    , if data.isLookupOpen then
-                        div [ class "panel in-horizon sidePanel" ]
-                            [ viewUserSelectors i u.pattern op ]
-
-                      else
-                        span [] []
-                    ]
-            )
-            form.users
-            ++ [ p [ class "help-label", attribute "style" "margin-top: 4px !important;" ] [ textH txt.firstLink_help ] ]
-        )
 
 
 nodeMandateInputView txt node op =
@@ -811,42 +709,6 @@ viewVerRow now i blob =
 --- Utils
 
 
-getFirstLinks : NodeFragment -> List UserForm
-getFirstLinks node =
-    case node.type_ |> withDefault NodeType.Role of
-        NodeType.Role ->
-            node.first_link
-                |> Maybe.map
-                    (\uname ->
-                        { username = uname
-                        , role_type = withDefault RoleType.Peer node.role_type
-                        , pattern = ""
-                        }
-                    )
-                |> List.singleton
-                |> List.filterMap identity
-
-        NodeType.Circle ->
-            node.children
-                |> Maybe.map
-                    (\children ->
-                        children
-                            |> List.map
-                                (\c ->
-                                    c.first_link
-                                        |> Maybe.map
-                                            (\uname ->
-                                                { username = uname
-                                                , role_type = withDefault RoleType.Peer node.role_type
-                                                , pattern = ""
-                                                }
-                                            )
-                                )
-                            |> List.filterMap identity
-                    )
-                |> withDefault []
-
-
 nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
 nodeFragmentFromOrga node_m nodeData children_eo ndata =
     let
@@ -949,11 +811,6 @@ makeNewNodeId name =
 updateUserPattern_ : Int -> String -> List UserForm -> List UserForm
 updateUserPattern_ pos pattern users =
     LE.updateAt pos (\x -> { x | pattern = pattern }) users
-
-
-updateUserRole_ : Int -> String -> List UserForm -> List UserForm
-updateUserRole_ pos r users =
-    LE.updateAt pos (\x -> { x | role_type = RoleType.fromString r |> withDefault RoleType.Peer }) users
 
 
 selectUser_ : Int -> String -> List UserForm -> List UserForm

@@ -191,29 +191,56 @@ viewUsers users =
 
 viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
-    let
-        circleCls =
-            "image circleBaseInline circle0"
-    in
     if isLinked then
-        span [ class "mr-1" ]
-            [ a [ class circleCls, href (uriFromUsername UsersBaseUri username) ]
-                [ getAvatar username ]
+        span [ class "mr-2" ]
+            [ a [ href (uriFromUsername UsersBaseUri username) ]
+                [ getAvatar1 username ]
             ]
 
     else
-        span [ class "mr-1" ] [ div [ class circleCls ] [ getAvatar username ] ]
+        span [ class "mr-2" ] [ getAvatar1 username ]
 
 
 viewUser2 : String -> Html msg
 viewUser2 username =
-    let
-        circleCls =
-            "image circleBaseInline circle1"
-    in
-    span [ class "mr-1" ]
-        [ a [ class circleCls, href (uriFromUsername UsersBaseUri username) ]
+    span [ class "mr-2" ]
+        [ a [ href (uriFromUsername UsersBaseUri username) ]
             [ getAvatar2 username ]
+        ]
+
+
+viewUserFull : Int -> Bool -> Bool -> User -> Html msg
+viewUserFull size isLinked isBoxed user =
+    let
+        ( pad, avatar ) =
+            case size of
+                0 ->
+                    ( "p-1", getAvatar0 )
+
+                1 ->
+                    ( "p-1", getAvatar1 )
+
+                2 ->
+                    ( "", getAvatar2 )
+
+                3 ->
+                    ( "", getAvatar3 )
+
+                _ ->
+                    ( "p-1", getAvatar1 )
+    in
+    span (ternary isBoxed [ class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] [])
+        [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
+            [ if isLinked then
+                a [ href (uriFromUsername UsersBaseUri user.username) ] [ avatar user.username ]
+
+              else
+                avatar user.username
+            ]
+        , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ]
+            [ Maybe.map (\name -> span [ class "is-name" ] [ text name ]) user.name |> withDefault (text "")
+            , span [ class "is-username" ] [ text ("@" ++ user.username) ]
+            ]
         ]
 
 
@@ -457,37 +484,24 @@ roleColor rt =
 -}
 
 
-getAvatar : String -> Html msg
-getAvatar username =
-    Identicon.identicon "18px" username
+getAvatar0 : String -> Html msg
+getAvatar0 username =
+    span [ class "image circleBaseInline circle00" ] [ Identicon.identicon "14px" username ]
+
+
+getAvatar1 : String -> Html msg
+getAvatar1 username =
+    span [ class "image circleBaseInline circle0" ] [ Identicon.identicon "18px" username ]
 
 
 getAvatar2 : String -> Html msg
 getAvatar2 username =
-    Identicon.identicon "22px" username
+    span [ class "image circleBaseInline circle1" ] [ Identicon.identicon "22px" username ]
 
 
 getAvatar3 : String -> Html msg
 getAvatar3 username =
-    Identicon.identicon "108px" username
-
-
-
---let
---    initial =
---        username
---            |> String.slice 0 1
---            |> String.toUpper
---in
---span []
---    [ text initial
---    , username
---        |> String.slice 1 3
---        |> String.toLower
---        |> text
---        |> List.singleton
---        |> sub [ attribute "style" "font-size: 75% !important;" ]
---    ]
+    span [ class "image circleBaseInline circle3" ] [ Identicon.identicon "108px" username ]
 
 
 getAvatarOrga : String -> Html msg

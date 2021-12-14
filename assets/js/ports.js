@@ -28,7 +28,9 @@ window.addEventListener('load', _ => {
                 delta: 200,
                 // Graphpack
                 gp: Object.create(GraphPack),
-                // QuickSearch
+
+                /*** QuickSearch ***/
+                // Node Quick Search
                 qsn: new MiniSearch({
                     idField: 'nameid',
                     storeFields: ['nameid'],
@@ -38,12 +40,14 @@ window.addEventListener('load', _ => {
                         boost: { name: 2 },
                     },
                 }),
+                // User Quick Search
                 qsu: new MiniSearch({
                     idField: 'username',
                     storeFields: ['username'],
                     fields: ['username', 'name'],
                     searchOptions: { fuzzy: 0.3, },
                 }),
+                // Label Quick Search
                 qsl: new MiniSearch({
                     idField: 'id',
                     storeFields: ['id', 'name', 'color'],
@@ -188,6 +192,15 @@ const actions = {
     'INIT_USERSEARCH': (app, session, data) => {
         // Setup User quickSearch
         initQuickSearch(session.qsu, data);
+    },
+    'INIT_USERSEARCHSEEK': (app, session, data) => {
+        // Setup and search
+        var qs = session.qsu;
+        // Setup User quickSearch
+        initQuickSearch(qs, data.users);
+        // And return a search result
+        var res = qs.search(data.pattern, {prefix:true}).slice(0,20);
+        app.ports.lookupUserFromJs_.send(res);
     },
     'INIT_LABELSEARCH': (app, session, data) => {
         // Setup User quickSearch

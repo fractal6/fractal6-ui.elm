@@ -41,8 +41,8 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : EventFragmentHasFilter -> String
-toString enum =
-    case enum of
+toString enum____ =
+    case enum____ of
         Event_type ->
             "event_type"
 
@@ -65,8 +65,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe EventFragmentHasFilter
-fromString enumString =
-    case enumString of
+fromString enumString____ =
+    case enumString____ of
         "event_type" ->
             Just Event_type
 

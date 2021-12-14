@@ -31,16 +31,16 @@ contract :
     (ContractOptionalArguments -> ContractOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Contract
     -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddContractPayload
-contract fillInOptionals object_ =
+contract fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeContractFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeContractOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeContractFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeContractOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "contract" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "contract" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 numUids : SelectionSet (Maybe Int) Fractal.Object.AddContractPayload

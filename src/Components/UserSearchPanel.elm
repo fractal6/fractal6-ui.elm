@@ -18,7 +18,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (AssigneeForm, Ev, UserState(..), initAssigneeForm)
 import ModelCommon.Codecs exposing (nearestCircleid)
-import ModelCommon.View exposing (viewUser)
+import ModelCommon.View exposing (viewUserFull)
 import ModelSchema exposing (..)
 import Ports
 import Process
@@ -373,6 +373,17 @@ type alias Op =
     }
 
 
+view : Op -> State -> Html Msg
+view op (State model) =
+    div [ id id_target_name ]
+        [ if model.isOpen then
+            view_ op (State model)
+
+          else
+            text ""
+        ]
+
+
 view_ : Op -> State -> Html Msg
 view_ op_ (State model) =
     nav [ id "usersSearchPanel", class "panel sidePanel" ]
@@ -418,7 +429,7 @@ view_ op_ (State model) =
                             viewGqlErrors err
 
                         _ ->
-                            div [] []
+                            text ""
                     , viewAssigneeSelectors users op model
                     ]
 
@@ -429,7 +440,7 @@ view_ op_ (State model) =
                 div [ class "spinner" ] [ text "" ]
 
             NotAsked ->
-                div [] []
+                text ""
 
             Failure err ->
                 viewGqlErrors err
@@ -457,86 +468,12 @@ viewAssigneeSelectors users op model =
                                 model.click_result == LoadingSlowly && u.username == model.form.assignee.username
                         in
                         p
-                            [ class "panel-block"
+                            [ class "panel-block p-1"
                             , classList [ ( "is-active", isActive ) ]
                             , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
                             ]
                             [ span [ class "panel-icon" ] [ I.icon iconCls ]
-                            , viewUser False u.username
-                            , case u.name of
-                                Just name ->
-                                    span [ class "has-text-weight-semibold" ] [ text name ]
-
-                                Nothing ->
-                                    span [] []
-                            , span [ class "is-grey-light help" ] [ text u.username ]
+                            , viewUserFull 1 False False u
                             , loadingSpin isLoading
                             ]
                     )
-
-
-
---
--- Input View
---
-
-
-view : Op -> State -> Html Msg
-view op (State model) =
-    div [ id id_target_name ]
-        [ if model.isOpen then
-            view_ op (State model)
-
-          else
-            text ""
-        ]
-
-
-{-|
-
-     @Debug: put this in User quicksearch module
-
--}
-viewUserSelectors i pattern op =
-    div [ class "selectors", classList [ ( "spinner", op.users_data == Loading ) ] ] <|
-        case op.users_data of
-            Success ud ->
-                let
-                    users =
-                        if pattern == "" then
-                            -- linked users
-                            op.targets
-                                |> List.foldl
-                                    (\a b ->
-                                        List.append (Dict.get a ud |> withDefault []) b
-                                    )
-                                    []
-                                |> LE.uniqueBy (\u -> u.username)
-
-                        else
-                            op.lookup
-                in
-                if users == [] then
-                    [ p [ class "panel-block" ] [ textH T.noResultsFound ] ]
-
-                else
-                    users
-                        |> List.map
-                            (\u ->
-                                p
-                                    [ class "panel-block"
-                                    , onClick (op.onSelectUser i u.username)
-                                    ]
-                                    [ viewUser False u.username
-                                    , case u.name of
-                                        Just name ->
-                                            span [ class "has-text-weight-semibold" ] [ text name ]
-
-                                        Nothing ->
-                                            span [] []
-                                    , span [ class "is-grey-light help" ] [ text u.username ]
-                                    ]
-                            )
-
-            _ ->
-                []

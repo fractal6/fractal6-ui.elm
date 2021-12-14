@@ -28,16 +28,16 @@ tension :
     (TensionOptionalArguments -> TensionOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Tension
     -> SelectionSet decodesTo Fractal.Object.Blob
-tension fillInOptionals object_ =
+tension fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "tension" optionalArgs object_ identity
+    Object.selectionForCompositeField "tension" optionalArgs____ object____ Basics.identity
 
 
 blob_type : SelectionSet Fractal.Enum.BlobType.BlobType Fractal.Object.Blob
@@ -63,16 +63,16 @@ node :
     (NodeOptionalArguments -> NodeOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.NodeFragment
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Blob
-node fillInOptionals object_ =
+node fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFragmentFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "node" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "node" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 md : SelectionSet (Maybe String) Fractal.Object.Blob
@@ -93,16 +93,16 @@ createdBy :
     (CreatedByOptionalArguments -> CreatedByOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.User
     -> SelectionSet decodesTo Fractal.Object.Blob
-createdBy fillInOptionals object_ =
+createdBy fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+    Object.selectionForCompositeField "createdBy" optionalArgs____ object____ Basics.identity
 
 
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Blob

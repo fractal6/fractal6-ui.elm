@@ -402,7 +402,7 @@ view_ _ model uctx =
 viewProfileLeft : Model -> UserCtx -> Html Msg
 viewProfileLeft _ uctx =
     div []
-        [ div [ class "content image circleBase circle3" ] [ getAvatar3 uctx.username ]
+        [ div [ class "content" ] [ getAvatar3 uctx.username ]
         , div [ class "content" ]
             [ case uctx.name of
                 Just name ->

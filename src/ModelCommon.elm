@@ -13,6 +13,8 @@ import Dict exposing (Dict)
 import Dict.Extra as DE
 import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.ContractStatus as ContractStatus
+import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -20,6 +22,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs
     exposing
@@ -109,13 +112,11 @@ type alias TensionForm =
     , action : Maybe TensionAction.TensionAction
     , post : Post -- For String type,  createdBy, createdAt, title, message, etc
 
-    --
-    , users : List UserForm
-
     -- data
     , events : List Ev
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
+    , users : List UserForm
     }
 
 
@@ -129,19 +130,19 @@ type alias TensionPatchForm =
     , receiver : Maybe EmitterOrReceiver
     , post : Post -- createdBy, createdAt, title, message...
 
-    --
-    , users : List UserForm
-
     -- data
     , events : List Ev
     , blob_type : Maybe BlobType.BlobType
     , node : NodeFragment
     , md : Maybe String
+    , users : List UserForm
     }
 
 
 type alias UserForm =
-    { username : String, role_type : RoleType.RoleType, pattern : String }
+    -- Name is optional but when get user from lookup it
+    -- allow to manage two records, a User and UserForm but only one.
+    { username : String, name : Maybe String, email : String, pattern : String }
 
 
 type alias CommentPatchForm =
@@ -291,7 +292,6 @@ initLabelNodeForm user nameid =
 
 
 -- Join Form
--- @debug: ActionForm is defined twice here and in ActionPanel
 
 
 type alias ActionForm =
@@ -300,6 +300,7 @@ type alias ActionForm =
     , bid : String
     , node : Node
     , fragment : NodeFragment
+    , users : List UserForm
     , events : List Ev
     , post : Post
     }
@@ -318,7 +319,52 @@ initActionForm tid user =
     , bid = ""
     , node = initNode
     , fragment = initNodeFragment Nothing
+    , users = []
     , events = []
+    , post = Dict.empty
+    }
+
+
+initUserForm : UserForm
+initUserForm =
+    { username = "", name = Nothing, email = "", pattern = "" }
+
+
+
+{-
+   Contract Form
+-}
+
+
+type alias ContractForm =
+    { uctx : UserCtx
+    , tid : String
+    , status : ContractStatus.ContractStatus
+    , contract_type : ContractType.ContractType
+    , event : EventFragment
+    , contractid : String
+
+    --, candidate:
+    , participants : List Vote
+    , post : Post
+    }
+
+
+initContractForm : UserState -> ContractForm
+initContractForm user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                initUserctx
+    , tid = "" -- example
+    , status = ContractStatus.Open
+    , contract_type = ContractType.AnyCoordoDual
+    , event = initEventFragment
+    , contractid = ""
+    , participants = []
     , post = Dict.empty
     }
 
@@ -555,6 +601,15 @@ orgaToUsersData nd =
         |> List.map (\( k, n ) -> Maybe.map (\fs -> ( nearestCircleid k, { username = fs.username, name = fs.name } )) n.first_link)
         |> List.filterMap identity
         |> toMapOfList
+
+
+orgaToUsers : NodesDict -> List User
+orgaToUsers nd =
+    nd
+        |> Dict.toList
+        |> List.map (\( k, n ) -> n.first_link)
+        |> List.filterMap identity
+        |> LE.uniqueBy (\u -> u.username)
 
 
 

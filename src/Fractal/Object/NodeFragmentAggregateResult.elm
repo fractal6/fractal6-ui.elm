@@ -24,16 +24,6 @@ count =
     Object.selectionForField "(Maybe Int)" "count" [] (Decode.int |> Decode.nullable)
 
 
-nameMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
-nameMin =
-    Object.selectionForField "(Maybe String)" "nameMin" [] (Decode.string |> Decode.nullable)
-
-
-nameMax : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
-nameMax =
-    Object.selectionForField "(Maybe String)" "nameMax" [] (Decode.string |> Decode.nullable)
-
-
 nameidMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
 nameidMin =
     Object.selectionForField "(Maybe String)" "nameidMin" [] (Decode.string |> Decode.nullable)
@@ -42,6 +32,16 @@ nameidMin =
 nameidMax : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
 nameidMax =
     Object.selectionForField "(Maybe String)" "nameidMax" [] (Decode.string |> Decode.nullable)
+
+
+nameMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
+nameMin =
+    Object.selectionForField "(Maybe String)" "nameMin" [] (Decode.string |> Decode.nullable)
+
+
+nameMax : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
+nameMax =
+    Object.selectionForField "(Maybe String)" "nameMax" [] (Decode.string |> Decode.nullable)
 
 
 aboutMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult

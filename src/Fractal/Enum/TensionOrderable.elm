@@ -13,7 +13,6 @@ type TensionOrderable
     | Message
     | Emitterid
     | Receiverid
-    | Nth
     | Title
     | N_comments
     | N_open_contracts
@@ -21,7 +20,7 @@ type TensionOrderable
 
 list : List TensionOrderable
 list =
-    [ CreatedAt, UpdatedAt, Message, Emitterid, Receiverid, Nth, Title, N_comments, N_open_contracts ]
+    [ CreatedAt, UpdatedAt, Message, Emitterid, Receiverid, Title, N_comments, N_open_contracts ]
 
 
 decoder : Decoder TensionOrderable
@@ -45,9 +44,6 @@ decoder =
                     "receiverid" ->
                         Decode.succeed Receiverid
 
-                    "nth" ->
-                        Decode.succeed Nth
-
                     "title" ->
                         Decode.succeed Title
 
@@ -65,8 +61,8 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : TensionOrderable -> String
-toString enum =
-    case enum of
+toString enum____ =
+    case enum____ of
         CreatedAt ->
             "createdAt"
 
@@ -81,9 +77,6 @@ toString enum =
 
         Receiverid ->
             "receiverid"
-
-        Nth ->
-            "nth"
 
         Title ->
             "title"
@@ -107,8 +100,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe TensionOrderable
-fromString enumString =
-    case enumString of
+fromString enumString____ =
+    case enumString____ of
         "createdAt" ->
             Just CreatedAt
 
@@ -123,9 +116,6 @@ fromString enumString =
 
         "receiverid" ->
             Just Receiverid
-
-        "nth" ->
-            Just Nth
 
         "title" ->
             Just Title

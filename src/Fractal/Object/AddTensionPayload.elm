@@ -31,16 +31,16 @@ tension :
     (TensionOptionalArguments -> TensionOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Tension
     -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddTensionPayload
-tension fillInOptionals object_ =
+tension fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "tension" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "tension" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 numUids : SelectionSet (Maybe Int) Fractal.Object.AddTensionPayload

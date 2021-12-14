@@ -183,7 +183,8 @@ buildLabels form =
                         { x | id = Present (encodeId label.id) }
                     )
             )
-        |> Present
+        |> (\x -> ternary (x == []) Nothing (Just x))
+        |> fromMaybe
 
 
 buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
@@ -277,28 +278,26 @@ buildNodeFragmentRef users nf =
                     -- Role
                     { commonFields
                         | first_link = users |> List.filter (\u -> u.username /= "") |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe
-
-                        --, role_type = fromMaybe nf.role_type
-                        , role_type = users |> List.head |> Maybe.map (\us -> us.role_type) |> fromMaybe
+                        , role_type = fromMaybe nf.role_type
                     }
 
                 NodeType.Circle ->
                     -- Circle
-                    { commonFields
-                        | children =
-                            users
-                                |> List.map
-                                    (\us ->
-                                        Input.buildNodeFragmentRef
-                                            (\c ->
-                                                { c
-                                                    | first_link = ternary (us.username /= "") (Present us.username) Absent
-                                                    , role_type = Present us.role_type
-                                                }
-                                            )
-                                    )
-                                |> Present
-                    }
+                    { commonFields | children = Absent }
+         -- Children not implemented for now
+         --        users
+         --            |> List.map
+         --                (\us ->
+         --                    Input.buildNodeFragmentRef
+         --                        (\c ->
+         --                            { c
+         --                                | first_link = ternary (us.username /= "") (Present us.username) Absent
+         --                                , role_type = Present us.role_type
+         --                            }
+         --                        )
+         --                )
+         --            |> Present
+         --}
         )
         |> Present
 

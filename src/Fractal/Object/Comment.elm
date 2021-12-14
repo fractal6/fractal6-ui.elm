@@ -37,16 +37,16 @@ createdBy :
     (CreatedByOptionalArguments -> CreatedByOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.User
     -> SelectionSet decodesTo Fractal.Object.Comment
-createdBy fillInOptionals object_ =
+createdBy fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+    Object.selectionForCompositeField "createdBy" optionalArgs____ object____ Basics.identity
 
 
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Comment

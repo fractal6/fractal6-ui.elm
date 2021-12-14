@@ -22,5 +22,5 @@ import Json.Decode as Decode
 polygons :
     SelectionSet decodesTo Fractal.Object.Polygon
     -> SelectionSet (List decodesTo) Fractal.Object.MultiPolygon
-polygons object_ =
-    Object.selectionForCompositeField "polygons" [] object_ (identity >> Decode.list)
+polygons object____ =
+    Object.selectionForCompositeField "polygons" [] object____ (Basics.identity >> Decode.list)

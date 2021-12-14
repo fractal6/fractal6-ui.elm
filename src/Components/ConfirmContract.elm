@@ -7,8 +7,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
-import Form exposing (isPostEmpty, isPostSendable)
-import Fractal.Enum.ContractStatus as ContractStatus
+import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
@@ -20,7 +19,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..))
+import ModelCommon exposing (ContractForm, UserState(..), initContractForm)
 import ModelCommon.Codecs exposing (nid2eor, nid2rootid)
 import ModelCommon.View exposing (contractEventToText, contractTypeToText, viewTensionArrow)
 import ModelSchema exposing (..)
@@ -56,44 +55,11 @@ initModel user =
     , target = ""
     , data_result = NotAsked
     , contract = Nothing
-    , form = initForm user
+    , form = initContractForm user
 
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
-    }
-
-
-type alias ContractForm =
-    { uctx : UserCtx
-    , tid : String
-    , status : ContractStatus.ContractStatus
-    , contract_type : ContractType.ContractType
-    , event : EventFragment
-    , contractid : String
-
-    --, candidate:
-    , participants : List Vote
-    , post : Post
-    }
-
-
-initForm : UserState -> ContractForm
-initForm user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                initUserctx
-    , tid = "" -- example
-    , status = ContractStatus.Open
-    , contract_type = ContractType.AnyCoordoDual
-    , event = initEventFragment
-    , contractid = ""
-    , participants = []
-    , post = Dict.empty
     }
 
 

@@ -74,16 +74,6 @@ receiveridMax =
     Object.selectionForField "(Maybe String)" "receiveridMax" [] (Decode.string |> Decode.nullable)
 
 
-nthMin : SelectionSet (Maybe String) Fractal.Object.TensionAggregateResult
-nthMin =
-    Object.selectionForField "(Maybe String)" "nthMin" [] (Decode.string |> Decode.nullable)
-
-
-nthMax : SelectionSet (Maybe String) Fractal.Object.TensionAggregateResult
-nthMax =
-    Object.selectionForField "(Maybe String)" "nthMax" [] (Decode.string |> Decode.nullable)
-
-
 titleMin : SelectionSet (Maybe String) Fractal.Object.TensionAggregateResult
 titleMin =
     Object.selectionForField "(Maybe String)" "titleMin" [] (Decode.string |> Decode.nullable)

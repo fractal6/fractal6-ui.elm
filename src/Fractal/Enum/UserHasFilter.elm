@@ -16,19 +16,19 @@ type UserHasFilter
     | Email
     | EmailHash
     | EmailValidated
+    | Bio
+    | Utc
     | Rights
     | Roles
     | Backed_roles
     | Tensions_created
     | Tensions_assigned
     | Contracts
-    | Bio
-    | Utc
 
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Bio, Utc ]
+    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts ]
 
 
 decoder : Decoder UserHasFilter
@@ -61,6 +61,12 @@ decoder =
                     "emailValidated" ->
                         Decode.succeed EmailValidated
 
+                    "bio" ->
+                        Decode.succeed Bio
+
+                    "utc" ->
+                        Decode.succeed Utc
+
                     "rights" ->
                         Decode.succeed Rights
 
@@ -79,12 +85,6 @@ decoder =
                     "contracts" ->
                         Decode.succeed Contracts
 
-                    "bio" ->
-                        Decode.succeed Bio
-
-                    "utc" ->
-                        Decode.succeed Utc
-
                     _ ->
                         Decode.fail ("Invalid UserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
@@ -93,8 +93,8 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : UserHasFilter -> String
-toString enum =
-    case enum of
+toString enum____ =
+    case enum____ of
         CreatedAt ->
             "createdAt"
 
@@ -119,6 +119,12 @@ toString enum =
         EmailValidated ->
             "emailValidated"
 
+        Bio ->
+            "bio"
+
+        Utc ->
+            "utc"
+
         Rights ->
             "rights"
 
@@ -137,12 +143,6 @@ toString enum =
         Contracts ->
             "contracts"
 
-        Bio ->
-            "bio"
-
-        Utc ->
-            "utc"
-
 
 {-| Convert from a String representation to an elm representation enum.
 This is the inverse of the Enum `toString` function. So you can call `toString` and then convert back `fromString` safely.
@@ -156,8 +156,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe UserHasFilter
-fromString enumString =
-    case enumString of
+fromString enumString____ =
+    case enumString____ of
         "createdAt" ->
             Just CreatedAt
 
@@ -182,6 +182,12 @@ fromString enumString =
         "emailValidated" ->
             Just EmailValidated
 
+        "bio" ->
+            Just Bio
+
+        "utc" ->
+            Just Utc
+
         "rights" ->
             Just Rights
 
@@ -199,12 +205,6 @@ fromString enumString =
 
         "contracts" ->
             Just Contracts
-
-        "bio" ->
-            Just Bio
-
-        "utc" ->
-            Just Utc
 
         _ ->
             Nothing

@@ -189,7 +189,7 @@ export const GraphPack = {
 
     // Graph fx settings
     isLoading: true,
-    minZoomDuration: 350, // 1250
+    minZoomDuration: 450, // 1250
     zoomFactorRoot: 2.02,
     zoomFactorCircle: 2.02,
     zoomFactorRole: 6,
@@ -204,11 +204,11 @@ export const GraphPack = {
 
     // State
     colToCircle : {}, // Dataset to swich between color of a circle (in the hidden canvas) and the node data
-    nextCol: 1,
+    nextCol     : 1,
     colorCircle : null,
     rootNode    : null, // The root node of the graph
     focusedNode : null, // The node that has the active focus
-    zoomedNode : null, // The node that has is centered
+    zoomedNode  : null, // The node that has is centered
     hoveredNode : null, // The node that is curently hoovered
     isFrozen    : false, // prevent mouse move glitching thing
 

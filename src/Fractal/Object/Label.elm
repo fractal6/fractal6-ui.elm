@@ -56,16 +56,16 @@ tensions :
     (TensionsOptionalArguments -> TensionsOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Tension
     -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Label
-tensions fillInOptionals object_ =
+tensions fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "tensions" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "tensions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
 type alias NodesOptionalArguments =
@@ -80,16 +80,16 @@ nodes :
     (NodesOptionalArguments -> NodesOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Node
     -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Label
-nodes fillInOptionals object_ =
+nodes fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNodeOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "nodes" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "nodes" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
 n_nodes : SelectionSet (Maybe Int) Fractal.Object.Label
@@ -110,16 +110,16 @@ tensionsAggregate :
     (TensionsAggregateOptionalArguments -> TensionsAggregateOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.TensionAggregateResult
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Label
-tensionsAggregate fillInOptionals object_ =
+tensionsAggregate fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeTensionFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "tensionsAggregate" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "tensionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias NodesAggregateOptionalArguments =
@@ -130,13 +130,13 @@ nodesAggregate :
     (NodesAggregateOptionalArguments -> NodesAggregateOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.NodeAggregateResult
     -> SelectionSet (Maybe decodesTo) Fractal.Object.Label
-nodesAggregate fillInOptionals object_ =
+nodesAggregate fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "nodesAggregate" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "nodesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

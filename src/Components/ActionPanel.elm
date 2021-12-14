@@ -5,12 +5,13 @@ import Browser.Events as Events
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
+import Components.UserInput as UserInput
 import Dict exposing (Dict)
 import Dom
 import Extra exposing (mor, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
-import Form exposing (isPostEmpty, isPostSendable)
+import Form exposing (isPostEmpty, isUsersSendable)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -28,7 +29,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, initActionForm)
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nid2rootid)
-import ModelCommon.View exposing (roleColor)
+import ModelCommon.View exposing (roleColor, viewUserFull)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (actionRequest)
@@ -59,6 +60,7 @@ type alias Model =
 
     -- Components
     , moveTension : MoveTension.State
+    , userInput : UserInput.State
     }
 
 
@@ -67,11 +69,10 @@ type PanelState
     | VisibilityAction
     | AuthorityAction
     | LinkAction
-    | UnLinkAction
+    | UnLinkAction User
     | ArchiveAction
     | UnarchiveAction
     | LeaveAction
-    | NoAction
 
 
 type ActionStep
@@ -86,7 +87,7 @@ initModel user =
     , isOpen = False
     , isModalActive = False
     , form = initActionForm "" user
-    , state = NoAction
+    , state = LinkAction -- random
     , step = StepOne
     , domid = ""
 
@@ -94,6 +95,7 @@ initModel user =
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , moveTension = MoveTension.init user
+    , userInput = UserInput.init user
     }
 
 
@@ -117,7 +119,7 @@ action2str action =
         LinkAction ->
             upH T.invite
 
-        UnLinkAction ->
+        UnLinkAction _ ->
             upH T.unlink
 
         ArchiveAction ->
@@ -128,9 +130,6 @@ action2str action =
 
         LeaveAction ->
             upH T.leaveRole
-
-        NoAction ->
-            "no action"
 
 
 auth2str : NodeType.NodeType -> String
@@ -158,7 +157,7 @@ action2submitstr action =
         LinkAction ->
             upH T.invite
 
-        UnLinkAction ->
+        UnLinkAction _ ->
             upH T.unlink
 
         ArchiveAction ->
@@ -169,9 +168,6 @@ action2submitstr action =
 
         LeaveAction ->
             upH T.leaveRole
-
-        NoAction ->
-            "no action"
 
 
 action2header : PanelState -> NodeType.NodeType -> String
@@ -192,10 +188,10 @@ action2header action type_ =
                     "Change Authority of: "
 
         LinkAction ->
-            "Invite a first-link for: "
+            "New first-link for Role: "
 
-        UnLinkAction ->
-            "Unlink the first-link of: "
+        UnLinkAction _ ->
+            "Unlink the Role: "
 
         ArchiveAction ->
             "Archive {{type}}: "
@@ -205,9 +201,6 @@ action2header action type_ =
 
         LeaveAction ->
             "Leave {{type}}: "
-
-        NoAction ->
-            "not implemented"
 
 
 action2post : PanelState -> String
@@ -223,10 +216,10 @@ action2post action =
             T.authority ++ " " ++ T.changed
 
         LinkAction ->
-            "@todo: invited or unlinked"
+            "User has been invited"
 
-        UnLinkAction ->
-            "@todo: invited or unlinked"
+        UnLinkAction _ ->
+            "User unlinked"
 
         ArchiveAction ->
             T.documentArchived
@@ -236,9 +229,6 @@ action2post action =
 
         LeaveAction ->
             T.roleLeft
-
-        NoAction ->
-            "error: No action requested"
 
 
 action2color : PanelState -> String
@@ -256,7 +246,7 @@ action2color action =
         LinkAction ->
             "link"
 
-        UnLinkAction ->
+        UnLinkAction _ ->
             "danger"
 
         LeaveAction ->
@@ -356,9 +346,9 @@ setActionForm data =
         events =
             case data.state of
                 MoveAction ->
-                    [ Ev TensionEvent.Moved "" "" ]
+                    -- @see MoveTension.elm
+                    []
 
-                -- @see MoveTension.elm
                 VisibilityAction ->
                     [ Ev TensionEvent.Visibility
                         (node.visibility |> NodeVisibility.toString)
@@ -385,9 +375,9 @@ setActionForm data =
                         (mor frag.first_link (node.first_link |> Maybe.map (\x -> x.username)) |> withDefault "")
                     ]
 
-                UnLinkAction ->
+                UnLinkAction user ->
                     [ Ev TensionEvent.MemberUnlinked
-                        (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
+                        user.username
                         ""
                     ]
 
@@ -402,9 +392,6 @@ setActionForm data =
                         (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
                         node.nameid
                     ]
-
-                NoAction ->
-                    []
     in
     data |> setEvents events
 
@@ -485,7 +472,7 @@ canExitSafe model =
                             List.member model.form.fragment.role_type [ model.form.node.role_type, Nothing ]
 
                 LinkAction ->
-                    model.form.fragment.first_link /= Nothing
+                    not (isUsersSendable model.form.users)
 
                 _ ->
                     True
@@ -514,6 +501,9 @@ isSendable model =
                 NodeType.Role ->
                     model.form.node.role_type /= mor model.form.fragment.role_type model.form.node.role_type
 
+        LinkAction ->
+            isUsersSendable model.form.users
+
         _ ->
             True
 
@@ -532,6 +522,7 @@ type Msg
     | PushAction ActionForm PanelState
     | OnSubmit (Time.Posix -> Msg)
     | OnOpenModal PanelState
+    | OnOpenModal2 PanelState (GqlData NodesDict)
     | OnCloseModal ModalData
     | OnCloseModalSafe String String
     | OnUpdatePost String String
@@ -556,6 +547,7 @@ type Msg
     | Navigate String
       -- Components
     | MoveTensionMsg MoveTension.Msg
+    | UserInputMsg UserInput.Msg
 
 
 type alias Out =
@@ -611,19 +603,12 @@ update_ apis message model =
             ( reset model, noOut )
 
         PushAction form state ->
-            let
-                ackMsg =
-                    case state of
-                        MoveAction ->
-                            \_ -> NoMsg
+            case state of
+                LinkAction ->
+                    ( model, out0 [ actionRequest apis.gql form PushAck ] )
 
-                        NoAction ->
-                            \_ -> NoMsg
-
-                        _ ->
-                            PushAck
-            in
-            ( model, out0 [ actionRequest apis.gql form ackMsg ] )
+                _ ->
+                    ( model, out0 [ actionRequest apis.gql form PushAck ] )
 
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
@@ -637,6 +622,24 @@ update_ apis message model =
                         |> setStep StepOne
             in
             ( newModel, out0 [ Ports.open_modal ("actionPanelModal" ++ model.domid) ] )
+
+        OnOpenModal2 action orga_data ->
+            let
+                newModel =
+                    model
+                        |> openModal
+                        |> setAction action
+                        |> setStep StepOne
+
+                cmds =
+                    case action of
+                        LinkAction ->
+                            [ Cmd.map UserInputMsg (send (UserInput.OnLoad orga_data)) ]
+
+                        _ ->
+                            []
+            in
+            ( newModel, out0 ([ Ports.open_modal ("actionPanelModal" ++ model.domid) ] ++ cmds) )
 
         OnCloseModal data ->
             let
@@ -682,7 +685,7 @@ update_ apis message model =
                                 in
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
 
-                            UnLinkAction ->
+                            UnLinkAction _ ->
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
 
                             ArchiveAction ->
@@ -694,9 +697,6 @@ update_ apis message model =
                             LeaveAction ->
                                 -- Ignore Guest deletion (either non visible or very small)
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
-
-                            NoAction ->
-                                []
 
                     else
                         []
@@ -732,21 +732,12 @@ update_ apis message model =
                         |> setActionForm
                         |> setActionResult LoadingSlowly
             in
-            ( data, out0 [ send (PushAction data.form data.state) ] )
-
-        OnActionMove ->
-            ( model, out0 [ getTensionHead apis.gql model.form.tid GotTensionToMove ] )
-
-        GotTensionToMove result ->
-            case result of
-                Success th ->
-                    ( model, out0 [ send (DoMove th) ] )
+            case model.state of
+                LinkAction ->
+                    ( data, out0 [ send (PushAction data.form data.state) ] )
 
                 _ ->
-                    ( model, noOut )
-
-        DoMove t ->
-            ( model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ] )
+                    ( data, out0 [ send (PushAction data.form data.state) ] )
 
         PushAck result ->
             case parseErr result model.refresh_trial of
@@ -763,6 +754,20 @@ update_ apis message model =
 
                 _ ->
                     ( model |> setActionResult result, noOut )
+
+        OnActionMove ->
+            ( model, out0 [ getTensionHead apis.gql model.form.tid GotTensionToMove ] )
+
+        GotTensionToMove result ->
+            case result of
+                Success th ->
+                    ( model, out0 [ send (DoMove th) ] )
+
+                _ ->
+                    ( model, noOut )
+
+        DoMove t ->
+            ( model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -824,6 +829,31 @@ update_ apis message model =
             in
             ( { model | moveTension = data }, out2 (List.map (\m -> Cmd.map MoveTensionMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
 
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                users =
+                    out.result
+                        |> Maybe.map
+                            (\( t, u ) ->
+                                if t then
+                                    u
+
+                                else
+                                    []
+                            )
+                        |> withDefault model.form.users
+
+                ( cmds, gcmds ) =
+                    ( [], [] )
+
+                form =
+                    model.form
+            in
+            ( { model | userInput = data, form = { form | users = users } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
@@ -831,6 +861,7 @@ subscriptions (State model) =
       Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
+        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
         ++ (if model.isOpen then
                 [ Events.onMouseUp (Dom.outsideClickClose model.domid OnClose)
                 , Events.onKeyUp (Dom.key "Escape" OnClose)
@@ -921,11 +952,11 @@ viewPanel op model =
                             NodeType.Role ->
                                 case model.form.node.first_link of
                                     Just user ->
-                                        div [ class "dropdown-item button-light", onClick (OnOpenModal UnLinkAction) ]
-                                            [ I.icon1 "icon-user-plus" (action2str UnLinkAction) ]
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal (UnLinkAction user)) ]
+                                            [ I.icon1 "icon-user-plus" (action2str (UnLinkAction user)) ]
 
                                     Nothing ->
-                                        div [ class "dropdown-item button-light", onClick (OnOpenModal LinkAction) ]
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.orga_data) ]
                                             [ I.icon1 "icon-user-plus" (action2str LinkAction) ]
 
                         --
@@ -995,7 +1026,7 @@ viewModalContent op model =
                     div
                         [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH (action2post model.state)
+                        , textH (action2post model.state ++ ".")
                         ]
 
                 Failure err ->
@@ -1012,18 +1043,8 @@ viewModalContent op model =
 viewStep1 : Op -> Model -> Html Msg
 viewStep1 op model =
     let
-        header =
-            action2header model.state model.form.node.type_
-
         color =
             action2color model.state
-
-        name =
-            model.form.node.name
-
-        type_ =
-            model.form.node.type_
-                |> NodeType.toString
 
         isLoading =
             model.action_result == LoadingSlowly
@@ -1031,31 +1052,39 @@ viewStep1 op model =
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
             [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
-                [ header
-                    |> Format.namedValue "type" type_
-                    --|> Format.namedValue "name" name
+                [ action2header model.state model.form.node.type_
+                    |> Format.namedValue "type" (NodeType.toString model.form.node.type_)
                     |> text
                     |> List.singleton
                     |> span []
-                , span [ class "has-text-primary" ] [ text name ]
+                , span [ class "has-text-primary" ] [ text model.form.node.name ]
                 ]
             ]
-        , div [ class "modal-card-body" ]
-            [ case model.state of
+        , div [ class "modal-card-body" ] <|
+            case model.state of
                 VisibilityAction ->
-                    viewVisibility op model
+                    [ viewVisibility op model ]
 
                 AuthorityAction ->
                     case model.form.node.type_ of
                         NodeType.Circle ->
-                            viewCircleAuthority op model
+                            [ viewCircleAuthority op model ]
 
                         NodeType.Role ->
-                            viewRoleAuthority op model
+                            [ viewRoleAuthority op model ]
+
+                LinkAction ->
+                    [ UserInput.view {} model.userInput |> Html.map UserInputMsg
+                    , viewComment op model
+                    ]
+
+                UnLinkAction user ->
+                    [ div [ class "mb-5" ] [ text "Confirm to unlink user: ", viewUserFull 2 True True user ]
+                    , viewComment op model
+                    ]
 
                 _ ->
-                    viewComment op model
-            ]
+                    [ viewComment op model ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
             [ case model.action_result of
                 Failure err ->

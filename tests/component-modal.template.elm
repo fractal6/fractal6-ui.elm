@@ -6,7 +6,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
-import Form exposing (isPostEmpty, isPostSendable)
+import Form exposing (isPostEmpty)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)

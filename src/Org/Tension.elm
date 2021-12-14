@@ -315,7 +315,6 @@ type Msg
     | PushBlobAck (GqlData BlobFlag)
       -- User Quick Search
     | ChangeUserPattern Int String
-    | ChangeUserRole Int String
     | ChangeUserLookup (LookupResult User)
     | SelectUser Int String
     | CancelUser Int
@@ -1125,12 +1124,6 @@ update global message model =
         ChangeUserPattern pos pattern ->
             ( { model | nodeDoc = NodeDoc.updateUserPattern pos pattern model.nodeDoc }
             , Ports.searchUser pattern
-            , Cmd.none
-            )
-
-        ChangeUserRole pos role ->
-            ( { model | nodeDoc = NodeDoc.updateUserRole pos role model.nodeDoc }
-            , Cmd.none
             , Cmd.none
             )
 
@@ -2529,7 +2522,6 @@ viewDocument u t b model =
                             , onAddPolicies = AddPolicies
                             , onAddResponsabilities = AddResponsabilities
                             , onChangeUserPattern = ChangeUserPattern
-                            , onChangeUserRole = ChangeUserRole
                             , onSelectUser = SelectUser
                             , onCancelUser = CancelUser
                             , onShowLookupFs = ShowLookupFs

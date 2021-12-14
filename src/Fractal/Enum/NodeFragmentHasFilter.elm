@@ -8,23 +8,23 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type NodeFragmentHasFilter
-    = Name
-    | Nameid
-    | Type_
+    = Nameid
+    | Name
     | About
     | Mandate
+    | Skills
+    | Children
     | Visibility
     | Mode
-    | Children
+    | Type_
     | First_link
     | Second_link
-    | Skills
     | Role_type
 
 
 list : List NodeFragmentHasFilter
 list =
-    [ Name, Nameid, Type_, About, Mandate, Visibility, Mode, Children, First_link, Second_link, Skills, Role_type ]
+    [ Nameid, Name, About, Mandate, Skills, Children, Visibility, Mode, Type_, First_link, Second_link, Role_type ]
 
 
 decoder : Decoder NodeFragmentHasFilter
@@ -33,14 +33,11 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "name" ->
-                        Decode.succeed Name
-
                     "nameid" ->
                         Decode.succeed Nameid
 
-                    "type_" ->
-                        Decode.succeed Type_
+                    "name" ->
+                        Decode.succeed Name
 
                     "about" ->
                         Decode.succeed About
@@ -48,23 +45,26 @@ decoder =
                     "mandate" ->
                         Decode.succeed Mandate
 
+                    "skills" ->
+                        Decode.succeed Skills
+
+                    "children" ->
+                        Decode.succeed Children
+
                     "visibility" ->
                         Decode.succeed Visibility
 
                     "mode" ->
                         Decode.succeed Mode
 
-                    "children" ->
-                        Decode.succeed Children
+                    "type_" ->
+                        Decode.succeed Type_
 
                     "first_link" ->
                         Decode.succeed First_link
 
                     "second_link" ->
                         Decode.succeed Second_link
-
-                    "skills" ->
-                        Decode.succeed Skills
 
                     "role_type" ->
                         Decode.succeed Role_type
@@ -77,16 +77,13 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : NodeFragmentHasFilter -> String
-toString enum =
-    case enum of
-        Name ->
-            "name"
-
+toString enum____ =
+    case enum____ of
         Nameid ->
             "nameid"
 
-        Type_ ->
-            "type_"
+        Name ->
+            "name"
 
         About ->
             "about"
@@ -94,23 +91,26 @@ toString enum =
         Mandate ->
             "mandate"
 
+        Skills ->
+            "skills"
+
+        Children ->
+            "children"
+
         Visibility ->
             "visibility"
 
         Mode ->
             "mode"
 
-        Children ->
-            "children"
+        Type_ ->
+            "type_"
 
         First_link ->
             "first_link"
 
         Second_link ->
             "second_link"
-
-        Skills ->
-            "skills"
 
         Role_type ->
             "role_type"
@@ -128,16 +128,13 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe NodeFragmentHasFilter
-fromString enumString =
-    case enumString of
-        "name" ->
-            Just Name
-
+fromString enumString____ =
+    case enumString____ of
         "nameid" ->
             Just Nameid
 
-        "type_" ->
-            Just Type_
+        "name" ->
+            Just Name
 
         "about" ->
             Just About
@@ -145,23 +142,26 @@ fromString enumString =
         "mandate" ->
             Just Mandate
 
+        "skills" ->
+            Just Skills
+
+        "children" ->
+            Just Children
+
         "visibility" ->
             Just Visibility
 
         "mode" ->
             Just Mode
 
-        "children" ->
-            Just Children
+        "type_" ->
+            Just Type_
 
         "first_link" ->
             Just First_link
 
         "second_link" ->
             Just Second_link
-
-        "skills" ->
-            Just Skills
 
         "role_type" ->
             Just Role_type

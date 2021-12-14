@@ -1,11 +1,15 @@
 module Form exposing (..)
 
 import Dict
+import ModelCommon exposing (UserForm)
 import ModelSchema exposing (Post)
 
 
-{-| Test require fields
--}
+isUsersSendable : List UserForm -> Bool
+isUsersSendable user_forms =
+    user_forms |> List.any (\u -> u.username /= "" || u.email /= "")
+
+
 isPostEmpty : List String -> Post -> Bool
 isPostEmpty keys post =
     keys

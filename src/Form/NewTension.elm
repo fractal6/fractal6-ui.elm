@@ -5,7 +5,7 @@ import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc as NodeDoc exposing (nodeAboutInputView, nodeLinksInputView, nodeMandateInputView)
+import Components.NodeDoc as NodeDoc exposing (nodeAboutInputView, nodeMandateInputView)
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
@@ -147,7 +147,7 @@ initCircleTab type_ model =
                 | type_ = TensionType.Governance
                 , blob_type = Just BlobType.OnNode
                 , node = { node | type_ = Just type_ }
-                , users = [ { username = "", role_type = RoleType.Peer, pattern = "" } ]
+                , users = []
             }
                 |> NodeDoc.updateNodeForm "name" (withDefault "" node.name)
     in
@@ -490,18 +490,6 @@ updateUserPattern pos pattern data =
     { data | form = newForm }
 
 
-updateUserRole : Int -> String -> Model -> Model
-updateUserRole pos role data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = NodeDoc.updateUserRole_ pos role f.users }
-    in
-    { data | form = newForm }
-
-
 selectUser : Int -> String -> Model -> Model
 selectUser pos username data =
     let
@@ -581,7 +569,6 @@ type Msg
     | OnTensionAck (GqlData Tension)
       -- User Quick Search
     | OnChangeUserPattern Int String
-    | OnChangeUserRole Int String
     | OnChangeUserLookup (LookupResult User)
     | OnSelectUser Int String
     | OnCancelUser Int
@@ -833,9 +820,6 @@ update_ apis message model =
             ( updateUserPattern pos pattern model
             , out0 [ Ports.searchUser pattern ]
             )
-
-        OnChangeUserRole pos role ->
-            ( updateUserRole pos role model, noOut )
 
         OnChangeUserLookup users_ ->
             case users_ of
@@ -1260,7 +1244,6 @@ viewCircle op (State model) =
                     , onAddDomains = OnAddDomains
                     , onAddPolicies = OnAddPolicies
                     , onAddResponsabilities = OnAddResponsabilities
-                    , onChangeUserRole = OnChangeUserRole
                     , onSelectUser = OnSelectUser
                     , onCancelUser = OnCancelUser
                     , onShowLookupFs = OnShowLookupFs
@@ -1291,21 +1274,6 @@ viewCircle op (State model) =
                         , div [ class "card-content" ]
                             [ nodeMandateInputView txt form.node op_ ]
                         ]
-                    , if model.doAddLinks || (form.users |> List.filter (\u -> u.username /= "")) /= [] then
-                        div
-                            [ class "card cardForm"
-                            , attribute "style" "overflow: unset;"
-                            ]
-                            --[ div [ class "card-header" ] [ div [ class "card-header-title" ] [ textH T.firstLink ] ]
-                            [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.firstLink ]
-                            , div [ class "card-content" ] [ nodeLinksInputView txt form model op_ ]
-                            ]
-
-                      else
-                        div [ class "field" ]
-                            [ div [ class "button is-info", onClick OnAddLinks ]
-                                [ I.icon1 "icon-plus" "", text "Add first link" ]
-                            ]
                     , br [] []
                     , div [ class "field" ]
                         [ div [ class "control" ]

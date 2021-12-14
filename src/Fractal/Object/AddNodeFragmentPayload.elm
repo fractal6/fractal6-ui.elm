@@ -31,16 +31,16 @@ nodeFragment :
     (NodeFragmentOptionalArguments -> NodeFragmentOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.NodeFragment
     -> SelectionSet (Maybe (List (Maybe decodesTo))) Fractal.Object.AddNodeFragmentPayload
-nodeFragment fillInOptionals object_ =
+nodeFragment fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "nodeFragment" optionalArgs object_ (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "nodeFragment" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
 numUids : SelectionSet (Maybe Int) Fractal.Object.AddNodeFragmentPayload

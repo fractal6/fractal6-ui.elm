@@ -19,11 +19,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Vote
-id =
-    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
-
-
 voteid : SelectionSet String Fractal.Object.Vote
 voteid =
     Object.selectionForField "String" "voteid" [] Decode.string
@@ -37,16 +32,16 @@ contract :
     (ContractOptionalArguments -> ContractOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Contract
     -> SelectionSet decodesTo Fractal.Object.Vote
-contract fillInOptionals object_ =
+contract fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeContractFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeContractFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "contract" optionalArgs object_ identity
+    Object.selectionForCompositeField "contract" optionalArgs____ object____ Basics.identity
 
 
 type alias NodeOptionalArguments =
@@ -57,21 +52,26 @@ node :
     (NodeOptionalArguments -> NodeOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Node
     -> SelectionSet decodesTo Fractal.Object.Vote
-node fillInOptionals object_ =
+node fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "node" optionalArgs object_ identity
+    Object.selectionForCompositeField "node" optionalArgs____ object____ Basics.identity
 
 
 data : SelectionSet (List Int) Fractal.Object.Vote
 data =
     Object.selectionForField "(List Int)" "data" [] (Decode.int |> Decode.list)
+
+
+id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.Vote
+id =
+    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
 type alias CreatedByOptionalArguments =
@@ -82,16 +82,16 @@ createdBy :
     (CreatedByOptionalArguments -> CreatedByOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.User
     -> SelectionSet decodesTo Fractal.Object.Vote
-createdBy fillInOptionals object_ =
+createdBy fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeUserFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "createdBy" optionalArgs object_ identity
+    Object.selectionForCompositeField "createdBy" optionalArgs____ object____ Basics.identity
 
 
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.Vote

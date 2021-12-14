@@ -7,9 +7,8 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
 import Extra.Events exposing (onClickPD, onClickPD2)
-import Form exposing (isPostEmpty, isPostSendable)
+import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractType as ContractType
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)

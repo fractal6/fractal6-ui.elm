@@ -309,6 +309,18 @@ initUserSearch data =
         }
 
 
+initUserSearchSeek : List User -> String -> Cmd msg
+initUserSearchSeek data pattern =
+    outgoing
+        { action = "INIT_USERSEARCHSEEK"
+        , data =
+            JE.object
+                [ ( "users", usersEncoder data )
+                , ( "pattern", JE.string pattern )
+                ]
+        }
+
+
 initLabelSearch : List Label -> Cmd msg
 initLabelSearch data =
     outgoing

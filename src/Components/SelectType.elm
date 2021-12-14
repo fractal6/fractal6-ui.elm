@@ -7,7 +7,6 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
-import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (send, sendNow, sendSleep)

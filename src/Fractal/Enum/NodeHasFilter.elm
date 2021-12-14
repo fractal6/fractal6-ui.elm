@@ -35,13 +35,14 @@ type NodeHasFilter
     | Second_link
     | Skills
     | Role_type
+    | Role_ext
     | Contracts
     | Orga_agg
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, Labels, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, First_link, Second_link, Skills, Role_type, Contracts, Orga_agg ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, Labels, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, First_link, Second_link, Skills, Role_type, Role_ext, Contracts, Orga_agg ]
 
 
 decoder : Decoder NodeHasFilter
@@ -131,6 +132,9 @@ decoder =
                     "role_type" ->
                         Decode.succeed Role_type
 
+                    "role_ext" ->
+                        Decode.succeed Role_ext
+
                     "contracts" ->
                         Decode.succeed Contracts
 
@@ -145,8 +149,8 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : NodeHasFilter -> String
-toString enum =
-    case enum of
+toString enum____ =
+    case enum____ of
         CreatedBy ->
             "createdBy"
 
@@ -228,6 +232,9 @@ toString enum =
         Role_type ->
             "role_type"
 
+        Role_ext ->
+            "role_ext"
+
         Contracts ->
             "contracts"
 
@@ -247,8 +254,8 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe NodeHasFilter
-fromString enumString =
-    case enumString of
+fromString enumString____ =
+    case enumString____ of
         "createdBy" ->
             Just CreatedBy
 
@@ -329,6 +336,9 @@ fromString enumString =
 
         "role_type" ->
             Just Role_type
+
+        "role_ext" ->
+            Just Role_ext
 
         "contracts" ->
             Just Contracts

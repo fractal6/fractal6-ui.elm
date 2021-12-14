@@ -8,8 +8,8 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type NodeFragmentOrderable
-    = Name
-    | Nameid
+    = Nameid
+    | Name
     | About
     | First_link
     | Second_link
@@ -17,7 +17,7 @@ type NodeFragmentOrderable
 
 list : List NodeFragmentOrderable
 list =
-    [ Name, Nameid, About, First_link, Second_link ]
+    [ Nameid, Name, About, First_link, Second_link ]
 
 
 decoder : Decoder NodeFragmentOrderable
@@ -26,11 +26,11 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "name" ->
-                        Decode.succeed Name
-
                     "nameid" ->
                         Decode.succeed Nameid
+
+                    "name" ->
+                        Decode.succeed Name
 
                     "about" ->
                         Decode.succeed About
@@ -49,13 +49,13 @@ decoder =
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : NodeFragmentOrderable -> String
-toString enum =
-    case enum of
-        Name ->
-            "name"
-
+toString enum____ =
+    case enum____ of
         Nameid ->
             "nameid"
+
+        Name ->
+            "name"
 
         About ->
             "about"
@@ -79,13 +79,13 @@ This can be useful for generating Strings to use for <select> menus to check whi
 
 -}
 fromString : String -> Maybe NodeFragmentOrderable
-fromString enumString =
-    case enumString of
-        "name" ->
-            Just Name
-
+fromString enumString____ =
+    case enumString____ of
         "nameid" ->
             Just Nameid
+
+        "name" ->
+            Just Name
 
         "about" ->
             Just About

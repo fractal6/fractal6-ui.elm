@@ -45,6 +45,10 @@ type AddOrgaAggPayload
     = AddOrgaAggPayload
 
 
+type AddRoleExtPayload
+    = AddRoleExtPayload
+
+
 type AddTensionPayload
     = AddTensionPayload
 
@@ -127,6 +131,10 @@ type DeleteOrgaAggPayload
 
 type DeletePostPayload
     = DeletePostPayload
+
+
+type DeleteRoleExtPayload
+    = DeleteRoleExtPayload
 
 
 type DeleteTensionPayload
@@ -225,6 +233,14 @@ type PostAggregateResult
     = PostAggregateResult
 
 
+type RoleExt
+    = RoleExt
+
+
+type RoleExtAggregateResult
+    = RoleExtAggregateResult
+
+
 type Tension
     = Tension
 
@@ -275,6 +291,10 @@ type UpdateOrgaAggPayload
 
 type UpdatePostPayload
     = UpdatePostPayload
+
+
+type UpdateRoleExtPayload
+    = UpdateRoleExtPayload
 
 
 type UpdateTensionPayload

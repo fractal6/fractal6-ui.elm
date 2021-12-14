@@ -18,7 +18,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionForm, UserForm)
+import ModelCommon exposing (ContractForm, TensionForm, UserForm)
 import ModelSchema exposing (..)
 import Query.QueryContract exposing (cidPayload, contractPayload)
 import RemoteData exposing (RemoteData)
@@ -67,8 +67,8 @@ addOneContract url form msg =
 -- input Encoder
 
 
+addContractInputEncoder : ContractForm -> Mutation.AddContractRequiredArguments
 addContractInputEncoder f =
-    --addContractInputEncoder : ContractForm -> Mutation.AddContractRequiredArguments
     let
         cat =
             Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime

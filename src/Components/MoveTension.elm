@@ -6,7 +6,7 @@ import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
-import Form exposing (isPostEmpty, isPostSendable)
+import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent

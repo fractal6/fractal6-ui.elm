@@ -28,19 +28,14 @@ id =
     Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
 
 
-name : SelectionSet (Maybe String) Fractal.Object.NodeFragment
-name =
-    Object.selectionForField "(Maybe String)" "name" [] (Decode.string |> Decode.nullable)
-
-
 nameid : SelectionSet (Maybe String) Fractal.Object.NodeFragment
 nameid =
     Object.selectionForField "(Maybe String)" "nameid" [] (Decode.string |> Decode.nullable)
 
 
-type_ : SelectionSet (Maybe Fractal.Enum.NodeType.NodeType) Fractal.Object.NodeFragment
-type_ =
-    Object.selectionForField "(Maybe Enum.NodeType.NodeType)" "type_" [] (Fractal.Enum.NodeType.decoder |> Decode.nullable)
+name : SelectionSet (Maybe String) Fractal.Object.NodeFragment
+name =
+    Object.selectionForField "(Maybe String)" "name" [] (Decode.string |> Decode.nullable)
 
 
 about : SelectionSet (Maybe String) Fractal.Object.NodeFragment
@@ -56,26 +51,21 @@ mandate :
     (MandateOptionalArguments -> MandateOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Mandate
     -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
-mandate fillInOptionals object_ =
+mandate fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeMandateFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeMandateFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "mandate" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "mandate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
-visibility : SelectionSet (Maybe Fractal.Enum.NodeVisibility.NodeVisibility) Fractal.Object.NodeFragment
-visibility =
-    Object.selectionForField "(Maybe Enum.NodeVisibility.NodeVisibility)" "visibility" [] (Fractal.Enum.NodeVisibility.decoder |> Decode.nullable)
-
-
-mode : SelectionSet (Maybe Fractal.Enum.NodeMode.NodeMode) Fractal.Object.NodeFragment
-mode =
-    Object.selectionForField "(Maybe Enum.NodeMode.NodeMode)" "mode" [] (Fractal.Enum.NodeMode.decoder |> Decode.nullable)
+skills : SelectionSet (Maybe (List String)) Fractal.Object.NodeFragment
+skills =
+    Object.selectionForField "(Maybe (List String))" "skills" [] (Decode.string |> Decode.list |> Decode.nullable)
 
 
 type alias ChildrenOptionalArguments =
@@ -90,16 +80,31 @@ children :
     (ChildrenOptionalArguments -> ChildrenOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.NodeFragment
     -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.NodeFragment
-children fillInOptionals object_ =
+children fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent, order = Absent, first = Absent, offset = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals.first Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFragmentFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNodeFragmentOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "children" optionalArgs object_ (identity >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "children" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
+visibility : SelectionSet (Maybe Fractal.Enum.NodeVisibility.NodeVisibility) Fractal.Object.NodeFragment
+visibility =
+    Object.selectionForField "(Maybe Enum.NodeVisibility.NodeVisibility)" "visibility" [] (Fractal.Enum.NodeVisibility.decoder |> Decode.nullable)
+
+
+mode : SelectionSet (Maybe Fractal.Enum.NodeMode.NodeMode) Fractal.Object.NodeFragment
+mode =
+    Object.selectionForField "(Maybe Enum.NodeMode.NodeMode)" "mode" [] (Fractal.Enum.NodeMode.decoder |> Decode.nullable)
+
+
+type_ : SelectionSet (Maybe Fractal.Enum.NodeType.NodeType) Fractal.Object.NodeFragment
+type_ =
+    Object.selectionForField "(Maybe Enum.NodeType.NodeType)" "type_" [] (Fractal.Enum.NodeType.decoder |> Decode.nullable)
 
 
 first_link : SelectionSet (Maybe String) Fractal.Object.NodeFragment
@@ -110,11 +115,6 @@ first_link =
 second_link : SelectionSet (Maybe String) Fractal.Object.NodeFragment
 second_link =
     Object.selectionForField "(Maybe String)" "second_link" [] (Decode.string |> Decode.nullable)
-
-
-skills : SelectionSet (Maybe (List String)) Fractal.Object.NodeFragment
-skills =
-    Object.selectionForField "(Maybe (List String))" "skills" [] (Decode.string |> Decode.list |> Decode.nullable)
 
 
 role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.NodeFragment
@@ -130,13 +130,13 @@ childrenAggregate :
     (ChildrenAggregateOptionalArguments -> ChildrenAggregateOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.NodeFragmentAggregateResult
     -> SelectionSet (Maybe decodesTo) Fractal.Object.NodeFragment
-childrenAggregate fillInOptionals object_ =
+childrenAggregate fillInOptionals____ object____ =
     let
-        filledInOptionals =
-            fillInOptionals { filter = Absent }
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
 
-        optionalArgs =
-            [ Argument.optional "filter" filledInOptionals.filter Fractal.InputObject.encodeNodeFragmentFilter ]
-                |> List.filterMap identity
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNodeFragmentFilter ]
+                |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "childrenAggregate" optionalArgs object_ (identity >> Decode.nullable)
+    Object.selectionForCompositeField "childrenAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

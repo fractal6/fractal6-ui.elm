@@ -178,20 +178,18 @@ queryNodeExt url nameids msg =
 nodeExtFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
 nodeExtFilter nameids a =
     let
-        nameidsRegxp_ =
+        nameidsRegxp =
             nameids
                 |> List.map (\n -> "^" ++ n ++ "$")
                 |> String.join "|"
-
-        nameidsRegxp =
-            "/" ++ nameidsRegxp_ ++ "/"
+                |> SE.surround "/"
     in
     { a
         | filter =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | nameid = { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } |> Present
+                        | nameid = { regexp = Present nameidsRegxp, eq = Absent, in_ = Absent } |> Present
                     }
                 )
                 |> Present
