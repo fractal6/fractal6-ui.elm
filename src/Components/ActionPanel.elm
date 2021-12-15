@@ -626,7 +626,11 @@ update_ apis message model =
                         ( candidates, pending_candidates ) =
                             List.foldl
                                 (\uf ( cand, pend ) ->
-                                    ( [], [] )
+                                    if uf.email == "" then
+                                        ( [ { username = uf.username } ], [] )
+
+                                    else
+                                        ( [], [ { email = uf.email } ] )
                                 )
                                 ( [], [] )
                                 form.users
