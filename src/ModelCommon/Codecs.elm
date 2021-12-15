@@ -309,6 +309,16 @@ nodeIdCodec parentid targetid type_ =
                 String.join "#" [ parentid, targetid ]
 
 
+contractIdCodec : String -> String -> String -> String -> String
+contractIdCodec tid event_type old new =
+    String.join "#" [ tid, event_type, old, new ]
+
+
+voteIdCodec : String -> String -> String -> String
+voteIdCodec contractid rootnameid username =
+    String.join "#" [ contractid, memberIdCodec rootnameid username ]
+
+
 nid2rootid : String -> String
 nid2rootid nameid =
     nameid |> String.split "#" |> List.head |> withDefault ""

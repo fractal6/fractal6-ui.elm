@@ -8,7 +8,7 @@ module Query.AddTension exposing
     )
 
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (listToMaybe, ternary)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -83,13 +83,13 @@ addTensionInputEncoder f =
             Dict.get "title" f.post |> withDefault ""
 
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         message =
             Dict.get "message" f.post |> withDefault ""
 
         inputReq =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
+            { createdAt = createdAt
             , createdBy =
                 Input.buildUserRef
                     (\x -> { x | username = Present f.uctx.username })
@@ -109,7 +109,7 @@ addTensionInputEncoder f =
                             Input.buildEventRef
                                 (\x ->
                                     { x
-                                        | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                                        | createdAt = createdAt |> Present
                                         , createdBy =
                                             Input.buildUserRef
                                                 (\u -> { u | username = Present f.uctx.username })
@@ -145,14 +145,14 @@ tensionFromForm f =
             Dict.get "title" f.post |> withDefault ""
 
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         message =
             Dict.get "message" f.post |> withDefault ""
     in
     \t ->
         { t
-            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+            | createdAt = createdAt |> Present
             , createdBy =
                 Input.buildUserRef
                     (\x -> { x | username = Present f.uctx.username })
@@ -183,11 +183,11 @@ buildLabels form =
                         { x | id = Present (encodeId label.id) }
                     )
             )
-        |> (\x -> ternary (x == []) Nothing (Just x))
+        |> listToMaybe
         |> fromMaybe
 
 
-buildComment : String -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
+buildComment : Fractal.Scalar.DateTime -> String -> Maybe String -> OptionalArgument (List Input.CommentRef)
 buildComment createdAt username message_m =
     message_m
         |> Maybe.map
@@ -195,7 +195,7 @@ buildComment createdAt username message_m =
                 [ Input.buildCommentRef
                     (\x ->
                         { x
-                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            | createdAt = createdAt |> Present
                             , createdBy =
                                 Input.buildUserRef
                                     (\u -> { u | username = Present username })
@@ -208,7 +208,7 @@ buildComment createdAt username message_m =
         |> fromMaybe
 
 
-buildBlob : String -> String -> Maybe BlobType.BlobType -> List UserForm -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
+buildBlob : Fractal.Scalar.DateTime -> String -> Maybe BlobType.BlobType -> List UserForm -> NodeFragment -> Post -> OptionalArgument (List Input.BlobRef)
 buildBlob createdAt username blob_type_m users node post =
     blob_type_m
         |> Maybe.map
@@ -216,7 +216,7 @@ buildBlob createdAt username blob_type_m users node post =
                 [ Input.buildBlobRef
                     (\x ->
                         { x
-                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            | createdAt = createdAt |> Present
                             , createdBy =
                                 Input.buildUserRef
                                     (\u -> { u | username = Present username })
@@ -231,7 +231,7 @@ buildBlob createdAt username blob_type_m users node post =
         |> fromMaybe
 
 
-buildEvents : String -> String -> List Ev -> OptionalArgument (List Input.EventRef)
+buildEvents : Fractal.Scalar.DateTime -> String -> List Ev -> OptionalArgument (List Input.EventRef)
 buildEvents createdAt username events =
     events
         |> List.map
@@ -239,7 +239,7 @@ buildEvents createdAt username events =
                 Input.buildEventRef
                     (\x ->
                         { x
-                            | createdAt = createdAt |> Fractal.Scalar.DateTime |> Present
+                            | createdAt = createdAt |> Present
                             , createdBy =
                                 Input.buildUserRef
                                     (\u -> { u | username = Present username })

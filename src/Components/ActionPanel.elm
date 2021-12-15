@@ -12,6 +12,8 @@ import Extra exposing (mor, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
+import Fractal.Enum.ContractStatus as ContractStatus
+import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -27,11 +29,12 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, initActionForm)
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nid2rootid)
+import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, buildVote, ev2eventFragment, initActionForm)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, contractIdCodec, nid2rootid, voteIdCodec)
 import ModelCommon.View exposing (roleColor, viewUserFull)
 import ModelSchema exposing (..)
 import Ports
+import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryTension exposing (getTensionHead)
 import Session exposing (Apis, GlobalCmd(..))
@@ -46,7 +49,7 @@ type State
 
 type alias Model =
     { user : UserState
-    , action_result : GqlData ActionResult
+    , action_result : GqlData IdPayload
     , isOpen : Bool
     , isModalActive : Bool
     , form : ActionForm
@@ -288,7 +291,7 @@ close data =
     { data | isOpen = False }
 
 
-setActionResult : GqlData ActionResult -> Model -> Model
+setActionResult : GqlData IdPayload -> Model -> Model
 setActionResult result data =
     let
         ( isModalActive, step ) =
@@ -534,7 +537,7 @@ type Msg
       --
       --| ActionStep1 xxx
     | GotTensionToMove (GqlData TensionHead)
-    | PushAck (GqlData ActionResult)
+    | PushAck (GqlData IdPayload)
       -- move tension
     | DoMove TensionHead
       -- Confirm Modal
@@ -605,7 +608,44 @@ update_ apis message model =
         PushAction form state ->
             case state of
                 LinkAction ->
-                    ( model, out0 [ actionRequest apis.gql form PushAck ] )
+                    let
+                        -- @codefactor: put it in Codec.contractIdCodec.
+                        -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
+                        ( et, old, new ) =
+                            List.head form.events
+                                |> Maybe.map (\x -> ( TensionEvent.toString x.event_type, x.old, x.new ))
+                                |> withDefault ( "", "", "" )
+
+                        contractid =
+                            contractIdCodec form.tid et old new
+
+                        rootnameid =
+                            nid2rootid form.node.nameid
+
+                        -- Feed candidate and pendingcandidate
+                        ( candidates, pending_candidates ) =
+                            List.foldl
+                                (\uf ( cand, pend ) ->
+                                    ( [], [] )
+                                )
+                                ( [], [] )
+                                form.users
+
+                        --form.users |> ...
+                        contractForm =
+                            { uctx = form.uctx
+                            , tid = form.tid
+                            , event = form.events |> List.map ev2eventFragment |> List.head |> withDefault initEventFragment
+                            , post = form.post
+                            , status = ContractStatus.Open
+                            , contract_type = ContractType.AnyCandidates
+                            , contractid = contractid
+                            , participants = [ buildVote contractid rootnameid form.uctx.username 1 ]
+                            , candidates = candidates
+                            , pending_candidates = pending_candidates
+                            }
+                    in
+                    ( model, out0 [ addOneContract apis.gql contractForm PushAck ] )
 
                 _ ->
                     ( model, out0 [ actionRequest apis.gql form PushAck ] )
@@ -732,12 +772,7 @@ update_ apis message model =
                         |> setActionForm
                         |> setActionResult LoadingSlowly
             in
-            case model.state of
-                LinkAction ->
-                    ( data, out0 [ send (PushAction data.form data.state) ] )
-
-                _ ->
-                    ( data, out0 [ send (PushAction data.form data.state) ] )
+            ( data, out0 [ send (PushAction data.form data.state) ] )
 
         PushAck result ->
             case parseErr result model.refresh_trial of

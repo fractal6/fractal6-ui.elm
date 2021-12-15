@@ -743,6 +743,50 @@ aggregateContract fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateContract" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias QueryPendingUserOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PendingUserFilter
+    , order : OptionalArgument Fractal.InputObject.PendingUserOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryPendingUser :
+    (QueryPendingUserOptionalArguments -> QueryPendingUserOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.PendingUser
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryPendingUser fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodePendingUserFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodePendingUserOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryPendingUser" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregatePendingUserOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PendingUserFilter }
+
+
+aggregatePendingUser :
+    (AggregatePendingUserOptionalArguments -> AggregatePendingUserOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.PendingUserAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregatePendingUser fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodePendingUserFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregatePendingUser" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetVoteOptionalArguments =
     { id : OptionalArgument Fractal.ScalarCodecs.Id
     , voteid : OptionalArgument String

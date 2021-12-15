@@ -501,6 +501,42 @@ deleteContract requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteContract" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeContractFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddPendingUserRequiredArguments =
+    { input : List Fractal.InputObject.AddPendingUserInput }
+
+
+addPendingUser :
+    AddPendingUserRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddPendingUserPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addPendingUser requiredArgs____ object____ =
+    Object.selectionForCompositeField "addPendingUser" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddPendingUserInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdatePendingUserRequiredArguments =
+    { input : Fractal.InputObject.UpdatePendingUserInput }
+
+
+updatePendingUser :
+    UpdatePendingUserRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdatePendingUserPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updatePendingUser requiredArgs____ object____ =
+    Object.selectionForCompositeField "updatePendingUser" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdatePendingUserInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeletePendingUserRequiredArguments =
+    { filter : Fractal.InputObject.PendingUserFilter }
+
+
+deletePendingUser :
+    DeletePendingUserRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeletePendingUserPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deletePendingUser requiredArgs____ object____ =
+    Object.selectionForCompositeField "deletePendingUser" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodePendingUserFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddVoteOptionalArguments =
     { upsert : OptionalArgument Bool }
 

@@ -19,6 +19,7 @@ type ContractHasFilter
     | ClosedAt
     | Event
     | Candidates
+    | Pending_candidates
     | Participants
     | Comments
     | IsValidator
@@ -26,7 +27,7 @@ type ContractHasFilter
 
 list : List ContractHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Contractid, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Participants, Comments, IsValidator ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Contractid, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Pending_candidates, Participants, Comments, IsValidator ]
 
 
 decoder : Decoder ContractHasFilter
@@ -67,6 +68,9 @@ decoder =
 
                     "candidates" ->
                         Decode.succeed Candidates
+
+                    "pending_candidates" ->
+                        Decode.succeed Pending_candidates
 
                     "participants" ->
                         Decode.succeed Participants
@@ -119,6 +123,9 @@ toString enum____ =
 
         Candidates ->
             "candidates"
+
+        Pending_candidates ->
+            "pending_candidates"
 
         Participants ->
             "participants"
@@ -176,6 +183,9 @@ fromString enumString____ =
 
         "candidates" ->
             Just Candidates
+
+        "pending_candidates" ->
+            Just Pending_candidates
 
         "participants" ->
             Just Participants

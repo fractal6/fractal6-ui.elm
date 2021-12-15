@@ -45,6 +45,10 @@ type AddOrgaAggPayload
     = AddOrgaAggPayload
 
 
+type AddPendingUserPayload
+    = AddPendingUserPayload
+
+
 type AddRoleExtPayload
     = AddRoleExtPayload
 
@@ -127,6 +131,10 @@ type DeleteNodePayload
 
 type DeleteOrgaAggPayload
     = DeleteOrgaAggPayload
+
+
+type DeletePendingUserPayload
+    = DeletePendingUserPayload
 
 
 type DeletePostPayload
@@ -213,6 +221,14 @@ type OrgaAggAggregateResult
     = OrgaAggAggregateResult
 
 
+type PendingUser
+    = PendingUser
+
+
+type PendingUserAggregateResult
+    = PendingUserAggregateResult
+
+
 type Point
     = Point
 
@@ -287,6 +303,10 @@ type UpdateNodePayload
 
 type UpdateOrgaAggPayload
     = UpdateOrgaAggPayload
+
+
+type UpdatePendingUserPayload
+    = UpdatePendingUserPayload
 
 
 type UpdatePostPayload

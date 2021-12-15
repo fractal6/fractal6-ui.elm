@@ -484,7 +484,7 @@ type Msg
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
     | DoJoinOrga3 Node Time.Posix
-    | JoinAck (GqlData ActionResult)
+    | JoinAck (GqlData IdPayload)
       -- Token refresh
     | DoOpenAuthModal UserCtx
     | DoCloseAuthModal String

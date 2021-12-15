@@ -32,8 +32,10 @@ import ModelCommon.Codecs
         , getOrgaRoles
         , isCircle
         , isOwner
+        , memberIdCodec
         , nearestCircleid
         , nid2rootid
+        , voteIdCodec
         )
 import ModelSchema exposing (..)
 import Set
@@ -100,6 +102,11 @@ type alias Ev =
     , old : String
     , new : String
     }
+
+
+ev2eventFragment : Ev -> EventFragment
+ev2eventFragment ev =
+    { event_type = ev.event_type, old = Just ev.old, new = Just ev.new }
 
 
 type alias TensionForm =
@@ -343,9 +350,9 @@ type alias ContractForm =
     , contract_type : ContractType.ContractType
     , event : EventFragment
     , contractid : String
-
-    --, candidate:
     , participants : List Vote
+    , candidates : List Username
+    , pending_candidates : List Email
     , post : Post
     }
 
@@ -365,7 +372,17 @@ initContractForm user =
     , event = initEventFragment
     , contractid = ""
     , participants = []
+    , candidates = []
+    , pending_candidates = []
     , post = Dict.empty
+    }
+
+
+buildVote : String -> String -> String -> Int -> Vote
+buildVote contractid rootnameid username value =
+    { voteid = voteIdCodec contractid rootnameid username
+    , node = { nameid = memberIdCodec rootnameid username }
+    , data = [ value ]
     }
 
 
@@ -377,7 +394,7 @@ initContractForm user =
 -}
 type JoinStep form
     = JoinInit (GqlData Node)
-    | JoinValidation form (GqlData ActionResult)
+    | JoinValidation form (GqlData IdPayload)
     | JoinNotAuthorized ErrorData
 
 

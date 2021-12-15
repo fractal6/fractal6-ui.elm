@@ -70,13 +70,13 @@ sendVote url form msg =
 voteInputDecoder form =
     let
         createdAt =
-            Dict.get "createdAt" form.post |> withDefault ""
+            Dict.get "createdAt" form.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         nid =
             memberIdCodec form.rootnameid form.uctx.username
 
         inputReq =
-            { createdAt = createdAt |> Fractal.Scalar.DateTime
+            { createdAt = createdAt
             , createdBy =
                 Input.buildUserRef
                     (\u -> { u | username = Present form.uctx.username })

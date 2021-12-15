@@ -122,7 +122,7 @@ patchTensionInputEncoder f =
     --@Debug: receiver and receiverid
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         updatedAt =
             Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
@@ -292,7 +292,7 @@ setAssigneeEncoder : AssigneeForm -> Mutation.UpdateTensionRequiredArguments
 setAssigneeEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         events =
             buildEvents createdAt f.uctx.username f.events
@@ -352,7 +352,7 @@ setLabelEncoder : LabelForm -> Mutation.UpdateTensionRequiredArguments
 setLabelEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         events =
             buildEvents createdAt f.uctx.username f.events
@@ -447,7 +447,7 @@ moveTension url form msg =
 setMoveEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         message =
             -- new comment
@@ -551,7 +551,7 @@ publishBlobInputEncoder bid f =
     --@Debug: receiver and receiverid
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         inputReq =
             { filter =
@@ -594,26 +594,6 @@ publishBlobInputEncoder bid f =
 -}
 
 
-type alias TensionActionPayload =
-    { tension : Maybe (List (Maybe ActionResult)) }
-
-
-actionDecoder : Maybe TensionActionPayload -> Maybe ActionResult
-actionDecoder data =
-    case data of
-        Just d ->
-            d.tension
-                |> Maybe.map
-                    (\items ->
-                        List.filterMap identity items
-                    )
-                |> withDefault []
-                |> List.head
-
-        Nothing ->
-            Nothing
-
-
 {-| Just push a new event accompagned of a maybe
 
   - a comment
@@ -624,19 +604,18 @@ actionRequest url form msg =
     makeGQLMutation url
         (Mutation.updateTension
             (actionInputEncoder form)
-            (SelectionSet.map TensionActionPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
-                    SelectionSet.map ActionResult Fractal.Object.Tension.action
+            (SelectionSet.map TensionIdPayload <|
+                Fractal.Object.UpdateTensionPayload.tension identity tidPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse actionDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse tensionIdDecoder >> msg)
 
 
 actionInputEncoder : ActionForm -> Mutation.UpdateTensionRequiredArguments
 actionInputEncoder f =
     let
         createdAt =
-            Dict.get "createdAt" f.post |> withDefault ""
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         message =
             -- new comment

@@ -1,7 +1,7 @@
 module Query.AddContract exposing (addOneContract, deleteOneContract)
 
 import Dict exposing (Dict)
-import Extra exposing (ternary)
+import Extra exposing (listToMaybe, ternary)
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -20,6 +20,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ContractForm, TensionForm, UserForm)
 import ModelSchema exposing (..)
+import Query.AddTension exposing (buildComment)
 import Query.QueryContract exposing (cidPayload, contractPayload)
 import RemoteData exposing (RemoteData)
 
@@ -34,12 +35,16 @@ type alias ContractsPayload =
     { contract : Maybe (List (Maybe Contract)) }
 
 
+type alias ContractsPayloadId =
+    { contract : Maybe (List (Maybe IdPayload)) }
+
+
 
 -- Response Decoder
 
 
-contractDecoder : Maybe ContractsPayload -> Maybe Contract
-contractDecoder a =
+contractIdDecoder : Maybe ContractsPayloadId -> Maybe IdPayload
+contractIdDecoder a =
     a
         |> Maybe.andThen
             (\b ->
@@ -56,11 +61,11 @@ addOneContract url form msg =
         (Mutation.addContract
             identity
             (addContractInputEncoder form)
-            (SelectionSet.map ContractsPayload <|
-                Fractal.Object.AddContractPayload.contract identity contractPayload
+            (SelectionSet.map ContractsPayloadId <|
+                Fractal.Object.AddContractPayload.contract identity cidPayload
             )
         )
-        (RemoteData.fromResult >> decodeResponse contractDecoder >> msg)
+        (RemoteData.fromResult >> decodeResponse contractIdDecoder >> msg)
 
 
 
@@ -114,7 +119,24 @@ addContractInputEncoder f =
 
         inputOpt =
             \x ->
-                { x | message = Dict.get "message" f.post |> fromMaybe }
+                { x
+                    | message = Dict.get "message" f.post |> fromMaybe
+                    , comments = buildComment cat f.uctx.username (Dict.get "message" f.post)
+                    , candidates =
+                        f.candidates
+                            |> List.map
+                                (\p ->
+                                    Input.buildUserRef (\v -> { v | username = Present p.username })
+                                )
+                            |> listToMaybe
+                            |> fromMaybe
+                    , pending_candidates =
+                        f.pending_candidates
+                            |> List.map
+                                (\p -> { email = Present p.email })
+                            |> listToMaybe
+                            |> fromMaybe
+                }
     in
     { input =
         [ Input.buildAddContractInput inputReq inputOpt ]
@@ -125,22 +147,6 @@ addContractInputEncoder f =
 {-
    Remove contract
 -}
-
-
-type alias ContractsPayloadId =
-    { contract : Maybe (List (Maybe IdPayload)) }
-
-
-contractIdDecoder : Maybe ContractsPayloadId -> Maybe IdPayload
-contractIdDecoder a =
-    a
-        |> Maybe.andThen
-            (\b ->
-                b.contract
-                    |> Maybe.map (\x -> List.head x)
-                    |> Maybe.withDefault Nothing
-                    |> Maybe.withDefault Nothing
-            )
 
 
 deleteOneContract url form msg =

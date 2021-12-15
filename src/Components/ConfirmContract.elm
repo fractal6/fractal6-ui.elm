@@ -38,7 +38,7 @@ type alias Model =
     { user : UserState
     , isOpen : Bool
     , target : String -- keep origin target
-    , data_result : GqlData Contract -- contract created
+    , data_result : GqlData IdPayload -- contract created
     , contract : Maybe Contract -- partial contract
     , form : ContractForm -- user inputs
 
@@ -134,7 +134,7 @@ updatePost field value model =
     { model | form = { form | post = Dict.insert field value form.post } }
 
 
-setDataResult : GqlData Contract -> Model -> Model
+setDataResult : GqlData IdPayload -> Model -> Model
 setDataResult result model =
     { model | data_result = result }
 
@@ -171,7 +171,7 @@ type Msg
     | DoAddContract
     | OnSubmit (Time.Posix -> Msg)
     | OnDataQuery Time.Posix
-    | OnDataAck (GqlData Contract)
+    | OnDataAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -187,7 +187,7 @@ type alias Out =
 
     --Bool : Does the parent modal should be closed
     --Contract : the result Contract
-    , result : Maybe ( Bool, Contract )
+    , result : Maybe ( Bool, IdPayload )
     }
 
 
@@ -350,7 +350,7 @@ viewModal op (State model) =
                 Success data ->
                     let
                         link =
-                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = data.tension.id, param3 = data.id } |> toHref
+                            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = data.id } |> toHref
                     in
                     div [ class "box is-light" ]
                         [ I.icon1 "icon-check icon-2x has-text-success" " "

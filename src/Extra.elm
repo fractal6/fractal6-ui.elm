@@ -6,7 +6,7 @@ import String
 
 
 ternary test positive negative =
-    -- Save som line ;)
+    -- Save som lines ;)
     if test then
         positive
 
@@ -53,6 +53,16 @@ clean c s =
 
 
 -- Maybe
+
+
+listToMaybe : List a -> Maybe (List a)
+listToMaybe l =
+    case l of
+        [] ->
+            Nothing
+
+        _ ->
+            Just l
 
 
 {-| Returns the first value that is present, like the boolean `||`.

@@ -391,7 +391,7 @@ update_ apis message model =
                 cmds =
                     out.result
                         |> Maybe.map
-                            (\( terminate, contract ) ->
+                            (\( terminate, _ ) ->
                                 if terminate == True then
                                     [ send (OnClose { reset = True, link = "" }) ]
 

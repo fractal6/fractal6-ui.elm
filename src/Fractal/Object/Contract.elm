@@ -105,6 +105,30 @@ candidates fillInOptionals____ object____ =
     Object.selectionForCompositeField "candidates" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias PendingCandidatesOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PendingUserFilter
+    , order : OptionalArgument Fractal.InputObject.PendingUserOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+pending_candidates :
+    (PendingCandidatesOptionalArguments -> PendingCandidatesOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.PendingUser
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Contract
+pending_candidates fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodePendingUserFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodePendingUserOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "pending_candidates" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias ParticipantsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.VoteFilter
     , order : OptionalArgument Fractal.InputObject.VoteOrder
@@ -216,6 +240,26 @@ candidatesAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "candidatesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias PendingCandidatesAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.PendingUserFilter }
+
+
+pending_candidatesAggregate :
+    (PendingCandidatesAggregateOptionalArguments -> PendingCandidatesAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.PendingUserAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Contract
+pending_candidatesAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodePendingUserFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "pending_candidatesAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias ParticipantsAggregateOptionalArguments =

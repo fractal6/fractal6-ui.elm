@@ -162,10 +162,6 @@ type alias Count =
     { count : Maybe Int }
 
 
-type alias ActionResult =
-    { action : Maybe TensionAction.TensionAction }
-
-
 type alias Label =
     { id : String, name : String, color : Maybe String }
 
@@ -479,6 +475,10 @@ initEventFragment =
 
 type alias Username =
     { username : String }
+
+
+type alias Email =
+    { email : String }
 
 
 type alias User =

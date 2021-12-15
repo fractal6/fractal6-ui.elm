@@ -215,7 +215,7 @@ type Msg
     | DoJoinOrga String
     | DoJoinOrga2 (GqlData Node)
     | DoJoinOrga3 Node Time.Posix
-    | JoinAck (GqlData ActionResult)
+    | JoinAck (GqlData IdPayload)
       -- Graphpack
     | FetchNewNode String
     | NewNodesAck (GqlData (List Node))
