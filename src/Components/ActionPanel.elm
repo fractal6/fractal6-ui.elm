@@ -635,7 +635,7 @@ update_ apis message model =
                                 ( [], [] )
                                 form.users
 
-                        --form.users |> ...
+                        --form.users |> @FUTURE: multiple invitation...
                         contractForm =
                             { uctx = form.uctx
                             , tid = form.tid
@@ -688,7 +688,19 @@ update_ apis message model =
         OnCloseModal data ->
             let
                 cmds =
-                    ternary data.reset [ sendSleep OnReset 333 ] []
+                    ternary data.reset
+                        [ sendSleep OnReset 333
+                        , case model.state of
+                            LinkAction ->
+                                Cmd.map UserInputMsg (send UserInput.OnReset)
+
+                            UnLinkAction _ ->
+                                Cmd.map UserInputMsg (send UserInput.OnReset)
+
+                            _ ->
+                                send NoMsg
+                        ]
+                        []
 
                 gcmds =
                     if data.link /= "" then
@@ -876,8 +888,8 @@ update_ apis message model =
                 users =
                     out.result
                         |> Maybe.map
-                            (\( t, u ) ->
-                                if t then
+                            (\( selected, u ) ->
+                                if selected then
                                     u
 
                                 else
@@ -888,10 +900,19 @@ update_ apis message model =
                 ( cmds, gcmds ) =
                     ( [], [] )
 
+                -- Only valide because It can has only one user selected here.
+                -- updated fragment is used to build the old/new value of the event.
+                -- COntract is build directly from form.users
+                fragment =
+                    model.form.fragment
+
+                frag =
+                    { fragment | first_link = List.head users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email) }
+
                 form =
                     model.form
             in
-            ( { model | userInput = data, form = { form | users = users } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
+            ( { model | userInput = data, form = { form | users = users, fragment = frag } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
 
 
 subscriptions : State -> List (Sub Msg)

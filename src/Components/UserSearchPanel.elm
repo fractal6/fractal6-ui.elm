@@ -278,7 +278,6 @@ update_ apis message model =
                             data =
                                 newModel
                                     |> updatePost "createdAt" (fromTime time)
-                                    |> updatePost "new" assignee.username
                                     |> setEvents
                                         [ ternary
                                             isNew
@@ -295,7 +294,6 @@ update_ apis message model =
                         let
                             data =
                                 newModel
-                                    |> updatePost "new" assignee.username
                                     |> setClickResult LoadingSlowly
 
                             users =
@@ -385,29 +383,23 @@ view op (State model) =
 
 
 view_ : Op -> State -> Html Msg
-view_ op_ (State model) =
+view_ op (State model) =
     nav [ id "usersSearchPanel", class "panel sidePanel" ]
         [ case model.assignees_data of
             Success assignees_d ->
                 let
-                    selection =
-                        List.map (\x -> x.username) op_.selectedAssignees
-
-                    op =
-                        { op_ | selectedAssignees = List.filter (\x -> List.member x.username selection) assignees_d }
-
                     user =
                         model.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
 
                     users =
                         if model.pattern == "" then
-                            op.selectedAssignees
+                            List.sortBy .username op.selectedAssignees
                                 ++ user
-                                ++ List.take 42 assignees_d
-                                |> LE.uniqueBy (\u -> u.username)
+                                ++ List.sortBy .username (List.take 42 assignees_d)
+                                |> LE.uniqueBy .username
 
                         else
-                            LE.uniqueBy (\u -> u.username) model.lookup
+                            LE.uniqueBy .username model.lookup
                 in
                 div []
                     [ div [ class "panel-block" ]

@@ -147,6 +147,7 @@ setDataResult result model =
 type Msg
     = -- Data
       OnLoad (GqlData NodesDict)
+    | OnReset
     | OnInput String
     | OnClickUser User
     | OnClickEmail String
@@ -210,6 +211,9 @@ update_ apis message model =
             )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
+        OnReset ->
+            ( reset model, noOut )
+
         OnInput value ->
             ( setPattern value model, out0 [ send DoQueryUser ] )
 

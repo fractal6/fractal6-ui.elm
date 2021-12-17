@@ -408,17 +408,17 @@ view_ isInternal op (State model) =
             Success labels_d ->
                 let
                     --selection =
-                    --    List.map (\x -> x.name) op_.selectedLabels
+                    --    List.map .name op_.selectedLabels
                     --op =
-                    --    { op_ | selectedLabels = List.map (\x -> ternary (List.member x.name selection) x ) selection }
+                    --    { op_ | selectedLabels = List.filter (\x -> List.member x.name selection) labels_d }
                     labels =
                         if model.pattern == "" then
-                            op.selectedLabels
-                                ++ labels_d
-                                |> LE.uniqueBy (\u -> u.name)
+                            List.sortBy .name op.selectedLabels
+                                ++ List.sortBy .name (List.take 42 labels_d)
+                                |> LE.uniqueBy .name
 
                         else
-                            LE.uniqueBy (\u -> u.name) model.lookup
+                            LE.uniqueBy .name model.lookup
                 in
                 div [] <|
                     ternary isInternal List.reverse identity <|
@@ -486,9 +486,9 @@ viewLabelSelectors isInternal labels op model =
                         (\l ->
                             let
                                 isActive =
-                                    List.member l op.selectedLabels
+                                    List.member l.name (List.map .name op.selectedLabels)
 
-                                -- Map label has atttribuyte (such has color, is lost when params
+                                -- Map label has atttribute (such has color, is lost when params
                                 -- object from url.
                                 l_ =
                                     if isActive then

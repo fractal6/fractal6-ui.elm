@@ -978,7 +978,7 @@ update global message model =
                                 model.authors ++ [ Tuple.second r ]
 
                             else
-                                LE.remove (Tuple.second r) model.authors
+                                List.filter (\x -> x.username /= (Tuple.second r).username) model.authors
                         )
                         out.result
                         |> withDefault model.authors
@@ -1012,7 +1012,7 @@ update global message model =
                                 model.labels ++ [ Tuple.second r ]
 
                             else
-                                LE.remove (Tuple.second r) model.labels
+                                List.filter (\x -> x.name /= (Tuple.second r).name) model.labels
                         )
                         out.result
                         |> withDefault model.labels
