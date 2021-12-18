@@ -16,7 +16,7 @@ import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, LabelForm, UserState(..), initLabelForm)
+import ModelCommon exposing (Ev, LabelForm, UserState(..), encodeLabel, initLabelForm)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nearestCircleid, uriFromNameid)
 import ModelCommon.View exposing (viewLabel, viewLabels)
 import ModelSchema exposing (..)
@@ -298,8 +298,8 @@ update_ apis message model =
                                     |> setEvents
                                         [ ternary
                                             isNew
-                                            (Ev TensionEvent.LabelAdded "" (label.name ++ "§" ++ withDefault "" label.color))
-                                            (Ev TensionEvent.LabelRemoved (label.name ++ "§" ++ withDefault "" label.color) "")
+                                            (Ev TensionEvent.LabelAdded "" (encodeLabel label))
+                                            (Ev TensionEvent.LabelRemoved (encodeLabel label) "")
                                         ]
                                     |> setClickResult LoadingSlowly
                         in

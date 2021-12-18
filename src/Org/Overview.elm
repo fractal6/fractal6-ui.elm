@@ -76,7 +76,6 @@ import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
 import Query.QueryNodeData exposing (queryNodeData)

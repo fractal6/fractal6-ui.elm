@@ -13,6 +13,7 @@ import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.TensionAction as TensionAction
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Fractal.InputObject as Input
@@ -28,7 +29,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, TensionForm, UserForm)
+import ModelCommon exposing (Ev, TensionForm, UserForm, encodeLabel)
 import ModelSchema exposing (..)
 import Query.QueryTension exposing (tensionPayload)
 import RemoteData exposing (RemoteData)
@@ -88,6 +89,14 @@ addTensionInputEncoder f =
         message =
             Dict.get "message" f.post |> withDefault ""
 
+        events =
+            f.events
+                ++ List.map
+                    (\l ->
+                        Ev TensionEvent.LabelAdded "" (encodeLabel l)
+                    )
+                    f.labels
+
         inputReq =
             { createdAt = createdAt
             , createdBy =
@@ -103,7 +112,7 @@ addTensionInputEncoder f =
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
             , history =
-                f.events
+                events
                     |> List.map
                         (\{ event_type, old, new } ->
                             Input.buildEventRef

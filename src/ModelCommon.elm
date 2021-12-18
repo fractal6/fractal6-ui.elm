@@ -171,6 +171,11 @@ type alias AssigneeForm =
     }
 
 
+encodeLabel : Label -> String
+encodeLabel label =
+    label.name ++ "§" ++ withDefault "" label.color
+
+
 initAssigneeForm : String -> UserState -> AssigneeForm
 initAssigneeForm tid user =
     { uctx =
