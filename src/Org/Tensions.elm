@@ -845,7 +845,9 @@ update global message model =
                     model
                 , Cmd.batch
                     [ fetchTensionInt apis.rest nameids first skip model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
-                    , fetchTensionExt apis.rest nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
+
+                    -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
+                    --, fetchTensionExt apis.rest nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
                     , fetchTensionCount apis.rest nameids model.pattern model.authors model.labels type_ GotTensionsCount
                     ]
                 , Ports.show "footBar"
@@ -1488,11 +1490,12 @@ viewSearchBar model =
                         --[ a [ onClickPD (GoView ListView), target "_blank" ]
                         [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsListTooltip ] [ text "List" ] ]
                     ]
-                , li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
-                    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
-                        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
-                        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsIntExtTooltip ] [ text "Internal/External" ] ]
-                    ]
+
+                --, li [ classList [ ( "is-active", model.viewMode == IntExtView ) ] ]
+                --    [ a [ onClickPD (ChangeViewFilter IntExtView), target "_blank" ]
+                --        --[ a [ onClickPD (GoView IntExtView), target "_blank" ]
+                --        [ div [ class "tooltip has-tooltip-right has-tooltip-arrow", attribute "data-tooltip" T.tensionsIntExtTooltip ] [ text "Internal/External" ] ]
+                --    ]
                 , li [ classList [ ( "is-active", model.viewMode == CircleView ) ] ]
                     [ a [ onClickPD (ChangeViewFilter CircleView), target "_blank" ]
                         --[ a [ onClickPD (GoView CircleView), target "_blank" ]
