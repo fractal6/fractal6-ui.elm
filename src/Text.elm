@@ -46,6 +46,11 @@ textA s =
     s |> upA |> text
 
 
+space_ : String
+space_ =
+    "\u{00A0}"
+
+
 
 -- General
 
@@ -388,16 +393,6 @@ the =
 this : String
 this =
     "this"
-
-
-updatedTitle : String
-updatedTitle =
-    "updated title"
-
-
-updatedType : String
-updatedType =
-    "updated type"
 
 
 confirmUnsaved : String

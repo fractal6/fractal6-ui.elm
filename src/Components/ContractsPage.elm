@@ -686,7 +686,7 @@ viewContractBox data op model =
                         _ ->
                             [ text "not implemented" ]
                 ]
-            , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ "\u{00A0}"), byAt op.now data.createdBy data.createdAt ] ]
+            , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ T.space_), byAt op.now data.createdBy data.createdAt ] ]
             ]
         , case model.vote_result of
             Failure err ->

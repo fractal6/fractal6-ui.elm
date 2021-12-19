@@ -118,7 +118,7 @@ userButton op =
                         [ I.icon1 "icon-tool" (upH T.settings) ]
 
                     --, hr [ class "navbar-divider" ] []
-                    --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "icon-adjust fa-fw" ] [], text "\u{00A0} Toggle dark theme" ]
+                    --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "icon-adjust fa-fw" ] [], text (T.space_ ++ " Toggle dark theme") ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
                         [ I.icon1 "icon-power" (upH T.signout) ]

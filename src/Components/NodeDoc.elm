@@ -314,7 +314,7 @@ view_ tid data op_m =
                            else
                             span []
                           )
-                            [ text "\u{00A0}", text " ", text (data.node.name |> withDefault "") ]
+                            [ text T.space_, text T.space_, text (data.node.name |> withDefault "") ]
                         ]
                     , case data.toolbar of
                         Just tb ->
@@ -687,7 +687,7 @@ viewVersions now blobsData =
 viewVerRow : Time.Posix -> Int -> Blob -> List (Html msg)
 viewVerRow now i blob =
     [ tr [ class "mediaBox is-hoverable", classList [ ( "is-active", i == 0 ) ] ]
-        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text "\u{00A0}", byAt now blob.createdBy blob.createdAt ]
+        [ td [] [ span [] [ text (blobTypeStr blob.blob_type) ], text T.space_, byAt now blob.createdBy blob.createdAt ]
         , td []
             [ case blob.pushedFlag of
                 Just flag ->

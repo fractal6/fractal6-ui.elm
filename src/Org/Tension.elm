@@ -69,6 +69,7 @@ import ModelCommon.Codecs
         , isOwner
         , nid2rootid
         , nodeFromFragment
+        , tensionAction2NodeType
         , uriFromUsername
         )
 import ModelCommon.Requests exposing (getQuickDoc, login)
@@ -1657,7 +1658,7 @@ view_ global model =
 
 viewTypeBadge : TensionType.TensionType -> Html Msg
 viewTypeBadge type_ =
-    span [] [ span [ class <| "Circle " ++ tensionTypeColor "text" type_ ] [ text "\u{00A0}" ], type_ |> TensionType.toString |> text ]
+    span [] [ span [ class <| "Circle " ++ tensionTypeColor "text" type_ ] [ text T.space_ ], type_ |> TensionType.toString |> text ]
 
 
 viewTension : UserState -> TensionHead -> Model -> Html Msg
@@ -1820,9 +1821,9 @@ viewComments u t model =
                         |> withDefault []
 
                 allEvts =
-                    -- When event and comment are created at the same time, show the event first.
-                    List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) t.history
-                        ++ List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
+                    -- When event and comment are created at the same time, show the comment first.
+                    List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
+                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) t.history
                         |> List.sortBy .createdAt
 
                 viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
@@ -2192,6 +2193,12 @@ viewEvent now event t =
         TensionEvent.TypeUpdated ->
             viewEventType now event
 
+        TensionEvent.Visibility ->
+            viewEventVisibility now event
+
+        TensionEvent.Authority ->
+            viewEventAuthority now event t.action
+
         TensionEvent.AssigneeAdded ->
             viewEventAssignee now event True
 
@@ -2250,15 +2257,12 @@ viewEventTitle now event =
     let
         icon =
             I.icon "icon-edit-2"
-
-        actionText =
-            T.updatedTitle
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text (formatDate now event.createdAt) ]
-            , span [ class "section" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.title ], text (formatDate now event.createdAt) ]
+            , span [ class "ml-3" ]
                 [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
                 , span [ class "right-arrow" ] []
                 , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
@@ -2272,18 +2276,61 @@ viewEventType now event =
     let
         icon =
             I.icon "icon-edit-2"
-
-        actionText =
-            T.updatedType
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text actionText, text (formatDate now event.createdAt) ]
-            , span [ class "section" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.type_ ], text (formatDate now event.createdAt) ]
+            , span [ class "ml-3" ]
                 [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
                 , span [ class "right-arrow" ] []
                 , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
+                ]
+            ]
+        ]
+
+
+viewEventVisibility : Time.Posix -> Event -> Html Msg
+viewEventVisibility now event =
+    let
+        icon =
+            I.icon "icon-lock"
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ icon ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.visibility ], text (formatDate now event.createdAt) ]
+            , span [ class "ml-3" ]
+                [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
+                , span [ class "right-arrow" ] []
+                , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
+                ]
+            ]
+        ]
+
+
+viewEventAuthority : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventAuthority now event action =
+    let
+        ( icon, eventText ) =
+            case tensionAction2NodeType action of
+                Just NodeType.Circle ->
+                    ( I.icon "icon-key", T.governance )
+
+                Just NodeType.Role ->
+                    ( I.icon "icon-key", T.authority )
+
+                _ ->
+                    ( I.icon "icon-key", "unknown action" )
+    in
+    div [ class "media section actionComment is-paddingless is-small" ]
+        [ div [ class "media-left" ] [ icon ]
+        , div [ class "media-content" ]
+            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text eventText ], text (formatDate now event.createdAt) ]
+            , span [ class "ml-3" ]
+                [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
+                , span [ class "right-arrow" ] []
+                , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
                 ]
             ]
         ]
@@ -2295,19 +2342,19 @@ viewEventAssignee now event isNew =
         icon =
             I.icon "icon-user"
 
-        actionText =
+        ( actionText, value ) =
             if isNew then
-                T.assigned
+                ( T.assigned, withDefault "" event.new )
 
             else
-                T.unassigned
+                ( T.unassigned, withDefault "" event.old )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
         , div [ class "media-content" ]
             [ span [] <|
                 List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], event.new |> withDefault "" |> viewUsernameLink, text (formatDate now event.createdAt) ]
+                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate now event.createdAt) ]
             ]
         ]
 
@@ -2318,7 +2365,7 @@ viewEventLabel now event isNew =
         icon =
             I.icon "icon-tag"
 
-        ( actionText, label_ ) =
+        ( actionText, value ) =
             if isNew then
                 ( T.addedThe, withDefault "unknown" event.new )
 
@@ -2326,7 +2373,7 @@ viewEventLabel now event isNew =
                 ( T.removedThe, withDefault "unknown" event.old )
 
         label =
-            Label "" (SE.leftOfBack "§" label_) (SE.rightOfBack "§" label_ |> Just)
+            Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just)
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2436,6 +2483,12 @@ viewEventMoved now event =
                     ]
             ]
         ]
+
+
+
+--
+-- </ View Event>
+--
 
 
 viewBlobToolBar : UserState -> TensionHead -> Blob -> Model -> Html Msg

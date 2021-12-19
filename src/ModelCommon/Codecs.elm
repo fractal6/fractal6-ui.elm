@@ -439,6 +439,36 @@ getTensionCharac action =
             { action_type = ARCHIVE, doc_type = MD }
 
 
+tensionAction2NodeType : Maybe TensionAction.TensionAction -> Maybe NodeType.NodeType
+tensionAction2NodeType action_m =
+    action_m
+        |> Maybe.map
+            (\action ->
+                case action of
+                    TensionAction.NewRole ->
+                        Just NodeType.Role
+
+                    TensionAction.EditRole ->
+                        Just NodeType.Role
+
+                    TensionAction.ArchivedRole ->
+                        Just NodeType.Role
+
+                    TensionAction.NewCircle ->
+                        Just NodeType.Circle
+
+                    TensionAction.EditCircle ->
+                        Just NodeType.Circle
+
+                    TensionAction.ArchivedCircle ->
+                        Just NodeType.Circle
+
+                    _ ->
+                        Nothing
+            )
+        |> withDefault Nothing
+
+
 nodeFromFragment : String -> NodeFragment -> Node
 nodeFromFragment parentid f =
     { createdAt = ""

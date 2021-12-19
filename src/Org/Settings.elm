@@ -120,13 +120,13 @@ type alias Model =
 
 type MenuSettings
     = LabelsMenu
-    | SecurityMenu
+    | GlobalMenu
     | EditMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, SecurityMenu, EditMenu ]
+    [ LabelsMenu, GlobalMenu, EditMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -135,12 +135,12 @@ menuEncoder menu =
         LabelsMenu ->
             "labels"
 
-        SecurityMenu ->
-            "security"
+        GlobalMenu ->
+            "global"
 
         EditMenu ->
             --redirect
-            "labels"
+            ""
 
 
 menuDecoder : String -> MenuSettings
@@ -149,8 +149,8 @@ menuDecoder menu =
         "labels" ->
             LabelsMenu
 
-        "security" ->
-            SecurityMenu
+        "global" ->
+            GlobalMenu
 
         _ ->
             LabelsMenu
@@ -162,8 +162,8 @@ menuToString menu =
         LabelsMenu ->
             upH T.labels
 
-        SecurityMenu ->
-            upH T.security
+        GlobalMenu ->
+            upH "Organisation"
 
         EditMenu ->
             upH "edit node"
@@ -175,7 +175,7 @@ menuToIcon menu =
         LabelsMenu ->
             "icon-tag"
 
-        SecurityMenu ->
+        GlobalMenu ->
             "icon-shield"
 
         EditMenu ->
@@ -957,7 +957,7 @@ viewSettingsContent model =
                 , viewLabelsExt T.labelsSub T.noLabelsSub model.labels model.labels_sub
                 ]
 
-        SecurityMenu ->
+        GlobalMenu ->
             div [] [ text "Work in progress" ]
 
         EditMenu ->

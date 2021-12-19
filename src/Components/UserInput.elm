@@ -148,7 +148,7 @@ type Msg
     = -- Data
       OnLoad (GqlData NodesDict)
     | OnReset
-    | OnInput String
+    | OnInput Bool String
     | OnClickUser User
     | OnClickEmail String
     | OnUnselect
@@ -214,8 +214,12 @@ update_ apis message model =
         OnReset ->
             ( reset model, noOut )
 
-        OnInput value ->
-            ( setPattern value model, out0 [ send DoQueryUser ] )
+        OnInput seemsEmail value ->
+            if seemsEmail then
+                ( setPattern value model, noOut )
+
+            else
+                ( setPattern value model, out0 [ send DoQueryUser ] )
 
         OnClickUser user ->
             let
@@ -316,26 +320,48 @@ viewInput op model =
         hasSelected =
             isUsersSendable [ model.form ]
 
-        punkt =
+        selectedUser =
             if hasSelected then
                 let
                     user =
                         User model.form.username model.form.name
                 in
                 div [ class "tagsinput tags has-addons" ]
-                    [ span [ class "tag is-rounded" ] [ viewUserFull 0 False False user ]
+                    [ span [ class "tag is-rounded" ]
+                        [ if model.form.email /= "" then
+                            viewEmail model.form.email
+
+                          else
+                            viewUserFull 0 False False user
+                        ]
                     , span [ class "tag is-delete is-rounded", onClick OnUnselect ] []
                     ]
 
             else
                 text ""
+
+        seemsEmail =
+            model.form.pattern
+                |> String.split "@"
+                |> (\l ->
+                        case l of
+                            [ a, b ] ->
+                                if a /= "" && b /= "" then
+                                    True
+
+                                else
+                                    False
+
+                            _ ->
+                                False
+                   )
     in
     div []
         [ div [ class "field mb-5" ]
             [ label [ class "label" ]
                 [ text "Invite someone:" ]
             , div [ class "control" ]
-                [ punkt
+                [ selectedUser
                 , input
                     [ id "userInput"
                     , class "input is-rounded"
@@ -344,7 +370,7 @@ viewInput op model =
                     , value model.form.pattern
                     , ternary hasSelected
                         (onClick NoMsg)
-                        (onInput OnInput)
+                        (onInput (OnInput seemsEmail))
 
                     --, disabled hasSelected
                     ]
@@ -352,6 +378,9 @@ viewInput op model =
                 ]
             , if model.form.pattern == "" then
                 text ""
+
+              else if seemsEmail then
+                viewEmailSelector op model
 
               else
                 viewUserSelectors op model
@@ -383,4 +412,31 @@ viewUserSelectors op model =
                                 ]
                                 [ viewUserFull 1 False False u ]
                         )
+        ]
+
+
+viewEmailSelector : Op -> Model -> Html Msg
+viewEmailSelector op model =
+    div [ class "panel sidePanel" ]
+        [ div [ class "selectors has-background-grey" ]
+            [ p
+                [ class "panel-block"
+                , onClick (OnClickEmail model.form.pattern)
+                ]
+                [ I.icon1 "icon-mail" T.invite
+                , text T.space_
+                , span [ class "is-italic" ] [ text "\"", text model.form.pattern, text "\"" ]
+                ]
+            ]
+        ]
+
+
+viewEmail : String -> Html Msg
+viewEmail email =
+    span []
+        [ span [ class "mr-2" ]
+            [ I.icon "icon-mail"
+            ]
+        , span [ attribute "style" "position:relative;top:-2px;" ]
+            [ span [ class "is-email" ] [ text email ] ]
         ]

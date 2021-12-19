@@ -1078,7 +1078,7 @@ viewTension op (State model) =
                 [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
-                            List.intersperse (text "\u{00A0}")
+                            List.intersperse (text T.space_)
                                 [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
@@ -1254,7 +1254,7 @@ viewCircle op (State model) =
                 [ div [ class "panel-heading" ]
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
-                            List.intersperse (text "\u{00A0}")
+                            List.intersperse (text T.space_)
                                 [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
