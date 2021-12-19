@@ -6,7 +6,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
-            "dillonkearns/elm-graphql": "5.0.3",
+            "dillonkearns/elm-graphql": "5.0.8",
             "dillonkearns/elm-markdown": "7.0.0",
             "dividat/elm-identicon": "1.0.0",
             "elm/browser": "1.0.2",
@@ -39,6 +39,7 @@
             "elm/parser": "1.1.0",
             "elm/virtual-dom": "1.0.2",
             "folkertdev/elm-flate": "2.0.5",
+            "j-maas/elm-ordered-containers": "1.0.0",
             "lukewestby/elm-string-interpolate": "1.0.4",
             "rtfeldman/elm-hex": "1.0.0"
         }

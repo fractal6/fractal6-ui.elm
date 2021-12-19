@@ -496,6 +496,45 @@ type alias Member =
     }
 
 
+type alias UserEvents =
+    List UserEvent
+
+
+type alias UserEvent =
+    { isRead : Bool
+    , event : EventKind
+    }
+
+
+type EventKind
+    = TensionEvent EventNotif
+    | ContractEvent ContractNotif
+
+
+type alias EventNotif =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , event_type : TensionEvent.TensionEvent
+    , tension : { receiver : PNode }
+    }
+
+
+type alias ContractNotif =
+    { id : String
+    , createdAt : String
+    , createdBy : Username
+    , contract_type : ContractType.ContractType
+    , tension : { receiver : PNode }
+    }
+
+
+type alias NotificationsForm =
+    { uctx : UserCtx
+    , first : Int
+    }
+
+
 
 --
 -- User auth

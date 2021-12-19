@@ -424,6 +424,15 @@ fromMaybeData ma type_ =
         |> withDefault type_
 
 
+withMaybeSlowly : RequestResult e a -> RequestResult e a
+withMaybeSlowly result =
+    if result == Loading then
+        LoadingSlowly
+
+    else
+        result
+
+
 
 -- Idem but for WebData ...:S
 --

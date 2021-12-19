@@ -54,13 +54,29 @@ view op =
                         [ textH T.explore ]
                     ]
                 , div [ class "navbar-end" ]
-                    [ helpButton op
+                    [ notificationButton op
+                    , helpButton op
                     , newButton op
                     , userButton op
                     ]
                 ]
             ]
         ]
+
+
+notificationButton : Op -> Html msg
+notificationButton op =
+    case op.user of
+        LoggedIn _ ->
+            a
+                [ class "navbar-item", href (Route.toHref Route.Notifications) ]
+                [ div
+                    [ class "navbar-link is-arrowless is-rounded is-small notifTrigger" ]
+                    [ I.icon "icon-bg icon-bell" ]
+                ]
+
+        LoggedOut ->
+            text ""
 
 
 helpButton : Op -> Html msg
@@ -83,11 +99,9 @@ newButton op =
     case op.user of
         LoggedIn _ ->
             div
-                [ class "navbar-item has-dropdown mx-2"
-                , attribute "style" "align-items: center !important;"
-                ]
+                [ class "navbar-item has-dropdown" ]
                 [ div
-                    [ class "navbar-link has-background-primary button is-small"
+                    [ class "navbar-link is-small"
                     , attribute "style" "padding-right: 1.65rem;"
                     ]
                     [ I.icon "icon-plus icon-bg" ]

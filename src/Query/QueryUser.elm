@@ -1,4 +1,4 @@
-module Query.QueryUser exposing (queryUctx, queryUser)
+module Query.QueryUser exposing (queryUctx, queryUser, uctxFilter)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType

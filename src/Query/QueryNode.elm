@@ -11,6 +11,7 @@ module Query.QueryNode exposing
     , nodeDecoder
     , nodeIdPayload
     , nodeOrgaPayload
+    , pNodePayload
     , queryFocusNode
     , queryGraphPack
     , queryLabels
@@ -342,6 +343,13 @@ userPayload =
         Fractal.Object.User.name
 
 
+pNodePayload : SelectionSet PNode Fractal.Object.Node
+pNodePayload =
+    SelectionSet.map2 PNode
+        Fractal.Object.Node.name
+        Fractal.Object.Node.nameid
+
+
 tidPayload : SelectionSet IdPayload Fractal.Object.Tension
 tidPayload =
     SelectionSet.map IdPayload
@@ -585,12 +593,7 @@ membersFilter rootid a =
 membersPayload : SelectionSet NodeMembers Fractal.Object.Node
 membersPayload =
     SelectionSet.succeed NodeMembers
-        |> with
-            (Fractal.Object.Node.first_link identity <|
-                SelectionSet.map2 User
-                    Fractal.Object.User.username
-                    Fractal.Object.User.name
-            )
+        |> with (Fractal.Object.Node.first_link identity userPayload)
 
 
 
@@ -695,12 +698,7 @@ membersLocalPayload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.role_type
-        |> with
-            (Fractal.Object.Node.first_link identity <|
-                SelectionSet.map2 User
-                    Fractal.Object.User.username
-                    Fractal.Object.User.name
-            )
+        |> with (Fractal.Object.Node.first_link identity userPayload)
         |> hardcoded Nothing
         |> with
             (Fractal.Object.Node.children nArchivedFilter
@@ -709,12 +707,7 @@ membersLocalPayload =
                     |> with Fractal.Object.Node.name
                     |> with Fractal.Object.Node.nameid
                     |> with Fractal.Object.Node.role_type
-                    |> with
-                        (Fractal.Object.Node.first_link identity <|
-                            SelectionSet.map2 User
-                                Fractal.Object.User.username
-                                Fractal.Object.User.name
-                        )
+                    |> with (Fractal.Object.Node.first_link identity userPayload)
                     |> hardcoded Nothing
                 )
             )

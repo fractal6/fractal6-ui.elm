@@ -69,11 +69,11 @@ i {
 
     &.icon-bg {
         font-size: 1.12rem;
-        margin-left: -4px;
+        // prtotect the navbar height
+        line-height: 0;
     }
     &.icon-1half {
         font-size: 1.5rem;
-        margin-left: -4px;
     }
     //
     &.icon-1x {

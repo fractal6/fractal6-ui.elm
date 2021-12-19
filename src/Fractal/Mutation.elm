@@ -635,6 +635,42 @@ deleteUser requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteUser" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddUserEventRequiredArguments =
+    { input : List Fractal.InputObject.AddUserEventInput }
+
+
+addUserEvent :
+    AddUserEventRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddUserEventPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addUserEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "addUserEvent" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddUserEventInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateUserEventRequiredArguments =
+    { input : Fractal.InputObject.UpdateUserEventInput }
+
+
+updateUserEvent :
+    UpdateUserEventRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateUserEventPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateUserEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateUserEvent" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateUserEventInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteUserEventRequiredArguments =
+    { filter : Fractal.InputObject.UserEventFilter }
+
+
+deleteUserEvent :
+    DeleteUserEventRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteUserEventPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteUserEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteUserEvent" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserEventFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddUserRightsRequiredArguments =
     { input : List Fractal.InputObject.AddUserRightsInput }
 

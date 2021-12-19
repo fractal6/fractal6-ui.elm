@@ -42,6 +42,9 @@ import ModelSchema
 port triggerHelpFromJs : (() -> msg) -> Sub msg
 
 
+port triggerNotifFromJs : (() -> msg) -> Sub msg
+
+
 
 -- Modal
 

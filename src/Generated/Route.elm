@@ -14,6 +14,7 @@ type Route
     | Login
     | Logout
     | NotFound
+    | Notifications
     | PasswordReset
     | Signup
     | Dynamic { param1 : String }
@@ -50,6 +51,7 @@ routes =
         , Parser.map Login (Parser.s "login")
         , Parser.map Logout (Parser.s "logout")
         , Parser.map NotFound (Parser.s "not-found")
+        , Parser.map Notifications (Parser.s "notifications")
         , Parser.map PasswordReset (Parser.s "password-reset")
         , Parser.map Signup (Parser.s "signup")
         , (Parser.string)
@@ -130,6 +132,9 @@ toHref route =
                 
                 NotFound ->
                     [ "not-found" ]
+                
+                Notifications ->
+                    [ "notifications" ]
                 
                 PasswordReset ->
                     [ "password-reset" ]

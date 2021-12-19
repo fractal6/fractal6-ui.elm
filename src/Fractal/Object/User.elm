@@ -74,6 +74,11 @@ utc =
     Object.selectionForField "(Maybe String)" "utc" [] (Decode.string |> Decode.nullable)
 
 
+notifyByEmail : SelectionSet (Maybe Bool) Fractal.Object.User
+notifyByEmail =
+    Object.selectionForField "(Maybe Bool)" "notifyByEmail" [] (Decode.bool |> Decode.nullable)
+
+
 type alias RightsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserRightsFilter }
 
@@ -214,6 +219,54 @@ contracts fillInOptionals____ object____ =
     Object.selectionForCompositeField "contracts" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias SubscriptionsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter
+    , order : OptionalArgument Fractal.InputObject.TensionOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+subscriptions :
+    (SubscriptionsOptionalArguments -> SubscriptionsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+subscriptions fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeTensionOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "subscriptions" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
+type alias EventsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserEventFilter
+    , order : OptionalArgument Fractal.InputObject.UserEventOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+events :
+    (EventsOptionalArguments -> EventsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserEvent
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.User
+events fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserEventFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeUserEventOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "events" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias RolesAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -312,3 +365,43 @@ contractsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "contractsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias SubscriptionsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.TensionFilter }
+
+
+subscriptionsAggregate :
+    (SubscriptionsAggregateOptionalArguments -> SubscriptionsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.TensionAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+subscriptionsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeTensionFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "subscriptionsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias EventsAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserEventFilter }
+
+
+eventsAggregate :
+    (EventsAggregateOptionalArguments -> EventsAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserEventAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.User
+eventsAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserEventFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "eventsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

@@ -1213,7 +1213,7 @@ viewActionPanel domid us node o actionPanel =
                         { tc = Just { action_type = EDIT, doc_type = NODE }
                         , isAdmin = isAdmin
                         , hasRole = hasRole
-                        , isRight = domid == "actionPanelContentTooltip"
+                        , isRight = True
                         , domid = domid
                         , orga_data = o
                         }

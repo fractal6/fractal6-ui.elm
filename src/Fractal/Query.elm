@@ -919,6 +919,50 @@ aggregateUser fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateUser" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias QueryUserEventOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserEventFilter
+    , order : OptionalArgument Fractal.InputObject.UserEventOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryUserEvent :
+    (QueryUserEventOptionalArguments -> QueryUserEventOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserEvent
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryUserEvent fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserEventFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeUserEventOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryUserEvent" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateUserEventOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserEventFilter }
+
+
+aggregateUserEvent :
+    (AggregateUserEventOptionalArguments -> AggregateUserEventOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserEventAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateUserEvent fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserEventFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateUserEvent" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias QueryUserRightsOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserRightsFilter
     , order : OptionalArgument Fractal.InputObject.UserRightsOrder

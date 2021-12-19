@@ -5,6 +5,5 @@
 module Fractal.Union exposing (..)
 
 
-placeholder : String
-placeholder =
-    ""
+type EventKind
+    = EventKind

@@ -18,17 +18,20 @@ type UserHasFilter
     | EmailValidated
     | Bio
     | Utc
+    | NotifyByEmail
     | Rights
     | Roles
     | Backed_roles
     | Tensions_created
     | Tensions_assigned
     | Contracts
+    | Subscriptions
+    | Events
 
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts ]
+    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, NotifyByEmail, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Subscriptions, Events ]
 
 
 decoder : Decoder UserHasFilter
@@ -67,6 +70,9 @@ decoder =
                     "utc" ->
                         Decode.succeed Utc
 
+                    "notifyByEmail" ->
+                        Decode.succeed NotifyByEmail
+
                     "rights" ->
                         Decode.succeed Rights
 
@@ -84,6 +90,12 @@ decoder =
 
                     "contracts" ->
                         Decode.succeed Contracts
+
+                    "subscriptions" ->
+                        Decode.succeed Subscriptions
+
+                    "events" ->
+                        Decode.succeed Events
 
                     _ ->
                         Decode.fail ("Invalid UserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -125,6 +137,9 @@ toString enum____ =
         Utc ->
             "utc"
 
+        NotifyByEmail ->
+            "notifyByEmail"
+
         Rights ->
             "rights"
 
@@ -142,6 +157,12 @@ toString enum____ =
 
         Contracts ->
             "contracts"
+
+        Subscriptions ->
+            "subscriptions"
+
+        Events ->
+            "events"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -188,6 +209,9 @@ fromString enumString____ =
         "utc" ->
             Just Utc
 
+        "notifyByEmail" ->
+            Just NotifyByEmail
+
         "rights" ->
             Just Rights
 
@@ -205,6 +229,12 @@ fromString enumString____ =
 
         "contracts" ->
             Just Contracts
+
+        "subscriptions" ->
+            Just Subscriptions
+
+        "events" ->
+            Just Events
 
         _ ->
             Nothing

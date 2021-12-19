@@ -18,16 +18,16 @@ type ContractHasFilter
     | Contract_type
     | ClosedAt
     | Event
+    | Participants
     | Candidates
     | Pending_candidates
-    | Participants
     | Comments
     | IsValidator
 
 
 list : List ContractHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Contractid, Tension, Status, Contract_type, ClosedAt, Event, Candidates, Pending_candidates, Participants, Comments, IsValidator ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Contractid, Tension, Status, Contract_type, ClosedAt, Event, Participants, Candidates, Pending_candidates, Comments, IsValidator ]
 
 
 decoder : Decoder ContractHasFilter
@@ -66,14 +66,14 @@ decoder =
                     "event" ->
                         Decode.succeed Event
 
+                    "participants" ->
+                        Decode.succeed Participants
+
                     "candidates" ->
                         Decode.succeed Candidates
 
                     "pending_candidates" ->
                         Decode.succeed Pending_candidates
-
-                    "participants" ->
-                        Decode.succeed Participants
 
                     "comments" ->
                         Decode.succeed Comments
@@ -121,14 +121,14 @@ toString enum____ =
         Event ->
             "event"
 
+        Participants ->
+            "participants"
+
         Candidates ->
             "candidates"
 
         Pending_candidates ->
             "pending_candidates"
-
-        Participants ->
-            "participants"
 
         Comments ->
             "comments"
@@ -181,14 +181,14 @@ fromString enumString____ =
         "event" ->
             Just Event
 
+        "participants" ->
+            Just Participants
+
         "candidates" ->
             Just Candidates
 
         "pending_candidates" ->
             Just Pending_candidates
-
-        "participants" ->
-            Just Participants
 
         "comments" ->
             Just Comments

@@ -15,6 +15,7 @@ import Pages.Explore
 import Pages.Login
 import Pages.Logout
 import Pages.NotFound
+import Pages.Notifications
 import Pages.PasswordReset
 import Pages.Signup
 import Pages.Dynamic
@@ -48,6 +49,7 @@ type Model
     | Login_Model Pages.Login.Model
     | Logout_Model Pages.Logout.Model
     | NotFound_Model Pages.NotFound.Model
+    | Notifications_Model Pages.Notifications.Model
     | PasswordReset_Model Pages.PasswordReset.Model
     | Signup_Model Pages.Signup.Model
     | Dynamic_Model Pages.Dynamic.Model
@@ -77,6 +79,7 @@ type Msg
     | Login_Msg Pages.Login.Msg
     | Logout_Msg Pages.Logout.Msg
     | NotFound_Msg Pages.NotFound.Msg
+    | Notifications_Msg Pages.Notifications.Msg
     | PasswordReset_Msg Pages.PasswordReset.Msg
     | Signup_Msg Pages.Signup.Msg
     | Dynamic_Msg Pages.Dynamic.Msg
@@ -117,6 +120,7 @@ type alias UpgradedPages =
     , login : UpgradedPage Pages.Login.Flags Pages.Login.Model Pages.Login.Msg
     , logout : UpgradedPage Pages.Logout.Flags Pages.Logout.Model Pages.Logout.Msg
     , notFound : UpgradedPage Pages.NotFound.Flags Pages.NotFound.Model Pages.NotFound.Msg
+    , notifications : UpgradedPage Pages.Notifications.Flags Pages.Notifications.Model Pages.Notifications.Msg
     , passwordReset : UpgradedPage Pages.PasswordReset.Flags Pages.PasswordReset.Model Pages.PasswordReset.Msg
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
     , dynamic : UpgradedPage Pages.Dynamic.Flags Pages.Dynamic.Model Pages.Dynamic.Msg
@@ -148,6 +152,7 @@ pages =
     , login = Pages.Login.page |> Page.upgrade Login_Model Login_Msg
     , logout = Pages.Logout.page |> Page.upgrade Logout_Model Logout_Msg
     , notFound = Pages.NotFound.page |> Page.upgrade NotFound_Model NotFound_Msg
+    , notifications = Pages.Notifications.page |> Page.upgrade Notifications_Model Notifications_Msg
     , passwordReset = Pages.PasswordReset.page |> Page.upgrade PasswordReset_Model PasswordReset_Msg
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
     , dynamic = Pages.Dynamic.page |> Page.upgrade Dynamic_Model Dynamic_Msg
@@ -193,6 +198,9 @@ init route =
         
         Route.NotFound ->
             pages.notFound.init ()
+        
+        Route.Notifications ->
+            pages.notifications.init ()
         
         Route.PasswordReset ->
             pages.passwordReset.init ()
@@ -279,6 +287,9 @@ update bigMsg bigModel =
         
         ( NotFound_Msg msg, NotFound_Model model ) ->
             pages.notFound.update msg model
+        
+        ( Notifications_Msg msg, Notifications_Model model ) ->
+            pages.notifications.update msg model
         
         ( PasswordReset_Msg msg, PasswordReset_Model model ) ->
             pages.passwordReset.update msg model
@@ -368,6 +379,9 @@ bundle bigModel =
         
         NotFound_Model model ->
             pages.notFound.bundle model
+        
+        Notifications_Model model ->
+            pages.notifications.bundle model
         
         PasswordReset_Model model ->
             pages.passwordReset.bundle model

@@ -128,6 +128,13 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
+    const $notifTrigger = $doc.querySelectorAll('.notifTrigger');
+    if ($notifTrigger.length > 0) {
+        $notifTrigger.forEach( el => {
+            setupHandler("click", triggerNotif, el, el, app);
+        });
+    }
+
     //
     // Activate autofocus
     //
@@ -458,4 +465,8 @@ function closeModal(e, modal, app) {
 
 function triggerHelp(e, el, app) {
     app.ports.triggerHelpFromJs.send(null)
+}
+
+function triggerNotif(e, el, app) {
+    //app.ports.triggerNotifFromJs.send(null)
 }
