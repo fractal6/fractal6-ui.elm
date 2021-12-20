@@ -467,7 +467,7 @@ init global flags =
                 Cmd.none
             , case tab of
                 Conversation ->
-                    getTensionComments apis.gql tid GotTensionComments
+                    getTensionComments apis tid GotTensionComments
 
                 Document ->
                     case model.actionView of
@@ -478,7 +478,7 @@ init global flags =
                             Cmd.none
 
                         DocVersion ->
-                            getTensionBlobs apis.gql tid GotTensionBlobs
+                            getTensionBlobs apis tid GotTensionBlobs
 
                         NoView ->
                             Cmd.none
@@ -512,25 +512,25 @@ update global message model =
     in
     case message of
         LoadOrga ->
-            ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
+            ( model, queryGraphPack apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
         PushGuest form ->
-            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis form JoinAck, Cmd.none )
 
         LoadTensionHead ->
-            ( model, getTensionHead apis.gql model.tensionid GotTensionHead, Cmd.none )
+            ( model, getTensionHead apis model.tensionid GotTensionHead, Cmd.none )
 
         LoadTensionComments ->
-            ( model, pushTensionPatch apis.gql model.tension_form CommentAck, Cmd.none )
+            ( model, pushTensionPatch apis model.tension_form CommentAck, Cmd.none )
 
         PushCommentPatch ->
-            ( model, patchComment apis.gql model.comment_form CommentPatchAck, Cmd.none )
+            ( model, patchComment apis model.comment_form CommentPatchAck, Cmd.none )
 
         PushTitle ->
-            ( model, patchLiteral apis.gql model.tension_form TitleAck, Cmd.none )
+            ( model, patchLiteral apis model.tension_form TitleAck, Cmd.none )
 
         PushBlob_ form ->
-            ( model, pushTensionPatch apis.gql form BlobAck, Cmd.none )
+            ( model, pushTensionPatch apis form BlobAck, Cmd.none )
 
         PublishBlob ->
             let
@@ -544,7 +544,7 @@ update global message model =
                         |> Maybe.map .new
                         |> withDefault ""
             in
-            ( model, publishBlob apis.gql bid form PushBlobAck, Cmd.none )
+            ( model, publishBlob apis bid form PushBlobAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -601,7 +601,7 @@ update global message model =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }
-                            , queryLocalGraph apis.gql nameid (GotPath False)
+                            , queryLocalGraph apis nameid (GotPath False)
                             , Cmd.none
                             )
 
@@ -647,7 +647,7 @@ update global message model =
 
                 OkAuth th ->
                     ( { model | tension_head = result }
-                    , Cmd.batch [ queryLocalGraph apis.gql th.receiver.nameid (GotPath True), Ports.bulma_driver "" ]
+                    , Cmd.batch [ queryLocalGraph apis th.receiver.nameid (GotPath True), Ports.bulma_driver "" ]
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 
@@ -737,11 +737,12 @@ update global message model =
                                         { t
                                             | status = withDefault t.status model.tension_form.status
                                             , history =
-                                                t.history
+                                                withDefault [] t.history
                                                     ++ (events
                                                             |> List.filter (\e -> e.event_type /= TensionEvent.CommentPushed)
                                                             |> List.map (\e -> eventFromForm e model.tension_form)
                                                        )
+                                                    |> Just
                                         }
 
                                 other ->
@@ -1032,11 +1033,12 @@ update global message model =
                                         { t
                                             | blobs = ternary (tp.blobs == Nothing) t.blobs tp.blobs
                                             , history =
-                                                t.history
+                                                withDefault [] t.history
                                                     ++ (model.tension_form.events
                                                             |> List.filter (\e -> e.event_type /= TensionEvent.CommentPushed)
                                                             |> List.map (\e -> eventFromForm e model.tension_form)
                                                        )
+                                                    |> Just
                                         }
 
                                 other ->
@@ -1306,7 +1308,7 @@ update global message model =
 
                 LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
+                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
                     )
 
@@ -1425,7 +1427,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of
@@ -1820,17 +1822,20 @@ viewComments u t model =
                     tension_c.comments
                         |> withDefault []
 
+                history =
+                    withDefault [] t.history
+
                 allEvts =
                     -- When event and comment are created at the same time, show the comment first.
                     List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
-                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) t.history
+                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
                         |> List.sortBy .createdAt
 
                 viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
                 viewCommentOrEvent e =
                     case e.type_ of
                         Just _ ->
-                            case LE.getAt e.i t.history of
+                            case LE.getAt e.i history of
                                 Just event ->
                                     viewEvent model.now event t
 
@@ -2550,7 +2555,7 @@ viewDocument u t b model =
                     , source = TensionBaseUri
 
                     --, focus = model.node_focus
-                    , hasBeenPushed = t.history |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+                    , hasBeenPushed = t.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
                     , toolbar = Nothing
                     , receiver = t.receiver.nameid
                     }

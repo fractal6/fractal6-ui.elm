@@ -254,7 +254,7 @@ update_ apis message model =
             ( updatePost field value model, noOut )
 
         DoAddContract ->
-            ( setDataResult LoadingSlowly model, out0 [ addOneContract apis.gql model.form OnDataAck ] )
+            ( setDataResult LoadingSlowly model, out0 [ addOneContract apis model.form OnDataAck ] )
 
         OnSubmit next ->
             ( model

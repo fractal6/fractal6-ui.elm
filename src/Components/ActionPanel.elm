@@ -649,10 +649,10 @@ update_ apis message model =
                             , pending_candidates = pending_candidates
                             }
                     in
-                    ( model, out0 [ addOneContract apis.gql contractForm PushAck ] )
+                    ( model, out0 [ addOneContract apis contractForm PushAck ] )
 
                 _ ->
-                    ( model, out0 [ actionRequest apis.gql form PushAck ] )
+                    ( model, out0 [ actionRequest apis form PushAck ] )
 
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
@@ -807,7 +807,7 @@ update_ apis message model =
                     ( model |> setActionResult result, noOut )
 
         OnActionMove ->
-            ( model, out0 [ getTensionHead apis.gql model.form.tid GotTensionToMove ] )
+            ( model, out0 [ getTensionHead apis model.form.tid GotTensionToMove ] )
 
         GotTensionToMove result ->
             case result of

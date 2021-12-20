@@ -240,7 +240,7 @@ update_ apis message model =
 
         DoQueryUser ->
             ( setDataResult LoadingSlowly model
-            , out0 [ queryUser apis.gql model.form.pattern OnUsersAck ]
+            , out0 [ queryUser apis model.form.pattern OnUsersAck ]
             )
 
         OnUsersAck result ->

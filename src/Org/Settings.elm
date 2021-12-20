@@ -307,15 +307,15 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid (GotPath True)) Cmd.none
+            [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             ]
                 ++ (case menu of
                         LabelsMenu ->
-                            [ getLabels apis.gql newFocus.nameid GotLabels
-                            , fetchLabelsTop apis.rest newFocus.nameid GotLabelsTop
-                            , fetchLabelsSub apis.rest newFocus.nameid GotLabelsSub
+                            [ getLabels apis newFocus.nameid GotLabels
+                            , fetchLabelsTop apis newFocus.nameid GotLabelsTop
+                            , fetchLabelsSub apis newFocus.nameid GotLabelsSub
                             ]
 
                         _ ->
@@ -340,7 +340,7 @@ update global message model =
     in
     case message of
         PushGuest form ->
-            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -380,7 +380,7 @@ update global message model =
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid (GotPath False), Cmd.none )
+                            ( { model | path_data = Success newPath }, queryLocalGraph apis nameid (GotPath False), Cmd.none )
 
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
@@ -492,10 +492,10 @@ update global message model =
             ( { model | label_form = newForm }, Cmd.none, Cmd.none )
 
         SubmitAddLabel _ ->
-            ( { model | label_result = LoadingSlowly }, addOneLabel apis.gql model.label_form GotLabel, Cmd.none )
+            ( { model | label_result = LoadingSlowly }, addOneLabel apis model.label_form GotLabel, Cmd.none )
 
         SubmitEditLabel _ ->
-            ( { model | label_result = LoadingSlowly }, updateOneLabel apis.gql model.label_form GotLabel, Cmd.none )
+            ( { model | label_result = LoadingSlowly }, updateOneLabel apis model.label_form GotLabel, Cmd.none )
 
         SubmitDeleteLabel id _ ->
             let
@@ -505,7 +505,7 @@ update global message model =
                 newForm =
                     { f | id = id }
             in
-            ( { model | label_result_del = LoadingSlowly, label_form = newForm }, removeOneLabel apis.gql newForm GotLabelDel, Cmd.none )
+            ( { model | label_result_del = LoadingSlowly, label_form = newForm }, removeOneLabel apis newForm GotLabelDel, Cmd.none )
 
         GotLabel result ->
             case parseErr result model.refresh_trial of
@@ -624,7 +624,7 @@ update global message model =
 
                 LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
+                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
                     )
 
@@ -722,7 +722,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of

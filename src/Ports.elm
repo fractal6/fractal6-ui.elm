@@ -412,6 +412,14 @@ click target =
         }
 
 
+force_reload : Cmd msg
+force_reload =
+    outgoing
+        { action = "FORCE_RELOAD"
+        , data = JE.string ""
+        }
+
+
 
 --
 -- Encoder

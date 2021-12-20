@@ -19,6 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+id : SelectionSet Fractal.ScalarCodecs.Id Fractal.Object.UserEvent
+id =
+    Object.selectionForField "ScalarCodecs.Id" "id" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecId |> .decoder)
+
+
 createdAt : SelectionSet Fractal.ScalarCodecs.DateTime Fractal.Object.UserEvent
 createdAt =
     Object.selectionForField "ScalarCodecs.DateTime" "createdAt" [] (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapCodecs |> .codecDateTime |> .decoder)
@@ -50,20 +55,23 @@ user fillInOptionals____ object____ =
 
 
 type alias EventOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.EventKindFilter }
+    { filter : OptionalArgument Fractal.InputObject.EventKindFilter
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
 
 
 event :
     (EventOptionalArguments -> EventOptionalArguments)
     -> SelectionSet decodesTo Fractal.Union.EventKind
-    -> SelectionSet decodesTo Fractal.Object.UserEvent
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.UserEvent
 event fillInOptionals____ object____ =
     let
         filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
+            fillInOptionals____ { filter = Absent, first = Absent, offset = Absent }
 
         optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventKindFilter ]
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventKindFilter, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
                 |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "event" optionalArgs____ object____ Basics.identity
+    Object.selectionForCompositeField "event" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)

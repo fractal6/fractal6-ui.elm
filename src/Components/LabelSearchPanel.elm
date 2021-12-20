@@ -230,10 +230,10 @@ update_ apis message model =
 
                     ( newModel, cmd ) =
                         if hasChanged && isDepth then
-                            ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis.gql nameids OnGotLabels ] )
+                            ( { model | labels_data = LoadingSlowly }, [ queryLabelsDown apis nameids OnGotLabels ] )
 
                         else if hasChanged && not isDepth then
-                            ( { model | labels_data = LoadingSlowly }, [ queryLabels apis.gql nameids OnGotLabels ] )
+                            ( { model | labels_data = LoadingSlowly }, [ queryLabels apis nameids OnGotLabels ] )
 
                         else
                             ( model, [] )
@@ -362,7 +362,7 @@ update_ apis message model =
 
         SetLabel form ->
             ( model
-            , out0 [ setLabel apis.gql form OnLabelAck ]
+            , out0 [ setLabel apis form OnLabelAck ]
             )
 
         ResetClickResult ->

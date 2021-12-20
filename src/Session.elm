@@ -28,6 +28,7 @@ type alias Apis =
     , gql : String
     , rest : String
     , data : String
+    , version : String
     }
 
 

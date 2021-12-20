@@ -199,7 +199,7 @@ type alias HistoryOptionalArguments =
 history :
     (HistoryOptionalArguments -> HistoryOptionalArguments)
     -> SelectionSet decodesTo Fractal.Object.Event
-    -> SelectionSet (List decodesTo) Fractal.Object.Tension
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Tension
 history fillInOptionals____ object____ =
     let
         filledInOptionals____ =
@@ -209,7 +209,7 @@ history fillInOptionals____ object____ =
             [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeEventOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
                 |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "history" optionalArgs____ object____ (Basics.identity >> Decode.list)
+    Object.selectionForCompositeField "history" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
 type alias ContractsOptionalArguments =

@@ -95,7 +95,7 @@ init global flags =
                 newForm =
                     { form | post = Dict.insert "token" token form.post }
             in
-            ( { model | form = newForm }, uuidCheck global.session.apis.auth (Dict.fromList [ ( "token", token ) ]) GotUuidCheck, gcmd )
+            ( { model | form = newForm }, uuidCheck global.session.apis (Dict.fromList [ ( "token", token ) ]) GotUuidCheck, gcmd )
 
         Nothing ->
             ( model, send LoadCaptcha, gcmd )
@@ -135,7 +135,7 @@ update global msg model =
     in
     case msg of
         LoadCaptcha ->
-            ( { model | challenge_data = RemoteData.Loading }, resetPasswordChallenge apis.auth GotChallenge, Cmd.none )
+            ( { model | challenge_data = RemoteData.Loading }, resetPasswordChallenge apis GotChallenge, Cmd.none )
 
         ChangeUserPost field value ->
             let
@@ -149,13 +149,13 @@ update global msg model =
 
         SubmitReset form ->
             ( { model | reset_result = RemoteData.Loading }
-            , resetPassword apis.auth form.post GotReset
+            , resetPassword apis form.post GotReset
             , Cmd.none
             )
 
         SubmitReset2 form ->
             ( { model | reset_result = RemoteData.Loading }
-            , resetPassword2 apis.auth form.post GotReset
+            , resetPassword2 apis form.post GotReset
             , Cmd.none
             )
 

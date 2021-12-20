@@ -186,7 +186,7 @@ type alias TensionHead =
     --
     , blobs : Maybe (List Blob) -- head / len() == 1
     , contracts : Maybe (List IdPayload) -- head / len() == 1
-    , history : List Event
+    , history : Maybe (List Event)
     , n_open_contracts : Maybe Int
     }
 
@@ -502,7 +502,7 @@ type alias UserEvents =
 
 type alias UserEvent =
     { isRead : Bool
-    , event : EventKind
+    , event : List EventKind
     }
 
 

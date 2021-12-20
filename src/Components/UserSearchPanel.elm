@@ -218,7 +218,7 @@ update_ apis message model =
                 let
                     ( newModel, cmd ) =
                         ternary (targets /= model.form.targets)
-                            ( { model | assignees_data = LoadingSlowly }, [ queryMembers apis.gql targets OnGotAssignees ] )
+                            ( { model | assignees_data = LoadingSlowly }, [ queryMembers apis targets OnGotAssignees ] )
                             ( model, [] )
                 in
                 ( open targets newModel
@@ -338,7 +338,7 @@ update_ apis message model =
 
         SetAssignee form ->
             ( model
-            , out0 [ setAssignee apis.gql form OnAssigneeAck ]
+            , out0 [ setAssignee apis form OnAssigneeAck ]
             )
 
         ResetClickResult ->

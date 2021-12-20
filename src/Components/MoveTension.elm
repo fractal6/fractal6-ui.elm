@@ -304,7 +304,7 @@ update_ apis message model =
             ( setTarget node model, noOut )
 
         DoMoveTension ->
-            ( setMoveResult LoadingSlowly model, out0 [ moveTension apis.gql model.form OnMoveAck ] )
+            ( setMoveResult LoadingSlowly model, out0 [ moveTension apis model.form OnMoveAck ] )
 
         OnSubmit next ->
             ( model

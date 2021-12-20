@@ -44,7 +44,22 @@ userNotificationsDecoder data =
     data
         |> Maybe.map
             (\user ->
+                -- If  union type (EventKind)is not a list, the Maybe can be removed...
                 user.events
+                    |> Maybe.map
+                        (\q ->
+                            q
+                                |> List.map
+                                    (\x ->
+                                        case x.event of
+                                            Just e ->
+                                                UserEvent x.isRead e |> Just
+
+                                            Nothing ->
+                                                Nothing
+                                    )
+                                |> List.filterMap identity
+                        )
             )
         |> withDefault Nothing
 
@@ -74,8 +89,12 @@ notificationsFilter f a =
 --
 
 
+type alias UserEvent_ =
+    { isRead : Bool, event : Maybe (List EventKind) }
+
+
 type alias UserNotifications =
-    { events : Maybe UserEvents }
+    { events : Maybe (List UserEvent_) }
 
 
 userNotificationsPayload : NotificationsForm -> SelectionSet UserNotifications Fractal.Object.User
@@ -84,9 +103,9 @@ userNotificationsPayload f =
         |> with (Fractal.Object.User.events (notificationsFilter f) notificationsPayload)
 
 
-notificationsPayload : SelectionSet UserEvent Fractal.Object.UserEvent
+notificationsPayload : SelectionSet UserEvent_ Fractal.Object.UserEvent
 notificationsPayload =
-    SelectionSet.succeed UserEvent
+    SelectionSet.succeed UserEvent_
         |> with Fractal.Object.UserEvent.isRead
         |> with (Fractal.Object.UserEvent.event identity eventKindType)
 

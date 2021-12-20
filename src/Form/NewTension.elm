@@ -638,7 +638,7 @@ update_ apis message model =
     case message of
         -- Data control
         PushTension ack ->
-            ( model, out0 [ addOneTension apis.gql model.form ack ] )
+            ( model, out0 [ addOneTension apis model.form ack ] )
 
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )

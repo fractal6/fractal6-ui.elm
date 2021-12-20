@@ -290,10 +290,10 @@ update_ apis message model =
             ( { model | form = f, activeView = ContractView }, out1 [ DoNavigate url ] )
 
         DoQueryContracts ->
-            ( { model | contracts_result = LoadingSlowly }, out0 [ getContracts apis.gql model.form OnContractsAck ] )
+            ( { model | contracts_result = LoadingSlowly }, out0 [ getContracts apis model.form OnContractsAck ] )
 
         DoQueryContract cid ->
-            ( { model | contract_result = LoadingSlowly }, out0 [ getContract apis.gql model.form OnContractAck ] )
+            ( { model | contract_result = LoadingSlowly }, out0 [ getContract apis model.form OnContractAck ] )
 
         DoQueryContractComments cid ->
             let
@@ -303,7 +303,7 @@ update_ apis message model =
                 f =
                     { form | cid = cid }
             in
-            ( { model | form = f }, out0 [ getContractComments apis.gql f OnContractCommentsAck ] )
+            ( { model | form = f }, out0 [ getContractComments apis f OnContractCommentsAck ] )
 
         DoDeleteContract cid ->
             let
@@ -313,7 +313,7 @@ update_ apis message model =
                 f =
                     { form | cid = cid }
             in
-            ( { model | contract_result_del = LoadingSlowly, form = f }, out0 [ deleteOneContract apis.gql f OnContractDeleteAck ] )
+            ( { model | contract_result_del = LoadingSlowly, form = f }, out0 [ deleteOneContract apis f OnContractDeleteAck ] )
 
         OnSubmit next ->
             ( model
@@ -438,7 +438,7 @@ update_ apis message model =
                         , post = Dict.insert "createdAt" (fromTime time) f.post
                     }
             in
-            ( { model | voteForm = form }, out0 [ sendVote apis.gql form OnVoteAck ] )
+            ( { model | voteForm = form }, out0 [ sendVote apis form OnVoteAck ] )
 
         OnVoteAck result ->
             let

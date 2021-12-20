@@ -407,4 +407,7 @@ const actions = {
         var elt = document.getElementById(target);
         if (elt) elt.click();
     },
+    'FORCE_RELOAD': (app, session, target) => {
+        window.location.reload(true);
+    },
 }

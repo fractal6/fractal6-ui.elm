@@ -320,14 +320,14 @@ init global flags =
                 [ send LoadOrga
                 , Ports.initGraphPack Dict.empty "" -- canvas loading effet
 
-                --, queryCircleTension apis.gql newFocus.nameid GotTensions
-                , queryNodeData apis.gql newFocus.nameid GotData
+                --, queryCircleTension apis newFocus.nameid GotTensions
+                , queryNodeData apis newFocus.nameid GotData
                 ]
 
             else if fs.focusChange then
-                [ queryNodeData apis.gql newFocus.nameid GotData
+                [ queryNodeData apis newFocus.nameid GotData
 
-                --queryCircleTension apis.gql newFocus.nameid GotTensions
+                --queryCircleTension apis newFocus.nameid GotTensions
                 ]
                     ++ (if fs.menuChange then
                             case session.orga_data of
@@ -347,8 +347,8 @@ init global flags =
                 [ send LoadOrga
                 , Ports.initGraphPack Dict.empty "" --canvas loading effect
 
-                --, queryCircleTension apis.gql newFocus.nameid GotTensions
-                , queryNodeData apis.gql newFocus.nameid GotData
+                --, queryCircleTension apis newFocus.nameid GotTensions
+                , queryNodeData apis newFocus.nameid GotData
                 ]
 
             else
@@ -385,10 +385,10 @@ update global message model =
     in
     case message of
         LoadOrga ->
-            ( model, queryGraphPack apis.gql model.node_focus.rootnameid GotOrga, Cmd.none )
+            ( model, queryGraphPack apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
         PushGuest form ->
-            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -628,7 +628,7 @@ update global message model =
 
                 LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
+                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
                     )
 
@@ -678,7 +678,7 @@ update global message model =
 
                         OkAuth _ ->
                             ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , queryNodesSub apis.gql (memberIdCodec form.node.nameid form.uctx.username) NewNodesAck
+                            , queryNodesSub apis (memberIdCodec form.node.nameid form.uctx.username) NewNodesAck
                             , Cmd.none
                             )
 
@@ -697,7 +697,7 @@ update global message model =
             ( { model | tensions_data = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
 
         FetchNewNode nameid ->
-            ( model, queryNodesSub apis.gql nameid NewNodesAck, Cmd.none )
+            ( model, queryNodesSub apis nameid NewNodesAck, Cmd.none )
 
         NewNodesAck result ->
             case result of
@@ -795,7 +795,7 @@ update global message model =
                     path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
                 cmd =
-                    queryAllTension apis.gql nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                    queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
             in
             ( { model | path_data = Just path }
             , Cmd.batch [ Ports.drawButtonsGraphPack, cmd, Ports.bulma_driver "" ]
@@ -872,7 +872,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of
@@ -1430,10 +1430,10 @@ viewActivies model =
                     else
                         case model.node_focus.type_ of
                             NodeType.Role ->
-                                div [ class "ml-4" ] [ textH T.noOpenTensionRole ]
+                                div [ class "m-4" ] [ textH T.noOpenTensionRole ]
 
                             NodeType.Circle ->
-                                div [ class "ml-4" ] [ textH T.noOpenTensionCircle ]
+                                div [ class "m-4" ] [ textH T.noOpenTensionCircle ]
 
                 Failure err ->
                     viewGqlErrors err

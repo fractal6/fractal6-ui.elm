@@ -607,7 +607,7 @@ init global flags =
 
         cmds =
             [ if fs.focusChange then
-                [ queryLocalGraph apis.gql newFocus.nameid (GotPath True), send ResetData ]
+                [ queryLocalGraph apis newFocus.nameid (GotPath True), send ResetData ]
 
               else if getTargetsHere model == [] then
                 -- path of children has not been loaded
@@ -662,7 +662,7 @@ update global message model =
             ( { model | tensions_int = Success tensions_int }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
 
         PushGuest form ->
-            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -737,7 +737,7 @@ update global message model =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }
-                            , queryLocalGraph apis.gql nameid (GotPath False)
+                            , queryLocalGraph apis nameid (GotPath False)
                             , Cmd.none
                             )
 
@@ -796,7 +796,7 @@ update global message model =
             ( model
             , case model.depthFilter of
                 AllSubChildren ->
-                    fetchChildren apis.rest model.node_focus.nameid GotChildren
+                    fetchChildren apis model.node_focus.nameid GotChildren
 
                 SelectedNode ->
                     send (DoLoad False)
@@ -833,7 +833,7 @@ update global message model =
 
             else if model.viewMode == CircleView then
                 ( { model | tensions_all = LoadingSlowly }
-                , fetchTensionAll apis.rest nameids nfirstC 0 model.pattern status model.authors model.labels type_ GotTensionsAll
+                , fetchTensionAll apis nameids nfirstC 0 model.pattern status model.authors model.labels type_ GotTensionsAll
                 , Ports.hide "footBar"
                 )
 
@@ -844,11 +844,11 @@ update global message model =
                   else
                     model
                 , Cmd.batch
-                    [ fetchTensionInt apis.rest nameids first skip model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
+                    [ fetchTensionInt apis nameids first skip model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
-                    --, fetchTensionExt apis.rest nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
-                    , fetchTensionCount apis.rest nameids model.pattern model.authors model.labels type_ GotTensionsCount
+                    --, fetchTensionExt apis nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
+                    , fetchTensionCount apis nameids model.pattern model.authors model.labels type_ GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )
@@ -1066,7 +1066,7 @@ update global message model =
 
                 LoggedIn _ ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
+                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
                     )
 
@@ -1164,7 +1164,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of

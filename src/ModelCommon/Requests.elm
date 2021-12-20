@@ -18,6 +18,7 @@ import Maybe exposing (withDefault)
 import ModelSchema exposing (Count, Label, LabelFull, Member, NodeId, Post, Tension, TensionsCount, User, UserCtx, UserRoleExtended, Username)
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData exposing (RemoteData)
+import Session exposing (Apis)
 
 
 
@@ -34,16 +35,23 @@ import RemoteData exposing (RemoteData)
 -}
 
 
+setHeaders : Apis -> List Http.Header
+setHeaders api =
+    -- CORS error in dev mode !?
+    --[ Http.header "X-Client-Version" api.version ]
+    []
+
+
 {-|
 
     Get all children ** Nodes ** below the given node recursively
 
 -}
-fetchChildren url targetid msg =
+fetchChildren api targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/sub_nodes"
+        , url = api.rest ++ "/sub_nodes"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list nodeIdDecoder
         , timeout = Nothing
@@ -56,11 +64,11 @@ fetchChildren url targetid msg =
     Get all member ** Nodes ** below the given node (role with first link) recursively
 
 -}
-fetchMembersSub url targetid msg =
+fetchMembersSub api targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/sub_members"
+        , url = api.rest ++ "/sub_members"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> mapWeb2Data membersNodeDecoder >> msg) membersDecoder
         , timeout = Nothing
@@ -85,11 +93,11 @@ membersDecoder =
     Get all ** Labels ** from the parent, unril the root node
 
 -}
-fetchLabelsTop url targetid msg =
+fetchLabelsTop api targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/top_labels"
+        , url = api.rest ++ "/top_labels"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelFullDecoder
         , timeout = Nothing
@@ -102,11 +110,11 @@ fetchLabelsTop url targetid msg =
     Get all ** Labels ** below the given node recursively
 
 -}
-fetchLabelsSub url targetid msg =
+fetchLabelsSub api targetid msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/sub_labels"
+        , url = api.rest ++ "/sub_labels"
         , body = Http.jsonBody <| JE.string targetid
         , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelFullDecoder
         , timeout = Nothing
@@ -150,11 +158,11 @@ type alias TensionQuery =
     }
 
 
-fetchTensionInt url targetids first offset query_ status_ authors labels type_ msg =
+fetchTensionInt api targetids first offset query_ status_ authors labels type_ msg =
     Http.riskyRequest
         { method = "POST"
-        , headers = []
-        , url = url ++ "/tensions_int"
+        , headers = setHeaders api
+        , url = api.rest ++ "/tensions_int"
         , body = Http.jsonBody <| fetchTensionEncoder targetids first offset query_ status_ authors labels type_
         , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
         , timeout = Nothing
@@ -162,11 +170,11 @@ fetchTensionInt url targetids first offset query_ status_ authors labels type_ m
         }
 
 
-fetchTensionExt url targetids first offset query_ status_ authors labels type_ msg =
+fetchTensionExt api targetids first offset query_ status_ authors labels type_ msg =
     Http.riskyRequest
         { method = "POST"
-        , headers = []
-        , url = url ++ "/tensions_ext"
+        , headers = setHeaders api
+        , url = api.rest ++ "/tensions_ext"
         , body = Http.jsonBody <| fetchTensionEncoder targetids first offset query_ status_ authors labels type_
         , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
         , timeout = Nothing
@@ -174,11 +182,11 @@ fetchTensionExt url targetids first offset query_ status_ authors labels type_ m
         }
 
 
-fetchTensionAll url targetids first offset query_ status_ authors labels type_ msg =
+fetchTensionAll api targetids first offset query_ status_ authors labels type_ msg =
     Http.riskyRequest
         { method = "POST"
-        , headers = []
-        , url = url ++ "/tensions_all"
+        , headers = setHeaders api
+        , url = api.rest ++ "/tensions_all"
         , body = Http.jsonBody <| fetchTensionEncoder targetids first offset query_ status_ authors labels type_
         , expect = expectJson (fromResult >> msg) <| JD.list tensionDecoder
         , timeout = Nothing
@@ -186,11 +194,11 @@ fetchTensionAll url targetids first offset query_ status_ authors labels type_ m
         }
 
 
-fetchTensionCount url targetids query_ authors labels type_ msg =
+fetchTensionCount api targetids query_ authors labels type_ msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/tensions_count"
+        , url = api.rest ++ "/tensions_count"
         , body = Http.jsonBody <| fetchTensionEncoder targetids 0 0 query_ Nothing authors labels type_
         , expect = expectJson (fromResult >> msg) <| JD.map2 TensionsCount (JD.field "open" JD.int) (JD.field "closed" JD.int)
         , timeout = Nothing
@@ -234,11 +242,11 @@ tensionDecoder =
 --
 
 
-createOrga url post msg =
+createOrga api post msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/createorga"
+        , url = api.auth ++ "/createorga"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) nodeIdDecoder
         , timeout = Nothing
@@ -252,7 +260,7 @@ createOrga url post msg =
 --
 
 
-login url post msg =
+login api post msg =
     --, Http.post
     --    { url = "http://localhost:8888/login"
     --    , body = Http.jsonBody <| JE.dict identity JE.string form.post
@@ -260,8 +268,8 @@ login url post msg =
     --    }
     Http.riskyRequest
         { method = "POST"
-        , headers = []
-        , url = url ++ "/login"
+        , headers = setHeaders api
+        , url = api.auth ++ "/login"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
@@ -269,11 +277,11 @@ login url post msg =
         }
 
 
-signup url post msg =
+signup api post msg =
     Http.riskyRequest
         { method = "POST"
-        , headers = []
-        , url = url ++ "/signup"
+        , headers = setHeaders api
+        , url = api.auth ++ "/signup"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
@@ -281,11 +289,11 @@ signup url post msg =
         }
 
 
-tokenack url msg =
+tokenack api msg =
     Http.riskyRequest
         { method = "POST"
-        , headers = []
-        , url = url ++ "/tokenack"
+        , headers = setHeaders api
+        , url = api.auth ++ "/tokenack"
         , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
@@ -293,11 +301,11 @@ tokenack url msg =
         }
 
 
-uuidCheck url post msg =
+uuidCheck api post msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/uuidcheck"
+        , url = api.auth ++ "/uuidcheck"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
         , timeout = Nothing
@@ -305,11 +313,11 @@ uuidCheck url post msg =
         }
 
 
-resetPassword url post msg =
+resetPassword api post msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/resetpassword"
+        , url = api.auth ++ "/resetpassword"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
         , timeout = Nothing
@@ -317,11 +325,11 @@ resetPassword url post msg =
         }
 
 
-resetPassword2 url post msg =
+resetPassword2 api post msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/resetpassword2"
+        , url = api.auth ++ "/resetpassword2"
         , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
         , timeout = Nothing
@@ -329,11 +337,11 @@ resetPassword2 url post msg =
         }
 
 
-resetPasswordChallenge url msg =
+resetPasswordChallenge api msg =
     Http.riskyRequest
         { method = "POST"
         , headers = []
-        , url = url ++ "/resetpasswordchallenge"
+        , url = api.auth ++ "/resetpasswordchallenge"
         , body = Http.emptyBody
 
         -- see https://github.com/justgook/elm-image/issues/9
@@ -370,11 +378,11 @@ httpReponseToImage response =
 --
 
 
-getQuickDoc url lang msg =
+getQuickDoc api lang msg =
     Http.riskyRequest
         { method = "GET"
         , headers = []
-        , url = url ++ ("/quickdoc." ++ lang ++ ".json")
+        , url = api.data ++ ("/quickdoc." ++ lang ++ ".json")
         , body = Http.emptyBody
         , expect = expectJson (RemoteData.fromResult >> msg) quickDocDecoder
         , timeout = Nothing

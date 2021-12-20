@@ -111,24 +111,6 @@ addTensionInputEncoder f =
                 Input.buildNodeRef (\n -> { n | nameid = Present f.target.nameid })
             , emitterid = f.source.nameid
             , receiverid = f.target.nameid
-            , history =
-                events
-                    |> List.map
-                        (\{ event_type, old, new } ->
-                            Input.buildEventRef
-                                (\x ->
-                                    { x
-                                        | createdAt = createdAt |> Present
-                                        , createdBy =
-                                            Input.buildUserRef
-                                                (\u -> { u | username = Present f.uctx.username })
-                                                |> Present
-                                        , event_type = Present event_type
-                                        , old = Present old
-                                        , new = Present new
-                                    }
-                                )
-                        )
             }
 
         inputOpt =
@@ -138,6 +120,7 @@ addTensionInputEncoder f =
                     , comments = buildComment createdAt f.uctx.username (Just message)
                     , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
                     , labels = buildLabels f
+                    , history = buildEvents createdAt f.uctx.username events
                 }
     in
     { input = [ Input.buildAddTensionInput inputReq inputOpt ] }

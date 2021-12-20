@@ -108,7 +108,7 @@ update global msg model =
 
         SubmitUser form ->
             ( model
-            , login apis.auth form.post GotSignin
+            , login apis form.post GotSignin
             , Cmd.none
             )
 

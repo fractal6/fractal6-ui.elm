@@ -153,7 +153,7 @@ update global message model =
     in
     case message of
         LoadNodeExts ->
-            ( model, queryPublicOrga apis.gql GotOrgas, Cmd.none )
+            ( model, queryPublicOrga apis GotOrgas, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -202,7 +202,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of

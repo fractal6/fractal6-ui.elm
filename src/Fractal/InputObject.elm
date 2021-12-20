@@ -761,9 +761,9 @@ buildAddTensionInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, message = Absent, action = Absent, comments = Absent, assignees = Absent, labels = Absent, blobs = Absent, contracts = Absent, suscribers = Absent, n_comments = Absent, n_open_contracts = Absent }
+                { updatedAt = Absent, message = Absent, action = Absent, comments = Absent, assignees = Absent, labels = Absent, blobs = Absent, history = Absent, contracts = Absent, suscribers = Absent, n_comments = Absent, n_open_contracts = Absent }
     in
-    AddTensionInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, emitter = required____.emitter, emitterid = required____.emitterid, receiver = required____.receiver, receiverid = required____.receiverid, title = required____.title, type_ = required____.type_, status = required____.status, action = optionals____.action, comments = optionals____.comments, assignees = optionals____.assignees, labels = optionals____.labels, blobs = optionals____.blobs, history = required____.history, contracts = optionals____.contracts, suscribers = optionals____.suscribers, n_comments = optionals____.n_comments, n_open_contracts = optionals____.n_open_contracts }
+    AddTensionInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, emitter = required____.emitter, emitterid = required____.emitterid, receiver = required____.receiver, receiverid = required____.receiverid, title = required____.title, type_ = required____.type_, status = required____.status, action = optionals____.action, comments = optionals____.comments, assignees = optionals____.assignees, labels = optionals____.labels, blobs = optionals____.blobs, history = optionals____.history, contracts = optionals____.contracts, suscribers = optionals____.suscribers, n_comments = optionals____.n_comments, n_open_contracts = optionals____.n_open_contracts }
 
 
 type alias AddTensionInputRequiredFields =
@@ -776,7 +776,6 @@ type alias AddTensionInputRequiredFields =
     , title : String
     , type_ : Fractal.Enum.TensionType.TensionType
     , status : Fractal.Enum.TensionStatus.TensionStatus
-    , history : List EventRef
     }
 
 
@@ -788,6 +787,7 @@ type alias AddTensionInputOptionalFields =
     , assignees : OptionalArgument (List UserRef)
     , labels : OptionalArgument (List LabelRef)
     , blobs : OptionalArgument (List BlobRef)
+    , history : OptionalArgument (List EventRef)
     , contracts : OptionalArgument (List ContractRef)
     , suscribers : OptionalArgument (List UserRef)
     , n_comments : OptionalArgument Int
@@ -817,7 +817,7 @@ type alias AddTensionInputRaw =
     , assignees : OptionalArgument (List UserRef)
     , labels : OptionalArgument (List LabelRef)
     , blobs : OptionalArgument (List BlobRef)
-    , history : List EventRef
+    , history : OptionalArgument (List EventRef)
     , contracts : OptionalArgument (List ContractRef)
     , suscribers : OptionalArgument (List UserRef)
     , n_comments : OptionalArgument Int
@@ -836,22 +836,31 @@ type AddTensionInput
 encodeAddTensionInput : AddTensionInput -> Value
 encodeAddTensionInput (AddTensionInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "emitter", encodeNodeRef input____.emitter |> Just ), ( "emitterid", Encode.string input____.emitterid |> Just ), ( "receiver", encodeNodeRef input____.receiver |> Just ), ( "receiverid", Encode.string input____.receiverid |> Just ), ( "title", Encode.string input____.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input____.type_ |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input____.status |> Just ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input____.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input____.comments ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input____.blobs ), ( "history", (encodeEventRef |> Encode.list) input____.history |> Just ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "suscribers", (encodeUserRef |> Encode.list) |> Encode.optional input____.suscribers ), ( "n_comments", Encode.int |> Encode.optional input____.n_comments ), ( "n_open_contracts", Encode.int |> Encode.optional input____.n_open_contracts ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "emitter", encodeNodeRef input____.emitter |> Just ), ( "emitterid", Encode.string input____.emitterid |> Just ), ( "receiver", encodeNodeRef input____.receiver |> Just ), ( "receiverid", Encode.string input____.receiverid |> Just ), ( "title", Encode.string input____.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input____.type_ |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input____.status |> Just ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input____.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input____.comments ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input____.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input____.history ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "suscribers", (encodeUserRef |> Encode.list) |> Encode.optional input____.suscribers ), ( "n_comments", Encode.int |> Encode.optional input____.n_comments ), ( "n_open_contracts", Encode.int |> Encode.optional input____.n_open_contracts ) ]
 
 
 buildAddUserEventInput :
     AddUserEventInputRequiredFields
+    -> (AddUserEventInputOptionalFields -> AddUserEventInputOptionalFields)
     -> AddUserEventInput
-buildAddUserEventInput required____ =
-    AddUserEventInput { createdAt = required____.createdAt, isRead = required____.isRead, user = required____.user, event = required____.event }
+buildAddUserEventInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { event = Absent }
+    in
+    AddUserEventInput { createdAt = required____.createdAt, isRead = required____.isRead, user = required____.user, event = optionals____.event }
 
 
 type alias AddUserEventInputRequiredFields =
     { createdAt : Fractal.ScalarCodecs.DateTime
     , isRead : Bool
     , user : UserRef
-    , event : EventKindRef
     }
+
+
+type alias AddUserEventInputOptionalFields =
+    { event : OptionalArgument (List EventKindRef) }
 
 
 {-| Type alias for the `AddUserEventInput` attributes. Note that this type
@@ -863,7 +872,7 @@ type alias AddUserEventInputRaw =
     { createdAt : Fractal.ScalarCodecs.DateTime
     , isRead : Bool
     , user : UserRef
-    , event : EventKindRef
+    , event : OptionalArgument (List EventKindRef)
     }
 
 
@@ -878,7 +887,7 @@ type AddUserEventInput
 encodeAddUserEventInput : AddUserEventInput -> Value
 encodeAddUserEventInput (AddUserEventInput input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "isRead", Encode.bool input____.isRead |> Just ), ( "user", encodeUserRef input____.user |> Just ), ( "event", encodeEventKindRef input____.event |> Just ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "isRead", Encode.bool input____.isRead |> Just ), ( "user", encodeUserRef input____.user |> Just ), ( "event", (encodeEventKindRef |> Encode.list) |> Encode.optional input____.event ) ]
 
 
 buildAddUserInput :
@@ -6357,13 +6366,14 @@ buildUserEventFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdAt = Absent, isRead = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, isRead = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    UserEventFilter { createdAt = optionals____.createdAt, isRead = optionals____.isRead, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    UserEventFilter { id = optionals____.id, createdAt = optionals____.createdAt, isRead = optionals____.isRead, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias UserEventFilterOptionalFields =
-    { createdAt : OptionalArgument DateTimeFilter
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
     , isRead : OptionalArgument Bool
     , has : OptionalArgument (List (Maybe Fractal.Enum.UserEventHasFilter.UserEventHasFilter))
     , and : OptionalArgument (List (Maybe UserEventFilter))
@@ -6378,7 +6388,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias UserEventFilterRaw =
-    { createdAt : OptionalArgument DateTimeFilter
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
     , isRead : OptionalArgument Bool
     , has : OptionalArgument (List (Maybe Fractal.Enum.UserEventHasFilter.UserEventHasFilter))
     , and : OptionalArgument (List (Maybe UserEventFilter))
@@ -6398,7 +6409,7 @@ type UserEventFilter
 encodeUserEventFilter : UserEventFilter -> Value
 encodeUserEventFilter (UserEventFilter input____) =
     Encode.maybeObject
-        [ ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "has", (Encode.enum Fractal.Enum.UserEventHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeUserEventFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeUserEventFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeUserEventFilter |> Encode.optional input____.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "has", (Encode.enum Fractal.Enum.UserEventHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeUserEventFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeUserEventFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeUserEventFilter |> Encode.optional input____.not ) ]
 
 
 buildUserEventOrder :
@@ -6462,7 +6473,7 @@ type alias UserEventPatchOptionalFields =
     { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , isRead : OptionalArgument Bool
     , user : OptionalArgument UserRef
-    , event : OptionalArgument EventKindRef
+    , event : OptionalArgument (List EventKindRef)
     }
 
 
@@ -6475,7 +6486,7 @@ type alias UserEventPatchRaw =
     { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , isRead : OptionalArgument Bool
     , user : OptionalArgument UserRef
-    , event : OptionalArgument EventKindRef
+    , event : OptionalArgument (List EventKindRef)
     }
 
 
@@ -6490,7 +6501,7 @@ type UserEventPatch
 encodeUserEventPatch : UserEventPatch -> Value
 encodeUserEventPatch (UserEventPatch input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "user", encodeUserRef |> Encode.optional input____.user ), ( "event", encodeEventKindRef |> Encode.optional input____.event ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "user", encodeUserRef |> Encode.optional input____.user ), ( "event", (encodeEventKindRef |> Encode.list) |> Encode.optional input____.event ) ]
 
 
 buildUserEventRef :
@@ -6500,16 +6511,17 @@ buildUserEventRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdAt = Absent, isRead = Absent, user = Absent, event = Absent }
+                { id = Absent, createdAt = Absent, isRead = Absent, user = Absent, event = Absent }
     in
-    UserEventRef { createdAt = optionals____.createdAt, isRead = optionals____.isRead, user = optionals____.user, event = optionals____.event }
+    UserEventRef { id = optionals____.id, createdAt = optionals____.createdAt, isRead = optionals____.isRead, user = optionals____.user, event = optionals____.event }
 
 
 type alias UserEventRefOptionalFields =
-    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , isRead : OptionalArgument Bool
     , user : OptionalArgument UserRef
-    , event : OptionalArgument EventKindRef
+    , event : OptionalArgument (List EventKindRef)
     }
 
 
@@ -6519,10 +6531,11 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias UserEventRefRaw =
-    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
     , isRead : OptionalArgument Bool
     , user : OptionalArgument UserRef
-    , event : OptionalArgument EventKindRef
+    , event : OptionalArgument (List EventKindRef)
     }
 
 
@@ -6537,7 +6550,7 @@ type UserEventRef
 encodeUserEventRef : UserEventRef -> Value
 encodeUserEventRef (UserEventRef input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "user", encodeUserRef |> Encode.optional input____.user ), ( "event", encodeEventKindRef |> Encode.optional input____.event ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "user", encodeUserRef |> Encode.optional input____.user ), ( "event", (encodeEventKindRef |> Encode.list) |> Encode.optional input____.event ) ]
 
 
 buildUserFilter :

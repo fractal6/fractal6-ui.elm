@@ -919,6 +919,18 @@ aggregateUser fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateUser" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias GetUserEventRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getUserEvent :
+    GetUserEventRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UserEvent
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getUserEvent requiredArgs____ object____ =
+    Object.selectionForCompositeField "getUserEvent" [ Argument.required "id" requiredArgs____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias QueryUserEventOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserEventFilter
     , order : OptionalArgument Fractal.InputObject.UserEventOrder

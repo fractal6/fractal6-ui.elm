@@ -121,10 +121,10 @@ update global msg model =
             ( model
             , case model.viewMode of
                 Login ->
-                    login apis.auth form.post GotSignin
+                    login apis form.post GotSignin
 
                 Signup ->
-                    signup apis.auth form.post GotSignin
+                    signup apis form.post GotSignin
             , Cmd.none
             )
 

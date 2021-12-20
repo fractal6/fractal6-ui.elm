@@ -202,6 +202,10 @@ errorGraphQLHttpToString httpError =
                 body
 
         GqlHttp.BadPayload body ->
+            let
+                d =
+                    Debug.log "body" body
+            in
             "Graphql Http JSON decoder unexpected error."
 
 

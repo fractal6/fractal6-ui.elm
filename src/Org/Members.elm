@@ -194,9 +194,9 @@ init global flags =
             }
 
         cmds =
-            [ ternary fs.focusChange (queryLocalGraph apis.gql newFocus.nameid (GotPath True)) Cmd.none
-            , queryMembersLocal apis.gql newFocus.nameid GotMembers
-            , fetchMembersSub apis.rest newFocus.nameid GotMembersSub
+            [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid (GotPath True)) Cmd.none
+            , queryMembersLocal apis newFocus.nameid GotMembers
+            , fetchMembersSub apis newFocus.nameid GotMembersSub
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             ]
@@ -219,7 +219,7 @@ update global message model =
     in
     case message of
         PushGuest form ->
-            ( model, actionRequest apis.gql form JoinAck, Cmd.none )
+            ( model, actionRequest apis form JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -262,7 +262,7 @@ update global message model =
                                 nameid =
                                     List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
                             in
-                            ( { model | path_data = Success newPath }, queryLocalGraph apis.gql nameid (GotPath False), Cmd.none )
+                            ( { model | path_data = Success newPath }, queryLocalGraph apis nameid (GotPath False), Cmd.none )
 
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
@@ -312,7 +312,7 @@ update global message model =
 
                 LoggedIn uctx ->
                     ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis.gql rootnameid DoJoinOrga2, send DoOpenModal ]
+                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
                     , Cmd.none
                     )
 
@@ -410,7 +410,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of

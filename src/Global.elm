@@ -187,7 +187,7 @@ update msg model =
 
         UpdateUserToken ->
             ( model
-            , tokenack apis.auth UpdateUserTokenAck
+            , tokenack apis UpdateUserTokenAck
             )
 
         UpdateUserTokenAck result ->

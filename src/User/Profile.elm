@@ -169,7 +169,7 @@ init global flags =
                     send (LoadNodes uctx)
 
                 _ ->
-                    queryUctx apis.gql username GotUctx
+                    queryUctx apis username GotUctx
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -195,7 +195,7 @@ update global message model =
                 rootids =
                     uctx.roles |> List.map (\r -> nid2rootid r.nameid) |> LE.unique
             in
-            ( model, queryNodeExt apis.gql rootids GotNodes, Cmd.none )
+            ( model, queryNodeExt apis rootids GotNodes, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -266,7 +266,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of

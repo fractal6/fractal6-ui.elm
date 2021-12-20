@@ -221,7 +221,7 @@ update_ apis message model =
         DoQueryData ->
             -- Adapt your query
             ( setDataResult LoadingSlowly model
-            , out0 [getData apis.gql model.form OnDataAck]
+            , out0 [getData apis model.form OnDataAck]
             )
 
 

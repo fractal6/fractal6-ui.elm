@@ -255,7 +255,7 @@ update_ apis message model =
 
         DoPatchData ->
             ( setDataResult LoadingSlowly model
-            , out0 [ patchLiteral apis.gql model.form OnDataAck ]
+            , out0 [ patchLiteral apis model.form OnDataAck ]
             )
 
         OnDataAck result ->

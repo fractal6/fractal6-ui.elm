@@ -178,7 +178,7 @@ update global message model =
             ( model, Task.perform nextMsg Time.now, Cmd.none )
 
         LoadNotifications ->
-            ( model, queryNotifications apis.gql { first = 50, uctx = model.uctx } GotNotifications, Cmd.none )
+            ( model, queryNotifications apis { first = 50, uctx = model.uctx } GotNotifications, Cmd.none )
 
         GotNotifications result ->
             case parseErr result model.refresh_trial of
@@ -230,7 +230,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis.auth form.post GotSignin, Cmd.none )
+            ( model, login apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
             case result of
@@ -381,17 +381,23 @@ viewNotifications notifications model =
 viewUserEvent : UserEvent -> Model -> Html Msg
 viewUserEvent ue model =
     let
+        firstEvent =
+            List.head ue.event
+
         ( title, address ) =
-            case ue.event of
-                TensionEvent e ->
+            case firstEvent of
+                Just (TensionEvent e) ->
                     ( e.event_type |> TensionEvent.toString
                     , e.tension.receiver.name ++ "@" ++ nid2rootid e.tension.receiver.nameid
                     )
 
-                ContractEvent c ->
+                Just (ContractEvent c) ->
                     ( c.contract_type |> ContractType.toString
                     , c.tension.receiver.name ++ "@" ++ nid2rootid c.tension.receiver.nameid
                     )
+
+                Nothing ->
+                    ( "never", "never" )
     in
     div [ class "content" ]
         [ p []

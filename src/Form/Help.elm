@@ -275,7 +275,7 @@ update_ apis message model =
     case message of
         OnOpen ->
             ( open model
-            , out0 [ getQuickDoc apis.data "en" OnGotQuickDoc, Ports.open_modal "helpModal" ]
+            , out0 [ getQuickDoc apis "en" OnGotQuickDoc, Ports.open_modal "helpModal" ]
             )
 
         OnClose data ->
@@ -331,7 +331,7 @@ update_ apis message model =
             ( model, out0 [ sendNow next ] )
 
         PushTension form ack ->
-            ( model, out0 [ addOneTension apis.gql form.form ack ] )
+            ( model, out0 [ addOneTension apis form.form ack ] )
 
         OnSubmitAsk time ->
             let
