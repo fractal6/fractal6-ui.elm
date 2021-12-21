@@ -56,7 +56,7 @@ window.addEventListener('load', _ => {
                 }),
             };
 
-            // Suscribe to Elm outgoing ports
+            // Subscribe to Elm outgoing ports
             app.ports.outgoing.subscribe(({ action, data }) => {
                 if (actions[action]) {
                     actions[action](app, session, data)

@@ -253,7 +253,7 @@ patchCommentInputEncoder form =
 
 
 {-
-   set assignee
+   Set assignee
 -}
 
 
@@ -333,7 +333,7 @@ setAssigneeEncoder f =
 
 
 {-
-   set label
+   Set label
 -}
 
 

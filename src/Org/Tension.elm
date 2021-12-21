@@ -48,7 +48,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
 import Iso8601 exposing (fromTime)
@@ -96,8 +96,10 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
+import Query.PatchUser exposing (toggleTensionSubscription)
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
+import Query.QueryUser exposing (getIsSubscribe)
 import RemoteData exposing (RemoteData)
 import Scroll
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), UserSearchPanelOnClickAction(..))
@@ -174,6 +176,7 @@ type alias Model =
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
     , expandedEvents : List Int
+    , isSubscribed : GqlData Bool
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionPatchForm
@@ -279,9 +282,11 @@ type Msg
     | GotOrga (GqlData NodesDict)
       -- Page
     | GotTensionHead (GqlData TensionHead)
+    | GotIsSucribe (GqlData Bool)
     | GotTensionComments (GqlData TensionComments)
     | GotTensionBlobs (GqlData TensionBlobs)
     | ExpandEvent Int
+    | ToggleSubscription String
       --
       -- Page Action
       --
@@ -414,6 +419,7 @@ init global flags =
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
+            , isSubscribed = Loading
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionPatchForm tid global.session.user
@@ -518,7 +524,16 @@ update global message model =
             ( model, actionRequest apis form JoinAck, Cmd.none )
 
         LoadTensionHead ->
-            ( model, getTensionHead apis model.tensionid GotTensionHead, Cmd.none )
+            let
+                cmd =
+                    case global.session.user of
+                        LoggedIn uctx ->
+                            getIsSubscribe apis uctx.username model.tensionid GotIsSucribe
+
+                        LoggedOut ->
+                            Cmd.none
+            in
+            ( model, Cmd.batch [ getTensionHead apis model.tensionid GotTensionHead, cmd ], Cmd.none )
 
         LoadTensionComments ->
             ( model, pushTensionPatch apis model.tension_form CommentAck, Cmd.none )
@@ -657,6 +672,9 @@ update global message model =
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 
+        GotIsSucribe result ->
+            ( { model | isSubscribed = result }, Cmd.none, Cmd.none )
+
         GotTensionComments result ->
             ( { model | tension_comments = result }, Cmd.none, Ports.bulma_driver "" )
 
@@ -665,6 +683,14 @@ update global message model =
 
         ExpandEvent i ->
             ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Cmd.none )
+
+        ToggleSubscription username ->
+            case model.isSubscribed of
+                Success b ->
+                    ( model, toggleTensionSubscription apis username model.tensionid (not b) GotIsSucribe, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- Page Action
         ChangeTensionPost field value ->
@@ -2658,11 +2684,6 @@ viewSidePane u t model =
 
         hasBlobRight =
             isAdmin && actionType_m /= Just NEW && blob_m /= Nothing
-
-        --g1 =
-        --    Debug.log "author" isAuthor
-        --g2 =
-        --    Debug.log "admin" isAdmin
     in
     div [ class "tensionSidePane" ] <|
         [ -- Assignees/User select
@@ -2805,7 +2826,45 @@ viewSidePane u t model =
                             ]
                        ]
             ]
+        , -- Subscriptions
+          case u of
+            LoggedIn uctx ->
+                let
+                    ( iconElt, txt, isLoading ) =
+                        case model.isSubscribed of
+                            Success True ->
+                                ( I.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText, False )
+
+                            Success False ->
+                                ( I.icon1 "icon-bell icon-1x" (upH T.subscribe), T.tensionUnsubscribeText, False )
+
+                            LoadingSlowly ->
+                                ( text "", "", True )
+
+                            Failure err ->
+                                ( viewGqlErrors err, "", False )
+
+                            _ ->
+                                ( text "", "", False )
+                in
+                div [ class "media pb-0" ]
+                    [ div [ class "media-content" ]
+                        [ h2 [ class "subtitle" ]
+                            [ textH T.notifications ]
+                        , p
+                            [ class "button is-fullwidth has-background-grey-dark is-small "
+                            , style "border-radius" "5px"
+                            , onClick (ToggleSubscription uctx.username)
+                            ]
+                            [ iconElt, loadingSpin isLoading ]
+                        , p [ class "help" ] [ textH txt ]
+                        ]
+                    ]
+
+            LoggedOut ->
+                text ""
         ]
+            -- Extra action (Move, Lock, ...)
             ++ (if isAdmin || isAuthor then
                     [ hr [ class "has-background-grey" ] [] ]
                         ++ [ div

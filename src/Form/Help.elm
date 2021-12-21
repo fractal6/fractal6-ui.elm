@@ -71,13 +71,13 @@ labelCodec : FeedbackType -> Label
 labelCodec type_ =
     case type_ of
         BugReport ->
-            Label "0xc5f2" "bug" Nothing
+            Label "0xc5f2" "bug" (Just "#ff4136")
 
         FeatureRequest ->
-            Label "0xc5f3" "feature request" Nothing
+            Label "0xc5f3" "feature request" (Just "#0074d9")
 
         Praise ->
-            Label "0xc5f4" "Praise" Nothing
+            Label "0xc5f4" "Praise" (Just "#dddddd")
 
 
 init : UserState -> State

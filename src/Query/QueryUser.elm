@@ -1,4 +1,4 @@
-module Query.QueryUser exposing (queryUctx, queryUser, uctxFilter)
+module Query.QueryUser exposing (IsSubscribe, getIsSubscribe, isSubscribePayload, queryUctx, queryUser, usernameFilter)
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -6,6 +6,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Node
+import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Object.UserRights
 import Fractal.Query as Query
@@ -29,14 +30,14 @@ import String.Extra as SE
 queryUctx url username msg =
     makeGQLQuery url
         (Query.getUser
-            (uctxFilter username)
+            (usernameFilter username)
             uctxPayload
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-uctxFilter : String -> Query.GetUserOptionalArguments -> Query.GetUserOptionalArguments
-uctxFilter username a =
+usernameFilter : String -> Query.GetUserOptionalArguments -> Query.GetUserOptionalArguments
+usernameFilter username a =
     { a | username = Present username }
 
 
@@ -124,3 +125,39 @@ userPayload =
     SelectionSet.succeed User
         |> with Fractal.Object.User.username
         |> with Fractal.Object.User.name
+
+
+
+{-
+   Check if user is subscribe to the given tension
+-}
+
+
+isSubscribeDecoder : Maybe IsSubscribe -> Maybe Bool
+isSubscribeDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                d.subscriptions /= Nothing && d.subscriptions /= Just []
+            )
+
+
+getIsSubscribe url username tid msg =
+    makeGQLQuery url
+        (Query.getUser
+            (usernameFilter username)
+            (isSubscribePayload tid)
+        )
+        (RemoteData.fromResult >> decodeResponse isSubscribeDecoder >> msg)
+
+
+type alias IsSubscribe =
+    { subscriptions : Maybe (List IdPayload) }
+
+
+isSubscribePayload : String -> SelectionSet IsSubscribe Fractal.Object.User
+isSubscribePayload tid =
+    SelectionSet.map IsSubscribe
+        (Fractal.Object.User.subscriptions (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | id = Present [ encodeId tid ] }) })
+            (SelectionSet.map IdPayload (Fractal.Object.Tension.id |> SelectionSet.map decodedId))
+        )

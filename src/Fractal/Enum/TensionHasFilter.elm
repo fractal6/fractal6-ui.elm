@@ -26,14 +26,14 @@ type TensionHasFilter
     | Blobs
     | History
     | Contracts
-    | Suscribers
+    | Subscribers
     | N_comments
     | N_open_contracts
 
 
 list : List TensionHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Action, Comments, Assignees, Labels, Blobs, History, Contracts, Suscribers, N_comments, N_open_contracts ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Message, Emitter, Emitterid, Receiver, Receiverid, Title, Type_, Status, Action, Comments, Assignees, Labels, Blobs, History, Contracts, Subscribers, N_comments, N_open_contracts ]
 
 
 decoder : Decoder TensionHasFilter
@@ -96,8 +96,8 @@ decoder =
                     "contracts" ->
                         Decode.succeed Contracts
 
-                    "suscribers" ->
-                        Decode.succeed Suscribers
+                    "subscribers" ->
+                        Decode.succeed Subscribers
 
                     "n_comments" ->
                         Decode.succeed N_comments
@@ -169,8 +169,8 @@ toString enum____ =
         Contracts ->
             "contracts"
 
-        Suscribers ->
-            "suscribers"
+        Subscribers ->
+            "subscribers"
 
         N_comments ->
             "n_comments"
@@ -247,8 +247,8 @@ fromString enumString____ =
         "contracts" ->
             Just Contracts
 
-        "suscribers" ->
-            Just Suscribers
+        "subscribers" ->
+            Just Subscribers
 
         "n_comments" ->
             Just N_comments

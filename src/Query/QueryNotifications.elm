@@ -29,7 +29,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
 import Query.QueryNode exposing (nidFilter, nodeDecoder, nodeOrgaPayload, pNodePayload)
-import Query.QueryUser exposing (uctxFilter)
+import Query.QueryUser exposing (usernameFilter)
 import RemoteData exposing (RemoteData)
 
 
@@ -66,7 +66,7 @@ userNotificationsDecoder data =
 
 queryNotifications url f msg =
     makeGQLQuery url
-        (Query.getUser (uctxFilter f.uctx.username)
+        (Query.getUser (usernameFilter f.uctx.username)
             (userNotificationsPayload f)
         )
         (RemoteData.fromResult >> decodeResponse userNotificationsDecoder >> msg)

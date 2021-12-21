@@ -475,6 +475,31 @@ delete =
     "delete"
 
 
+subscribe : String
+subscribe =
+    "subscribe"
+
+
+unsubscribe : String
+unsubscribe =
+    "unsubscribe"
+
+
+notifications : String
+notifications =
+    "notifications"
+
+
+tensionSubscribeText : String
+tensionSubscribeText =
+    "You’re receiving notifications because you’re subscribed to this thread."
+
+
+tensionUnsubscribeText : String
+tensionUnsubscribeText =
+    "You’re not receiving notifications from this thread. "
+
+
 
 --Quick Search
 --(header)
