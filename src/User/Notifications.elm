@@ -431,8 +431,9 @@ viewUserEvent ue model =
     div [ class "content" ]
         [ p [] <|
             List.intersperse (text " ") <|
-                [ strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
-                , span [ class "has-text-grey-lighter" ] [ text "in circle" ]
+                [ I.icon icon_
+                , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
+                , span [ class "has-text-grey-lighter" ] [ text "in" ]
                 , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
                 , span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                 , br [ class "mb-3" ] []
