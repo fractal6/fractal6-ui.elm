@@ -11,7 +11,7 @@ import Form exposing (isPostSendable)
 import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
@@ -420,15 +420,17 @@ viewProfileRight model uctx =
     div []
         [ h1 [ class "subtitle" ] [ textH T.organisations ]
         , if List.length uctx.roles == 0 then
-            p [ class "section" ] <|
+            p [ class "section content" ] <|
                 List.intersperse (text " ")
-                    [ text "You have no organisations yet."
-                    , br [] []
-                    , text "You can"
-                    , a [ href (Route.toHref Route.Explore) ] [ text "Explore" ]
-                    , text "public organisations"
-                    , text ", or create a"
-                    , a [ href (Route.toHref Route.New_Orga) ] [ textH T.newOrganisation ]
+                    [ p [] [ text "Welcome," ]
+                    , p [] <|
+                        List.intersperse (text " ") <|
+                            [ text "You can"
+                            , a [ href (Route.toHref Route.Explore) ] [ text "Explore" ]
+                            , text "public organisations"
+                            , text ", or create your"
+                            , a [ href (Route.toHref Route.New_Orga) ] [ textH "first organisation." ]
+                            ]
                     ]
 
           else

@@ -24,7 +24,7 @@ import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Icon as I
@@ -33,14 +33,16 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
+import ModelCommon.Event exposing (eventToIcon)
 import ModelCommon.Requests exposing (login)
-import ModelCommon.View exposing (byAt)
+import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNotifications exposing (queryNotifications)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
+import String.Extra as SE
 import Task
 import Text as T exposing (textH, textT)
 import Time
@@ -366,11 +368,23 @@ viewNotifications : UserEvents -> Model -> Html Msg
 viewNotifications notifications model =
     notifications
         |> List.map
-            (\e ->
+            (\ue ->
+                let
+                    n =
+                        case List.head ue.event of
+                            Just (TensionEvent e) ->
+                                e.tension.receiver
+
+                            Just (ContractEvent c) ->
+                                c.tension.receiver
+
+                            Nothing ->
+                                PNode "" ""
+                in
                 div [ class "media" ]
-                    [ div [ class "media-left" ] [ p [ class "image is-16x16" ] [ I.icon "icon-edit icon-bg" ] ]
+                    [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga False n.nameid ] ]
                     , div [ class "media-content" ]
-                        [ viewUserEvent e model
+                        [ viewUserEvent ue model
 
                         --, nav [class "level is-mobile"]
                         ]
@@ -387,37 +401,41 @@ viewUserEvent ue model =
         firstEvent =
             List.head ue.event
 
-        event =
+        ( ev, icon_ ) =
             case firstEvent of
                 Just (TensionEvent e) ->
-                    Dict.fromList
-                        [ ( "title", e.event_type |> TensionEvent.toString )
+                    ( Dict.fromList
+                        [ ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
                         , ( "target", e.tension.receiver.name )
                         , ( "orga", nid2rootid e.tension.receiver.nameid )
                         , ( "date", e.createdAt )
                         , ( "author", e.createdBy.username )
                         ]
+                    , eventToIcon e.event_type
+                    )
 
                 Just (ContractEvent c) ->
-                    Dict.fromList
-                        [ ( "title", c.contract_type |> ContractType.toString )
+                    ( Dict.fromList
+                        [ ( "title", c.contract_type |> ContractType.toString |> SE.humanize )
                         , ( "target", c.tension.receiver.name )
                         , ( "orga", nid2rootid c.tension.receiver.nameid )
                         , ( "date", c.createdAt )
                         , ( "author", c.createdBy.username )
                         ]
+                    , "icon-edit"
+                    )
 
                 Nothing ->
-                    Dict.empty
+                    ( Dict.empty, "" )
     in
     div [ class "content" ]
         [ p [] <|
             List.intersperse (text " ") <|
-                [ strong [] [ Dict.get "title" event |> withDefault "" |> text ]
+                [ strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
                 , span [ class "has-text-grey-lighter" ] [ text "in circle" ]
-                , span [ class "" ] [ Dict.get "target" event |> withDefault "" |> text ]
-                , span [ class "has-text-grey-light pl-1" ] [ text "#", Dict.get "orga" event |> withDefault "" |> text ]
+                , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+                , span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                 , br [ class "mb-3" ] []
-                , small [] [ byAt model.now (Username (Dict.get "author" event |> withDefault "")) (Dict.get "date" event |> withDefault "") ]
+                , small [] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
                 ]
         ]

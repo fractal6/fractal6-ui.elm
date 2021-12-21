@@ -21,7 +21,8 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ContractForm, UserState(..), initContractForm)
 import ModelCommon.Codecs exposing (nid2eor, nid2rootid)
-import ModelCommon.View exposing (contractEventToText, contractTypeToText, viewTensionArrow)
+import ModelCommon.Event exposing (contractEventToText, contractTypeToText)
+import ModelCommon.View exposing (viewTensionArrow)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)

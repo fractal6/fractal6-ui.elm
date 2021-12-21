@@ -4,12 +4,10 @@ import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
-import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
@@ -31,7 +29,19 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelSchema exposing (EmitterOrReceiver, Label, NodeExt, Post, Tension, User, UserCtx, Username)
+import ModelSchema
+    exposing
+        ( EmitterOrReceiver
+        , Label
+        , NodeExt
+        , PNode
+        , Post
+        , Tension
+        , User
+        , UserCtx
+        , Username
+        , shrinkNode
+        )
 import Text as T exposing (textH, textT, upH)
 import Time
 
@@ -43,6 +53,29 @@ import Time
 {-
    Tension
 -}
+
+
+statusColor : TensionStatus.TensionStatus -> String
+statusColor s =
+    case s of
+        TensionStatus.Open ->
+            "success"
+
+        TensionStatus.Closed ->
+            "danger"
+
+
+tensionTypeColor : String -> TensionType.TensionType -> String
+tensionTypeColor elt tt =
+    case tt of
+        TensionType.Operational ->
+            "has-" ++ elt ++ "-success"
+
+        TensionType.Governance ->
+            "has-" ++ elt ++ "-info"
+
+        TensionType.Help ->
+            "has-" ++ elt ++ "-warning"
 
 
 tensionTypeSpan : TensionType.TensionType -> Html msg
@@ -165,6 +198,12 @@ viewTensionArrowB cls emitter receiver =
         ]
 
 
+
+{-
+   Labels
+-}
+
+
 viewLabels : List Label -> Html msg
 viewLabels labels =
     span [ class "labelsList" ] (List.map (\label -> viewLabel "" label) labels)
@@ -182,6 +221,17 @@ viewLabel cls label =
                 |> withDefault []
     in
     span ([ class ("tag is-rounded " ++ cls) ] ++ color) [ text label.name ]
+
+
+
+{-
+   Users
+-}
+
+
+viewUsernameLink : String -> Html msg
+viewUsernameLink username =
+    a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
 
 
 viewUsers : List User -> Html msg
@@ -244,9 +294,29 @@ viewUserFull size isLinked isBoxed user =
         ]
 
 
-viewUsernameLink : String -> Html msg
-viewUsernameLink username =
-    a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
+viewOrga : Bool -> String -> Html msg
+viewOrga isLinked nameid =
+    let
+        rid =
+            nid2rootid nameid
+    in
+    if isLinked then
+        a
+            [ class "image circleBase circle2"
+            , href (uriFromNameid OverviewBaseUri rid)
+            ]
+            [ getAvatarOrga rid ]
+
+    else
+        span
+            [ class "image circleBase circle2" ]
+            [ getAvatarOrga rid ]
+
+
+
+{-
+   Date and authors
+-}
 
 
 viewOpenedDate : Time.Posix -> String -> Html msg
@@ -316,29 +386,6 @@ atBy now cls createdAt createdBy =
             ]
 
 
-statusColor : TensionStatus.TensionStatus -> String
-statusColor s =
-    case s of
-        TensionStatus.Open ->
-            "success"
-
-        TensionStatus.Closed ->
-            "danger"
-
-
-tensionTypeColor : String -> TensionType.TensionType -> String
-tensionTypeColor elt tt =
-    case tt of
-        TensionType.Operational ->
-            "has-" ++ elt ++ "-success"
-
-        TensionType.Governance ->
-            "has-" ++ elt ++ "-info"
-
-        TensionType.Help ->
-            "has-" ++ elt ++ "-warning"
-
-
 
 {-
    Node
@@ -380,13 +427,7 @@ viewOrgaMedia user root =
             root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_guests) |> withDefault 0
     in
     div [ class "media box mediaBox" ]
-        [ div [ class "media-left" ]
-            [ a
-                [ class "image circleBase circle2"
-                , href (uriFromNameid OverviewBaseUri root.nameid)
-                ]
-                [ getAvatarOrga root.name ]
-            ]
+        [ div [ class "media-left" ] [ viewOrga True root.nameid ]
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
                 [ div [ class "column is-8" ]
@@ -736,35 +777,3 @@ getNodeTextFromNodeType type_ =
 
         NodeType.Role ->
             FormText T.newRole T.roleAdded T.roleNameHelp T.roleAboutHelp T.roleMessageHelp T.phRolePurpose T.phRoleResponsabilities T.phRoleDomains T.phRolePolicies T.tensionSubmit T.tensionRoleCloseSubmit T.firstLinkRoleMessageHelp T.tensionRoleAdded T.noFirstLinksRole
-
-
-
-{-
-   Contract
--}
-
-
-contractTypeToText : ContractType.ContractType -> String
-contractTypeToText c =
-    case c of
-        ContractType.AnyCoordoDual ->
-            "dual coordinators"
-
-        ContractType.AnyCandidates ->
-            "poll"
-
-        ContractType.AnyCoordoTarget ->
-            "receiver coordinator"
-
-        ContractType.AnyCoordoSource ->
-            "emitter coordinator"
-
-
-contractEventToText : TensionEvent.TensionEvent -> String
-contractEventToText c =
-    case c of
-        TensionEvent.Moved ->
-            "move tension"
-
-        _ ->
-            "@TODO text"
