@@ -2019,7 +2019,7 @@ viewComment c model =
                     , div [ class "message-body" ]
                         [ case c.message of
                             "" ->
-                                div [ class "is-italic" ] [ text "No message provided." ]
+                                div [ class "help is-italic" ] [ text "No message provided." ]
 
                             message ->
                                 renderMarkdown "is-light" message
@@ -2723,7 +2723,7 @@ viewSidePane u t model =
                                 viewUsers assignees
 
                               else
-                                div [ class "is-italic" ] [ textH T.noneYet ]
+                                div [ class "help is-italic" ] [ textH T.noneYet ]
                             ]
                        ]
             ]
@@ -2764,7 +2764,7 @@ viewSidePane u t model =
                                 viewLabels labels
 
                               else
-                                div [ class "is-italic" ] [ textH T.noneYet ]
+                                div [ class "help is-italic" ] [ textH T.noneYet ]
                             ]
                        ]
             ]
@@ -2822,7 +2822,7 @@ viewSidePane u t model =
                                     viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (actionNameStr action)) ""
 
                                 Nothing ->
-                                    div [ class "is-italic" ] [ textH T.noDocument ]
+                                    div [ class "help is-italic" ] [ textH T.noDocument ]
                             ]
                        ]
             ]

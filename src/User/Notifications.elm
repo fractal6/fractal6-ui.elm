@@ -34,6 +34,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
 import ModelCommon.Requests exposing (login)
+import ModelCommon.View exposing (byAt)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -97,6 +98,7 @@ type alias Model =
     , modalAuth : ModalAuth
     , help : Help.State
     , refresh_trial : Int
+    , now : Time.Posix
     }
 
 
@@ -152,6 +154,7 @@ init global flags =
             , modalAuth = Inactive
             , help = Help.init global.session.user
             , refresh_trial = 0
+            , now = global.now
             }
     in
     ( model
@@ -365,7 +368,7 @@ viewNotifications notifications model =
         |> List.map
             (\e ->
                 div [ class "media" ]
-                    [ div [ class "media-left" ] [ I.icon "icon-edit" ]
+                    [ div [ class "media-left" ] [ p [ class "image is-16x16" ] [ I.icon "icon-edit icon-bg" ] ]
                     , div [ class "media-content" ]
                         [ viewUserEvent e model
 
@@ -384,26 +387,37 @@ viewUserEvent ue model =
         firstEvent =
             List.head ue.event
 
-        ( title, address ) =
+        event =
             case firstEvent of
                 Just (TensionEvent e) ->
-                    ( e.event_type |> TensionEvent.toString
-                    , e.tension.receiver.name ++ "@" ++ nid2rootid e.tension.receiver.nameid
-                    )
+                    Dict.fromList
+                        [ ( "title", e.event_type |> TensionEvent.toString )
+                        , ( "target", e.tension.receiver.name )
+                        , ( "orga", nid2rootid e.tension.receiver.nameid )
+                        , ( "date", e.createdAt )
+                        , ( "author", e.createdBy.username )
+                        ]
 
                 Just (ContractEvent c) ->
-                    ( c.contract_type |> ContractType.toString
-                    , c.tension.receiver.name ++ "@" ++ nid2rootid c.tension.receiver.nameid
-                    )
+                    Dict.fromList
+                        [ ( "title", c.contract_type |> ContractType.toString )
+                        , ( "target", c.tension.receiver.name )
+                        , ( "orga", nid2rootid c.tension.receiver.nameid )
+                        , ( "date", c.createdAt )
+                        , ( "author", c.createdBy.username )
+                        ]
 
                 Nothing ->
-                    ( "never", "never" )
+                    Dict.empty
     in
     div [ class "content" ]
-        [ p []
-            [ strong [] [ text title ]
-            , small [] [ text address ]
-            , br [] []
-            , text ""
-            ]
+        [ p [] <|
+            List.intersperse (text " ") <|
+                [ strong [] [ Dict.get "title" event |> withDefault "" |> text ]
+                , span [ class "has-text-grey-lighter" ] [ text "in circle" ]
+                , span [ class "" ] [ Dict.get "target" event |> withDefault "" |> text ]
+                , span [ class "has-text-grey-light pl-1" ] [ text "#", Dict.get "orga" event |> withDefault "" |> text ]
+                , br [ class "mb-3" ] []
+                , small [] [ byAt model.now (Username (Dict.get "author" event |> withDefault "")) (Dict.get "date" event |> withDefault "") ]
+                ]
         ]
