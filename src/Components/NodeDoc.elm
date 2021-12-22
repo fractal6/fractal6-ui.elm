@@ -326,7 +326,7 @@ view_ tid data op_m =
                     ]
                 , case data.node.about of
                     Just ab ->
-                        p [ class "column is-fullwidth" ] [ text ab ]
+                        p [ class "column is-fullwidth is-human" ] [ text ab ]
 
                     Nothing ->
                         text ""

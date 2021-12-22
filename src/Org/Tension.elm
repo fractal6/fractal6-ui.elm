@@ -1708,7 +1708,7 @@ viewTension u t model =
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9" ]
-                [ h1 [ class "title tensionTitle" ] <|
+                [ h1 [ class "title tensionTitle is-human" ] <|
                     if model.isTitleEdit then
                         let
                             title =
@@ -2150,7 +2150,7 @@ viewCommentInput uctx tension form result viewMode =
                                 Write ->
                                     textarea
                                         [ id "commentInput"
-                                        , class "textarea defaultSubmit"
+                                        , class "textarea defaultSubmit is-human"
                                         , rows 7
                                         , placeholder "Leave a comment"
                                         , value message

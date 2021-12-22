@@ -109,7 +109,7 @@ mediaTension now focus tension showStatus showRecip size navigate =
                 [ class "content mb-0"
                 ]
                 [ a
-                    [ class "has-text-weight-semibold"
+                    [ class "is-human"
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
@@ -342,7 +342,7 @@ viewCommentedDate : Time.Posix -> String -> Html msg
 viewCommentedDate now date =
     span [ class "is-grey-light" ] <|
         List.intersperse (text " ") <|
-            [ span [ class "is-itali" ] [ text T.commented ]
+            [ span [] [ text T.commented ]
             , text (formatDate now date)
             ]
 
@@ -434,7 +434,7 @@ viewOrgaMedia user root =
                     [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ]
                     , case root.about of
                         Just ab ->
-                            p [ class "is-italic pt-1" ] [ text ab ]
+                            p [ class "is-human pt-1" ] [ text ab ]
 
                         Nothing ->
                             text ""

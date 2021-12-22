@@ -69,7 +69,6 @@ hr {
 }
 
 .help-label {
-  //font-family: bold !important;
   color: $grey !important;
   display: block !important;
   font-size: $help-size !important;
@@ -797,8 +796,7 @@ html.has-modal-active, html.has-modal-active2 {
 #tensionPage  {
 
     .tensionTitle {
-        font-size: 1.9rem !important;
-        font-weight: 600;
+        font-size: 2.5rem !important;
         margin-top: 1rem;
     }
 
@@ -840,8 +838,8 @@ html.has-modal-active, html.has-modal-active2 {
 
         .message {
             background-color: $body-background-color !important;
-            //background-color: #404953 !important;
             border: 1px solid  $grey-darker2  !important;
+            border-radius: 8px !important;
             .tabs a {
                 text-decoration: none !important;
             }
@@ -900,7 +898,7 @@ html.has-modal-active, html.has-modal-active2 {
 
             .message-body {
                 padding: 1rem 0.9rem !important;
-                font-size: 15px;
+                // font-size: 15px; @deprecated
                 line-height: 1.5;
             }
         }
@@ -1433,7 +1431,6 @@ a.actionLink {
     &::after,
     &::before {
         //font-family: "Font Awesome 5 Free";
-        //font-weight: 900;
         //content: "\f007";
         content: "";
         position: absolute;
@@ -2307,16 +2304,23 @@ header .acc-title {
 	-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;
 }
 .acc-content {
-	display: none;
+    // About using overflow and max-height for making transition.
+    //https://stackoverflow.com/questions/3508605/how-can-i-transition-height-0-to-height-auto-using-css?page=1&tab=active#tab-top
+    overflow: hidden;
+    max-height: 0;
+    // this padding transition  prevent the padding (if any) to change during the dropdown collapse while
+    // removing the extra space that it causes when collapsed.
+    // Thereffore, it cause a slitgly glitch on collapse action... @helpNeeded.
+    transition: height,max-height .3s ease, padding 0s 0.3s ease;
 }
 .acc-close {
+	display: none;
 	position: absolute;
 	height: $acc-height-subtitle;
 	width: 100%;
 	top: 0;
 	left: 0;
 	cursor: pointer;
-	display: none;
 }
 input:checked + .acc {
 	height: auto;
@@ -2326,6 +2330,11 @@ input:checked + .acc {
 input:checked + .acc .acc-content,
 input:checked + .acc .acc-close {
 	display: inline-block;
+}
+input:checked + .acc .acc-content {
+    overflow: auto;
+    max-height: 800px;
+    transition: height,max-height .3s ease, padding 0s;
 }
 .arrows-left section .acc-title {
 	padding-left: 44px;
@@ -2356,9 +2365,6 @@ input:checked + section.acc .acc-title:before {
 }
 
 .quickHelp { // Style for accordion (acc)
-    .acc {
-        height: $acc-height-subtitle;
-    }
     header.acc {
         height: $acc-height-title !important;
         background: $grey-lighter;
@@ -2377,7 +2383,7 @@ input:checked + section.acc .acc-title:before {
         padding: 0 20px;
         color: $grey-darker;
     }
-    .acc-content {
+    input:checked + .acc .acc-content {
         width: calc(100% - 20px);
         font-size: 11pt;
         padding: 20px 10px 20px 20px;

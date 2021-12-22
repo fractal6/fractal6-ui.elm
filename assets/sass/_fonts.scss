@@ -1,0 +1,166 @@
+//
+// Zen fonts
+//
+
+$size-1: 3rem;
+$size-2: 2.5rem;
+$size-3: 2rem;
+$size-4: 1.75rem;
+$size-5: 1.5rem;
+$size-6: 1.1rem;
+$size-7: 0.9rem;
+$sizes: $size-1 $size-2 $size-3 $size-4 $size-5 $size-6 $size-7;
+
+$weight-light: 400;
+$weight-normal: 600;
+$weight-medium: 600;
+$weight-semibold: 700;
+$weight-bold: 800;
+
+
+@font-face {
+    font-family: zenKurenaido;
+    src: url(../fonts/ZenKurenaido-Regular.ttf);
+}
+
+@mixin zenFontFace {
+    font-family: zenKurenaido, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+    // Default
+    font-size: $size-6 !important;
+    font-weight: $weight-normal !important;
+}
+
+.markdown, .is-human {
+    @include zenFontFace;
+}
+
+// Fix size of Zen font size
+@each $size in $sizes {
+    $i: index($sizes, $size);
+    .is-size-#{$i} {
+        &.markdown, &.is-human, .markdown, .is-human {
+            font-size: $size !important;
+        }
+    }
+}
+
+.has-text-weight-light {
+  font-weight: $weight-light !important;
+}
+.has-text-weight-normal {
+  font-weight: $weight-normal !important;
+}
+.has-text-weight-medium {
+  font-weight: $weight-medium !important;
+}
+.has-text-weight-semibold {
+	font-weight: $weight-semibold !important;
+}
+.has-text-weight-bold {
+	font-weight: $weight-bold !important;
+}
+
+
+/*
+ *
+ * Icon fonts
+ *
+ */
+
+////$fa-font-path: "fonts";
+//$fa-font-path: '~@fortawesome/fontawesome-free/webfonts';
+//@import '../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome';
+//@import '../../node_modules/@fortawesome/fontawesome-free/scss/regular';
+//@import '../../node_modules/@fortawesome/fontawesome-free/scss/solid';
+//@import '../../node_modules/@fortawesome/fontawesome-free/scss/brands';
+@import '../icons/style.css';
+
+.is-small {
+    i { font-size: 0.875rem; }
+}
+
+i {
+    font-size: 1rem;
+    &.icon-tiny {
+        font-size: 0.55rem;
+    }
+    &.icon-xs {
+        font-size: 0.75rem;
+    }
+    &.icon-sm {
+        font-size: 0.875rem;
+    }
+	&.icon-lg {
+	/* makes the font 33% larger relative to the icon container */
+		font-size: (4rem / 3);
+		line-height: (3rem / 4);
+		vertical-align: -.0667rem;
+	}
+
+    &.icon-bg {
+        font-size: 1.12rem;
+        // prtotect the navbar height
+        line-height: 0;
+    }
+    &.icon-1half {
+        font-size: 1.5rem;
+    }
+    //
+    &.icon-1x {
+        font-size: 1rem;
+        vertical-align: -.1rem;
+    }
+
+    &.icon-2x {
+    font-size: 2rem; }
+
+    &.icon-3x {
+    font-size: 3rem; }
+
+    &.icon-4x {
+    font-size: 4rem; }
+
+    &.icon-5x {
+    font-size: 5rem; }
+
+    &.icon-6x {
+    font-size: 6rem; }
+
+    &.icon-7x {
+    font-size: 7rem; }
+
+    &.icon-8x {
+    font-size: 8rem; }
+
+    &.icon-9x {
+    font-size: 9rem; }
+
+    &.icon-10x {
+    font-size: 10rem; }
+
+}
+
+.icon-is-slashed {
+	position: relative;
+}
+.icon-is-slashed:after {
+	content: '|';
+	position: absolute;
+    left: 18%;
+    bottom: 0.1px;
+	font-size: 1.3em;
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	-o-transform: rotate(-45deg);
+	-ms-transform: rotate(-45deg);
+}
+
+.stackPen {
+		&.icon-stack > i.icon-pen {
+				top: -5px;
+				left: 5px;
+		}
+}
+
+
+

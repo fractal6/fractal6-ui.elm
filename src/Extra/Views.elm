@@ -28,8 +28,8 @@ showMsg id_ color icon header message =
                     ]
                     [ I.icon1 icon (upH header) ]
                 , label [ class "acc-close", for "acc-close" ] []
-                , div [ class "acc-content message-body" ]
-                    [ renderMarkdown "is-light" message
+                , div [ class "acc-content " ]
+                    [ renderMarkdown "is-light message-body" message
                     ]
                 ]
             , input [ id "acc-close", name "accordion", type_ "radio" ] []
