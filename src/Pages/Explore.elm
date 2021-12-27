@@ -14,7 +14,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)

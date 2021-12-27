@@ -13,7 +13,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -423,7 +423,7 @@ viewEmailSelector op model =
                 [ class "panel-block"
                 , onClick (OnClickEmail model.form.pattern)
                 ]
-                [ I.icon1 "icon-mail" T.invite
+                [ A.icon1 "icon-mail" T.invite
                 , text T.space_
                 , span [ class "is-italic" ] [ text "\"", text model.form.pattern, text "\"" ]
                 ]
@@ -435,7 +435,7 @@ viewEmail : String -> Html Msg
 viewEmail email =
     span []
         [ span [ class "mr-2" ]
-            [ I.icon "icon-mail"
+            [ A.icon "icon-mail"
             ]
         , span [ attribute "style" "position:relative;top:-2px;" ]
             [ span [ class "is-email" ] [ text email ] ]

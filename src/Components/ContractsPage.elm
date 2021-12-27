@@ -15,7 +15,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -583,7 +583,7 @@ viewRow d op model =
                     [ class "button-light"
                     , onClick <| DoModalConfirmOpen (DoDeleteContract d.id) { message = Nothing, txts = [ ( upH T.confirmDeleteContract, "" ), ( "?", "" ) ] }
                     ]
-                    [ span [ class "tag is-danger is-light is-smaller2" ] [ I.icon "icon-x", loadingSpin deleteLoading ] ]
+                    [ span [ class "tag is-danger is-light is-smaller2" ] [ A.icon "icon-x", loadingSpin deleteLoading ] ]
 
               else
                 text ""
@@ -778,7 +778,7 @@ viewComment op c isAuthor =
                                         , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ I.icon "icon-ellipsis-v" ]
+                                        [ A.icon "icon-ellipsis-v" ]
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content" ]

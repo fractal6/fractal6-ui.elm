@@ -12,7 +12,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -464,7 +464,7 @@ viewAssigneeSelectors users op model =
                             , classList [ ( "is-active", isActive ) ]
                             , onClick (OnSubmit <| OnAssigneeClick u (isActive == False))
                             ]
-                            [ span [ class "panel-icon" ] [ I.icon iconCls ]
+                            [ span [ class "panel-icon" ] [ A.icon iconCls ]
                             , viewUserFull 1 False False u
                             , loadingSpin isLoading
                             ]

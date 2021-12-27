@@ -1,6 +1,6 @@
 module Pages.NotFound exposing (Flags, Model, Msg, page)
 
-import Asset exposing (viewNotFound)
+import Assets as A
 import Html exposing (Html)
 import Page exposing (Document, Page)
 
@@ -27,5 +27,5 @@ page =
 view : Document Msg
 view =
     { title = "Page not found"
-    , body = [ viewNotFound ]
+    , body = [ A.viewNotFound ]
     }

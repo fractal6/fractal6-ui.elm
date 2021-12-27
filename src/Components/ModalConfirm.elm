@@ -12,7 +12,7 @@ import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ActionForm, UserState(..), initActionForm)

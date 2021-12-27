@@ -3,7 +3,7 @@ module Extra.Views exposing (..)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Markdown exposing (renderMarkdown)
 import Text as T exposing (textH, textT, upH)
 
@@ -15,7 +15,7 @@ showMsg id_ color icon header message =
             "acc" ++ id_
     in
     if message == "" then
-        div [ class ("notification is-light p-4 m-0 mb-2 is-size-7 " ++ color) ] [ I.icon1 icon (upH header) ]
+        div [ class ("notification is-light p-4 m-0 mb-2 is-size-7 " ++ color) ] [ A.icon1 icon (upH header) ]
 
     else
         div [ class "accordion arrows-right" ]
@@ -26,7 +26,7 @@ showMsg id_ color icon header message =
                     , attribute "title" T.clickMe
                     , for did
                     ]
-                    [ I.icon1 icon (upH header) ]
+                    [ A.icon1 icon (upH header) ]
                 , label [ class "acc-close", for "acc-close" ] []
                 , div [ class "acc-content " ]
                     [ renderMarkdown "is-light message-body" message

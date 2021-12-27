@@ -24,7 +24,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -821,7 +821,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.welcomIn
                         , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]

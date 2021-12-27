@@ -1,5 +1,6 @@
 module Pages.Login exposing (Flags, Model, Msg, page)
 
+import Assets as A
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
@@ -13,7 +14,6 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
-import Logo exposing (welcome)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (login)
@@ -178,7 +178,7 @@ viewLogin global model =
                     [ text "Login" ]
                 ]
             , div [ class "card-content" ]
-                [ welcome
+                [ A.welcome
                 , div [ class "field is-horizntl" ]
                     [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
                     , div [ class "field-body" ]

@@ -1,6 +1,6 @@
 module Components.Loading exposing (..)
 
-import Asset as Asset
+import Assets as A
 import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
@@ -221,7 +221,7 @@ toErrorData httpErr =
 spinner : Html msg
 spinner =
     img
-        [ src Asset.loading
+        [ src A.loading
         , width 26
         , height 26
         , alt (upH T.loading ++ "..")

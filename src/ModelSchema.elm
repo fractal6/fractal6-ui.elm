@@ -525,6 +525,7 @@ type alias ContractNotif =
     , createdAt : String
     , createdBy : Username
     , contract_type : ContractType.ContractType
+    , event : { event_type : TensionEvent.TensionEvent }
     , tension : { receiver : PNode }
     }
 

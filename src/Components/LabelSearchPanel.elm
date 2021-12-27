@@ -12,7 +12,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -472,7 +472,7 @@ viewLabelSelectors isInternal labels op model =
                   else
                     onClick (Navigate (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")))
                 ]
-                [ I.icon1 "icon-edit-2" <| upH T.editLabels ]
+                [ A.icon1 "icon-edit-2" <| upH T.editLabels ]
     in
     div []
         [ ternary isInternal viewEdit (text "")
@@ -518,7 +518,7 @@ viewLabelSelectors isInternal labels op model =
                                     (onClick (OnLabelClickInt l (isActive == False)))
                                     (onClick (OnSubmit <| OnLabelClick l (isActive == False)))
                                 ]
-                                [ span [ class "panel-icon" ] [ I.icon iconCls ]
+                                [ span [ class "panel-icon" ] [ A.icon iconCls ]
                                 , viewLabel "" l_
                                 , loadingSpin isLoading
                                 ]
@@ -558,7 +558,7 @@ viewNew op (State model) =
             [ class "button is-small is-primary mr-2"
             , onClick (OnOpen op.targets False)
             ]
-            [ I.icon1 "icon-1x icon-plus" "", text "Label" ]
+            [ A.icon1 "icon-1x icon-plus" "", text "Label" ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels
 

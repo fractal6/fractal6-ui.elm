@@ -15,7 +15,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -285,7 +285,7 @@ update_ apis message model =
                     ( data, Out [] [] (Just ( False, d )) )
 
                 DuplicateErr ->
-                    ( setDataResult (Failure [ "Duplicate error: a similar contract already exists, please check it out." ]) model, noOut )
+                    ( setDataResult (Failure [ "Duplicate Error: A similar contract already exists, please check it out." ]) model, noOut )
 
                 _ ->
                     ( data, noOut )
@@ -354,7 +354,7 @@ viewModal op (State model) =
                             Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.target, param2 = model.form.tid, param3 = data.id } |> toHref
                     in
                     div [ class "box is-light" ]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , text "New contract created. "
                         , a
                             [ href link

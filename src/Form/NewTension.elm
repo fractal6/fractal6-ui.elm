@@ -22,7 +22,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, tabindex, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -810,7 +810,7 @@ update_ apis message model =
                             ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                 DuplicateErr ->
-                    ( setResult (Failure [ "Duplicate error: this name is already taken." ]) model, noOut )
+                    ( setResult (Failure [ "Duplicate Error: this name is already taken." ]) model, noOut )
 
                 _ ->
                     ( setResult result model, noOut )
@@ -1017,12 +1017,12 @@ viewTensionTabs tab targ =
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
                 [ a [ class "tootltip", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "blank_" ]
-                    [ I.icon1 "icon-exchange" "Tension" ]
+                    [ A.icon1 "icon-exchange" "Tension" ]
                 ]
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
                     [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "blank_" ]
-                        [ I.icon1 "icon-leaf" "Role" ]
+                        [ A.icon1 "icon-leaf" "Role" ]
                     ]
 
               else
@@ -1030,7 +1030,7 @@ viewTensionTabs tab targ =
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
                     [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "blank_" ]
-                        [ I.icon1 "icon-git-branch" "Circle" ]
+                        [ A.icon1 "icon-git-branch" "Circle" ]
                     ]
 
               else
@@ -1356,7 +1356,7 @@ viewRecipients model =
                                 [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
                                 , onClick (OnChangeTensionSource t)
                                 ]
-                                [ I.icon1 "icon-user" t.name ]
+                                [ A.icon1 "icon-user" t.name ]
                         )
                         (List.filter (\n -> n.nameid /= model.form.source.nameid) model.sources)
                 ]
@@ -1379,7 +1379,7 @@ viewRecipients model =
                                 [ class <| "dropdown-item has-text-weight-semibold button-light has-text-light"
                                 , onClick (OnChangeTensionTarget t)
                                 ]
-                                [ I.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
+                                [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
                         )
                         (List.filter (\n -> n.nameid /= model.form.target.nameid) model.targets)
                 ]
@@ -1394,7 +1394,7 @@ viewSuccess txt res model =
             Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
     in
     div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
-        [ I.icon1 "icon-check icon-2x has-text-success" " "
+        [ A.icon1 "icon-check icon-2x has-text-success" " "
         , textH txt.added
         , text " "
         , a

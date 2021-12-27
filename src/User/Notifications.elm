@@ -27,7 +27,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -401,10 +401,11 @@ viewUserEvent ue model =
         firstEvent =
             List.head ue.event
 
-        ( ev, icon_ ) =
+        ( isContract, ev, icon_ ) =
             case firstEvent of
                 Just (TensionEvent e) ->
-                    ( Dict.fromList
+                    ( False
+                    , Dict.fromList
                         [ ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
                         , ( "target", e.tension.receiver.name )
                         , ( "orga", nid2rootid e.tension.receiver.nameid )
@@ -415,8 +416,10 @@ viewUserEvent ue model =
                     )
 
                 Just (ContractEvent c) ->
-                    ( Dict.fromList
+                    ( True
+                    , Dict.fromList
                         [ ( "title", c.contract_type |> ContractType.toString |> SE.humanize )
+                        , ( "event", c.event.event_type |> TensionEvent.toString |> SE.humanize )
                         , ( "target", c.tension.receiver.name )
                         , ( "orga", nid2rootid c.tension.receiver.nameid )
                         , ( "date", c.createdAt )
@@ -426,17 +429,36 @@ viewUserEvent ue model =
                     )
 
                 Nothing ->
-                    ( Dict.empty, "" )
+                    ( False, Dict.empty, "" )
     in
+    if isContract then
+        div []
+            [ p [] <|
+                List.intersperse (text " ") <|
+                    [ A.icon icon_
+                    , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
+                    ]
+            , div [ class "media" ]
+                [ div [ class "media-content" ]
+                    [ viewEventMedia ev icon_ model
+                    ]
+                ]
+            ]
+
+    else
+        viewEventMedia ev icon_ model
+
+
+viewEventMedia : Dict String String -> String -> Model -> Html Msg
+viewEventMedia ev icon_ model =
     div [ class "content" ]
         [ p [] <|
             List.intersperse (text " ") <|
-                [ I.icon icon_
+                [ A.icon icon_
                 , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
                 , span [ class "has-text-grey-lighter" ] [ text "in" ]
                 , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
                 , span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
-                , br [ class "mb-3" ] []
-                , small [] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+                , small [ class "help" ] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
                 ]
         ]

@@ -39,7 +39,7 @@ formatDate now timePosix =
         nowDate =
             Date.fromPosix utc now
     in
-    if Date.diff Date.Days nowDate date < 31 then
+    if Date.diff Date.Days nowDate date <= 31 then
         Distance.inWords time now
 
     else if Date.diff Date.Days nowDate date <= 365 then

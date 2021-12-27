@@ -25,7 +25,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -735,11 +735,13 @@ update_ apis message model =
                                         [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
 
                             LinkAction ->
-                                let
-                                    fs =
-                                        Just { username = withDefault "" model.form.fragment.first_link, name = Nothing }
-                                in
-                                [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
+                                -- Contract based event...
+                                --let
+                                --    fs =
+                                --        Just { username = withDefault "" model.form.fragment.first_link, name = Nothing }
+                                --in
+                                --[ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
+                                []
 
                             UnLinkAction _ ->
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
@@ -802,6 +804,9 @@ update_ apis message model =
 
                 OkAuth _ ->
                     ( model |> setActionResult result, noOut )
+
+                DuplicateErr ->
+                    ( setActionResult (Failure [ "Duplicate Error: A similar contract already exists, please check it out." ]) model, noOut )
 
                 _ ->
                     ( model |> setActionResult result, noOut )
@@ -986,7 +991,7 @@ viewPanel op model =
                             )
                         )
                     ]
-                    [ I.icon1 "icon-edit-2" (upH T.edit) ]
+                    [ A.icon1 "icon-edit-2" (upH T.edit) ]
                 , hr [ class "dropdown-divider" ] []
                 ]
 
@@ -1001,23 +1006,23 @@ viewPanel op model =
 
                         -- Authority Action
                         , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
-                            [ I.icon1 "icon-key" (auth2str model.form.node.type_) ]
+                            [ A.icon1 "icon-key" (auth2str model.form.node.type_) ]
                         , case model.form.node.type_ of
                             -- Visibility Action
                             NodeType.Circle ->
                                 div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
-                                    [ I.icon1 "icon-lock" (action2str VisibilityAction) ]
+                                    [ A.icon1 "icon-lock" (action2str VisibilityAction) ]
 
                             -- Link/Unlink Action
                             NodeType.Role ->
                                 case model.form.node.first_link of
                                     Just user ->
                                         div [ class "dropdown-item button-light", onClick (OnOpenModal (UnLinkAction user)) ]
-                                            [ I.icon1 "icon-user-plus" (action2str (UnLinkAction user)) ]
+                                            [ A.icon1 "icon-user-plus" (action2str (UnLinkAction user)) ]
 
                                     Nothing ->
                                         div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.orga_data) ]
-                                            [ I.icon1 "icon-user-plus" (action2str LinkAction) ]
+                                            [ A.icon1 "icon-user-plus" (action2str LinkAction) ]
 
                         --
                         , hr [ class "dropdown-divider" ] []
@@ -1026,11 +1031,11 @@ viewPanel op model =
                         , case Maybe.map (\c -> c.action_type) op.tc of
                             Just EDIT ->
                                 div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
-                                    [ I.icon1 "icon-archive" (action2str ArchiveAction) ]
+                                    [ A.icon1 "icon-archive" (action2str ArchiveAction) ]
 
                             Just ARCHIVE ->
                                 div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
-                                    [ I.icon1 "icon-archive" (action2str UnarchiveAction) ]
+                                    [ A.icon1 "icon-archive" (action2str UnarchiveAction) ]
 
                             _ ->
                                 div [] [ text "not implemented" ]
@@ -1043,7 +1048,7 @@ viewPanel op model =
                 ++ (if op.hasRole then
                         [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
                             [ p []
-                                [ I.icon1 "icon-log-out" (action2str LeaveAction) ]
+                                [ A.icon1 "icon-log-out" (action2str LeaveAction) ]
                             ]
                         ]
                             |> List.append [ hr [ class "dropdown-divider" ] [] ]
@@ -1085,7 +1090,7 @@ viewModalContent op model =
                 Success _ ->
                     div
                         [ class "box is-light" ]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , textH (action2post model.state ++ ".")
                         ]
 
@@ -1232,7 +1237,7 @@ viewVisibility op model =
                         ]
                         [ div [ class "card-content p-4" ]
                             [ h2 [ class "is-strong is-size-5" ]
-                                [ I.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
+                                [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
                             , div [ class "content is-small" ]
                                 [ text description ]
                             ]
@@ -1271,7 +1276,7 @@ viewCircleAuthority op model =
                         ]
                         [ div [ class "card-content p-4" ]
                             [ h2 [ class "is-strong is-size-5" ]
-                                [ I.icon1 (icon ++ " icon-bg") (NodeMode.toString x) ]
+                                [ A.icon1 (icon ++ " icon-bg") (NodeMode.toString x) ]
                             , div [ class "content is-small" ]
                                 [ text description ]
                             ]
@@ -1306,7 +1311,7 @@ viewRoleAuthority op model =
                         ]
                         [ div [ class "card-content p-4" ]
                             [ h2 [ class "is-strong is-size-5" ]
-                                [ I.icon1 (icon ++ " icon-bg") (RoleType.toString x) ]
+                                [ A.icon1 (icon ++ " icon-bg") (RoleType.toString x) ]
                             , div [ class "content is-small" ]
                                 [ text description ]
                             ]

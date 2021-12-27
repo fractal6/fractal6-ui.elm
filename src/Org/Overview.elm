@@ -43,7 +43,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, style, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
@@ -1119,16 +1119,16 @@ viewLeftPane model =
             [ li [ class "menu-label" ]
                 [ div [ class "hero is-small is-info is-bold" ]
                     [ div [ class "hero-body" ]
-                        [ I.icon1 "icon-git-branch icon-lg" model.node_focus.nameid ]
+                        [ A.icon1 "icon-git-branch icon-lg" model.node_focus.nameid ]
                     ]
                 ]
             , li []
                 [ ul [ class "menu-list" ]
-                    [ li [] [ a [] [ I.icon1 "icon-book-open icon-xs" "Mandates" ] ]
-                    , li [] [ a [] [ I.icon1 "icon-exchange icon-xs" "Tensions" ] ]
-                    , li [] [ a [] [ I.icon1 "icon-history icon-xs" "Journal" ] ]
+                    [ li [] [ a [] [ A.icon1 "icon-book-open icon-xs" "Mandates" ] ]
+                    , li [] [ a [] [ A.icon1 "icon-exchange icon-xs" "Tensions" ] ]
+                    , li [] [ a [] [ A.icon1 "icon-history icon-xs" "Journal" ] ]
                     , li []
-                        [ a [] [ I.icon1 "icon-user icon-xs" "Members" ]
+                        [ a [] [ A.icon1 "icon-user icon-xs" "Members" ]
                         ]
                     ]
                 ]
@@ -1336,7 +1336,7 @@ viewCanvas us model =
                 , attribute "data-tooltip" (upH T.goRoot)
                 , onClick (NodeClicked model.node_focus.rootnameid)
                 ]
-                [ I.icon "icon-chevrons-up" ]
+                [ A.icon "icon-chevrons-up" ]
             , div
                 [ id "root_cvbtn"
                 , class "button tooltip has-tooltip-arrow has-tooltip-right"
@@ -1352,14 +1352,14 @@ viewCanvas us model =
                     Nothing ->
                         onClick NoMsg
                 ]
-                [ I.icon "icon-chevron-up" ]
+                [ A.icon "icon-chevron-up" ]
             , div
                 [ id "invGraph_cvbtn"
                 , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.reverseTooltip)
                 , onClick ToggleGraphReverse
                 ]
-                [ span [ style "padding" "2px" ] [ I.icon "icon-sort-amount-desc icon-xs" ] ]
+                [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
             ]
         , div
             [ id "nodeTooltip"
@@ -1408,8 +1408,8 @@ viewActivies model =
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
-                            [ li [ class "is-active" ] [ a [ href "#" ] [ I.icon1 "icon-exchange icon-sm" (upH T.tension) ] ]
-                            , li [] [ a [ class "has-text-grey", href "#" ] [ I.icon1 "icon-history icon-sm" (upH T.journal) ] ]
+                            [ li [ class "is-active" ] [ a [ href "#" ] [ A.icon1 "icon-exchange icon-sm" (upH T.tension) ] ]
+                            , li [] [ a [ class "has-text-grey", href "#" ] [ A.icon1 "icon-history icon-sm" (upH T.journal) ] ]
                             ]
                         ]
                     ]
@@ -1498,7 +1498,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.welcomIn
                         , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]

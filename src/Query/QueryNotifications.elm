@@ -13,6 +13,7 @@ import Fractal.Object
 import Fractal.Object.AddNodePayload
 import Fractal.Object.Contract
 import Fractal.Object.Event
+import Fractal.Object.EventFragment
 import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.Tension
@@ -140,6 +141,7 @@ contractEventPayload =
         |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with Fractal.Object.Contract.contract_type
+        |> with (Fractal.Object.Contract.event identity <| SelectionSet.map (\x -> { event_type = x }) Fractal.Object.EventFragment.event_type)
         |> with
             (Fractal.Object.Contract.tension identity
                 (SelectionSet.map (\x -> { receiver = x })

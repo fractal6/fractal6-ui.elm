@@ -1,5 +1,6 @@
 module ${module_name} exposing (Msg(..), State, init, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -11,7 +12,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button,  div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span,  text, textarea,  ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -315,7 +315,7 @@ viewModal op (State model) =
                         link = data.id -- example @tofix
                     in
                     div [ class "box is-light"]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , text "data queried..."
                         , text " "
                         , a

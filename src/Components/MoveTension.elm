@@ -14,7 +14,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -447,7 +447,7 @@ viewModal op (State model) =
             [ case model.move_result of
                 Success _ ->
                     div [ class "box is-light" ]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.tensionMoved
                         ]
 
@@ -610,6 +610,6 @@ viewNodesSelector targets =
                 [ class <| ("dropdown-item has-text-weight-semibold button-light has-text-" ++ color)
                 , onClick (OnChangeTarget n)
                 ]
-                [ I.icon1 (ternary (nid2type n.nameid == NodeType.Role) "icon-user" "icon-circle") n.name ]
+                [ A.icon1 (ternary (nid2type n.nameid == NodeType.Role) "icon-user" "icon-circle") n.name ]
         )
         targets

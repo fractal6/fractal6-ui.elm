@@ -19,7 +19,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, header, hr, i, input, label, li, nav, option, p, pre, section, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -563,7 +563,7 @@ viewAskQuestion op (State model) =
             in
             div []
                 [ div [ class "box is-light" ]
-                    [ I.icon1 "icon-check icon-2x has-text-success" " "
+                    [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , textH T.messageSent
                     , text ". "
                     , a
@@ -666,7 +666,7 @@ viewFeedback op (State model) =
             in
             div []
                 [ div [ class "box is-light" ]
-                    [ I.icon1 "icon-check icon-2x has-text-success" " "
+                    [ A.icon1 "icon-check icon-2x has-text-success" " "
                     , textH T.messageSent
                     , text ". "
                     , a

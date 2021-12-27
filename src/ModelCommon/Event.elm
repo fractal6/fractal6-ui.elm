@@ -17,7 +17,7 @@ import Global
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
-import Icon as I
+import Assets as A
 import Identicon
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)

@@ -1,5 +1,6 @@
 module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 
+import Assets as A
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (WebData, expectJson, loadingSpin, viewHttpErrors)
 import Dict exposing (Dict)
@@ -12,11 +13,9 @@ import Html exposing (Html, a, br, button, div, h1, h2, hr, i, img, input, label
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, src, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Icon as I
 import Image exposing (Image)
 import Json.Decode as JD
 import Json.Encode as JE
-import Logo exposing (welcome)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Requests exposing (resetPassword, resetPassword2, resetPasswordChallenge, uuidCheck)
@@ -297,7 +296,7 @@ viewResetForm global model =
 
                             RemoteData.NotAsked ->
                                 text ""
-                        , div [ class "button m-2", classList [ ( "is-loading", model.challenge_data == RemoteData.Loading ) ], onClick LoadCaptcha ] [ I.icon "icon-refresh-ccw" ]
+                        , div [ class "button m-2", classList [ ( "is-loading", model.challenge_data == RemoteData.Loading ) ], onClick LoadCaptcha ] [ A.icon "icon-refresh-ccw" ]
                         , div [ class "field" ]
                             [ div [ class "control m-2" ]
                                 [ input

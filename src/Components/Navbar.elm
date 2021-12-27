@@ -1,11 +1,10 @@
 module Components.Navbar exposing (view)
 
+import Assets as A
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
-import Logo as Logo
 import ModelCommon exposing (UserState(..))
 import Text as T exposing (textH, textT, upH)
 
@@ -25,7 +24,7 @@ view op =
             [ div [ class "navbar-brand" ]
                 [ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
-                    [ Logo.logo_fractal
+                    [ A.logo1
                     , span [ class "has-text-warning", attribute "style" "padding-top: 10px; font-size: 0.7rem; margin-left: -2px;" ] [ text "Alpha" ]
                     ]
                 , div
@@ -72,7 +71,7 @@ notificationButton op =
                 [ class "navbar-item", href (Route.toHref Route.Notifications) ]
                 [ div
                     [ class "navbar-link is-arrowless is-rounded is-small notifTrigger" ]
-                    [ I.icon "icon-bg icon-bell" ]
+                    [ A.icon "icon-bg icon-bell" ]
                 ]
 
         LoggedOut ->
@@ -87,7 +86,7 @@ helpButton op =
                 [ class "navbar-item" ]
                 [ div
                     [ class "navbar-link is-arrowless has-background-info button is-rounded is-small helpTrigger" ]
-                    [ I.icon "icon-question" ]
+                    [ A.icon "icon-question" ]
                 ]
 
         LoggedOut ->
@@ -104,7 +103,7 @@ newButton op =
                     [ class "navbar-link is-small"
                     , attribute "style" "padding-right: 1.65rem;"
                     ]
-                    [ I.icon "icon-plus icon-bg" ]
+                    [ A.icon "icon-plus icon-bg" ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
                         [ textH T.newOrganisation ]
@@ -127,15 +126,15 @@ userButton op =
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
                     [ a [ class "navbar-item", href (toHref <| Route.User_Dynamic { param1 = uctx.username }) ]
-                        [ I.icon1 "icon-user" (upH T.profile) ]
+                        [ A.icon1 "icon-user" (upH T.profile) ]
                     , a [ class "navbar-item", href "#" ]
-                        [ I.icon1 "icon-tool" (upH T.settings) ]
+                        [ A.icon1 "icon-tool" (upH T.settings) ]
 
                     --, hr [ class "navbar-divider" ] []
                     --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "icon-adjust fa-fw" ] [], text (T.space_ ++ " Toggle dark theme") ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
-                        [ I.icon1 "icon-power" (upH T.signout) ]
+                        [ A.icon1 "icon-power" (upH T.signout) ]
                     ]
                 ]
 

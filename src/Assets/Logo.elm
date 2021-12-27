@@ -1,17 +1,9 @@
-module Logo exposing (..)
+module Assets.Logo exposing (..)
 
-import Html exposing (Html, h1, h2, img, p)
+import Html exposing (Html)
 import Html.Attributes as Attr
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
-
-
-welcome : Html msg
-welcome =
-    p [ class "field content is-aligned-center" ]
-        [ h2 [ class "mb-0 has-text-grey-lighter" ] [ text "Welcome to Fractale" ]
-        , p [ class "has-text-grey-light" ] [ text "a collective intelligence platform." ]
-        ]
 
 
 logo : Html msg

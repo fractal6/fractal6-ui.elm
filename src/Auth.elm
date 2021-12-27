@@ -1,7 +1,7 @@
 module Auth exposing (ErrState(..), parseErr, parseErr2, refreshAuthModal)
 
+import Assets as A
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData, viewHttpErrors)
-import Markdown exposing (renderMarkdown)
 import Dict
 import Extra.Events exposing (onKeydown)
 import Form
@@ -10,6 +10,7 @@ import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ModalAuth(..))
 import ModelSchema exposing (UserCtx)
@@ -17,6 +18,12 @@ import RemoteData exposing (RemoteData)
 import String exposing (contains, startsWith)
 import String.Extra as SE
 import Task
+
+
+
+--
+-- Model
+--
 
 
 type ErrState a
@@ -28,19 +35,31 @@ type ErrState a
     | UnknownErr
 
 
+
+--
+-- Logics
+--
+
+
+{-| Convert an error message to an error type
+-}
 messageToErrState : String -> Int -> ErrState a
-messageToErrState message trial =
+messageToErrState message_ trial =
+    let
+        message =
+            String.toLower message_
+    in
     if startsWith "token is expired" message || startsWith "no token found" message then
         Authenticate
 
-    else if startsWith "Access denied" message then
+    else if startsWith "access denied" message then
         if trial == 0 then
             RefreshToken (trial + 1)
 
         else
             UnknownErr
 
-    else if startsWith "Duplicate error" message then
+    else if startsWith "duplicate error" message then
         DuplicateErr
 
     else if contains "already exists for field" message then
@@ -50,10 +69,7 @@ messageToErrState message trial =
         UnknownErr
 
 
-{-|
-
-    For GQL Response
-
+{-| For GQL Response
 -}
 parseErr : GqlData a -> Int -> ErrState a
 parseErr data trial =
@@ -95,10 +111,7 @@ parseErr data trial =
             NoErr
 
 
-{-|
-
-    For HTTP response
-
+{-| For HTTP response
 -}
 parseErr2 : WebData a -> Int -> ErrState a
 parseErr2 data trial =
@@ -179,7 +192,8 @@ refreshAuthModal modalAuth msgs =
         ]
         [ div [ class "modal-background", onClick onCloseModal ] []
         , div [ class "modal-content" ]
-            [ div [ class "box" ] <|
+            [ A.logo1
+            , div [ class "box" ] <|
                 case modalAuth of
                     Active form ->
                         [ p [ class "field" ] [ text "Your session expired. Please, confirm your password:" ]

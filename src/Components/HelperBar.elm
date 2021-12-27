@@ -1,6 +1,7 @@
 module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
+import Assets as A
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -8,7 +9,6 @@ import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick)
-import Icon as I
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
@@ -59,108 +59,125 @@ type alias Op msg =
 
 view : Op msg -> Html msg
 view op =
-    let
-        ( rootnameid, focusid, userCanJoin ) =
-            case op.path_data of
-                Just path ->
-                    ( path.root |> Maybe.map (\r -> r.nameid) |> withDefault "", path.focus.nameid, path.root |> Maybe.map (\r -> r.userCanJoin) |> withDefault Nothing )
-
-                Nothing ->
-                    ( "", "", Nothing )
-    in
     div [ id "helperBar", class "columns is-centered" ]
         [ nav [ class "column is-11-desktop is-10-widescreen is-10-fullhd" ]
-            [ div [ class "navbar" ]
-                [ div [ class "navbar-brand" ]
-                    [ viewPath op.baseUri op.uriQuery op.path_data ]
-                , div
-                    [ class "navbar-burger burger"
-                    , attribute "data-target" "rolesMenu"
-                    , attribute "aria-expanded" "false"
-                    , attribute "aria-label" "menu"
-                    , attribute "role" "button"
-                    ]
-                    [ span [ attribute "aria-hidden" "true" ] []
-                    , span [ attribute "aria-hidden" "true" ] []
-                    , span [ attribute "aria-hidden" "true" ] []
-                    ]
-                , div [ id "rolesMenu", class "navbar-menu" ]
-                    [ case op.user of
-                        LoggedIn uctx ->
-                            case op.path_data of
-                                Just path ->
-                                    let
-                                        roles =
-                                            List.filter (\r -> nid2rootid r.nameid == rootnameid) uctx.roles
-                                    in
-                                    if List.length roles > 0 then
-                                        memberButtons roles { op | baseUri = OverviewBaseUri }
-
-                                    else
-                                        userCanJoin
-                                            |> Maybe.map (\ucj -> joinButton op.onJoin)
-                                            |> withDefault (text "")
-
-                                Nothing ->
-                                    div [ class "navbar-end ph-button-1" ] []
-
-                        LoggedOut ->
-                            userCanJoin
-                                |> Maybe.map (\ucj -> joinButton op.onJoin)
-                                |> withDefault (text "")
-                    ]
-                ]
-            , div [ class "tabs is-boxed" ]
-                [ ul []
-                    ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
-                        [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ I.icon1 "icon-sun" "Overview" ] ]
-                     , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri ) ] ]
-                        [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ I.icon1 "icon-exchange" "Tensions" ] ]
-
-                     --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
-                     --    [ div [ class "dropdown is-hoverable" ]
-                     --        [ div [ class "dropdown-trigger", attribute "aria-haspopup" "true", attribute "aria-controls" "tension-menu" ] [ I.icon1 "icon-exchange" "Tensions" ]
-                     --        , div [ class "dropdown-menu", id "tension-menu", attribute "role" "menu" ]
-                     --            [ div [ class "dropdown-content" ]
-                     --                [ p [ class "dropdown-item" ] [ text "List" ]
-                     --                ]
-                     --            ]
-                     --        ]
-                     --    ]
-                     --]
-                     , li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
-                        [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ I.icon1 "icon-user" "Members" ] ]
-                     ]
-                        ++ (Maybe.map
-                                (\path ->
-                                    if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
-                                        [ li [ class "is-vbar-2" ] []
-                                        , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
-                                            [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ I.icon1 "icon-settings" "Settings" ] ]
-                                        ]
-
-                                    else
-                                        []
-                                )
-                                op.path_data
-                                |> withDefault []
-                           )
-                    )
-                , div
-                    ([ class "button is-small is-info is-rounded is-pulled-right"
-                     , attribute "style" "bottom:-5px;"
-                     ]
-                        ++ (case op.path_data of
-                                Just p ->
-                                    [ onClick (op.onCreateTension p) ]
-
-                                Nothing ->
-                                    []
-                           )
-                    )
-                    [ I.icon1 "icon-send" "Create tension" ]
-                ]
+            [ viewPathLevel op
+            , viewNavLevel op
             ]
+        ]
+
+
+viewPathLevel : Op msg -> Html msg
+viewPathLevel op =
+    let
+        ( rootnameid, userCanJoin ) =
+            case op.path_data of
+                Just path ->
+                    ( path.root |> Maybe.map (\r -> r.nameid) |> withDefault ""
+                    , path.root |> Maybe.map (\r -> r.userCanJoin) |> withDefault Nothing
+                    )
+
+                Nothing ->
+                    ( "", Nothing )
+    in
+    div [ class "navbar" ]
+        [ div [ class "navbar-brand" ]
+            [ viewPath op.baseUri op.uriQuery op.path_data ]
+        , div
+            [ class "navbar-burger burger"
+            , attribute "data-target" "rolesMenu"
+            , attribute "aria-expanded" "false"
+            , attribute "aria-label" "menu"
+            , attribute "role" "button"
+            ]
+            [ span [ attribute "aria-hidden" "true" ] []
+            , span [ attribute "aria-hidden" "true" ] []
+            , span [ attribute "aria-hidden" "true" ] []
+            ]
+        , div [ id "rolesMenu", class "navbar-menu" ]
+            [ case op.user of
+                LoggedIn uctx ->
+                    case op.path_data of
+                        Just path ->
+                            let
+                                roles =
+                                    List.filter (\r -> nid2rootid r.nameid == rootnameid) uctx.roles
+                            in
+                            if List.length roles > 0 then
+                                memberButtons roles { op | baseUri = OverviewBaseUri }
+
+                            else
+                                userCanJoin
+                                    |> Maybe.map (\ucj -> joinButton op.onJoin)
+                                    |> withDefault (text "")
+
+                        Nothing ->
+                            div [ class "navbar-end ph-button-1" ] []
+
+                LoggedOut ->
+                    userCanJoin
+                        |> Maybe.map (\ucj -> joinButton op.onJoin)
+                        |> withDefault (text "")
+            ]
+        ]
+
+
+viewNavLevel : Op msg -> Html msg
+viewNavLevel op =
+    let
+        focusid =
+            Maybe.map (\x -> x.focus.nameid) op.path_data
+                |> withDefault ""
+    in
+    nav [ class "tabs is-boxed" ]
+        [ ul []
+            ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
+                [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ A.icon1 "icon-sun" "Overview" ] ]
+             , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri ) ] ]
+                [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ A.icon1 "icon-exchange" "Tensions" ] ]
+
+             --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
+             --    [ div [ class "dropdown is-hoverable" ]
+             --        [ div [ class "dropdown-trigger", attribute "aria-haspopup" "true", attribute "aria-controls" "tension-menu" ] [ A.icon1 "icon-exchange" "Tensions" ]
+             --        , div [ class "dropdown-menu", id "tension-menu", attribute "role" "menu" ]
+             --            [ div [ class "dropdown-content" ]
+             --                [ p [ class "dropdown-item" ] [ text "List" ]
+             --                ]
+             --            ]
+             --        ]
+             --    ]
+             --]
+             , li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
+                [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ A.icon1 "icon-user" "Members" ] ]
+             ]
+                ++ (Maybe.map
+                        (\path ->
+                            if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
+                                [ li [ class "is-vbar-2" ] []
+                                , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
+                                    [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ A.icon1 "icon-settings" "Settings" ] ]
+                                ]
+
+                            else
+                                []
+                        )
+                        op.path_data
+                        |> withDefault []
+                   )
+            )
+        , div
+            ([ class "button is-small is-info is-rounded is-pulled-right"
+             , attribute "style" "bottom:-5px;"
+             ]
+                ++ (case op.path_data of
+                        Just p ->
+                            [ onClick (op.onCreateTension p) ]
+
+                        Nothing ->
+                            []
+                   )
+            )
+            [ A.icon1 "icon-send" "Create tension" ]
         ]
 
 
@@ -170,7 +187,7 @@ viewPath baseUri uriQuery maybePath =
         [ class "breadcrumb"
         , attribute "aria-label" "breadcrumbs"
         ]
-        [ I.icon0 "icon-layers icon-lg"
+        [ A.icon0 "icon-layers icon-lg"
         , case maybePath of
             Just g ->
                 let
@@ -218,7 +235,7 @@ viewTree baseUri uriQuery g =
     in
     div [ class "dropdown" ]
         [ div [ class "dropdown-trigger px-2 button-light" ]
-            [ div [ attribute "aria-controls" "tree-menu" ] [ I.icon "icon-chevron-down1" ]
+            [ div [ attribute "aria-controls" "tree-menu" ] [ A.icon "icon-chevron-down1" ]
             ]
         , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
             [ div [ class "dropdown-content" ] <|
@@ -262,13 +279,13 @@ memberButtons roles_ op =
         lastButton =
             case op.data of
                 Expanded ->
-                    div [ class "button is-small is-primary", onClick op.onCollapse ] [ I.icon "icon-chevrons-left" ]
+                    div [ class "button is-small is-primary", onClick op.onCollapse ] [ A.icon "icon-chevrons-left" ]
 
                 Collapsed ->
                     if roleMoreLen > 0 then
                         div [ class "button has-font-weight-semibold is-small is-primary", onClick op.onExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
-                            , I.icon "icon-chevrons-right icon-padding-left"
+                            , A.icon "icon-chevrons-right icon-padding-left"
                             ]
 
                     else

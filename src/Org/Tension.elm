@@ -50,7 +50,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -1758,7 +1758,7 @@ viewTension u t model =
                                 , attribute "data-tooltip" (upH T.editTitle)
                                 , onClick DoChangeTitle
                                 ]
-                                [ I.icon "icon-edit-2" ]
+                                [ A.icon "icon-edit-2" ]
 
                           else
                             text ""
@@ -1792,12 +1792,12 @@ viewTension u t model =
                     [ ul []
                         [ li [ classList [ ( "is-active", model.activeTab == Conversation ) ] ]
                             [ a [ href (Route.Tension_Dynamic_Dynamic { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                [ I.icon1 "icon-message-square" (upH T.conversation) ]
+                                [ A.icon1 "icon-message-square" (upH T.conversation) ]
                             ]
                         , if t.blobs /= Nothing && t.blobs /= Just [] then
                             li [ classList [ ( "is-active", model.activeTab == Document ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Action { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ I.icon1 "icon-copy" (upH T.document) ]
+                                    [ A.icon1 "icon-copy" (upH T.document) ]
                                 ]
 
                           else
@@ -1805,7 +1805,7 @@ viewTension u t model =
                         , if t.contracts /= Nothing && t.contracts /= Just [] then
                             li [ classList [ ( "is-active", model.activeTab == Contracts ) ] ]
                                 [ a [ href (Route.Tension_Dynamic_Dynamic_Contract { param1 = model.node_focus.rootnameid, param2 = t.id } |> toHref) ]
-                                    [ I.icon1 "icon-link-2" (upH T.contracts) ]
+                                    [ A.icon1 "icon-link-2" (upH T.contracts) ]
                                 ]
 
                           else
@@ -2005,7 +2005,7 @@ viewComment c model =
                                         , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
                                         , attribute "aria-haspopup" "true"
                                         ]
-                                        [ I.icon "icon-ellipsis-v" ]
+                                        [ A.icon "icon-ellipsis-v" ]
                                     ]
                                 , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
                                     [ div [ class "dropdown-content p-0" ]
@@ -2060,7 +2060,7 @@ viewUpdateInput uctx comment form result =
                         Write ->
                             textarea
                                 [ id "updateCommentInput"
-                                , class "textarea defaultSubmit"
+                                , class "textarea defaultSubmit is-human"
                                 , rows 7
                                 , placeholder (upH T.leaveComment)
                                 , value message
@@ -2276,7 +2276,7 @@ viewEventStatus now event status =
                     ( "icon-alert-circle", T.closed )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
+        [ div [ class "media-left" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
         , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
             ]
@@ -2287,7 +2287,7 @@ viewEventTitle : Time.Posix -> Event -> Html Msg
 viewEventTitle now event =
     let
         icon =
-            I.icon "icon-edit-2"
+            A.icon "icon-edit-2"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2306,7 +2306,7 @@ viewEventType : Time.Posix -> Event -> Html Msg
 viewEventType now event =
     let
         icon =
-            I.icon "icon-edit-2"
+            A.icon "icon-edit-2"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2325,7 +2325,7 @@ viewEventVisibility : Time.Posix -> Event -> Html Msg
 viewEventVisibility now event =
     let
         icon =
-            I.icon "icon-lock"
+            A.icon "icon-lock"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2346,13 +2346,13 @@ viewEventAuthority now event action =
         ( icon, eventText ) =
             case tensionAction2NodeType action of
                 Just NodeType.Circle ->
-                    ( I.icon "icon-key", T.governance )
+                    ( A.icon "icon-key", T.governance )
 
                 Just NodeType.Role ->
-                    ( I.icon "icon-key", T.authority )
+                    ( A.icon "icon-key", T.authority )
 
                 _ ->
-                    ( I.icon "icon-key", "unknown action" )
+                    ( A.icon "icon-key", "unknown action" )
     in
     div [ class "media section actionComment is-paddingless is-small" ]
         [ div [ class "media-left" ] [ icon ]
@@ -2371,7 +2371,7 @@ viewEventAssignee : Time.Posix -> Event -> Bool -> Html Msg
 viewEventAssignee now event isNew =
     let
         icon =
-            I.icon "icon-user"
+            A.icon "icon-user"
 
         ( actionText, value ) =
             if isNew then
@@ -2394,7 +2394,7 @@ viewEventLabel : Time.Posix -> Event -> Bool -> Html Msg
 viewEventLabel now event isNew =
     let
         icon =
-            I.icon "icon-tag"
+            A.icon "icon-tag"
 
         ( actionText, value ) =
             if isNew then
@@ -2423,7 +2423,7 @@ viewEventPushed now event action_m =
             withDefault TensionAction.NewRole action_m
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon "icon-share" ]
+        [ div [ class "media-left" ] [ A.icon "icon-share" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
             ]
@@ -2438,7 +2438,7 @@ viewEventArchived now event action_m isArchived =
 
         ( icon, txt ) =
             if isArchived then
-                ( I.icon "icon-archive", T.archived )
+                ( A.icon "icon-archive", T.archived )
 
             else
                 ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived )
@@ -2458,7 +2458,7 @@ viewEventUserJoined now event action_m =
             "the organisation"
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon "icon-log-in" ]
+        [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate now event.createdAt) ]
             ]
@@ -2485,7 +2485,7 @@ viewEventUserLeft now event action_m =
                     actionNameStr action
     in
     div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ I.icon "icon-log-out" ]
+        [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
         , div [ class "media-content" ]
             [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate now event.createdAt) ]
             ]
@@ -2546,7 +2546,7 @@ viewBlobToolBar u t b model =
                                 [ class "button is-small is-success has-text-weight-semibold"
                                 , onClick (Submit <| PushBlob b.id)
                                 ]
-                                [ I.icon1 "icon-share" (upH T.publish)
+                                [ A.icon1 "icon-share" (upH T.publish)
                                 , loadingSpin isLoading
                                 ]
                             ]
@@ -2699,10 +2699,10 @@ viewSidePane u t model =
                             [ class "subtitle is-h" ]
                             [ textH T.assignees
                             , if model.isAssigneeOpen then
-                                I.icon "icon-x is-pulled-right"
+                                A.icon "icon-x is-pulled-right"
 
                               else if hasAssigneeRight then
-                                I.icon "icon-settings is-pulled-right"
+                                A.icon "icon-settings is-pulled-right"
 
                               else
                                 text ""
@@ -2740,10 +2740,10 @@ viewSidePane u t model =
                         [ h2 [ class "subtitle is-h" ]
                             [ textH T.labels
                             , if model.isLabelOpen then
-                                I.icon "icon-x is-pulled-right"
+                                A.icon "icon-x is-pulled-right"
 
                               else if hasLabelRight then
-                                I.icon "icon-settings is-pulled-right"
+                                A.icon "icon-settings is-pulled-right"
 
                               else
                                 text ""
@@ -2787,10 +2787,10 @@ viewSidePane u t model =
                                 ]
                                 [ textH T.document
                                 , if ActionPanel.isOpen_ model.actionPanel then
-                                    I.icon "icon-x is-pulled-right"
+                                    A.icon "icon-x is-pulled-right"
 
                                   else if hasBlobRight || hasRole then
-                                    I.icon "icon-settings is-pulled-right"
+                                    A.icon "icon-settings is-pulled-right"
 
                                   else
                                     text ""
@@ -2833,10 +2833,10 @@ viewSidePane u t model =
                     ( iconElt, txt, isLoading ) =
                         case model.isSubscribed of
                             Success True ->
-                                ( I.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText, False )
+                                ( A.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText, False )
 
                             Success False ->
-                                ( I.icon1 "icon-bell icon-1x" (upH T.subscribe), T.tensionUnsubscribeText, False )
+                                ( A.icon1 "icon-bell icon-1x" (upH T.subscribe), T.tensionUnsubscribeText, False )
 
                             LoadingSlowly ->
                                 ( text "", "", True )
@@ -2876,10 +2876,10 @@ viewSidePane u t model =
                                 [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                 , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
                                 ]
-                                [ I.icon "icon-disc mr-1", text "Change type" ]
+                                [ A.icon "icon-disc mr-1", text "Change type" ]
                            ]
                         ++ (if isAdmin then
-                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ I.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
+                                [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ A.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
                                 ]
 
                             else
@@ -2940,7 +2940,7 @@ viewJoinOrgaStep step =
             case result of
                 Success _ ->
                     div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
-                        [ I.icon1 "icon-check icon-2x has-text-success" " "
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
                         , textH T.welcomIn
                         , text " "
                         , span [ class "has-font-weight-semibold" ] [ text form.node.name ]

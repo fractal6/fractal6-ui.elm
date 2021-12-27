@@ -15,7 +15,7 @@ import Global
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
-import Icon as I
+import Assets as A
 import Identicon
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
@@ -132,7 +132,7 @@ mediaTension now focus tension showStatus showRecip size navigate =
                             , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
                             , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                             ]
-                            [ I.icon1 "icon-message-square icon-sm" "", text (String.fromInt (n_comments - 1)) ]
+                            [ A.icon1 "icon-message-square icon-sm" "", text (String.fromInt (n_comments - 1)) ]
 
                       else
                         text ""
@@ -144,7 +144,7 @@ mediaTension now focus tension showStatus showRecip size navigate =
                         [ class "tooltip has-tooltip-arrow has-tooltip-right"
                         , attribute "data-tooltip" (TensionStatus.toString tension.status)
                         ]
-                        [ I.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                        [ A.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
 
                   else
                     text ""
@@ -459,7 +459,7 @@ viewOrgaMedia user root =
              , div [ id "icons", class "level is-mobile" ]
                 [ div [ class "level-left" ]
                     [ if root.visibility == NodeVisibility.Private then
-                        span [ class "level-item" ] [ I.icon "icon-lock" ]
+                        span [ class "level-item" ] [ A.icon "icon-lock" ]
 
                       else
                         text ""
@@ -620,31 +620,31 @@ viewActionIcon : TensionAction.TensionAction -> Html msg
 viewActionIcon action =
     case action of
         TensionAction.NewRole ->
-            I.icon0 "icon-leaf"
+            A.icon0 "icon-leaf"
 
         TensionAction.NewCircle ->
-            I.icon0 "icon-git-branch"
+            A.icon0 "icon-git-branch"
 
         TensionAction.NewMd ->
-            I.icon0 "icon-markdown"
+            A.icon0 "icon-markdown"
 
         TensionAction.EditRole ->
-            I.icon0 "icon-leaf"
+            A.icon0 "icon-leaf"
 
         TensionAction.EditCircle ->
-            I.icon0 "icon-git-branch"
+            A.icon0 "icon-git-branch"
 
         TensionAction.EditMd ->
-            I.icon0 "icon-markdown"
+            A.icon0 "icon-markdown"
 
         TensionAction.ArchivedCircle ->
-            I.icon0 "icon-archive"
+            A.icon0 "icon-archive"
 
         TensionAction.ArchivedRole ->
-            I.icon0 "icon-archive"
+            A.icon0 "icon-archive"
 
         TensionAction.ArchivedMd ->
-            I.icon0 "icon-archive"
+            A.icon0 "icon-archive"
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String

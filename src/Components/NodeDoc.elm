@@ -13,7 +13,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Icon as I
+import Assets as A
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -300,7 +300,7 @@ view_ tid data op_m =
             div [ class "aboutDoc" ]
                 [ div [ class "media subtitle" ]
                     [ div [ class "media-left" ]
-                        [ I.icon "icon-info icon-1half" ]
+                        [ A.icon "icon-info icon-1half" ]
                     , div [ class "media-content nodeName" ]
                         [ (if data.hasBeenPushed && data.source == TensionBaseUri then
                             let
@@ -352,7 +352,7 @@ view_ tid data op_m =
                 Just mandate ->
                     div [ class "mandateDoc" ]
                         [ div [ class "subtitle is-5" ]
-                            [ I.icon1 "icon-book-open icon-1half" (upH T.mandate), doEditView op_m BlobType.OnMandate ]
+                            [ A.icon1 "icon-book-open icon-1half" (upH T.mandate), doEditView op_m BlobType.OnMandate ]
                         , viewMandateSection (upH T.purpose) (Just mandate.purpose)
                         , viewMandateSection (upH T.responsabilities) mandate.responsabilities
                         , viewMandateSection (upH T.domains) mandate.domains
@@ -378,7 +378,7 @@ view_ tid data op_m =
         --    div [ class "linksDoc" ]
         --        [ hr [ class "has-background-grey-light" ] []
         --        , div [ class "subtitle is-5" ]
-        --            [ I.icon1 "icon-users icon-1half" (upH T.links)
+        --            [ A.icon1 "icon-users icon-1half" (upH T.links)
         --            , links_
         --                |> List.map (\l -> viewUser True l.username)
         --                |> span [ attribute "style" "margin-left:20px;" ]
@@ -575,7 +575,7 @@ nodeMandateInputView txt node op =
         , if showResponsabilities == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
-                    [ I.icon1 "icon-plus" "", textH T.addResponsabilities ]
+                    [ A.icon1 "icon-plus" "", textH T.addResponsabilities ]
                 ]
 
           else
@@ -583,7 +583,7 @@ nodeMandateInputView txt node op =
         , if showDomains == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddDomains ]
-                    [ I.icon1 "icon-plus" "", textH T.addDomains ]
+                    [ A.icon1 "icon-plus" "", textH T.addDomains ]
                 ]
 
           else
@@ -591,7 +591,7 @@ nodeMandateInputView txt node op =
         , if showPolicies == False then
             span [ class "pr-2" ]
                 [ div [ class "button is-small is-success", onClick op.onAddPolicies ]
-                    [ I.icon1 "icon-plus" "", textH T.addPolicies ]
+                    [ A.icon1 "icon-plus" "", textH T.addPolicies ]
                 ]
 
           else
@@ -615,7 +615,7 @@ doEditView op_m btype =
                     [ class "button has-text-weight-normal is-pulled-right is-small"
                     , onClick (op.onBlobEdit btype)
                     ]
-                    [ I.icon "icon-edit-2" ]
+                    [ A.icon "icon-edit-2" ]
 
         Nothing ->
             span [] []
@@ -696,7 +696,7 @@ viewVerRow now i blob =
                         , attribute "style" "cursor: inherit;"
                         , attribute "data-tooltip" (upH T.published ++ " " ++ formatDate now flag)
                         ]
-                        [ I.icon "icon-flag" ]
+                        [ A.icon "icon-flag" ]
 
                 Nothing ->
                     text ""
