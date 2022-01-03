@@ -16,6 +16,10 @@ const safePostCssParser = require('postcss-safe-parser');
 // deprecated
 const autoprefixer = require('autoprefixer');
 
+const commitHash = require('child_process')
+  .execSync('git rev-parse --short HEAD')
+  .toString()
+  .trim();
 
 // additional webpack settings for local env (when invoked by 'npm start')
 module.exports = (env, argv) => {
@@ -71,7 +75,8 @@ module.exports = (env, argv) => {
                 'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
                 'REST_API': JSON.stringify(API_URL.rest),
-                'DATA_API': JSON.stringify(API_URL.data)
+                'DATA_API': JSON.stringify(API_URL.data),
+                'VERSION': JSON.stringify(commitHash)
             }),
             new webpack.LoaderOptionsPlugin({
                 options: {
@@ -244,7 +249,7 @@ module.exports = (env, argv) => {
                                 ascii_only: true,
                             },
                             compress: {
-                                passes: 2,
+                                passes: 3,
                                 warnings: false,
                                 // Disabled because of an issue with Uglify breaking seemingly valid code:
                                 // https://github.com/facebook/create-react-app/issues/2376
@@ -253,8 +258,9 @@ module.exports = (env, argv) => {
                                 comparisons: false,
                                 pure_getters: true,
                                 keep_fargs: false,
-                                unsafe_comps: true,
                                 unsafe: true,
+                                unsafe_comps: true,
+                                unsafe_math: true,
                                 pure_funcs: [ 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
                                 //keep_fnames: true,
                             },

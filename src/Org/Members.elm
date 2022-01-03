@@ -1,6 +1,7 @@
 module Org.Members exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Assets as A
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -24,7 +25,6 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -525,18 +525,6 @@ subscriptions _ model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
-    , body =
-        [ view_ global model
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
-        ]
-    }
-
-
-view_ : Global.Model -> Model -> Html Msg
-view_ global model =
     let
         helperData =
             { user = global.session.user
@@ -550,19 +538,29 @@ view_ global model =
             , onCreateTension = DoCreateTension
             }
     in
-    div [ id "mainPane" ]
+    { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    , body =
         [ HelperBar.view helperData
-        , div [ class "columns is-centered" ]
-            [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
-                [ div [ class "columns" ]
-                    [ viewMembers model.now model.members_top model.node_focus ]
-                , div [ class "columns" ]
-                    [ viewMembersSub model.now model.members_sub model.node_focus ]
-                , div [ class "columns" ]
-                    [ viewGuest model.now model.members_top T.guest model.node_focus ]
-                ]
+        , div [ id "mainPane" ] [ view_ model ]
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
+        , setupActionModal model
+        ]
+    }
+
+
+view_ : Model -> Html Msg
+view_ model =
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
+            [ div [ class "columns" ]
+                [ viewMembers model.now model.members_top model.node_focus ]
+            , div [ class "columns" ]
+                [ viewMembersSub model.now model.members_sub model.node_focus ]
+            , div [ class "columns" ]
+                [ viewGuest model.now model.members_top T.guest model.node_focus ]
             ]
-        , setupActionModal model.isModalActive model.node_action
         ]
 
 
@@ -593,7 +591,7 @@ viewMembers now data focus =
                         [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.directMembers ]
                         , div [ class "table is-fullwidth" ]
                             [ thead []
-                                [ tr []
+                                [ tr [ class "has-background-header" ]
                                     [ th [] []
                                     , th [] [ textH T.username ]
                                     , th [] [ textH T.name ]
@@ -651,7 +649,7 @@ viewMembersSub now data focus =
                         [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.subMembers ]
                         , div [ class "table is-fullwidth" ]
                             [ thead []
-                                [ tr []
+                                [ tr [ class "has-background-header" ]
                                     [ th [] []
                                     , th [] [ textH T.username ]
                                     , th [] [ textH T.name ]
@@ -700,7 +698,7 @@ viewGuest now members_d title focus =
             [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
             , div [ class "table is-fullwidth" ]
                 [ thead []
-                    [ tr []
+                    [ tr [ class "has-background-header" ]
                         [ th [] [ textH T.username ]
                         , th [] [ textH T.name ]
                         ]
@@ -776,22 +774,26 @@ viewMemberRoles now baseUri roles =
 -- Actions
 
 
-setupActionModal : Bool -> ActionState -> Html Msg
-setupActionModal isModalActive action =
+setupActionModal : Model -> Html Msg
+setupActionModal model =
+    let
+        onClose =
+            DoCloseModal { reset = True, link = "" }
+    in
     div
         [ id "actionModal"
         , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", isModalActive ) ]
+        , classList [ ( "is-active", model.isModalActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "actionModal"
-            , onClick (DoCloseModal { reset = True, link = "" })
+            , onClick onClose
             ]
             []
         , div [ class "modal-content" ]
-            [ case action of
+            [ case model.node_action of
                 JoinOrga step ->
                     viewJoinOrgaStep step
 
@@ -804,7 +806,7 @@ setupActionModal isModalActive action =
                 ActionAuthNeeded ->
                     viewAuthNeeded DoCloseModal
             ]
-        , button [ class "modal-close is-large", onClick (DoCloseModal { reset = True, link = "" }) ] []
+        , button [ class "modal-close is-large", onClick onClose ] []
         ]
 
 

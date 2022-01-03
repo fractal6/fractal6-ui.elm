@@ -192,7 +192,7 @@ refreshAuthModal modalAuth msgs =
         ]
         [ div [ class "modal-background", onClick onCloseModal ] []
         , div [ class "modal-content" ]
-            [ A.logo1
+            [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
             , div [ class "box" ] <|
                 case modalAuth of
                     Active form ->
@@ -201,7 +201,7 @@ refreshAuthModal modalAuth msgs =
                             [ div [ class "field" ]
                                 [ div [ class "control" ]
                                     [ input
-                                        [ class "input has-background-grey"
+                                        [ class "input is-disabled"
                                         , type_ "username"
                                         , name "username"
                                         , value username

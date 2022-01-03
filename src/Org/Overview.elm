@@ -1,6 +1,7 @@
 port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Assets as A
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
@@ -43,7 +44,6 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, style, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
 import List.Extra as LE
@@ -1008,12 +1008,28 @@ port sendToggleGraphReverse : () -> Cmd msg
 
 view : Global.Model -> Model -> Document Msg
 view global model =
+    let
+        helperData =
+            { user = global.session.user
+            , uriQuery = global.url.query
+            , path_data = model.path_data
+            , baseUri = OverviewBaseUri
+            , data = model.helperBar
+            , onJoin = DoJoinOrga model.node_focus.rootnameid
+            , onExpand = ExpandRoles
+            , onCollapse = CollapseRoles
+            , onCreateTension = DoCreateTension
+            }
+    in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ view_ global model
+        [ --div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+          HelperBar.view helperData
+        , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
         , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
+        , setupActionModal model
         ]
     }
 
@@ -1061,18 +1077,6 @@ view_ global model =
                 _ ->
                     nodeData_
 
-        helperData =
-            { user = global.session.user
-            , uriQuery = global.url.query
-            , path_data = model.path_data
-            , baseUri = OverviewBaseUri
-            , data = model.helperBar
-            , onJoin = DoJoinOrga model.node_focus.rootnameid
-            , onExpand = ExpandRoles
-            , onCollapse = CollapseRoles
-            , onCreateTension = DoCreateTension
-            }
-
         viewFromPos : String -> Html Msg
         viewFromPos pos =
             case pos of
@@ -1085,26 +1089,21 @@ view_ global model =
                 _ ->
                     text "Wrong position"
     in
-    div [ id "mainPane" ]
-        [ --div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
-          HelperBar.view helperData
-        , div [ class "columns is-centered is-variable is-4" ]
-            [ div [ class "column is-6-desktop is-5-widescreen is-5-fullhd" ]
-                [ viewSearchBar global.session.user model
-                , viewCanvas global.session.user model
-                , br [] []
-                , viewFromPos model.window_pos.bottomLeft
-                ]
-            , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
-            , div
-                [ class "column is-5-desktop is-5-widescreen is-5-fullhd" ]
-                [ div [ class "columns is-gapless" ]
-                    [ div [ class "column is-12", id "nextToChart" ]
-                        [ viewFromPos model.window_pos.topRight ]
-                    ]
+    div [ class "columns is-centered is-variable is-4" ]
+        [ div [ class "column is-6-desktop is-5-widescreen is-5-fullhd" ]
+            [ viewSearchBar global.session.user model
+            , viewCanvas global.session.user model
+            , br [] []
+            , viewFromPos model.window_pos.bottomLeft
+            ]
+        , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
+        , div
+            [ class "column is-5-desktop is-5-widescreen is-5-fullhd" ]
+            [ div [ class "columns is-gapless" ]
+                [ div [ class "column is-12", id "nextToChart" ]
+                    [ viewFromPos model.window_pos.topRight ]
                 ]
             ]
-        , setupActionModal model
         ]
 
 
@@ -1171,14 +1170,15 @@ viewSearchBar us model =
                             in
                             [ div [ class "control controlButtons" ]
                                 [ span
-                                    [ class "button is-small is-info is-wrapped"
+                                    [ class "button is-small is-link2 is-wrapped"
                                     , attribute "data-modal" "actionModal"
                                     , onClick (DoCreateTension p)
                                     ]
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
 
                                     --, i [ class "icon-plus1 custom-style" ] []
-                                    , i [ class "icon-send custom-style" ] []
+                                    --, i [ class "icon-send custom-style" ] []
+                                    , i [ class "px-1" ] []
                                     ]
                                 , viewActionPanel "actionPanelContentSearchBar" us node model.orga_data model.actionPanel
                                 ]
@@ -1221,7 +1221,7 @@ viewActionPanel domid us node o actionPanel =
                 span []
                     [ span [ id domid ]
                         [ span
-                            [ class "button is-small is-info"
+                            [ class "button is-small is-link2"
                             , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
                             , onClick (DoActionEdit domid node)
                             ]
@@ -1419,7 +1419,7 @@ viewActivies model =
             [ case model.tensions_data of
                 Success tensions ->
                     if List.length tensions > 0 then
-                        List.map (\t -> mediaTension model.now model.node_focus t False True "is-size-7" Navigate) tensions
+                        List.map (\t -> mediaTension model.now model.node_focus t False True "is-size-6" Navigate) tensions
                             ++ ternary (List.length tensions > 5)
                                 [ div [ class "is-aligned-center mt-1 mb-2" ]
                                     [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
@@ -1467,25 +1467,21 @@ setupActionModal model =
             ]
             []
         , div [ class "modal-content" ]
-            [ viewActionStep model model.node_action ]
+            [ case model.node_action of
+                JoinOrga step ->
+                    viewJoinOrgaStep step
+
+                NoOp ->
+                    text ""
+
+                AskErr err ->
+                    viewGqlErrors [ err ]
+
+                ActionAuthNeeded ->
+                    viewAuthNeeded DoCloseModal
+            ]
         , button [ class "modal-close is-large", onClick onClose ] []
         ]
-
-
-viewActionStep : Model -> ActionState -> Html Msg
-viewActionStep model action =
-    case action of
-        JoinOrga step ->
-            viewJoinOrgaStep step
-
-        NoOp ->
-            text ""
-
-        AskErr err ->
-            viewGqlErrors [ err ]
-
-        ActionAuthNeeded ->
-            viewAuthNeeded DoCloseModal
 
 
 viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
@@ -1512,7 +1508,3 @@ viewJoinOrgaStep step =
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
-
-
-
----- Utils

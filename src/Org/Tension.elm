@@ -1,5 +1,6 @@
 module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
@@ -50,7 +51,6 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -88,6 +88,7 @@ import ModelCommon.View
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
         , viewUpdated
+        , viewUser0
         , viewUser2
         , viewUsernameLink
         , viewUsers
@@ -673,7 +674,15 @@ update global message model =
                     )
 
         GotIsSucribe result ->
-            ( { model | isSubscribed = result }, Cmd.none, Cmd.none )
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
+
+                _ ->
+                    ( { model | isSubscribed = result }, Cmd.none, Cmd.none )
 
         GotTensionComments result ->
             ( { model | tension_comments = result }, Cmd.none, Ports.bulma_driver "" )
@@ -1629,26 +1638,6 @@ subscriptions _ model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title =
-        case model.tension_head of
-            Success t ->
-                t.title
-
-            _ ->
-                "Loading tension..."
-    , body =
-        [ view_ global model
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
-        , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
-        , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
-        ]
-    }
-
-
-view_ : Global.Model -> Model -> Html Msg
-view_ global model =
     let
         helperData =
             { user = global.session.user
@@ -1662,25 +1651,43 @@ view_ global model =
             , onCreateTension = DoCreateTension
             }
     in
-    div [ id "mainPane" ]
+    { title =
+        case model.tension_head of
+            Success t ->
+                t.title
+
+            _ ->
+                "Loading..."
+    , body =
         [ HelperBar.view helperData
-        , div [ class "columns is-centered" ]
-            [ div [ class "column is-11-desktop is-10-widescreen is-10-fullhd " ]
-                [ case model.tension_head of
-                    Success t ->
-                        viewTension global.session.user t model
-
-                    Failure err ->
-                        viewGqlErrors err
-
-                    LoadingSlowly ->
-                        div [ class "spinner" ] []
-
-                    other ->
-                        text ""
-                ]
-            ]
+        , div [ id "mainPane" ] [ view_ global model ]
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
+        , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
+        , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
         , setupActionModal model.isModalActive model.node_action
+        ]
+    }
+
+
+view_ : Global.Model -> Model -> Html Msg
+view_ global model =
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
+            [ case model.tension_head of
+                Success t ->
+                    viewTension global.session.user t model
+
+                Failure err ->
+                    viewGqlErrors err
+
+                LoadingSlowly ->
+                    div [ class "spinner" ] []
+
+                other ->
+                    text ""
+            ]
         ]
 
 
@@ -1708,7 +1715,7 @@ viewTension u t model =
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9" ]
-                [ h1 [ class "title tensionTitle is-human" ] <|
+                [ h1 [ class "title tensionTitle mt-2" ] <|
                     if model.isTitleEdit then
                         let
                             title =
@@ -1727,7 +1734,7 @@ viewTension u t model =
                             [ p [ class "control is-expanded" ]
                                 [ input
                                     [ id "titleInput"
-                                    , class "input"
+                                    , class "input is-human"
                                     , type_ "text"
                                     , placeholder "Title*"
                                     , value title
@@ -1751,11 +1758,12 @@ viewTension u t model =
                         ]
 
                     else
-                        [ text t.title
+                        [ span [ class "is-human" ] [ text t.title ]
                         , if model.isTensionAdmin || isAuthor then
                             div
                                 [ class "button has-text-weight-normal is-pulled-right is-small tooltip has-tooltip-arrow"
                                 , attribute "data-tooltip" (upH T.editTitle)
+                                , style "vertical-align" "middle" -- @needHelp do not work with pulled right.
                                 , onClick DoChangeTitle
                                 ]
                                 [ A.icon "icon-edit-2" ]
@@ -1778,7 +1786,7 @@ viewTension u t model =
 
                       else
                         text ""
-                    , viewTensionDateAndUser model.now "is-grey-light" t.createdAt t.createdBy
+                    , viewTensionDateAndUser model.now "is-discrete" t.createdAt t.createdBy
                     , viewTensionArrow "is-pulled-right" t.emitter t.receiver
 
                     --, div [ class "mx-2 mt-4" ] [ viewTensionArrow "" t.emitter t.receiver ]
@@ -1962,7 +1970,7 @@ viewComments u t model =
                                 viewCommentOrEvent x
                         )
                     |> div []
-                , hr [ class "has-background-grey is-3" ] []
+                , hr [ class "has-background-border is-2" ] []
                 , userInput
                 ]
 
@@ -1979,7 +1987,7 @@ viewComments u t model =
 viewComment : Comment -> Model -> Html Msg
 viewComment c model =
     div [ class "media section is-paddingless" ]
-        [ div [ class "media-left" ] [ viewUser2 c.createdBy.username ]
+        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 c.createdBy.username ]
         , div
             [ class "media-content"
             , attribute "style" "width: 66.66667%;"
@@ -1989,8 +1997,9 @@ viewComment c model =
 
               else
                 div [ class "message" ]
-                    [ div [ class "message-header" ]
-                        [ viewTensionDateAndUserC model.now c.createdAt c.createdBy
+                    [ div [ class "message-header pl-1-mobile" ]
+                        [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
+                        , viewTensionDateAndUserC model.now c.createdAt c.createdBy
                         , case c.updatedAt of
                             Just updatedAt ->
                                 viewUpdated model.now updatedAt
@@ -2022,7 +2031,7 @@ viewComment c model =
                                 div [ class "help is-italic" ] [ text "No message provided." ]
 
                             message ->
-                                renderMarkdown "is-light" message
+                                renderMarkdown "is-light is-human" message
                         ]
                     ]
             ]
@@ -2060,7 +2069,7 @@ viewUpdateInput uctx comment form result =
                         Write ->
                             textarea
                                 [ id "updateCommentInput"
-                                , class "textarea defaultSubmit is-human"
+                                , class "textarea defaultSubmit"
                                 , rows 7
                                 , placeholder (upH T.leaveComment)
                                 , value message
@@ -2069,7 +2078,7 @@ viewUpdateInput uctx comment form result =
                                 []
 
                         Preview ->
-                            div [] [ renderMarkdown "is-light" message, hr [] [] ]
+                            div [] [ renderMarkdown "is-light is-human" message, hr [] [] ]
                     ]
                 ]
             , case result of
@@ -2150,7 +2159,7 @@ viewCommentInput uctx tension form result viewMode =
                                 Write ->
                                     textarea
                                         [ id "commentInput"
-                                        , class "textarea defaultSubmit is-human"
+                                        , class "textarea defaultSubmit"
                                         , rows 7
                                         , placeholder "Leave a comment"
                                         , value message
@@ -2159,7 +2168,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown "is-light mt-4 mx-3" message, hr [] [] ]
+                                    div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [] [] ]
                             ]
                         ]
                     , case result of
@@ -2563,8 +2572,8 @@ viewBlobToolBar u t b model =
 
 viewDocument : UserState -> TensionHead -> Blob -> Model -> Html Msg
 viewDocument u t b model =
-    div [ class "tensionDocument" ]
-        [ viewBlobToolBar u t b model
+    div []
+        [ div [ class "mb-4" ] [ viewBlobToolBar u t b model ]
         , if b.md /= Nothing then
             -- Markdown Document
             case model.actionView of
@@ -2852,7 +2861,7 @@ viewSidePane u t model =
                         [ h2 [ class "subtitle" ]
                             [ textH T.notifications ]
                         , p
-                            [ class "button is-fullwidth has-background-grey-dark is-small "
+                            [ class "button is-fullwidth has-background-evidence is-small "
                             , style "border-radius" "5px"
                             , onClick (ToggleSubscription uctx.username)
                             ]
@@ -2866,7 +2875,7 @@ viewSidePane u t model =
         ]
             -- Extra action (Move, Lock, ...)
             ++ (if isAdmin || isAuthor then
-                    [ hr [ class "has-background-grey" ] [] ]
+                    [ hr [ class "has-background-border-light" ] [] ]
                         ++ [ div
                                 [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                 , onClick (DoMove t)

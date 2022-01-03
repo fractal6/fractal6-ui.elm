@@ -1,5 +1,6 @@
 module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -15,7 +16,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -539,7 +539,7 @@ headers =
 viewContractsTable : Contracts -> Op -> Model -> Html Msg
 viewContractsTable data op model =
     table
-        [ class "table is-fullwidth tensionContracts" ]
+        [ class "table is-fullwidth" ]
         [ thead [ class "is-size-7" ]
             [ tr [] (headers |> List.map (\x -> th [ class "has-text-weight-light" ] [ textH x ]))
             ]
@@ -572,7 +572,7 @@ viewRow d op model =
                 [ span [] [ textH (contractEventToText d.event.event_type) ] ]
             ]
         , td [ onClick (DoClickContract d.id) ] [ span [] [ textH (contractTypeToText d.contract_type) ] ]
-        , td [ class "has-links-light" ] [ viewUsernameLink d.createdBy.username ]
+        , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
         , td [] [ text (formatDate op.now d.createdAt) ]
 
         -- participant

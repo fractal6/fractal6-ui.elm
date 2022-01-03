@@ -1,11 +1,11 @@
 module Components.DocToolBar exposing (ActionView(..), view)
 
+import Assets as A
 import Extra exposing (ternary)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, uriFromUsername)
 import ModelSchema exposing (..)

@@ -6,8 +6,12 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
 
-logo : Html msg
-logo =
+type alias LogoInput =
+    { color : String, h : String, w : String }
+
+
+logo : LogoInput -> Html msg
+logo s =
     svg
         [ id "logo"
         , viewBox "0 0 100 100"
@@ -38,8 +42,8 @@ logo =
         ]
 
 
-logo_fractal : Html msg
-logo_fractal =
+logo_fractal : LogoInput -> Html msg
+logo_fractal s =
     svg
         -- v0
         --[ viewBox "0 0 218.70918173366346 157.7632873478665"
@@ -49,9 +53,9 @@ logo_fractal =
         --]
         [ -- v1
           viewBox "0 0 223.44353478444896 240"
-        , height "38"
-        , width "54"
-        , fill "white"
+        , height s.h
+        , width s.w
+        , fill s.color
         ]
         [ circle [ cx "109.78968302877287", cy "99.15668163926206", r "1.0797695846263342" ] []
         , circle [ cx "111.52334028825763", cy "101.64814282932058", r "2.09924686902379" ] []

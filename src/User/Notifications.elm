@@ -1,5 +1,6 @@
 module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -27,7 +28,6 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -347,7 +347,11 @@ view_ global model =
             [ h2 [ class "title" ] [ text "Notifications" ]
             , case model.notifications_data of
                 Success notifications ->
-                    viewNotifications notifications model
+                    if List.length notifications == 0 then
+                        text "No notifications yet."
+
+                    else
+                        viewNotifications notifications model
 
                 NotAsked ->
                     text ""
@@ -456,7 +460,7 @@ viewEventMedia ev icon_ model =
             List.intersperse (text " ") <|
                 [ A.icon icon_
                 , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
-                , span [ class "has-text-grey-lighter" ] [ text "in" ]
+                , span [ class "is-discrete" ] [ text "in" ]
                 , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
                 , span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                 , small [ class "help" ] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]

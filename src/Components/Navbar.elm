@@ -17,18 +17,18 @@ view : Op -> Html msg
 view op =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
-            [ class "navbar has-shadow is-fixed-top"
+            [ class "navbar is-fixed-top"
             , attribute "role" "navigation"
             , attribute "aria-label" "main navigation"
             ]
             [ div [ class "navbar-brand" ]
                 [ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
-                    [ A.logo1
-                    , span [ class "has-text-warning", attribute "style" "padding-top: 10px; font-size: 0.7rem; margin-left: -2px;" ] [ text "Alpha" ]
+                    [ A.logo0 "white"
+                    , span [ class "has-text-warning", attribute "style" "padding-top: 10px; font-size: 0.65rem; margin-left: -2px;" ] [ text "Alpha" ]
                     ]
                 , div
-                    [ class "navbar-burger burger"
+                    [ class "burger navbar-burger"
                     , attribute "data-target" "userMenu"
                     , attribute "aria-expanded" "false"
                     , attribute "aria-label" "menu"
@@ -85,7 +85,7 @@ helpButton op =
             div
                 [ class "navbar-item" ]
                 [ div
-                    [ class "navbar-link is-arrowless has-background-info button is-rounded is-small helpTrigger" ]
+                    [ class "navbar-link is-arrowless has-background-navbar button is-rounded is-small helpTrigger" ]
                     [ A.icon "icon-question" ]
                 ]
 

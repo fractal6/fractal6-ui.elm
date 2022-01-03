@@ -1,5 +1,6 @@
 module Components.NodeDoc exposing (..)
 
+import Assets as A
 import Components.DocToolBar exposing (ActionView(..))
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Dict
@@ -13,7 +14,6 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -237,21 +237,19 @@ type alias Op msg =
 
 view : OrgaNodeData msg -> Maybe (Op msg) -> Html msg
 view data op_m =
-    div [ id "DocContainer", class "hero is-small is-light" ]
-        [ div [ class "hero-body" ]
-            [ case data.data of
-                Failure err ->
-                    viewGqlErrors err
+    div [ id "DocContainer", class "box" ]
+        [ case data.data of
+            Failure err ->
+                viewGqlErrors err
 
-                LoadingSlowly ->
-                    div [ class "spinner" ] []
+            LoadingSlowly ->
+                div [ class "spinner" ] []
 
-                Success tid ->
-                    view_ tid data op_m
+            Success tid ->
+                view_ tid data op_m
 
-                _ ->
-                    text ""
-            ]
+            _ ->
+                text ""
         ]
 
 
@@ -297,41 +295,8 @@ view_ tid data op_m =
                 |> withDefault (text "")
 
           else
-            div [ class "aboutDoc" ]
-                [ div [ class "media subtitle" ]
-                    [ div [ class "media-left" ]
-                        [ A.icon "icon-info icon-1half" ]
-                    , div [ class "media-content nodeName" ]
-                        [ (if data.hasBeenPushed && data.source == TensionBaseUri then
-                            let
-                                nameid =
-                                    data.node.nameid
-                                        |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
-                                        |> withDefault ""
-                            in
-                            a [ nameid |> uriFromNameid OverviewBaseUri |> href ]
-
-                           else
-                            span []
-                          )
-                            [ text T.space_, text T.space_, text (data.node.name |> withDefault "") ]
-                        ]
-                    , case data.toolbar of
-                        Just tb ->
-                            -- from OverviewBaseUri: show toolbar that is linked to the tension id.
-                            div [ class "media-right is-marginless buttonsToolbar" ] [ tb ]
-
-                        Nothing ->
-                            div [ class "media-right is-marginless buttonEdit" ] [ doEditView op_m BlobType.OnAbout ]
-                    ]
-                , case data.node.about of
-                    Just ab ->
-                        p [ class "column is-fullwidth is-human" ] [ text ab ]
-
-                    Nothing ->
-                        text ""
-                ]
-        , hr [ class "has-background-grey-light" ] []
+            div [ class "aboutDoc" ] [ viewAboutSection (doEditView op_m BlobType.OnAbout) data ]
+        , hr [ class "has-background-border-light" ] []
         , if blobTypeEdit == Just BlobType.OnMandate then
             op_m
                 |> Maybe.map
@@ -340,7 +305,7 @@ view_ tid data op_m =
                             isSendable =
                                 data.node.mandate /= op.data.form.node.mandate
                         in
-                        div [ class "mandateEdit" ]
+                        div []
                             [ nodeMandateInputView txt op.data.form.node op
                             , blobButtonsView isSendable isLoading op
                             ]
@@ -348,48 +313,7 @@ view_ tid data op_m =
                 |> withDefault (text "")
 
           else
-            case data.node.mandate of
-                Just mandate ->
-                    div [ class "mandateDoc" ]
-                        [ div [ class "subtitle is-5" ]
-                            [ A.icon1 "icon-book-open icon-1half" (upH T.mandate), doEditView op_m BlobType.OnMandate ]
-                        , viewMandateSection (upH T.purpose) (Just mandate.purpose)
-                        , viewMandateSection (upH T.responsabilities) mandate.responsabilities
-                        , viewMandateSection (upH T.domains) mandate.domains
-                        , viewMandateSection (upH T.policies) mandate.policies
-                        ]
-
-                Nothing ->
-                    case data.node.role_type of
-                        Just RoleType.Guest ->
-                            a [ class "is-size-6", href "https://doc.fractale.co/role/guest" ] [ text "https://doc.fractale.co/role/guest" ]
-
-                        _ ->
-                            div [ class "is-italic" ]
-                                [ text "No description for this node."
-                                , doEditView op_m BlobType.OnMandate
-                                ]
-
-        --, if op_m == Nothing && not isLinksHidden then
-        --    let
-        --        links_ =
-        --            List.filter (\x -> x.username /= "") links
-        --    in
-        --    div [ class "linksDoc" ]
-        --        [ hr [ class "has-background-grey-light" ] []
-        --        , div [ class "subtitle is-5" ]
-        --            [ A.icon1 "icon-users icon-1half" (upH T.links)
-        --            , links_
-        --                |> List.map (\l -> viewUser True l.username)
-        --                |> span [ attribute "style" "margin-left:20px;" ]
-        --            ]
-        --        , if List.length links_ == 0 then
-        --            span [ class "is-italic" ] [ textH txt.noFirstLinks ]
-        --          else
-        --            text ""
-        --        ]
-        --  else
-        --    text ""
+            div [ class "mandateDoc" ] [ viewMandateSection (doEditView op_m BlobType.OnMandate) data ]
         ]
 
 
@@ -397,13 +321,88 @@ view_ tid data op_m =
 --- Template view
 
 
-viewMandateSection : String -> Maybe String -> Html msg
-viewMandateSection name maybePara =
+viewAboutSection : Html msg -> OrgaNodeData msg -> Html msg
+viewAboutSection editView data =
+    let
+        type_ =
+            withDefault NodeType.Role data.node.type_
+    in
+    div []
+        [ div [ class "media subtitle" ]
+            [ div [ class "media-left" ]
+                [ A.icon "icon-info icon-1half" ]
+            , div [ class "media-content nodeName" ]
+                [ if data.hasBeenPushed && data.source == TensionBaseUri then
+                    let
+                        nameid =
+                            data.node.nameid
+                                |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
+                                |> withDefault ""
+                    in
+                    a [ nameid |> uriFromNameid OverviewBaseUri |> href ]
+                        [ withDefault "" data.node.name |> text ]
+
+                  else
+                    span [] [ text "About" ]
+                ]
+            , case data.toolbar of
+                Just tb ->
+                    -- from OverviewBaseUri: show toolbar that is linked to the tension id.
+                    div [ class "media-right is-marginless is-small" ] [ tb ]
+
+                Nothing ->
+                    div [ class "media-right is-marginless buttonEdit" ] [ editView ]
+            ]
+        , case data.node.about of
+            Just ab ->
+                p [ class "column is-fullwidth pt-0 pb-0 is-human" ] [ text ab ]
+
+            Nothing ->
+                text ""
+        ]
+
+
+viewMandateSection : Html msg -> OrgaNodeData msg -> Html msg
+viewMandateSection editView data =
+    div []
+        [ div [ class "media subtitle" ]
+            [ div [ class "media-left" ]
+                [ A.icon "icon-book-open icon-1half" ]
+            , div [ class "media-content" ]
+                [ textH T.mandate ]
+            , div [ class "media-right is-marginless buttonEdit" ] [ editView ]
+            ]
+        , case data.node.mandate of
+            Just mandate ->
+                div []
+                    [ viewMandateSubSection (upH T.purpose) (Just mandate.purpose)
+                    , viewMandateSubSection (upH T.responsabilities) mandate.responsabilities
+                    , viewMandateSubSection (upH T.domains) mandate.domains
+                    , viewMandateSubSection (upH T.policies) mandate.policies
+                    ]
+
+            Nothing ->
+                case data.node.role_type of
+                    Just RoleType.Guest ->
+                        a [ class "is-size-6", href "https://doc.fractale.co/role/guest" ] [ text "https://doc.fractale.co/role/guest" ]
+
+                    _ ->
+                        div [ class "is-italic" ]
+                            [ text "No description for this node."
+                            , editView
+                            ]
+
+        --, p [ class "column is-fullwidth" ] []
+        ]
+
+
+viewMandateSubSection : String -> Maybe String -> Html msg
+viewMandateSubSection name maybePara =
     case maybePara of
         Just para ->
-            div [ class "message" ]
-                [ div [ class "message-header" ] [ text name ]
-                , p [ class "message-body" ] [ renderMarkdown "is-dark" para ]
+            div [ class "subSection" ]
+                [ div [ class "label" ] [ text name ]
+                , p [ class "" ] [ renderMarkdown "is-light is-human" para ]
                 ]
 
         Nothing ->
@@ -663,7 +662,7 @@ viewVersions now blobsData =
                 headers =
                     []
             in
-            table [ class "table is-fullwidth tensionContracts" ]
+            table [ class "table is-fullwidth" ]
                 [ thead []
                     [ tr [] (headers |> List.map (\x -> th [] [ textH x ]))
                     ]

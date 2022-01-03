@@ -1,16 +1,4 @@
 
-html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-
-  //line-height: 1.3;
-  //font-size: 0.95rem;
-  //font-size: 16px;
-}
-
-* {
-    font-family : inherit !important;
-}
-
 /*
  *
  * Bulma fixes
@@ -24,10 +12,31 @@ html, body {
     // For discrete footer.
     min-height: calc(100vh - #{$navbar-height}) !important;
 
-    @include until($desktop) {
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-    }
+    // when Helpbar is active
+    /********** Bulma FIX ***********/
+    /* Adjust left offet is too large */
+    //margin-left: 5%;
+
+    /* is-paddingless compatibility */
+    //padding-top: 1.25rem;
+
+}
+
+.dropdown-content {
+      .dropdown-item:hover {
+          background-color: $dropdown-item-hover-background-color !important;
+      }
+      a.dropdown-item:hover {
+          color: $link;
+      }
+}
+
+.navbar-divider {
+    background-color: $border-color;
+}
+.dropdown-divider {
+    background-color: $border-color;
+    margin: 0.1rem 0;
 }
 
 hr {
@@ -49,10 +58,8 @@ hr {
         //display: flex;
         //flex-direction: row;
         //justify-content: stretch;
-
         overflow-y: auto;
     }
-
 
     /* add a margin-top only when item are wrapped */
     &.flex-gap {
@@ -68,6 +75,72 @@ hr {
     }
 }
 
+.input,
+.textarea {
+    transition: all 100ms ease;
+    &:not(.in-modal) {
+        color: $text !important;
+        background-color: $input-background-color !important;
+    }
+
+    &::placeholder {
+        color: $input-placeholder-color !important;
+    }
+}
+.input:not([type="search"]),
+.textarea {
+    border-color: $border-color-light;
+    &:hover {
+        border-color: $border-color-light;
+    }
+
+    &.is-disabled, &[disabled] {
+        //color: $input-disabled-color !important;
+        background-color: $input-disabled-background-color !important;
+    }
+}
+.input[type="search"] {
+    border-color: $border-color;
+    &:hover {
+        border-color: $border-color;
+    }
+}
+.input:focus,
+.textarea:focus {
+    border-color: $input-focus-border-color;
+    &:hover {
+        border-color: $input-focus-border-color;
+    }
+}
+
+.panel-heading {
+  font-weight: $weight-bold;
+}
+
+.panel-tabs {
+  a {
+    &.is-active {
+      border-bottom-color: $link-active;
+    }
+  }
+}
+
+.panel-block {
+  &:hover {
+    color: $link-hover;
+
+    .panel-icon {
+      color: $link-hover;
+    }
+  }
+
+  &.is-active {
+    .panel-icon {
+      color: $link-active;
+    }
+  }
+}
+
 .help-label {
   color: $grey !important;
   display: block !important;
@@ -77,36 +150,72 @@ hr {
 .help {
   color: $grey-light !important;
 }
+
+.is-link2 {
+    color: $white !important;
+    background-color: $link2 !important;
+    &.is-light {
+        color: $link2 !important;
+        background-color: initial !important;
+    }
+}
 .is-grey {
     color: $grey !important;
 }
 .is-grey-light {
     color: $grey-light2 !important;
 }
-.is-bg-grey {
-    background-color: $grey !important;
+.is-discrete {
+    color: $is-discrete !important;
 }
-.is-bg-grey-light {
-    background-color: $grey-light2 !important;
+.is-highlight-3 {
+    color: $is-highlight3 !important;
 }
-.has-links-light {
+.has-text-turquoise {
+    color: $turquoise !important;
+}
+.has-links-discrete {
     a {
-        color: $blue-light;
+        color: $link-discrete;
     }
 }
 .is-username {
     color: $grey;
 }
-
+.has-background-evidence {
+    background-color: $background-evidence !important;
+}
+.has-background-border {
+    background-color: $border-color !important;
+}
+.has-background-border-light {
+    background-color: $border-color-light !important;
+}
+.has-background-header {
+    background-color: $hbc;
+}
+.has-background-navbar {
+    background-color: $nbc !important;
+}
+.has-background-turquoise {
+    background-color: $turquoise !important;
+}
+.has-background-grey-light2 {
+    background-color: $grey-light2 !important;
+}
+.input.has-background-grey {
+    background-color: $grey-light2 !important;
+}
+.has-border {
+    border: 1px solid $grey;
+}
 .is-md {
     font-size: 0.9rem !important;
 }
-
 .is-transparent {
-	opacity: 0;
+    opacity: 0;
     z-index: -1;
 }
-
 .do-clear {
     animation: fadeOut 0.5s;
 }
@@ -126,8 +235,8 @@ hr {
 }
 
 .is-underline {
-    //text-decoration: underline;
     border-bottom: 1px ridge;
+    //text-decoration: underline;
 }
 
 .is-underline-dotted {
@@ -154,7 +263,7 @@ hr {
 }
 
 .icon {
-    color: #11111133 !important;
+    color: inherit !important;
 }
 
 .icon-padding-left {
@@ -186,7 +295,6 @@ hr {
     }
 }
 
-
 .is-smaller {
     font-size: 88% !important;
 }
@@ -204,8 +312,6 @@ hr {
   -ms-user-select: text;
   user-select: text;
 }
-
-// Tooltip
 
 .tooltip.has-tooltip-multiline::before {
   white-space: pre-line !important;
@@ -238,33 +344,29 @@ hr {
 }
 
 .box.is-light, .modal-card-body  {
+    // frac6 color for internal link. How compute ?
     a {
         color: $blue !important;
     }
 }
-
 
 .arrow {
 	border: solid;
 	border-width: 0 3px 3px 0;
 	display: inline-block;
 	padding: 3px;
-
 	&.right {
 		transform: rotate(-45deg);
 		-webkit-transform: rotate(-45deg);
 	}
-
 	&.left {
 		transform: rotate(135deg);
 		-webkit-transform: rotate(135deg);
 	}
-
 	&.up {
 		transform: rotate(-135deg);
 		-webkit-transform: rotate(-135deg);
 	}
-
 	&.down {
 		transform: rotate(45deg);
 		-webkit-transform: rotate(45deg);
@@ -282,27 +384,8 @@ hr {
 	right: 0;
 }
 
-
-// Media
-
 .media.is-small {
     font-size: 0.9rem !important;
-}
-
-// Modal
-
-html.has-modal-active, html.has-modal-active2 {
-    overflow: hidden !important;
-    padding-right: 14px; /* Avoid width reflow */
-
-    .tabs:not(.modal-content .tabs) {
-        overflow: hidden;
-    }
-}
-#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
-    .navbar {
-        padding-right: 14px; /* Avoid width reflow */
-    }
 }
 
 .dropdown-menu {
@@ -311,13 +394,39 @@ html.has-modal-active, html.has-modal-active2 {
     max-width: 330px;
 }
 
+.tabs, .tabs.is-boxed  {
+    a {
+        text-decoration: none !important;
+    }
+    ul {
+        border-bottom-color: $border-color-light !important;
+    }
+    li.is-active a {
+        border-color: $border-color-light;
+    }
+    li:not(.is-active) a:hover {
+        background-color: inherit;
+        border-bottom-color: lighten($link, 20) !important;
+    }
+}
 
-.tabs {
-	&.is-boxed {
-		a {
-			padding-right: 1rem !important;
-			padding-left: 1rem !important;
-		}
+.tabs.is-boxed {
+    a {
+        border-radius: 8px 8px 0 0 !important;
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
+    }
+}
+
+.tabs:not(.is-boxed) {
+    li a {
+        border-bottom-color: transparent !important;
+        border-bottom-width: 2px !important;
+    }
+    li.is-active a {
+        //font-weight: 600 !important;
+        border-bottom-color: $link !important;
+        border-bottom-width: 2px !important;
     }
 }
 
@@ -325,29 +434,17 @@ html.has-modal-active, html.has-modal-active2 {
     overflow: hidden !important;
 }
 
-.has-background-turquoise {
-    background-color: $turquoise !important;
-}
-.has-background-grey-light2 {
-    background-color: $grey-light2 !important;
-}
-.has-text-turquoise {
-    color: $turquoise !important;
-}
-
-.input.has-background-grey {
-    background-color: $grey-light2 !important;
-}
-
 .box {
-    border: 1px solid $grey-darker !important;
+    background-color: $hbc;
+    border: 1px solid $border-color-light !important;
+    box-shadow: 0 .33em .66em -0.125em rgba($scheme-invert, 0.1), 0 0px 0 1px rgba($scheme-invert, 0.02);
     .media {
         &.is-active {
             border: solid 2px $link !important;
         }
 
         & + .media {
-            border-top: 1px solid $grey-darker !important;
+            border-top: 1px solid $border-color-light !important;
         }
     }
 
@@ -384,8 +481,8 @@ html.has-modal-active, html.has-modal-active2 {
 .scrollbar-thin {
     // @debug see : https://bugzilla.mozilla.org/show_bug.cgi?id=1460109
     scrollbar-width: thin;
-    scrollbar-color: grey $body-background-color;
-    //scrollbar-color: $grey-darker darken($body-background-color, 5) ;
+    scrollbar-color: grey $bbc;
+    //scrollbar-color: $grey-darker darken($bbc, 5) ;
     &::-webkit-scrollbar {
         width: 6px;
         color: grey;
@@ -397,24 +494,135 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
+// Message
+.message {
+    background-color: $bbc;
+    border: 1px solid  $border-color-light  !important;
+    border-radius: 6px !important;
+    .message-header {
+        border-radius: 6px 6px 0 0 !important;
+        color: lighten($text, 10) !important;
+        background-color: $comment-header-background-color;
+    }
+}
+
+// Table
+
+.table {
+    background-color: inherit;
+    border-radius: 6px !important;
+
+	th:first-child {
+		border-radius: 6px 0 0 0;
+	}
+
+	th:last-child {
+		border-radius: 0 6px 0 0;
+	}
+
+	td:first-child, th:first-child {
+		border-left: medium none;
+	}
+
+	th {
+		border-top: medium none;
+        border: none;
+		padding-top: 1.1rem;
+		padding-bottom: 1.1rem;
+	}
+
+	td {
+		padding-top: 1.1rem;
+		padding-bottom: 1.1rem;
+        border-bottom: 1px solid $table-border-color;
+	}
+
+    tbody tr{
+        border: 1px solid $table-border-color;
+    }
+}
+
+// Card
+
+.card {
+  //border:1px solid $border-color-light !important;
+  border-radius: 6px;
+}
+
+// Hero
+
+.hero {
+    // @deprecated for dark colors
+    //@each $name, $pair in $colors {
+    //  $color: nth($pair, 1);
+    //  $color-invert: nth($pair, 2);
+
+    //  &.is-#{$name} {
+    //    .navbar {
+    //      .navbar-dropdown {
+    //        .navbar-item:hover {
+    //          background-color: transparent;
+    //        }
+    //      }
+    //    }
+    //  }
+    //}
+
+    // @debug welcom page with light mode...
+    &.is-dark .tabs a {
+        color: inherit;
+    }
+}
+
+
+// Modal
+
+html.has-modal-active, html.has-modal-active2 {
+    overflow: hidden !important;
+    padding-right: 14px; /* Avoid width reflow */
+
+    .tabs:not(.modal-content .tabs) {
+        overflow: hidden;
+    }
+}
+#navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
+    .navbar {
+        padding-right: 14px; /* Avoid width reflow */
+    }
+}
+
 /*
  *
  * My style
  *
  */
 
+
+#mainPane {
+    @include until($desktop) {
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+    }
+}
+
+
 .menu .menu-label {
     font-weight: bold !important;
 }
 
 #navbarTop {
+    .navbar {
+        //box-shadow: 0 1px 0 0 $grey-dark;
+    }
 
-    //#logo {
-    //    height: $navbar-height !important;
-    //    width: $navbar-height !important;
-    //}
     .navbar-item {
         font-size: 0.9rem !important;
+    }
+    .navbar-item, .navbar-link {
+        color: $white-ter;
+        &:hover{
+            color: $link2;
+        }
     }
 
     .navbar-brand a {
@@ -422,16 +630,16 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .navbar-brand svg {
+    }
+    //#logo {
+    //    height: $navbar-height !important;
+    //    width: $navbar-height !important;
+    //
         //-webkit-transform: rotate(45deg);
         //transform: rotate(45deg);
         //-webkit-transition: -webkit-transform .666s ease-in-out;
         //transition: transform .666s ease-in-out;
-    }
-
-    .navbar-start .navbar-item {
-        font-size: 0.95rem;
-        font-weight: 500 !important;
-    }
+    //}
 
     .navbar-link:not(.is-arrowless) {
         &:after {
@@ -440,78 +648,43 @@ html.has-modal-active, html.has-modal-active2 {
     }
 
     .navbar-dropdown {
-        border: solid 2px $grey-darker;
+        border-bottom: solid 1px $grey-darker;
+        border-left: solid 1px $grey-darker;
+        border-right: solid 1px $grey-darker;
     }
 }
 
 #helperBar {
-    background-color: $header-background-color;
-    & > .column {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0 !important;
-    }
+    background-color: $header-background-color !important;
+    margin-top: 0;
+    padding-top: 2.5rem;
 
     .breadcrumb {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         a {
-            color: $green-frac6-lighter;
             padding-right:0.4rem;
             padding-left:0.4rem;
         }
     }
 
-    nav > .navbar {
-        background-color: inherit !important;
-        margin-bottom: 0.75rem !important;
-        z-index: 29 !important;
-        .navbar-brand {
-            max-width: 50% !important;
-        }
-        .navbar-end {
-            justify-content: flex-start !important;
-            max-width: 50% !important;
-            margin-right: -0.5rem !important;
-            @include until($desktop) {
-            max-width: 99% !important;
-            }
-        }
-
-        .navbar-burger {
-            float: right !important;
-            margin-top: -3.5rem !important;
-        }
-
+    nav.level {
         .navbar-menu {
-            flex-shrink: 1 !important;
             background-color: inherit !important;
         }
     }
 
-    nav > .tabs {
-        font-size: 0.85rem;
+    nav.tabs {
+        font-size: 0.9rem;
         ul {
-            border-bottom-color: #dbdee085;
+            border-bottom-color: $border-color !important;
         }
-        &.is-boxed {
-            a {
-                border-radius: 8px 8px 0 0 !important;
-            }
-            li a:hover {
-                background-color: $grey-dark;
-                border-bottom-color: $tabs-boxed-link-hover-border-bottom-color;
-            }
-            li.is-active a {
-                color: $green-frac6-lighter;
-                background-color: $body-background-color;
-                border-color: #dbdee085;
-                border-bottom-color: $tabs-boxed-link-active-border-bottom-color !important;
-            }
+        li.is-active a {
+            border-color: $border-color;
         }
     }
 }
 
 #footBar {
-    //background-color: $header-background-color;
     box-shadow: 0 0 1px 0 $white-ter;
     margin-top: 3rem;
     padding: 3rem 1.5rem 3rem;
@@ -529,7 +702,6 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #welcome {
-    //background-color: #24292e;
     filter: invert(5%);
     .title {
         margin-bottom: 3rem !important;
@@ -603,10 +775,9 @@ html.has-modal-active, html.has-modal-active2 {
           padding-bottom: $size-small;
       }
       a {
-          &:hover {background-color: $grey-dark;}
           &.is-active {
               font-weight: 600;
-              background-color: $blue-grey;
+              background-color: $background;
               color: $link;
           }
       }
@@ -621,18 +792,6 @@ html.has-modal-active, html.has-modal-active2 {
 @keyframes fadeOut {
     from { opacity: 1; }
     to { opacity: 0; }
-}
-
-
-#mainPane {
-    // when Helpbar is active
-    /********** Bulma FIX ***********/
-    /* Adjust left offet is too large */
-    //margin-left: 5%;
-
-    /* is-paddingless compatibility */
-    padding-top: 1.25rem;
-
 }
 
 .divider {
@@ -686,28 +845,19 @@ html.has-modal-active, html.has-modal-active2 {
     font-weight: 500;
     &.is-orange {
         background-color: $orange-frac6 !important;
-        color: white !important;
+        color: $white !important;
     }
 }
 
 .docToolbar {
     .button {
-        //background: $grey-light2;
+        background-color: $background-evidence !important;
         &.is-active {
-            color: $blue !important;
+            color: $link !important;
+            border: 1px solid $link;
         }
     }
-}
 
-.buttonsToolbar {
-    .field {
-        margin-top: -0.8rem !important;
-        margin-right: -1rem !important;
-    }
-    .button {
-        font-size: 0.6rem !important;
-        //padding-bottom: 2px !important;
-    }
 }
 
 #activities {
@@ -719,75 +869,51 @@ html.has-modal-active, html.has-modal-active2 {
 }
 
 #DocContainer {
-    border-radius: 9px;
-    border: 1px solid $grey-darker;
-    .title {
-        //
-    }
+    padding: 1rem;
     .subtitle {
-        //
+        //color: $grey-lighter;
     }
 
-    .hero-body > a,.hero-body > div > a, .content a {
+    .media {
+        margin-bottom: 1rem !important;
+    }
+    //.media-left { margin-right: 0 !important; }
+
+    .is-small .docToolbar {
+        .button {
+            font-size: 0.6rem !important;
+        }
+    }
+
+    & > a, & > div > a, .content a {
         color: $blue;
-    }
-
-    .hero-body > hr {
-       margin-top: 1rem !important;
-       margin-bottom: 1.5rem !important;
-    }
-
-    .message-body {
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
     }
 
 }
 
 .aboutDoc {
-    & > .column.is-fullwidth {
-        //padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }
-
-    .media { margin-bottom: 1rem !important; }
-    .media-left { margin-right: 0 !important; }
-
-    .nodeName {
-        font-weight: 600 !important;
-        color: $grey-dark !important;
-
-    }
-
     .subtitle {
         .nodeName a {
-            color: $blue-grey !important;
+            color: $link2 !important;
         }
         a:hover, a:hover .content {
-            color: $blue !important;
-            transition: none;
-            &:after, a:before { transition: none; }
-        }
-        a, a .content {
-            transition: none;
-            &:after, a:before { transition: none; }
+            color: $link2 !important;
         }
     }
 }
 
-.mandateDoc {
-    .message-header {
-        background-color: $grey !important;
+.subSection {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+    .label {
+        color: $is-highlight2;
+        border-bottom: 1px solid $border-color-light;
     }
-    .message-body {
-        background-color: $white-light !important;
+
+    &:not(last-child) {
+        margin-bottom: 1rem;
     }
 }
-
-.mandateEdit {
-    .label { color: #363636 }
-}
-
 
 
 //
@@ -795,9 +921,10 @@ html.has-modal-active, html.has-modal-active2 {
 //
 #tensionPage  {
 
-    .tensionTitle {
-        font-size: 2.5rem !important;
-        margin-top: 1rem;
+    .tensionTitle > .is-human {
+        font-size: 2rem !important;
+        // Zen font
+        //font-size: 2.5rem !important;
     }
 
     .tensionSubtitle {
@@ -811,25 +938,6 @@ html.has-modal-active, html.has-modal-active2 {
         }
     }
 
-    .column > .tabs {
-        ul {
-            border-bottom-color: $grey !important;
-        }
-
-        li {
-            a {
-                border-bottom-color: $grey !important;
-            }
-            &.is-active a {
-                border-bottom-color: $link !important;
-                color: inherit;
-            }
-            a:hover {
-                border-bottom-color: lighten($link, 25) !important;
-            }
-        }
-    }
-
     .tensionComments {
         .media + .media {
             margin-top: 1.5rem !important;
@@ -837,21 +945,19 @@ html.has-modal-active, html.has-modal-active2 {
         }
 
         .message {
-            background-color: $body-background-color !important;
-            border: 1px solid  $grey-darker2  !important;
             border-radius: 8px !important;
-            .tabs a {
-                text-decoration: none !important;
-            }
             .message-header {
+                border-radius: 8px 8px 0 0 !important;
                 display: inherit !important;
                 font-size: 14px !important;
                 font-weight: 500 !important;
-                background-color: $comment-header-background-color !important;
-                border-bottom: solid 1px $grey-dark;
+                border-bottom: solid 1px $border-color-light;
                 a {
-                    font-weight: 600 !important;
                     text-decoration: none !important;
+                    font-weight: 600 !important;
+                }
+                li a {
+                    font-weight: 500 !important;
                 }
 
                 .dropdown-trigger {
@@ -859,7 +965,7 @@ html.has-modal-active, html.has-modal-active2 {
                     bottom: $size-small2;
                     left: $size-small;
                     padding: $size-small2 $size-small $size-small2 $size-small ;
-                    border-left: 1px solid $grey-darker2;
+                    border-left: 1px solid $border-color-light;
                     &:hover { cursor: pointer !important; }
                     &:active { color: $grey; }
                 }
@@ -884,54 +990,27 @@ html.has-modal-active, html.has-modal-active2 {
 				pointer-events: none;
 			}
 			.message-header:after {
-				//border-color: rgba(52, 60, 61, 0);
 				border-right-color: $comment-header-background-color !important;
 				border-width: 8px;
 				margin-top: -8px;
 			}
 			.message-header:before {
-				//border-color: rgba(52, 60, 61, 0);
-				border-right-color: $grey-darker2;
+				border-right-color: $border-color-light;
 				border-width: 9px;
 				margin-top: -9px;
 			}
 
             .message-body {
                 padding: 1rem 0.9rem !important;
-                // font-size: 15px; @deprecated
-                line-height: 1.5;
+                //font-size: 15px;
+                //line-height: 1.5;
             }
         }
 
         .tensionCommentInput {
-
-            .tabs, .tabs.is-boxed  {
-                ul {
-                    border-bottom-color: $grey !important;
-                }
-                li a  {
-                    color: $grey-light !important;
-                }
-                li:not(.is-active) a:hover {
-                    background-color: inherit;
-                }
-                li.is-active a {
-                    color: $grey-lighter !important;
-                    text-decoration: none !important;
-                    border-color: $grey;
-                    border-bottom-color: body-background-color !important;
-                }
-            }
-
             .message-header {
                 border: 0;
-                font-weight: 500 !important;
                 padding: 0 0.75rem !important;
-                a {
-                    font-weight: 600 !important;
-                    text-decoration: none !important;
-                    //&:hover { text-decoration: underline !important; }
-                }
             }
 
             .message-body {
@@ -950,12 +1029,12 @@ html.has-modal-active, html.has-modal-active2 {
         margin-top: 2.25rem !important;
 
         .media:first-child {
-            border-top: 1px solid $grey !important;
+            border-top: 1px solid $border-color-light !important;
             padding-top: 1rem !important;
         }
 
         .media {
-            border-top: 1px solid $grey !important;
+            border-top: 1px solid $border-color-light !important;
             margin:0;
             padding-bottom: 2rem;
         }
@@ -965,20 +1044,8 @@ html.has-modal-active, html.has-modal-active2 {
             .subtitle {
                 font-size: 13px !important;
                 font-weight: 600 !important;
-                color: $grey-light2;
+                color: $is-discrete;
                 margin-bottom: 1rem !important;
-            }
-        }
-    }
-
-    .tensionTitle, .tensionComments, .tensionSidePane  {
-        textarea, input {
-            &:not(.in-modal) {
-                color: $white-1 !important;
-                background-color: #33383ed9 !important;
-                &::placeholder {
-                    color: $white-ter !important;
-                }
             }
         }
     }
@@ -994,7 +1061,7 @@ html.has-modal-active, html.has-modal-active2 {
 
 .sidePanel {
     position: absolute;
-    background: lighten($body-background-color, 7);
+    background: lighten($bbc, 7);
     border: 1px solid $grey-light;
     min-width: 350px;
     max-width: 450px;
@@ -1027,10 +1094,10 @@ html.has-modal-active, html.has-modal-active2 {
 
     p {
         &.panel-block {
-            border-bottom-color: #ededed5c;
+            border-bottom-color: $border-color;
             &:hover {
                 cursor: pointer !important;
-                background: lighten($body-background-color, 5) !important;
+                background: $background-evidence !important;
             }
         }
         .panel-icon {
@@ -1075,15 +1142,6 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 
-.tensionDocument {
-    .blobToolBar {
-        margin-bottom: 1rem;
-    }
-}
-
-.tensionContracts {
-}
-
 
 .tagsinput {
 	position: absolute;
@@ -1098,9 +1156,7 @@ html.has-modal-active, html.has-modal-active2 {
     .tag {
         height: 2.2em;
         font-size: 0.9rem;
-        //color: findColorInvert($primary);
         color: $grey-darker;
-        //background-color: $primary;
         background-color: $white-ter;
         &.is-delete {
             &:hover {
@@ -1109,166 +1165,6 @@ html.has-modal-active, html.has-modal-active2 {
                 background-color: $white-ter;
             }
         }
-    }
-}
-
-//
-// Search Bar and QuickSearch
-//
-
-.searchBar {
-    .input, .button, select {
-        height: 2.2rem !important;
-    }
-}
-
-#searchBarOverview {
-    width: 100.25% !important;
-    padding-top: 5px !important;
-    margin-bottom: 12px !important;
-
-    #searchList {
-        margin-top: -12px !important;
-    }
-
-    .searchBar > div:first-child {
-        display: inline-flex;
-        position: relative;
-        vertical-align: top;
-    }
-
-    .controlButtons {
-        //display: flex;
-        //flex-grow: 1;
-        //flex-direction: column;
-        max-width: 55% !important;
-        & > .button:first-child {
-            padding-right: 0 !important;
-            &:hover { border-color: $grey; }
-        }
-
-        .custom-style {
-            margin-left: 5px !important;
-            margin-right: 8px !important;
-            color: $green-frac6 !important;
-        }
-    }
-
-    .button {
-        border: 1px solid $grey;
-        border-right: 0;
-        &:last-child {
-            border-right: 1px solid $grey;
-        }
-    }
-}
-
-#searchBarTensions {
-    padding-top: 5px;
-
-    & > .field {
-        margin-bottom: 0.25rem !important;
-    }
-
-    .tabs {
-        margin-bottom: 0.75rem !important;
-        ul {
-            border-bottom-color: $grey !important;
-            border-bottom-with: 2px !important;
-        }
-        li {
-            a {
-                border-bottom-color: $grey !important;
-            }
-            &.is-active a {
-                border-bottom-color: $link !important;
-                color: inherit;
-                font-weight: 600 !important;
-            }
-            & a:hover {
-                border-bottom-color: lighten($link, 20) !important;
-            }
-        }
-    }
-}
-
-.filterBar.has-addons {
-    .control {
-        .button {
-            border: 1px solid $grey !important;
-            //background-color: #558db3 !important;
-            &:hover {
-                background-color: #4281ac !important;
-            }
-        }
-
-        &:first-child .button {
-            border: 1px solid $grey !important;
-            border-top-left-radius: 15px !important;
-            border-bottom-left-radius: 15px !important;
-        }
-        &:not(:first-child):not(:last-child) .button {
-            border-radius: 0px !important;
-            border-radius: 0px !important;
-        }
-        &:last-child .button {
-            border-top-right-radius: 15px !important;
-            border-bottom-right-radius: 15px !important;
-        }
-    }
-}
-
-#searchList {
-    //top: 100% !important;
-    position: absolute !important;
-    z-index: 20 !important;
-    width: 99.9% !important;
-    height: 412px;
-    max-height: 400px !important;
-    overflow-y: auto !important;
-
-    .table, .table.is-fullwidth {
-        //flex-grow: 1;
-        //flex-shrink: 1;
-        display: inline-table;
-        background-color: #fffffdf6 !important;
-        line-height: 1.4 !important;
-        font-size: 0.775rem !important;
-
-        .help {
-            border-bottom: 1px solid #22222222;
-        }
-    }
-
-    // @debug don't work !
-    //tbody {
-    //    max-height: 400px !important;
-    //    overflow-y: auto !important;
-    //}
-
-    thead th,
-    thead td {
-        color: #acb6c1 !important;
-        background-color: #eeeeedf2 !important;
-    }
-    tbody th,
-    tbody td {
-        border: 0 !important;
-        padding-top: 0.4rem;
-        padding-bottom: 0.4rem;
-        color: #24292e !important;
-    }
-
-    a:hover,& a:focus,
-    tr:hover,& tr:focus,
-    span:hover,&  span:focus {
-        background-color: #eee9d8 !important;
-    }
-
-     a.is-active,
-     tr.is-active,
-     span.is-active {
-        background-color: #dfdfdf !important;
     }
 }
 
@@ -1290,7 +1186,7 @@ html.has-modal-active, html.has-modal-active2 {
 
 .mediaBox {
     &.is-hoverable:hover {
-        background-color: $grey-darker2;
+        background-color: $mediaBox-item-hover-background;
     }
 
     &.is-active {
@@ -1306,10 +1202,29 @@ html.has-modal-active, html.has-modal-active2 {
                 margin-right: $size-small !important;
             }
             a { // right icons
-                color: $text !important;
+                color: $text-light !important;
                 &:hover {
                     color: $link !important;
                 }
+                &.is-size-7 {
+                    //font-size: 0.88rem !important;
+                }
+                .box > &.is-size-6 { // tensions circle
+                    font-size: 1rem !important;
+                }
+                &.is-size-5 {
+                    //font-size: 1rem !important;
+                }
+                // Zen Font
+                //&.is-size-7 {
+                //    font-size: 1rem !important;
+                //}
+                //&.is-size-6 {
+                //    font-size: 1.1rem !important;
+                //}
+                //&.is-size-5 {
+                //    font-size: 1.3rem !important;
+                //}
             }
         }
     }
@@ -1346,8 +1261,8 @@ a.actionLink {
 }
 
 .marginTensionStatus {
-    margin-top: 0.2rem;
-    margin-left: -28px;
+    margin-top: 0rem;
+    margin-left: -27px;
 }
 
 //
@@ -1372,7 +1287,6 @@ a.actionLink {
  */
 
 .kb-board {
-
     & > .column {
         min-width: 220px;
 
@@ -1394,7 +1308,6 @@ a.actionLink {
             border-bottom: 1px solid $grey;
         }
     }
-
 }
 
 /*
@@ -1425,7 +1338,7 @@ a.actionLink {
     padding: 2px 0px 1px 8px;
     border: 2px solid #333;
     border-style: solid;
-    border-radius: 9px;
+    border-radius: 8px;
 
     // Tooltip style
     &::after,
@@ -1478,7 +1391,7 @@ a.actionLink {
     .custom-style {
         margin-left: 5px !important;
         margin-right: 5px !important;
-        color: $green !important;
+        color: $link2 !important;
         font-size: 16px !important;
     }
 
@@ -1491,12 +1404,13 @@ a.actionLink {
 }
 
 #canvasButtons {
-    position: absolute;
     //display: flex;
+    position: absolute;
     flex-direction: column;
 
     .button {
         margin-right: 0;
+        color: $white;
         background: $grey;
     }
 }
@@ -1515,6 +1429,31 @@ a.actionLink {
     display: flex;
     visibility: hidden;
     cursor: initial; // when modal nested in a button for example (the case for Tooltip Action Panel)
+
+    // @DEBUG: LIGHT colorscheme
+    // do not work for li in dark mode...
+    .input,
+    .textarea {
+        color: $dark;
+        background-color: $white-light;
+    }
+    .input:not([type="search"]),
+    .textarea, li {
+        border-color: $grey-light3;
+        &:hover {
+            border-color: $grey-light3;
+        }
+        &::placeholder {
+            color: $grey !important;
+        }
+    }
+    .input:focus,
+    .textarea:focus {
+        border-color: $link2;
+        &:hover {
+            border-color: $link2;
+        }
+    }
 
     .modal-background {
         opacity: 0;
@@ -1620,20 +1559,20 @@ a.actionLink {
     }
 
     .modal-card-body {
-        background-color: $white-1 !important;
-        color: $text-inverted;
+        background-color: $white-light;
+        color: #111;
         .card, .title, .content {
-            color: $text-inverted;
+            color: #111;
         }
     }
 
     .modal-card-title, .panel-heading,
     .modal-card-head,
     .modal-card-foot, {
-        background-color: #e5e5e5;
+        background-color: $modal-header-background;
         border-color: #ccc !important;
-        color: $text-inverted;
-        div:not(.dropdown-content) {
+        color: #111;
+        div:not(.dropdown-content):not(.dropdown-item) {
             color: inherit;
             background-color: inherit;
         }
@@ -1654,22 +1593,28 @@ a.actionLink {
         }
         li a:hover {
             background-color: $blue-light;
+            border-bottom-color: #ccc !important;
         }
         li.is-active a {
             color: $grey;
-            //background-color: $white-1;
             background-color: $blue-light;
             border-top-color: $blue-grey;
             border-top-width: 3px;
+            border-left: none;
+            border-right: none;
+            border-bottom-color: #ccc !important;
         }
         li:not(:last-child) a {
-            border-right-color: $grey-lighter;
+            border-right-color: #ccc;
+        }
+        li:not(.is-active) a:hover {
+            border-bottom-color: $blue-light !important;
         }
 
         &#tensionTabTop { // tensionModal
             min-height: 42px;
-            background-color: #e5e5e5;
-            border-bottom: solid 1px $grey-lighter !important;
+            background-color: $modal-header-background;
+            border-bottom: solid 1px #ccc !important;
         }
     }
 
@@ -1704,24 +1649,24 @@ a.actionLink {
 
 #tensionModal {
 
+    // Input Message
     .message {
-        //background-color: $white-light;
         background-color: inherit;
+        border-color: transparent !important;
         .tabs, .tabs.is-boxed  {
             li a  {
                 color: $grey-light !important;
+                text-decoration: none !important;
             }
             li a:hover{
                 background-color: inherit !important;
             }
             li.is-active a {
-                text-decoration: none !important;
                 background-color: $white-light !important;
                 border-top-width: 2px !important;
             }
         }
     }
-
     .message-header {
         background-color: $white-ter;
         font-weight: 500 !important;
@@ -1732,7 +1677,6 @@ a.actionLink {
             &:hover { text-decoration: underline !important; }
         }
     }
-
     .message-body {
         //padding: 0.75rem 0.75rem;
         padding: 0;
@@ -1787,6 +1731,12 @@ a.actionLink {
     background: $orange-frac6 !important;
 }
 
+#confirmModal {
+    .modal-card-body {
+        border-radius: 4px;
+    }
+}
+
 #refreshAuthModal {
     &.modal.is-active {
         z-index: 100 !important;
@@ -1794,6 +1744,13 @@ a.actionLink {
     .modal-background {
         background-color: $grey-light;
     }
+
+
+    justify-content: start;
+    .modal-content {
+        margin-top: 5rem;
+    }
+
 }
 
 #helpModal {
@@ -1849,6 +1806,147 @@ a.actionLink {
     }
 }
 
+//
+// Search Bar and QuickSearch
+//
+
+.searchBar {
+    .input, .button, select {
+        height: 2.2rem !important;
+    }
+}
+
+#searchBarOverview {
+    width: 100.25% !important;
+    margin-bottom: 12px !important;
+
+    #searchList {
+        margin-top: -12px !important;
+    }
+
+    .searchBar > div:first-child {
+        display: inline-flex;
+        position: relative;
+        vertical-align: top;
+    }
+
+    .controlButtons {
+        //display: flex;
+        //flex-grow: 1;
+        //flex-direction: column;
+        max-width: 55% !important;
+        & > .button:first-child {
+            padding-right: 0 !important;
+        }
+
+        .custom-style {
+            margin-left: 5px !important;
+            margin-right: 8px !important;
+            color: $green-frac6 !important;
+        }
+    }
+
+    .button {
+        border: 1px solid $grey;
+        border-right: 0;
+        &:last-child {
+            border-right: 1px solid $grey;
+        }
+    }
+}
+
+#searchBarTensions {
+    & > .field {
+        margin-bottom: 0.25rem !important;
+    }
+
+    .tabs {
+        margin-bottom: 0.75rem !important;
+        li.is-active a {
+            font-weight: 600 !important;
+        }
+    }
+}
+
+.filterBar.has-addons {
+    .control {
+        .button {
+            border: 1px solid $grey !important;
+            &:hover {
+                background-color: $filter-hover-background !important;
+            }
+        }
+
+        &:first-child .button {
+            border: 1px solid $grey !important;
+            border-top-left-radius: 15px !important;
+            border-bottom-left-radius: 15px !important;
+        }
+        &:not(:first-child):not(:last-child) .button {
+            border-radius: 0px !important;
+            border-radius: 0px !important;
+        }
+        &:last-child .button {
+            border-top-right-radius: 15px !important;
+            border-bottom-right-radius: 15px !important;
+        }
+    }
+}
+
+#searchList {
+    //top: 100% !important;
+    position: absolute !important;
+    z-index: 20 !important;
+    width: 99.9% !important;
+    height: 412px;
+    max-height: 400px !important;
+    overflow-y: auto !important;
+
+    .table, .table.is-fullwidth {
+        //flex-grow: 1;
+        //flex-shrink: 1;
+        display: inline-table;
+        background-color: #fffffdf6 !important;
+        line-height: 1.4 !important;
+        font-size: 0.775rem !important;
+
+        .help {
+            border-bottom: 1px solid #22222222;
+        }
+    }
+
+    // @debug don't work !
+    //tbody {
+    //    max-height: 400px !important;
+    //    overflow-y: auto !important;
+    //}
+
+    thead th,
+    thead td {
+        color: #acb6c1 !important;
+        background-color: #eeeeedf2 !important;
+    }
+    tbody th,
+    tbody td {
+        border: 0 !important;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem;
+        color: #24292e !important;
+    }
+
+    a:hover,& a:focus,
+    tr:hover,& tr:focus,
+    span:hover,&  span:focus {
+        background-color: #eee9d8 !important;
+    }
+
+     a.is-active,
+     tr.is-active,
+     span.is-active {
+        background-color: #dfdfdf !important;
+    }
+}
+
 
 /*
  *
@@ -1861,7 +1959,7 @@ a.actionLink {
     &:hover {
         cursor: pointer;
         .is-h, &.is-h {
-            color: $white-ter !important;
+            color: $is-highlight !important;
         }
     }
 }
@@ -1958,10 +2056,10 @@ a.actionLink {
 }
 
 .Circle {
-    padding-bottom: 2px;
+    //padding-top: 4px;
     &::before {
         content: ' \25CF'; // draw a circle (use as tag/bullet)
-        font-size: 13px;
+        font-size: 18px;
     }
 }
 
@@ -2134,7 +2232,8 @@ a.actionLink {
     animation-iteration-count: infinite;
     animation-name: placeHolderLine;
     animation-timing-function: linear;
-    background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
+    //background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
+    background: linear-gradient(to right, $background-evidence 0%, $ph-background 10%, $background-evidence 100%);
     display: inline-block;
     height: 1.5rem;
     overflow: hidden;
@@ -2164,7 +2263,7 @@ a.actionLink {
     animation-iteration-count: infinite;
     animation-name: placeHolderButton;
     animation-timing-function: linear;
-    background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
+    background: linear-gradient(to right, $background-evidence 0%, $ph-background 10%, $background-evidence 100%);
     display: inline-block;
     height: 2.2rem;
     overflow: hidden;
@@ -2286,7 +2385,6 @@ a.actionLink {
 	left: 0;
 	right: 0;
 	pointer-events: none;
-	//box-shadow: 0 -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
 header.acc {
 	z-index: 100;
@@ -2367,15 +2465,14 @@ input:checked + section.acc .acc-title:before {
 .quickHelp { // Style for accordion (acc)
     header.acc {
         height: $acc-height-title !important;
-        background: $grey-lighter;
-        //box-shadow: 0 -1px 0 #e5e5e5,0 0 2px -2px rgba(0,0,0,.12),0 2px 4px -4px rgba(0,0,0,.24);
+        background: $modal-header-background;
     }
     header .acc-title {
         height: $acc-height-title !important;
         line-height: $acc-height-title !important;
         font-weight: 600;
         font-size: 12pt;
-        color: $darker;
+        color: darken($grey, 42);
     }
     .acc-title {
         height: $acc-height;

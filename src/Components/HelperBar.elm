@@ -59,10 +59,13 @@ type alias Op msg =
 
 view : Op msg -> Html msg
 view op =
-    div [ id "helperBar", class "columns is-centered" ]
-        [ nav [ class "column is-11-desktop is-10-widescreen is-10-fullhd" ]
-            [ viewPathLevel op
-            , viewNavLevel op
+    -- @debug: padding-top overflow column.with is-paddingless
+    div [ id "helperBar", class "mb-3" ]
+        [ div [ class "columns is-centered" ]
+            [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ]
+                [ div [ class "mx-5 mb-5" ] [ viewPathLevel op ]
+                , viewNavLevel op
+                ]
             ]
         ]
 
@@ -80,44 +83,36 @@ viewPathLevel op =
                 Nothing ->
                     ( "", Nothing )
     in
-    div [ class "navbar" ]
-        [ div [ class "navbar-brand" ]
+    nav [ class "level is-mobile" ]
+        [ div [ class "level-left" ]
             [ viewPath op.baseUri op.uriQuery op.path_data ]
-        , div
-            [ class "navbar-burger burger"
-            , attribute "data-target" "rolesMenu"
-            , attribute "aria-expanded" "false"
-            , attribute "aria-label" "menu"
-            , attribute "role" "button"
-            ]
-            [ span [ attribute "aria-hidden" "true" ] []
-            , span [ attribute "aria-hidden" "true" ] []
-            , span [ attribute "aria-hidden" "true" ] []
-            ]
-        , div [ id "rolesMenu", class "navbar-menu" ]
-            [ case op.user of
-                LoggedIn uctx ->
-                    case op.path_data of
-                        Just path ->
-                            let
-                                roles =
-                                    List.filter (\r -> nid2rootid r.nameid == rootnameid) uctx.roles
-                            in
-                            if List.length roles > 0 then
-                                memberButtons roles { op | baseUri = OverviewBaseUri }
+        , div [ class "level-right" ]
+            [ A.burger "rolesMenu"
+            , div [ id "rolesMenu", class "navbar-menu" ]
+                [ case op.user of
+                    LoggedIn uctx ->
+                        case op.path_data of
+                            Just path ->
+                                let
+                                    roles =
+                                        List.filter (\r -> nid2rootid r.nameid == rootnameid) uctx.roles
+                                in
+                                if List.length roles > 0 then
+                                    memberButtons roles { op | baseUri = OverviewBaseUri }
 
-                            else
-                                userCanJoin
-                                    |> Maybe.map (\ucj -> joinButton op.onJoin)
-                                    |> withDefault (text "")
+                                else
+                                    userCanJoin
+                                        |> Maybe.map (\ucj -> joinButton op.onJoin)
+                                        |> withDefault (text "")
 
-                        Nothing ->
-                            div [ class "navbar-end ph-button-1" ] []
+                            Nothing ->
+                                div [ class "ph-button-1" ] []
 
-                LoggedOut ->
-                    userCanJoin
-                        |> Maybe.map (\ucj -> joinButton op.onJoin)
-                        |> withDefault (text "")
+                    LoggedOut ->
+                        userCanJoin
+                            |> Maybe.map (\ucj -> joinButton op.onJoin)
+                            |> withDefault (text "")
+                ]
             ]
         ]
 
@@ -129,8 +124,8 @@ viewNavLevel op =
             Maybe.map (\x -> x.focus.nameid) op.path_data
                 |> withDefault ""
     in
-    nav [ class "tabs is-boxed" ]
-        [ ul []
+    nav [ class "tabs is-boxed px-3" ]
+        [ ul [ class "" ]
             ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
                 [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ A.icon1 "icon-sun" "Overview" ] ]
              , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri ) ] ]
@@ -166,7 +161,7 @@ viewNavLevel op =
                    )
             )
         , div
-            ([ class "button is-small is-info is-rounded is-pulled-right"
+            ([ class "button is-small is-link2 is-rounded is-pulled-right"
              , attribute "style" "bottom:-5px;"
              ]
                 ++ (case op.path_data of
@@ -220,7 +215,7 @@ viewPath baseUri uriQuery maybePath =
                 div [ class "ph-line is-1" ] []
         , case maybePath of
             Just p ->
-                span [ class "tag is-rounded ml-1" ] [ text (NodeVisibility.toString p.focus.visibility) ]
+                span [ class "tag is-rounded ml-1 has-border" ] [ text (NodeVisibility.toString p.focus.visibility) ]
 
             Nothing ->
                 text ""
@@ -253,7 +248,7 @@ viewTree baseUri uriQuery g =
 joinButton : msg -> Html msg
 joinButton msg =
     div
-        [ class "button is-small has-text-weight-semibold is-primary toolti has-tooltip-arrow has-tooltip-bottom navbar-end"
+        [ class "button is-small has-text-weight-semibold is-primary toolti has-tooltip-arrow has-tooltip-bottom"
         , attribute "data-modal" "actionModal"
 
         --, attribute "data-tooltip" "Join this organisation."
@@ -312,4 +307,4 @@ memberButtons roles_ op =
         |> List.reverse
         |> List.append [ lastButton ]
         |> List.reverse
-        |> div [ class "buttons navbar-end" ]
+        |> div [ class "buttons" ]

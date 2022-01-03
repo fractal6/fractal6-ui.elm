@@ -60,14 +60,42 @@ icon1 cls words =
 -- VIEWS
 
 
-logo1 =
-    Logo.logo_fractal
+logo0 : String -> Html msg
+logo0 color =
+    Logo.logo_fractal { color = color, h = "30", w = "38" }
+
+
+logo1 : String -> Html msg
+logo1 color =
+    Logo.logo_fractal { color = color, h = "38", w = "54" }
+
+
+logo2 : String -> Html msg
+logo2 color =
+    Logo.logo_fractal { color = color, h = "96", w = "128" }
+
+
+{-| A burger button used when the terminal is in mobile/collapse state.
+-}
+burger : String -> Html msg
+burger targetid =
+    div
+        [ class "burger navbar-burger"
+        , attribute "data-target" targetid
+        , attribute "aria-expanded" "false"
+        , attribute "aria-label" "menu"
+        , attribute "role" "button"
+        ]
+        [ span [ attribute "aria-hidden" "true" ] []
+        , span [ attribute "aria-hidden" "true" ] []
+        , span [ attribute "aria-hidden" "true" ] []
+        ]
 
 
 welcome : Html msg
 welcome =
     p [ class "field content is-aligned-center" ]
-        [ h2 [ class "mb-0 has-text-grey-lighter" ] [ text "Welcome to Fractale" ]
+        [ h2 [ class "mb-0 is-highlight-3" ] [ text "Welcome to Fractale" ]
         , p [ class "has-text-grey-light" ] [ text "a collective intelligence platform." ]
         ]
 

@@ -1,6 +1,7 @@
 module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Assets as A
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
@@ -28,7 +29,6 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -877,19 +877,6 @@ subscriptions _ model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
-    , body =
-        [ view_ global model
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        ]
-    }
-
-
-view_ : Global.Model -> Model -> Html Msg
-view_ global model =
     let
         helperData =
             { user = global.session.user
@@ -903,19 +890,30 @@ view_ global model =
             , onCreateTension = DoCreateTension
             }
     in
-    div [ id "mainPane" ]
+    { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    , body =
         [ HelperBar.view helperData
-        , div [ class "columns is-centered" ]
-            [ div [ class "column is-10-desktop is-10-widescreen is-9-fullhd" ]
-                [ div [ class "section" ]
-                    [ div [ class "columns" ]
-                        [ div [ class "column is-2" ] [ viewSettingsMenu model ]
-                        , div [ class "column is-10" ] [ viewSettingsContent model ]
-                        ]
+        , div [ id "mainPane" ] [ view_ model ]
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        , setupActionModal model
+        ]
+    }
+
+
+view_ : Model -> Html Msg
+view_ model =
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
+            [ div [ class "section" ]
+                [ div [ class "columns" ]
+                    [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
+                    , div [ class "column" ] [ viewSettingsContent model ]
                     ]
                 ]
             ]
-        , setupActionModal model.isModalActive model.node_action
         ]
 
 
@@ -986,7 +984,7 @@ viewLabels model =
                 else
                     table [ class "table is-fullwidth" ]
                         [ thead []
-                            [ tr []
+                            [ tr [ class "has-background-header" ]
                                 [ th [] [ textH T.name ]
                                 , th [] [ textH T.description ]
                                 , th [] [ text "" ]
@@ -1131,7 +1129,7 @@ viewLabelAddBox model =
         doCancel =
             CancelLabel
     in
-    div [ class "box has-background-light" ]
+    div [ class "box" ]
         [ div [ class "field is-grouped" ]
             [ p [ class "control" ]
                 [ label [ class "label is-small" ] [ text "Label name *" ]
@@ -1190,22 +1188,26 @@ viewLabelAddBox model =
 -- Actions
 
 
-setupActionModal : Bool -> ActionState -> Html Msg
-setupActionModal isModalActive action =
+setupActionModal : Model -> Html Msg
+setupActionModal model =
+    let
+        onClose =
+            DoCloseModal { reset = True, link = "" }
+    in
     div
         [ id "actionModal"
         , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", isModalActive ) ]
+        , classList [ ( "is-active", model.isModalActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
             [ class "modal-background modal-escape"
             , attribute "data-modal" "actionModal"
-            , onClick (DoCloseModal { reset = True, link = "" })
+            , onClick onClose
             ]
             []
         , div [ class "modal-content" ]
-            [ case action of
+            [ case model.node_action of
                 JoinOrga step ->
                     viewJoinOrgaStep step
 
@@ -1218,7 +1220,7 @@ setupActionModal isModalActive action =
                 ActionAuthNeeded ->
                     viewAuthNeeded DoCloseModal
             ]
-        , button [ class "modal-close is-large", onClick (DoCloseModal { reset = True, link = "" }) ] []
+        , button [ class "modal-close is-large", onClick onClose ] []
         ]
 
 

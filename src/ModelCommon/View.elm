@@ -1,5 +1,6 @@
 module ModelCommon.View exposing (..)
 
+import Assets as A
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
 import Extra.Date exposing (formatDate)
@@ -15,7 +16,6 @@ import Global
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
-import Assets as A
 import Identicon
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
@@ -92,12 +92,26 @@ mediaTension now focus tension showStatus showRecip size navigate =
 
         labels_m =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
+
+        ( default_size, title_size ) =
+            case size of
+                "is-size-7" ->
+                    ( "is-size-7", "is-size-7" )
+
+                "is-size-6" ->
+                    ( "is-size-6", "is-size-6" )
+
+                "is-size-5" ->
+                    ( "is-size-6", "is-size-5" )
+
+                _ ->
+                    ( "is-size-6", "is-size-5" )
     in
     div
-        [ class ("media mediaBox is-hoverable " ++ size)
+        [ class ("media mediaBox is-hoverable " ++ default_size)
         , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
         ]
-        [ div [ class "media-left" ]
+        [ div [ class "media-left mr-3" ]
             [ div
                 [ class "tooltip has-tooltip-arrow"
                 , attribute "data-tooltip" (TensionType.toString tension.type_)
@@ -105,11 +119,9 @@ mediaTension now focus tension showStatus showRecip size navigate =
                 [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
             ]
         , div [ class "media-content" ]
-            [ div
-                [ class "content mb-0"
-                ]
+            [ div [ class "content mb-0" ]
                 [ a
-                    [ class "is-human"
+                    [ class ("is-human " ++ title_size)
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
@@ -138,7 +150,7 @@ mediaTension now focus tension showStatus showRecip size navigate =
                         text ""
                     ]
                 ]
-            , span [ class "is-smaller" ]
+            , span [ class "is-smaller2" ]
                 [ if showStatus then
                     span
                         [ class "tooltip has-tooltip-arrow has-tooltip-right"
@@ -239,6 +251,14 @@ viewUsers users =
     span [ class "usersList" ] (List.map (\u -> viewUser True u.username) users)
 
 
+viewUser0 : String -> Html msg
+viewUser0 username =
+    span [ class "mr-2" ]
+        [ a [ href (uriFromUsername UsersBaseUri username) ]
+            [ getAvatar0 username ]
+        ]
+
+
 viewUser : Bool -> String -> Html msg
 viewUser isLinked username =
     if isLinked then
@@ -330,9 +350,9 @@ viewOpenedDate now date =
 
 viewUpdated : Time.Posix -> String -> Html msg
 viewUpdated now date =
-    span [ class "is-grey-light" ] <|
+    span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
-            [ text "·"
+            [ text " ·"
             , span [] [ text T.edited ]
             , text (formatDate now date)
             ]
@@ -340,7 +360,7 @@ viewUpdated now date =
 
 viewCommentedDate : Time.Posix -> String -> Html msg
 viewCommentedDate now date =
-    span [ class "is-grey-light" ] <|
+    span [ class "is-discrete" ] <|
         List.intersperse (text " ") <|
             [ span [] [ text T.commented ]
             , text (formatDate now date)

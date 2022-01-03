@@ -1,5 +1,6 @@
 module Form.NewTension exposing (..)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -20,9 +21,8 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, tabindex, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, style, tabindex, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -1013,7 +1013,7 @@ viewTensionTabs tab targ =
         type_ =
             nid2type targ.nameid
     in
-    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed has-text-weight-medium" ]
+    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
                 [ a [ class "tootltip", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "blank_" ]
@@ -1082,7 +1082,7 @@ viewTension op (State model) =
                                 [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
-                                    , span [ class "dropdown" ]
+                                    , span [ class "dropdown", style "vertical-align" "unset" ]
                                         [ span [ class "dropdown-trigger button-light" ]
                                             [ span [ attribute "aria-controls" "type-menu" ]
                                                 [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.type_ ]
@@ -1112,7 +1112,7 @@ viewTension op (State model) =
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
-                                [ class "input autofocus followFocus"
+                                [ class "input autofocus followFocus in-modal"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder (upH T.title)
@@ -1127,7 +1127,7 @@ viewTension op (State model) =
                         ]
                     , div [ class "message" ]
                         [ div [ class "message-header" ]
-                            [ div [ class "tabs is-boxed is-small" ]
+                            [ div [ class "tabs is-boxed is-small pl-1" ]
                                 [ ul []
                                     [ li [ classList [ ( "is-active", model.viewMode == Write ) ] ]
                                         [ a [ onClickPD2 (OnChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
@@ -1144,7 +1144,7 @@ viewTension op (State model) =
                                         Write ->
                                             textarea
                                                 [ id "textAreaModal"
-                                                , class "textarea"
+                                                , class "textarea in-modal"
                                                 , rows 5
                                                 , placeholder (upH T.leaveCommentOpt)
                                                 , value message
@@ -1278,7 +1278,7 @@ viewCircle op (State model) =
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ textarea
-                                [ class "textarea"
+                                [ class "textarea in-modal"
                                 , rows 3
                                 , placeholder (upH T.leaveCommentOpt)
                                 , value message
@@ -1338,13 +1338,13 @@ viewRecipients model =
         form =
             model.form
     in
-    div [ class "level-right has-text-weight-medium" ]
+    div [ class "level-right" ]
         [ span [ class "has-text-weight-light is-size-6" ] [ textH (T.from ++ ": ") ]
         , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid black;" ]
+            [ span [ class "dropdown-trigger " ]
                 [ span [ attribute "aria-controls" "source-menu" ]
                     [ span
-                        [ class "button is-small is-static has-text-black" ]
+                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
                         [ text form.source.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                     ]
                 ]
@@ -1364,10 +1364,10 @@ viewRecipients model =
         , span [ class "right-arro mx-3" ] []
         , span [ class "has-text-weight-light is-size-6" ] [ textH (T.to ++ ": ") ]
         , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger button-light", attribute "style" "border:1px solid black;" ]
+            [ span [ class "dropdown-trigger " ]
                 [ span [ attribute "aria-controls" "target-menu" ]
                     [ span
-                        [ class "button is-small is-static has-text-black" ]
+                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
                         [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                     ]
                 ]
@@ -1376,7 +1376,7 @@ viewRecipients model =
                     List.map
                         (\t ->
                             div
-                                [ class <| "dropdown-item has-text-weight-semibold button-light has-text-light"
+                                [ class <| "dropdown-item has-text-weight-semibold button-light"
                                 , onClick (OnChangeTensionTarget t)
                                 ]
                                 [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]

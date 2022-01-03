@@ -1,5 +1,6 @@
 module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
@@ -19,7 +20,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, header, hr, i, input, label, li, nav, option, p, pre, section, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -588,7 +588,7 @@ viewAskQuestion op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ input
-                                    [ class "input autofocus followFocus"
+                                    [ class "input autofocus followFocus in-modal"
                                     , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
                                     , placeholder "Subject of your question"
@@ -608,7 +608,7 @@ viewAskQuestion op (State model) =
                             [ div [ class "control is-expanded" ]
                                 [ textarea
                                     [ id "textAreaModal"
-                                    , class "textarea"
+                                    , class "textarea in-modal"
                                     , rows 5
                                     , placeholder "Write your question here..."
                                     , required True
@@ -728,7 +728,7 @@ viewFeedback op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ input
-                                    [ class "input autofocus followFocus"
+                                    [ class "input autofocus followFocus in-modal"
                                     , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
                                     , placeholder "Subject of your feedback"
@@ -748,7 +748,7 @@ viewFeedback op (State model) =
                             [ div [ class "control is-expanded" ]
                                 [ textarea
                                     [ id "textAreaModal"
-                                    , class "textarea"
+                                    , class "textarea in-modal"
                                     , rows 5
                                     , placeholder "Write your feedback here..."
                                     , required True

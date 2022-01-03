@@ -1,5 +1,6 @@
 module Components.LabelSearchPanel exposing (..)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Codecs exposing (LookupResult)
@@ -12,7 +13,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -465,7 +465,11 @@ viewLabelSelectors isInternal labels op model =
         viewEdit =
             p
                 [ class "panel-block is-md is-w"
-                , attribute "style" "border-top: 1px solid;"
+                , if isInternal then
+                    attribute "style" "border-bottom: 1px solid;"
+
+                  else
+                    attribute "style" "border-top: 1px solid;"
                 , if isInternal then
                     onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")) "")
 

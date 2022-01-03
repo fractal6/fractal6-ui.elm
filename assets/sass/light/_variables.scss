@@ -1,31 +1,82 @@
+////////////////////////////////////////////////
+// Light
+////////////////////////////////////////////////
+
+// Default colors
+$primary: #375a7f !default;
+$link: $blue-frac6;
+$link2: $blue;
+$link-hover: lighten($link, 5);
+$link-focus: darken($link, 5);
+$link-active: darken($link, 5);
+$link-focus-border: $grey-light;
+$is-discrete: $grey;
+$is-highlight: $dark;
+$is-highlight2: lighten($is-highlight, 5);
+$is-highlight3: $grey;
+
+// Background colors
+$nbc: $primary;
+$nbbc: $nbc;
+$hbc: #e6eaec;
+$bbc: white;
+//$chbc: $hbc;
+$background-evidence: darken($bbc, 5); // hover
+//$background-evidence: $white-ter; // hover
+$ph-background: $grey-lighter;
+// $background = kind of grey-lighter
+
+// Alias background
+$header-background-color: $hbc;
+$body-background-color: $bbc;
+$footer-background-color: $hbc;
+$comment-header-background-color: $hbc;
+
+// Text
+$text: $dark;
+$text-light: darken($text, 10);
+$link-discrete: $blue-grey;
+
+// Input
+$input-placeholder-color: $grey;
+$input-background-color: $white-light;
+$input-focus-border-color: $link2;
+
+// Border
+$border-color: $grey-light2;
+$border-color-light: $grey-light3;
+//$border: red;
+//$border-light: red;
+//$border-hover: none;
+//$border-light-hover: none;
+
+// Button
+//$button-background-color: $background;
+//$button-border-color: lighten($button-background-color, 15);
+
+// Dropdown
+$dropdown-content-background-color: $grey-lightest;
+$dropdown-item-hover-background-color: $background-evidence;
+$mediaBox-item-hover-background: $background-evidence;
+$filter-hover-background: $background-evidence;
+
+// Modal
+$modal-header-background: #e5e5e5;
+
+// Table
+$table-border-color: $border-color-light;
+
+// Markdown
+$code-color: $hbc;
+
+// Vertical Menu
 $menu-left-background-color: #fafafa;
 $menu-left-border-color: #e5e5e5;
 
-$header-background-color: #fafbfc;
-$comment-header-background-color: $header-background-color;
+// Tabs
+//$navbar-border-color: $border-color;
+$tabs-boxed-link-active-background-color: $bbc;
+$tabs-boxed-link-hover-border-bottom-color: $link;
 
-// Markdown
-$code-color: $grey;
-
-
-// FIX TOP MENU
-$navbar-brand-background-color: #02071ac4;
-
-$_primary: #375a7f !default;
-$_text: #fff;
-$_navbar-divider-background-color: rgba(0, 0, 0, 0.2);
-$_link: $turquoise;
-
-$navbar-background-color: $_primary;
-$navbar-item-color: $_text;
-$navbar-item-hover-color: $_link;
-$navbar-item-hover-background-color: $grey-darker;
-$navbar-item-active-color: $_link;
-$navbar-dropdown-arrow: #fff;
-$navbar-divider-background-color: rgba(0, 0, 0, 0.2);
-$navbar-dropdown-border-top: 1px solid $_navbar-divider-background-color;
-$navbar-dropdown-background-color: $_primary;
-$navbar-dropdown-item-hover-color: $grey-lighter;
-$navbar-dropdown-item-hover-background-color: hsl(210.7, 21.3%, 41.4%);
-$navbar-dropdown-item-active-background-color: transparent;
-$navbar-dropdown-item-active-color: $_link;
+// Cards
+// ...

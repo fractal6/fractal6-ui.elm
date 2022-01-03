@@ -1,0 +1,18 @@
+
+//
+// NAVBAR (top)
+//
+$navbar-background-color: $nbc;
+$navbar-brand-background-color: $nbbc;
+$navbar-item-color: $white-dimmed;
+$navbar-item-hover-color: $link;
+$navbar-item-hover-background-color: darken($nbc, 2);
+$navbar-item-active-color: $link;
+$navbar-dropdown-arrow: $white-dimmed;
+$navbar-divider-background-color: rgba(0, 0, 0, 0.2);
+$navbar-dropdown-border-top: 1px solid $navbar-divider-background-color;
+$navbar-dropdown-background-color: $nbc;
+$navbar-dropdown-item-hover-color: $white-dimmed;
+$navbar-dropdown-item-hover-background-color: lighten($nbc, 3);
+$navbar-dropdown-item-active-background-color: transparent;
+$navbar-dropdown-item-active-color: $link;

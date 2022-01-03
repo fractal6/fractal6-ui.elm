@@ -1,6 +1,7 @@
 module Org.Tensions exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Array
+import Assets as A
 import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Dom as Dom
 import Browser.Events as Events
@@ -42,7 +43,6 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autocomplete, autofocus, class, classList, disabled, href, id, list, placeholder, rows, selected, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -1281,18 +1281,6 @@ subscriptions _ model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
-    , body =
-        [ view_ global model
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
-        ]
-    }
-
-
-view_ : Global.Model -> Model -> Html Msg
-view_ global model =
     let
         helperData =
             { user = global.session.user
@@ -1305,16 +1293,30 @@ view_ global model =
             , onCollapse = CollapseRoles
             , onCreateTension = DoCreateTension
             }
+    in
+    { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
+    , body =
+        [ HelperBar.view helperData
+        , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
+        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Help.view {} model.help |> Html.map HelpMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
+        , setupActionModal model.isModalActive model.node_action
+        ]
+    }
 
+
+view_ : Global.Model -> Model -> Html Msg
+view_ global model =
+    let
         isFullwidth =
             model.viewMode == CircleView
     in
-    div [ id "mainPane" ]
-        [ HelperBar.view helperData
-        , div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
-            [ div [ class "column is-10-desktop is-10-widescreen is-11-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
+    div []
+        [ div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
+            [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
                 [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
-                    [ div [ class "column is-10-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
+                    [ div [ class "column pt-0 is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
                 , case model.children of
                     RemoteData.Failure err ->
                         viewHttpErrors err
@@ -1352,7 +1354,6 @@ view_ global model =
 
           else
             text ""
-        , setupActionModal model.isModalActive model.node_action
         ]
 
 
@@ -1512,10 +1513,10 @@ viewTensionsCount model =
         Success c ->
             let
                 activeCls =
-                    "has-background-grey-darker is-hovered"
+                    "has-background-header is-hovered has-text-weight-semibold"
 
                 inactiveCls =
-                    "has-background-grey-dark"
+                    "is-bg-"
             in
             div [ class "buttons has-addons mb-1" ]
                 [ div
@@ -1560,7 +1561,7 @@ viewListTensions model =
                     other |> List.sortBy .createdAt |> List.reverse |> Success
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-10-desktop is-10-fullhd" ]
+        [ div [ class "column is-12" ]
             [ viewTensionsCount model
             , viewTensions model.now model.node_focus model.initPattern tensions_d ListTension
             ]
@@ -1664,7 +1665,7 @@ viewTensions now focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension now focus t True True "is-size-6" Navigate)
+                        |> List.map (\t -> mediaTension now focus t True True "is-size-5" Navigate)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then

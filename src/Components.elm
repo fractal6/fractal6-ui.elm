@@ -1,8 +1,8 @@
 module Components exposing (layout)
 
 import Browser exposing (Document)
-import Components.Footbar as Footbar
 import Components.Navbar as Navbar
+import Footbar
 import Html exposing (Html, a, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Session exposing (Session)

@@ -1,3 +1,4 @@
+
 .content.markdown {
     pre, code {
         @include defaultFontFace;
@@ -22,25 +23,10 @@
     }
 }
 
-.content.markdown.is-light {
-    // Default in the dark mode
-}
-
-.content.markdown.is-dark {
-    color: #111 !important;
-    h1, h2, h3, h4, h5, h6, strong {
-        color: #111 !important;
-    }
-    pre, code, blockquote {
-        color: #fff !important;
-    }
-}
-
 .box {
     .content.markdown {
         pre, code {
-            background-color: lighten($code-color, 5) !important;
+            background-color: darken($code-color, 5) !important;
         }
     }
 }
-
