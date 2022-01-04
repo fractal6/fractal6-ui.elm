@@ -28,7 +28,8 @@ $dark-default: #18191a;
 $dark-dimmed: #22272e;
 $darker-dimmed: #1c2128;
 $dark-dimmed-top: #2d333b;
-$white-dimmed: #adbac7;
+$white-dimmed: #c1cdd9;
+//$white-dimmed: #adbac7;
 
 $blue: #3498db;
 $red: #e74c3c;
@@ -185,6 +186,7 @@ $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
 $link-focus-border: $grey-light;
 $link-discrete: $blue-grey;
+$danger-hover: lighten($danger, 5);
 $is-discrete: $grey;
 $is-highlight: $dark;
 $is-highlight2: lighten($is-highlight, 5);
@@ -297,7 +299,6 @@ $navbar-dropdown-item-active-background-color: transparent;
 $navbar-dropdown-item-active-color: $link;
 
 :root.light {
-  // Default colors
   --primary: #{$primary};
   --link: #{$link};
   --info: #{$info};
@@ -310,6 +311,7 @@ $navbar-dropdown-item-active-color: $link;
   --link-active: #{$link-active};
   --link-focus-border: #{$link-focus-border};
   --link-discrete: #{$link-discrete};
+  --danger-hover: #{$danger-hover};
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
   --is-highlight2: #{$is-highlight2};
@@ -422,6 +424,13 @@ $navbar-dropdown-item-active-color: $link;
   --tag-background-color: inherit;
 
 }
+.markdown-body.is-light {
+  --info: #{$info};
+  --is-discrete: #{$is-discrete};
+  --is-highlight: #{$is-highlight};
+  --code-color: #{$code-color};
+  --code-color-light: #{$code-color-light};
+}
 
 //
 // DARK THEME
@@ -433,7 +442,7 @@ $link: $green-frac6;
 $info:    hsl(204, 86%, 53%);
 $success: hsl(141, 71%, 38%);
 $warning: hsl(48, 100%, 47%);
-$danger:  hsl(368, 100%, 41%);
+$danger:  hsl(368, 100%, 61%);
 $link2: $green;
 $link-light: lighten($link, 20);
 $link-hover: darken($link, 20);
@@ -441,6 +450,7 @@ $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
 $link-focus-border: $grey-light;
 $link-discrete: $blue-light;
+$danger-hover: lighten($danger, 5);
 $is-discrete: $grey-light;
 $is-highlight: $white-ter;
 $is-highlight2: darken($is-highlight, 5);
@@ -572,6 +582,7 @@ $navbar-dropdown-item-active-color: $link;
   --link-active: #{$link-active};
   --link-focus-border: #{$link-focus-border};
   --link-discrete: #{$link-discrete};
+  --danger-hover: #{$danger-hover};
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
   --is-highlight2: #{$is-highlight2};
@@ -690,3 +701,10 @@ $navbar-dropdown-item-active-color: $link;
 
 }
 
+.markdown-body.is-dark {
+  --info: #{$info};
+  --is-discrete: #{$is-discrete};
+  --is-highlight: #{$is-highlight};
+  --code-color: #{$code-color};
+  --code-color-light: #{$code-color-light};
+}

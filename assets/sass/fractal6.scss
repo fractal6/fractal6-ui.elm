@@ -269,9 +269,15 @@ hr {
 }
 
 .button.is-selected {
-    outline: 4px solid;
+    outline: 4px solid $grey;
     outline-style: outset;
     outline-offset: 3px;
+}
+
+.button:hover {
+    &.is-danger {
+        background-color: var(--danger-hover);
+    }
 }
 
 .card.is-selected {
@@ -1446,8 +1452,8 @@ a.actionLink {
     visibility: hidden;
     cursor: initial; // when modal nested in a button for example (the case for Tooltip Action Panel)
 
-    // @DEBUG: LIGHT colorscheme
-    // do not work for li in dark mode...
+    //// @DEBUG: LIGHT colorscheme
+    //// do not work for li in dark mode...
     .input,
     .textarea {
         color: var(--dark) !important;
@@ -1576,14 +1582,6 @@ a.actionLink {
         }
     }
 
-    .modal-card-body {
-        background-color: var(--white-light);
-        color: #111;
-        .card, .title, .content {
-            color: #111;
-        }
-    }
-
     .modal-card-title, .panel-heading,
     .modal-card-head,
     .modal-card-foot, {
@@ -1598,7 +1596,22 @@ a.actionLink {
             padding-top: 10px;
             padding-bottom: 10px;
         }
+    }
 
+    .card, .modal-card-body, {
+        background-color: var(--white-light);
+        color: #111;
+    }
+
+    .message {
+        .message-header {
+            color: var(--grey-lightest) !important;
+        }
+    }
+
+    .box.is-light {
+        background-color: #dce3e3;
+        color: black;
     }
 
     .tabs, .tabs.is-boxed {
@@ -1636,21 +1649,6 @@ a.actionLink {
         }
     }
 
-    .card {
-        background-color: #eee;
-    }
-    .card-header-title, .label {
-        color: #363636
-    }
-
-    .box.is-light {
-        background-color: #dce3e3;
-        color: black;
-    }
-
-    .message-header {
-        color: var(--white-ter) !important;
-    }
 }
 
 .modal.fixed-top {

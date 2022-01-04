@@ -1153,7 +1153,7 @@ viewTension op (State model) =
                                                 []
 
                                         Preview ->
-                                            div [] [ renderMarkdown "is-dark mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
+                                            div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [ class "has-background-grey-lighter" ] [] ]
                                     ]
                                 , p [ class "help-label" ] [ textH txt.message_help ]
                                 , br [] []
@@ -1339,7 +1339,7 @@ viewRecipients model =
             model.form
     in
     div [ class "level-right" ]
-        [ span [ class "has-text-weight-light is-size-6" ] [ textH (T.from ++ ": ") ]
+        [ span [ class "has-text-grey-light is-size-6" ] [ textH (T.from ++ ": ") ]
         , span [ class "dropdown" ]
             [ span [ class "dropdown-trigger " ]
                 [ span [ attribute "aria-controls" "source-menu" ]
@@ -1362,7 +1362,7 @@ viewRecipients model =
                 ]
             ]
         , span [ class "right-arro mx-3" ] []
-        , span [ class "has-text-weight-light is-size-6" ] [ textH (T.to ++ ": ") ]
+        , span [ class "has-text-grey-light is-size-6" ] [ textH (T.to ++ ": ") ]
         , span [ class "dropdown" ]
             [ span [ class "dropdown-trigger " ]
                 [ span [ attribute "aria-controls" "target-menu" ]

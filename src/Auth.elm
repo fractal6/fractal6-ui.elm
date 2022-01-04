@@ -10,7 +10,6 @@ import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
-import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ModalAuth(..))
 import ModelSchema exposing (UserCtx)

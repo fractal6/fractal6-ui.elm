@@ -1,5 +1,6 @@
 module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors)
@@ -25,7 +26,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -1231,7 +1231,7 @@ viewVisibility op model =
                                     ( "icon-lock", T.visibilitySeccret )
                     in
                     div
-                        [ class "card column is-paddingless m-3 is-w"
+                        [ class "card has-border column is-paddingless m-3 is-w"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeVisibility x)
                         ]
@@ -1270,7 +1270,7 @@ viewCircleAuthority op model =
                                     ( "icon-", T.authAgile )
                     in
                     div
-                        [ class "card column is-paddingless m-3 is-w"
+                        [ class "card has-border column is-paddingless m-3 is-w"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeMode x)
                         ]
@@ -1304,7 +1304,7 @@ viewRoleAuthority op model =
                             "icon-user has-text-" ++ roleColor x
                     in
                     div
-                        [ class "card column is-paddingless m-3 is-w"
+                        [ class "card has-border column is-paddingless m-3 is-w"
                         , attribute "style" "min-width: 150px;"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeRoleType x)

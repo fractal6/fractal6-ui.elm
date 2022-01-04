@@ -516,7 +516,7 @@ viewQuickHelp op (State model) =
                                             , section [ class "acc" ]
                                                 [ label [ class "acc-title", for did ] [ textH task.header ]
                                                 , label [ class "acc-close", for "acc-close" ] []
-                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown "is-dark" ]
+                                                , div [ class "acc-content" ] [ task.content |> upH |> renderMarkdown "is-light" ]
                                                 ]
                                             ]
                                         )

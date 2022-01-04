@@ -2031,7 +2031,7 @@ viewComment c model =
                                 div [ class "help is-italic" ] [ text "No message provided." ]
 
                             message ->
-                                renderMarkdown "is-light is-human" message
+                                renderMarkdown "is-human" message
                         ]
                     ]
             ]
@@ -2078,7 +2078,7 @@ viewUpdateInput uctx comment form result =
                                 []
 
                         Preview ->
-                            div [] [ renderMarkdown "is-light is-human" message, hr [ class "has-background-border-light" ] [] ]
+                            div [] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
                     ]
                 ]
             , case result of
@@ -2168,7 +2168,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
+                                    div [] [ renderMarkdown "is-human mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
                             ]
                         ]
                     , case result of
@@ -2206,7 +2206,7 @@ viewCommentInput uctx tension form result viewMode =
 
 viewJoinNeeded : NodeFocus -> Html Msg
 viewJoinNeeded focus =
-    div [ class "box has-background-primary" ]
+    div [ class "box has-background-primary has-text-light" ]
         [ p []
             [ button
                 [ class "button is-small"

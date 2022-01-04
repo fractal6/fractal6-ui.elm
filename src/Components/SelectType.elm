@@ -1,5 +1,6 @@
 module Components.SelectType exposing (Msg(..), State, init, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -13,7 +14,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -374,7 +374,7 @@ viewModalContent op (State model) =
                         in
                         div [ class "level-item" ]
                             [ div
-                                [ class <| "button " ++ tensionTypeColor "background" tensionType
+                                [ class <| "button has-text-light " ++ tensionTypeColor "background" tensionType
                                 , classList [ ( "is-active", isActive ), ( "is-selected", isActive ) ]
                                 , onClick (OnSetType tensionType)
                                 ]

@@ -796,7 +796,7 @@ viewComment op c isAuthor =
                                 div [ class "is-italic" ] [ text "No description provided." ]
 
                             message ->
-                                renderMarkdown "is-light" message
+                                renderMarkdown "is-human" message
                         ]
                     ]
             ]
