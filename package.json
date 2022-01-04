@@ -33,6 +33,7 @@
   "author": "Adrien Dulac",
   "license": "GPLv2",
   "dependencies": {
+    "@bulvar/bulma": "^0.9.4",
     "@creativebulma/bulma-badge": "^1.0.1",
     "@creativebulma/bulma-tagsinput": "^1.0.3",
     "@creativebulma/bulma-tooltip": "^1.2.0",

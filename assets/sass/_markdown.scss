@@ -1,0 +1,69 @@
+
+.markdown-body {
+    pre, code {
+        @include defaultFontFace;
+        font-size: 14px;
+        max-height: 400px;
+        overflow-y: auto;
+        border-radius: 5px;
+
+        color: currentColor;
+        background-color: var(--code-color) !important;
+    }
+
+    a {
+        color: var(--info) !important;
+        text-decoration: none !important;
+    }
+    a:hover {
+        text-decoration: underline !important;
+    }
+    a:visited {
+        color: var(--info-light);
+    }
+
+    blockquote {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      background: inherit;
+      font-weight: 600;
+      font-style: italic;
+      border-color: var(--is-discrete);
+      //filter: invert(25%);
+    }
+
+    li input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    li p {
+      // checkbox are defined before <p> (dillonkeans,)
+      display: inline;
+    }
+    strong {
+        font-weight: 600;
+        color: var(--is-highlight);
+    }
+}
+
+//.markdown-body.is-light {
+//    // Default in the dark mode
+//}
+//
+//.markdown-body.is-dark {
+//    color: #111 !important;
+//    h1, h2, h3, h4, h5, h6, strong {
+//        color: #111 !important;
+//    }
+//    pre, code, blockquote {
+//        color: #fff !important;
+//    }
+//}
+
+.box {// background of box is equal of $code-color.
+    .markdown-body {
+        pre, code {
+            background-color: var(--code-color-light) !important;
+        }
+    }
+}
+

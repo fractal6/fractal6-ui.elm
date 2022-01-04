@@ -129,9 +129,9 @@ userButton op =
                         [ A.icon1 "icon-user" (upH T.profile) ]
                     , a [ class "navbar-item", href "#" ]
                         [ A.icon1 "icon-tool" (upH T.settings) ]
-
-                    --, hr [ class "navbar-divider" ] []
-                    --, a [ id "themeButton_port", class "navbar-item", href "#" ] [ i [ class "icon-adjust fa-fw" ] [], text (T.space_ ++ " Toggle dark theme") ]
+                    , hr [ class "navbar-divider" ] []
+                    , a [ id "themeTrigger", class "navbar-item", href "#" ]
+                        [ A.icon1 "icon-moon" "Toggle color theme" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]
                         [ A.icon1 "icon-power" (upH T.signout) ]

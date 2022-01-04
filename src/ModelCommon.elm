@@ -304,7 +304,7 @@ initLabelNodeForm user nameid =
                 initUserctx
     , id = ""
     , nameid = nameid
-    , post = Dict.empty
+    , post = Dict.fromList [ ( "color", "#dddddd" ) ]
     }
 
 

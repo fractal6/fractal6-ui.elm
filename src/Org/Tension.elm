@@ -2078,7 +2078,7 @@ viewUpdateInput uctx comment form result =
                                 []
 
                         Preview ->
-                            div [] [ renderMarkdown "is-light is-human" message, hr [] [] ]
+                            div [] [ renderMarkdown "is-light is-human" message, hr [ class "has-background-border-light" ] [] ]
                     ]
                 ]
             , case result of
@@ -2168,7 +2168,7 @@ viewCommentInput uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [] [] ]
+                                    div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
                             ]
                         ]
                     , case result of

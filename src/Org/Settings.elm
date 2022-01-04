@@ -27,7 +27,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -966,10 +966,9 @@ viewSettingsContent model =
 viewLabels : Model -> Html Msg
 viewLabels model =
     div [ id "labelsTable" ]
-        [ h2 [ class "subtitle has-text-weight-semibold" ]
-            [ textH T.labels
-            , button [ class "button is-success is-pulled-right", onClick AddLabel ] [ textT T.newLabel ]
-            , br [] []
+        [ div [ class "level" ]
+            [ h2 [ class "subtitle" ] [ textH T.labels ]
+            , button [ class "button is-success level-right", onClick AddLabel ] [ textT T.newLabel ]
             ]
         , if model.label_add then
             viewLabelAddBox model
@@ -984,7 +983,7 @@ viewLabels model =
                 else
                     table [ class "table is-fullwidth" ]
                         [ thead []
-                            [ tr [ class "has-background-header" ]
+                            [ tr []
                                 [ th [] [ textH T.name ]
                                 , th [] [ textH T.description ]
                                 , th [] [ text "" ]
@@ -1003,7 +1002,7 @@ viewLabels model =
                                                 n_nodes =
                                                     withDefault 0 d.n_nodes
                                             in
-                                            [ td [] [ viewLabel "s-medium" (Label d.id d.name d.color) ]
+                                            [ td [] [ viewLabel "" (Label d.id d.name d.color) ]
                                             , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                             , td [ attribute "style" "min-width: 9.4rem;" ]
                                                 [ if n_nodes > 1 then

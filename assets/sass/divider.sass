@@ -15,7 +15,7 @@ $divider-width: 5px !default
     font-size: $divider-font-size
     font-weight: $weight-semibold
     letter-spacing: .5px
-    margin: $divider-margin-size $size-small
+    margin: $divider-margin-size var(--size-small)
 
     &::after,
     &::before
@@ -43,7 +43,7 @@ $divider-width: 5px !default
 
     &.is-vertical
         flex-direction: column
-        margin: $size-small $divider-margin-size
+        margin: var(--size-small) $divider-margin-size
 
         &::after,
         &::before
@@ -60,7 +60,7 @@ $divider-width: 5px !default
 
     &.is-vertical2
         flex-direction: column
-        margin: $size-small $divider-margin-size
+        margin: var(--size-small) $divider-margin-size
 
         &::after,
         &::before
@@ -73,17 +73,17 @@ $divider-width: 5px !default
         &::before
             margin-right: 0
 
-    @each $name, $pair in $colors
-        $color: nth($pair, 1)
-        &.is-#{$name}
-            &::after,
-            &::before
-                background-color: $color
+    //@each $name, $pair in $colors
+    //    $color: nth($pair, 1)
+    //    &.is-#{$name}
+    //        &::after,
+    //        &::before
+    //            background-color: $color
 
-            // If light and dark colors are provided
-            @if length($pair) >= 4
-                $color-light: nth($pair, 3)
-                &.is-light
-                    &::after,
-                    &::before
-                        background-color: $color-light
+    //        // If light and dark colors are provided
+    //        @if length($pair) >= 4
+    //            $color-light: nth($pair, 3)
+    //            &.is-light
+    //                &::after,
+    //                &::before
+    //                    background-color: $color-light

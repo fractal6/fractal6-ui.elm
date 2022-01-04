@@ -488,10 +488,14 @@ viewOrgaMedia user root =
              ]
                 ++ (case user of
                         LoggedIn uctx ->
-                            [ hr [] []
+                            let
+                                roles =
+                                    uctx.roles
+                                        |> List.filter (\r -> r.role_type /= RoleType.Member && nid2rootid r.nameid == root.nameid)
+                            in
+                            [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
-                                (uctx.roles
-                                    |> List.filter (\r -> r.role_type /= RoleType.Member && nid2rootid r.nameid == root.nameid)
+                                (roles
                                     |> List.map
                                         (\r ->
                                             a

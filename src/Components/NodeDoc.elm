@@ -402,7 +402,7 @@ viewMandateSubSection name maybePara =
         Just para ->
             div [ class "subSection" ]
                 [ div [ class "label" ] [ text name ]
-                , p [ class "" ] [ renderMarkdown "is-light is-human" para ]
+                , p [ class "mt-3" ] [ renderMarkdown "is-light is-human" para ]
                 ]
 
         Nothing ->

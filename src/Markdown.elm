@@ -15,7 +15,7 @@ renderMarkdown style message =
             |> Result.andThen (\ast -> Markdown.Renderer.render Markdown.Renderer.defaultHtmlRenderer ast)
     of
         Ok rendered ->
-            div [ class ("content markdown " ++ style) ] rendered
+            div [ class ("content markdown-body " ++ style) ] rendered
 
         Err errors ->
             text errors

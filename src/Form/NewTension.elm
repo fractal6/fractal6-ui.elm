@@ -1153,7 +1153,7 @@ viewTension op (State model) =
                                                 []
 
                                         Preview ->
-                                            div [] [ renderMarkdown "is-dark mt-4 mx-3" message, hr [] [] ]
+                                            div [] [ renderMarkdown "is-dark mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
                                     ]
                                 , p [ class "help-label" ] [ textH txt.message_help ]
                                 , br [] []

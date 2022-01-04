@@ -135,6 +135,13 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
+    const $themeTrigger = $doc.querySelectorAll('#themeTrigger');
+    if ($themeTrigger.length > 0) {
+        $themeTrigger.forEach( el => {
+            setupHandler("click", triggerTheme, el, el, app);
+        });
+    }
+
     //
     // Activate autofocus
     //
@@ -470,3 +477,18 @@ function triggerHelp(e, el, app) {
 function triggerNotif(e, el, app) {
     //app.ports.triggerNotifFromJs.send(null)
 }
+
+function triggerTheme(e, el, app) {
+    if (document.documentElement.classList.contains("dark")) {
+        document.documentElement.className = "light";
+        return
+    } else if (document.documentElement.classList.contains("light")) {
+        document.documentElement.className = "dark";
+        return
+    }
+    // Assume default is dark
+    document.documentElement.className = "light";
+
+    //localStorage.setItem('theme', theme);
+}
+

@@ -1,6 +1,5 @@
 // pull in desired CSS/SASS files
-require( '../assets/sass/dark.scss' );
-//require( '../assets/sass/light.scss' );
+require( '../assets/sass/main.scss' );
 
 // JS entry point
 require( '../assets/js/ports.js' )
