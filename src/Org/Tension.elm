@@ -420,7 +420,7 @@ init global flags =
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
-            , isSubscribed = Loading
+            , isSubscribed = fromMaybeData global.session.isSubscribed Loading
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionPatchForm tid global.session.user
@@ -682,7 +682,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
 
                 _ ->
-                    ( { model | isSubscribed = result }, Cmd.none, Cmd.none )
+                    ( { model | isSubscribed = result }, Cmd.none, send (UpdateSessionSubscribe (withMaybeData result)) )
 
         GotTensionComments result ->
             ( { model | tension_comments = result }, Cmd.none, Ports.bulma_driver "" )

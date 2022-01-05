@@ -110,6 +110,7 @@ type Msg
     | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
+    | UpdateSessionSubscribe (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionScreen Screen
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
@@ -248,8 +249,8 @@ update msg model =
         UpdateSessionFocus data ->
             -- @here @warning: this Msg has side effect. It reset some session data, in order
             -- to avoid glitch or bad UX (seeing uncoherent tensions data) when navigating app.
-            -- * teset tensions data,
-            -- * reset panel data
+            -- * reset Tensions and Tension page data.
+            -- * reset Panel data.
             let
                 session =
                     model.session
@@ -358,6 +359,13 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | isAdmin = data } }, Cmd.none )
+
+        UpdateSessionSubscribe data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | isSubscribed = data } }, Cmd.none )
 
         UpdateSessionWindow data ->
             let
