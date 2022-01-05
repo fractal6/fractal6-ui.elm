@@ -128,7 +128,8 @@ tensionEventPayload =
         |> with Fractal.Object.Event.event_type
         |> with
             (Fractal.Object.Event.tension identity
-                (SelectionSet.map (\x -> { receiver = x })
+                (SelectionSet.map2 (\a b -> { id = a, receiver = b })
+                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
                     (Fractal.Object.Tension.receiver identity pNodePayload)
                 )
             )
@@ -144,7 +145,8 @@ contractEventPayload =
         |> with (Fractal.Object.Contract.event identity <| SelectionSet.map (\x -> { event_type = x }) Fractal.Object.EventFragment.event_type)
         |> with
             (Fractal.Object.Contract.tension identity
-                (SelectionSet.map (\x -> { receiver = x })
+                (SelectionSet.map2 (\a b -> { id = a, receiver = b })
+                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
                     (Fractal.Object.Tension.receiver identity pNodePayload)
                 )
             )

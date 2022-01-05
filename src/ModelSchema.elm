@@ -516,7 +516,7 @@ type alias EventNotif =
     , createdAt : String
     , createdBy : Username
     , event_type : TensionEvent.TensionEvent
-    , tension : { receiver : PNode }
+    , tension : { id : String, receiver : PNode }
     }
 
 
@@ -526,7 +526,7 @@ type alias ContractNotif =
     , createdBy : Username
     , contract_type : ContractType.ContractType
     , event : { event_type : TensionEvent.TensionEvent }
-    , tension : { receiver : PNode }
+    , tension : { id : String, receiver : PNode }
     }
 
 

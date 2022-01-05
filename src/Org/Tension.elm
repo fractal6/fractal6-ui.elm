@@ -173,6 +173,7 @@ type alias Model =
     , tensionid : String
     , activeTab : TensionTab
     , actionView : ActionView
+    , jumpTo : Maybe String
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
@@ -415,6 +416,7 @@ init global flags =
             , tensionid = tid
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
+            , jumpTo = Dict.get "goto" query |> Maybe.map List.head |> withDefault Nothing
             , path_data = fromMaybeData global.session.path_data Loading
             , tension_head = fromMaybeData global.session.tension_head Loading
             , tension_comments = Loading
@@ -600,7 +602,7 @@ update global message model =
                                     getTensionRights (uctxFromUser global.session.user) model.tension_head result
                             in
                             ( { model | path_data = Success newPath, isTensionAdmin = True }
-                            , Cmd.none
+                            , Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
                                 , send (UpdateSessionAdmin (Just isAdmin))
@@ -1960,7 +1962,7 @@ viewComments u t model =
                         (\x ->
                             if x.n > 0 then
                                 div
-                                    [ class "button is-small  actionComment m-4"
+                                    [ class "button is-small actionComment m-4"
                                     , attribute "style" "left:10%;"
                                     , onClick (ExpandEvent x.i)
                                     ]
@@ -1986,7 +1988,7 @@ viewComments u t model =
 
 viewComment : Comment -> Model -> Html Msg
 viewComment c model =
-    div [ class "media section is-paddingless" ]
+    div [ id c.createdAt, class "media section is-paddingless" ]
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 c.createdBy.username ]
         , div
             [ class "media-content"
@@ -2220,60 +2222,68 @@ viewJoinNeeded focus =
 
 viewEvent : Time.Posix -> Event -> TensionHead -> Html Msg
 viewEvent now event t =
-    case event.event_type of
-        TensionEvent.Reopened ->
-            viewEventStatus now event TensionStatus.Open
+    let
+        eventView =
+            case event.event_type of
+                TensionEvent.Reopened ->
+                    viewEventStatus now event TensionStatus.Open
 
-        TensionEvent.Closed ->
-            viewEventStatus now event TensionStatus.Closed
+                TensionEvent.Closed ->
+                    viewEventStatus now event TensionStatus.Closed
 
-        TensionEvent.TitleUpdated ->
-            viewEventTitle now event
+                TensionEvent.TitleUpdated ->
+                    viewEventTitle now event
 
-        TensionEvent.TypeUpdated ->
-            viewEventType now event
+                TensionEvent.TypeUpdated ->
+                    viewEventType now event
 
-        TensionEvent.Visibility ->
-            viewEventVisibility now event
+                TensionEvent.Visibility ->
+                    viewEventVisibility now event
 
-        TensionEvent.Authority ->
-            viewEventAuthority now event t.action
+                TensionEvent.Authority ->
+                    viewEventAuthority now event t.action
 
-        TensionEvent.AssigneeAdded ->
-            viewEventAssignee now event True
+                TensionEvent.AssigneeAdded ->
+                    viewEventAssignee now event True
 
-        TensionEvent.AssigneeRemoved ->
-            viewEventAssignee now event False
+                TensionEvent.AssigneeRemoved ->
+                    viewEventAssignee now event False
 
-        TensionEvent.LabelAdded ->
-            viewEventLabel now event True
+                TensionEvent.LabelAdded ->
+                    viewEventLabel now event True
 
-        TensionEvent.LabelRemoved ->
-            viewEventLabel now event False
+                TensionEvent.LabelRemoved ->
+                    viewEventLabel now event False
 
-        TensionEvent.BlobPushed ->
-            viewEventPushed now event t.action
+                TensionEvent.BlobPushed ->
+                    viewEventPushed now event t.action
 
-        TensionEvent.BlobArchived ->
-            viewEventArchived now event t.action True
+                TensionEvent.BlobArchived ->
+                    viewEventArchived now event t.action True
 
-        TensionEvent.BlobUnarchived ->
-            viewEventArchived now event t.action False
+                TensionEvent.BlobUnarchived ->
+                    viewEventArchived now event t.action False
 
-        TensionEvent.UserJoined ->
-            viewEventUserJoined now event t.action
+                TensionEvent.UserJoined ->
+                    viewEventUserJoined now event t.action
 
-        TensionEvent.UserLeft ->
-            viewEventUserLeft now event t.action
+                TensionEvent.UserLeft ->
+                    viewEventUserLeft now event t.action
 
-        TensionEvent.Moved ->
-            viewEventMoved now event
+                TensionEvent.Moved ->
+                    viewEventMoved now event
 
-        _ ->
-            text ""
+                _ ->
+                    []
+    in
+    if eventView == [] then
+        text ""
+
+    else
+        div [ id event.createdAt, class "media is-paddingless actionComment" ] eventView
 
 
-viewEventStatus : Time.Posix -> Event -> TensionStatus.TensionStatus -> Html Msg
+viewEventStatus : Time.Posix -> Event -> TensionStatus.TensionStatus -> List (Html Msg)
 viewEventStatus now event status =
     let
         ( actionIcon, actionText ) =
@@ -2284,72 +2294,68 @@ viewEventStatus now event status =
                 TensionStatus.Closed ->
                     ( "icon-alert-circle", T.closed )
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
-        , div [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
-            ]
+    [ span [ class "media-left" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
+    , span [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventTitle : Time.Posix -> Event -> Html Msg
+viewEventTitle : Time.Posix -> Event -> List (Html Msg)
 viewEventTitle now event =
     let
         icon =
             A.icon "icon-edit-2"
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.title ], text (formatDate now event.createdAt) ]
-            , span [ class "ml-3" ]
-                [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
-                , span [ class "right-arrow" ] []
-                , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-                ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.title ], text (formatDate now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
+            , span [ class "right-arrow" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
+    ]
 
 
-viewEventType : Time.Posix -> Event -> Html Msg
+viewEventType : Time.Posix -> Event -> List (Html Msg)
 viewEventType now event =
     let
         icon =
             A.icon "icon-edit-2"
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.type_ ], text (formatDate now event.createdAt) ]
-            , span [ class "ml-3" ]
-                [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
-                , span [ class "right-arrow" ] []
-                , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
-                ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.type_ ], text (formatDate now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
+            , span [ class "right-arrow" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
             ]
         ]
+    ]
 
 
-viewEventVisibility : Time.Posix -> Event -> Html Msg
+viewEventVisibility : Time.Posix -> Event -> List (Html Msg)
 viewEventVisibility now event =
     let
         icon =
             A.icon "icon-lock"
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.visibility ], text (formatDate now event.createdAt) ]
-            , span [ class "ml-3" ]
-                [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-                , span [ class "right-arrow" ] []
-                , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-                ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.visibility ], text (formatDate now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
+            , span [ class "right-arrow" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
+    ]
 
 
-viewEventAuthority : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventAuthority : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventAuthority now event action =
     let
         ( icon, eventText ) =
@@ -2363,20 +2369,19 @@ viewEventAuthority now event action =
                 _ ->
                     ( A.icon "icon-key", "unknown action" )
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text eventText ], text (formatDate now event.createdAt) ]
-            , span [ class "ml-3" ]
-                [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-                , span [ class "right-arrow" ] []
-                , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
-                ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text eventText ], text (formatDate now event.createdAt) ]
+        , span [ class "ml-3" ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
+            , span [ class "right-arrow" ] []
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
+    ]
 
 
-viewEventAssignee : Time.Posix -> Event -> Bool -> Html Msg
+viewEventAssignee : Time.Posix -> Event -> Bool -> List (Html Msg)
 viewEventAssignee now event isNew =
     let
         icon =
@@ -2389,17 +2394,16 @@ viewEventAssignee now event isNew =
             else
                 ( T.unassigned, withDefault "" event.old )
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <|
-                List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate now event.createdAt) ]
-            ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewUsernameLink value, text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventLabel : Time.Posix -> Event -> Bool -> Html Msg
+viewEventLabel : Time.Posix -> Event -> Bool -> List (Html Msg)
 viewEventLabel now event isNew =
     let
         icon =
@@ -2415,31 +2419,29 @@ viewEventLabel now event isNew =
         label =
             Label "" (SE.leftOfBack "§" value) (SE.rightOfBack "§" value |> Just)
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <|
-                List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text (formatDate now event.createdAt) ]
-            ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], viewLabel "" label, text "label", text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventPushed : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventPushed : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventPushed now event action_m =
     let
         action =
             withDefault TensionAction.NewRole action_m
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ A.icon "icon-share" ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
-            ]
+    [ div [ class "media-left" ] [ A.icon "icon-share" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventArchived : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> Html Msg
+viewEventArchived : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Bool -> List (Html Msg)
 viewEventArchived now event action_m isArchived =
     let
         action =
@@ -2452,29 +2454,27 @@ viewEventArchived now event action_m isArchived =
             else
                 ( i [ class "icon-archive icon-is-slashed" ] [], T.unarchived )
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ icon ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text (formatDate now event.createdAt) ]
-            ]
+    [ div [ class "media-left" ] [ icon ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventUserJoined : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventUserJoined : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventUserJoined now event action_m =
     let
         action_txt =
             "the organisation"
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate now event.createdAt) ]
-            ]
+    [ div [ class "media-left" ] [ A.icon "icon-log-in" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.joined ], text action_txt, text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventUserLeft : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> Html Msg
+viewEventUserLeft : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
 viewEventUserLeft now event action_m =
     let
         action =
@@ -2493,36 +2493,34 @@ viewEventUserLeft now event action_m =
                 Nothing ->
                     actionNameStr action
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
-        , div [ class "media-content" ]
-            [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate now event.createdAt) ]
-            ]
+    [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.left ], text action_txt, text (formatDate now event.createdAt) ]
         ]
+    ]
 
 
-viewEventMoved : Time.Posix -> Event -> Html Msg
+viewEventMoved : Time.Posix -> Event -> List (Html Msg)
 viewEventMoved now event =
     let
         action_txt =
             "tension"
     in
-    div [ class "media section actionComment is-paddingless is-small" ]
-        [ div [ class "media-left" ] [ span [ class "right-arrow2 pl-0 pr-0 mr-0" ] [] ]
-        , div [ class "media-content" ]
-            [ span [] <|
-                List.intersperse (text " ")
-                    [ viewUsernameLink event.createdBy.username
-                    , strong [] [ text T.moved ]
-                    , text action_txt
-                    , text T.from
-                    , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                    , text T.to
-                    , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
-                    , text (formatDate now event.createdAt)
-                    ]
-            ]
+    [ div [ class "media-left" ] [ span [ class "right-arrow2 pl-0 pr-0 mr-0" ] [] ]
+    , div [ class "media-content" ]
+        [ span [] <|
+            List.intersperse (text " ")
+                [ viewUsernameLink event.createdBy.username
+                , strong [] [ text T.moved ]
+                , text action_txt
+                , text T.from
+                , event.old |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
+                , text T.to
+                , event.new |> Maybe.map (\nid -> viewNodeRefShort OverviewBaseUri nid) |> withDefault (text "unknown")
+                , text (formatDate now event.createdAt)
+                ]
         ]
+    ]
 
 
 

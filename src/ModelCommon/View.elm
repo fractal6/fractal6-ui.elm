@@ -109,7 +109,9 @@ mediaTension now focus tension showStatus showRecip size navigate =
     in
     div
         [ class ("media mediaBox is-hoverable " ++ default_size)
-        , onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
+
+        --, onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
+        --, href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
         ]
         [ div [ class "media-left mr-3" ]
             [ div
@@ -121,7 +123,7 @@ mediaTension now focus tension showStatus showRecip size navigate =
         , div [ class "media-content" ]
             [ div [ class "content mb-0" ]
                 [ a
-                    [ class ("is-human " ++ title_size)
+                    [ class ("is-human discrete-link " ++ title_size)
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
@@ -140,11 +142,11 @@ mediaTension now focus tension showStatus showRecip size navigate =
                             text ""
                     , if n_comments > 1 then
                         a
-                            [ class "tooltip has-tooltip-arrow level-item"
+                            [ class "tooltip has-tooltip-arrow level-item discrete-link"
                             , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
                             , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                             ]
-                            [ A.icon1 "icon-message-square icon-sm" "", text (String.fromInt (n_comments - 1)) ]
+                            [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
 
                       else
                         text ""
@@ -446,7 +448,7 @@ viewOrgaMedia user root =
         n_guests =
             root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_guests) |> withDefault 0
     in
-    div [ class "media box mediaBox" ]
+    div [ class "media mediaBox box" ]
         [ div [ class "media-left" ] [ viewOrga True root.nameid ]
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
@@ -630,7 +632,7 @@ viewActionIconLink action org tid words cls =
             getTensionCharac action
     in
     a
-        [ class "actionLink tooltip has-tooltip-arrow"
+        [ class "actionLink tooltip has-tooltip-arrow discrete-link"
         , classList [ ( "has-text-warning", charac.action_type == ARCHIVE ) ]
         , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
         , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
@@ -644,31 +646,31 @@ viewActionIcon : TensionAction.TensionAction -> Html msg
 viewActionIcon action =
     case action of
         TensionAction.NewRole ->
-            A.icon0 "icon-leaf"
+            A.icon1 "icon-leaf" ""
 
         TensionAction.NewCircle ->
-            A.icon0 "icon-git-branch"
+            A.icon1 "icon-git-branch" ""
 
         TensionAction.NewMd ->
-            A.icon0 "icon-markdown"
+            A.icon1 "icon-markdown" ""
 
         TensionAction.EditRole ->
-            A.icon0 "icon-leaf"
+            A.icon1 "icon-leaf" ""
 
         TensionAction.EditCircle ->
-            A.icon0 "icon-git-branch"
+            A.icon1 "icon-git-branch" ""
 
         TensionAction.EditMd ->
-            A.icon0 "icon-markdown"
+            A.icon1 "icon-markdown" ""
 
         TensionAction.ArchivedCircle ->
-            A.icon0 "icon-archive"
+            A.icon1 "icon-archive" ""
 
         TensionAction.ArchivedRole ->
-            A.icon0 "icon-archive"
+            A.icon1 "icon-archive" ""
 
         TensionAction.ArchivedMd ->
-            A.icon0 "icon-archive"
+            A.icon1 "icon-archive" ""
 
 
 action2SourceStr : Maybe TensionAction.TensionAction -> String

@@ -25,7 +25,9 @@ view op =
                 [ a [ class "navbar-item", href "/" ]
                     --[ img [ alt "Fractal", attribute "height" "28", attribute "width" "112", src "https://bulma.io/images/bulma-logo.png" ] [] ]
                     [ A.logo0 "white"
-                    , span [ class "has-text-warning", attribute "style" "padding-top: 10px; font-size: 0.65rem; margin-left: -2px;" ] [ text "Alpha" ]
+
+                    --, span [ class "has-text-orange", attribute "style" "padding-top: 10px; font-size: 0.65rem; margin-left: -2px;" ] [ text "Alpha" ]
+                    , span [ class "has-text-orange", attribute "style" "position:relative; top: -10px; font-size: 0.65rem;" ] [ text "Beta" ]
                     ]
                 , div
                     [ class "burger navbar-burger"

@@ -236,6 +236,12 @@ hr {
 .do-clear {
     animation: fadeOut 0.5s;
 }
+.discrete-link {
+    color: inherit;
+    &:hover {
+        color: var(--link);
+    }
+}
 
 .is-flex-grow {
 	flex-grow: 1 !important;
@@ -488,12 +494,16 @@ hr {
             padding: 0.5rem 0.7rem;
         }
     }
+
+    &.box.has-background-light {
+        label {color: var(--grey);}
+        color: black;
+    }
+    &.box.has-background-danger {
+        color: white;
+    }
 }
 
-.box.has-background-light {
-    label {color: var(--grey);}
-    color: black;
-}
 
 .bulma-issue-33 { // found in the archived repo bulma-tooltip of wikiki
     @include desktop {
@@ -1203,6 +1213,7 @@ hr {
 }
 
 .mediaBox {
+    cursor: initial;
     &.is-hoverable:hover {
         background-color: var(--mediaBox-item-hover-background);
     }
@@ -1220,10 +1231,6 @@ hr {
                 margin-right: $size-small !important;
             }
             a { // right icons
-                color: var(--text) !important;
-                &:hover {
-                    color: var(--link) !important;
-                }
                 &.is-size-7 {
                     //font-size: 0.88rem !important;
                 }
@@ -1245,7 +1252,7 @@ hr {
                 //}
             }
         }
-        a:hover {
+        .has-text-weight-light a:hover {
             color: var(--link) !important;
             font-weight: 500;
         }
@@ -1270,16 +1277,6 @@ tr.mediaBox {
         margin-right: 5px !important;
         margin-bottom: 5px !important; // doesn't work
     }
-}
-
-a.actionLink {
-    color: inherit;
-    &.has-text-warning {
-        color: var(--orange) !important;
-    }
-    //&:hover {
-    //    color: var(--link) !important;
-    //}
 }
 
 .marginTensionStatus {
@@ -1980,6 +1977,12 @@ a.actionLink {
         cursor: pointer;
         .is-h, &.is-h {
             color: var(--is-highlight) !important;
+        }
+        &.content,
+        .content,
+        &.content strong
+        {
+            color: var(--link) !important;
         }
     }
 }
