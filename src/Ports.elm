@@ -3,6 +3,7 @@ port module Ports exposing (..)
 import Codecs
     exposing
         ( LookupResult
+        , WindowPos
         , labelDecoder
         , labelsEncoder
         , localGraphDecoder
@@ -15,6 +16,7 @@ import Codecs
         , userDecoder
         , userEncoder
         , usersEncoder
+        , windowEncoder
         )
 import Components.Loading exposing (ModalData)
 import Dict exposing (Dict)
@@ -229,9 +231,11 @@ saveUserCtx : UserCtx -> Cmd msg
 saveUserCtx userCtx =
     let
         -- Stringigy a Dict
-        --dataD = Dict.fromList [ ( "key", "user_ctx" ++ userCtx.username ), ( "data", JE.encode 0 <| userCtxEncoder userCtx ) ]
+        --dataD = Dict.fromList [
+        --( "key", "user_ctx" ++ userCtx.username ),
+        --( "data", JE.encode 0 <| userCtxEncoder userCtx )
+        --]
         --datad = JE.dict identity JE.string dataD
-        --
         -- Turn the dict into Json string
         data =
             JE.object
@@ -254,10 +258,18 @@ loadUserCtx key =
         }
 
 
-removeUserCtx : UserCtx -> Cmd msg
-removeUserCtx userCtx =
+saveWindowpos : WindowPos -> Cmd msg
+saveWindowpos x =
     outgoing
-        { action = "REMOVE_USERCTX"
+        { action = "SAVE_WINDOWPOS"
+        , data = windowEncoder x
+        }
+
+
+removeSession : UserCtx -> Cmd msg
+removeSession userCtx =
+    outgoing
+        { action = "REMOVE_SESSION"
         , data = JE.string "user_ctx"
 
         --, data = JE.string <| "user_ctx" ++ userCtx.username

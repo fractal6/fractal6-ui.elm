@@ -234,7 +234,7 @@ update msg model =
         LoggedOutUser ->
             case model.session.user of
                 LoggedIn uctx ->
-                    ( { model | session = resetSession model.flags }, Ports.removeUserCtx uctx )
+                    ( { model | session = resetSession model.flags }, Ports.removeSession uctx )
 
                 LoggedOut ->
                     ( model, Cmd.none )
@@ -363,8 +363,6 @@ update msg model =
             let
                 session =
                     model.session
-
-                -- @debug: Save window_pos in localStorage ?
             in
             ( { model | session = { session | window_pos = data } }, Cmd.none )
 

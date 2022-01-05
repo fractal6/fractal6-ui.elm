@@ -479,16 +479,17 @@ function triggerNotif(e, el, app) {
 }
 
 function triggerTheme(e, el, app) {
+    var theme;
+    // Toggle theme color
     if (document.documentElement.classList.contains("dark")) {
-        document.documentElement.className = "light";
-        return
+        theme = "light";
     } else if (document.documentElement.classList.contains("light")) {
-        document.documentElement.className = "dark";
-        return
+        theme = "dark";
+    } else {
+        // Assume default is dark
+        theme = "light"
     }
-    // Assume default is dark
-    document.documentElement.className = "light";
-
-    //localStorage.setItem('theme', theme);
+    document.documentElement.className = theme;
+    localStorage.setItem('theme', theme);
 }
 

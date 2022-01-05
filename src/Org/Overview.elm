@@ -415,7 +415,7 @@ update global message model =
                 newWin =
                     { win | bottomLeft = win.topRight, topRight = win.bottomLeft }
             in
-            ( { model | window_pos = newWin }, Cmd.none, send (UpdateSessionWindow (Just newWin)) )
+            ( { model | window_pos = newWin }, Ports.saveWindowpos newWin, send (UpdateSessionWindow (Just newWin)) )
 
         -- Data queries
         GotOrga result ->

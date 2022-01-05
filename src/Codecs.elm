@@ -275,6 +275,14 @@ windowDecoder =
         (JD.field "topRight" JD.string)
 
 
+windowEncoder : WindowPos -> JE.Value
+windowEncoder w =
+    JE.object
+        [ ( "bottomLeft", JE.string w.bottomLeft )
+        , ( "topRight", JE.string w.topRight )
+        ]
+
+
 
 {-
    QuickDoc Decoder

@@ -328,8 +328,13 @@ const actions = {
     'LOAD_USERCTX' : (app, session, user_ctx_key) => {
         app.ports.loadUserCtxFromJs.send(JSON.parse(localStorage.getItem(user_ctx_key)));
     },
-    'REMOVE_USERCTX' : (app, session, user_ctx_key) => {
+    'SAVE_WINDOWPOS' : (app, session, data) => {
+        localStorage.setItem("window_pos", JSON.stringify(data));
+    },
+    'REMOVE_SESSION' : (app, session, user_ctx_key) => {
         localStorage.removeItem(user_ctx_key);
+        localStorage.removeItem("theme");
+        localStorage.removeItem("window_pos");
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/";
         app.ports.loggedOutOkFromJs.send(null);
     },
