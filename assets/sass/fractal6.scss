@@ -94,11 +94,14 @@ hr {
 .input,
 .textarea {
     transition: all 100ms ease;
-    &:not(.in-modal) {
-        color: var(--text) !important;
-        background-color: var(--input-background-color) !important;
+    &:focus {
+        border-color: var(--input-focus-border-color) !important;
+        background-color: var(--input-focus-background-color) !important;
+        &:hover {
+            border-color: var(--input-focus-border-color) !important;
+            background-color: var(--input-focus-background-color) !important;
+        }
     }
-
     &::placeholder {
         color: var(--input-placeholder-color) !important;
     }
@@ -109,7 +112,6 @@ hr {
     &:hover {
         border-color: var(--border-color-light);
     }
-
     &.is-disabled, &[disabled] {
         background-color: var(--input-disabled-background-color) !important;
     }
@@ -118,15 +120,6 @@ hr {
     border-color: var(--border-color);
     &:hover {
         border-color: var(--border-color);
-    }
-}
-.input:focus,
-.textarea:focus {
-    border-color: var(--input-focus-border-color);
-    background-color: var(--input-focus-background-color) !important;
-    &:hover {
-        border-color: var(--input-focus-border-color);
-        background-color: var(--input-focus-background-color) !important;
     }
 }
 
@@ -274,6 +267,13 @@ hr {
     font-weight: bold;
 }
 
+.is-text-aligned {
+    vertical-align: baseline;
+    .button {
+        vertical-align: baseline;
+    }
+}
+
 .button.is-selected {
     outline: 4px solid $grey;
     outline-style: outset;
@@ -373,13 +373,6 @@ hr {
     border-radius: 8px;
     min-width: 8px;
     box-shadow: none;
-}
-
-.box.is-light, .modal-card-body  {
-    // frac6 color for internal link. How compute ?
-    a {
-        color: var(--blue) !important;
-    }
 }
 
 .arrow {
@@ -503,7 +496,6 @@ hr {
         color: white;
     }
 }
-
 
 .bulma-issue-33 { // found in the archived repo bulma-tooltip of wikiki
     @include desktop {
@@ -1444,7 +1436,7 @@ tr.mediaBox {
 // Modal (Form)
 //
 
-.modal {
+.modal:not(#refreshAuthModal) {
     display: flex;
     visibility: hidden;
     cursor: initial; // when modal nested in a button for example (the case for Tooltip Action Panel)
@@ -1455,6 +1447,14 @@ tr.mediaBox {
     .textarea {
         color: var(--dark) !important;
         background-color: var(--white-light) !important;
+        &:focus {
+            border-color: var(--link2) !important;
+            background-color: var(--white-light) !important;
+            &:hover {
+                border-color: var(--link2) !important;
+                background-color: var(--white-light) !important;
+            }
+        }
     }
     .input:not([type="search"]),
     .textarea, li {
@@ -1464,15 +1464,6 @@ tr.mediaBox {
         }
         &::placeholder {
             color: var(--grey) !important;
-        }
-    }
-    .input:focus,
-    .textarea:focus {
-        border-color: var(--link2);
-        background-color: var(--white-light) !important;
-        &:hover {
-            border-color: var(--link2);
-            background-color: var(--white-light) !important;
         }
     }
 
@@ -1603,6 +1594,12 @@ tr.mediaBox {
     .message {
         .message-header {
             color: var(--grey-lightest) !important;
+        }
+    }
+
+    .field {
+        .label {
+            color: var(--grey);
         }
     }
 
@@ -1987,6 +1984,10 @@ tr.mediaBox {
     }
 }
 
+.is-h:hover {
+    cursor: pointer;
+}
+
 .button-light {
     &:hover {
         cursor: pointer !important;
@@ -2009,6 +2010,10 @@ tr.mediaBox {
 
     &.is-link:hover {
         color: var(--link);
+    }
+
+    &:active {
+        background-color: inherit;
     }
 }
 

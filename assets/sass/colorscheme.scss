@@ -224,8 +224,8 @@ $box-color: $text;
 $box-background-color: $hbc;
 
 // Input
-$input-background-color: lighten($white-dimmed, 25);
 $input-focus-background-color: lighten($white-dimmed, 25);
+$input-background-color: lighten($white-dimmed, 25);
 //$input-focus-background-color: lighten($white-dimmed, 25);
 $input-disabled-background-color: $grey-lighter;
 $input-disabled-color: $grey-lightest;
@@ -490,8 +490,8 @@ $box-color: $text;
 $box-background-color: $hbc;
 
 // Input
-$input-background-color: $darker-dimmed;
 $input-focus-background-color: $darker-dimmed;
+$input-background-color: $darker-dimmed;
 //$input-focus-background-color: darken($darker-dimmed, 5);
 $input-disabled-background-color: $grey-dark;
 $input-disabled-color: $grey;
