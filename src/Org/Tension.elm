@@ -5,6 +5,7 @@ import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel
+import Components.Comments exposing (viewComment, viewCommentInput)
 import Components.ContractsPage as ContractsPage
 import Components.DocToolBar as DocToolBar exposing (ActionView(..))
 import Components.HelperBar as HelperBar exposing (HelperBar)
@@ -31,9 +32,8 @@ import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.SelectType as SelectType
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
-import Extra exposing (ternary, toMapOfList)
+import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPD, onClickPD2)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
@@ -53,7 +53,6 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
-import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs
@@ -81,6 +80,7 @@ import ModelCommon.View
         , tensionTypeColor
         , viewActionIcon
         , viewActionIconLink
+        , viewJoinNeeded
         , viewLabel
         , viewLabels
         , viewNodeRefShort
@@ -443,7 +443,7 @@ init global flags =
             , publish_result = NotAsked
 
             -- Side Pane
-            , isTensionAdmin = global.session.isAdmin |> withDefault False
+            , isTensionAdmin = withDefault False global.session.isAdmin
             , isAssigneeOpen = False
             , assigneesPanel = UserSearchPanel.init tid AssignUser global.session.user
             , isLabelOpen = False
@@ -601,7 +601,7 @@ update global message model =
                                 isAdmin =
                                     getTensionRights (uctxFromUser global.session.user) model.tension_head result
                             in
-                            ( { model | path_data = Success newPath, isTensionAdmin = True }
+                            ( { model | path_data = Success newPath, isTensionAdmin = isAdmin }
                             , Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
@@ -789,7 +789,7 @@ update global message model =
                             if List.member TensionEvent.CommentPushed (List.map .event_type events) then
                                 case model.tension_comments of
                                     Success t ->
-                                        Success { t | comments = Just ((t.comments |> withDefault []) ++ (tp.comments |> withDefault [])) }
+                                        Success { t | comments = Just (withDefault [] t.comments ++ withDefault [] tp.comments) }
 
                                     other ->
                                         other
@@ -829,41 +829,29 @@ update global message model =
             let
                 form =
                     model.comment_form
-
-                newForm =
-                    { form | id = id }
             in
-            ( { model | comment_form = newForm }, Ports.focusOn "updateCommentInput", Cmd.none )
-
-        ChangeCommentPost field value ->
-            let
-                form =
-                    model.comment_form
-
-                newForm =
-                    { form | post = Dict.insert field value form.post }
-            in
-            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+            ( { model | comment_form = { form | id = id } }, Ports.focusOn "updateCommentInput", Cmd.none )
 
         CancelCommentPatch ->
             let
                 form =
                     model.comment_form
-
-                newForm =
-                    { form | id = "" }
             in
-            ( { model | comment_form = newForm, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | comment_form = { form | id = "" }, comment_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+
+        ChangeCommentPost field value ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | post = Dict.insert field value form.post } }, Cmd.none, Cmd.none )
 
         SubmitCommentPatch time ->
             let
                 form =
                     model.comment_form
-
-                newForm =
-                    { form | post = Dict.insert "updatedAt" (fromTime time) form.post }
             in
-            ( { model | comment_form = newForm, comment_result = LoadingSlowly }, send PushCommentPatch, Cmd.none )
+            ( { model | comment_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }, send PushCommentPatch, Cmd.none )
 
         CommentPatchAck result ->
             case parseErr result model.refresh_trial of
@@ -880,21 +868,14 @@ update global message model =
                                 Success t ->
                                     let
                                         comments =
-                                            t.comments |> withDefault []
+                                            withDefault [] t.comments
 
                                         n =
                                             comments
                                                 |> LE.findIndex (\c -> c.id == comment.id)
                                                 |> withDefault 0
-
-                                        newComments =
-                                            { t
-                                                | comments = Just (LE.setAt n comment comments)
-
-                                                --| comments = Just (List.take n comments ++ comment :: List.drop (n + 1) comments)
-                                            }
                                     in
-                                    Success newComments
+                                    Success { t | comments = Just (LE.setAt n comment comments) }
 
                                 other ->
                                     other
@@ -986,7 +967,7 @@ update global message model =
                                     let
                                         doc =
                                             NodeDoc.create model.tensionid global.session.user
-                                                |> NodeDoc.initBlob blobType (nodeFragmentFromTensionHead th)
+                                                |> NodeDoc.initBlob blobType (nodeFromTension th)
                                                 |> NodeDoc.edit
                                     in
                                     ( { model | nodeDoc = doc }, Cmd.none, Cmd.none )
@@ -996,7 +977,7 @@ update global message model =
                                     --let
                                     --    doc =
                                     --        MdDoc.create model.tensionid global.session.user
-                                    --            |> MdDoc.initBlob blobType (mdFromTensionHead th)
+                                    --            |> MdDoc.initBlob blobType (mdFromTension th)
                                     --            |> MdDoc.edit
                                     --in
                                     --( { model | mdDoc = doc }, Cmd.none, Cmd.none )
@@ -1511,11 +1492,8 @@ update global message model =
             let
                 form =
                     model.comment_form
-
-                newForm =
-                    { form | viewMode = viewMode }
             in
-            ( { model | comment_form = newForm }, Cmd.none, Cmd.none )
+            ( { model | comment_form = { form | viewMode = viewMode } }, Cmd.none, Cmd.none )
 
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
@@ -1795,7 +1773,6 @@ viewTension u t model =
                     ]
                 ]
             ]
-        , div [ class "block is-hidden-desktop" ] []
         , div [ class "columns is-centered is-variable is-4" ]
             [ div [ class "column is-9" ]
                 [ div [ class "tabs is-md" ]
@@ -1881,7 +1858,18 @@ viewComments u t model =
                         Nothing ->
                             case LE.getAt e.i comments of
                                 Just c ->
-                                    viewComment c model
+                                    let
+                                        op =
+                                            { doUpdate = DoUpdateComment
+                                            , doCancelComment = CancelCommentPatch
+                                            , doChangeViewMode = ChangeUpdateViewMode
+                                            , doChangePost = ChangeCommentPost
+                                            , doSubmit = Submit
+                                            , doEditComment = SubmitCommentPatch
+                                            , now = model.now
+                                            }
+                                    in
+                                    viewComment op c model.comment_form model.comment_result
 
                                 Nothing ->
                                     text ""
@@ -1895,15 +1883,24 @@ viewComments u t model =
                             in
                             case orgaRoles of
                                 [] ->
-                                    viewJoinNeeded model.node_focus
+                                    viewJoinNeeded DoJoinOrga model.node_focus
 
                                 _ ->
-                                    viewCommentInput uctx t model.tension_form model.tension_patch model.inputViewMode
+                                    let
+                                        opNew =
+                                            { doChangeViewMode = ChangeInputViewMode
+                                            , doChangePost = ChangeTensionPost
+                                            , doSubmit = Submit
+                                            , doSubmitComment = SubmitComment
+                                            , rows = 7
+                                            }
+                                    in
+                                    viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode
 
                         LoggedOut ->
-                            viewJoinNeeded model.node_focus
+                            viewJoinNeeded DoJoinOrga model.node_focus
             in
-            div [ class "tensionComments" ]
+            div [ class "comments" ]
                 [ allEvts
                     -- Filter events if there a above a given number.
                     -- If above, we keep track of the extra number of event
@@ -1972,7 +1969,7 @@ viewComments u t model =
                                 viewCommentOrEvent x
                         )
                     |> div []
-                , hr [ class "has-background-border is-2" ] []
+                , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
 
@@ -1984,240 +1981,6 @@ viewComments u t model =
 
         other ->
             text ""
-
-
-viewComment : Comment -> Model -> Html Msg
-viewComment c model =
-    div [ id c.createdAt, class "media section is-paddingless" ]
-        [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 c.createdBy.username ]
-        , div
-            [ class "media-content"
-            , attribute "style" "width: 66.66667%;"
-            ]
-            [ if model.comment_form.id == c.id then
-                viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
-
-              else
-                div [ class "message" ]
-                    [ div [ class "message-header pl-1-mobile" ]
-                        [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
-                        , viewTensionDateAndUserC model.now c.createdAt c.createdBy
-                        , case c.updatedAt of
-                            Just updatedAt ->
-                                viewUpdated model.now updatedAt
-
-                            Nothing ->
-                                text ""
-                        , if c.createdBy.username == model.tension_form.uctx.username then
-                            div [ class "dropdown is-right is-pulled-right " ]
-                                [ div [ class "dropdown-trigger" ]
-                                    [ div
-                                        [ class "ellipsis"
-                                        , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
-                                        , attribute "aria-haspopup" "true"
-                                        ]
-                                        [ A.icon "icon-ellipsis-v" ]
-                                    ]
-                                , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
-                                    [ div [ class "dropdown-content p-0" ]
-                                        [ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ textH T.edit ] ] ]
-                                    ]
-                                ]
-
-                          else
-                            text ""
-                        ]
-                    , div [ class "message-body" ]
-                        [ case c.message of
-                            "" ->
-                                div [ class "help is-italic" ] [ text "No message provided." ]
-
-                            message ->
-                                renderMarkdown "is-human" message
-                        ]
-                    ]
-            ]
-        ]
-
-
-viewUpdateInput : UserCtx -> Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
-viewUpdateInput uctx comment form result =
-    let
-        message =
-            Dict.get "message" form.post |> withDefault comment.message
-
-        viewMode =
-            form.viewMode
-
-        isLoading =
-            result == LoadingSlowly
-
-        isSendable =
-            message /= comment.message
-    in
-    div [ class "message tensionCommentInput" ]
-        [ div [ class "message-header" ]
-            [ div [ class "tabs is-boxed is-small" ]
-                [ ul []
-                    [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Write), target "_blank" ] [ text "Write" ] ]
-                    , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeUpdateViewMode Preview), target "_blank" ] [ text "Preview" ] ]
-                    ]
-                ]
-            ]
-        , div [ class "message-body" ]
-            [ div [ class "field" ]
-                [ div [ class "control submitFocus" ]
-                    [ case viewMode of
-                        Write ->
-                            textarea
-                                [ id "updateCommentInput"
-                                , class "textarea defaultSubmit"
-                                , rows 7
-                                , placeholder (upH T.leaveComment)
-                                , value message
-                                , onInput (ChangeCommentPost "message")
-                                ]
-                                []
-
-                        Preview ->
-                            div [] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
-                    ]
-                ]
-            , case result of
-                Failure err ->
-                    viewGqlErrors err
-
-                _ ->
-                    text ""
-            , div [ class "field is-grouped is-grouped-right" ]
-                [ div [ class "control" ]
-                    [ div [ class "buttons" ]
-                        [ button
-                            [ class "button"
-                            , onClick CancelCommentPatch
-                            ]
-                            [ textH T.cancel ]
-                        , button
-                            [ class "button is-success"
-                            , classList [ ( "is-loading", isLoading ) ]
-                            , disabled (not isSendable)
-                            , onClick (Submit <| SubmitCommentPatch)
-                            ]
-                            [ textH T.updateComment ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-
-viewCommentInput : UserCtx -> TensionHead -> TensionPatchForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html Msg
-viewCommentInput uctx tension form result viewMode =
-    let
-        message =
-            Dict.get "message" form.post |> withDefault ""
-
-        isLoading =
-            result == LoadingSlowly
-
-        isSendable =
-            isPostSendable [ "message" ] form.post
-
-        doSubmit =
-            ternary isSendable [ onClick (Submit <| SubmitComment Nothing) ] []
-
-        submitCloseOpenTension =
-            case tension.status of
-                TensionStatus.Open ->
-                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Closed)) ]
-
-                TensionStatus.Closed ->
-                    [ onClick (Submit <| SubmitComment (Just TensionStatus.Open)) ]
-
-        closeOpenText =
-            case tension.status of
-                TensionStatus.Open ->
-                    ternary (message == "") "Close tension" "Close and comment"
-
-                TensionStatus.Closed ->
-                    ternary (message == "") "Reopen tension" "Reopen and comment"
-    in
-    div [ id "tensionCommentInput", class "media section is-paddingless tensionCommentInput" ]
-        [ div [ class "media-left" ] [ viewUser2 uctx.username ]
-        , div [ class "media-content" ]
-            [ div [ class "message" ]
-                [ div [ class "message-header" ]
-                    [ div [ class "tabs is-boxed is-small" ]
-                        [ ul []
-                            [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Write), target "_blank" ] [ text "Write" ] ]
-                            , li [ classList [ ( "is-active", viewMode == Preview ) ] ] [ a [ onClickPD2 (ChangeInputViewMode Preview), target "_blank" ] [ text "Preview" ] ]
-                            ]
-                        ]
-                    ]
-                , div [ class "message-body" ]
-                    [ div [ class "field" ]
-                        [ div [ class "control submitFocus" ]
-                            [ case viewMode of
-                                Write ->
-                                    textarea
-                                        [ id "commentInput"
-                                        , class "textarea defaultSubmit"
-                                        , rows 7
-                                        , placeholder "Leave a comment"
-                                        , value message
-                                        , onInput (ChangeTensionPost "message")
-                                        ]
-                                        []
-
-                                Preview ->
-                                    div [] [ renderMarkdown "is-human mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
-                            ]
-                        ]
-                    , case result of
-                        Failure err ->
-                            viewGqlErrors err
-
-                        _ ->
-                            text ""
-                    , div [ class "field is-grouped is-grouped-right" ]
-                        [ div [ class "control" ]
-                            [ div [ class "buttons" ]
-                                [ button
-                                    ([ class "button"
-                                     , classList [ ( "is-danger", tension.status == TensionStatus.Open ), ( "is-loading", isLoading && form.status /= Nothing ) ]
-                                     ]
-                                        ++ submitCloseOpenTension
-                                    )
-                                    [ text closeOpenText ]
-                                , button
-                                    ([ class "button is-success"
-                                     , classList [ ( "is-loading", isLoading && form.status == Nothing ) ]
-                                     , disabled (not isSendable)
-                                     ]
-                                        ++ doSubmit
-                                    )
-                                    [ text "Comment" ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-
-viewJoinNeeded : NodeFocus -> Html Msg
-viewJoinNeeded focus =
-    div [ class "box has-background-primary has-text-light" ]
-        [ p []
-            [ button
-                [ class "button is-small"
-                , onClick (DoJoinOrga focus.rootnameid)
-                ]
-                [ text "Join" ]
-            , text " this organisation to participate to this conversation."
-            ]
-        ]
 
 
 viewEvent : Time.Posix -> Event -> TensionHead -> Html Msg
@@ -2263,6 +2026,12 @@ viewEvent now event t =
 
                 TensionEvent.BlobUnarchived ->
                     viewEventArchived now event t.action False
+
+                TensionEvent.MemberLinked ->
+                    viewEventMemberLinked now event t.action
+
+                TensionEvent.MemberUnlinked ->
+                    viewEventMemberUnlinked now event t.action
 
                 TensionEvent.UserJoined ->
                     viewEventUserJoined now event t.action
@@ -2457,6 +2226,24 @@ viewEventArchived now event action_m isArchived =
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text (formatDate now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventMemberLinked : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberLinked now event action_m =
+    [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.hasBeen, strong [] [ text T.linked ], text T.toThisRole, text (formatDate now event.createdAt) ]
+        ]
+    ]
+
+
+viewEventMemberUnlinked : Time.Posix -> Event -> Maybe TensionAction.TensionAction -> List (Html Msg)
+viewEventMemberUnlinked now event action_m =
+    [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
+    , div [ class "media-content" ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.hasBeen, strong [] [ text T.unlinked ], text T.toThisRole, text (formatDate now event.createdAt) ]
         ]
     ]
 
@@ -2964,15 +2751,6 @@ viewJoinOrgaStep step =
 ---- Utils
 
 
-initCommentPatchForm : UserState -> CommentPatchForm
-initCommentPatchForm user =
-    { uctx = uctxFromUser user
-    , id = ""
-    , post = Dict.empty
-    , viewMode = Write
-    }
-
-
 url2tid : Url -> String
 url2tid url =
     url.path |> String.split "/" |> LE.getAt 3 |> withDefault url.path
@@ -3004,25 +2782,6 @@ tensionChanged2 t_m to =
             url2tid to
     in
     tid1 /= tid2
-
-
-nodeFragmentFromTensionHead : TensionHead -> NodeFragment
-nodeFragmentFromTensionHead t =
-    t.blobs
-        |> withDefault []
-        |> List.head
-        |> Maybe.map (\h -> h.node)
-        |> withDefault Nothing
-        |> withDefault (initNodeFragment Nothing)
-
-
-mdFromTensionHead : TensionHead -> Maybe String
-mdFromTensionHead t =
-    t.blobs
-        |> withDefault []
-        |> List.head
-        |> Maybe.map (\h -> h.md)
-        |> withDefault Nothing
 
 
 eventFromForm : Ev -> TensionPatchForm -> Event

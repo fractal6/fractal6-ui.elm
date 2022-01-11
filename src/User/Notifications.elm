@@ -33,7 +33,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
-import ModelCommon.Event exposing (eventToIcon)
+import ModelCommon.Event exposing (contractEventToText, contractTypeToText, eventToIcon)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
@@ -405,7 +405,7 @@ viewUserEvent ue model =
         firstEvent =
             List.head ue.event
 
-        ( isContract, ev, icon_ ) =
+        ( isContract, ev ) =
             case firstEvent of
                 Just (TensionEvent e) ->
                     let
@@ -415,13 +415,14 @@ viewUserEvent ue model =
                     ( False
                     , Dict.fromList
                         [ ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
+                        , ( "title_", e.tension.title )
                         , ( "target", e.tension.receiver.name )
                         , ( "orga", nid2rootid e.tension.receiver.nameid )
                         , ( "date", e.createdAt )
                         , ( "author", e.createdBy.username )
                         , ( "link", link )
+                        , ( "icon", eventToIcon e.event_type )
                         ]
-                    , eventToIcon e.event_type
                     )
 
                 Just (ContractEvent c) ->
@@ -431,39 +432,29 @@ viewUserEvent ue model =
                     in
                     ( True
                     , Dict.fromList
-                        [ ( "title", c.contract_type |> ContractType.toString |> SE.humanize )
-                        , ( "event", c.event.event_type |> TensionEvent.toString |> SE.humanize )
+                        [ ( "contract", c.contract_type |> contractTypeToText )
+                        , ( "title", c.event.event_type |> contractEventToText )
                         , ( "target", c.tension.receiver.name )
                         , ( "orga", nid2rootid c.tension.receiver.nameid )
                         , ( "date", c.createdAt )
                         , ( "author", c.createdBy.username )
                         , ( "link", link )
+                        , ( "icon", eventToIcon c.event.event_type )
                         ]
-                    , "icon-edit"
                     )
 
                 Nothing ->
-                    ( False, Dict.empty, "" )
+                    ( False, Dict.empty )
     in
     if isContract then
-        div []
-            [ p [] <|
-                List.intersperse (text " ") <|
-                    [ A.icon icon_
-                    , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
-                    ]
-            , div [ class "media" ]
-                [ div [ class "media-content" ]
-                    [ viewEventMedia ev icon_ model ]
-                ]
-            ]
+        viewContractMedia ev model
 
     else
-        viewEventMedia ev icon_ model
+        viewEventMedia ev model
 
 
-viewEventMedia : Dict String String -> String -> Model -> Html Msg
-viewEventMedia ev icon_ model =
+viewEventMedia : Dict String String -> Model -> Html Msg
+viewEventMedia ev model =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -472,11 +463,40 @@ viewEventMedia ev icon_ model =
                 ]
               <|
                 List.intersperse (text " ") <|
-                    [ A.icon icon_
+                    [ A.icon (Dict.get "icon" ev |> withDefault "")
                     , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
                     , span [ class "is-discrete" ] [ text "in" ]
                     , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
-                    , span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
+
+                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
+                    , text ":"
+                    , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
+                    ]
+            , small [ class "help" ] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            ]
+        ]
+
+
+viewContractMedia : Dict String String -> Model -> Html Msg
+viewContractMedia ev model =
+    div [ class "content" ]
+        [ p [] <|
+            [ a
+                [ class "discrete-link"
+                , href (Dict.get "link" ev |> withDefault "#")
+                ]
+              <|
+                List.intersperse (text " ") <|
+                    [ A.icon "icon-edit"
+                    , strong [ class "ml-1" ] [ Dict.get "contract" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text "to" ]
+
+                    --, A.icon (Dict.get "icon" ev |> withDefault "")
+                    , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text "in" ]
+                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+
+                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]
             , small [ class "help" ] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
@@ -485,11 +505,18 @@ viewEventMedia ev icon_ model =
 
 eventToLink : EventNotif -> String
 eventToLink e =
-    let
-        d =
-            Debug.log "ll" e.event_type
-    in
-    if List.member e.event_type [ TensionEvent.Closed, TensionEvent.Reopened, TensionEvent.CommentPushed, TensionEvent.Moved, TensionEvent.UserLeft, TensionEvent.UserJoined ] then
+    if
+        List.member e.event_type
+            [ TensionEvent.Closed
+            , TensionEvent.Reopened
+            , TensionEvent.CommentPushed
+            , TensionEvent.Moved
+            , TensionEvent.UserLeft
+            , TensionEvent.UserJoined
+            , TensionEvent.MemberLinked
+            , TensionEvent.MemberUnlinked
+            ]
+    then
         (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
             ++ "?goto="
             ++ e.createdAt
@@ -503,4 +530,4 @@ eventToLink e =
 
 contractToLink : ContractNotif -> String
 contractToLink c =
-    Route.Tension_Dynamic_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id } |> toHref
+    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref

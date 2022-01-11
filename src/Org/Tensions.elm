@@ -1340,7 +1340,7 @@ view_ global model =
                         ]
 
                   else if model.viewMode /= CircleView && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
-                    div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
+                    div [ class "column is-12 is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
                         [ button [ class "button is-small", onClick (DoLoad False) ]
                             [ text "Load more" ]
                         ]

@@ -275,9 +275,24 @@ invite =
     "invite"
 
 
+link : String
+link =
+    "link"
+
+
 unlink : String
 unlink =
     "unlink"
+
+
+linked : String
+linked =
+    "linked"
+
+
+unlinked : String
+unlinked =
+    "unlinked"
 
 
 left : String
@@ -711,6 +726,16 @@ removedThe =
 description : String
 description =
     "description"
+
+
+hasBeen : String
+hasBeen =
+    "has been"
+
+
+toThisRole : String
+toThisRole =
+    "to this role"
 
 
 

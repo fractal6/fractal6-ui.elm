@@ -552,7 +552,7 @@ viewModalContent op (State model) =
             , div [ class "field" ]
                 [ div [ class "control submitFocus" ]
                     [ textarea
-                        [ class "textarea in-modal"
+                        [ class "textarea"
                         , rows 3
                         , placeholder (upH T.leaveCommentOpt)
                         , value message

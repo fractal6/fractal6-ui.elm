@@ -5,6 +5,7 @@ module Query.QueryTension exposing
     , getTensionBlobs
     , getTensionComments
     , getTensionHead
+    , nodeFragmentPayload
     , queryAllTension
     , queryCircleTension
     , queryExtTension

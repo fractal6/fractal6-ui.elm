@@ -31,7 +31,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembersSub, getQuickDoc, login)
-import ModelCommon.View exposing (roleColor, viewUser)
+import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -743,30 +743,11 @@ memberRolesFilter focus roles =
         |> List.concat
 
 
-viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html msg
+viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Html Msg
 viewMemberRoles now baseUri roles =
     div [ class "buttons" ] <|
         List.map
-            (\r ->
-                a
-                    [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-                    , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
-                    , href <| uriFromNameid baseUri r.nameid
-                    ]
-                    [ if r.role_type == RoleType.Guest then
-                        textH T.guest
-
-                      else if r.role_type == RoleType.Member then
-                        textH T.member
-
-                      else if r.role_type == RoleType.Owner then
-                        textH T.owner
-
-                      else
-                        -- Peer
-                        text r.name
-                    ]
-            )
+            (\r -> viewMemberRole now baseUri r)
             roles
 
 

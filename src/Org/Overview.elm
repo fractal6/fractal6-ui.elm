@@ -1089,8 +1089,8 @@ view_ global model =
                 _ ->
                     text "Wrong position"
     in
-    div [ class "columns is-centered is-variable is-4" ]
-        [ div [ class "column is-6-desktop is-5-widescreen is-5-fullhd" ]
+    div [ class "columns is-centered" ]
+        [ div [ class "column is-6 is-5-desktop is-5-fullhd" ]
             [ viewSearchBar global.session.user model
             , viewCanvas global.session.user model
             , br [] []
@@ -1098,7 +1098,7 @@ view_ global model =
             ]
         , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
         , div
-            [ class "column is-5-desktop is-5-widescreen is-5-fullhd" ]
+            [ class "column is-6 is-5-fullhd" ]
             [ div [ class "columns is-gapless" ]
                 [ div [ class "column is-12", id "nextToChart" ]
                     [ viewFromPos model.window_pos.topRight ]

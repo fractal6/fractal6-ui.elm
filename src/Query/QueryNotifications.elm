@@ -128,9 +128,10 @@ tensionEventPayload =
         |> with Fractal.Object.Event.event_type
         |> with
             (Fractal.Object.Event.tension identity
-                (SelectionSet.map2 (\a b -> { id = a, receiver = b })
+                (SelectionSet.map3 (\a b c -> { id = a, receiver = b, title = c })
                     (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
                     (Fractal.Object.Tension.receiver identity pNodePayload)
+                    Fractal.Object.Tension.title
                 )
             )
 

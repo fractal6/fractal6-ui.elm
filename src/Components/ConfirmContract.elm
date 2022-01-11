@@ -1,5 +1,6 @@
 module Components.ConfirmContract exposing (Msg(..), State, init, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
@@ -15,12 +16,11 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ContractForm, UserState(..), initContractForm)
-import ModelCommon.Codecs exposing (nid2eor, nid2rootid)
+import ModelCommon.Codecs exposing (contractIdCodec, nid2eor, nid2rootid)
 import ModelCommon.Event exposing (contractEventToText, contractTypeToText)
 import ModelCommon.View exposing (viewTensionArrow)
 import ModelSchema exposing (..)
@@ -71,8 +71,8 @@ updateFormFromData c f =
         , status = c.status
         , contract_type = c.contract_type
         , event = c.event
-        , contractid = c.contractid
-        , participants = c.participants
+        , contractid = contractIdCodec c.tension.id (TensionEvent.toString c.event.event_type) (withDefault "" c.event.old) (withDefault "" c.event.new)
+        , participants = c.participants -- Voteid build in the back fro now...
     }
 
 
@@ -394,7 +394,7 @@ viewModalContent op (State model) =
             , div [ class "field" ]
                 [ div [ class "control submitFocus" ]
                     [ textarea
-                        [ class "textarea in-modal"
+                        [ class "textarea"
                         , rows 3
                         , placeholder (upH T.leaveCommentOpt)
                         , value message

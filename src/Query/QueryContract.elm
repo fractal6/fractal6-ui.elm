@@ -16,9 +16,11 @@ import Fractal.InputObject as Input
 import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddContractPayload
+import Fractal.Object.Blob
 import Fractal.Object.Contract
 import Fractal.Object.EventFragment
 import Fractal.Object.Node
+import Fractal.Object.NodeFragment
 import Fractal.Object.Tension
 import Fractal.Object.User
 import Fractal.Object.Vote
@@ -32,7 +34,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (TensionForm, UserForm)
 import ModelSchema exposing (..)
 import Query.QueryNode exposing (emiterOrReceiverPayload, tidPayload, userPayload)
-import Query.QueryTension exposing (commentPayload)
+import Query.QueryTension exposing (commentPayload, nodeFragmentPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -125,7 +127,6 @@ contractPayload =
         |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
         |> with Fractal.Object.Contract.status
         |> with Fractal.Object.Contract.contract_type
-        |> with Fractal.Object.Contract.contractid
         |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.participants identity votePayload)
         |> hardcoded Nothing
@@ -135,18 +136,35 @@ contractFullPayload : SelectionSet ContractFull Fractal.Object.Contract
 contractFullPayload =
     SelectionSet.succeed ContractFull
         |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with Fractal.Object.Contract.contractid
         |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Contract.closedAt |> SelectionSet.map (Maybe.map (\x -> decodedTime x)))
         |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with (Fractal.Object.Contract.tension identity tidPayload)
+        |> with (Fractal.Object.Contract.tension identity tensionForContractPayload)
         |> with (Fractal.Object.Contract.event identity eventFragmentPayload)
         |> with Fractal.Object.Contract.status
         |> with Fractal.Object.Contract.contract_type
         |> with (Fractal.Object.Contract.candidates identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with (Fractal.Object.Contract.participants identity votePayload)
-        |> hardcoded Nothing
         |> with Fractal.Object.Contract.isValidator
+        |> with
+            (Fractal.Object.Contract.comments
+                (\args -> { args | first = Present nCommentPerContract })
+                commentPayload
+            )
+
+
+type alias BlobNode =
+    { node : Maybe NodeFragment }
+
+
+tensionForContractPayload : SelectionSet TensionForContract Fractal.Object.Tension
+tensionForContractPayload =
+    SelectionSet.succeed TensionForContract
+        |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+        |> with
+            (Fractal.Object.Tension.blobs identity
+                (SelectionSet.map BlobNode (Fractal.Object.Blob.node identity nodeFragmentPayload))
+            )
 
 
 eventFragmentPayload : SelectionSet EventFragment Fractal.Object.EventFragment

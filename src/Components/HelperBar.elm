@@ -13,7 +13,7 @@ import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid, nid2type, uriFromNameid)
-import ModelCommon.View exposing (roleColor)
+import ModelCommon.View exposing (roleColor, viewRole)
 import ModelSchema exposing (LocalGraph, UserRole)
 import Ports
 import Text as T exposing (textH, textT)
@@ -124,7 +124,7 @@ viewNavLevel op =
             Maybe.map (\x -> x.focus.nameid) op.path_data
                 |> withDefault ""
     in
-    nav [ class "tabs is-boxed px-3" ]
+    nav [ class "tabs is-boxed" ]
         [ ul [ class "" ]
             ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
                 [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ A.icon1 "icon-sun" "Overview" ] ]
@@ -274,11 +274,11 @@ memberButtons roles_ op =
         lastButton =
             case op.data of
                 Expanded ->
-                    div [ class "button is-small is-primary", onClick op.onCollapse ] [ A.icon "icon-chevrons-left" ]
+                    div [ class "button is-small", onClick op.onCollapse ] [ A.icon "icon-chevrons-left" ]
 
                 Collapsed ->
                     if roleMoreLen > 0 then
-                        div [ class "button has-font-weight-semibold is-small is-primary", onClick op.onExpand ]
+                        div [ class "button has-font-weight-semibold is-small", onClick op.onExpand ]
                             [ text ("+" ++ String.fromInt roleMoreLen)
                             , A.icon "icon-chevrons-right icon-padding-left"
                             ]
@@ -290,12 +290,7 @@ memberButtons roles_ op =
         |> List.indexedMap
             (\i r ->
                 if (r.role_type /= RoleType.Member && r.role_type /= RoleType.Owner) || (r.role_type == RoleType.Owner && i == 0) then
-                    [ a
-                        [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-                        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                        , href <| uriFromNameid op.baseUri r.nameid
-                        ]
-                        [ text r.name ]
+                    [ viewRole op.baseUri r
 
                     --++ [ span [ class "is-vbar-1" ] [] ]
                     ]

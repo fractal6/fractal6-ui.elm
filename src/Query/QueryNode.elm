@@ -1,6 +1,7 @@
 module Query.QueryNode exposing
     ( MemberNode
     , blobIdPayload
+    , cidPayload
     , emiterOrReceiverPayload
     , fetchNode
     , getLabels
@@ -35,6 +36,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
+import Fractal.Object.Contract
 import Fractal.Object.Label
 import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
@@ -354,6 +356,12 @@ tidPayload : SelectionSet IdPayload Fractal.Object.Tension
 tidPayload =
     SelectionSet.map IdPayload
         (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+
+
+cidPayload : SelectionSet IdPayload Fractal.Object.Contract
+cidPayload =
+    SelectionSet.map IdPayload
+        (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
 
 
 

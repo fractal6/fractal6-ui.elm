@@ -588,7 +588,7 @@ viewAskQuestion op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ input
-                                    [ class "input autofocus followFocus in-modal"
+                                    [ class "input autofocus followFocus"
                                     , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
                                     , placeholder "Subject of your question"
@@ -608,7 +608,7 @@ viewAskQuestion op (State model) =
                             [ div [ class "control is-expanded" ]
                                 [ textarea
                                     [ id "textAreaModal"
-                                    , class "textarea in-modal"
+                                    , class "textarea"
                                     , rows 5
                                     , placeholder "Write your question here..."
                                     , required True
@@ -728,7 +728,7 @@ viewFeedback op (State model) =
                         [ div [ class "field" ]
                             [ div [ class "control is-expanded" ]
                                 [ input
-                                    [ class "input autofocus followFocus in-modal"
+                                    [ class "input autofocus followFocus"
                                     , attribute "data-nextfocus" "textAreaModal"
                                     , type_ "text"
                                     , placeholder "Subject of your feedback"
@@ -748,7 +748,7 @@ viewFeedback op (State model) =
                             [ div [ class "control is-expanded" ]
                                 [ textarea
                                     [ id "textAreaModal"
-                                    , class "textarea in-modal"
+                                    , class "textarea"
                                     , rows 5
                                     , placeholder "Write your feedback here..."
                                     , required True

@@ -926,7 +926,7 @@ viewSettingsMenu model =
                     (\x ->
                         [ case x of
                             EditMenu ->
-                                hr [ class "dropdown-divider" ] []
+                                hr [ class "dropdown-divider has-background-border-light" ] []
 
                             _ ->
                                 text ""

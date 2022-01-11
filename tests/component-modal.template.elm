@@ -352,7 +352,7 @@ viewModalContent op (State model) =
             , div [ class "field" ]
                 [ div [ class "control" ]
                     [ textarea
-                        [ class "textarea in-modal"
+                        [ class "textarea"
                         , rows 5
                         , placeholder (upH T.leaveCommentOpt)
                         , value message

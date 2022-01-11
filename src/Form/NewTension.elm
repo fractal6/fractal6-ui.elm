@@ -1112,7 +1112,7 @@ viewTension op (State model) =
                     [ div [ class "field" ]
                         [ div [ class "control" ]
                             [ input
-                                [ class "input autofocus followFocus in-modal"
+                                [ class "input autofocus followFocus"
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder (upH T.title)
@@ -1144,7 +1144,7 @@ viewTension op (State model) =
                                         Write ->
                                             textarea
                                                 [ id "textAreaModal"
-                                                , class "textarea in-modal"
+                                                , class "textarea"
                                                 , rows 5
                                                 , placeholder (upH T.leaveCommentOpt)
                                                 , value message
@@ -1278,7 +1278,7 @@ viewCircle op (State model) =
                     , div [ class "field" ]
                         [ div [ class "control" ]
                             [ textarea
-                                [ class "textarea in-modal"
+                                [ class "textarea"
                                 , rows 3
                                 , placeholder (upH T.leaveCommentOpt)
                                 , value message

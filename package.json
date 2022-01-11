@@ -22,14 +22,7 @@
     "localprod": "webpack-dev-server --hot --port 8000 --mode production",
     "prod": "webpack --mode production"
   },
-  "keywords": [
-    "graphql",
-    "elm",
-    "fractal",
-    "organisation",
-    "d3",
-    "spa"
-  ],
+  "keywords": ["graphql", "elm", "fractal", "organisation", "d3", "spa"],
   "author": "Adrien Dulac",
   "license": "GPLv2",
   "dependencies": {

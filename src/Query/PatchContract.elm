@@ -1,4 +1,4 @@
-module Query.PatchContract exposing (sendVote)
+module Query.PatchContract exposing (pushComment, sendVote)
 
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -10,6 +10,7 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.AddVotePayload
 import Fractal.Object.Contract
+import Fractal.Object.UpdateContractPayload
 import Fractal.Object.Vote
 import Fractal.Query as Query
 import Fractal.Scalar
@@ -18,11 +19,14 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (TensionForm, UserForm)
+import ModelCommon exposing (CommentPatchForm, TensionForm, UserForm)
 import ModelCommon.Codecs exposing (memberIdCodec, nodeIdCodec)
 import ModelSchema exposing (..)
+import Query.AddTension exposing (buildComment)
+import Query.PatchTension exposing (pushCommentFilter)
 import Query.QueryContract exposing (contractPayload)
-import Query.QueryNode exposing (tidPayload)
+import Query.QueryNode exposing (cidPayload)
+import Query.QueryTension exposing (commentPayload)
 import RemoteData exposing (RemoteData)
 
 
@@ -102,3 +106,86 @@ votePayload =
                 (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
                 Fractal.Object.Contract.status
         )
+
+
+
+{-
+   update contract (Push Comment)
+-}
+
+
+type alias ContractCommentPayload =
+    { contract : Maybe (List (Maybe Comments)) }
+
+
+type alias Comments =
+    { comments : Maybe (List Comment)
+    }
+
+
+contractCommentDecoder : Maybe ContractCommentPayload -> Maybe Comment
+contractCommentDecoder data =
+    case data of
+        Just d ->
+            d.contract
+                |> Maybe.map (List.filterMap identity)
+                |> withDefault []
+                |> List.head
+                |> Maybe.map
+                    (\x ->
+                        x.comments
+                            |> withDefault []
+                            |> List.head
+                    )
+                |> withDefault Nothing
+
+        Nothing ->
+            Nothing
+
+
+pushComment url form msg =
+    makeGQLMutation url
+        (Mutation.updateContract
+            (commentInputDecoder form)
+            (SelectionSet.map ContractCommentPayload <|
+                Fractal.Object.UpdateContractPayload.contract identity
+                    (SelectionSet.map Comments
+                        (Fractal.Object.Contract.comments pushCommentFilter
+                            commentPayload
+                        )
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse contractCommentDecoder >> msg)
+
+
+commentInputDecoder : CommentPatchForm -> Mutation.UpdateContractRequiredArguments
+commentInputDecoder f =
+    let
+        createdAt =
+            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
+
+        message =
+            Dict.get "message" f.post
+
+        inputReq =
+            { filter =
+                Input.buildContractFilter
+                    (\ft -> { ft | id = Present [ encodeId f.pid ] })
+            }
+
+        inputOpt =
+            \_ ->
+                { set =
+                    Input.buildContractPatch
+                        (\s ->
+                            { s
+                                | -- updatedAt = Present createdAt -- Only the creator of the the contract can update this field
+                                  comments = buildComment createdAt f.uctx.username message
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input = Input.buildUpdateContractInput inputReq inputOpt }

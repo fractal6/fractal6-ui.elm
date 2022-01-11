@@ -4,6 +4,7 @@ module Query.PatchTension exposing
     , patchComment
     , patchLiteral
     , publishBlob
+    , pushCommentFilter
     , pushTensionPatch
     , setAssignee
     , setLabel
@@ -61,10 +62,7 @@ tensionPushDecoder data =
         |> Maybe.andThen
             (\d ->
                 d.tension
-                    |> Maybe.map
-                        (\items ->
-                            List.filterMap identity items
-                        )
+                    |> Maybe.map (List.filterMap identity)
                     |> withDefault []
                     |> List.head
             )
@@ -75,14 +73,14 @@ pushTensionPatch url form msg =
         (Mutation.updateTension
             (patchTensionInputEncoder form)
             (SelectionSet.map PatchTensionPayload <|
-                Fractal.Object.UpdateTensionPayload.tension identity <|
+                Fractal.Object.UpdateTensionPayload.tension identity
                     (SelectionSet.succeed PatchTensionPayloadID
                         |> with
-                            (Fractal.Object.Tension.comments (pushCommentFilter form) <|
+                            (Fractal.Object.Tension.comments pushCommentFilter
                                 commentPayload
                             )
                         |> with
-                            (Fractal.Object.Tension.blobs (pushBlobFilter form) <|
+                            (Fractal.Object.Tension.blobs pushBlobFilter
                                 blobPayload
                             )
                     )
@@ -91,8 +89,7 @@ pushTensionPatch url form msg =
         (RemoteData.fromResult >> decodeResponse tensionPushDecoder >> msg)
 
 
-pushCommentFilter : TensionPatchForm -> Fractal.Object.Tension.CommentsOptionalArguments -> Fractal.Object.Tension.CommentsOptionalArguments
-pushCommentFilter f a =
+pushCommentFilter a =
     { a
         | first = Present 1
         , order =
@@ -104,8 +101,8 @@ pushCommentFilter f a =
     }
 
 
-pushBlobFilter : TensionPatchForm -> Fractal.Object.Tension.BlobsOptionalArguments -> Fractal.Object.Tension.BlobsOptionalArguments
-pushBlobFilter f a =
+pushBlobFilter : Fractal.Object.Tension.BlobsOptionalArguments -> Fractal.Object.Tension.BlobsOptionalArguments
+pushBlobFilter a =
     { a
         | first = Present 1
         , order =

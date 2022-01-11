@@ -1,5 +1,6 @@
 module ModelCommon.Event exposing (..)
 
+import Assets as A
 import Dict exposing (Dict)
 import Extra exposing (colorToTextColor, ternary)
 import Extra.Date exposing (formatDate)
@@ -17,7 +18,6 @@ import Global
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
-import Assets as A
 import Identicon
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
@@ -40,17 +40,17 @@ import Time
 contractTypeToText : ContractType.ContractType -> String
 contractTypeToText c =
     case c of
-        ContractType.AnyCoordoDual ->
-            "dual coordinators"
-
         ContractType.AnyCandidates ->
-            "poll"
+            "Invitation"
+
+        ContractType.AnyCoordoDual ->
+            "Coordinators Validation"
 
         ContractType.AnyCoordoTarget ->
-            "receiver coordinator"
+            "Coordinator Validation"
 
         ContractType.AnyCoordoSource ->
-            "emitter coordinator"
+            "Coordinator Validation"
 
 
 contractEventToText : TensionEvent.TensionEvent -> String
@@ -59,8 +59,14 @@ contractEventToText c =
         TensionEvent.Moved ->
             "move tension"
 
+        TensionEvent.MemberLinked ->
+            "New First Link"
+
+        TensionEvent.UserJoined ->
+            "New Member"
+
         _ ->
-            "@TODO text"
+            "@TODO contractEventToText"
 
 
 eventToIcon : TensionEvent.TensionEvent -> String
@@ -115,16 +121,16 @@ eventToIcon ev =
             "icon-archive"
 
         TensionEvent.UserJoined ->
-            "icon-login-in"
+            "icon-log-in"
 
         TensionEvent.UserLeft ->
-            "icon-login-out"
+            "icon-log-out"
 
         TensionEvent.MemberLinked ->
-            "icon-login-in"
+            "icon-log-in"
 
         TensionEvent.MemberUnlinked ->
-            "icon-login-out"
+            "icon-log-out"
 
         TensionEvent.Moved ->
             "right-arrow2 pl-0 pr-0 mr-0"

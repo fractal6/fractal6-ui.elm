@@ -45,8 +45,8 @@ regexFromString =
     Regex.fromString >> Maybe.withDefault Regex.never
 
 
-clean : String -> String -> String
-clean c s =
+cleanDup : String -> String -> String
+cleanDup c s =
     -- Remove any repetition of the character c in string s
     s |> Regex.replace (regexFromString (c ++ c ++ "+")) (always c)
 

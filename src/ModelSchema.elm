@@ -253,7 +253,6 @@ type alias Contract =
     , event : EventFragment
     , status : ContractStatus.ContractStatus
     , contract_type : ContractType.ContractType
-    , contractid : String
 
     --, candidate:
     , candidates : Maybe (List Username)
@@ -266,11 +265,10 @@ type alias Contract =
 
 type alias ContractFull =
     { id : String
-    , contractid : String
     , createdAt : String
     , closedAt : Maybe String
     , createdBy : Username
-    , tension : IdPayload
+    , tension : TensionForContract
     , event : EventFragment
     , status : ContractStatus.ContractStatus
     , contract_type : ContractType.ContractType
@@ -279,11 +277,15 @@ type alias ContractFull =
     , candidates : Maybe (List Username)
     , participants : List Vote
 
-    -- Maybe hardocded
-    , comments : Maybe (List Comment)
-
     -- Full
     , isValidator : Maybe Bool
+    , comments : Maybe (List Comment)
+    }
+
+
+type alias TensionForContract =
+    { id : String
+    , blobs : Maybe (List { node : Maybe NodeFragment })
     }
 
 
@@ -516,7 +518,7 @@ type alias EventNotif =
     , createdAt : String
     , createdBy : Username
     , event_type : TensionEvent.TensionEvent
-    , tension : { id : String, receiver : PNode }
+    , tension : { id : String, receiver : PNode, title : String }
     }
 
 

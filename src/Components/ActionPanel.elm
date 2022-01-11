@@ -13,8 +13,6 @@ import Extra exposing (mor, ternary)
 import Extra.Events exposing (onClickPD)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isUsersSendable)
-import Fractal.Enum.ContractStatus as ContractStatus
-import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -29,8 +27,8 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, buildVote, ev2eventFragment, initActionForm)
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, contractIdCodec, nid2rootid, voteIdCodec)
+import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, initActionForm, makeCandidateContractForm)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nid2rootid)
 import ModelCommon.View exposing (roleColor, viewUserFull)
 import ModelSchema exposing (..)
 import Ports
@@ -145,8 +143,8 @@ auth2str type_ =
             upH T.authority
 
 
-action2submitstr : PanelState -> String
-action2submitstr action =
+action2submitstr : PanelState -> Bool -> String
+action2submitstr action selfContract =
     case action of
         MoveAction ->
             upH T.move
@@ -158,7 +156,11 @@ action2submitstr action =
             upH T.submit
 
         LinkAction ->
-            upH T.invite
+            if selfContract then
+                upH T.link
+
+            else
+                upH T.invite
 
         UnLinkAction _ ->
             upH T.unlink
@@ -206,8 +208,8 @@ action2header action type_ =
             "Leave {{type}}: "
 
 
-action2post : PanelState -> String
-action2post action =
+action2post : PanelState -> Bool -> String
+action2post action selfContract =
     case action of
         MoveAction ->
             T.moved
@@ -219,7 +221,11 @@ action2post action =
             T.authority ++ " " ++ T.changed
 
         LinkAction ->
-            "User has been invited"
+            if selfContract then
+                "Welcome to your new role"
+
+            else
+                "User has been invited"
 
         UnLinkAction _ ->
             "User unlinked"
@@ -609,47 +615,14 @@ update_ apis message model =
             case state of
                 LinkAction ->
                     let
-                        -- @codefactor: put it in Codec.contractIdCodec.
-                        -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
-                        ( et, old, new ) =
-                            List.head form.events
-                                |> Maybe.map (\x -> ( TensionEvent.toString x.event_type, x.old, x.new ))
-                                |> withDefault ( "", "", "" )
-
-                        contractid =
-                            contractIdCodec form.tid et old new
-
-                        rootnameid =
-                            nid2rootid form.node.nameid
-
-                        -- Feed candidate and pendingcandidate
-                        ( candidates, pending_candidates ) =
-                            List.foldl
-                                (\uf ( cand, pend ) ->
-                                    if uf.email == "" then
-                                        ( [ { username = uf.username } ], [] )
-
-                                    else
-                                        ( [], [ { email = uf.email } ] )
-                                )
-                                ( [], [] )
-                                form.users
-
-                        --form.users |> @FUTURE: multiple invitation...
                         contractForm =
-                            { uctx = form.uctx
-                            , tid = form.tid
-                            , event = form.events |> List.map ev2eventFragment |> List.head |> withDefault initEventFragment
-                            , post = form.post
-                            , status = ContractStatus.Open
-                            , contract_type = ContractType.AnyCandidates
-                            , contractid = contractid
-                            , participants = [ buildVote contractid rootnameid form.uctx.username 1 ]
-                            , candidates = candidates
-                            , pending_candidates = pending_candidates
-                            }
+                            makeCandidateContractForm form
                     in
-                    ( model, out0 [ addOneContract apis contractForm PushAck ] )
+                    if isSelfContract model then
+                        ( model, out0 [ actionRequest apis form PushAck ] )
+
+                    else
+                        ( model, out0 [ addOneContract apis contractForm PushAck ] )
 
                 _ ->
                     ( model, out0 [ actionRequest apis form PushAck ] )
@@ -735,13 +708,16 @@ update_ apis message model =
                                         [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
 
                             LinkAction ->
-                                -- Contract based event...
-                                --let
-                                --    fs =
-                                --        Just { username = withDefault "" model.form.fragment.first_link, name = Nothing }
-                                --in
-                                --[ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
-                                []
+                                if isSelfContract model then
+                                    let
+                                        fs =
+                                            Just { username = withDefault "" model.form.fragment.first_link, name = Nothing }
+                                    in
+                                    [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
+
+                                else
+                                    --Contract based event...
+                                    []
 
                             UnLinkAction _ ->
                                 [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
@@ -1091,7 +1067,7 @@ viewModalContent op model =
                     div
                         [ class "box is-light" ]
                         [ A.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH (action2post model.state ++ ".")
+                        , textH (action2post model.state (isSelfContract model) ++ ".")
                         ]
 
                 Failure err ->
@@ -1139,7 +1115,7 @@ viewStep1 op model =
                             [ viewRoleAuthority op model ]
 
                 LinkAction ->
-                    [ UserInput.view {} model.userInput |> Html.map UserInputMsg
+                    [ UserInput.view { label_text = "Invite someone (or link yourself):" } model.userInput |> Html.map UserInputMsg
                     , viewComment op model
                     ]
 
@@ -1171,9 +1147,9 @@ viewStep1 op model =
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not (isSendable model) || isLoading)
                          ]
-                            ++ [ onClick (OnSubmit <| OnActionSubmit) ]
+                            ++ [ onClick (OnSubmit OnActionSubmit) ]
                         )
-                        [ model.state |> action2submitstr |> text ]
+                        [ action2submitstr model.state (isSelfContract model) |> text ]
                     ]
                 ]
             ]
@@ -1189,7 +1165,7 @@ viewComment op model =
     div [ class "field" ]
         [ div [ class "control submitFocus" ]
             [ textarea
-                [ class "textarea in-modal"
+                [ class "textarea"
                 , rows 3
                 , placeholder (upH T.leaveCommentOpt)
                 , value message
@@ -1231,7 +1207,7 @@ viewVisibility op model =
                                     ( "icon-lock", T.visibilitySeccret )
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-w"
+                        [ class "card has-border column is-paddingless m-3 is-h"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeVisibility x)
                         ]
@@ -1270,7 +1246,7 @@ viewCircleAuthority op model =
                                     ( "icon-", T.authAgile )
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-w"
+                        [ class "card has-border column is-paddingless m-3 is-h"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeMode x)
                         ]
@@ -1304,7 +1280,7 @@ viewRoleAuthority op model =
                             "icon-user has-text-" ++ roleColor x
                     in
                     div
-                        [ class "card has-border column is-paddingless m-3 is-w"
+                        [ class "card has-border column is-paddingless m-3 is-h"
                         , attribute "style" "min-width: 150px;"
                         , classList [ ( "is-selected", isActive ) ]
                         , onClick (OnChangeRoleType x)
@@ -1319,3 +1295,8 @@ viewRoleAuthority op model =
                 )
             |> div [ class "columns is-multiline" ]
         ]
+
+
+isSelfContract : Model -> Bool
+isSelfContract model =
+    List.member model.form.uctx.username (List.map (\x -> x.username) model.form.users)

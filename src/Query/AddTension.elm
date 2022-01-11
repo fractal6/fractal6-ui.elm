@@ -187,11 +187,8 @@ buildComment createdAt username message_m =
                 [ Input.buildCommentRef
                     (\x ->
                         { x
-                            | createdAt = createdAt |> Present
-                            , createdBy =
-                                Input.buildUserRef
-                                    (\u -> { u | username = Present username })
-                                    |> Present
+                            | createdAt = Present createdAt
+                            , createdBy = Input.buildUserRef (\u -> { u | username = Present username }) |> Present
                             , message = Present message
                         }
                     )

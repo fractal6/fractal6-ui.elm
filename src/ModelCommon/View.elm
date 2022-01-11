@@ -39,6 +39,8 @@ import ModelSchema
         , Tension
         , User
         , UserCtx
+        , UserRole
+        , UserRoleExtended
         , Username
         , shrinkNode
         )
@@ -190,6 +192,20 @@ mediaTension now focus tension showStatus showRecip size navigate =
         ]
 
 
+viewJoinNeeded : (String -> msg) -> NodeFocus -> Html msg
+viewJoinNeeded doJoin focus =
+    div [ class "box has-background-primary has-text-light" ]
+        [ p []
+            [ button
+                [ class "button is-small"
+                , onClick (doJoin focus.rootnameid)
+                ]
+                [ text "Join" ]
+            , text " this organisation to participate to this conversation."
+            ]
+        ]
+
+
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow cls emitter receiver =
     span [ class cls ]
@@ -290,7 +306,7 @@ viewUserFull size isLinked isBoxed user =
                     ( "p-1", getAvatar0 )
 
                 1 ->
-                    ( "p-1", getAvatar1 )
+                    ( "p-2", getAvatar1 )
 
                 2 ->
                     ( "", getAvatar2 )
@@ -333,6 +349,38 @@ viewOrga isLinked nameid =
         span
             [ class "image circleBase circle2" ]
             [ getAvatarOrga rid ]
+
+
+viewMemberRole : Time.Posix -> FractalBaseRoute -> UserRoleExtended -> Html msg
+viewMemberRole now baseUri r =
+    a
+        [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
+        , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
+        , href <| uriFromNameid baseUri r.nameid
+        ]
+        [ if r.role_type == RoleType.Guest then
+            textH T.guest
+
+          else if r.role_type == RoleType.Member then
+            textH T.member
+
+          else if r.role_type == RoleType.Owner then
+            textH T.owner
+
+          else
+            -- Peer
+            text r.name
+        ]
+
+
+viewRole : FractalBaseRoute -> UserRole -> Html msg
+viewRole baseUri r =
+    a
+        [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
+        , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
+        , href <| uriFromNameid baseUri r.nameid
+        ]
+        [ text r.name ]
 
 
 

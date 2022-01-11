@@ -39,6 +39,7 @@ $orange: #e67e22;
 $yellow: #f1b70e;
 $purple: #8e44ad;
 
+
 //
 // App
 //
@@ -193,6 +194,9 @@ $is-highlight: $dark;
 $is-highlight2: lighten($is-highlight, 5);
 $is-highlight3: $grey;
 
+$success-light: lighten($success, 50);
+$danger-light: lighten($danger, 50);
+
 // Background colors
 $nbc: $primary;
 $nbbc: $nbc;
@@ -265,6 +269,7 @@ $table-cell-border: 1px solid $grey;
 // Markdown
 $code-color: $hbc;
 $code-color-light: lighten($code-color, 5);
+$content-heading-color: $text-strong;
 
 // Menu
 $menu-item-active-color: $link;
@@ -298,6 +303,12 @@ $navbar-dropdown-item-hover-color: $white-dimmed;
 $navbar-dropdown-item-hover-background-color: lighten($nbc, 3);
 $navbar-dropdown-item-active-background-color: transparent;
 $navbar-dropdown-item-active-color: $link;
+
+// Extra
+$button-vote-success: $success-light;
+$button-vote-success-background: $success;
+$button-vote-danger: $danger-light;
+$button-vote-danger-background: $danger;
 
 :root.light {
   --primary: #{$primary};
@@ -389,6 +400,7 @@ $navbar-dropdown-item-active-color: $link;
   // Markdown
   --code-color: #{$code-color};
   --code-color-light: #{$code-color-light};
+  --content-heading-color: #{$content-heading-color};
 
   // Menu
   --menu-item-active-color: #{$menu-item-active-color};
@@ -422,15 +434,21 @@ $navbar-dropdown-item-active-color: $link;
   --navbar-dropdown-item-active-background-color: #{$navbar-dropdown-item-active-background-color};
   --navbar-dropdown-item-active-color: #{$navbar-dropdown-item-active-color};
 
+  // Extra
   --tag-background-color: inherit;
+  --button-vote-success: #{$button-vote-success};
+  --button-vote-success-background: #{$button-vote-success-background};
+  --button-vote-danger: #{$button-vote-danger};
+  --button-vote-danger-background: #{$button-vote-danger-background};
 
 }
-.markdown-body.is-light {
+.markdown-body.is-light, .content.is-light {
   --info: #{$info};
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
   --code-color: #{$code-color};
   --code-color-light: #{$code-color-light};
+  --content-heading-color: #{$content-heading-color};
 }
 
 //
@@ -457,6 +475,9 @@ $is-discrete: $grey-light;
 $is-highlight: $white-ter;
 $is-highlight2: darken($is-highlight, 5);
 $is-highlight3: $grey-lighter;
+
+$success-light: lighten($success, 53);
+$danger-light: lighten($danger, 35);
 
 // Background colors
 $nbc: #172335;
@@ -535,6 +556,7 @@ $table-striped-row-even-hover-background-color: lighten($grey-darker, 2);
 // Markdown
 $code-color: $hbc;
 $code-color-light: lighten($code-color, 5);
+$content-heading-color: $text-strong;
 
 // Menu
 $menu-item-active-color: $link;
@@ -568,6 +590,12 @@ $navbar-dropdown-item-hover-color: $white-dimmed;
 $navbar-dropdown-item-hover-background-color: lighten($nbc, 3);
 $navbar-dropdown-item-active-background-color: transparent;
 $navbar-dropdown-item-active-color: $link;
+
+// Extra
+$button-vote-success: $success;
+$button-vote-success-background: $success-light;
+$button-vote-danger: $danger;
+$button-vote-danger-background: $danger-light;
 
 :root,
 :root.dark {
@@ -666,6 +694,7 @@ $navbar-dropdown-item-active-color: $link;
   // Markdown
   --code-color: #{$code-color};
   --code-color-light: #{$code-color-light};
+  --content-heading-color: #{$content-heading-color};
 
   // Menu
   --menu-item-active-color: #{$menu-item-active-color};
@@ -699,14 +728,19 @@ $navbar-dropdown-item-active-color: $link;
   --navbar-dropdown-item-active-background-color: #{$navbar-dropdown-item-active-background-color};
   --navbar-dropdown-item-active-color: #{$navbar-dropdown-item-active-color};
 
+  // Extra
   --tag-background-color: inherit;
+  --button-vote-success: #{$button-vote-success};
+  --button-vote-success-background: #{$button-vote-success-background};
+  --button-vote-danger: #{$button-vote-danger};
+  --button-vote-danger-background: #{$button-vote-danger-background};
 
 }
-
-.markdown-body.is-dark {
+.markdown-body.is-dark, .content.is-dark {
   --info: #{$info};
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
   --code-color: #{$code-color};
   --code-color-light: #{$code-color-light};
+  --content-heading-color: #{$content-heading-color};
 }

@@ -2,15 +2,16 @@ module Components.NodeDoc exposing (..)
 
 import Assets as A
 import Components.DocToolBar exposing (ActionView(..))
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
 import Dict
-import Extra exposing (clean, ternary)
+import Extra exposing (cleanDup, ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
+import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -18,7 +19,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
@@ -332,18 +333,42 @@ viewAboutSection editView data =
             [ div [ class "media-left" ]
                 [ A.icon "icon-info icon-1half" ]
             , div [ class "media-content nodeName" ]
-                [ if data.hasBeenPushed && data.source == TensionBaseUri then
+                [ if data.source == TensionBaseUri && data.hasBeenPushed then
                     let
                         nameid =
                             data.node.nameid
                                 |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
                                 |> withDefault ""
                     in
-                    a [ nameid |> uriFromNameid OverviewBaseUri |> href ]
-                        [ withDefault "" data.node.name |> text ]
+                    span []
+                        [ textH T.about
+                        , text T.space_
+                        , a
+                            [ class "is-discrete-2"
+                            , nameid |> uriFromNameid OverviewBaseUri |> href
+                            ]
+                            [ withDefault "" data.node.name |> text ]
+                        ]
+
+                  else if data.source == OverviewBaseUri then
+                    let
+                        nameid =
+                            data.node.nameid
+                                |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
+                                |> withDefault ""
+                    in
+                    span []
+                        [ textH T.about
+                        , text T.space_
+                        , a
+                            [ class "is-discrete-2"
+                            , Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href
+                            ]
+                            [ withDefault "" data.node.name |> text ]
+                        ]
 
                   else
-                    span [] [ text "About" ]
+                    span [] [ textH T.about ]
                 ]
             , case data.toolbar of
                 Just tb ->
@@ -799,8 +824,8 @@ makeNewNodeId name =
                 else
                     c
             )
-        |> clean "-"
-        |> clean "_"
+        |> cleanDup "-"
+        |> cleanDup "_"
 
 
 

@@ -169,6 +169,9 @@ hr {
         background-color: initial !important;
     }
 }
+a.is-link {
+    color: var(--link2) !important;
+}
 .is-grey {
     color: var(--grey) !important;
 }
@@ -177,6 +180,10 @@ hr {
 }
 .is-discrete {
     color: var(--is-discrete) !important;
+}
+.is-discrete-2 {
+    color: var(--is-discrete) !important;
+    font-weight: 600;
 }
 .is-highlight-3 {
     color: var(--is-highlight3) !important;
@@ -189,8 +196,11 @@ hr {
         color: var(--link-discrete);
     }
 }
+.is-name{
+    color: var(--text);
+}
 .is-username {
-    color: var(--grey);
+    color: var(--text-light2);
 }
 .has-background-evidence {
     background-color: var(--background-evidence) !important;
@@ -699,6 +709,13 @@ hr {
             border-color: var(--border-color);
         }
     }
+
+    @include touch {
+        nav.tabs {
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+        }
+    }
 }
 
 #footBar {
@@ -784,7 +801,7 @@ hr {
 }
 
 #menuSettings {
-  border-right: solid 1px var(--grey) !important;
+  border-right: solid 1px var(--border-color-light) !important;
   margin-right: 2rem;
   .menu-list {
       li {
@@ -821,6 +838,13 @@ hr {
     &.is-small::after,
     &.is-small::before {
         width: 2px;
+    }
+
+    @include touch {
+        &.is-vertical {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
     }
 }
 
@@ -909,9 +933,9 @@ hr {
 
 .aboutDoc {
     .subtitle {
-        .nodeName a {
-            color: var(--link2) !important;
-        }
+    //    .nodeName a {
+    //        color: var(--link2) !important;
+    //    }
         a:hover, a:hover .content {
             color: var(--link2) !important;
         }
@@ -935,143 +959,143 @@ hr {
 //
 // Tension/Blob Page
 //
-#tensionPage  {
 
-    .tensionTitle > .is-human {
-        color: var(--text);
-        font-size: 2rem !important;
-        // Zen font
-        //font-size: 2.5rem !important;
+.tensionTitle > .is-human {
+    color: var(--text);
+    font-size: 2rem !important;
+    // Zen font
+    //font-size: 2.5rem !important;
+}
+
+.tensionSubtitle {
+    font-size: 14px !important;
+    & > span:not(:last-child) {
+        margin-right: 12px !important;
     }
 
-    .tensionSubtitle {
-        font-size: 14px !important;
-        & > span:not(:last-child) {
-            margin-right: 12px !important;
-        }
+    .tag {
+        height: 1.7rem !important;
+    }
+}
 
-        .tag {
-            height: 1.7rem !important;
-        }
+.comments {
+    .media + .media {
+        margin-top: 1.5rem !important;
+        border: 0 !important;
     }
 
-    .tensionComments {
-        .media + .media {
-            margin-top: 1.5rem !important;
-            border: 0 !important;
-        }
-
-        .message {
-            border-radius: 8px !important;
-            .message-header {
-                border-radius: 8px 8px 0 0 !important;
-                display: inherit !important;
-                font-size: 14px !important;
-                font-weight: 500 !important;
-                border-bottom: solid 1px var(--border-color-light);
-                a {
-                    text-decoration: none !important;
-                    font-weight: 600 !important;
-                }
-                li a {
-                    font-weight: 500 !important;
-                }
-
-                .dropdown-trigger {
-                    position: relative;
-                    bottom: $size-small2;
-                    left: $size-small;
-                    padding: $size-small2 $size-small$size-small2 $size-small;
-                    border-left: 1px solid var(--border-color-light);
-                    &:hover { cursor: pointer !important; }
-                    &:active { color: var(--grey); }
-                }
-                .dropdown-menu {
-                    margin-top: -$size-small;
-                    margin-right: -$size-small !important;
-                }
-
-                .ellipsis {
-                    opacity: 0.75 !important;
-                }
-            }
-            // CSS arrow please !
-            .message-header:after, .message-header:before {
-				right: 100%;
-				top: 50%;
-				border: solid transparent;
-				content: " ";
-				height: 0;
-				width: 0;
-				position: absolute;
-				pointer-events: none;
-			}
-			.message-header:after {
-				border-right-color: var(--comment-header-background-color) !important;
-				border-width: 8px;
-				margin-top: -8px;
-			}
-			.message-header:before {
-				border-right-color: var(--border-color-light);
-				border-width: 9px;
-				margin-top: -9px;
-			}
-
-            .message-body {
-                padding: 1rem 0.9rem !important;
-                //font-size: 15px;
-                //line-height: 1.5;
-            }
-        }
-
-        .tensionCommentInput {
-            .message-header {
-                border: 0;
-                padding: 0 0.75rem !important;
-            }
-
-            .message-body {
-                padding: 0.75rem 0.75rem !important;
-            }
-
-        }
-
-        .actionComment {
-            margin-left: 5rem !important;
+    .message {
+        border-radius: 8px !important;
+        .message-header {
+            border-radius: 8px 8px 0 0 !important;
+            display: inherit !important;
             font-size: 14px !important;
-        }
-    }
-
-    .tensionSidePane {
-        margin-top: 2.25rem !important;
-
-        .media:first-child {
-            border-top: 1px solid var(--border-color-light) !important;
-            padding-top: 1rem !important;
-        }
-
-        .media {
-            border-top: 1px solid var(--border-color-light) !important;
-            margin:0;
-            padding-bottom: 2rem;
-        }
-
-        .media-content {
-            font-size: 14px !important;
-            .subtitle {
-                font-size: 13px !important;
+            font-weight: 500 !important;
+            border-bottom: solid 1px var(--border-color-light);
+            a {
+                text-decoration: none !important;
                 font-weight: 600 !important;
-                color: var(--is-discrete);
-                margin-bottom: 1rem !important;
             }
+            li a {
+                font-weight: 500 !important;
+            }
+
+            .dropdown-trigger {
+                position: relative;
+                bottom: $size-small2;
+                left: $size-small;
+                padding: $size-small2 $size-small$size-small2 $size-small;
+                border-left: 1px solid var(--border-color-light);
+                &:hover { cursor: pointer !important; }
+                &:active { color: var(--grey); }
+            }
+            .dropdown-menu {
+                margin-top: -$size-small;
+                margin-right: -$size-small !important;
+            }
+
+            .ellipsis {
+                opacity: 0.75 !important;
+            }
+        }
+        // CSS arrow please !
+        .message-header:after, .message-header:before {
+            right: 100%;
+            top: 50%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .message-header:after {
+            border-right-color: var(--comment-header-background-color) !important;
+            border-width: 8px;
+            margin-top: -8px;
+        }
+        .message-header:before {
+            border-right-color: var(--border-color-light);
+            border-width: 9px;
+            margin-top: -9px;
+        }
+
+        .message-body {
+            padding: 1rem 0.9rem !important;
+            //font-size: 15px;
+            //line-height: 1.5;
         }
     }
 
-    .sidePanel {
-        &.in-horizon {
-            @media screen and (min-width: var(--tablet)) {
-                margin-left: 150px !important;
-            }
+}
+
+.commentInput {
+    .message-header {
+        border: 0 !important;
+        padding: 0 0.75rem !important;
+    }
+    .message-body {
+        padding: 0.75rem 0.75rem !important;
+    }
+
+}
+
+.actionComment {
+    @include tablet {
+        margin-left: 5rem !important;
+    }
+    font-size: 14px !important;
+}
+
+.tensionSidePane {
+    margin-top: 2.25rem !important;
+
+    .media:first-child {
+        border-top: 1px solid var(--border-color-light) !important;
+        padding-top: 1rem !important;
+    }
+
+    .media {
+        border-top: 1px solid var(--border-color-light) !important;
+        margin:0;
+        padding-bottom: 2rem;
+    }
+
+    .media-content {
+        font-size: 14px !important;
+        .subtitle {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: var(--is-discrete);
+            margin-bottom: 1rem !important;
+        }
+    }
+}
+
+.sidePanel {
+    &.in-horizon {
+        @media screen and (min-width: var(--tablet)) {
+            margin-left: 150px !important;
         }
     }
 }
@@ -1106,10 +1130,10 @@ hr {
     overflow-y: auto;
 
     .is-name {
-        color: var(--text);
+        color: var(--text) !important;
     }
     .is-username {
-        color: var(--text-light2);
+        color: var(--text-light2) !important;
     }
 
     p {
@@ -1603,6 +1627,17 @@ tr.mediaBox {
         }
     }
 
+    a {
+        color: $blue;
+    }
+
+    .is-name{
+        color: $dark;
+    }
+    .is-username {
+        color: lighten($dark, 20);
+    }
+
     .box.is-light {
         background-color: #dce3e3;
         color: black;
@@ -1837,13 +1872,11 @@ tr.mediaBox {
     #searchList {
         margin-top: -12px !important;
     }
-
     .searchBar > div:first-child {
         display: inline-flex;
         position: relative;
         vertical-align: top;
     }
-
     .controlButtons {
         //display: flex;
         //flex-grow: 1;
@@ -1853,19 +1886,21 @@ tr.mediaBox {
             padding-right: 0 !important;
         }
 
-        .custom-style {
-            margin-left: 5px !important;
-            margin-right: 8px !important;
-            color: var(--green-frac6) !important;
-        }
+        //.button {
+        //    border: 1px solid var(--grey-light);
+        //    border-right: 0;
+        //    &:last-child {
+        //        border-right: 1px solid var(--grey);
+        //    }
+        //}
     }
-
-    .button {
-        border: 1px solid var(--grey);
-        border-right: 0;
-        &:last-child {
-            border-right: 1px solid var(--grey);
-        }
+    .custom-style {
+        margin-left: 5px !important;
+        margin-right: 8px !important;
+        color: var(--green-frac6) !important;
+    }
+    #actionPanelContentSearchBar {
+        margin-left: -1px;
     }
 }
 
@@ -1961,6 +1996,20 @@ tr.mediaBox {
     }
 }
 
+.voteButton {
+    .button.is-success {
+        color: var(--button-vote-success);
+        background-color: var(--button-vote-success-background);
+    }
+    .button.is-danger {
+        color: var(--button-vote-danger);
+        background-color: var(--button-vote-danger-background);
+    }
+    .button:hover {
+        filter: invert(5%);
+        border: solid 1px var(--border-color-light);
+    }
+}
 
 /*
  *

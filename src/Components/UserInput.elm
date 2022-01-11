@@ -1,5 +1,6 @@
 module Components.UserInput exposing (Msg(..), State, init, subscriptions, update, view)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpinRight, viewGqlErrors, withMaybeData)
@@ -13,7 +14,6 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -240,7 +240,7 @@ update_ apis message model =
 
         DoQueryUser ->
             ( setDataResult LoadingSlowly model
-            , out0 [ queryUser apis model.form.pattern OnUsersAck ]
+            , out0 [ queryUser apis (String.toLower model.form.pattern) OnUsersAck ]
             )
 
         OnUsersAck result ->
@@ -303,7 +303,7 @@ subscriptions =
 
 
 type alias Op =
-    {}
+    { label_text : String }
 
 
 view : Op -> State -> Html Msg
@@ -359,7 +359,7 @@ viewInput op model =
     div []
         [ div [ class "field mb-5" ]
             [ label [ class "label" ]
-                [ text "Invite someone:" ]
+                [ text op.label_text ]
             , div [ class "control" ]
                 [ selectedUser
                 , input

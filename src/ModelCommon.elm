@@ -27,6 +27,7 @@ import Maybe exposing (withDefault)
 import ModelCommon.Codecs
     exposing
         ( FractalBaseRoute(..)
+        , contractIdCodec
         , getCircleRoles
         , getCoordoRoles
         , getOrgaRoles
@@ -159,10 +160,21 @@ type alias UserForm =
 
 
 type alias CommentPatchForm =
-    { id : String
+    { id : String -- comment id (for edit/patch)
+    , pid : String -- parent id (e.g. tid of cid) (for creating)
     , uctx : UserCtx
     , post : Post
     , viewMode : InputViewMode
+    }
+
+
+initCommentPatchForm : UserState -> CommentPatchForm
+initCommentPatchForm user =
+    { uctx = uctxFromUser user
+    , id = ""
+    , pid = ""
+    , post = Dict.empty
+    , viewMode = Write
     }
 
 
@@ -397,6 +409,50 @@ buildVote contractid rootnameid username value =
     }
 
 
+makeCandidateContractForm : ActionForm -> ContractForm
+makeCandidateContractForm form =
+    let
+        -- @codefactor: put it in Codec.contractIdCodec.
+        -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
+        ( et, old, new ) =
+            List.head form.events
+                |> Maybe.map (\x -> ( TensionEvent.toString x.event_type, x.old, x.new ))
+                |> withDefault ( "", "", "" )
+
+        contractid =
+            contractIdCodec form.tid et old new
+
+        rootnameid =
+            nid2rootid form.node.nameid
+
+        -- Feed candidate and pendingcandidate
+        ( candidates, pending_candidates ) =
+            List.foldl
+                (\uf ( cand, pend ) ->
+                    if uf.email == "" then
+                        ( [ { username = uf.username } ], [] )
+
+                    else
+                        ( [], [ { email = uf.email } ] )
+                )
+                ( [], [] )
+                form.users
+
+        --form.users |> @FUTURE: multiple invitation...
+    in
+    { uctx = form.uctx
+    , tid = form.tid
+    , event = form.events |> List.map ev2eventFragment |> List.head |> withDefault initEventFragment
+    , post = form.post
+    , status = ContractStatus.Open
+    , contract_type = ContractType.AnyCandidates
+    , contractid = contractid
+    , participants = [ buildVote contractid rootnameid form.uctx.username 1 ]
+    , candidates = candidates
+    , pending_candidates = pending_candidates
+    }
+
+
 
 -- Steps
 
@@ -538,6 +594,23 @@ getParentFragmentFromRole role =
                 |> Array.fromList
     in
     Array.get (Array.length l - 2) l |> withDefault ""
+
+
+nodeFromTension t =
+    t.blobs
+        |> withDefault []
+        |> List.head
+        |> Maybe.map (\h -> h.node)
+        |> withDefault Nothing
+        |> withDefault (initNodeFragment Nothing)
+
+
+mdFromTension t =
+    t.blobs
+        |> withDefault []
+        |> List.head
+        |> Maybe.map (\h -> h.md)
+        |> withDefault Nothing
 
 
 

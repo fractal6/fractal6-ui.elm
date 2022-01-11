@@ -2,33 +2,48 @@ module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, u
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
+import Components.Comments exposing (viewComment, viewContractCommentInput)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
-import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), uctxFromUser)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, uriFromUsername)
+import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, uctxFromUser)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nodeIdCodec, uriFromUsername)
 import ModelCommon.Event exposing (contractEventToText, contractTypeToText)
-import ModelCommon.View exposing (byAt, viewTensionArrow, viewTensionDateAndUserC, viewUpdated, viewUser2, viewUsernameLink)
+import ModelCommon.View
+    exposing
+        ( byAt
+        , viewJoinNeeded
+        , viewRole
+        , viewTensionArrow
+        , viewTensionDateAndUserC
+        , viewUpdated
+        , viewUser0
+        , viewUser2
+        , viewUserFull
+        , viewUsernameLink
+        )
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (deleteOneContract)
-import Query.PatchContract exposing (sendVote)
-import Query.QueryContract exposing (getContract, getContractComments, getContracts)
+import Query.PatchContract exposing (pushComment, sendVote)
+import Query.PatchTension exposing (patchComment)
+import Query.QueryContract exposing (getContract, getContracts)
 import Session exposing (Apis, GlobalCmd(..))
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -49,9 +64,15 @@ type alias Model =
     , vote_result : GqlData ContractResult
     , activeView : ContractsPageView
 
+    -- Comments
+    , comment_form : CommentPatchForm
+    , comment_patch_form : CommentPatchForm
+    , comment_result : GqlData Comment
+
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , inputViewMode : InputViewMode
     }
 
 
@@ -71,10 +92,14 @@ initModel rootnameid user =
     , form = initContractForm user
     , voteForm = initVoteForm user
     , activeView = ContractsView
+    , comment_form = initCommentPatchForm user
+    , comment_patch_form = initCommentPatchForm user
+    , comment_result = NotAsked
 
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , inputViewMode = Write
     }
 
 
@@ -155,19 +180,7 @@ setContractsResult result model =
 
 setContractResult : GqlData ContractFull -> Model -> Model
 setContractResult result model =
-    let
-        form =
-            model.form
-
-        newForm =
-            case result of
-                Success c ->
-                    { form | contractid = c.contractid }
-
-                _ ->
-                    form
-    in
-    { model | contract_result = result, form = newForm }
+    { model | contract_result = result }
 
 
 setContractDelResult : GqlData IdPayload -> Model -> Model
@@ -204,7 +217,6 @@ type Msg
     | DoClickContract String
     | DoQueryContracts
     | DoQueryContract String
-    | DoQueryContractComments String
     | DoDeleteContract String
     | DoPopContract String
     | DoVote Int Time.Posix
@@ -212,8 +224,18 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | OnContractsAck (GqlData Contracts)
     | OnContractAck (GqlData ContractFull)
-    | OnContractCommentsAck (GqlData ContractComments)
     | OnContractDeleteAck (GqlData IdPayload)
+      -- Comments
+    | PushComment
+    | PushCommentPatch
+    | DoUpdateComment String
+    | CancelCommentPatch
+    | ChangeCommentPost String String
+    | ChangeCommentPatch String String
+    | SubmitCommentPost Time.Posix
+    | SubmitCommentPatch Time.Posix
+    | CommentAck (GqlData Comment)
+    | CommentPatchAck (GqlData Comment)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -221,6 +243,8 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | ChangeInputViewMode InputViewMode
+    | ChangeUpdateViewMode InputViewMode
 
 
 type alias Out =
@@ -296,16 +320,6 @@ update_ apis message model =
         DoQueryContract cid ->
             ( { model | contract_result = LoadingSlowly }, out0 [ getContract apis model.form OnContractAck ] )
 
-        DoQueryContractComments cid ->
-            let
-                form =
-                    model.form
-
-                f =
-                    { form | cid = cid }
-            in
-            ( { model | form = f }, out0 [ getContractComments apis f OnContractCommentsAck ] )
-
         DoDeleteContract cid ->
             let
                 form =
@@ -356,35 +370,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep (DoQueryContract model.form.cid) 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
-                    ( data, Out [ send (DoQueryContractComments d.id) ] [] (Just ( True, [ { id = d.id } ] )) )
-
-                _ ->
-                    ( data, noOut )
-
-        OnContractCommentsAck result ->
-            let
-                newResult =
-                    model.contract_result
-                        |> withMapData
-                            (\c ->
-                                withMaybeDataMap (\r -> { c | comments = r.comments }) result
-                                    |> withDefault c
-                            )
-
-                data =
-                    setContractResult newResult model
-            in
-            case parseErr result data.refresh_trial of
-                Authenticate ->
-                    ( setContractResult NotAsked model
-                    , out1 [ DoAuth data.form.uctx ]
-                    )
-
-                RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep (DoQueryContractComments model.form.cid) 500 ] [ DoUpdateToken ] )
-
-                OkAuth d ->
-                    ( data, Out [] [] (Just ( True, [] )) )
+                    ( data, Out [] [] (Just ( True, [ { id = d.id } ] )) )
 
                 _ ->
                     ( data, noOut )
@@ -459,6 +445,131 @@ update_ apis message model =
                 _ ->
                     ( data, noOut )
 
+        -- Comments
+        PushComment ->
+            ( model, out0 [ pushComment apis model.comment_form CommentAck ] )
+
+        PushCommentPatch ->
+            ( model, out0 [ patchComment apis model.comment_patch_form CommentPatchAck ] )
+
+        DoUpdateComment id ->
+            let
+                form =
+                    model.comment_patch_form
+            in
+            ( { model | comment_patch_form = { form | id = id } }, out0 [ Ports.focusOn "updateCommentInput" ] )
+
+        CancelCommentPatch ->
+            let
+                form =
+                    model.comment_patch_form
+            in
+            ( { model | comment_patch_form = { form | id = "" }, comment_result = NotAsked }, out0 [ Ports.bulma_driver "" ] )
+
+        ChangeCommentPost field value ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model | comment_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+        ChangeCommentPatch field value ->
+            let
+                form =
+                    model.comment_patch_form
+            in
+            ( { model | comment_patch_form = { form | post = Dict.insert field value form.post } }, noOut )
+
+        SubmitCommentPost time ->
+            let
+                form =
+                    model.comment_form
+            in
+            ( { model
+                | comment_form =
+                    { form
+                        | pid = withMaybeDataMap .id model.contract_result |> withDefault ""
+                        , post = Dict.insert "createdAt" (fromTime time) form.post
+                    }
+                , comment_result = LoadingSlowly
+              }
+            , out0 [ send PushComment ]
+            )
+
+        SubmitCommentPatch time ->
+            let
+                form =
+                    model.comment_patch_form
+            in
+            ( { model | comment_patch_form = { form | post = Dict.insert "updatedAt" (fromTime time) form.post }, comment_result = LoadingSlowly }
+            , out0 [ send PushCommentPatch ]
+            )
+
+        CommentAck result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | comment_result = NotAsked }, out1 [ DoAuth model.form.uctx ] )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, out2 [ sendSleep PushComment 500 ] [ DoUpdateToken ] )
+
+                OkAuth data ->
+                    let
+                        contract =
+                            case model.contract_result of
+                                Success t ->
+                                    Success { t | comments = Just (withDefault [] t.comments ++ [ data ]) }
+
+                                other ->
+                                    other
+
+                        resetForm =
+                            initCommentPatchForm model.user
+                    in
+                    ( { model | contract_result = contract, comment_form = resetForm, comment_result = result }
+                    , out0 [ Ports.bulma_driver "" ]
+                    )
+
+                _ ->
+                    ( { model | comment_result = result }, noOut )
+
+        CommentPatchAck result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | comment_result = NotAsked }, out1 [ DoAuth model.form.uctx ] )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, out2 [ sendSleep PushCommentPatch 500 ] [ DoUpdateToken ] )
+
+                OkAuth comment ->
+                    let
+                        contract =
+                            case model.contract_result of
+                                Success t ->
+                                    let
+                                        comments =
+                                            withDefault [] t.comments
+
+                                        n =
+                                            comments
+                                                |> LE.findIndex (\c -> c.id == comment.id)
+                                                |> withDefault 0
+                                    in
+                                    Success { t | comments = Just (LE.setAt n comment comments) }
+
+                                other ->
+                                    other
+
+                        resetForm =
+                            initCommentPatchForm model.user
+                    in
+                    ( { model | contract_result = contract, comment_patch_form = resetForm, comment_result = result }
+                    , out0 [ Ports.bulma_driver "" ]
+                    )
+
+                _ ->
+                    ( { model | comment_result = result }, noOut )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -475,6 +586,17 @@ update_ apis message model =
 
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
+
+        ChangeInputViewMode viewMode ->
+            -- @codefactor: should write in comment_form, but tension page directly write in tension_head...
+            ( { model | inputViewMode = viewMode }, noOut )
+
+        ChangeUpdateViewMode viewMode ->
+            let
+                form =
+                    model.comment_patch_form
+            in
+            ( { model | comment_patch_form = { form | viewMode = viewMode } }, noOut )
 
 
 subscriptions =
@@ -571,7 +693,7 @@ viewRow d op model =
                 [ href (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.rootnameid, param2 = model.form.tid, param3 = d.id } |> toHref) ]
                 [ span [] [ textH (contractEventToText d.event.event_type) ] ]
             ]
-        , td [ onClick (DoClickContract d.id) ] [ span [] [ textH (contractTypeToText d.contract_type) ] ]
+        , td [] [ span [] [ textH (contractTypeToText d.contract_type) ] ]
         , td [ class "has-links-discrete" ] [ viewUsernameLink d.createdBy.username ]
         , td [] [ text (formatDate op.now d.createdAt) ]
 
@@ -628,176 +750,179 @@ viewContract op model =
 
 
 viewContractPage : ContractFull -> Op -> Model -> Html Msg
-viewContractPage data op model =
-    div []
-        [ viewContractBox data op model
-        , case data.comments of
-            Nothing ->
-                div [ class "spinner" ] []
+viewContractPage c op model =
+    let
+        isCandidate =
+            c.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member model.form.uctx.username
 
-            Just comments ->
-                --viewComments comments data op model -- @todo
-                text ""
+        isParticipant =
+            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member model.form.uctx.username
+
+        isValidator =
+            withDefault False c.isValidator
+
+        userInput =
+            case model.user of
+                LoggedIn uctx ->
+                    if isParticipant || isValidator || isCandidate then
+                        let
+                            opNew =
+                                { doChangeViewMode = ChangeInputViewMode
+                                , doChangePost = ChangeCommentPost
+                                , doSubmit = OnSubmit
+                                , doSubmitComment = SubmitCommentPost
+                                , rows = 3
+                                }
+                        in
+                        viewContractCommentInput opNew uctx model.comment_form model.comment_result model.inputViewMode
+
+                    else
+                        text ""
+
+                LoggedOut ->
+                    --viewJoinNeeded DoJoinOrga model.node_focus
+                    text ""
+    in
+    div [ class "comments" ]
+        [ viewContractBox c op model
+        , if (isValidator || isCandidate) && not isParticipant then
+            viewVoteBox c op model
+
+          else
+            text ""
+        , c.comments
+            |> Maybe.map
+                (\comments ->
+                    --viewComments op (List.tail comments |> withDefault []) model
+                    viewComments op comments model
+                )
+            |> withDefault (text "")
+        , hr [ class "has-background-border-light is-2" ] []
+        , userInput
         ]
 
 
 viewContractBox : ContractFull -> Op -> Model -> Html Msg
-viewContractBox data op model =
-    let
-        uctx =
-            model.form.uctx
-
-        isCandidate =
-            data.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member uctx.username
-
-        isParticipant =
-            data.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member uctx.username
-
-        isValidator =
-            withDefault False data.isValidator
-    in
-    div []
-        [ form [ class "box is-light form" ]
-            [ div [ class "field is-horizontal" ]
-                [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractType ] ]
-                , div [ class "field-body" ]
-                    [ div [ class "field is-narrow" ]
-                        [ input [ class "input", value (upH (contractTypeToText data.contract_type)), disabled True ] []
+viewContractBox c op model =
+    form [ class "box form" ]
+        [ div [ class "columns" ]
+            [ div [ class "column is-5" ]
+                [ div [ class "field is-horizontal" ]
+                    [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractType ] ]
+                    , div [ class "field-bod" ]
+                        [ div [ class "field is-narrow" ]
+                            [ input [ class "input", value (upH (contractTypeToText c.contract_type)), disabled True ] [] ]
+                        ]
+                    ]
+                , div [ class "field is-horizontal" ]
+                    [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractEvent ] ]
+                    , div [ class "field-bod" ]
+                        [ div [ class "field is-narrow" ]
+                            [ input [ class "input", value (upH (contractEventToText c.event.event_type)), disabled True ] [] ]
                         ]
                     ]
                 ]
-            , div [ class "field is-horizontal" ]
-                [ div [ class "field-label" ] [ label [ class "label" ] [ textH T.contractEvent ] ]
-                , div [ class "field-body" ] <|
-                    case data.event.event_type of
-                        TensionEvent.Moved ->
-                            let
-                                emitter =
-                                    data.event.old |> withDefault "unknown" |> nid2eor
+            , div [ class "column is-6" ]
+                [ case c.event.event_type of
+                    TensionEvent.Moved ->
+                        let
+                            emitter =
+                                c.event.old |> withDefault "unknown" |> nid2eor
 
-                                receiver =
-                                    data.event.new |> withDefault "unkown" |> nid2eor
-                            in
-                            [ div [ class "field is-narrow" ]
-                                [ input [ class "input", value (upH (contractEventToText data.event.event_type)), disabled True ] []
+                            receiver =
+                                c.event.new |> withDefault "unkown" |> nid2eor
+                        in
+                        viewTensionArrow "is-pulled-right" emitter receiver
+
+                    TensionEvent.MemberLinked ->
+                        let
+                            user =
+                                c.event.new |> withDefault "unkown"
+
+                            n =
+                                nodeFromTension c.tension
+
+                            role =
+                                { name = withDefault "" n.name
+                                , nameid = Maybe.map (\x -> nodeIdCodec op.receiverid x NodeType.Role) n.nameid |> withDefault ""
+                                , role_type = withDefault RoleType.Peer n.role_type
+                                }
+                        in
+                        div [ class "subtitle", attribute "style" "line-height: 2.5; " ] <|
+                            List.intersperse (text " ") <|
+                                [ viewUserFull 1 True True { username = user, name = Nothing }
+                                , text "has been invited"
+                                , text "to play the role"
+                                , span [ class "is-text-aligned" ] [ viewRole OverviewBaseUri role, text "." ]
                                 ]
-                            , viewTensionArrow "is-pulled-right" emitter receiver
-                            ]
 
-                        _ ->
-                            [ text "not implemented" ]
+                    TensionEvent.UserJoined ->
+                        let
+                            user =
+                                c.event.new |> withDefault "unkown"
+                        in
+                        span [] <|
+                            List.intersperse (text " ") <|
+                                [ text user
+                                , text "has been invited."
+                                ]
+
+                    _ ->
+                        text "not implemented"
                 ]
-            , div [ class "field pb-2" ] [ span [ class "is-pulled-right is-smaller" ] [ textH (T.created ++ T.space_), byAt op.now data.createdBy data.createdAt ] ]
             ]
+        , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ T.space_), byAt op.now c.createdBy c.createdAt ] ]
+        ]
+
+
+viewVoteBox : ContractFull -> Op -> Model -> Html Msg
+viewVoteBox c op model =
+    let
+        -- @doublon
+        isParticipant =
+            c.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member model.form.uctx.username
+    in
+    div [ class "mb-5" ]
+        [ p [ class "buttons is-centered voteButton" ]
+            [ div
+                [ class "button is-success is-rounded"
+                , onClick (OnSubmit <| DoVote 1)
+                ]
+                [ span [ class "mx-4" ] [ textH "accept" ] ]
+            , div
+                [ class "button is-danger is-rounded"
+                , onClick (OnSubmit <| DoVote 0)
+                ]
+                [ span [ class "mx-4" ] [ textH "decline" ] ]
+            ]
+        , if isParticipant then
+            div [ class "help has-text-centered" ] [ text "You've already voted, but you can still change your vote." ]
+
+          else
+            text ""
         , case model.vote_result of
             Failure err ->
                 viewGqlErrors err
 
             _ ->
                 text ""
-        , if (isValidator || isCandidate) && isParticipant == False then
-            p [ class "buttons is-centered" ]
-                [ div
-                    [ class "button is-success is-light is-rounded"
-                    , onClick (OnSubmit <| DoVote 1)
-                    ]
-                    [ span [ class "mx-4" ] [ textH "accept" ] ]
-                , div
-                    [ class "button is-danger is-light is-rounded"
-                    , onClick (OnSubmit <| DoVote 0)
-                    ]
-                    [ span [ class "mx-4" ] [ textH "decline" ] ]
-                ]
-
-          else
-            text ""
         ]
 
 
-
---viewComments : List Comment -> Contract -> Op -> Model -> Html Msg
---viewComments comments data op model =
---    let
---        userInput =
---            case model.user of
---                LoggedIn uctx ->
---                    let
---                        orgaRoles =
---                            getOrgaRoles uctx.roles [ op.emitterid, op.receiverid ]
---                    in
---                    case orgaRoles of
---                        [] ->
---                            viewJoinNeeded model.node_focus
---
---                        _ ->
---                            viewCommentInput uctx t model.tension_form model.tension_patch model.inputViewMode
---
---                LoggedOut ->
---                    viewJoinNeeded model.node_focus
---    in
---    comments
---        |> List.map
---            (\c ->
---                let
---                    isAuthor =
---                        c.createdBy.username == model.form.uctx.username
---                in
---                viewComment op c isAuthor
---            )
---        |> div []
-
-
-viewComment : Op -> Comment -> Bool -> Html Msg
-viewComment op c isAuthor =
-    div [ class "media section is-paddingless" ]
-        [ div [ class "media-left" ] [ viewUser2 c.createdBy.username ]
-        , div
-            [ class "media-content"
-            , attribute "style" "width: 66.66667%;"
-            ]
-            [ if False then
-                --if model.comment_form.id == c.id then
-                --viewUpdateInput model.comment_form.uctx c model.comment_form model.comment_result
-                text "edit box"
-
-              else
-                div [ class "message" ]
-                    [ div [ class "message-header" ]
-                        [ viewTensionDateAndUserC op.now c.createdAt c.createdBy
-                        , case c.updatedAt of
-                            Just updatedAt ->
-                                viewUpdated op.now updatedAt
-
-                            Nothing ->
-                                text ""
-                        , if isAuthor then
-                            div [ class "dropdown is-right is-pulled-right " ]
-                                [ div [ class "dropdown-trigger" ]
-                                    [ div
-                                        [ class "ellipsis"
-                                        , attribute "aria-controls" ("dropdown-menu_ellipsis" ++ c.id)
-                                        , attribute "aria-haspopup" "true"
-                                        ]
-                                        [ A.icon "icon-ellipsis-v" ]
-                                    ]
-                                , div [ id ("dropdown-menu_ellipsis" ++ c.id), class "dropdown-menu", attribute "role" "menu" ]
-                                    [ div [ class "dropdown-content" ]
-                                        --[ div [ class "dropdown-item button-light" ] [ p [ onClick (DoUpdateComment c.id) ] [ textH T.edit ] ] ]
-                                        []
-                                    ]
-                                ]
-
-                          else
-                            text ""
-                        ]
-                    , div [ class "message-body" ]
-                        [ case c.message of
-                            "" ->
-                                div [ class "is-italic" ] [ text "No description provided." ]
-
-                            message ->
-                                renderMarkdown "is-human" message
-                        ]
-                    ]
-            ]
-        ]
+viewComments : Op -> List Comment -> Model -> Html Msg
+viewComments op comments model =
+    let
+        opEdit =
+            { doUpdate = DoUpdateComment
+            , doCancelComment = CancelCommentPatch
+            , doChangeViewMode = ChangeUpdateViewMode
+            , doChangePost = ChangeCommentPatch
+            , doSubmit = OnSubmit
+            , doEditComment = SubmitCommentPatch
+            , now = op.now
+            }
+    in
+    comments
+        |> List.map
+            (\c -> viewComment opEdit c model.comment_patch_form model.comment_result)
+        |> div []
