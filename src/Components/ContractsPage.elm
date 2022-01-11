@@ -23,7 +23,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, uctxFromUser)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nodeIdCodec, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nodeIdCodec, uriFromUsername)
 import ModelCommon.Event exposing (contractEventToText, contractTypeToText)
 import ModelCommon.View
     exposing
@@ -180,7 +180,20 @@ setContractsResult result model =
 
 setContractResult : GqlData ContractFull -> Model -> Model
 setContractResult result model =
-    { model | contract_result = result }
+    let
+        form =
+            model.form
+
+        newForm =
+            case result of
+                Success c ->
+                    --{ form | cid = c.id }
+                    { form | contractid = contractIdCodec c.tension.id (TensionEvent.toString c.event.event_type) (withDefault "" c.event.old) (withDefault "" c.event.new) }
+
+                _ ->
+                    form
+    in
+    { model | contract_result = result, form = newForm }
 
 
 setContractDelResult : GqlData IdPayload -> Model -> Model
@@ -419,13 +432,14 @@ update_ apis message model =
                 form =
                     { f
                         | vote = v
-                        , cid = model.form.cid
+
+                        --, cid = model.form.cid
                         , contractid = model.form.contractid
                         , rootnameid = model.rootnameid
                         , post = Dict.insert "createdAt" (fromTime time) f.post
                     }
             in
-            ( { model | voteForm = form }, out0 [ sendVote apis form OnVoteAck ] )
+            ( { model | voteForm = form, vote_result = LoadingSlowly }, out0 [ sendVote apis form OnVoteAck ] )
 
         OnVoteAck result ->
             let
@@ -881,32 +895,50 @@ viewVoteBox c op model =
         -- @doublon
         isParticipant =
             c.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member model.form.uctx.username
+
+        isLoading =
+            model.vote_result == LoadingSlowly
+
+        isSuccess =
+            withMaybeData model.vote_result /= Nothing
     in
-    div [ class "mb-5" ]
-        [ p [ class "buttons is-centered voteButton" ]
-            [ div
-                [ class "button is-success is-rounded"
-                , onClick (OnSubmit <| DoVote 1)
-                ]
-                [ span [ class "mx-4" ] [ textH "accept" ] ]
-            , div
-                [ class "button is-danger is-rounded"
-                , onClick (OnSubmit <| DoVote 0)
-                ]
-                [ span [ class "mx-4" ] [ textH "decline" ] ]
+    if isSuccess && model.voteForm.vote == 1 then
+        div [ class "notification is-success is-light" ]
+            [ A.icon1 "icon-check icon-2x has-text-success" " "
+            , text "Congratulations, you have been link to this role."
             ]
-        , if isParticipant then
-            div [ class "help has-text-centered" ] [ text "You've already voted, but you can still change your vote." ]
 
-          else
-            text ""
-        , case model.vote_result of
-            Failure err ->
-                viewGqlErrors err
+    else if isSuccess && model.voteForm.vote == 0 then
+        div [ class "notification is-danger is-light" ] [ text "Invitation has been rejected." ]
 
-            _ ->
+    else
+        div [ class "mb-5" ]
+            [ p [ class "buttons is-centered voteButton" ]
+                [ div
+                    [ class "button is-success is-rounded"
+                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
+                    , onClick (OnSubmit <| DoVote 1)
+                    ]
+                    [ span [ class "mx-4" ] [ textH "accept" ] ]
+                , div
+                    [ class "button is-danger is-rounded"
+                    , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
+                    , onClick (OnSubmit <| DoVote 0)
+                    ]
+                    [ span [ class "mx-4" ] [ textH "decline" ] ]
+                ]
+            , if isParticipant then
+                div [ class "help has-text-centered" ] [ text "You've already voted, but you can still change your vote." ]
+
+              else
                 text ""
-        ]
+            , case model.vote_result of
+                Failure err ->
+                    viewGqlErrors err
+
+                _ ->
+                    text ""
+            ]
 
 
 viewComments : Op -> List Comment -> Model -> Html Msg
