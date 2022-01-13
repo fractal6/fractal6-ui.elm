@@ -62,23 +62,3 @@ colorMin =
 colorMax : SelectionSet (Maybe String) Fractal.Object.RoleExtAggregateResult
 colorMax =
     Object.selectionForField "(Maybe String)" "colorMax" [] (Decode.string |> Decode.nullable)
-
-
-n_nodesMin : SelectionSet (Maybe Int) Fractal.Object.RoleExtAggregateResult
-n_nodesMin =
-    Object.selectionForField "(Maybe Int)" "n_nodesMin" [] (Decode.int |> Decode.nullable)
-
-
-n_nodesMax : SelectionSet (Maybe Int) Fractal.Object.RoleExtAggregateResult
-n_nodesMax =
-    Object.selectionForField "(Maybe Int)" "n_nodesMax" [] (Decode.int |> Decode.nullable)
-
-
-n_nodesSum : SelectionSet (Maybe Int) Fractal.Object.RoleExtAggregateResult
-n_nodesSum =
-    Object.selectionForField "(Maybe Int)" "n_nodesSum" [] (Decode.int |> Decode.nullable)
-
-
-n_nodesAvg : SelectionSet (Maybe Float) Fractal.Object.RoleExtAggregateResult
-n_nodesAvg =
-    Object.selectionForField "(Maybe Float)" "n_nodesAvg" [] (Decode.float |> Decode.nullable)

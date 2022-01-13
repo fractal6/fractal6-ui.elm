@@ -24,7 +24,7 @@ import Components.Loading as Loading
         , withMaybeData
         , withMaybeDataMap
         )
-import Components.NodeDoc as NodeDoc exposing (nodeFragmentFromOrga)
+import Components.NodeDoc as NodeDoc
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -77,8 +77,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, queryGraphPack, queryNodesSub)
-import Query.QueryNodeData exposing (queryNodeData)
+import Query.QueryNode exposing (fetchNode, fetchNodeData, queryGraphPack, queryNodesSub)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), NodesQuickSearch)
@@ -321,11 +320,11 @@ init global flags =
                 , Ports.initGraphPack Dict.empty "" -- canvas loading effet
 
                 --, queryCircleTension apis newFocus.nameid GotTensions
-                , queryNodeData apis newFocus.nameid GotData
+                , fetchNodeData apis newFocus.nameid GotData
                 ]
 
             else if fs.focusChange then
-                [ queryNodeData apis newFocus.nameid GotData
+                [ fetchNodeData apis newFocus.nameid GotData
 
                 --queryCircleTension apis newFocus.nameid GotTensions
                 ]
@@ -348,7 +347,7 @@ init global flags =
                 , Ports.initGraphPack Dict.empty "" --canvas loading effect
 
                 --, queryCircleTension apis newFocus.nameid GotTensions
-                , queryNodeData apis newFocus.nameid GotData
+                , fetchNodeData apis newFocus.nameid GotData
                 ]
 
             else
@@ -1508,3 +1507,21 @@ viewJoinOrgaStep step =
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
+
+
+
+-- Utils
+
+
+nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
+nodeFragmentFromOrga node_m nodeData children_eo ndata =
+    let
+        children =
+            children_eo
+                |> List.map (\n -> Dict.get n.nameid ndata)
+                |> List.filterMap identity
+                |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
+                |> List.map node2SubNodeFragment
+                |> Just
+    in
+    node2NodeFragment node_m children (withMaybeData nodeData)

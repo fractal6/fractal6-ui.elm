@@ -27,8 +27,11 @@ html.has-modal-active, html.has-modal-active2 {
     overflow: hidden !important;
     padding-right: 14px; /* Avoid width reflow */
 
-    .tabs:not(.modal-content .tabs) {
+    .tabs:not(.modal .tabs) {
         overflow: hidden;
+    }
+    .modal .tabs {
+        overflow-x: auto;
     }
 }
 #navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
@@ -154,7 +157,7 @@ hr {
 .help-label {
   color: var(--grey) !important;
   display: block !important;
-  font-size: var(--help-size) !important;
+  font-size: $size-small !important;
   margin-top: 0.25rem !important;
 }
 .help {
@@ -545,7 +548,8 @@ a.is-link {
 
 // Table
 
-.table {
+.table, table.table {
+    border: 1px solid var(--table-border-color);
     border-radius: 6px !important;
 	th:first-child {
 		border-radius: 6px 0 0 0;
@@ -572,9 +576,6 @@ a.is-link {
         border-bottom: 1px solid var(--table-border-color);
 	}
 
-    tbody tr{
-        border: 1px solid var(--table-border-color);
-    }
 }
 
 // Card
@@ -886,6 +887,9 @@ a.is-link {
     &.is-orange {
         background-color: var(--orange-frac6) !important;
         color: var(--white) !important;
+        .is-king, .is-queen {
+            color: var(--white) !important;
+        }
     }
 }
 
@@ -1304,16 +1308,8 @@ tr.mediaBox {
 // Members
 //
 
-#membersTable {
-    width: 100% !important;
-}
-
 #labelsTable {
     .tag { font-size: 85%;}
-    width: 100% !important;
-    & + & {
-        margin-top: 6rem;
-    }
 }
 
 /*
@@ -2082,6 +2078,24 @@ tr.mediaBox {
     }
 }
 
+.is-queen {
+    font-size: 1.2rem;
+    padding-right: 5px;
+    color: $orange;
+    &::after {
+        content: " \2655 ";
+    }
+}
+.is-king {
+    font-size: 1.2rem;
+    padding-right: 5px;
+    color: $orange;
+    &::after {
+        //content: " \2655 ";
+        content: "\2654";
+    }
+}
+
 .is-vbar-1 { // next buttons
 	display: inline-block;
 	border-left: 1px solid #ccc;
@@ -2581,6 +2595,23 @@ input:checked + section.acc .acc-title:before {
 
     .message.is-light {
         opacity: 0.7;
+    }
+}
+
+/*
+ * Self managed accordion
+ *  (do not work on table ( mandate settings !)
+ */
+.is-accordion {
+    .is-child {
+        overflow: hidden;
+        height: 0 !important;
+        max-height: 0 !important;
+        transition: max-height 0.4s ease-out;
+        &.is-open {
+            height: 800px !important;
+            max-height: 800px !important ;
+        }
     }
 }
 

@@ -297,16 +297,17 @@ initTensionPatchForm tid user =
 --Settings Form
 
 
-type alias LabelNodeForm =
+type alias ArtefactNodeForm =
     { uctx : UserCtx
     , id : String
     , nameid : String
     , post : Post
+    , mandate : Mandate
     }
 
 
-initLabelNodeForm : UserState -> String -> LabelNodeForm
-initLabelNodeForm user nameid =
+initArtefactNodeForm : UserState -> String -> ArtefactNodeForm
+initArtefactNodeForm user nameid =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -317,6 +318,7 @@ initLabelNodeForm user nameid =
     , id = ""
     , nameid = nameid
     , post = Dict.fromList [ ( "color", "#dddddd" ) ]
+    , mandate = initMandate
     }
 
 

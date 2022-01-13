@@ -14,13 +14,11 @@ type LabelHasFilter
     | Color
     | Tensions
     | Nodes
-    | N_nodes
-    | N_tensions
 
 
 list : List LabelHasFilter
 list =
-    [ Rootnameid, Name, Description, Color, Tensions, Nodes, N_nodes, N_tensions ]
+    [ Rootnameid, Name, Description, Color, Tensions, Nodes ]
 
 
 decoder : Decoder LabelHasFilter
@@ -46,12 +44,6 @@ decoder =
 
                     "nodes" ->
                         Decode.succeed Nodes
-
-                    "n_nodes" ->
-                        Decode.succeed N_nodes
-
-                    "n_tensions" ->
-                        Decode.succeed N_tensions
 
                     _ ->
                         Decode.fail ("Invalid LabelHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -80,12 +72,6 @@ toString enum____ =
 
         Nodes ->
             "nodes"
-
-        N_nodes ->
-            "n_nodes"
-
-        N_tensions ->
-            "n_tensions"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -119,12 +105,6 @@ fromString enumString____ =
 
         "nodes" ->
             Just Nodes
-
-        "n_nodes" ->
-            Just N_nodes
-
-        "n_tensions" ->
-            Just N_tensions
 
         _ ->
             Nothing

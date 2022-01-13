@@ -15,15 +15,12 @@ type NodeHasFilter
     | Nameid
     | Rootnameid
     | Parent
-    | Children
     | Type_
     | Tensions_out
     | Tensions_in
     | About
     | Mandate
-    | Docs
     | Source
-    | Labels
     | Visibility
     | Mode
     | Rights
@@ -31,6 +28,10 @@ type NodeHasFilter
     | IsRoot
     | IsPersonal
     | UserCanJoin
+    | Children
+    | Docs
+    | Labels
+    | Roles
     | First_link
     | Second_link
     | Skills
@@ -42,7 +43,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Children, Type_, Tensions_out, Tensions_in, About, Mandate, Docs, Source, Labels, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, First_link, Second_link, Skills, Role_type, Role_ext, Contracts, Orga_agg ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, Children, Docs, Labels, Roles, First_link, Second_link, Skills, Role_type, Role_ext, Contracts, Orga_agg ]
 
 
 decoder : Decoder NodeHasFilter
@@ -72,9 +73,6 @@ decoder =
                     "parent" ->
                         Decode.succeed Parent
 
-                    "children" ->
-                        Decode.succeed Children
-
                     "type_" ->
                         Decode.succeed Type_
 
@@ -90,14 +88,8 @@ decoder =
                     "mandate" ->
                         Decode.succeed Mandate
 
-                    "docs" ->
-                        Decode.succeed Docs
-
                     "source" ->
                         Decode.succeed Source
-
-                    "labels" ->
-                        Decode.succeed Labels
 
                     "visibility" ->
                         Decode.succeed Visibility
@@ -119,6 +111,18 @@ decoder =
 
                     "userCanJoin" ->
                         Decode.succeed UserCanJoin
+
+                    "children" ->
+                        Decode.succeed Children
+
+                    "docs" ->
+                        Decode.succeed Docs
+
+                    "labels" ->
+                        Decode.succeed Labels
+
+                    "roles" ->
+                        Decode.succeed Roles
 
                     "first_link" ->
                         Decode.succeed First_link
@@ -172,9 +176,6 @@ toString enum____ =
         Parent ->
             "parent"
 
-        Children ->
-            "children"
-
         Type_ ->
             "type_"
 
@@ -190,14 +191,8 @@ toString enum____ =
         Mandate ->
             "mandate"
 
-        Docs ->
-            "docs"
-
         Source ->
             "source"
-
-        Labels ->
-            "labels"
 
         Visibility ->
             "visibility"
@@ -219,6 +214,18 @@ toString enum____ =
 
         UserCanJoin ->
             "userCanJoin"
+
+        Children ->
+            "children"
+
+        Docs ->
+            "docs"
+
+        Labels ->
+            "labels"
+
+        Roles ->
+            "roles"
 
         First_link ->
             "first_link"
@@ -277,9 +284,6 @@ fromString enumString____ =
         "parent" ->
             Just Parent
 
-        "children" ->
-            Just Children
-
         "type_" ->
             Just Type_
 
@@ -295,14 +299,8 @@ fromString enumString____ =
         "mandate" ->
             Just Mandate
 
-        "docs" ->
-            Just Docs
-
         "source" ->
             Just Source
-
-        "labels" ->
-            Just Labels
 
         "visibility" ->
             Just Visibility
@@ -324,6 +322,18 @@ fromString enumString____ =
 
         "userCanJoin" ->
             Just UserCanJoin
+
+        "children" ->
+            Just Children
+
+        "docs" ->
+            Just Docs
+
+        "labels" ->
+            Just Labels
+
+        "roles" ->
+            Just Roles
 
         "first_link" ->
             Just First_link

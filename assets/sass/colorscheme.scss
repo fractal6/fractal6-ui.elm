@@ -54,6 +54,7 @@ $yellow-invert: #fff;
 //
 // Dimensions
 //
+// @debug: bulba var(--size-small) does not seems to work ?
 $size-small2: 0.65rem;
 
 // Navbar
@@ -136,7 +137,6 @@ $acc-height: 48px;
     //
     // Dimmension
     //
-    --size-small2: #{$size-small2};
 
     // Navbar
     --navbar-height: #{$navbar-height};

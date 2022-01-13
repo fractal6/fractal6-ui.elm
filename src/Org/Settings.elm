@@ -9,6 +9,7 @@ import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
@@ -34,19 +35,28 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, login)
-import ModelCommon.View exposing (roleColor, viewLabel)
+import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, login)
+import ModelCommon.View exposing (getNodeTextFromNodeType, roleColor, viewLabel, viewRoleExt)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.PatchNode exposing (addOneLabel, removeOneLabel, updateOneLabel)
+import Query.PatchNode
+    exposing
+        ( addOneLabel
+        , addOneRole
+        , removeOneLabel
+        , removeOneRole
+        , updateOneLabel
+        , updateOneRole
+        )
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, getLabels, queryLocalGraph)
+import Query.QueryNode exposing (fetchNode, getLabels, getRoles, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis, GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
+import Url exposing (Url)
 
 
 page : Page Flags Model Msg
@@ -92,17 +102,31 @@ type alias Model =
     , path_data : GqlData LocalGraph
 
     -- Page
-    , labels : GqlData (List LabelFull)
-    , labels_top : WebData (List LabelFull)
-    , labels_sub : WebData (List LabelFull)
     , menuFocus : MenuSettings
     , menuList : List MenuSettings
+    , colorPicker : ColorPicker
+    , artefact_form : ArtefactNodeForm
+    , hasUnsavedData : Bool
+
+    -- Labels
+    , labels : GqlData (List LabelFull)
+    , labels_top : WebData (List Label)
+    , labels_sub : WebData (List Label)
     , label_add : Bool
     , label_edit : Maybe LabelFull
     , label_result : GqlData LabelFull
     , label_result_del : GqlData LabelFull
-    , label_form : LabelNodeForm
-    , colorPicker : ColorPicker
+
+    -- Roles
+    , nodeDoc : NodeDoc
+    , showMandate : String
+    , roles : GqlData (List RoleExtFull)
+    , roles_top : WebData (List RoleExt)
+    , roles_sub : WebData (List RoleExt)
+    , role_add : Bool
+    , role_edit : Maybe RoleExtFull
+    , role_result : GqlData RoleExtFull
+    , role_result_del : GqlData RoleExtFull
 
     -- Common
     , node_action : ActionState
@@ -111,6 +135,7 @@ type alias Model =
     , helperBar : HelperBar
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
+    , url : Url
 
     -- Components
     , help : Help.State
@@ -120,13 +145,14 @@ type alias Model =
 
 type MenuSettings
     = LabelsMenu
+    | RolesMenu
     | GlobalMenu
     | EditMenu
 
 
 menuList : List MenuSettings
 menuList =
-    [ LabelsMenu, GlobalMenu, EditMenu ]
+    [ LabelsMenu, RolesMenu, GlobalMenu, EditMenu ]
 
 
 menuEncoder : MenuSettings -> String
@@ -134,6 +160,9 @@ menuEncoder menu =
     case menu of
         LabelsMenu ->
             "labels"
+
+        RolesMenu ->
+            "roles"
 
         GlobalMenu ->
             "global"
@@ -149,6 +178,9 @@ menuDecoder menu =
         "labels" ->
             LabelsMenu
 
+        "roles" ->
+            RolesMenu
+
         "global" ->
             GlobalMenu
 
@@ -161,6 +193,9 @@ menuToString menu =
     case menu of
         LabelsMenu ->
             upH T.labels
+
+        RolesMenu ->
+            upH T.roles
 
         GlobalMenu ->
             upH "Organisation"
@@ -175,11 +210,22 @@ menuToIcon menu =
         LabelsMenu ->
             "icon-tag"
 
+        RolesMenu ->
+            "icon-user"
+
         GlobalMenu ->
             "icon-shield"
 
         EditMenu ->
             "icon-edit"
+
+
+resetForm : Model -> Model
+resetForm model =
+    { model
+        | artefact_form = initArtefactNodeForm (LoggedIn model.artefact_form.uctx) model.node_focus.nameid
+        , hasUnsavedData = False
+    }
 
 
 
@@ -195,19 +241,40 @@ type Msg
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
       -- Page
-    | GotLabels (GqlData (List LabelFull))
-    | GotLabelsTop (WebData (List LabelFull))
-    | GotLabelsSub (WebData (List LabelFull))
     | ChangeMenuFocus MenuSettings
+    | ChangeArtefactPost String String
+    | SafeEdit Msg
+    | SafeSend Msg
+      -- Labels
+    | GotLabels (GqlData (List LabelFull))
+    | GotLabelsTop (WebData (List Label))
+    | GotLabelsSub (WebData (List Label))
     | AddLabel
     | EditLabel LabelFull
     | CancelLabel
-    | ChangeLabelPost String String
     | SubmitAddLabel Time.Posix
     | SubmitEditLabel Time.Posix
     | SubmitDeleteLabel String Time.Posix
     | GotLabel (GqlData LabelFull)
     | GotLabelDel (GqlData LabelFull)
+      -- Roles
+    | GotRoles (GqlData (List RoleExtFull))
+    | GotRolesTop (WebData (List RoleExt))
+    | GotRolesSub (WebData (List RoleExt))
+    | AddRole
+    | EditRole RoleExtFull
+    | CancelRole
+    | SubmitAddRole Time.Posix
+    | SubmitEditRole Time.Posix
+    | SubmitDeleteRole String Time.Posix
+    | GotRole (GqlData RoleExtFull)
+    | GotRoleDel (GqlData RoleExtFull)
+    | ToggleMandate String
+    | ChangeRoleAuthority RoleType.RoleType
+    | AddDomains
+    | AddPolicies
+    | AddResponsabilities
+    | UpdateNodePost String String
       -- New Tension
     | DoCreateTension LocalGraph
       -- JoinOrga Action
@@ -225,7 +292,7 @@ type Msg
       -- Color Picker
     | OpenColor
     | CloseColor
-    | SelectLabelColor String
+    | SelectColor String
       -- Common
     | NoMsg
     | InitModals
@@ -283,17 +350,31 @@ init global flags =
                 global.session.path_data
                     |> Maybe.map (\x -> Success x)
                     |> withDefault Loading
+            , menuFocus = menu
+            , menuList = menuList
+            , colorPicker = ColorPicker.init
+            , artefact_form = initArtefactNodeForm global.session.user newFocus.nameid
+            , hasUnsavedData = False
+
+            -- Labels
             , labels = Loading
             , labels_top = RemoteData.Loading
             , labels_sub = RemoteData.Loading
-            , menuFocus = menu
-            , menuList = menuList
             , label_add = False
             , label_edit = Nothing
             , label_result = NotAsked
             , label_result_del = NotAsked
-            , label_form = initLabelNodeForm global.session.user newFocus.nameid
-            , colorPicker = ColorPicker.init
+
+            -- Roles
+            , nodeDoc = NodeDoc.create "" global.session.user
+            , showMandate = ""
+            , roles = Loading
+            , roles_top = RemoteData.Loading
+            , roles_sub = RemoteData.Loading
+            , role_add = False
+            , role_edit = Nothing
+            , role_result = NotAsked
+            , role_result_del = NotAsked
 
             -- Common
             , node_action = NoOp
@@ -301,6 +382,7 @@ init global flags =
             , modalAuth = Inactive
             , helperBar = HelperBar.create
             , refresh_trial = 0
+            , url = global.url
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , modal_confirm = ModalConfirm.init NoMsg
@@ -316,6 +398,12 @@ init global flags =
                             [ getLabels apis newFocus.nameid GotLabels
                             , fetchLabelsTop apis newFocus.nameid GotLabelsTop
                             , fetchLabelsSub apis newFocus.nameid GotLabelsSub
+                            ]
+
+                        RolesMenu ->
+                            [ getRoles apis newFocus.nameid GotRoles
+                            , fetchRolesTop apis newFocus.nameid GotRolesTop
+                            , fetchRolesSub apis newFocus.nameid GotRolesSub
                             ]
 
                         _ ->
@@ -385,6 +473,54 @@ update global message model =
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
 
+        ChangeMenuFocus menu ->
+            case menu of
+                EditMenu ->
+                    case getIdsFromPath model.path_data of
+                        Just ( nid, tid ) ->
+                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nid, param2 = tid }) ++ "?v=edit")), Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none, Cmd.none )
+
+                _ ->
+                    let
+                        query =
+                            queryBuilder
+                                [ ( "m", menuEncoder menu ) ]
+                    in
+                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
+
+        ChangeArtefactPost field value ->
+            let
+                f =
+                    model.artefact_form
+
+                newForm =
+                    { f | post = Dict.insert field value f.post }
+            in
+            ( { model | artefact_form = newForm, hasUnsavedData = True }, Cmd.none, Cmd.none )
+
+        SafeEdit msg ->
+            if model.hasUnsavedData then
+                ( model
+                , send <|
+                    DoModalConfirmOpen (SafeSend msg)
+                        { message = Nothing
+                        , txts = [ ( upH T.confirmUnsafe, "" ) ]
+                        }
+                , Cmd.none
+                )
+
+            else
+                ( resetForm model, send msg, Cmd.none )
+
+        SafeSend msg ->
+            ( resetForm model, send msg, Cmd.none )
+
+        --
+        -- Labels
+        --
         GotLabels result ->
             let
                 newModel =
@@ -406,24 +542,6 @@ update global message model =
             in
             ( newModel, Cmd.none, Cmd.none )
 
-        ChangeMenuFocus menu ->
-            case menu of
-                EditMenu ->
-                    case getIdsFromPath model.path_data of
-                        Just ( nid, tid ) ->
-                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nid, param2 = tid }) ++ "?v=edit")), Cmd.none )
-
-                        Nothing ->
-                            ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    let
-                        query =
-                            queryBuilder
-                                [ ( "m", menuEncoder menu ) ]
-                    in
-                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
-
         AddLabel ->
             if model.label_add then
                 ( model, Cmd.none, Cmd.none )
@@ -434,7 +552,6 @@ update global message model =
                     | label_add = ternary (model.label_add == True) False True
                     , label_edit = Nothing
                     , colorPicker = ColorPicker.setColor Nothing model.colorPicker
-                    , label_form = initLabelNodeForm global.session.user model.node_focus.nameid
                   }
                 , Cmd.none
                 , Cmd.none
@@ -443,7 +560,7 @@ update global message model =
         EditLabel label ->
             let
                 f =
-                    model.label_form
+                    model.artefact_form
 
                 newForm =
                     { f
@@ -460,7 +577,7 @@ update global message model =
             ( { model
                 | label_add = False
                 , label_edit = Just label
-                , label_form = newForm
+                , artefact_form = newForm
                 , label_result = NotAsked
                 , label_result_del = NotAsked
                 , colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker
@@ -473,44 +590,34 @@ update global message model =
             ( { model
                 | label_add = False
                 , label_edit = Nothing
-                , label_form = initLabelNodeForm global.session.user model.node_focus.nameid
                 , label_result = NotAsked
                 , label_result_del = NotAsked
               }
+                |> resetForm
             , Cmd.none
             , Cmd.none
             )
 
-        ChangeLabelPost field value ->
-            let
-                f =
-                    model.label_form
-
-                newForm =
-                    { f | post = Dict.insert field value f.post }
-            in
-            ( { model | label_form = newForm }, Cmd.none, Cmd.none )
-
         SubmitAddLabel _ ->
-            ( { model | label_result = LoadingSlowly }, addOneLabel apis model.label_form GotLabel, Cmd.none )
+            ( { model | label_result = LoadingSlowly }, addOneLabel apis model.artefact_form GotLabel, Cmd.none )
 
         SubmitEditLabel _ ->
-            ( { model | label_result = LoadingSlowly }, updateOneLabel apis model.label_form GotLabel, Cmd.none )
+            ( { model | label_result = LoadingSlowly }, updateOneLabel apis model.artefact_form GotLabel, Cmd.none )
 
         SubmitDeleteLabel id _ ->
             let
                 f =
-                    model.label_form
+                    model.artefact_form
 
                 newForm =
                     { f | id = id }
             in
-            ( { model | label_result_del = LoadingSlowly, label_form = newForm }, removeOneLabel apis newForm GotLabelDel, Cmd.none )
+            ( { model | label_result_del = LoadingSlowly, artefact_form = newForm }, removeOneLabel apis newForm GotLabelDel, Cmd.none )
 
         GotLabel result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | label_result = NotAsked }, send (DoOpenAuthModal model.label_form.uctx), Cmd.none )
+                    ( { model | label_result = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
 
                 RefreshToken i ->
                     if model.label_add then
@@ -541,7 +648,7 @@ update global message model =
                                     )
                                     d
                     in
-                    ( { model | label_result = result, labels = Success new, label_form = initLabelNodeForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
+                    ( { model | label_result = result, labels = Success new, label_add = False, label_edit = Nothing } |> resetForm
                     , Cmd.none
                     , Cmd.none
                     )
@@ -549,18 +656,18 @@ update global message model =
                 DuplicateErr ->
                     let
                         label_name =
-                            Dict.get "name" model.label_form.post |> withDefault ""
+                            Dict.get "name" model.artefact_form.post |> withDefault ""
 
                         here ln =
                             (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
                                 > 0
 
                         form =
-                            model.label_form
+                            model.artefact_form
                     in
                     if model.label_add && (here label_name == False) then
                         -- set the labels in the node labels list
-                        ( { model | label_result = LoadingSlowly, label_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
+                        ( { model | label_result = LoadingSlowly, artefact_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
 
                     else
                         -- trow error if the labels is in the list of labels
@@ -572,10 +679,10 @@ update global message model =
         GotLabelDel result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | label_result_del = NotAsked }, send (DoOpenAuthModal model.label_form.uctx), Cmd.none )
+                    ( { model | label_result_del = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
 
                 RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteLabel model.label_form.id) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteLabel model.artefact_form.id) 500, send UpdateUserToken )
 
                 OkAuth _ ->
                     let
@@ -583,15 +690,243 @@ update global message model =
                             withMaybeData model.labels |> withDefault []
 
                         new =
-                            List.filter (\x -> x.id /= model.label_form.id) d
+                            List.filter (\x -> x.id /= model.artefact_form.id) d
                     in
-                    ( { model | label_result_del = NotAsked, labels = Success new, label_form = initLabelNodeForm global.session.user model.node_focus.nameid, label_add = False, label_edit = Nothing }
+                    ( { model | label_result_del = NotAsked, labels = Success new, label_add = False, label_edit = Nothing } |> resetForm
                     , Cmd.none
                     , Cmd.none
                     )
 
                 _ ->
                     ( { model | label_result_del = result }, Cmd.none, Cmd.none )
+
+        --
+        -- Roles
+        --
+        GotRoles result ->
+            let
+                newModel =
+                    { model | roles = result }
+            in
+            ( newModel, Cmd.none, Cmd.none )
+
+        GotRolesTop result ->
+            let
+                newModel =
+                    { model | roles_top = result }
+            in
+            ( newModel, Cmd.none, Cmd.none )
+
+        GotRolesSub result ->
+            let
+                newModel =
+                    { model | roles_sub = result }
+            in
+            ( newModel, Cmd.none, Cmd.none )
+
+        AddRole ->
+            if model.role_add then
+                ( model, Cmd.none, Cmd.none )
+
+            else
+                -- Toggle Add Role Box
+                ( { model
+                    | role_add = ternary (model.role_add == True) False True
+                    , role_edit = Nothing
+                    , colorPicker = ColorPicker.setColor Nothing model.colorPicker
+                  }
+                , Ports.bulma_driver "rolesTable"
+                , Cmd.none
+                )
+
+        EditRole role ->
+            let
+                f =
+                    model.artefact_form
+
+                newForm =
+                    { f
+                        | id = role.id
+                        , post =
+                            Dict.fromList
+                                ([ ( "name", role.name ) ]
+                                    ++ (role.color |> Maybe.map (\x -> [ ( "color", x ) ]) |> withDefault [])
+                                    ++ [ ( "role_type", RoleType.toString role.role_type ) ]
+                                    ++ (role.about |> Maybe.map (\x -> [ ( "about", x ) ]) |> withDefault [])
+                                    ++ [ ( "old_name", role.name ) ]
+                                )
+                        , mandate = withDefault initMandate role.mandate
+                    }
+            in
+            ( { model
+                | role_add = False
+                , role_edit = Just role
+                , artefact_form = newForm
+                , role_result = NotAsked
+                , role_result_del = NotAsked
+                , colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker
+              }
+            , Ports.bulma_driver "rolesTable"
+            , Cmd.none
+            )
+
+        CancelRole ->
+            ( { model
+                | role_add = False
+                , role_edit = Nothing
+                , role_result = NotAsked
+                , role_result_del = NotAsked
+                , nodeDoc = NodeDoc.create "" global.session.user
+              }
+                |> resetForm
+            , Cmd.none
+            , Cmd.none
+            )
+
+        SubmitAddRole _ ->
+            ( { model | role_result = LoadingSlowly }, addOneRole apis model.artefact_form GotRole, Cmd.none )
+
+        SubmitEditRole _ ->
+            ( { model | role_result = LoadingSlowly }, updateOneRole apis model.artefact_form GotRole, Cmd.none )
+
+        SubmitDeleteRole id _ ->
+            let
+                f =
+                    model.artefact_form
+
+                newForm =
+                    { f | id = id }
+            in
+            ( { model | role_result_del = LoadingSlowly, artefact_form = newForm }, removeOneRole apis newForm GotRoleDel, Cmd.none )
+
+        ToggleMandate rid ->
+            if rid == "" || rid /= model.showMandate then
+                ( { model | showMandate = rid }, Cmd.none, Cmd.none )
+
+            else
+                ( { model | showMandate = "" }, Cmd.none, Cmd.none )
+
+        GotRole result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | role_result = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    if model.role_add then
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitAddRole) 500, send UpdateUserToken )
+
+                    else
+                        -- assume edit
+                        ( { model | refresh_trial = i }, sendSleep (Submit SubmitEditRole) 500, send UpdateUserToken )
+
+                OkAuth role ->
+                    let
+                        d =
+                            withMaybeData model.roles |> withDefault []
+
+                        new =
+                            if model.role_add then
+                                [ role ] ++ d
+
+                            else
+                                -- assume edit
+                                List.map
+                                    (\x ->
+                                        if x.id == role.id then
+                                            role
+
+                                        else
+                                            x
+                                    )
+                                    d
+                    in
+                    ( { model | role_result = result, roles = Success new, role_add = False, role_edit = Nothing } |> resetForm
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                DuplicateErr ->
+                    let
+                        role_name =
+                            Dict.get "name" model.artefact_form.post |> withDefault ""
+
+                        here ln =
+                            (withMaybeData model.roles |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
+                                > 0
+
+                        form =
+                            model.artefact_form
+                    in
+                    if model.role_add && (here role_name == False) then
+                        -- set the roles in the node roles list
+                        ( { model | role_result = LoadingSlowly, artefact_form = { form | id = "" } }, send (Submit SubmitEditRole), Cmd.none )
+
+                    else
+                        -- trow error if the roles is in the list of roles
+                        ( { model | role_result = result }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | role_result = result }, Cmd.none, Cmd.none )
+
+        GotRoleDel result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | role_result_del = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteRole model.artefact_form.id) 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    let
+                        d =
+                            withMaybeData model.roles |> withDefault []
+
+                        new =
+                            List.filter (\x -> x.id /= model.artefact_form.id) d
+                    in
+                    ( { model | role_result_del = NotAsked, roles = Success new, role_add = False, role_edit = Nothing } |> resetForm
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | role_result_del = result }, Cmd.none, Cmd.none )
+
+        ChangeRoleAuthority role_type ->
+            let
+                form =
+                    model.artefact_form
+
+                newForm =
+                    { form | post = Dict.insert "role_type" (RoleType.toString role_type) form.post }
+            in
+            ( { model | artefact_form = newForm }, Cmd.none, Cmd.none )
+
+        AddResponsabilities ->
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )
+
+        AddDomains ->
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, Cmd.none, Cmd.none )
+
+        AddPolicies ->
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, Cmd.none, Cmd.none )
+
+        UpdateNodePost field value ->
+            let
+                form =
+                    model.artefact_form
+
+                newNodeDoc =
+                    NodeDoc.updatePost field value model.nodeDoc
+            in
+            ( { model
+                | artefact_form = { form | mandate = NodeDoc.getMandate newNodeDoc }
+                , nodeDoc = newNodeDoc
+                , hasUnsavedData = True
+              }
+            , Cmd.none
+            , Cmd.none
+            )
 
         -- New tension
         DoCreateTension lg ->
@@ -790,7 +1125,7 @@ update global message model =
         CloseColor ->
             ( { model | colorPicker = ColorPicker.close model.colorPicker }, Cmd.none, Cmd.none )
 
-        SelectLabelColor color ->
+        SelectColor color ->
             let
                 newPicker =
                     model.colorPicker
@@ -798,12 +1133,12 @@ update global message model =
                         |> ColorPicker.close
 
                 form =
-                    model.label_form
+                    model.artefact_form
 
                 newForm =
                     { form | post = Dict.insert "color" color form.post }
             in
-            ( { model | colorPicker = newPicker, label_form = newForm }, Cmd.none, Ports.click "body" )
+            ( { model | colorPicker = newPicker, artefact_form = newForm }, Cmd.none, Ports.click "body" )
 
         -- Common
         NoMsg ->
@@ -880,7 +1215,7 @@ view global model =
     let
         helperData =
             { user = global.session.user
-            , uriQuery = global.url.query
+            , uriQuery = model.url.query
             , path_data = global.session.path_data
             , baseUri = SettingsBaseUri
             , data = model.helperBar
@@ -951,8 +1286,15 @@ viewSettingsContent model =
         LabelsMenu ->
             div []
                 [ viewLabels model
-                , viewLabelsExt T.labelsTop (ternary isRoot "" T.noLabelsTop) model.labels model.labels_top
-                , viewLabelsExt T.labelsSub T.noLabelsSub model.labels model.labels_sub
+                , viewLabelsExt T.labelsTop (ternary isRoot "" (T.noLabelsTop ++ ".")) model.labels model.labels_top
+                , viewLabelsExt T.labelsSub (T.noLabelsSub ++ ".") model.labels model.labels_sub
+                ]
+
+        RolesMenu ->
+            div []
+                [ viewRoles model
+                , viewRolesExt T.rolesTop (ternary isRoot "" (T.noRolesTop ++ ".")) model.roles model.roles_top
+                , viewRolesExt T.rolesSub (T.noRolesSub ++ ".") model.roles model.roles_sub
                 ]
 
         GlobalMenu ->
@@ -963,133 +1305,17 @@ viewSettingsContent model =
             div [] [ text "" ]
 
 
-viewLabels : Model -> Html Msg
-viewLabels model =
-    div [ id "labelsTable" ]
-        [ div [ class "level" ]
-            [ h2 [ class "subtitle" ] [ textH T.labels ]
-            , button [ class "button is-success level-right", onClick AddLabel ] [ textT T.newLabel ]
-            ]
-        , if model.label_add then
-            viewLabelAddBox model
 
-          else
-            text ""
-        , case model.labels of
-            Success labels ->
-                if List.length labels == 0 then
-                    div [ class "" ] [ textH T.noLabels ]
-
-                else
-                    table [ class "table is-fullwidth" ]
-                        [ thead []
-                            [ tr []
-                                [ th [] [ textH T.name ]
-                                , th [] [ textH T.description ]
-                                , th [] [ text "" ]
-                                , th [] []
-                                ]
-                            ]
-                        , labels
-                            |> List.map
-                                (\d ->
-                                    [ tr [] <|
-                                        if model.label_edit == Just d then
-                                            [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
-
-                                        else
-                                            let
-                                                n_nodes =
-                                                    withDefault 0 d.n_nodes
-                                            in
-                                            [ td [] [ viewLabel "" (Label d.id d.name d.color) ]
-                                            , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
-                                            , td [ attribute "style" "min-width: 9.4rem;" ]
-                                                [ if n_nodes > 1 then
-                                                    span [ class "is-italic is-size-7" ] [ A.icon1 "icon-exclamation-circle" "Defined in ", n_nodes |> String.fromInt |> text, text " circles." ]
-
-                                                  else
-                                                    text ""
-                                                ]
-                                            , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
-                                                [ span [ class "button-light", onClick (EditLabel d) ] [ textH T.edit ]
-                                                , text " · "
-                                                , span
-                                                    [ class "button-light"
-                                                    , onClick <|
-                                                        DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id)
-                                                            { message = Just ( T.labelDeleteInfoHeader, "" )
-                                                            , txts = [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
-                                                            }
-                                                    ]
-                                                    [ textH T.remove ]
-                                                ]
-                                            ]
-                                    ]
-                                        ++ (case model.label_result_del of
-                                                Failure err ->
-                                                    [ ternary (model.label_form.id == d.id)
-                                                        (td [] [ viewGqlErrors err ])
-                                                        (text "")
-                                                    ]
-
-                                                _ ->
-                                                    []
-                                           )
-                                )
-                            |> List.concat
-                            |> tbody []
-                        ]
-
-            Failure err ->
-                viewGqlErrors err
-
-            LoadingSlowly ->
-                div [ class "spinner" ] []
-
-            _ ->
-                text ""
-        ]
-
-
-viewLabelsExt : String -> String -> GqlData (List LabelFull) -> WebData (List LabelFull) -> Html Msg
-viewLabelsExt txt_yes text_no labels_d labels_ext_d =
-    case labels_ext_d of
-        RemoteData.Success labels ->
-            if List.length labels == 0 then
-                div [ class "mt-6" ] [ textH text_no ]
-
-            else
-                let
-                    circle_labels =
-                        withDefaultData [] labels_d
-                in
-                div [ class "mt-6" ]
-                    [ textH (txt_yes ++ " ")
-                    , labels
-                        |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_labels)))
-                        |> List.map
-                            (\d ->
-                                viewLabel "ml-2" (Label d.id d.name d.color)
-                            )
-                        |> span []
-                    ]
-
-        RemoteData.Failure err ->
-            viewHttpErrors err
-
-        RemoteData.Loading ->
-            div [ class "spinner" ] []
-
-        _ ->
-            text ""
+{-
+   LABEL VIEW
+-}
 
 
 viewLabelAddBox : Model -> Html Msg
 viewLabelAddBox model =
     let
         form =
-            model.label_form
+            model.artefact_form
 
         result =
             model.label_result
@@ -1119,42 +1345,40 @@ viewLabelAddBox model =
 
         doSubmit =
             if model.label_add then
-                ternary isSendable [ onClick (Submit <| SubmitAddLabel) ] []
+                ternary isSendable [ onClick (Submit SubmitAddLabel) ] []
 
             else
                 -- assume edit label
-                ternary isSendable [ onClick (Submit <| SubmitEditLabel) ] []
+                ternary isSendable [ onClick (Submit SubmitEditLabel) ] []
 
         doCancel =
             CancelLabel
     in
     div [ class "box" ]
-        [ div [ class "field is-grouped" ]
+        [ div [ class "field is-grouped is-grouped-multiline" ]
             [ p [ class "control" ]
                 [ label [ class "label is-small" ] [ text "Label name *" ]
                 , input
-                    [ id "titleInput"
-                    , class "input"
+                    [ class "input"
                     , type_ "text"
                     , placeholder "Label name"
                     , value name
-                    , onInput (ChangeLabelPost "name")
+                    , onInput (ChangeArtefactPost "name")
                     ]
                     []
                 ]
             , p [ class "control" ]
-                [ label [ class "label is-small" ] [ text "Color" ]
-                , ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectLabelColor }
+                [ label [ class "label is-small" ] [ textH T.color ]
+                , ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectColor }
                 ]
             , p [ class "control is-expanded" ]
-                [ label [ class "label is-small" ] [ text "Description" ]
+                [ label [ class "label is-small" ] [ textH T.description ]
                 , input
-                    [ id "titleInput"
-                    , class "input"
+                    [ class "input"
                     , type_ "text"
                     , placeholder "Description"
                     , value (withDefault "" description)
-                    , onInput (ChangeLabelPost "description")
+                    , onInput (ChangeArtefactPost "description")
                     ]
                     []
                 ]
@@ -1181,6 +1405,386 @@ viewLabelAddBox model =
             _ ->
                 text ""
         ]
+
+
+viewLabels : Model -> Html Msg
+viewLabels model =
+    div [ id "labelsTable" ]
+        [ h2 [ class "subtitle" ] [ textH T.labels ]
+        , div [ class "level" ]
+            [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
+            , div [ class "level-right" ] [ button [ class "button is-success", classList [ ( "is-active", model.label_add ) ], onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
+            ]
+        , if model.label_add then
+            viewLabelAddBox model
+
+          else
+            text ""
+        , case model.labels of
+            Success labels ->
+                if List.length labels == 0 then
+                    div [ class "" ] [ textH T.noLabels, text "." ]
+
+                else
+                    div [ class "table-container" ]
+                        [ table [ class "table is-fullwidth" ]
+                            [ thead []
+                                [ tr []
+                                    [ th [] [ textH T.name ]
+                                    , th [] [ textH T.description ]
+                                    , th [] [ text "" ]
+                                    , th [] []
+                                    ]
+                                ]
+                            , labels
+                                |> List.map
+                                    (\d ->
+                                        [ tr [] <|
+                                            if model.label_edit == Just d then
+                                                [ td [ colspan 4 ] [ viewLabelAddBox model ] ]
+
+                                            else
+                                                let
+                                                    n_nodes =
+                                                        withDefault 0 d.n_nodes
+                                                in
+                                                [ td [] [ viewLabel "" (Label d.id d.name d.color) ]
+                                                , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
+                                                , td [ attribute "style" "min-width: 9.4rem;" ]
+                                                    [ if n_nodes > 1 then
+                                                        span [ class "is-italic is-size-7" ] [ A.icon1 "icon-alert-circle icon-sm" "Defined in ", n_nodes |> String.fromInt |> text, text " circles" ]
+
+                                                      else
+                                                        text ""
+                                                    ]
+                                                , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
+                                                    [ span [ class "button-light", onClick (SafeEdit <| EditLabel d) ] [ textH T.edit ]
+                                                    , text " · "
+                                                    , span
+                                                        [ class "button-light"
+                                                        , onClick <|
+                                                            DoModalConfirmOpen (Submit <| SubmitDeleteLabel d.id)
+                                                                { message = Just ( T.labelDeleteInfoHeader, "" )
+                                                                , txts = [ ( upH T.confirmDeleteLabel, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                }
+                                                        ]
+                                                        [ textH T.remove ]
+                                                    ]
+                                                ]
+                                        ]
+                                            ++ (case model.label_result_del of
+                                                    Failure err ->
+                                                        [ ternary (model.artefact_form.id == d.id)
+                                                            (td [] [ viewGqlErrors err ])
+                                                            (text "")
+                                                        ]
+
+                                                    _ ->
+                                                        []
+                                               )
+                                    )
+                                |> List.concat
+                                |> tbody []
+                            ]
+                        ]
+
+            Failure err ->
+                viewGqlErrors err
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            _ ->
+                text ""
+        ]
+
+
+viewLabelsExt : String -> String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
+viewLabelsExt txt_yes text_no list_d list_ext_d =
+    case list_ext_d of
+        RemoteData.Success data ->
+            if List.length data == 0 then
+                div [ class "mt-6" ] [ textH text_no ]
+
+            else
+                let
+                    circle_data =
+                        withDefaultData [] list_d
+                in
+                div [ class "mt-6" ]
+                    [ textH (txt_yes ++ " ")
+                    , data
+                        |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
+                        |> List.map
+                            (\d ->
+                                viewLabel "ml-2" (Label d.id d.name d.color)
+                            )
+                        |> span []
+                    ]
+
+        RemoteData.Failure err ->
+            viewHttpErrors err
+
+        RemoteData.Loading ->
+            div [ class "spinner" ] []
+
+        _ ->
+            text ""
+
+
+
+{-
+   ROLE VIEW
+-}
+
+
+viewRoleAddBox : Model -> Html Msg
+viewRoleAddBox model =
+    let
+        form =
+            model.artefact_form
+
+        result =
+            model.role_result
+
+        name =
+            Dict.get "name" form.post |> withDefault ""
+
+        color =
+            Dict.get "color" form.post
+
+        about =
+            Dict.get "about" form.post
+
+        role_type =
+            Dict.get "role_type" form.post |> Maybe.map RoleType.fromString |> withDefault Nothing |> withDefault RoleType.Peer
+
+        isLoading =
+            model.role_result == LoadingSlowly
+
+        isSendable =
+            name /= ""
+
+        txt =
+            if model.role_add then
+                { submit = T.createRole }
+
+            else
+                -- assume edit role
+                { submit = T.updateRole }
+
+        doSubmit =
+            if model.role_add then
+                ternary isSendable [ onClick (Submit SubmitAddRole) ] []
+
+            else
+                -- assume edit label
+                ternary isSendable [ onClick (Submit SubmitEditRole) ] []
+
+        doCancel =
+            CancelRole
+    in
+    div [ class "box" ]
+        [ div [ class "field is-grouped is-grouped-multiline" ]
+            [ p [ class "control" ]
+                [ label [ class "label is-small" ] [ text "Role name *" ]
+                , input
+                    [ class "input"
+                    , type_ "text"
+                    , placeholder "Role name"
+                    , value name
+                    , onInput (ChangeArtefactPost "name")
+                    ]
+                    []
+                ]
+            , p [ class "control" ]
+                [ label [ class "label is-small" ] [ textH T.color ]
+                , ColorPicker.view { data = model.colorPicker, onOpen = OpenColor, onClose = CloseColor, onSelect = SelectColor }
+                ]
+            , p [ class "control is-expanded" ]
+                [ label [ class "label is-small" ] [ textH T.about ]
+                , input
+                    [ class "input"
+                    , type_ "text"
+                    , placeholder "About"
+                    , value (withDefault "" about)
+                    , onInput (ChangeArtefactPost "about")
+                    ]
+                    []
+                ]
+            , p [ class "control" ]
+                [ label [ class "label is-small" ] [ textH T.authority ]
+                , viewSelectAuthority
+                    { onSelect = ChangeRoleAuthority
+                    , selection = role_type
+                    }
+                ]
+            ]
+        , div [ class "field" ]
+            [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ]
+            , viewRoleExt "" (RoleExt "" (ternary (name == "") "role name" name) color role_type)
+            ]
+        , viewMandateInput (getNodeTextFromNodeType NodeType.Role)
+            (Just form.mandate)
+            { onChangePost = UpdateNodePost
+            , onAddResponsabilities = AddResponsabilities
+            , onAddDomains = AddDomains
+            , onAddPolicies = AddPolicies
+            , data = model.nodeDoc
+            }
+        , div [ class "field is-grouped is-grouped-right" ]
+            [ p [ class "control buttons" ]
+                [ button [ class "button is-small", onClick doCancel ] [ textH T.cancel ]
+                , button
+                    ([ class "button is-success is-small"
+                     , classList [ ( "is-loading", isLoading ) ]
+                     , disabled (not isSendable)
+                     ]
+                        ++ doSubmit
+                    )
+                    [ textH txt.submit ]
+                ]
+            ]
+        , case result of
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                text ""
+        ]
+
+
+viewRoles : Model -> Html Msg
+viewRoles model =
+    div [ id "rolesTable" ]
+        [ h2 [ class "subtitle" ] [ textH T.roles ]
+        , div [ class "level" ]
+            [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
+            , div [ class "level-right" ] [ button [ class "button is-success level-right", classList [ ( "is-active", model.role_add ) ], onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]
+            ]
+        , if model.role_add then
+            viewRoleAddBox model
+
+          else
+            text ""
+        , case model.roles of
+            Success roles ->
+                if List.length roles == 0 then
+                    div [ class "" ] [ textH T.noRoles, text "." ]
+
+                else
+                    div [ class "table-container" ]
+                        [ table [ class "table is-fullwidth" ]
+                            [ thead []
+                                [ tr []
+                                    [ th [] [ textH T.name ]
+                                    , th [] [ textH T.description ]
+                                    , th [] [ text "" ]
+                                    , th [] [ text "" ]
+                                    , th [] []
+                                    ]
+                                ]
+                            , roles
+                                |> List.map
+                                    (\d ->
+                                        [ tr [] <|
+                                            if model.role_edit == Just d then
+                                                [ td [ colspan 5 ] [ viewRoleAddBox model ] ]
+
+                                            else
+                                                let
+                                                    n_nodes =
+                                                        withDefault 0 d.n_nodes
+                                                in
+                                                [ td [] [ viewRoleExt "" (RoleExt d.id d.name d.color d.role_type) ]
+                                                , td [ class "is-aligned-left" ] [ d.about |> withDefault "" |> text |> List.singleton |> span [] ]
+                                                , td [ class "is-aligned-left" ] [ ternary (NodeDoc.hasMandate d.mandate) (span [ class "is-w", onClick (ToggleMandate d.id) ] [ A.icon0 "icon-book-open" ]) (text "") ]
+                                                , td [ attribute "style" "min-width: 9.4rem;" ]
+                                                    [ if n_nodes > 1 then
+                                                        span [ class "is-italic is-size-7" ] [ A.icon1 "icon-alert-circle icon-sm" "Defined in ", n_nodes |> String.fromInt |> text, text " circles." ]
+
+                                                      else
+                                                        text ""
+                                                    ]
+                                                , td [ class "is-aligned-right is-size-7", attribute "style" "min-width: 6.4rem;" ]
+                                                    [ span [ class "button-light", onClick (SafeEdit <| EditRole d) ] [ textH T.edit ]
+                                                    , text " · "
+                                                    , span
+                                                        [ class "button-light"
+                                                        , onClick <|
+                                                            DoModalConfirmOpen (Submit <| SubmitDeleteRole d.id)
+                                                                { message = Just ( T.roleDeleteInfoHeader, "" )
+                                                                , txts = [ ( upH T.confirmDeleteRole, "" ), ( d.name, "is-strong" ), ( "?", "" ) ]
+                                                                }
+                                                        ]
+                                                        [ textH T.remove ]
+                                                    ]
+                                                ]
+                                        ]
+                                            ++ (if model.showMandate == d.id then
+                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection (text "") d.mandate (Just d.role_type) ] ] ]
+
+                                                else
+                                                    []
+                                               )
+                                            ++ (case model.role_result_del of
+                                                    Failure err ->
+                                                        [ ternary (model.artefact_form.id == d.id)
+                                                            (td [] [ viewGqlErrors err ])
+                                                            (text "")
+                                                        ]
+
+                                                    _ ->
+                                                        []
+                                               )
+                                    )
+                                |> List.concat
+                                |> tbody []
+                            ]
+                        ]
+
+            Failure err ->
+                viewGqlErrors err
+
+            LoadingSlowly ->
+                div [ class "spinner" ] []
+
+            _ ->
+                text ""
+        ]
+
+
+viewRolesExt : String -> String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
+viewRolesExt txt_yes text_no list_d list_ext_d =
+    case list_ext_d of
+        RemoteData.Success data ->
+            if List.length data == 0 then
+                div [ class "mt-6" ] [ textH text_no ]
+
+            else
+                let
+                    circle_data =
+                        withDefaultData [] list_d
+                in
+                div [ class "mt-6" ]
+                    [ textH (txt_yes ++ " ")
+                    , data
+                        |> List.filter (\d -> not (List.member d.name (List.map (\x -> x.name) circle_data)))
+                        |> List.map
+                            (\d ->
+                                viewRoleExt "ml-2" (RoleExt d.id d.name d.color d.role_type)
+                            )
+                        |> span []
+                    ]
+
+        RemoteData.Failure err ->
+            viewHttpErrors err
+
+        RemoteData.Loading ->
+            div [ class "spinner" ] []
+
+        _ ->
+            text ""
 
 
 

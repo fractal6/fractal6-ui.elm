@@ -3,7 +3,6 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 import Auth exposing (ErrState(..), parseErr2, refreshAuthModal)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
-import Components.NodeDoc exposing (makeNewNodeId)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onKeydown)
@@ -24,7 +23,7 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), nameidEncoder, uriFromNameid)
 import ModelCommon.Requests exposing (createOrga, login)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -213,7 +212,7 @@ update global message model =
                                 | post =
                                     f.post
                                         |> Dict.insert field value
-                                        |> Dict.insert "nameid" (makeNewNodeId value)
+                                        |> Dict.insert "nameid" (nameidEncoder value)
                             }
 
                         _ ->

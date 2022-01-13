@@ -992,11 +992,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         ChangeBlobPost field value ->
-            let
-                action =
-                    model.tension_head |> withMaybeData |> Maybe.map (\th -> th.action) |> withDefault Nothing
-            in
-            ( { model | nodeDoc = NodeDoc.postNode field value action model.nodeDoc }, Cmd.none, Cmd.none )
+            ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, Cmd.none, Cmd.none )
 
         AddResponsabilities ->
             ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, Cmd.none, Cmd.none )

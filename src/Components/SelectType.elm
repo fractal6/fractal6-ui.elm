@@ -364,7 +364,7 @@ viewModalContent op (State model) =
                 [ textH "Change the tension Type" ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "selectType-0" "is-info" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
+            [ showMsg "selectType-0" "is-info is-light" "icon-info" T.tensionTypeHeader T.tensionTypeDoc
             , div [ class "level buttonRadio" ] <|
                 List.map
                     (\tensionType ->

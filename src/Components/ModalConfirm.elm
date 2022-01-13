@@ -85,7 +85,7 @@ viewConfirm op =
         [ div [ class "modal-card-body" ]
             [ case op.data.mess.message of
                 Just m ->
-                    showMsg "0" "is-info" "icon-info" (Tuple.first m) (Tuple.second m)
+                    showMsg "0" "is-info is-light" "icon-info" (Tuple.first m) (Tuple.second m)
 
                 Nothing ->
                     text ""

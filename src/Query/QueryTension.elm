@@ -47,8 +47,7 @@ import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, nidFilter, nodeDecoder, tidPayload, userPayload)
-import Query.QueryNodeData exposing (mandatePayload)
+import Query.QueryNode exposing (emiterOrReceiverPayload, labelPayload, mandatePayload, nidFilter, nodeDecoder, tidPayload, userPayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
 

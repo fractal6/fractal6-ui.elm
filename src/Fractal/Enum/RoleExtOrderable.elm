@@ -12,12 +12,11 @@ type RoleExtOrderable
     | Name
     | About
     | Color
-    | N_nodes
 
 
 list : List RoleExtOrderable
 list =
-    [ Rootnameid, Name, About, Color, N_nodes ]
+    [ Rootnameid, Name, About, Color ]
 
 
 decoder : Decoder RoleExtOrderable
@@ -37,9 +36,6 @@ decoder =
 
                     "color" ->
                         Decode.succeed Color
-
-                    "n_nodes" ->
-                        Decode.succeed N_nodes
 
                     _ ->
                         Decode.fail ("Invalid RoleExtOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -62,9 +58,6 @@ toString enum____ =
 
         Color ->
             "color"
-
-        N_nodes ->
-            "n_nodes"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -92,9 +85,6 @@ fromString enumString____ =
 
         "color" ->
             Just Color
-
-        "n_nodes" ->
-            Just N_nodes
 
         _ ->
             Nothing

@@ -36,6 +36,7 @@ import ModelSchema
         , NodeExt
         , PNode
         , Post
+        , RoleExt
         , Tension
         , User
         , UserCtx
@@ -380,7 +381,41 @@ viewRole baseUri r =
         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
         , href <| uriFromNameid baseUri r.nameid
         ]
-        [ text r.name ]
+        [ if r.role_type == RoleType.Coordinator then
+            span [ class "is-queen" ] []
+
+          else if r.role_type == RoleType.Owner then
+            span [ class "is-king" ] []
+
+          else
+            text ""
+        , text r.name
+        ]
+
+
+viewRoleExt : String -> RoleExt -> Html msg
+viewRoleExt cls r =
+    let
+        color =
+            r.color
+                |> Maybe.map
+                    (\c ->
+                        [ attribute "style" ("background-color:" ++ c ++ "; color:" ++ colorToTextColor c ++ ";") ]
+                    )
+                |> withDefault []
+    in
+    span
+        ([ class ("button buttonRole " ++ cls) ] ++ color)
+        [ if r.role_type == RoleType.Coordinator then
+            span [ class "is-queen" ] []
+
+          else if r.role_type == RoleType.Owner then
+            span [ class "is-king" ] []
+
+          else
+            text ""
+        , text r.name
+        ]
 
 
 

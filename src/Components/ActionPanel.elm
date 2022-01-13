@@ -1185,7 +1185,7 @@ viewVisibility : Op -> Model -> Html Msg
 viewVisibility op model =
     div []
         [ -- Show the help information
-          showMsg "visibility-0" "is-info" "icon-info" T.visibilityInfoHeader ""
+          showMsg "visibility-0" "is-info is-light" "icon-info" T.visibilityInfoHeader ""
 
         -- Show the choices as card.
         , NodeVisibility.list
@@ -1227,7 +1227,7 @@ viewCircleAuthority : Op -> Model -> Html Msg
 viewCircleAuthority op model =
     div []
         [ -- Show the help information
-          showMsg "circleAuthority-0" "is-info" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
+          showMsg "circleAuthority-0" "is-info is-light" "icon-info" T.circleAuthorityHeader T.circleAuthorityDoc
 
         -- Show the choices as card.
         , NodeMode.list
@@ -1266,7 +1266,7 @@ viewRoleAuthority : Op -> Model -> Html Msg
 viewRoleAuthority op model =
     div []
         [ -- Show the help information
-          --showMsg "roleAuthority-0" "is-info" "icon-info" T.roleAuthorityHeader ""
+          --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
           -- Show the choices as card.
           --RoleType.list
           [ ( RoleType.Peer, "Basic Role with restricted authorization." ), ( RoleType.Coordinator, "Role with administration rights at the circle level." ) ]

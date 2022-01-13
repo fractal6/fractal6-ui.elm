@@ -257,7 +257,7 @@ buildNodeFragmentRef users nf =
                         , nameid = fromMaybe (Maybe.map (String.toLower >> String.trim) nf.nameid)
                         , type_ = fromMaybe nf.type_
                         , about = fromMaybe nf.about
-                        , mandate = buildMandate nf.mandate
+                        , mandate = Maybe.map buildMandate nf.mandate |> fromMaybe
                         , visibility = fromMaybe nf.visibility
                         , mode = fromMaybe nf.mode
                     }
@@ -291,19 +291,14 @@ buildNodeFragmentRef users nf =
         |> Present
 
 
-buildMandate : Maybe Mandate -> OptionalArgument Input.MandateRef
-buildMandate maybeMandate =
-    maybeMandate
-        |> Maybe.map
-            (\mandate ->
-                Input.buildMandateRef
-                    (\m ->
-                        { m
-                            | purpose = mandate.purpose |> Present
-                            , responsabilities = mandate.responsabilities |> fromMaybe
-                            , domains = mandate.domains |> fromMaybe
-                            , policies = mandate.policies |> fromMaybe
-                        }
-                    )
-            )
-        |> fromMaybe
+buildMandate : Mandate -> Input.MandateRef
+buildMandate mandate =
+    Input.buildMandateRef
+        (\m ->
+            { m
+                | purpose = mandate.purpose |> Present
+                , responsabilities = mandate.responsabilities |> fromMaybe
+                , domains = mandate.domains |> fromMaybe
+                , policies = mandate.policies |> fromMaybe
+            }
+        )

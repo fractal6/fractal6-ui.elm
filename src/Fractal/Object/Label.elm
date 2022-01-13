@@ -92,16 +92,6 @@ nodes fillInOptionals____ object____ =
     Object.selectionForCompositeField "nodes" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
-n_nodes : SelectionSet (Maybe Int) Fractal.Object.Label
-n_nodes =
-    Object.selectionForField "(Maybe Int)" "n_nodes" [] (Decode.int |> Decode.nullable)
-
-
-n_tensions : SelectionSet (Maybe Int) Fractal.Object.Label
-n_tensions =
-    Object.selectionForField "(Maybe Int)" "n_tensions" [] (Decode.int |> Decode.nullable)
-
-
 type alias TensionsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

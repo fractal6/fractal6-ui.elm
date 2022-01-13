@@ -3,7 +3,7 @@ module ModelCommon.Codecs exposing (..)
 import Array exposing (Array)
 import Components.Loading exposing (GqlData, RequestResult(..), withMaybeData)
 import Dict
-import Extra exposing (ternary)
+import Extra exposing (cleanDup, ternary)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -307,6 +307,27 @@ nodeIdCodec parentid targetid type_ =
 
             else
                 String.join "#" [ parentid, targetid ]
+
+
+nameidEncoder : String -> String
+nameidEncoder nameid =
+    nameid
+        |> String.trim
+        |> String.toLower
+        |> String.trim
+        |> String.map
+            (\c ->
+                if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
+                    '-'
+
+                else if List.member c [ '@', '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
+                    '_'
+
+                else
+                    c
+            )
+        |> cleanDup "-"
+        |> cleanDup "_"
 
 
 contractIdCodec : String -> String -> String -> String -> String

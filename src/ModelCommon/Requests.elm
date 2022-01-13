@@ -15,7 +15,21 @@ import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Maybe exposing (withDefault)
-import ModelSchema exposing (Count, Label, LabelFull, Member, NodeId, Post, Tension, TensionsCount, User, UserCtx, UserRoleExtended, Username)
+import ModelSchema
+    exposing
+        ( Count
+        , Label
+        , Member
+        , NodeId
+        , Post
+        , RoleExt
+        , Tension
+        , TensionsCount
+        , User
+        , UserCtx
+        , UserRoleExtended
+        , Username
+        )
 import Query.QueryNode exposing (MemberNode, membersNodeDecoder)
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis)
@@ -99,7 +113,7 @@ fetchLabelsTop api targetid msg =
         , headers = []
         , url = api.rest ++ "/top_labels"
         , body = Http.jsonBody <| JE.string targetid
-        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelFullDecoder
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -116,20 +130,10 @@ fetchLabelsSub api targetid msg =
         , headers = []
         , url = api.rest ++ "/sub_labels"
         , body = Http.jsonBody <| JE.string targetid
-        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelFullDecoder
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list labelDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-labelFullDecoder : JD.Decoder LabelFull
-labelFullDecoder =
-    JD.map5 LabelFull
-        (JD.field "id" JD.string)
-        (JD.field "name" JD.string)
-        (JD.field "color" JD.string |> JD.maybe)
-        (JD.field "description" JD.string |> JD.maybe)
-        (JD.field "n_nodes" JD.int |> JD.maybe)
 
 
 labelDecoder : JD.Decoder Label
@@ -138,6 +142,49 @@ labelDecoder =
         (JD.field "id" JD.string)
         (JD.field "name" JD.string)
         (JD.field "color" JD.string |> JD.maybe)
+
+
+{-|
+
+    Get all ** Roles ** from the parent, unril the root node
+
+-}
+fetchRolesTop api targetid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = api.rest ++ "/top_roles"
+        , body = Http.jsonBody <| JE.string targetid
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+{-|
+
+    Get all ** Roles ** below the given node recursively
+
+-}
+fetchRolesSub api targetid msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = []
+        , url = api.rest ++ "/sub_roles"
+        , body = Http.jsonBody <| JE.string targetid
+        , expect = expectJson (RemoteData.fromResult >> msg) <| JD.list roleDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+roleDecoder : JD.Decoder RoleExt
+roleDecoder =
+    JD.map4 RoleExt
+        (JD.field "id" JD.string)
+        (JD.field "name" JD.string)
+        (JD.field "color" JD.string |> JD.maybe)
+        (JD.field "role_type" RoleType.decoder)
 
 
 

@@ -90,6 +90,16 @@ updateLabel =
     "update label"
 
 
+createRole : String
+createRole =
+    "create role"
+
+
+updateRole : String
+updateRole =
+    "update role"
+
+
 messageSent : String
 messageSent =
     "message sent"
@@ -415,9 +425,19 @@ confirmUnsaved =
     "you have unsaved data, please confirm to exit."
 
 
+confirmUnsafe : String
+confirmUnsafe =
+    "you have unsaved data, please confirm to continue (your editing will be lost)."
+
+
 confirmDeleteLabel : String
 confirmDeleteLabel =
     "are you sure to delete the label"
+
+
+confirmDeleteRole : String
+confirmDeleteRole =
+    "are you sure to delete the role"
 
 
 confirmDeleteContract : String
@@ -736,6 +756,11 @@ hasBeen =
 toThisRole : String
 toThisRole =
     "to this role"
+
+
+color : String
+color =
+    "color"
 
 
 
@@ -1130,7 +1155,12 @@ newReceiver =
 
 noLabels : String
 noLabels =
-    "No label yet"
+    "No label here yet"
+
+
+noRoles : String
+noRoles =
+    "No role here yet"
 
 
 noLabelsSub : String
@@ -1141,6 +1171,16 @@ noLabelsSub =
 noLabelsTop : String
 noLabelsTop =
     "No new parent label yet"
+
+
+noRolesSub : String
+noRolesSub =
+    "No new sub-circle role yet"
+
+
+noRolesTop : String
+noRolesTop =
+    "No new parent role yet"
 
 
 labelsSub : String
@@ -1198,6 +1238,11 @@ tensionsCircleTooltip =
 labelDeleteInfoHeader : String
 labelDeleteInfoHeader =
     "Label present in other circles, and in labeled tensions, wont' be deleted."
+
+
+roleDeleteInfoHeader : String
+roleDeleteInfoHeader =
+    "Role present in other circles, and created roles, wont' be deleted."
 
 
 contractInfoHeader : String
@@ -1269,3 +1314,33 @@ authCoordinated =
 authAgile : String
 authAgile =
     "Where all roles have equal governance authority."
+
+
+labelsInfoHeader : String
+labelsInfoHeader =
+    "Creating new labels help you to sort out your tensions"
+
+
+labelsInfoDoc : String
+labelsInfoDoc =
+    """
+  When you create a label here, you can then attach it to your tensions. You will also be able to filter the tension with a labels selection.
+
+  **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of that receiver circle.
+
+  """
+
+
+rolesInfoHeader : String
+rolesInfoHeader =
+    "Creating new roles help you to manage your organization"
+
+
+rolesInfoDoc : String
+rolesInfoDoc =
+    """
+  When you create a role here, you can use it as a template when you create a new role in your organisation.
+
+  **Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents.
+
+  """

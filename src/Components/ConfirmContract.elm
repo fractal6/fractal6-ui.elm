@@ -389,7 +389,7 @@ viewModalContent op (State model) =
                 [ textH T.newContract ]
             ]
         , div [ class "modal-card-body" ]
-            [ showMsg "0" "is-info" "icon-info" T.contractInfoHeader T.contractInfo
+            [ showMsg "0" "is-info is-light" "icon-info" T.contractInfoHeader T.contractInfo
             , showContractForm model.form
             , div [ class "field" ]
                 [ div [ class "control submitFocus" ]

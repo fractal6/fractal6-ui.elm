@@ -83,7 +83,16 @@ mor ma mb =
 
 colorToTextColor : String -> String
 colorToTextColor color =
-    if List.member (String.toUpper color) [ "#7FDBFF", "#39CCCC", "#01FF70", "#FFDC00", "#FF851B", "#F012BE", "#AAAAAA", "#DDDDDD" ] then
+    if
+        List.member (String.toUpper color)
+            [ "#7FDBFF"
+            , "#39CCCC"
+            , "#01FF70"
+            , "#FFDC00"
+            , "#AAAAAA"
+            , "#DDDDDD"
+            ]
+    then
         "#000"
 
     else

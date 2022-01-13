@@ -6,7 +6,7 @@ import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc as NodeDoc exposing (nodeAboutInputView, nodeMandateInputView)
+import Components.NodeDoc as NodeDoc exposing (viewAboutInput, viewMandateInput)
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
@@ -1268,11 +1268,11 @@ viewCircle op (State model) =
                     ]
                 , viewTensionTabs model.activeTab model.form.target
                 , div [ class "modal-card-body" ]
-                    [ nodeAboutInputView False OverviewBaseUri txt form.node op_
+                    [ viewAboutInput False OverviewBaseUri txt form.node op_
                     , div [ class "card cardForm" ]
                         [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.mandate ]
                         , div [ class "card-content" ]
-                            [ nodeMandateInputView txt form.node op_ ]
+                            [ viewMandateInput txt form.node.mandate op_ ]
                         ]
                     , br [] []
                     , div [ class "field" ]

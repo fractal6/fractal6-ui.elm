@@ -4,7 +4,7 @@ import Assets as A
 import Components.DocToolBar exposing (ActionView(..))
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
 import Dict
-import Extra exposing (cleanDup, ternary)
+import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
@@ -19,7 +19,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
@@ -102,6 +102,32 @@ addPolicies data =
 
 
 
+-- Getters
+
+
+getMandate : NodeDoc -> Mandate
+getMandate data =
+    data.form.node.mandate |> withDefault initMandate
+
+
+hasMandate : Maybe Mandate -> Bool
+hasMandate mandate_m =
+    let
+        mandate =
+            --data.form.node.mandate
+            mandate_m |> withDefault initMandate
+    in
+    mandate.purpose
+        /= ""
+        || withDefault "" mandate.responsabilities
+        /= ""
+        || withDefault "" mandate.domains
+        /= ""
+        || withDefault "" mandate.policies
+        /= ""
+
+
+
 -- Update Form
 
 
@@ -120,32 +146,10 @@ setEvents events data =
 updatePost : String -> String -> NodeDoc -> NodeDoc
 updatePost field value data =
     let
-        f =
-            data.form
-
-        newForm =
-            { f | post = Dict.insert field value f.post }
-    in
-    { data | form = newForm }
-
-
-postNode : String -> String -> Maybe TensionAction.TensionAction -> NodeDoc -> NodeDoc
-postNode field value action data =
-    -- reset action and title (Tension title can't be change in this function)
-    let
-        form_ =
-            data.form
-
-        oldAction =
-            form_.action
-
         form =
-            updateNodeForm field value { form_ | action = action }
-
-        newForm =
-            { form | action = oldAction, post = Dict.remove "title" form.post }
+            data.form
     in
-    { data | form = newForm }
+    { data | form = updateNodeForm field value data.form }
 
 
 
@@ -289,14 +293,14 @@ view_ tid data op_m =
                                 data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
                         in
                         div []
-                            [ nodeAboutInputView data.hasBeenPushed data.source txt op.data.form.node op
-                            , blobButtonsView isSendable isLoading op
+                            [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
+                            , viewBlobButtons isSendable isLoading op
                             ]
                     )
                 |> withDefault (text "")
 
           else
-            div [ class "aboutDoc" ] [ viewAboutSection (doEditView op_m BlobType.OnAbout) data ]
+            div [] [ viewAboutSection (doEditView op_m BlobType.OnAbout) data ]
         , hr [ class "has-background-border-light" ] []
         , if blobTypeEdit == Just BlobType.OnMandate then
             op_m
@@ -307,14 +311,14 @@ view_ tid data op_m =
                                 data.node.mandate /= op.data.form.node.mandate
                         in
                         div []
-                            [ nodeMandateInputView txt op.data.form.node op
-                            , blobButtonsView isSendable isLoading op
+                            [ viewMandateInput txt op.data.form.node.mandate op
+                            , viewBlobButtons isSendable isLoading op
                             ]
                     )
                 |> withDefault (text "")
 
           else
-            div [ class "mandateDoc" ] [ viewMandateSection (doEditView op_m BlobType.OnMandate) data ]
+            div [] [ viewMandateSection (doEditView op_m BlobType.OnMandate) data.node.mandate data.node.role_type ]
         ]
 
 
@@ -387,8 +391,8 @@ viewAboutSection editView data =
         ]
 
 
-viewMandateSection : Html msg -> OrgaNodeData msg -> Html msg
-viewMandateSection editView data =
+viewMandateSection : Html msg -> Maybe Mandate -> Maybe RoleType.RoleType -> Html msg
+viewMandateSection editView mandate_m role_type_m =
     div []
         [ div [ class "media subtitle" ]
             [ div [ class "media-left" ]
@@ -397,7 +401,7 @@ viewMandateSection editView data =
                 [ textH T.mandate ]
             , div [ class "media-right is-marginless buttonEdit" ] [ editView ]
             ]
-        , case data.node.mandate of
+        , case mandate_m of
             Just mandate ->
                 div []
                     [ viewMandateSubSection (upH T.purpose) (Just mandate.purpose)
@@ -407,7 +411,7 @@ viewMandateSection editView data =
                     ]
 
             Nothing ->
-                case data.node.role_type of
+                case role_type_m of
                     Just RoleType.Guest ->
                         a [ class "is-size-6", href "https://doc.fractale.co/role/guest" ] [ text "https://doc.fractale.co/role/guest" ]
 
@@ -438,7 +442,7 @@ viewMandateSubSection name maybePara =
 --- Input view
 
 
-nodeAboutInputView hasBeenPushed source txt node op =
+viewAboutInput hasBeenPushed source txt node op =
     div [ class "field" ]
         [ div [ class "field " ]
             [ div [ class "control" ]
@@ -505,19 +509,19 @@ nodeAboutInputView hasBeenPushed source txt node op =
         ]
 
 
-nodeMandateInputView txt node op =
+viewMandateInput txt mandate op =
     let
         purpose =
-            node.mandate |> Maybe.map (\m -> m.purpose) |> withDefault ""
+            mandate |> Maybe.map (\m -> m.purpose) |> withDefault ""
 
         responsabilities =
-            node.mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault ""
+            mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault ""
 
         domains =
-            node.mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault ""
+            mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault ""
 
         policies =
-            node.mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault ""
+            mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault ""
 
         showResponsabilities =
             op.data.doAddResponsabilities || responsabilities /= ""
@@ -645,8 +649,8 @@ doEditView op_m btype =
             span [] []
 
 
-blobButtonsView : Bool -> Bool -> Op msg -> Html msg
-blobButtonsView isSendable isLoading op =
+viewBlobButtons : Bool -> Bool -> Op msg -> Html msg
+viewBlobButtons isSendable isLoading op =
     div []
         [ case op.data.result of
             Failure err ->
@@ -675,6 +679,40 @@ blobButtonsView isSendable isLoading op =
         ]
 
 
+type alias OpAuthority msg =
+    { onSelect : RoleType.RoleType -> msg
+    , selection : RoleType.RoleType
+    }
+
+
+viewSelectAuthority : OpAuthority msg -> Html msg
+viewSelectAuthority op =
+    let
+        checked cls =
+            A.icon1 ("icon-check " ++ cls) ""
+
+        unchecked =
+            A.icon1 "icon-check is-invisible" ""
+    in
+    div [ class "dropdown is-right" ]
+        [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
+            [ span [ class ("has-text-" ++ roleColor op.selection) ] [ textH (RoleType.toString op.selection) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+        , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
+            [ div [ class "dropdown-content is-right" ] <|
+                List.map
+                    (\role_type ->
+                        let
+                            clsColor =
+                                "has-text-" ++ roleColor role_type
+                        in
+                        div [ class ("dropdown-item button-light " ++ clsColor), onClick <| op.onSelect role_type ]
+                            [ ternary (op.selection == role_type) (checked clsColor) unchecked, textH (RoleType.toString role_type) ]
+                    )
+                    [ RoleType.Peer, RoleType.Coordinator ]
+            ]
+        ]
+
+
 
 -- Versions view
 
@@ -687,15 +725,18 @@ viewVersions now blobsData =
                 headers =
                     []
             in
-            table [ class "table is-fullwidth" ]
-                [ thead []
-                    [ tr [] (headers |> List.map (\x -> th [] [ textH x ]))
+            div [ class "table-containe" ]
+                -- @debug table-container with width=100%, do not work!
+                [ table [ class "table is-fullwidth table-container" ]
+                    [ thead []
+                        [ tr [] (headers |> List.map (\x -> th [] [ textH x ]))
+                        ]
+                    , tblobs.blobs
+                        |> withDefault []
+                        |> List.indexedMap (\i d -> viewVerRow now i d)
+                        |> List.concat
+                        |> tbody []
                     ]
-                , tblobs.blobs
-                    |> withDefault []
-                    |> List.indexedMap (\i d -> viewVerRow now i d)
-                    |> List.concat
-                    |> tbody []
                 ]
 
         Failure err ->
@@ -733,20 +774,6 @@ viewVerRow now i blob =
 --- Utils
 
 
-nodeFragmentFromOrga : Maybe Node -> GqlData NodeData -> List EmitterOrReceiver -> NodesDict -> NodeFragment
-nodeFragmentFromOrga node_m nodeData children_eo ndata =
-    let
-        children =
-            children_eo
-                |> List.map (\n -> Dict.get n.nameid ndata)
-                |> List.filterMap identity
-                |> List.filter (\n -> n.role_type == Just RoleType.Coordinator)
-                |> List.map node2SubNodeFragment
-                |> Just
-    in
-    node2NodeFragment node_m children (withMaybeData nodeData)
-
-
 {-| updateNodeForm : String -> String -> TensionForm/Patch -> TensionForm/Patch
 -}
 updateNodeForm field value form =
@@ -759,7 +786,7 @@ updateNodeForm field value form =
     in
     case field of
         "nameid" ->
-            { form | node = { node | nameid = Just (makeNewNodeId value) } }
+            { form | node = { node | nameid = Just (nameidEncoder value) } }
 
         "about" ->
             { form | node = { node | about = Just value } }
@@ -794,7 +821,7 @@ updateNodeForm field value form =
                             newData =
                                 { node
                                     | name = Just value
-                                    , nameid = Just (makeNewNodeId value)
+                                    , nameid = Just (nameidEncoder value)
                                 }
                         in
                         { form | post = newPost, node = newData }
@@ -805,27 +832,6 @@ updateNodeForm field value form =
         _ ->
             -- title, message...
             { form | post = Dict.insert field value form.post }
-
-
-makeNewNodeId : String -> String
-makeNewNodeId name =
-    name
-        |> String.trim
-        |> String.toLower
-        |> String.trim
-        |> String.map
-            (\c ->
-                if List.member c [ ' ', '/', '=', '?', '#', '&', '?', '|', '%', '$', '\\' ] then
-                    '-'
-
-                else if List.member c [ '@', '(', ')', '<', '>', '[', ']', '{', '}', '"', '`', '\'' ] then
-                    '_'
-
-                else
-                    c
-            )
-        |> cleanDup "-"
-        |> cleanDup "_"
 
 
 

@@ -4,9 +4,12 @@ module Query.QueryNode exposing
     , cidPayload
     , emiterOrReceiverPayload
     , fetchNode
+    , fetchNodeData
     , getLabels
+    , getRoles
     , labelFullPayload
     , labelPayload
+    , mandatePayload
     , membersNodeDecoder
     , nidFilter
     , nodeDecoder
@@ -23,6 +26,7 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryPublicOrga
+    , roleFullPayload
     , tidPayload
     , userPayload
     )
@@ -32,16 +36,20 @@ import Fractal.Enum.LabelOrderable as LabelOrderable
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
 import Fractal.Enum.RoleType as RoleType
 import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Contract
 import Fractal.Object.Label
+import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
 import Fractal.Object.OrgaAgg
+import Fractal.Object.RoleExt
 import Fractal.Object.Tension
+import Fractal.Object.TensionAggregateResult
 import Fractal.Object.User
 import Fractal.Query as Query
 import Fractal.Scalar
@@ -362,6 +370,38 @@ cidPayload : SelectionSet IdPayload Fractal.Object.Contract
 cidPayload =
     SelectionSet.map IdPayload
         (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+
+
+
+{-
+   Get the node data /about, mandate, etc)
+-}
+
+
+fetchNodeData url nameid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nameid)
+            nodeDataPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+nodeDataPayload : SelectionSet NodeData Fractal.Object.Node
+nodeDataPayload =
+    SelectionSet.succeed NodeData
+        |> with Fractal.Object.Node.about
+        |> with
+            (Fractal.Object.Node.mandate identity mandatePayload)
+
+
+mandatePayload : SelectionSet Mandate Fractal.Object.Mandate
+mandatePayload =
+    SelectionSet.succeed Mandate
+        |> with Fractal.Object.Mandate.purpose
+        |> with Fractal.Object.Mandate.responsabilities
+        |> with Fractal.Object.Mandate.domains
+        |> with Fractal.Object.Mandate.policies
 
 
 
@@ -723,6 +763,61 @@ membersLocalPayload =
 
 
 {-
+   Query RoleExt (Full)
+-}
+
+
+type alias NodeRolesFull =
+    { roles : Maybe (List RoleExtFull) }
+
+
+rolesFullDecoder : Maybe NodeRolesFull -> Maybe (List RoleExtFull)
+rolesFullDecoder data =
+    data
+        |> Maybe.map (\d -> withDefault [] d.roles)
+
+
+getRoles url nid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nid)
+            nodeRolesFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse rolesFullDecoder >> msg)
+
+
+nodeRolesFullPayload : SelectionSet NodeRolesFull Fractal.Object.Node
+nodeRolesFullPayload =
+    SelectionSet.map NodeRolesFull
+        (Fractal.Object.Node.roles
+            (\args ->
+                { args
+                    | order =
+                        Input.buildRoleExtOrder (\b -> { b | asc = Present RoleExtOrderable.Name })
+                            |> Present
+                }
+            )
+            roleFullPayload
+        )
+
+
+roleFullPayload : SelectionSet RoleExtFull Fractal.Object.RoleExt
+roleFullPayload =
+    SelectionSet.map7 RoleExtFull
+        (Fractal.Object.RoleExt.id |> SelectionSet.map decodedId)
+        Fractal.Object.RoleExt.name
+        Fractal.Object.RoleExt.color
+        Fractal.Object.RoleExt.role_type
+        Fractal.Object.RoleExt.about
+        (Fractal.Object.RoleExt.mandate identity mandatePayload)
+        (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+            Fractal.Object.RoleExt.nodesAggregate identity <|
+                SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+        )
+
+
+
+{-
    Query Labels (Full)
 -}
 
@@ -802,7 +897,7 @@ labelsDecoder data =
         |> withDefault Nothing
 
 
-{-| Fetch the given node
+{-| Fetch on the given nodes only
 -}
 queryLabels url nids msg =
     makeGQLQuery url
@@ -813,7 +908,7 @@ queryLabels url nids msg =
         (RemoteData.fromResult >> decodeResponse labelsDecoder >> msg)
 
 
-{-| Fetch all children node
+{-| Fetch on all children nodes
 -}
 queryLabelsDown url nids msg =
     makeGQLQuery url

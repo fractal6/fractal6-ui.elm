@@ -19,19 +19,19 @@ type UserHasFilter
     | Bio
     | Utc
     | NotifyByEmail
+    | Subscriptions
     | Rights
     | Roles
     | Backed_roles
     | Tensions_created
     | Tensions_assigned
     | Contracts
-    | Subscriptions
     | Events
 
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, NotifyByEmail, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Subscriptions, Events ]
+    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, NotifyByEmail, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events ]
 
 
 decoder : Decoder UserHasFilter
@@ -73,6 +73,9 @@ decoder =
                     "notifyByEmail" ->
                         Decode.succeed NotifyByEmail
 
+                    "subscriptions" ->
+                        Decode.succeed Subscriptions
+
                     "rights" ->
                         Decode.succeed Rights
 
@@ -90,9 +93,6 @@ decoder =
 
                     "contracts" ->
                         Decode.succeed Contracts
-
-                    "subscriptions" ->
-                        Decode.succeed Subscriptions
 
                     "events" ->
                         Decode.succeed Events
@@ -140,6 +140,9 @@ toString enum____ =
         NotifyByEmail ->
             "notifyByEmail"
 
+        Subscriptions ->
+            "subscriptions"
+
         Rights ->
             "rights"
 
@@ -157,9 +160,6 @@ toString enum____ =
 
         Contracts ->
             "contracts"
-
-        Subscriptions ->
-            "subscriptions"
 
         Events ->
             "events"
@@ -212,6 +212,9 @@ fromString enumString____ =
         "notifyByEmail" ->
             Just NotifyByEmail
 
+        "subscriptions" ->
+            Just Subscriptions
+
         "rights" ->
             Just Rights
 
@@ -229,9 +232,6 @@ fromString enumString____ =
 
         "contracts" ->
             Just Contracts
-
-        "subscriptions" ->
-            Just Subscriptions
 
         "events" ->
             Just Events

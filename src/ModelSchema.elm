@@ -167,7 +167,35 @@ type alias Label =
 
 
 type alias LabelFull =
-    { id : String, name : String, color : Maybe String, description : Maybe String, n_nodes : Maybe Int }
+    { id : String
+    , name : String
+    , color : Maybe String
+    , description : Maybe String
+    , n_nodes : Maybe Int
+
+    --, n_tensions : Maybe Int
+    }
+
+
+type alias RoleExt =
+    { id : String
+    , name : String
+    , color : Maybe String
+    , role_type : RoleType.RoleType
+    }
+
+
+type alias RoleExtFull =
+    { id : String
+    , name : String
+    , color : Maybe String
+    , role_type : RoleType.RoleType
+    , about : Maybe String
+    , mandate : Maybe Mandate
+    , n_nodes : Maybe Int
+
+    --, n_roles : Maybe Int
+    }
 
 
 type alias TensionHead =

@@ -587,28 +587,31 @@ viewMembers now data focus =
                     div [ class "section" ] [ [ "No", T.member, "yet." ] |> String.join " " |> text ]
 
                 mbs ->
-                    div [ id "membersTable", class "section" ]
+                    div [ class "section" ]
                         [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.directMembers ]
-                        , div [ class "table is-fullwidth" ]
-                            [ thead []
-                                [ tr [ class "has-background-header" ]
-                                    [ th [] []
-                                    , th [] [ textH T.username ]
-                                    , th [] [ textH T.name ]
-                                    , th [ class "" ] [ textH T.roles ]
+                        , div [ class "table-containe" ]
+                            -- @DEBUG: table-container with width=100%, do not work !
+                            [ div [ class "table is-fullwidth" ]
+                                [ thead []
+                                    [ tr [ class "has-background-header" ]
+                                        [ th [] []
+                                        , th [] [ textH T.username ]
+                                        , th [] [ textH T.name ]
+                                        , th [ class "" ] [ textH T.roles ]
+                                        ]
                                     ]
+                                , tbody [] <|
+                                    List.indexedMap
+                                        (\i m ->
+                                            tr []
+                                                [ td [ class "pr-0" ] [ viewUser True m.username ]
+                                                , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                                , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
+                                                , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
+                                                ]
+                                        )
+                                        mbs
                                 ]
-                            , tbody [] <|
-                                List.indexedMap
-                                    (\i m ->
-                                        tr []
-                                            [ td [ class "pr-0" ] [ viewUser True m.username ]
-                                            , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                            , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-                                            , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
-                                            ]
-                                    )
-                                    mbs
                             ]
                         ]
 
@@ -645,7 +648,7 @@ viewMembersSub now data focus =
                     div [ class "section" ] [ [ "No sub-circle", T.member, "yet." ] |> String.join " " |> text ]
 
                 mbs ->
-                    div [ id "membersTable", class "section" ]
+                    div [ class "section" ]
                         [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.subMembers ]
                         , div [ class "table is-fullwidth" ]
                             [ thead []
@@ -694,7 +697,7 @@ viewGuest now members_d title focus =
                     )
     in
     if List.length guests > 0 then
-        div [ id "membersTable", class "section" ]
+        div [ class "section" ]
             [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
             , div [ class "table is-fullwidth" ]
                 [ thead []
