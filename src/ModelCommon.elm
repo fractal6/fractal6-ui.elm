@@ -117,26 +117,10 @@ ev2eventFragment ev =
 
 
 type alias TensionForm =
-    { uctx : UserCtx
-    , source : UserRole
-    , target : PNode
-    , status : TensionStatus.TensionStatus
-    , type_ : TensionType.TensionType
-    , labels : List Label
-    , action : Maybe TensionAction.TensionAction
-    , post : Post -- For String type,  createdBy, createdAt, title, message, etc
-
-    -- data
-    , events : List Ev
-    , blob_type : Maybe BlobType.BlobType
-    , node : NodeFragment
-    , users : List UserForm
-    }
-
-
-type alias TensionPatchForm =
     { id : String
     , uctx : UserCtx
+    , source : UserRole
+    , target : PNode
     , status : Maybe TensionStatus.TensionStatus
     , type_ : Maybe TensionType.TensionType
     , action : Maybe TensionAction.TensionAction
@@ -150,6 +134,34 @@ type alias TensionPatchForm =
     , node : NodeFragment
     , md : Maybe String
     , users : List UserForm
+    , labels : List Label
+    }
+
+
+initTensionForm : String -> UserState -> TensionForm
+initTensionForm tid user =
+    { uctx =
+        case user of
+            LoggedIn uctx ->
+                uctx
+
+            LoggedOut ->
+                initUserctx
+    , id = tid
+    , source = UserRole "" "" RoleType.Guest
+    , target = initPNode
+    , status = Nothing
+    , type_ = Nothing
+    , action = Nothing
+    , emitter = Nothing
+    , receiver = Nothing
+    , post = Dict.empty
+    , users = []
+    , events = []
+    , labels = []
+    , blob_type = Nothing
+    , node = initNodeFragment Nothing
+    , md = Nothing
     }
 
 
@@ -238,58 +250,6 @@ initLabelForm tid user =
     , isNew = False
     , events = []
     , post = Dict.empty
-    }
-
-
-{-|
-
-    Create tension a the current focus
-
--}
-initTensionForm : UserState -> TensionForm
-initTensionForm user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                initUserctx
-    , source = UserRole "" "" RoleType.Guest
-    , target = initPNode
-    , status = TensionStatus.Open
-    , type_ = TensionType.Operational
-    , labels = []
-    , action = Nothing
-    , post = Dict.empty
-    , users = []
-    , events = []
-    , blob_type = Nothing
-    , node = initNodeFragment Nothing
-    }
-
-
-initTensionPatchForm : String -> UserState -> TensionPatchForm
-initTensionPatchForm tid user =
-    { uctx =
-        case user of
-            LoggedIn uctx ->
-                uctx
-
-            LoggedOut ->
-                initUserctx
-    , id = tid
-    , status = Nothing
-    , type_ = Nothing
-    , action = Nothing
-    , emitter = Nothing
-    , receiver = Nothing
-    , post = Dict.empty
-    , users = []
-    , events = []
-    , blob_type = Nothing
-    , node = initNodeFragment Nothing
-    , md = Nothing
     }
 
 
@@ -666,21 +626,6 @@ hotTensionPush tension tsData =
 
         _ ->
             []
-
-
-hotNodeUpdateName : TensionForm -> GqlData NodesDict -> NodesDict
-hotNodeUpdateName form odata =
-    case odata of
-        Success data ->
-            form.node.name
-                |> Maybe.map
-                    (\name ->
-                        Dict.update form.target.nameid (\nm -> nm |> Maybe.map (\n -> { n | name = name })) data
-                    )
-                |> withDefault Dict.empty
-
-        _ ->
-            Dict.empty
 
 
 

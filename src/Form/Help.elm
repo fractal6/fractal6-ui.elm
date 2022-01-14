@@ -331,7 +331,7 @@ update_ apis message model =
             ( model, out0 [ sendNow next ] )
 
         PushTension form ack ->
-            ( model, out0 [ addOneTension apis form.form ack ] )
+            ( model, out0 [ addOneTension apis form.nodeDoc.form ack ] )
 
         OnSubmitAsk time ->
             let
@@ -364,7 +364,7 @@ update_ apis message model =
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResultAsk NotAsked model
-                    , out1 [ DoAuth form.form.uctx ]
+                    , out1 [ DoAuth form.nodeDoc.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -384,7 +384,7 @@ update_ apis message model =
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResultFeedback NotAsked model
-                    , out1 [ DoAuth form.form.uctx ]
+                    , out1 [ DoAuth form.nodeDoc.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -541,7 +541,7 @@ viewAskQuestion : Op -> State -> Html Msg
 viewAskQuestion op (State model) =
     let
         form =
-            model.formAsk.form
+            model.formAsk.nodeDoc.form
 
         title =
             Dict.get "title" form.post |> withDefault ""
@@ -644,7 +644,7 @@ viewFeedback : Op -> State -> Html Msg
 viewFeedback op (State model) =
     let
         form =
-            model.formFeedback.form
+            model.formFeedback.nodeDoc.form
 
         title =
             Dict.get "title" form.post |> withDefault ""

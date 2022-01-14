@@ -11,6 +11,8 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
+import Fractal.Enum.TensionStatus as TensionStatus
+import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
@@ -18,7 +20,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, TensionPatchForm, UserForm, UserState(..), initTensionPatchForm)
+import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
 import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
@@ -28,7 +30,7 @@ import Time
 
 
 type alias NodeDoc =
-    { form : TensionPatchForm
+    { form : TensionForm
     , result : GqlData PatchTensionPayloadID
     , isBlobEdit : Bool
     , isLookupOpen : Bool
@@ -40,7 +42,7 @@ type alias NodeDoc =
 
 create : String -> UserState -> NodeDoc
 create tid user =
-    { form = initTensionPatchForm tid user
+    { form = initTensionForm tid user
     , result = NotAsked
     , isBlobEdit = False
     , isLookupOpen = False
@@ -76,11 +78,6 @@ cancelEdit data =
     { data | isBlobEdit = False }
 
 
-setForm : TensionPatchForm -> NodeDoc -> NodeDoc
-setForm form data =
-    { data | form = form }
-
-
 setResult : GqlData PatchTensionPayloadID -> NodeDoc -> NodeDoc
 setResult result data =
     { data | result = result }
@@ -99,6 +96,136 @@ addDomains data =
 addPolicies : NodeDoc -> NodeDoc
 addPolicies data =
     { data | doAddPolicies = True }
+
+
+setForm : TensionForm -> NodeDoc -> NodeDoc
+setForm form data =
+    { data | form = form }
+
+
+setUctx : UserCtx -> NodeDoc -> NodeDoc
+setUctx uctx data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | uctx = uctx } }
+
+
+setTensionType : TensionType.TensionType -> NodeDoc -> NodeDoc
+setTensionType type_ data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | type_ = Just type_ } }
+
+
+setSource : UserRole -> NodeDoc -> NodeDoc
+setSource source data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | source = source } }
+
+
+setTarget : PNode -> NodeDoc -> NodeDoc
+setTarget target data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | target = target } }
+
+
+setSourceShort : String -> NodeDoc -> NodeDoc
+setSourceShort nameid data =
+    let
+        f =
+            data.form
+
+        newForm =
+            -- only nameid is used
+            { f | source = { nameid = nameid, name = "", role_type = RoleType.Bot } }
+    in
+    { data | form = newForm }
+
+
+setTargetShort : String -> NodeDoc -> NodeDoc
+setTargetShort nameid data =
+    let
+        f =
+            data.form
+
+        newForm =
+            -- only nameid is used
+            { f | target = { nameid = nameid, name = "" } }
+    in
+    { data | form = newForm }
+
+
+setStatus : TensionStatus.TensionStatus -> NodeDoc -> NodeDoc
+setStatus status data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | status = Just status } }
+
+
+setEvents : List Ev -> NodeDoc -> NodeDoc
+setEvents events data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | events = events } }
+
+
+setLabels : List Label -> NodeDoc -> NodeDoc
+setLabels labels data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | labels = labels } }
+
+
+addLabel : Label -> NodeDoc -> NodeDoc
+addLabel label data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | labels = f.labels ++ [ label ] } }
+
+
+removeLabel : Label -> NodeDoc -> NodeDoc
+removeLabel label data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | labels = LE.remove label f.labels } }
+
+
+resetPost : NodeDoc -> NodeDoc
+resetPost data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | post = Dict.empty } }
+
+
+resetNode : NodeDoc -> NodeDoc
+resetNode data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | node = initNodeFragment Nothing } }
 
 
 
@@ -131,18 +258,6 @@ hasMandate mandate_m =
 -- Update Form
 
 
-setEvents : List Ev -> NodeDoc -> NodeDoc
-setEvents events data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | events = events }
-    in
-    { data | form = newForm }
-
-
 updatePost : String -> String -> NodeDoc -> NodeDoc
 updatePost field value data =
     let
@@ -150,56 +265,6 @@ updatePost field value data =
             data.form
     in
     { data | form = updateNodeForm field value data.form }
-
-
-
--- User Lookup
-
-
-updateUserPattern : Int -> String -> NodeDoc -> NodeDoc
-updateUserPattern pos pattern data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = updateUserPattern_ pos pattern f.users }
-    in
-    { data | form = newForm }
-
-
-selectUser : Int -> String -> NodeDoc -> NodeDoc
-selectUser pos username data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = selectUser_ pos username f.users }
-    in
-    { data | form = newForm, isLookupOpen = False }
-
-
-cancelUser : Int -> NodeDoc -> NodeDoc
-cancelUser pos data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = cancelUser_ pos f.users }
-    in
-    { data | form = newForm, isLookupOpen = False }
-
-
-openLookup : NodeDoc -> NodeDoc
-openLookup data =
-    { data | isLookupOpen = True }
-
-
-closeLookup : NodeDoc -> NodeDoc
-closeLookup data =
-    { data | isLookupOpen = False }
 
 
 type alias OrgaNodeData msg =
@@ -214,9 +279,7 @@ type alias OrgaNodeData msg =
 
 
 type alias Op msg =
-    { lookup : List User
-    , users_data : GqlData UsersDict
-    , targets : List String
+    { targets : List String
     , data : NodeDoc
 
     -- Blob control
@@ -230,13 +293,6 @@ type alias Op msg =
     , onAddResponsabilities : msg
     , onAddDomains : msg
     , onAddPolicies : msg
-
-    -- User search and change
-    , onChangeUserPattern : Int -> String -> msg
-    , onSelectUser : Int -> String -> msg
-    , onCancelUser : Int -> msg
-    , onShowLookupFs : msg
-    , onCancelLookupFs : msg
     }
 
 
@@ -774,8 +830,7 @@ viewVerRow now i blob =
 --- Utils
 
 
-{-| updateNodeForm : String -> String -> TensionForm/Patch -> TensionForm/Patch
--}
+updateNodeForm : String -> String -> TensionForm -> TensionForm
 updateNodeForm field value form =
     let
         node =
@@ -832,23 +887,3 @@ updateNodeForm field value form =
         _ ->
             -- title, message...
             { form | post = Dict.insert field value form.post }
-
-
-
--- User Lookup utilities
-
-
-updateUserPattern_ : Int -> String -> List UserForm -> List UserForm
-updateUserPattern_ pos pattern users =
-    LE.updateAt pos (\x -> { x | pattern = pattern }) users
-
-
-selectUser_ : Int -> String -> List UserForm -> List UserForm
-selectUser_ pos username users =
-    LE.updateAt pos (\x -> { x | username = username, pattern = "" }) users
-
-
-cancelUser_ : Int -> List UserForm -> List UserForm
-cancelUser_ pos users =
-    --LE.removeAt pos users
-    LE.updateAt pos (\x -> { x | username = "" }) users

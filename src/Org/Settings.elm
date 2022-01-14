@@ -225,6 +225,10 @@ resetForm model =
     { model
         | artefact_form = initArtefactNodeForm (LoggedIn model.artefact_form.uctx) model.node_focus.nameid
         , hasUnsavedData = False
+        , label_result = NotAsked
+        , label_result_del = NotAsked
+        , role_result = NotAsked
+        , role_result_del = NotAsked
     }
 
 
@@ -578,8 +582,6 @@ update global message model =
                 | label_add = False
                 , label_edit = Just label
                 , artefact_form = newForm
-                , label_result = NotAsked
-                , label_result_del = NotAsked
                 , colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker
               }
             , Cmd.none
@@ -658,14 +660,14 @@ update global message model =
                         label_name =
                             Dict.get "name" model.artefact_form.post |> withDefault ""
 
-                        here ln =
-                            (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
+                        here name =
+                            (withMaybeData model.labels |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
                                 > 0
 
                         form =
                             model.artefact_form
                     in
-                    if model.label_add && (here label_name == False) then
+                    if model.label_add && not (here label_name) then
                         -- set the labels in the node labels list
                         ( { model | label_result = LoadingSlowly, artefact_form = { form | id = "" } }, send (Submit SubmitEditLabel), Cmd.none )
 
@@ -762,8 +764,6 @@ update global message model =
                 | role_add = False
                 , role_edit = Just role
                 , artefact_form = newForm
-                , role_result = NotAsked
-                , role_result_del = NotAsked
                 , colorPicker = ColorPicker.setColor (Dict.get "color" newForm.post) model.colorPicker
               }
             , Ports.bulma_driver "rolesTable"
@@ -850,14 +850,14 @@ update global message model =
                         role_name =
                             Dict.get "name" model.artefact_form.post |> withDefault ""
 
-                        here ln =
-                            (withMaybeData model.roles |> withDefault [] |> List.filter (\x -> x.name == ln) |> List.length)
+                        here name =
+                            (withMaybeData model.roles |> withDefault [] |> List.filter (\x -> x.name == name) |> List.length)
                                 > 0
 
                         form =
                             model.artefact_form
                     in
-                    if model.role_add && (here role_name == False) then
+                    if model.role_add && not (here role_name) then
                         -- set the roles in the node roles list
                         ( { model | role_result = LoadingSlowly, artefact_form = { form | id = "" } }, send (Submit SubmitEditRole), Cmd.none )
 

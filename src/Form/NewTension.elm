@@ -6,7 +6,7 @@ import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc as NodeDoc exposing (viewAboutInput, viewMandateInput)
+import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewAboutInput, viewMandateInput)
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
@@ -44,7 +44,7 @@ type State
 
 type alias Model =
     { user : UserState
-    , form : TensionForm
+    , nodeDoc : NodeDoc -- form
     , result : GqlData Tension
     , sources : List UserRole
     , targets : List PNode
@@ -53,13 +53,7 @@ type alias Model =
     , activeTab : TensionTab
     , viewMode : InputViewMode
     , activeButton : Maybe Int
-    , isLookupOpen : Bool
-    , doAddLinks : Bool
-    , doAddResponsabilities : Bool
-    , doAddDomains : Bool
-    , doAddPolicies : Bool
     , labelsPanel : LabelSearchPanel.State
-    , lookup_users : List User
     , path_data : Maybe LocalGraph
 
     -- Common
@@ -91,7 +85,6 @@ init user =
 initModel : UserState -> Model
 initModel user =
     { user = user
-    , form = initTensionForm user
     , result = NotAsked
     , sources = []
     , targets = []
@@ -100,13 +93,8 @@ initModel user =
     , activeTab = NewTensionTab
     , viewMode = Write
     , activeButton = Nothing
-    , isLookupOpen = False
-    , doAddLinks = False
-    , doAddResponsabilities = False
-    , doAddDomains = False
-    , doAddPolicies = False
+    , nodeDoc = NodeDoc.create "" user
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
-    , lookup_users = []
     , path_data = Nothing
 
     -- Common
@@ -120,31 +108,35 @@ initTensionTab : Model -> Model
 initTensionTab model =
     let
         form =
-            model.form
+            model.nodeDoc.form
 
         newForm =
             { form
-                | type_ = TensionType.Operational
+                | type_ = Just TensionType.Operational
                 , action = Nothing
                 , blob_type = Nothing
                 , users = []
             }
     in
-    { model | activeTab = NewTensionTab, form = newForm, result = NotAsked }
+    { model
+        | activeTab = NewTensionTab
+        , nodeDoc = NodeDoc.setForm newForm model.nodeDoc
+        , result = NotAsked
+    }
 
 
 initCircleTab : NodeType.NodeType -> Model -> Model
 initCircleTab type_ model =
     let
         form =
-            model.form
+            model.nodeDoc.form
 
         node =
             form.node
 
         newForm =
             { form
-                | type_ = TensionType.Governance
+                | type_ = Just TensionType.Governance
                 , blob_type = Just BlobType.OnNode
                 , node = { node | type_ = Just type_ }
                 , users = []
@@ -153,10 +145,18 @@ initCircleTab type_ model =
     in
     case type_ of
         NodeType.Role ->
-            { model | activeTab = NewRoleTab, form = { newForm | action = Just TensionAction.NewRole }, result = NotAsked }
+            { model
+                | activeTab = NewRoleTab
+                , nodeDoc = NodeDoc.setForm { newForm | action = Just TensionAction.NewRole } model.nodeDoc
+                , result = NotAsked
+            }
 
         NodeType.Circle ->
-            { model | activeTab = NewCircleTab, form = { newForm | action = Just TensionAction.NewCircle }, result = NotAsked }
+            { model
+                | activeTab = NewCircleTab
+                , nodeDoc = NodeDoc.setForm { newForm | action = Just TensionAction.NewCircle } model.nodeDoc
+                , result = NotAsked
+            }
 
 
 
@@ -188,21 +188,16 @@ setPath_ p (State model) =
 --        targets =
 --            case odata of
 --                Success od ->
---                    getParents model.form.target.nameid odata
---                        ++ (getChildren model.form.target.nameid odata |> List.filter (\n -> n.role_type == Nothing))
+--                    getParents model.nodeDoc.form.target.nameid odata
+--                        ++ (getChildren model.nodeDoc.form.target.nameid odata |> List.filter (\n -> n.role_type == Nothing))
 --                        -- Circle
---                        ++ ([ model.form.target.nameid, model.form.source.nameid ] |> List.map (\nid -> getNode nid odata) |> List.filterMap identity)
+--                        ++ ([ model.nodeDoc.form.target.nameid, model.nodeDoc.form.source.nameid ] |> List.map (\nid -> getNode nid odata) |> List.filterMap identity)
 --                        |> LE.uniqueBy (\n -> n.nameid)
 --
 --                _ ->
 --                    []
 --    in
 --    State { model | targets = targets }
-
-
-setTab_ : TensionTab -> State -> State
-setTab_ tab (State model) =
-    { model | activeTab = tab } |> State
 
 
 fixGlitch_ : State -> State
@@ -256,34 +251,9 @@ setStep step data =
     { data | step = step }
 
 
-setForm : TensionForm -> Model -> Model
-setForm form data =
-    { data | form = form }
-
-
 setResult : GqlData Tension -> Model -> Model
 setResult result data =
     { data | result = result }
-
-
-addLinks : Model -> Model
-addLinks data =
-    { data | doAddLinks = True }
-
-
-addResponsabilities : Model -> Model
-addResponsabilities data =
-    { data | doAddResponsabilities = True }
-
-
-addDomains : Model -> Model
-addDomains data =
-    { data | doAddDomains = True }
-
-
-addPolicies : Model -> Model
-addPolicies data =
-    { data | doAddPolicies = True }
 
 
 
@@ -292,177 +262,82 @@ addPolicies data =
 
 setUctx : UserCtx -> Model -> Model
 setUctx uctx data =
-    let
-        form =
-            data.form
-
-        newForm =
-            { form | uctx = uctx }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
 
 
 setSources : List UserRole -> Model -> Model
 setSources sources data =
-    let
-        form =
-            data.form
-
-        newForm =
-            { form | source = List.head sources |> withDefault form.source }
-    in
-    { data | sources = sources, form = newForm }
+    { data
+        | sources = sources
+        , nodeDoc = NodeDoc.setSource (List.head sources |> withDefault data.nodeDoc.form.source) data.nodeDoc
+    }
 
 
 setTensionType : TensionType.TensionType -> Model -> Model
 setTensionType type_ data =
-    let
-        form =
-            data.form
-
-        newForm =
-            { form | type_ = type_ }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setTensionType type_ data.nodeDoc }
 
 
 setSource : UserRole -> Model -> Model
 setSource source data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | source = source }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setSource source data.nodeDoc }
 
 
 setTarget : PNode -> Model -> Model
 setTarget target data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | target = target }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setTarget target data.nodeDoc }
 
 
 setSourceShort : String -> Model -> Model
 setSourceShort nameid data =
-    let
-        f =
-            data.form
-
-        newForm =
-            -- onlmy nameid is used
-            { f | source = { nameid = nameid, name = "", role_type = RoleType.Bot } }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setSourceShort nameid data.nodeDoc }
 
 
 setTargetShort : String -> Model -> Model
 setTargetShort nameid data =
-    let
-        f =
-            data.form
-
-        newForm =
-            -- onlmy nameid is used
-            { f | target = { nameid = nameid, name = "" } }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setTargetShort nameid data.nodeDoc }
 
 
 setStatus : TensionStatus.TensionStatus -> Model -> Model
 setStatus status data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | status = status }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setStatus status data.nodeDoc }
 
 
 setEvents : List Ev -> Model -> Model
 setEvents events data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | events = events }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setEvents events data.nodeDoc }
 
 
 setLabels : List Label -> Model -> Model
 setLabels labels data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | labels = labels }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.setLabels labels data.nodeDoc }
 
 
 addLabel : Label -> Model -> Model
 addLabel label data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | labels = f.labels ++ [ label ] }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.addLabel label data.nodeDoc }
 
 
 removeLabel : Label -> Model -> Model
 removeLabel label data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | labels = LE.remove label f.labels }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.removeLabel label data.nodeDoc }
 
 
 post : String -> String -> Model -> Model
 post field value data =
     let
         f =
-            data.form
+            data.nodeDoc.form
 
         newForm =
             { f | post = Dict.insert field value f.post }
     in
-    { data | form = newForm }
-
-
-postNode : String -> String -> Model -> Model
-postNode field value data =
-    { data | form = NodeDoc.updateNodeForm field value data.form }
+    { data | nodeDoc = NodeDoc.setForm newForm data.nodeDoc }
 
 
 resetPost : Model -> Model
 resetPost data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | post = Dict.empty }
-    in
-    { data | form = newForm }
+    { data | nodeDoc = NodeDoc.resetPost data.nodeDoc }
 
 
 resetModel : Model -> Model
@@ -476,55 +351,39 @@ resetModel data =
 
 
 -- User Lookup
-
-
-updateUserPattern : Int -> String -> Model -> Model
-updateUserPattern pos pattern data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = NodeDoc.updateUserPattern_ pos pattern f.users }
-    in
-    { data | form = newForm }
-
-
-selectUser : Int -> String -> Model -> Model
-selectUser pos username data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = NodeDoc.selectUser_ pos username f.users }
-    in
-    { data | form = newForm, isLookupOpen = False }
-
-
-cancelUser : Int -> Model -> Model
-cancelUser pos data =
-    let
-        f =
-            data.form
-
-        newForm =
-            { f | users = NodeDoc.cancelUser_ pos f.users }
-    in
-    { data | form = newForm, isLookupOpen = False }
-
-
-openLookup : Model -> Model
-openLookup data =
-    { data | isLookupOpen = True }
-
-
-closeLookup : Model -> Model
-closeLookup data =
-    { data | isLookupOpen = False }
-
-
-
+--updateUserPattern : Int -> String -> Model -> Model
+--updateUserPattern pos pattern data =
+--    let
+--        f =
+--            data.form
+--
+--        newForm =
+--            { f | users = NodeDoc.updateUserPattern_ pos pattern f.users }
+--    in
+--    { data | form = newForm }
+--
+--
+--cancelUser : Int -> Model -> Model
+--cancelUser pos data =
+--    let
+--        f =
+--            data.form
+--
+--        newForm =
+--            { f | users = NodeDoc.cancelUser_ pos f.users }
+--    in
+--    { data | form = newForm, isLookupOpen = False }
+--
+--
+--openLookup : Model -> Model
+--openLookup data =
+--    { data | isLookupOpen = True }
+--
+--
+--closeLookup : Model -> Model
+--closeLookup data =
+--    { data | isLookupOpen = False }
+--
 -- utils
 
 
@@ -535,7 +394,7 @@ canExitSafe data =
 
 hasData : Model -> Bool
 hasData data =
-    isPostEmpty [ "title", "message" ] data.form.post == False
+    isPostEmpty [ "title", "message" ] data.nodeDoc.form.post == False
 
 
 
@@ -561,19 +420,18 @@ type Msg
     | OnChangeTensionSource UserRole
     | OnChangeTensionTarget PNode
     | OnChangePost String String
-    | OnAddLinks
     | OnAddDomains
     | OnAddPolicies
     | OnAddResponsabilities
     | OnSubmitTension Bool Time.Posix
     | OnTensionAck (GqlData Tension)
       -- User Quick Search
-    | OnChangeUserPattern Int String
-    | OnChangeUserLookup (LookupResult User)
-    | OnSelectUser Int String
-    | OnCancelUser Int
-    | OnShowLookupFs
-    | OnCancelLookupFs
+      --| OnChangeUserPattern Int String
+      --| OnChangeUserLookup (LookupResult User)
+      --| OnSelectUser Int String
+      --| OnCancelUser Int
+      --| OnShowLookupFs
+      --| OnCancelLookupFs
       -- Labels
     | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Confirm Modal
@@ -638,7 +496,7 @@ update_ apis message model =
     case message of
         -- Data control
         PushTension ack ->
-            ( model, out0 [ addOneTension apis model.form ack ] )
+            ( model, out0 [ addOneTension apis model.nodeDoc.form ack ] )
 
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
@@ -649,7 +507,7 @@ update_ apis message model =
                 LoggedIn uctx ->
                     let
                         sources =
-                            getOrgaRoles [ nid2rootid model.form.target.nameid ] model.form.uctx.roles
+                            getOrgaRoles [ nid2rootid model.nodeDoc.form.target.nameid ] model.nodeDoc.form.uctx.roles
                     in
                     if sources == [] && model.refresh_trial == 0 then
                         ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )
@@ -713,27 +571,16 @@ update_ apis message model =
             ( setTarget target model, noOut )
 
         OnChangePost field value ->
-            case model.activeTab of
-                NewTensionTab ->
-                    ( post field value model, noOut )
-
-                NewRoleTab ->
-                    ( postNode field value model, noOut )
-
-                NewCircleTab ->
-                    ( postNode field value model, noOut )
-
-        OnAddLinks ->
-            ( addLinks model, noOut )
-
-        OnAddDomains ->
-            ( addDomains model, noOut )
-
-        OnAddPolicies ->
-            ( addPolicies model, noOut )
+            ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
 
         OnAddResponsabilities ->
-            ( addResponsabilities model, noOut )
+            ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, noOut )
+
+        OnAddDomains ->
+            ( { model | nodeDoc = NodeDoc.addDomains model.nodeDoc }, noOut )
+
+        OnAddPolicies ->
+            ( { model | nodeDoc = NodeDoc.addPolicies model.nodeDoc }, noOut )
 
         OnSubmitTension doClose time ->
             let
@@ -741,9 +588,9 @@ update_ apis message model =
                     if model.activeTab == NewTensionTab then
                         let
                             form =
-                                model.form
+                                model.nodeDoc.form
                         in
-                        { model | form = { form | node = initNodeFragment Nothing } }
+                        { model | nodeDoc = NodeDoc.resetNode model.nodeDoc }
 
                     else
                         model
@@ -780,7 +627,7 @@ update_ apis message model =
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResult NotAsked model
-                    , out1 [ DoAuth model.form.uctx ]
+                    , out1 [ DoAuth model.nodeDoc.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -794,8 +641,8 @@ update_ apis message model =
                         NewRoleTab ->
                             let
                                 newNameid =
-                                    model.form.node.nameid
-                                        |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Role model.form.node.type_))
+                                    model.nodeDoc.form.node.nameid
+                                        |> Maybe.map (\nid -> nodeIdCodec model.nodeDoc.form.target.nameid nid (withDefault NodeType.Role model.nodeDoc.form.node.type_))
                                         |> withDefault ""
                             in
                             ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
@@ -803,8 +650,8 @@ update_ apis message model =
                         NewCircleTab ->
                             let
                                 newNameid =
-                                    model.form.node.nameid
-                                        |> Maybe.map (\nid -> nodeIdCodec model.form.target.nameid nid (withDefault NodeType.Circle model.form.node.type_))
+                                    model.nodeDoc.form.node.nameid
+                                        |> Maybe.map (\nid -> nodeIdCodec model.nodeDoc.form.target.nameid nid (withDefault NodeType.Circle model.nodeDoc.form.node.type_))
                                         |> withDefault ""
                             in
                             ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
@@ -816,37 +663,29 @@ update_ apis message model =
                     ( setResult result model, noOut )
 
         -- User Quick Search
-        OnChangeUserPattern pos pattern ->
-            ( updateUserPattern pos pattern model
-            , out0 [ Ports.searchUser pattern ]
-            )
-
-        OnChangeUserLookup users_ ->
-            case users_ of
-                Ok users ->
-                    ( { model | lookup_users = users }, noOut )
-
-                Err err ->
-                    ( model, out0 [ Ports.logErr err ] )
-
-        OnSelectUser pos username ->
-            ( selectUser pos username model, noOut )
-
-        OnCancelUser pos ->
-            ( cancelUser pos model, noOut )
-
-        OnShowLookupFs ->
-            ( openLookup model
-            , if model.isLookupOpen == False then
-                out0 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
-
-              else
-                noOut
-            )
-
-        OnCancelLookupFs ->
-            ( closeLookup model, noOut )
-
+        --OnChangeUserPattern pos pattern ->
+        --    ( updateUserPattern pos pattern model
+        --    , out0 [ Ports.searchUser pattern ]
+        --    )
+        --OnChangeUserLookup users_ ->
+        --    case users_ of
+        --        Ok users ->
+        --            ( { model | lookup_users = users }, noOut )
+        --        Err err ->
+        --            ( model, out0 [ Ports.logErr err ] )
+        --OnSelectUser pos username ->
+        --    ( { model | nodeDoc = NodeDoc.selectUser pos username model.nodeDoc }, noOut )
+        --OnCancelUser pos ->
+        --    ( cancelUser pos model, noOut )
+        --OnShowLookupFs ->
+        --    ( openLookup model
+        --    , if model.isLookupOpen == False then
+        --        out0 [ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ]
+        --      else
+        --        noOut
+        --    )
+        --OnCancelLookupFs ->
+        --    ( closeLookup model, noOut )
         -- Labels
         LabelSearchPanelMsg msg ->
             let
@@ -892,10 +731,11 @@ update_ apis message model =
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    [ Ports.lookupUserFromJs OnChangeUserLookup
-    , Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
-    , Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
+    [ Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+
+    --, Ports.lookupUserFromJs OnChangeUserLookup
+    --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
     ]
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
 
@@ -990,7 +830,7 @@ viewSources : State -> TensionStep -> Html Msg
 viewSources (State model) nextStep =
     div [ class "modal-card submitFocus" ]
         [ div [ class "modal-card-head" ]
-            [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.form.action |> text ] ]
+            [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.nodeDoc.form.action |> text ] ]
         , div [ class "modal-card-body" ]
             [ div [ class "buttons buttonRadio", attribute "style" "margin-bottom: 2em; margin-right: 2em; margin-left: 2em;" ] <|
                 List.map
@@ -1049,13 +889,16 @@ viewTension : Op -> State -> Html Msg
 viewTension op (State model) =
     let
         form =
-            model.form
+            model.nodeDoc.form
 
         title =
             Dict.get "title" form.post |> withDefault ""
 
         message =
             Dict.get "message" form.post |> withDefault ""
+
+        tension_type =
+            withDefault TensionType.Operational form.type_
 
         txt =
             getTensionText
@@ -1085,8 +928,8 @@ viewTension op (State model) =
                                     , span [ class "dropdown", style "vertical-align" "unset" ]
                                         [ span [ class "dropdown-trigger button-light" ]
                                             [ span [ attribute "aria-controls" "type-menu" ]
-                                                [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.type_ ]
-                                                    [ text (TensionType.toString form.type_), span [ class "ml-2 arrow down" ] [] ]
+                                                [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
+                                                    [ text (TensionType.toString tension_type), span [ class "ml-2 arrow down" ] [] ]
                                                 ]
                                             ]
                                         , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
@@ -1107,7 +950,7 @@ viewTension op (State model) =
                         , viewRecipients model
                         ]
                     ]
-                , viewTensionTabs model.activeTab model.form.target
+                , viewTensionTabs model.activeTab model.nodeDoc.form.target
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1207,7 +1050,10 @@ viewCircle : Op -> State -> Html Msg
 viewCircle op (State model) =
     let
         form =
-            model.form
+            model.nodeDoc.form
+
+        tension_type =
+            withDefault TensionType.Operational form.type_
 
         txt =
             getNodeTextFromNodeType (form.node.type_ |> withDefault NodeType.Role)
@@ -1235,19 +1081,12 @@ viewCircle op (State model) =
 
                 --@Debug: NodeDoc has not its full State yet
                 op_ =
-                    { data = model
-                    , lookup = model.lookup_users
-                    , users_data = op.users_data
+                    { data = model.nodeDoc
                     , targets = model.targets |> List.map (\n -> n.nameid)
                     , onChangePost = OnChangePost
-                    , onAddLinks = OnAddLinks
                     , onAddDomains = OnAddDomains
                     , onAddPolicies = OnAddPolicies
                     , onAddResponsabilities = OnAddResponsabilities
-                    , onSelectUser = OnSelectUser
-                    , onCancelUser = OnCancelUser
-                    , onShowLookupFs = OnShowLookupFs
-                    , onChangeUserPattern = OnChangeUserPattern
                     }
             in
             div [ class "panel modal-card submitFocus" ]
@@ -1259,14 +1098,14 @@ viewCircle op (State model) =
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
                                     , span
-                                        [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" form.type_ ]
-                                        [ text (TensionType.toString form.type_) ]
+                                        [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
+                                        [ text (TensionType.toString tension_type) ]
                                     ]
                                 ]
                         , viewRecipients model
                         ]
                     ]
-                , viewTensionTabs model.activeTab model.form.target
+                , viewTensionTabs model.activeTab model.nodeDoc.form.target
                 , div [ class "modal-card-body" ]
                     [ viewAboutInput False OverviewBaseUri txt form.node op_
                     , div [ class "card cardForm" ]
@@ -1336,7 +1175,7 @@ viewRecipients : Model -> Html Msg
 viewRecipients model =
     let
         form =
-            model.form
+            model.nodeDoc.form
     in
     div [ class "level-right" ]
         [ span [ class "has-text-grey-light is-size-6" ] [ textH (T.from ++ ": ") ]
@@ -1358,7 +1197,7 @@ viewRecipients model =
                                 ]
                                 [ A.icon1 "icon-user" t.name ]
                         )
-                        (List.filter (\n -> n.nameid /= model.form.source.nameid) model.sources)
+                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
                 ]
             ]
         , span [ class "right-arro mx-3" ] []
@@ -1381,7 +1220,7 @@ viewRecipients model =
                                 ]
                                 [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
                         )
-                        (List.filter (\n -> n.nameid /= model.form.target.nameid) model.targets)
+                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid) model.targets)
                 ]
             ]
         ]
@@ -1391,7 +1230,7 @@ viewSuccess : FormText -> Tension -> Model -> Html Msg
 viewSuccess txt res model =
     let
         link =
-            Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.form.target.nameid, param2 = res.id } |> toHref
+            Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
     div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ A.icon1 "icon-check icon-2x has-text-success" " "

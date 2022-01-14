@@ -4,7 +4,6 @@ module Query.AddTension exposing
     , buildComment
     , buildEvents
     , buildMandate
-    , tensionFromForm
     )
 
 import Dict exposing (Dict)
@@ -103,8 +102,8 @@ addTensionInputEncoder f =
                 Input.buildUserRef
                     (\x -> { x | username = Present f.uctx.username })
             , title = title
-            , type_ = f.type_
-            , status = f.status
+            , type_ = withDefault TensionType.Operational f.type_
+            , status = withDefault TensionStatus.Open f.status
             , emitter =
                 Input.buildNodeRef (\n -> { n | nameid = Present f.source.nameid })
             , receiver =
@@ -128,41 +127,6 @@ addTensionInputEncoder f =
 
 
 --- Utils
-
-
-tensionFromForm : TensionForm -> (Input.TensionRefOptionalFields -> Input.TensionRefOptionalFields)
-tensionFromForm f =
-    let
-        title =
-            Dict.get "title" f.post |> withDefault ""
-
-        createdAt =
-            Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
-
-        message =
-            Dict.get "message" f.post |> withDefault ""
-    in
-    \t ->
-        { t
-            | createdAt = createdAt |> Present
-            , createdBy =
-                Input.buildUserRef
-                    (\x -> { x | username = Present f.uctx.username })
-                    |> Present
-            , title = title |> Present
-            , type_ = f.type_ |> Present
-            , status = f.status |> Present
-            , action = f.action |> fromMaybe
-            , emitter =
-                Input.buildNodeRef (\x -> { x | nameid = Present f.source.nameid }) |> Present
-            , receiver =
-                Input.buildNodeRef (\x -> { x | nameid = Present f.target.nameid }) |> Present
-            , emitterid = f.source.nameid |> Present
-            , receiverid = f.target.nameid |> Present
-            , comments = buildComment createdAt f.uctx.username (Just message)
-            , blobs = buildBlob createdAt f.uctx.username f.blob_type f.users f.node f.post
-            , history = buildEvents createdAt f.uctx.username f.events
-        }
 
 
 buildLabels : TensionForm -> OptionalArgument (List Input.LabelRef)

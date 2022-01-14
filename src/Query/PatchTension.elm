@@ -37,7 +37,7 @@ import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionPatchForm)
+import ModelCommon exposing (ActionForm, AssigneeForm, CommentPatchForm, LabelForm, TensionForm)
 import ModelSchema exposing (..)
 import Query.AddTension exposing (buildBlob, buildComment, buildEvents)
 import Query.QueryContract exposing (contractPayload)
@@ -114,18 +114,14 @@ pushBlobFilter a =
     }
 
 
-patchTensionInputEncoder : TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
+patchTensionInputEncoder : TensionForm -> Mutation.UpdateTensionRequiredArguments
 patchTensionInputEncoder f =
-    --@Debug: receiver and receiverid
     let
         createdAt =
             Dict.get "createdAt" f.post |> withDefault "" |> Fractal.Scalar.DateTime
 
         updatedAt =
             Dict.get "updatedAt" f.post |> Maybe.map (\x -> Fractal.Scalar.DateTime x)
-
-        title =
-            Dict.get "title" f.post
 
         message =
             -- new comment
@@ -543,7 +539,7 @@ bidFilter bid a =
     }
 
 
-publishBlobInputEncoder : String -> TensionPatchForm -> Mutation.UpdateTensionRequiredArguments
+publishBlobInputEncoder : String -> TensionForm -> Mutation.UpdateTensionRequiredArguments
 publishBlobInputEncoder bid f =
     --@Debug: receiver and receiverid
     let

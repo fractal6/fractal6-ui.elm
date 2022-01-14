@@ -181,7 +181,7 @@ type alias Model =
     , isSubscribed : GqlData Bool
 
     -- Form (Title, Status, Comment)
-    , tension_form : TensionPatchForm
+    , tension_form : TensionForm
     , tension_patch : GqlData PatchTensionPayloadID
 
     -- Title Result
@@ -275,7 +275,7 @@ type Msg
     | LoadTensionComments
     | PushCommentPatch
     | PushTitle
-    | PushBlob_ TensionPatchForm
+    | PushBlob_ TensionForm
     | PublishBlob
     | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
@@ -321,13 +321,6 @@ type Msg
     | BlobAck (GqlData PatchTensionPayloadID)
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
-      -- User Quick Search
-    | ChangeUserPattern Int String
-    | ChangeUserLookup (LookupResult User)
-    | SelectUser Int String
-    | CancelUser Int
-    | ShowLookupFs
-    | CancelLookupFs
       -- Assignees
     | DoAssigneeEdit
       -- Labels
@@ -425,7 +418,7 @@ init global flags =
             , isSubscribed = fromMaybeData global.session.isSubscribed Loading
 
             -- Form (Title, Status, Comment)
-            , tension_form = initTensionPatchForm tid global.session.user
+            , tension_form = initTensionForm tid global.session.user
 
             -- Push Comment / Change status
             , tension_patch = NotAsked
@@ -798,7 +791,7 @@ update global message model =
                                 model.tension_comments
 
                         resetForm =
-                            initTensionPatchForm model.tensionid global.session.user
+                            initTensionForm model.tensionid global.session.user
                     in
                     ( { model
                         | tension_head = tension_h
@@ -892,7 +885,7 @@ update global message model =
             ( { model | isTitleEdit = True }, Ports.focusOn "titleInput", Cmd.none )
 
         CancelTitle ->
-            ( { model | isTitleEdit = False, tension_form = initTensionPatchForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | isTitleEdit = False, tension_form = initTensionForm model.tensionid global.session.user, title_result = NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitTitle time ->
             let
@@ -932,7 +925,7 @@ update global message model =
                                     other
 
                         resetForm =
-                            initTensionPatchForm model.tensionid global.session.user
+                            initTensionForm model.tensionid global.session.user
                     in
                     ( { model | tension_head = tension_h, tension_form = resetForm, title_result = result, isTitleEdit = False }
                     , Ports.bulma_driver ""
@@ -1120,7 +1113,7 @@ update global message model =
                                     { th | blobs = blobs }
 
                                 resetForm =
-                                    initTensionPatchForm model.tensionid global.session.user
+                                    initTensionForm model.tensionid global.session.user
                             in
                             ( { model
                                 | publish_result = result
@@ -1136,55 +1129,6 @@ update global message model =
 
                 _ ->
                     ( { model | publish_result = result }, Cmd.none, Cmd.none )
-
-        -- User quick search
-        ChangeUserPattern pos pattern ->
-            ( { model | nodeDoc = NodeDoc.updateUserPattern pos pattern model.nodeDoc }
-            , Ports.searchUser pattern
-            , Cmd.none
-            )
-
-        ChangeUserLookup users_ ->
-            case users_ of
-                Ok users ->
-                    ( { model | lookup_users = users }, Cmd.none, Cmd.none )
-
-                Err err ->
-                    ( model, Ports.logErr err, Cmd.none )
-
-        SelectUser pos username ->
-            ( { model | nodeDoc = NodeDoc.selectUser pos username model.nodeDoc }
-            , Cmd.none
-            , Cmd.none
-            )
-
-        CancelUser pos ->
-            ( { model | nodeDoc = NodeDoc.cancelUser pos model.nodeDoc }
-            , Cmd.none
-            , Cmd.none
-            )
-
-        ShowLookupFs ->
-            let
-                ( newModel, cmd ) =
-                    case model.users_data of
-                        NotAsked ->
-                            ( { model | users_data = Loading }, send LoadOrga )
-
-                        _ ->
-                            ( model, Cmd.none )
-            in
-            ( { newModel | nodeDoc = NodeDoc.openLookup model.nodeDoc }
-            , if model.nodeDoc.isLookupOpen == False then
-                Cmd.batch ([ Ports.outsideClickClose "cancelLookupFsFromJs" "usersSearchPanel" ] ++ [ cmd ])
-
-              else
-                cmd
-            , Cmd.none
-            )
-
-        CancelLookupFs ->
-            ( { model | nodeDoc = NodeDoc.closeLookup model.nodeDoc }, Cmd.none, Cmd.none )
 
         -- Assignees
         DoAssigneeEdit ->
@@ -1595,8 +1539,6 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
-    , Ports.lookupUserFromJs ChangeUserLookup
-    , Ports.cancelLookupFsFromJs (always CancelLookupFs)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -2383,9 +2325,7 @@ viewDocument u t b model =
                 DocEdit ->
                     let
                         msgs =
-                            { lookup = model.lookup_users
-                            , users_data = model.users_data
-                            , targets = [ t.emitter.nameid, t.receiver.nameid ]
+                            { targets = [ t.emitter.nameid, t.receiver.nameid ]
                             , data = model.nodeDoc
                             , onBlobEdit = DoBlobEdit
                             , onCancelBlob = CancelBlob
@@ -2395,11 +2335,6 @@ viewDocument u t b model =
                             , onAddDomains = AddDomains
                             , onAddPolicies = AddPolicies
                             , onAddResponsabilities = AddResponsabilities
-                            , onChangeUserPattern = ChangeUserPattern
-                            , onSelectUser = SelectUser
-                            , onCancelUser = CancelUser
-                            , onShowLookupFs = ShowLookupFs
-                            , onCancelLookupFs = CancelLookupFs
                             }
                     in
                     NodeDoc.view nodeData (Just msgs)
@@ -2780,7 +2715,7 @@ tensionChanged2 t_m to =
     tid1 /= tid2
 
 
-eventFromForm : Ev -> TensionPatchForm -> Event
+eventFromForm : Ev -> TensionForm -> Event
 eventFromForm event form =
     { id = ""
     , createdAt = Dict.get "createdAt" form.post |> withDefault ""

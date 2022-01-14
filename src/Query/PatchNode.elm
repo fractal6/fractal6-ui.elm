@@ -78,7 +78,7 @@ addLabelInputEncoder form =
     let
         inputReq =
             { rootnameid = nid2rootid form.nameid
-            , name = Dict.get "name" form.post |> withDefault "" |> String.toLower
+            , name = Dict.get "name" form.post |> withDefault ""
             }
 
         inputOpt =
@@ -119,6 +119,7 @@ updateLabelInputEncoder form =
             { filter =
                 if form.id == "" then
                     -- assumes duplicate update
+                    -- see the duplicate err handler
                     Input.buildLabelFilter
                         (\i ->
                             { i
@@ -134,13 +135,18 @@ updateLabelInputEncoder form =
         post =
             if form.id == "" then
                 -- Just register the label in the given node
-                form.post |> Dict.remove "name" |> Dict.remove "color" |> Dict.remove "description"
+                -- see the duplicate err handler
+                form.post
+                    |> Dict.remove "name"
+                    |> Dict.remove "color"
+                    |> Dict.remove "description"
 
             else if Dict.get "name" form.post == Dict.get "old_name" form.post then
+                -- remove name to avoid making extra request due to @unique
                 form.post |> Dict.remove "name"
 
             else
-                form.post |> Dict.update "name" (\x -> Maybe.map (\n -> String.toLower n) x)
+                form.post
 
         inputOpt =
             \_ ->
@@ -246,7 +252,7 @@ addRoleInputEncoder form =
     let
         inputReq =
             { rootnameid = nid2rootid form.nameid
-            , name = Dict.get "name" form.post |> withDefault "" |> String.toLower
+            , name = Dict.get "name" form.post |> withDefault ""
             , role_type = Dict.get "role_type" form.post |> withDefault "" |> RoleType.fromString |> withDefault RoleType.Peer
             }
 
@@ -289,6 +295,7 @@ updateRoleInputEncoder form =
             { filter =
                 if form.id == "" then
                     -- assumes duplicate update
+                    -- see the duplicate err handler
                     Input.buildRoleExtFilter
                         (\i ->
                             { i
@@ -304,13 +311,19 @@ updateRoleInputEncoder form =
         post =
             if form.id == "" then
                 -- Just register the role in the given node
-                form.post |> Dict.remove "name" |> Dict.remove "color" |> Dict.remove "description"
+                -- see the duplicate err handler
+                form.post
+                    |> Dict.remove "name"
+                    |> Dict.remove "color"
+                    |> Dict.remove "about"
+                    |> Dict.remove "role_type"
 
             else if Dict.get "name" form.post == Dict.get "old_name" form.post then
+                -- remove name to avoid making extra request due to @unique
                 form.post |> Dict.remove "name"
 
             else
-                form.post |> Dict.update "name" (\x -> Maybe.map (\n -> String.toLower n) x)
+                form.post
 
         inputOpt =
             \_ ->
@@ -322,7 +335,12 @@ updateRoleInputEncoder form =
                                 , color = fromMaybe (Dict.get "color" post)
                                 , role_type = fromMaybe (Dict.get "role_type" post |> withDefault "" |> RoleType.fromString)
                                 , about = fromMaybe (Dict.get "about" post)
-                                , mandate = buildMandate form.mandate |> Present
+                                , mandate =
+                                    if form.id == "" then
+                                        Absent
+
+                                    else
+                                        buildMandate form.mandate |> Present
                                 , nodes = Present [ Input.buildNodeRef (\n -> { n | nameid = Present form.nameid }) ]
                             }
                         )

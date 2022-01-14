@@ -17,7 +17,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, TensionPatchForm, UserState(..), initTensionPatchForm, uctxFromUser)
+import ModelCommon exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
 import ModelCommon.View exposing (tensionTypeColor)
 import ModelSchema exposing (..)
 import Ports
@@ -36,7 +36,7 @@ type alias Model =
     , isOpen : Bool
     , type_orig : TensionType.TensionType
     , data_result : GqlData IdPayload -- result of any query
-    , form : TensionPatchForm -- user inputs
+    , form : TensionForm -- user inputs
 
     -- Common
     , refresh_trial : Int -- use to refresh user token
@@ -50,7 +50,7 @@ initModel tid user =
     , isOpen = False
     , data_result = NotAsked
     , type_orig = TensionType.Operational
-    , form = initTensionPatchForm tid user
+    , form = initTensionForm tid user
 
     -- Common
     , refresh_trial = 0

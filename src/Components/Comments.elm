@@ -12,7 +12,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (CommentPatchForm, InputViewMode(..), TensionPatchForm)
+import ModelCommon exposing (CommentPatchForm, InputViewMode(..), TensionForm)
 import ModelCommon.View exposing (viewTensionDateAndUserC, viewUpdated, viewUser0, viewUser2)
 import ModelSchema exposing (Comment, PatchTensionPayloadID, TensionHead, UserCtx)
 import Text as T exposing (textH, textT, toText, upH)
@@ -173,7 +173,7 @@ viewUpdateInput op uctx comment form result =
         ]
 
 
-viewCommentInput : OpNewComment msg -> UserCtx -> TensionHead -> TensionPatchForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html msg
+viewCommentInput : OpNewComment msg -> UserCtx -> TensionHead -> TensionForm -> GqlData PatchTensionPayloadID -> InputViewMode -> Html msg
 viewCommentInput op uctx tension form result viewMode =
     let
         message =
