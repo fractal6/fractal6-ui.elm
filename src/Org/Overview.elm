@@ -1087,7 +1087,7 @@ view_ global model =
                     viewActivies model
 
                 _ ->
-                    text "Wrong position"
+                    text "wrong position"
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-6 is-5-desktop is-5-fullhd" ]

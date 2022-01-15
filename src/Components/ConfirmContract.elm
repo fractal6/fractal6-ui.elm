@@ -336,7 +336,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "ConfirmContractModal"
-        , class "modal modal-fx-fadeIn"
+        , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -385,7 +385,7 @@ viewModalContent op (State model) =
     in
     div [ class "modal-card" ]
         [ div [ class "modal-card-head has-background-warning" ]
-            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+            [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ textH T.newContract ]
             ]
         , div [ class "modal-card-body" ]

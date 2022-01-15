@@ -383,7 +383,7 @@ viewOrgaForm global model =
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
                     , autocomplete False
-                    , type_ "search"
+                    , type_ "text"
                     , placeholder (upH T.name)
                     , value name
                     , onInput <| ChangeNodePost "name"
@@ -401,7 +401,7 @@ viewOrgaForm global model =
                     , class "input followFocus"
                     , attribute "data-nextfocus" "textAreaModal"
                     , autocomplete False
-                    , type_ "search"
+                    , type_ "text"
                     , placeholder (upH T.aboutOpt)
                     , value about
                     , onInput <| ChangeNodePost "about"

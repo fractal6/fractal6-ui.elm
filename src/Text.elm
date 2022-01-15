@@ -1344,3 +1344,13 @@ rolesInfoDoc =
   **Scope**: The roles template that you can use when creating a new role are those who are present in any of its parents.
 
   """
+
+
+peerRoleInfo : String
+peerRoleInfo =
+    "Basic Role with restricted authorization."
+
+
+coordinatorRoleInfo : String
+coordinatorRoleInfo =
+    "Role with administration rights at the circle level."

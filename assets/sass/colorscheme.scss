@@ -258,6 +258,8 @@ $filter-hover-background: $background-evidence;
 
 // Modal
 $modal-header-background: #e5e5e5;
+$modal-card-head-background-color: $modal-header-background;
+$modal-card-title-color: $grey;
 
 // Table
 $table-color: $text;
@@ -310,7 +312,7 @@ $button-vote-success-background: $success;
 $button-vote-danger: $danger-light;
 $button-vote-danger-background: $danger;
 
-:root.light {
+:root.light, .modal.is-light {
   --primary: #{$primary};
   --link: #{$link};
   --info: #{$info};
@@ -390,6 +392,8 @@ $button-vote-danger-background: $danger;
 
   // Modal
   --modal-header-background: #{$modal-header-background};
+  --modal-card-head-background-color: #{$modal-card-head-background-color};
+  --modal-card-title-color: #{$modal-card-title-color};
 
   // Table
   --table-color: #{$table-color};
@@ -546,6 +550,8 @@ $filter-hover-background: $background-evidence;
 
 // Modal
 $modal-header-background: #e5e5e5;
+$modal-card-head-background-color: $modal-header-background;
+$modal-card-title-color: $grey;
 
 // Table
 $table-color: $text;
@@ -602,8 +608,7 @@ $button-vote-success-background: $success-light;
 $button-vote-danger: $danger;
 $button-vote-danger-background: $danger-light;
 
-:root,
-:root.dark {
+:root, :root.dark, .modal.is-dark {
   // Default colors
   --primary: #{$primary};
   --link: #{$link};
@@ -685,6 +690,7 @@ $button-vote-danger-background: $danger-light;
 
   // Modal
   --modal-header-background: #{$modal-header-background};
+  --modal-card-head-background-color: #{$modal-card-head-background-color};
 
   // Table
   --table-color: #{$table-color};

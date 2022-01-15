@@ -592,15 +592,7 @@ viewOrgaMedia_ user root =
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
-                                    |> List.map
-                                        (\r ->
-                                            a
-                                                [ class ("button buttonRole is-small has-text-weight-semibold tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
-                                                , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-                                                , href <| uriFromNameid OverviewBaseUri r.nameid
-                                                ]
-                                                [ text r.name ]
-                                        )
+                                    |> List.map (\r -> viewRole OverviewBaseUri r)
                                 )
                             ]
 

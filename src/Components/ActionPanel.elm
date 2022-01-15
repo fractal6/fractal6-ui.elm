@@ -1039,7 +1039,7 @@ viewModal : Op -> Model -> Html Msg
 viewModal op model =
     div
         [ id ("actionPanelModal" ++ model.domid)
-        , class "modal modal-fx-fadeIn"
+        , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", model.isModalActive ) ]
 
         --, attribute "data-modal-close" "closeActionPanelModalFromJs"
@@ -1092,7 +1092,7 @@ viewStep1 op model =
     in
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+            [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ action2header model.state model.form.node.type_
                     |> Format.namedValue "type" (NodeType.toString model.form.node.type_)
                     |> text
@@ -1269,7 +1269,7 @@ viewRoleAuthority op model =
           --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
           -- Show the choices as card.
           --RoleType.list
-          [ ( RoleType.Peer, "Basic Role with restricted authorization." ), ( RoleType.Coordinator, "Role with administration rights at the circle level." ) ]
+          [ ( RoleType.Peer, T.peerRoleInfo ), ( RoleType.Coordinator, T.coordinatorRoleInfo ) ]
             |> List.map
                 (\( x, description ) ->
                     let

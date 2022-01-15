@@ -1623,13 +1623,13 @@ viewRoleAddBox model =
                 ]
             , p [ class "control" ]
                 [ label [ class "label is-small" ] [ textH T.authority ]
-                , viewSelectAuthority
+                , viewSelectAuthority "is-right"
                     { onSelect = ChangeRoleAuthority
                     , selection = role_type
                     }
                 ]
             ]
-        , div [ class "field" ]
+        , div [ class "field mt-2 mb-3" ]
             [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ]
             , viewRoleExt "" (RoleExt "" (ternary (name == "") "role name" name) color role_type)
             ]

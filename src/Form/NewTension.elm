@@ -6,12 +6,20 @@ import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
-import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewAboutInput, viewMandateInput)
+import Components.NodeDoc as NodeDoc
+    exposing
+        ( NodeDoc
+        , viewAboutInput
+        , viewMandateInput
+        , viewSelectAuthority
+        , viewSelectGovernance
+        )
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -20,7 +28,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
+import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, style, tabindex, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -419,6 +427,8 @@ type Msg
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource UserRole
     | OnChangeTensionTarget PNode
+    | OnChangeRoleAuthority RoleType.RoleType
+    | OnChangeCircleGovernance NodeMode.NodeMode
     | OnChangePost String String
     | OnAddDomains
     | OnAddPolicies
@@ -574,6 +584,12 @@ update_ apis message model =
 
         OnChangeTensionTarget target ->
             ( setTarget target model, noOut )
+
+        OnChangeRoleAuthority role_type ->
+            ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, noOut )
+
+        OnChangeCircleGovernance mode ->
+            ( { model | nodeDoc = NodeDoc.updatePost "mode" (NodeMode.toString mode) model.nodeDoc }, noOut )
 
         OnChangePost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
@@ -771,7 +787,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "tensionModal"
-        , class "modal modal-fx-fadeIn"
+        , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", model.isModalActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
@@ -884,6 +900,80 @@ viewTensionTabs tab targ =
         ]
 
 
+viewRecipients : Model -> Html Msg
+viewRecipients model =
+    let
+        form =
+            model.nodeDoc.form
+    in
+    div [ class "level-right" ]
+        [ span [ class "has-text-grey-light is-size-6" ] [ textH (T.from ++ ": ") ]
+        , span [ class "dropdown" ]
+            [ span [ class "dropdown-trigger " ]
+                [ span [ attribute "aria-controls" "source-menu" ]
+                    [ span
+                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
+                        [ text form.source.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                    ]
+                ]
+            , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
+                [ div [ class "dropdown-content" ] <|
+                    List.map
+                        (\t ->
+                            div
+                                [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
+                                , onClick (OnChangeTensionSource t)
+                                ]
+                                [ A.icon1 "icon-user" t.name ]
+                        )
+                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
+                ]
+            ]
+        , span [ class "right-arro mx-3" ] []
+        , span [ class "has-text-grey-light is-size-6" ] [ textH (T.to ++ ": ") ]
+        , span [ class "dropdown" ]
+            [ span [ class "dropdown-trigger " ]
+                [ span [ attribute "aria-controls" "target-menu" ]
+                    [ span
+                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
+                        [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                    ]
+                ]
+            , div [ id "target-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
+                [ div [ class "dropdown-content" ] <|
+                    List.map
+                        (\t ->
+                            div
+                                [ class <| "dropdown-item has-text-weight-semibold button-light"
+                                , onClick (OnChangeTensionTarget t)
+                                ]
+                                [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
+                        )
+                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid) model.targets)
+                ]
+            ]
+        ]
+
+
+viewSuccess : FormText -> Tension -> Model -> Html Msg
+viewSuccess txt res model =
+    let
+        link =
+            Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
+    in
+    div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
+        [ A.icon1 "icon-check icon-2x has-text-success" " "
+        , textH txt.added
+        , text " "
+        , a
+            [ href link
+            , onClickPD (OnClose { reset = True, link = link })
+            , target "_blank"
+            ]
+            [ textH T.checkItOut ]
+        ]
+
+
 
 ---
 --- Final Views
@@ -927,7 +1017,7 @@ viewTension op (State model) =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text T.space_)
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
+                                [ span [ class "is-size-6 has-text-weight-semibold" ]
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
                                     , span [ class "dropdown", style "vertical-align" "unset" ]
@@ -1060,8 +1150,11 @@ viewCircle op (State model) =
         tension_type =
             withDefault TensionType.Operational form.type_
 
+        node_type =
+            withDefault NodeType.Role form.node.type_
+
         txt =
-            getNodeTextFromNodeType (form.node.type_ |> withDefault NodeType.Role)
+            getNodeTextFromNodeType node_type
 
         isLoading =
             model.result == LoadingSlowly
@@ -1084,7 +1177,6 @@ viewCircle op (State model) =
                 message =
                     Dict.get "message" form.post |> withDefault ""
 
-                --@Debug: NodeDoc has not its full State yet
                 op_ =
                     { data = model.nodeDoc
                     , targets = model.targets |> List.map (\n -> n.nameid)
@@ -1099,7 +1191,7 @@ viewCircle op (State model) =
                     [ div [ class "level modal-card-title" ]
                         [ div [ class "level-left" ] <|
                             List.intersperse (text T.space_)
-                                [ span [ class "is-size-6 has-text-weight-semibold has-text-grey" ]
+                                [ span [ class "is-size-6 has-text-weight-semibold" ]
                                     [ textT txt.title
                                     , span [ class "has-text-weight-medium" ] [ text " | " ]
                                     , span
@@ -1113,11 +1205,34 @@ viewCircle op (State model) =
                 , viewTensionTabs model.activeTab model.nodeDoc.form.target
                 , div [ class "modal-card-body" ]
                     [ viewAboutInput False OverviewBaseUri txt form.node op_
-                    , div [ class "card cardForm" ]
-                        [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.mandate ]
-                        , div [ class "card-content" ]
-                            [ viewMandateInput txt form.node.mandate op_ ]
-                        ]
+                    , case node_type of
+                        NodeType.Role ->
+                            let
+                                role_type =
+                                    Dict.get "role_type" form.post |> Maybe.map RoleType.fromString |> withDefault Nothing |> withDefault RoleType.Peer
+                            in
+                            div [ class "field mb-5" ]
+                                [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.authority ]
+                                , viewSelectAuthority "" { onSelect = OnChangeRoleAuthority, selection = role_type }
+                                ]
+
+                        NodeType.Circle ->
+                            let
+                                mode =
+                                    Dict.get "mode" form.post |> Maybe.map NodeMode.fromString |> withDefault Nothing |> withDefault NodeMode.Coordinated
+                            in
+                            div [ class "field mb-5" ]
+                                [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.governance ]
+                                , viewSelectGovernance "" { onSelect = OnChangeCircleGovernance, selection = mode }
+                                ]
+                    , viewMandateInput txt form.node.mandate op_
+
+                    --, div [ class "card cardForm" ]
+                    --    [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.mandate ]
+                    --    , div [ class "card-content" ]
+                    --        [ viewMandateInput txt form.node.mandate op_ ]
+                    --    ]
+                    , br [] []
                     , br [] []
                     , div [ class "field" ]
                         [ div [ class "control" ]
@@ -1174,77 +1289,3 @@ viewCircle op (State model) =
                         ]
                     ]
                 ]
-
-
-viewRecipients : Model -> Html Msg
-viewRecipients model =
-    let
-        form =
-            model.nodeDoc.form
-    in
-    div [ class "level-right" ]
-        [ span [ class "has-text-grey-light is-size-6" ] [ textH (T.from ++ ": ") ]
-        , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger " ]
-                [ span [ attribute "aria-controls" "source-menu" ]
-                    [ span
-                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
-                        [ text form.source.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
-                    ]
-                ]
-            , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
-                [ div [ class "dropdown-content" ] <|
-                    List.map
-                        (\t ->
-                            div
-                                [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
-                                , onClick (OnChangeTensionSource t)
-                                ]
-                                [ A.icon1 "icon-user" t.name ]
-                        )
-                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
-                ]
-            ]
-        , span [ class "right-arro mx-3" ] []
-        , span [ class "has-text-grey-light is-size-6" ] [ textH (T.to ++ ": ") ]
-        , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger " ]
-                [ span [ attribute "aria-controls" "target-menu" ]
-                    [ span
-                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
-                        [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
-                    ]
-                ]
-            , div [ id "target-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
-                [ div [ class "dropdown-content" ] <|
-                    List.map
-                        (\t ->
-                            div
-                                [ class <| "dropdown-item has-text-weight-semibold button-light"
-                                , onClick (OnChangeTensionTarget t)
-                                ]
-                                [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
-                        )
-                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid) model.targets)
-                ]
-            ]
-        ]
-
-
-viewSuccess : FormText -> Tension -> Model -> Html Msg
-viewSuccess txt res model =
-    let
-        link =
-            Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
-    in
-    div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
-        [ A.icon1 "icon-check icon-2x has-text-success" " "
-        , textH txt.added
-        , text " "
-        , a
-            [ href link
-            , onClickPD (OnClose { reset = True, link = link })
-            , target "_blank"
-            ]
-            [ textH T.checkItOut ]
-        ]

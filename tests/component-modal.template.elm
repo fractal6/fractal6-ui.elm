@@ -298,7 +298,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "${module_basename}Modal"
-        , class "modal modal-fx-fadeIn"
+        , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]

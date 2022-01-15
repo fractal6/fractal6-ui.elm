@@ -7,6 +7,7 @@ import Dict
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
@@ -500,8 +501,8 @@ viewMandateSubSection name maybePara =
 
 
 viewAboutInput hasBeenPushed source txt node op =
-    div [ class "field" ]
-        [ div [ class "field " ]
+    div [ class "pb-0" ]
+        [ div [ class "field" ]
             [ div [ class "control" ]
                 [ input
                     [ class "input autofocus followFocus"
@@ -518,7 +519,7 @@ viewAboutInput hasBeenPushed source txt node op =
                         ref =
                             List.head op.targets |> withDefault "" |> String.replace "#" "/"
                     in
-                    div [ class "subForm" ]
+                    div [ class "urlForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-body control" ]
                                 [ div [] [ text "URL" ]
@@ -589,7 +590,7 @@ viewMandateInput txt mandate op =
         showPolicies =
             op.data.doAddPolicies || policies /= ""
     in
-    div [ class "" ]
+    div [ class "pb-0" ]
         [ div [ class "field" ]
             [ div [ class "label" ]
                 [ textH T.purpose ]
@@ -742,8 +743,8 @@ type alias OpAuthority msg =
     }
 
 
-viewSelectAuthority : OpAuthority msg -> Html msg
-viewSelectAuthority op =
+viewSelectAuthority : String -> OpAuthority msg -> Html msg
+viewSelectAuthority position op =
     let
         checked cls =
             A.icon1 ("icon-check " ++ cls) ""
@@ -751,21 +752,62 @@ viewSelectAuthority op =
         unchecked =
             A.icon1 "icon-check is-invisible" ""
     in
-    div [ class "dropdown is-right" ]
-        [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
-            [ span [ class ("has-text-" ++ roleColor op.selection) ] [ textH (RoleType.toString op.selection) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
-        , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
-            [ div [ class "dropdown-content is-right" ] <|
-                List.map
-                    (\role_type ->
-                        let
-                            clsColor =
-                                "has-text-" ++ roleColor role_type
-                        in
-                        div [ class ("dropdown-item button-light " ++ clsColor), onClick <| op.onSelect role_type ]
-                            [ ternary (op.selection == role_type) (checked clsColor) unchecked, textH (RoleType.toString role_type) ]
-                    )
-                    [ RoleType.Peer, RoleType.Coordinator ]
+    div [ class "field" ]
+        [ div [ class ("dropdown " ++ position) ]
+            [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-authority" ]
+                [ span [ class ("has-text-" ++ roleColor op.selection) ] [ textH (RoleType.toString op.selection) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+            , div [ id "select-authority", class "dropdown-menu", attribute "role" "menu" ]
+                [ div [ class "dropdown-content is-right" ] <|
+                    List.map
+                        (\role_type ->
+                            let
+                                clsColor =
+                                    "has-text-" ++ roleColor role_type
+                            in
+                            div
+                                [ class ("dropdown-item button-light " ++ clsColor)
+                                , onClick <| op.onSelect role_type
+                                ]
+                                [ ternary (op.selection == role_type) (checked clsColor) unchecked
+                                , textH (RoleType.toString role_type)
+
+                                --, span [ class "is-pulled-right mx-2 is-small tooltip" ] [ A.icon "icon-info" ]
+                                ]
+                        )
+                        [ RoleType.Peer, RoleType.Coordinator ]
+                ]
+            ]
+        ]
+
+
+type alias OpGovernance msg =
+    { onSelect : NodeMode.NodeMode -> msg
+    , selection : NodeMode.NodeMode
+    }
+
+
+viewSelectGovernance : String -> OpGovernance msg -> Html msg
+viewSelectGovernance position op =
+    let
+        checked cls =
+            A.icon1 ("icon-check " ++ cls) ""
+
+        unchecked =
+            A.icon1 "icon-check is-invisible" ""
+    in
+    div [ class "field" ]
+        [ div [ class ("dropdown " ++ position) ]
+            [ div [ class "button dropdown-trigger", attribute "aria-controls" "select-governance" ]
+                [ span [ class "has-text-" ] [ textH (NodeMode.toString op.selection) ], i [ class "ml-3 icon-chevron-down1 icon-tiny" ] [] ]
+            , div [ id "select-governance", class "dropdown-menu", attribute "role" "menu" ]
+                [ div [ class "dropdown-content is-right" ] <|
+                    List.map
+                        (\mode ->
+                            div [ class "dropdown-item button-light ", onClick <| op.onSelect mode ]
+                                [ ternary (op.selection == mode) (checked "") unchecked, textH (NodeMode.toString mode) ]
+                        )
+                        NodeMode.list
+                ]
             ]
         ]
 
@@ -846,13 +888,7 @@ updateNodeForm field value form =
             withDefault initMandate node.mandate
     in
     case field of
-        "nameid" ->
-            { form | node = { node | nameid = Just (nameidEncoder value) } }
-
-        "about" ->
-            { form | node = { node | about = Just value } }
-
-        -- Mandate data
+        -- Mandate
         "purpose" ->
             { form | node = { node | mandate = Just { mandate | purpose = value } } }
 
@@ -865,7 +901,13 @@ updateNodeForm field value form =
         "policies" ->
             { form | node = { node | mandate = Just { mandate | policies = ternary (value == "") Nothing (Just value) } } }
 
-        -- Various
+        -- NodeFragment
+        "nameid" ->
+            { form | node = { node | nameid = Just (nameidEncoder value) } }
+
+        "about" ->
+            { form | node = { node | about = Just value } }
+
         "name" ->
             case form.action of
                 Nothing ->

@@ -433,7 +433,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "MoveTensionModal"
-        , class "modal modal-fx-fadeIn"
+        , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", model.isOpen ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
@@ -482,7 +482,7 @@ viewModalContent op (State model) =
     in
     div [ class "modal-card" ]
         [ div [ class ("modal-card-head has-background-" ++ color) ]
-            [ div [ class "modal-card-title is-size-6 has-text-weight-semibold" ]
+            [ div [ class "modal-card-title is-size-6 has-text-grey-dark has-text-weight-semibold" ]
                 [ case model.blob of
                     Nothing ->
                         textH T.moveTension

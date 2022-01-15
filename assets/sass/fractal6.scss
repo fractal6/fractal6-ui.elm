@@ -116,6 +116,7 @@ hr {
         border-color: var(--border-color-light);
     }
     &.is-disabled, &[disabled] {
+        color: var(--text-light2);
         background-color: var(--input-disabled-background-color) !important;
     }
 }
@@ -540,12 +541,21 @@ a.is-link {
 // Message
 .message {
     background-color: var(--bbc);
+    .message-header {
+        color: var(--text-light) !important;
+        background-color: var(--comment-header-background-color);
+    }
+}
+.acc {
+    .message-header {
+        color: var(--text) !important;
+    }
+}
+.message:not(.acc) {
     border: 1px solid  var(--border-color-light)  !important;
     border-radius: 6px !important;
     .message-header {
         border-radius: 6px 6px 0 0 !important;
-        color: var(--text-light) !important;
-        background-color: var(--comment-header-background-color);
     }
 }
 
@@ -1469,42 +1479,6 @@ tr.mediaBox {
     visibility: hidden;
     cursor: initial; // when modal nested in a button for example (the case for Tooltip Action Panel)
 
-    //// @DEBUG: LIGHT colorscheme
-    //// do not work for li in dark mode...
-    .input,
-    .textarea {
-        color: var(--dark) !important;
-        background-color: var(--white-light) !important;
-        &:focus {
-            border-color: var(--link2) !important;
-            background-color: var(--white-light) !important;
-            &:hover {
-                border-color: var(--link2) !important;
-                background-color: var(--white-light) !important;
-            }
-        }
-    }
-    .input:not([type="search"]),
-    .textarea, li {
-        border-color: var(--grey-light3);
-        &:hover {
-            border-color: var(--grey-light3);
-        }
-        &::placeholder {
-            color: var(--grey) !important;
-        }
-    }
-
-    .modal-background {
-        opacity: 0;
-        transition: all $modal-out-duration;
-    }
-
-    .modal-close {
-        background-color: #952222b8 !important;
-        &:hover { background-color: #952222 !important;}
-    }
-
     &.is-active {
         visibility: visible;
         z-index: 40; // default
@@ -1598,41 +1572,63 @@ tr.mediaBox {
         }
     }
 
+    .modal-background {
+        opacity: 0;
+        transition: all $modal-out-duration;
+    }
+
+    .modal-close {
+        background-color: #952222b8 !important;
+        &:hover { background-color: #952222 !important;}
+    }
+
     .modal-card-title, .panel-heading,
     .modal-card-head,
     .modal-card-foot, {
-        background-color: var(--modal-header-background);
-        border-color: #ccc !important;
-        color: #111;
-        div:not(.dropdown-content):not(.dropdown-item) {
-            color: inherit;
-            background-color: inherit;
-        }
         @media (max-width: 768px){
             padding-top: 10px;
             padding-bottom: 10px;
         }
     }
 
+    ////// @DEBUG: LIGHT colorscheme
+    ////// do not work for li in dark mode...
+    //.input,
+    //.textarea {
+    //    color: var(--dark) !important;
+    //    background-color: var(--white-light) !important;
+    //    &:focus {
+    //        border-color: var(--link2) !important;
+    //        background-color: var(--white-light) !important;
+    //        &:hover {
+    //            border-color: var(--link2) !important;
+    //            background-color: var(--white-light) !important;
+    //        }
+    //    }
+    //}
+    //.input:not([type="search"]),
+    //.textarea, li {
+    //    border-color: var(--grey-light3);
+    //    &:hover {
+    //        border-color: var(--grey-light3);
+    //    }
+    //    &::placeholder {
+    //        color: var(--grey) !important;
+    //    }
+    //}
+
     .card, .modal-card-body, {
         background-color: var(--white-light);
         color: #111;
     }
-
-    .message {
-        .message-header {
-            color: var(--grey-lightest) !important;
-        }
+    .dropdown-content {
+        background-color: var(--blue-light);
     }
 
     .field {
         .label {
             color: var(--grey);
         }
-    }
-
-    a {
-        color: $blue;
     }
 
     .is-name{
@@ -1645,6 +1641,12 @@ tr.mediaBox {
     .box.is-light {
         background-color: #dce3e3;
         color: black;
+    }
+
+    .acc {
+        .message-header {
+            color: var(--grey-lightest) !important;
+        }
     }
 
     .tabs, .tabs.is-boxed {
@@ -1660,7 +1662,6 @@ tr.mediaBox {
             border-bottom-color: #ccc !important;
         }
         li.is-active a {
-            color: var(--grey);
             background-color: var(--blue-light);
             border-top-color: var(--blue-grey);
             border-top-width: 3px;
@@ -1680,6 +1681,9 @@ tr.mediaBox {
             background-color: var(--modal-header-background);
             border-bottom: solid 1px #ccc !important;
         }
+    }
+    .panel-heading {
+        background-color: var(--modal-header-background);
     }
 
 }
@@ -1704,8 +1708,8 @@ tr.mediaBox {
 
     // Input Message
     .message {
-        background-color: inherit;
         border-color: transparent !important;
+        background-color: inherit !important;
         .tabs, .tabs.is-boxed  {
             li a  {
                 color: var(--grey-light) !important;
@@ -1715,13 +1719,12 @@ tr.mediaBox {
                 background-color: inherit !important;
             }
             li.is-active a {
-                background-color: var(--white-light) !important;
+                background-color: var(--bbc)  !important;
                 border-top-width: 2px !important;
             }
         }
     }
     .message-header {
-        background-color: var(--white-ter);
         font-weight: 500 !important;
         padding: 0 !important;
         a {
@@ -1737,7 +1740,7 @@ tr.mediaBox {
 }
 
 
-.subForm {
+.urlForm {
     height: 1.8rem !important;
     .field .input, .field-label {
         font-size: 0.8rem !important;
@@ -1758,7 +1761,7 @@ tr.mediaBox {
             border: 1px solid var(--grey-light2);
         }
         .input:nth-child(3) {
-            background: #f6f6f6 !important;
+            background: #fbfbfb !important;
             border-radius: unset !important;
         }
     }

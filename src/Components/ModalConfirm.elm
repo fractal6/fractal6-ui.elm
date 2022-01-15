@@ -63,7 +63,7 @@ view : Op msg -> Html msg
 view op =
     div
         [ id "confirmModal"
-        , class "modal modal-fx-fadeIn"
+        , class "modal is-light modal-fx-fadeIn"
         , classList [ ( "is-active", op.data.isOpen ) ]
         , attribute "data-modal-close" "closeModalConfirmFromJs"
         ]
