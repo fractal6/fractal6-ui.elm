@@ -3,7 +3,7 @@ module Components.Navbar exposing (view)
 import Assets as A
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
-import Html.Attributes as Attr exposing (attribute, class, href, id, style)
+import Html.Attributes as Attr exposing (attribute, class, href, id, style, target)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import ModelCommon exposing (UserState(..))
 import Text as T exposing (textH, textT, upH)
@@ -133,7 +133,7 @@ userButton op =
                     --, a [ class "navbar-item", href "#" ]
                     --    [ A.icon1 "icon-tool" (upH T.settings) ]
                     --, hr [ class "navbar-divider" ] []
-                    , a [ id "themeTrigger", class "navbar-item", href "#" ]
+                    , span [ id "themeTrigger", class "navbar-item is-w" ]
                         [ A.icon1 "icon-moon" "Toggle dark mode" ]
                     , hr [ class "navbar-divider" ] []
                     , a [ class "navbar-item", href "/logout" ]

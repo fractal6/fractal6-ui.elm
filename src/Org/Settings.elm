@@ -30,6 +30,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -1227,9 +1228,9 @@ view global model =
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ HelperBar.view helperData
+        [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ model ]
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -1285,14 +1286,16 @@ viewSettingsContent model =
     case model.menuFocus of
         LabelsMenu ->
             div []
-                [ viewLabels model
+                [ --@todo lazy loading...
+                  viewLabels model
                 , viewLabelsExt T.labelsTop (ternary isRoot "" (T.noLabelsTop ++ ".")) model.labels model.labels_top
                 , viewLabelsExt T.labelsSub (T.noLabelsSub ++ ".") model.labels model.labels_sub
                 ]
 
         RolesMenu ->
             div []
-                [ viewRoles model
+                [ --@todo lazy loading...
+                  viewRoles model
                 , viewRolesExt T.rolesTop (ternary isRoot "" (T.noRolesTop ++ ".")) model.roles model.roles_top
                 , viewRolesExt T.rolesSub (T.noRolesSub ++ ".") model.roles model.roles_sub
                 ]
@@ -1314,6 +1317,9 @@ viewSettingsContent model =
 viewLabelAddBox : Model -> Html Msg
 viewLabelAddBox model =
     let
+        isAdd =
+            model.label_add
+
         form =
             model.artefact_form
 
@@ -1330,13 +1336,13 @@ viewLabelAddBox model =
             Dict.get "description" form.post
 
         isLoading =
-            model.label_result == LoadingSlowly
+            result == LoadingSlowly
 
         isSendable =
             name /= ""
 
         txt =
-            if model.label_add then
+            if isAdd then
                 { submit = T.createLabel }
 
             else
@@ -1344,7 +1350,7 @@ viewLabelAddBox model =
                 { submit = T.updateLabel }
 
         doSubmit =
-            if model.label_add then
+            if isAdd then
                 ternary isSendable [ onClick (Submit SubmitAddLabel) ] []
 
             else
@@ -1541,6 +1547,9 @@ viewLabelsExt txt_yes text_no list_d list_ext_d =
 viewRoleAddBox : Model -> Html Msg
 viewRoleAddBox model =
     let
+        isAdd =
+            model.role_add
+
         form =
             model.artefact_form
 
@@ -1560,13 +1569,13 @@ viewRoleAddBox model =
             Dict.get "role_type" form.post |> Maybe.map RoleType.fromString |> withDefault Nothing |> withDefault RoleType.Peer
 
         isLoading =
-            model.role_result == LoadingSlowly
+            result == LoadingSlowly
 
         isSendable =
             name /= ""
 
         txt =
-            if model.role_add then
+            if isAdd then
                 { submit = T.createRole }
 
             else
@@ -1574,7 +1583,7 @@ viewRoleAddBox model =
                 { submit = T.updateRole }
 
         doSubmit =
-            if model.role_add then
+            if isAdd then
                 ternary isSendable [ onClick (Submit SubmitAddRole) ] []
 
             else

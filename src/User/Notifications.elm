@@ -28,6 +28,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -385,10 +386,10 @@ viewNotifications notifications model =
                             Nothing ->
                                 PNode "" ""
                 in
-                div [ class "media" ]
+                div [ class "media mt-1" ]
                     [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga False n.nameid ] ]
                     , div [ class "media-content" ]
-                        [ viewUserEvent ue model
+                        [ Lazy.lazy2 viewUserEvent model.now ue
 
                         --, nav [class "level is-mobile"]
                         ]
@@ -399,8 +400,8 @@ viewNotifications notifications model =
         |> div []
 
 
-viewUserEvent : UserEvent -> Model -> Html Msg
-viewUserEvent ue model =
+viewUserEvent : Time.Posix -> UserEvent -> Html Msg
+viewUserEvent now ue =
     let
         firstEvent =
             List.head ue.event
@@ -447,14 +448,14 @@ viewUserEvent ue model =
                     ( False, Dict.empty )
     in
     if isContract then
-        viewContractMedia ev model
+        viewContractMedia now ev
 
     else
-        viewEventMedia ev model
+        viewEventMedia now ev
 
 
-viewEventMedia : Dict String String -> Model -> Html Msg
-viewEventMedia ev model =
+viewEventMedia : Time.Posix -> Dict String String -> Html Msg
+viewEventMedia now ev =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -472,13 +473,13 @@ viewEventMedia ev model =
                     , text ":"
                     , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
                     ]
-            , small [ class "help" ] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 
 
-viewContractMedia : Dict String String -> Model -> Html Msg
-viewContractMedia ev model =
+viewContractMedia : Time.Posix -> Dict String String -> Html Msg
+viewContractMedia now ev =
     div [ class "content" ]
         [ p [] <|
             [ a
@@ -498,7 +499,7 @@ viewContractMedia ev model =
 
                     --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
                     ]
-            , small [ class "help" ] [ byAt model.now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
 

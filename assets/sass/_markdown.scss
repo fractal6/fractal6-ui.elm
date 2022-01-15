@@ -1,5 +1,6 @@
 
 .markdown-body {
+    color: var(--text);
     pre, code {
         @include defaultFontFace;
         font-size: 14px;

@@ -51,6 +51,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -1577,9 +1578,9 @@ view global model =
             _ ->
                 "Loading..."
     , body =
-        [ HelperBar.view helperData
+        [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
@@ -1739,7 +1740,7 @@ viewTension u t model =
                     ]
                 , case model.activeTab of
                     Conversation ->
-                        viewComments u t model
+                        viewConversation u t model
 
                     Document ->
                         case t.blobs |> withDefault [] of
@@ -1764,149 +1765,39 @@ viewTension u t model =
         ]
 
 
-viewComments : UserState -> TensionHead -> Model -> Html Msg
-viewComments u t model =
-    case model.tension_comments of
-        Success tension_c ->
-            let
-                comments =
-                    tension_c.comments
-                        |> withDefault []
-
-                history =
-                    withDefault [] t.history
-
-                allEvts =
-                    -- When event and comment are created at the same time, show the comment first.
-                    List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
-                        ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
-                        |> List.sortBy .createdAt
-
-                viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
-                viewCommentOrEvent e =
-                    case e.type_ of
-                        Just _ ->
-                            case LE.getAt e.i history of
-                                Just event ->
-                                    viewEvent model.now event t
-
-                                Nothing ->
-                                    text ""
-
-                        Nothing ->
-                            case LE.getAt e.i comments of
-                                Just c ->
-                                    let
-                                        op =
-                                            { doUpdate = DoUpdateComment
-                                            , doCancelComment = CancelCommentPatch
-                                            , doChangeViewMode = ChangeUpdateViewMode
-                                            , doChangePost = ChangeCommentPost
-                                            , doSubmit = Submit
-                                            , doEditComment = SubmitCommentPatch
-                                            , now = model.now
-                                            }
-                                    in
-                                    viewComment op c model.comment_form model.comment_result
-
-                                Nothing ->
-                                    text ""
-
-                userInput =
-                    case u of
-                        LoggedIn uctx ->
-                            let
-                                orgaRoles =
-                                    getOrgaRoles [ t.emitter.nameid, t.receiver.nameid ] uctx.roles
-                            in
-                            case orgaRoles of
-                                [] ->
-                                    viewJoinNeeded DoJoinOrga model.node_focus
-
-                                _ ->
-                                    let
-                                        opNew =
-                                            { doChangeViewMode = ChangeInputViewMode
-                                            , doChangePost = ChangeTensionPost
-                                            , doSubmit = Submit
-                                            , doSubmitComment = SubmitComment
-                                            , rows = 7
-                                            }
-                                    in
-                                    viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode
-
-                        LoggedOut ->
+viewConversation : UserState -> TensionHead -> Model -> Html Msg
+viewConversation u t model =
+    let
+        userInput =
+            case u of
+                LoggedIn uctx ->
+                    let
+                        orgaRoles =
+                            getOrgaRoles [ t.emitter.nameid, t.receiver.nameid ] uctx.roles
+                    in
+                    case orgaRoles of
+                        [] ->
                             viewJoinNeeded DoJoinOrga model.node_focus
-            in
-            div [ class "comments" ]
-                [ allEvts
-                    -- Filter events if there a above a given number.
-                    -- If above, we keep track of the extra number of event
-                    -- until a non-event (i.e a comment) is met.
-                    |> LE.indexedFoldr
-                        (\i e d ->
+
+                        _ ->
                             let
-                                evts =
-                                    Tuple.first d
-
-                                state =
-                                    Tuple.second d
-
-                                isAbove =
-                                    (List.length evts > 6)
-                                        && (e.type_ /= Nothing)
-                                        && (evts
-                                                |> List.take 6
-                                                |> List.filter (\x -> x.type_ == Nothing)
-                                                |> List.length
-                                           )
-                                        == 0
-
-                                isClicked =
-                                    state.isClicked || List.member i model.expandedEvents
+                                opNew =
+                                    { doChangeViewMode = ChangeInputViewMode
+                                    , doChangePost = ChangeTensionPost
+                                    , doSubmit = Submit
+                                    , doSubmitComment = SubmitComment
+                                    , rows = 7
+                                    }
                             in
-                            if e.type_ == Just TensionEvent.Created then
-                                -- Ignore these type
-                                ( evts, state )
+                            viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode
 
-                            else if isAbove && state.nskip == 0 && isClicked == False then
-                                ( evts, { state | nskip = 1, i = i } )
-
-                            else if isAbove && state.nskip > 0 && state.isClicked == False then
-                                ( evts, { state | nskip = state.nskip + 1 } )
-
-                            else if state.nskip > 0 && e.type_ == Nothing && state.isClicked == False then
-                                let
-                                    btn =
-                                        { type_ = Nothing, n = state.nskip, createdAt = "", i = state.i }
-                                in
-                                ( [ e ] ++ [ btn ] ++ evts, { state | nskip = 0, isClicked = False } )
-
-                            else if e.type_ == Nothing then
-                                ( [ e ] ++ evts, { state | nskip = 0, isClicked = False } )
-
-                            else
-                                ( [ e ] ++ evts, { state | isClicked = isClicked } )
-                        )
-                        -- The tuple.first: filterered list of events
-                        -- The tuple.second: state of the fold loop. We stored the skips when a new comment is
-                        -- encoutered in order to insert a button later at the current position.
-                        ( [], { nskip = 0, isCollapsed = True, isClicked = False, i = 0 } )
-                    |> Tuple.first
-                    |> List.map
-                        (\x ->
-                            if x.n > 0 then
-                                div
-                                    [ class "button is-small actionComment m-4"
-                                    , attribute "style" "left:10%;"
-                                    , onClick (ExpandEvent x.i)
-                                    ]
-                                    [ toText [ "Show", String.fromInt x.n, "older events" ] ]
-
-                            else
-                                viewCommentOrEvent x
-                        )
-                    |> div []
+                LoggedOut ->
+                    viewJoinNeeded DoJoinOrga model.node_focus
+    in
+    case model.tension_comments of
+        Success comments ->
+            div [ class "comments" ]
+                [ Lazy.lazy7 viewComments model.now t.action t.history comments model.comment_form model.comment_result model.expandedEvents
                 , hr [ class "has-background-border-light is-2" ] []
                 , userInput
                 ]
@@ -1921,8 +1812,131 @@ viewComments u t model =
             text ""
 
 
-viewEvent : Time.Posix -> Event -> TensionHead -> Html Msg
-viewEvent now event t =
+viewComments :
+    Time.Posix
+    -> Maybe TensionAction.TensionAction
+    -> Maybe (List Event)
+    -> TensionComments
+    -> CommentPatchForm
+    -> GqlData Comment
+    -> List Int
+    -> Html Msg
+viewComments now action history_m comments_m comment_form comment_result expandedEvents =
+    let
+        comments =
+            withDefault [] comments_m.comments
+
+        history =
+            withDefault [] history_m
+
+        allEvts =
+            -- When event and comment are created at the same time, show the comment first.
+            List.indexedMap (\i c -> { type_ = Nothing, createdAt = c.createdAt, i = i, n = 0 }) comments
+                ++ List.indexedMap (\i e -> { type_ = Just e.event_type, createdAt = e.createdAt, i = i, n = 0 }) history
+                |> List.sortBy .createdAt
+
+        viewCommentOrEvent : { type_ : Maybe TensionEvent.TensionEvent, createdAt : String, i : Int, n : Int } -> Html Msg
+        viewCommentOrEvent e =
+            case e.type_ of
+                Just _ ->
+                    case LE.getAt e.i history of
+                        Just event ->
+                            viewEvent now action event
+
+                        Nothing ->
+                            text ""
+
+                Nothing ->
+                    case LE.getAt e.i comments of
+                        Just c ->
+                            let
+                                op =
+                                    { doUpdate = DoUpdateComment
+                                    , doCancelComment = CancelCommentPatch
+                                    , doChangeViewMode = ChangeUpdateViewMode
+                                    , doChangePost = ChangeCommentPost
+                                    , doSubmit = Submit
+                                    , doEditComment = SubmitCommentPatch
+                                    , now = now
+                                    }
+                            in
+                            viewComment op c comment_form comment_result
+
+                        Nothing ->
+                            text ""
+    in
+    allEvts
+        -- Filter events if there a above a given number.
+        -- If above, we keep track of the extra number of event
+        -- until a non-event (i.e a comment) is met.
+        |> LE.indexedFoldr
+            (\i e d ->
+                let
+                    evts =
+                        Tuple.first d
+
+                    state =
+                        Tuple.second d
+
+                    isAbove =
+                        (List.length evts > 6)
+                            && (e.type_ /= Nothing)
+                            && (evts
+                                    |> List.take 6
+                                    |> List.filter (\x -> x.type_ == Nothing)
+                                    |> List.length
+                               )
+                            == 0
+
+                    isClicked =
+                        state.isClicked || List.member i expandedEvents
+                in
+                if e.type_ == Just TensionEvent.Created then
+                    -- Ignore these type
+                    ( evts, state )
+
+                else if isAbove && state.nskip == 0 && isClicked == False then
+                    ( evts, { state | nskip = 1, i = i } )
+
+                else if isAbove && state.nskip > 0 && state.isClicked == False then
+                    ( evts, { state | nskip = state.nskip + 1 } )
+
+                else if state.nskip > 0 && e.type_ == Nothing && state.isClicked == False then
+                    let
+                        btn =
+                            { type_ = Nothing, n = state.nskip, createdAt = "", i = state.i }
+                    in
+                    ( [ e ] ++ [ btn ] ++ evts, { state | nskip = 0, isClicked = False } )
+
+                else if e.type_ == Nothing then
+                    ( [ e ] ++ evts, { state | nskip = 0, isClicked = False } )
+
+                else
+                    ( [ e ] ++ evts, { state | isClicked = isClicked } )
+            )
+            -- The tuple.first: filterered list of events
+            -- The tuple.second: state of the fold loop. We stored the skips when a new comment is
+            -- encoutered in order to insert a button later at the current position.
+            ( [], { nskip = 0, isCollapsed = True, isClicked = False, i = 0 } )
+        |> Tuple.first
+        |> List.map
+            (\x ->
+                if x.n > 0 then
+                    div
+                        [ class "button is-small actionComment m-4"
+                        , attribute "style" "left:10%;"
+                        , onClick (ExpandEvent x.i)
+                        ]
+                        [ toText [ "Show", String.fromInt x.n, "older events" ] ]
+
+                else
+                    Lazy.lazy viewCommentOrEvent x
+            )
+        |> div []
+
+
+viewEvent : Time.Posix -> Maybe TensionAction.TensionAction -> Event -> Html Msg
+viewEvent now action event =
     let
         eventView =
             case event.event_type of
@@ -1942,7 +1956,7 @@ viewEvent now event t =
                     viewEventVisibility now event
 
                 TensionEvent.Authority ->
-                    viewEventAuthority now event t.action
+                    viewEventAuthority now event action
 
                 TensionEvent.AssigneeAdded ->
                     viewEventAssignee now event True
@@ -1957,25 +1971,25 @@ viewEvent now event t =
                     viewEventLabel now event False
 
                 TensionEvent.BlobPushed ->
-                    viewEventPushed now event t.action
+                    viewEventPushed now event action
 
                 TensionEvent.BlobArchived ->
-                    viewEventArchived now event t.action True
+                    viewEventArchived now event action True
 
                 TensionEvent.BlobUnarchived ->
-                    viewEventArchived now event t.action False
+                    viewEventArchived now event action False
 
                 TensionEvent.MemberLinked ->
-                    viewEventMemberLinked now event t.action
+                    viewEventMemberLinked now event action
 
                 TensionEvent.MemberUnlinked ->
-                    viewEventMemberUnlinked now event t.action
+                    viewEventMemberUnlinked now event action
 
                 TensionEvent.UserJoined ->
-                    viewEventUserJoined now event t.action
+                    viewEventUserJoined now event action
 
                 TensionEvent.UserLeft ->
-                    viewEventUserLeft now event t.action
+                    viewEventUserLeft now event action
 
                 TensionEvent.Moved ->
                     viewEventMoved now event

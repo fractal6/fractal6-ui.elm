@@ -13,6 +13,16 @@ showMsg id_ cls icon header message =
     let
         did =
             "acc" ++ id_
+
+        mkdCls =
+            if String.contains "is-light" cls then
+                "is-light"
+
+            else if String.contains "is-dark" cls then
+                "is-dark"
+
+            else
+                ""
     in
     if message == "" then
         div [ class ("notification p-4 m-0 mb-2 is-size-7 " ++ cls) ] [ A.icon1 icon (upH header) ]
@@ -29,7 +39,7 @@ showMsg id_ cls icon header message =
                     [ A.icon1 icon (upH header) ]
                 , label [ class "acc-close", for "acc-close" ] []
                 , div [ class "acc-content " ]
-                    [ renderMarkdown "message-body" message
+                    [ renderMarkdown ("message-body " ++ mkdCls) message
                     ]
                 ]
             , input [ id "acc-close", name "accordion", type_ "radio" ] []

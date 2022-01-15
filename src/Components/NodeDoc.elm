@@ -17,6 +17,7 @@ import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
@@ -307,7 +308,7 @@ view data op_m =
                 div [ class "spinner" ] []
 
             Success tid ->
-                view_ tid data op_m
+                Lazy.lazy3 view_ tid data op_m
 
             _ ->
                 text ""
@@ -775,6 +776,11 @@ viewSelectAuthority op =
 
 viewVersions : Time.Posix -> GqlData TensionBlobs -> Html msg
 viewVersions now blobsData =
+    Lazy.lazy2 viewVersions_ now blobsData
+
+
+viewVersions_ : Time.Posix -> GqlData TensionBlobs -> Html msg
+viewVersions_ now blobsData =
     case blobsData of
         Success tblobs ->
             let

@@ -351,6 +351,7 @@ $button-vote-danger-background: $danger;
   --text-light: #{$text-light};
   --text-light2: #{$text-light2};
   --text-strong: #{$text-strong};
+  --input-color: #{$text};
 
   --title-color: #{$title-color};
   --subtitle-color: #{$subtitle-color};
@@ -443,6 +444,10 @@ $button-vote-danger-background: $danger;
 
 }
 .markdown-body.is-light, .content.is-light {
+  --text: #{$dark} !important;
+  --title-color: #{$title-color};
+  --subtitle-color: #{$subtitle-color};
+  --subtitle-strong-color: #{$subtitle-strong-color};
   --info: #{$info};
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};
@@ -641,6 +646,7 @@ $button-vote-danger-background: $danger-light;
   --text-light: #{$text-light};
   --text-light2: #{$text-light2};
   --text-strong: #{$text-strong};
+  --input-color: #{$text};
 
   --title-color: #{$title-color};
   --subtitle-color: #{$subtitle-color};
@@ -737,6 +743,10 @@ $button-vote-danger-background: $danger-light;
 
 }
 .markdown-body.is-dark, .content.is-dark {
+  --text: #{$white-dimmed};
+  --title-color: #{$title-color};
+  --subtitle-color: #{$subtitle-color};
+  --subtitle-strong-color: #{$subtitle-strong-color};
   --info: #{$info};
   --is-discrete: #{$is-discrete};
   --is-highlight: #{$is-highlight};

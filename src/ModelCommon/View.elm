@@ -16,6 +16,7 @@ import Global
 import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
+import Html.Lazy as Lazy
 import Identicon
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
@@ -88,6 +89,11 @@ tensionTypeSpan type_ =
 
 mediaTension : Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
 mediaTension now focus tension showStatus showRecip size navigate =
+    Lazy.lazy7 mediaTension_ now focus tension showStatus showRecip size navigate
+
+
+mediaTension_ : Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
+mediaTension_ now focus tension showStatus showRecip size navigate =
     let
         n_comments =
             --tension.comments_agg |> Maybe.map (\x -> withDefault 0 x.count) |> withDefault 0
@@ -524,6 +530,11 @@ viewNodeRefShort baseUri nid =
 
 viewOrgaMedia : UserState -> NodeExt -> Html msg
 viewOrgaMedia user root =
+    Lazy.lazy2 viewOrgaMedia_ user root
+
+
+viewOrgaMedia_ : UserState -> NodeExt -> Html msg
+viewOrgaMedia_ user root =
     let
         n_members =
             root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_members) |> withDefault 0

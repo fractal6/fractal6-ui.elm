@@ -187,6 +187,9 @@ a.is-link {
 .is-discrete-2 {
     color: var(--is-discrete) !important;
     font-weight: 600;
+    &:hover {
+        color: var(--link2) !important;
+    }
 }
 .is-highlight-3 {
     color: var(--is-highlight3) !important;

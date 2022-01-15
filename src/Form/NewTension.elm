@@ -548,7 +548,12 @@ update_ apis message model =
 
             else
                 ( model
-                , out0 [ send (DoModalConfirmOpen (OnClose { reset = True, link = link }) { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }) ]
+                , out0
+                    [ send
+                        (DoModalConfirmOpen (OnClose { reset = True, link = link })
+                            { message = Nothing, txts = [ ( upH T.confirmUnsaved, onCloseTxt ) ] }
+                        )
+                    ]
                 )
 
         OnChangeInputViewMode viewMode ->

@@ -18,6 +18,7 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, form, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, table, tbody, td, text, textarea, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -807,8 +808,7 @@ viewContractPage c op model =
         , c.comments
             |> Maybe.map
                 (\comments ->
-                    --viewComments op (List.tail comments |> withDefault []) model
-                    viewComments op comments model
+                    Lazy.lazy4 viewComments op comments model.comment_patch_form model.comment_result
                 )
             |> withDefault (text "")
         , hr [ class "has-background-border-light is-2" ] []
@@ -941,8 +941,8 @@ viewVoteBox c op model =
             ]
 
 
-viewComments : Op -> List Comment -> Model -> Html Msg
-viewComments op comments model =
+viewComments : Op -> List Comment -> CommentPatchForm -> GqlData Comment -> Html Msg
+viewComments op comments comment_patch_form comment_result =
     let
         opEdit =
             { doUpdate = DoUpdateComment
@@ -956,5 +956,5 @@ viewComments op comments model =
     in
     comments
         |> List.map
-            (\c -> viewComment opEdit c model.comment_patch_form model.comment_result)
+            (\c -> Lazy.lazy4 viewComment opEdit c comment_patch_form comment_result)
         |> div []
