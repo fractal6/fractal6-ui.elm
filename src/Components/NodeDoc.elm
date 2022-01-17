@@ -9,6 +9,7 @@ import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -907,6 +908,15 @@ updateNodeForm field value form =
 
         "about" ->
             { form | node = { node | about = Just value } }
+
+        "role_type" ->
+            { form | node = { node | role_type = RoleType.fromString value } }
+
+        "visibility" ->
+            { form | node = { node | visibility = NodeVisibility.fromString value } }
+
+        "mode" ->
+            { form | node = { node | mode = NodeMode.fromString value } }
 
         "name" ->
             case form.action of

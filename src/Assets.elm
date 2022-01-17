@@ -3,6 +3,7 @@ module Assets exposing (..)
 import Assets.Logo as Logo
 import Html exposing (Html, a, div, h1, h2, i, p, span, text)
 import Html.Attributes exposing (attribute, class, href, style)
+import Html.Lazy as Lazy
 import Text as T
 
 
@@ -62,17 +63,17 @@ icon1 cls words =
 
 logo0 : String -> Html msg
 logo0 color =
-    Logo.logo_fractal { color = color, h = "30", w = "38" }
+    Lazy.lazy Logo.logo_fractal { color = color, h = "30", w = "38" }
 
 
 logo1 : String -> Html msg
 logo1 color =
-    Logo.logo_fractal { color = color, h = "38", w = "54" }
+    Lazy.lazy Logo.logo_fractal { color = color, h = "38", w = "54" }
 
 
 logo2 : String -> Html msg
 logo2 color =
-    Logo.logo_fractal { color = color, h = "96", w = "128" }
+    Lazy.lazy Logo.logo_fractal { color = color, h = "96", w = "128" }
 
 
 {-| A burger button used when the terminal is in mobile/collapse state.

@@ -517,8 +517,10 @@ export const GraphPack = {
             ctx2d.lineWidth = 2;
         ctx2d.strokeStyle = "#5e6d6f" + opac;
         ctx2d.fillStyle = this.nameColor + opac;
-        if (node.data.visibility == NodeVisibility.Secret) {
+        if (node.data.visibility == NodeVisibility.Private) {
             text = "\ue930 " + text;
+        } else if (node.data.visibility == NodeVisibility.Secret) {
+            text = "\ue91a " + text;
         }
         ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);

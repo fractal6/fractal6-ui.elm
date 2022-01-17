@@ -308,6 +308,11 @@ a.is-link {
     box-shadow: 0px 2px 3px 0px var(--blue-grey);
 }
 
+.card.is-h:hover:not(.is-selected) {
+    border: 1px solid var(--blue);
+    box-shadow: 0px 2px 3px 0px var(--blue-grey);
+}
+
 .icon {
     color: inherit !important;
 }
@@ -627,13 +632,6 @@ a.is-link {
     &:hover {
         background-color: var(--primary) !important;
         filter: invert(10%);
-    }
-}
-
-.breadcrumb {
-    // breadcrum-item-hover-color don't work (bulvar ?)
-    a:hover {
-        color: var(--link-hover);
     }
 }
 
@@ -1685,6 +1683,15 @@ tr.mediaBox {
     .panel-heading {
         background-color: var(--modal-header-background);
     }
+    .breadcrumb {
+        a, a:hover {
+            color: var(--link-discrete);
+            cursor: initial;
+        }
+        li.is-active a {
+            color: var(--is-highlight);
+        }
+    }
 
 }
 
@@ -1765,13 +1772,6 @@ tr.mediaBox {
             border-radius: unset !important;
         }
     }
-}
-
-.cardForm {
-    &>div:nth-child(1) { padding: 0.25rem 0 0.25rem 0;}
-    border-width: 1px !important;
-    border-color: var(--grey-light) !important;
-    margin-bottom: 2rem !important;
 }
 
 .select.is-orange, .select.is-orange::after,

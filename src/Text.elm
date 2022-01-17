@@ -535,6 +535,11 @@ tensionUnsubscribeText =
     "You’re not receiving notifications from this thread. "
 
 
+back : String
+back =
+    "back"
+
+
 
 --Quick Search
 --(header)

@@ -17,10 +17,12 @@ import Components.NodeDoc as NodeDoc
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
+import Extra.Views exposing (showMsg)
 import Form exposing (isPostEmpty, isPostSendable)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -63,6 +65,8 @@ type alias Model =
     , activeButton : Maybe Int
     , labelsPanel : LabelSearchPanel.State
     , path_data : Maybe LocalGraph
+    , nodeStep : NodeStep
+    , txt : FormText
 
     -- Common
     , refresh_trial : Int
@@ -85,6 +89,35 @@ type TensionStep
     | AuthNeeded
 
 
+type NodeStep
+    = RoleAuthorityStep
+    | CircleVisibilityStep
+    | NodeValidateStep
+
+
+nodeStepToString : TensionForm -> NodeStep -> String
+nodeStepToString form step =
+    case step of
+        RoleAuthorityStep ->
+            case form.node.role_type of
+                Just x ->
+                    "Role Authority (" ++ RoleType.toString x ++ ")"
+
+                Nothing ->
+                    "Role Authority"
+
+        CircleVisibilityStep ->
+            case form.node.visibility of
+                Just x ->
+                    "Circle Visibility (" ++ NodeVisibility.toString x ++ ")"
+
+                Nothing ->
+                    "Circle Visibility"
+
+        NodeValidateStep ->
+            "Review and Validate"
+
+
 init : UserState -> State
 init user =
     initModel user |> State
@@ -104,6 +137,8 @@ initModel user =
     , nodeDoc = NodeDoc.create "" user
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
     , path_data = Nothing
+    , nodeStep = RoleAuthorityStep -- will change
+    , txt = getTensionText
 
     -- Common
     , refresh_trial = 0
@@ -130,6 +165,7 @@ initTensionTab model =
         | activeTab = NewTensionTab
         , nodeDoc = NodeDoc.setForm newForm model.nodeDoc
         , result = NotAsked
+        , txt = getTensionText
     }
 
 
@@ -157,6 +193,8 @@ initCircleTab type_ model =
                 | activeTab = NewRoleTab
                 , nodeDoc = NodeDoc.setForm { newForm | action = Just TensionAction.NewRole } model.nodeDoc
                 , result = NotAsked
+                , nodeStep = RoleAuthorityStep
+                , txt = getNodeTextFromNodeType type_
             }
 
         NodeType.Circle ->
@@ -164,6 +202,8 @@ initCircleTab type_ model =
                 | activeTab = NewCircleTab
                 , nodeDoc = NodeDoc.setForm { newForm | action = Just TensionAction.NewCircle } model.nodeDoc
                 , result = NotAsked
+                , nodeStep = CircleVisibilityStep
+                , txt = getNodeTextFromNodeType type_
             }
 
 
@@ -224,15 +264,24 @@ open data =
 
 switchTab : TensionTab -> Model -> Model
 switchTab tab model =
-    case tab of
-        NewTensionTab ->
-            initTensionTab model
+    if tab == model.activeTab then
+        model
 
-        NewRoleTab ->
-            initCircleTab NodeType.Role model
+    else
+        case tab of
+            NewTensionTab ->
+                initTensionTab model
 
-        NewCircleTab ->
-            initCircleTab NodeType.Circle model
+            NewRoleTab ->
+                initCircleTab NodeType.Role model
+
+            NewCircleTab ->
+                initCircleTab NodeType.Circle model
+
+
+changeNodeStep : NodeStep -> Model -> Model
+changeNodeStep step model =
+    { model | nodeStep = step }
 
 
 close : Model -> Model
@@ -420,14 +469,16 @@ type Msg
     | OnResetModel
     | OnClose ModalData
     | OnCloseSafe String String
-    | OnChangeInputViewMode InputViewMode
-    | OnTensionStep TensionStep
     | OnSwitchTab TensionTab
+    | OnChangeNodeStep NodeStep
+    | OnTensionStep TensionStep
+    | OnChangeInputViewMode InputViewMode
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource UserRole
     | OnChangeTensionTarget PNode
     | OnChangeRoleAuthority RoleType.RoleType
+    | OnChangeVisibility NodeVisibility.NodeVisibility
     | OnChangeCircleGovernance NodeMode.NodeMode
     | OnChangePost String String
     | OnAddDomains
@@ -566,14 +617,17 @@ update_ apis message model =
                     ]
                 )
 
-        OnChangeInputViewMode viewMode ->
-            ( setViewMode viewMode model, noOut )
+        OnSwitchTab tab ->
+            ( switchTab tab model, out0 [ Ports.bulma_driver "tensionModal" ] )
+
+        OnChangeNodeStep step ->
+            ( changeNodeStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
         OnTensionStep step ->
             ( setStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
 
-        OnSwitchTab tab ->
-            ( switchTab tab model, out0 [ Ports.bulma_driver "tensionModal" ] )
+        OnChangeInputViewMode viewMode ->
+            ( setViewMode viewMode model, noOut )
 
         -- Doc change
         OnChangeTensionType type_ ->
@@ -586,7 +640,14 @@ update_ apis message model =
             ( setTarget target model, noOut )
 
         OnChangeRoleAuthority role_type ->
-            ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, noOut )
+            ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
+
+        OnChangeVisibility visibility ->
+            let
+                k =
+                    Debug.log "ya" visibility
+            in
+            ( { model | nodeDoc = NodeDoc.updatePost "visibility" (NodeVisibility.toString visibility) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
 
         OnChangeCircleGovernance mode ->
             ( { model | nodeDoc = NodeDoc.updatePost "mode" (NodeMode.toString mode) model.nodeDoc }, noOut )
@@ -827,18 +888,18 @@ viewStep op (State model) =
                 ]
 
         TensionSource ->
-            viewSources (State model) TensionFinal
+            viewSources model TensionFinal
 
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    viewTension op (State model)
+                    viewTension model
 
                 NewRoleTab ->
-                    viewCircle op (State model)
+                    viewCircle model
 
                 NewCircleTab ->
-                    viewCircle op (State model)
+                    viewCircle model
 
         TensionNotAuthorized errMsg ->
             viewRoleNeeded errMsg
@@ -847,8 +908,8 @@ viewStep op (State model) =
             viewAuthNeeded OnClose
 
 
-viewSources : State -> TensionStep -> Html Msg
-viewSources (State model) nextStep =
+viewSources : Model -> TensionStep -> Html Msg
+viewSources model nextStep =
     div [ class "modal-card submitFocus" ]
         [ div [ class "modal-card-head" ]
             [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.nodeDoc.form.action |> text ] ]
@@ -955,15 +1016,15 @@ viewRecipients model =
         ]
 
 
-viewSuccess : FormText -> Tension -> Model -> Html Msg
-viewSuccess txt res model =
+viewSuccess : Tension -> Model -> Html Msg
+viewSuccess res model =
     let
         link =
             Route.Tension_Dynamic_Dynamic { param1 = nid2rootid model.nodeDoc.form.target.nameid, param2 = res.id } |> toHref
     in
     div [ class "box is-light", autofocus True, tabindex 0, onEnter (OnClose { reset = True, link = "" }) ]
         [ A.icon1 "icon-check icon-2x has-text-success" " "
-        , textH txt.added
+        , textH model.txt.added
         , text " "
         , a
             [ href link
@@ -974,14 +1035,62 @@ viewSuccess txt res model =
         ]
 
 
+viewHeader : Model -> Html Msg
+viewHeader model =
+    let
+        form =
+            model.nodeDoc.form
+
+        tension_type =
+            withDefault TensionType.Operational form.type_
+    in
+    div [ class "panel-heading" ]
+        [ div [ class "level modal-card-title" ]
+            [ div [ class "level-left" ] <|
+                List.intersperse (text T.space_)
+                    [ span [ class "is-size-6 has-text-weight-semibold" ]
+                        [ textT model.txt.title
+                        , span [ class "has-text-weight-medium" ] [ text " | " ]
+                        , if model.activeTab == NewTensionTab then
+                            span [ class "dropdown", style "vertical-align" "unset" ]
+                                [ span [ class "dropdown-trigger button-light" ]
+                                    [ span [ attribute "aria-controls" "type-menu" ]
+                                        [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
+                                            [ text (TensionType.toString tension_type), span [ class "ml-2 arrow down" ] [] ]
+                                        ]
+                                    ]
+                                , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
+                                    [ div [ class "dropdown-content" ] <|
+                                        List.map
+                                            (\t ->
+                                                div
+                                                    [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
+                                                    , onClick (OnChangeTensionType t)
+                                                    ]
+                                                    [ TensionType.toString t |> text ]
+                                            )
+                                            TensionType.list
+                                    ]
+                                ]
+
+                          else
+                            span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
+                                [ text (TensionType.toString tension_type) ]
+                        ]
+                    ]
+            , viewRecipients model
+            ]
+        ]
+
+
 
 ---
 --- Final Views
 ---
 
 
-viewTension : Op -> State -> Html Msg
-viewTension op (State model) =
+viewTension : Model -> Html Msg
+viewTension model =
     let
         form =
             model.nodeDoc.form
@@ -991,9 +1100,6 @@ viewTension op (State model) =
 
         message =
             Dict.get "message" form.post |> withDefault ""
-
-        tension_type =
-            withDefault TensionType.Operational form.type_
 
         txt =
             getTensionText
@@ -1009,43 +1115,12 @@ viewTension op (State model) =
     in
     case model.result of
         Success res ->
-            viewSuccess txt res model
+            viewSuccess res model
 
         other ->
             div [ class "panel modal-card submitFocus" ]
-                [ div [ class "panel-heading" ]
-                    [ div [ class "level modal-card-title" ]
-                        [ div [ class "level-left" ] <|
-                            List.intersperse (text T.space_)
-                                [ span [ class "is-size-6 has-text-weight-semibold" ]
-                                    [ textT txt.title
-                                    , span [ class "has-text-weight-medium" ] [ text " | " ]
-                                    , span [ class "dropdown", style "vertical-align" "unset" ]
-                                        [ span [ class "dropdown-trigger button-light" ]
-                                            [ span [ attribute "aria-controls" "type-menu" ]
-                                                [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                                                    [ text (TensionType.toString tension_type), span [ class "ml-2 arrow down" ] [] ]
-                                                ]
-                                            ]
-                                        , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
-                                            [ div [ class "dropdown-content" ] <|
-                                                List.map
-                                                    (\t ->
-                                                        div
-                                                            [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
-                                                            , onClick (OnChangeTensionType t)
-                                                            ]
-                                                            [ TensionType.toString t |> text ]
-                                                    )
-                                                    TensionType.list
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                        , viewRecipients model
-                        ]
-                    ]
-                , viewTensionTabs model.activeTab model.nodeDoc.form.target
+                [ viewHeader model
+                , viewTensionTabs model.activeTab form.target
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1060,7 +1135,7 @@ viewTension op (State model) =
                                 ]
                                 []
                             ]
-                        , p [ class "help-label" ] [ textH txt.name_help ]
+                        , p [ class "help-label" ] [ textH model.txt.name_help ]
                         , br [] []
                         ]
                     , div [ class "message" ]
@@ -1093,7 +1168,7 @@ viewTension op (State model) =
                                         Preview ->
                                             div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [ class "has-background-grey-lighter" ] [] ]
                                     ]
-                                , p [ class "help-label" ] [ textH txt.message_help ]
+                                , p [ class "help-label" ] [ textH model.txt.message_help ]
                                 , br [] []
                                 ]
                             ]
@@ -1133,7 +1208,7 @@ viewTension op (State model) =
                                      ]
                                         ++ submitTension
                                     )
-                                    [ textH txt.submit ]
+                                    [ textH model.txt.submit ]
                                 ]
                             ]
                         ]
@@ -1141,20 +1216,14 @@ viewTension op (State model) =
                 ]
 
 
-viewCircle : Op -> State -> Html Msg
-viewCircle op (State model) =
+viewCircle : Model -> Html Msg
+viewCircle model =
     let
         form =
             model.nodeDoc.form
 
-        tension_type =
-            withDefault TensionType.Operational form.type_
-
         node_type =
             withDefault NodeType.Role form.node.type_
-
-        txt =
-            getNodeTextFromNodeType node_type
 
         isLoading =
             model.result == LoadingSlowly
@@ -1170,122 +1239,250 @@ viewCircle op (State model) =
     in
     case model.result of
         Success res ->
-            viewSuccess txt res model
+            viewSuccess res model
 
         other ->
-            let
-                message =
-                    Dict.get "message" form.post |> withDefault ""
-
-                op_ =
-                    { data = model.nodeDoc
-                    , targets = model.targets |> List.map (\n -> n.nameid)
-                    , onChangePost = OnChangePost
-                    , onAddDomains = OnAddDomains
-                    , onAddPolicies = OnAddPolicies
-                    , onAddResponsabilities = OnAddResponsabilities
-                    }
-            in
-            div [ class "panel modal-card submitFocus" ]
-                [ div [ class "panel-heading" ]
-                    [ div [ class "level modal-card-title" ]
-                        [ div [ class "level-left" ] <|
-                            List.intersperse (text T.space_)
-                                [ span [ class "is-size-6 has-text-weight-semibold" ]
-                                    [ textT txt.title
-                                    , span [ class "has-text-weight-medium" ] [ text " | " ]
-                                    , span
-                                        [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                                        [ text (TensionType.toString tension_type) ]
+            div [ class "panel modal-card submitFocus" ] <|
+                [ viewHeader model
+                , viewTensionTabs model.activeTab form.target
+                ]
+                    ++ (case model.nodeStep of
+                            RoleAuthorityStep ->
+                                [ viewRoleAuthority model
+                                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                                    [ div [ class "field" ]
+                                        [ div [ class "is-pulled-left" ]
+                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ textH T.cancel ] ]
+                                        ]
                                     ]
                                 ]
-                        , viewRecipients model
-                        ]
-                    ]
-                , viewTensionTabs model.activeTab model.nodeDoc.form.target
-                , div [ class "modal-card-body" ]
-                    [ viewAboutInput False OverviewBaseUri txt form.node op_
-                    , case node_type of
-                        NodeType.Role ->
-                            let
-                                role_type =
-                                    Dict.get "role_type" form.post |> Maybe.map RoleType.fromString |> withDefault Nothing |> withDefault RoleType.Peer
-                            in
-                            div [ class "field mb-5" ]
-                                [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.authority ]
-                                , viewSelectAuthority "" { onSelect = OnChangeRoleAuthority, selection = role_type }
+
+                            CircleVisibilityStep ->
+                                [ viewVisibility model
+                                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                                    [ div [ class "field" ]
+                                        [ div [ class "is-pulled-left" ]
+                                            [ button [ class "button is-light", onClick (OnCloseSafe "" "") ] [ textH T.cancel ] ]
+                                        ]
+                                    ]
                                 ]
 
-                        NodeType.Circle ->
-                            let
-                                mode =
-                                    Dict.get "mode" form.post |> Maybe.map NodeMode.fromString |> withDefault Nothing |> withDefault NodeMode.Coordinated
-                            in
-                            div [ class "field mb-5" ]
-                                [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.governance ]
-                                , viewSelectGovernance "" { onSelect = OnChangeCircleGovernance, selection = mode }
-                                ]
-                    , viewMandateInput txt form.node.mandate op_
+                            NodeValidateStep ->
+                                [ viewNodeValidate model
+                                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
+                                    [ case other of
+                                        Failure err ->
+                                            viewGqlErrors err
 
-                    --, div [ class "card cardForm" ]
-                    --    [ div [ class "has-text-black is-aligned-center", attribute "style" "background-color: #e1e1e1;" ] [ textH T.mandate ]
-                    --    , div [ class "card-content" ]
-                    --        [ viewMandateInput txt form.node.mandate op_ ]
-                    --    ]
-                    , br [] []
-                    , br [] []
-                    , div [ class "field" ]
-                        [ div [ class "control" ]
-                            [ textarea
-                                [ class "textarea"
-                                , rows 3
-                                , placeholder (upH T.leaveCommentOpt)
-                                , value message
-                                , onInput <| OnChangePost "message"
+                                        _ ->
+                                            text ""
+                                    , div [ class "field" ]
+                                        [ div [ class "is-pulled-left" ]
+                                            [ button [ class "button is-light", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
+                                                [ A.icon0 "icon-chevron-left", textH T.back ]
+                                            ]
+                                        , div [ class "is-pulled-right" ]
+                                            [ div [ class "buttons" ]
+                                                [ button
+                                                    ([ class "button is-success defaultSubmit"
+                                                     , classList
+                                                        [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
+                                                     , disabled (not isSendable || isLoading)
+                                                     ]
+                                                        ++ submitCloseTension
+                                                    )
+                                                    [ textH model.txt.close_submit ]
+                                                , button
+                                                    ([ class "button is-warning"
+                                                     , classList
+                                                        [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
+                                                     , disabled (not isSendable || isLoading)
+                                                     ]
+                                                        ++ submitTension
+                                                    )
+                                                    [ textH model.txt.submit ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
                                 ]
-                                []
-                            ]
-                        , p [ class "help-label" ] [ textH txt.message_help ]
-                        ]
-                    , br [] []
-                    ]
-                , div [ class "modal-card-foot", attribute "style" "display: block;" ]
-                    [ case other of
-                        Failure err ->
-                            viewGqlErrors err
+                       )
 
-                        _ ->
-                            text ""
-                    , div [ class "field" ]
-                        [ div [ class "is-pulled-left" ]
-                            [ button
-                                [ class "button is-light"
-                                , onClick (OnCloseSafe "" "")
-                                ]
-                                [ textH T.cancel ]
-                            ]
-                        , div [ class "is-pulled-right" ]
-                            [ div [ class "buttons" ]
-                                [ button
-                                    ([ class "button is-success defaultSubmit"
-                                     , classList
-                                        [ ( "is-loading", isLoading && model.activeButton == Just 0 ) ]
-                                     , disabled (not isSendable || isLoading)
-                                     ]
-                                        ++ submitCloseTension
-                                    )
-                                    [ textH txt.close_submit ]
-                                , button
-                                    ([ class "button is-warning"
-                                     , classList
-                                        [ ( "is-loading", isLoading && model.activeButton == Just 1 ) ]
-                                     , disabled (not isSendable || isLoading)
-                                     ]
-                                        ++ submitTension
-                                    )
-                                    [ textH txt.submit ]
-                                ]
-                            ]
-                        ]
+
+viewNodeBreadcrumb : TensionForm -> NodeStep -> Html Msg
+viewNodeBreadcrumb form step =
+    let
+        node_type =
+            withDefault NodeType.Role form.node.type_
+
+        path =
+            case node_type of
+                NodeType.Role ->
+                    [ RoleAuthorityStep, NodeValidateStep ]
+
+                NodeType.Circle ->
+                    [ CircleVisibilityStep, NodeValidateStep ]
+    in
+    nav [ class "breadcrumb has-succeeds-separator is-small", attribute "aria-labels" "breadcrumbs" ]
+        [ ul [] <|
+            List.map
+                (\x ->
+                    li [ classList [ ( "is-active", x == step ) ] ] [ a [ onClickPD NoMsg, target "blank_" ] [ text (nodeStepToString form x) ] ]
+                )
+                path
+        ]
+
+
+viewNodeValidate : Model -> Html Msg
+viewNodeValidate model =
+    let
+        form =
+            model.nodeDoc.form
+
+        node_type =
+            withDefault NodeType.Role form.node.type_
+
+        message =
+            Dict.get "message" form.post |> withDefault ""
+
+        op_ =
+            { data = model.nodeDoc
+            , targets = model.targets |> List.map (\n -> n.nameid)
+            , onChangePost = OnChangePost
+            , onAddDomains = OnAddDomains
+            , onAddPolicies = OnAddPolicies
+            , onAddResponsabilities = OnAddResponsabilities
+            }
+    in
+    div [ class "modal-card-body" ]
+        [ viewNodeBreadcrumb form model.nodeStep
+        , viewAboutInput False OverviewBaseUri model.txt form.node op_
+        , case node_type of
+            NodeType.Role ->
+                let
+                    role_type =
+                        withDefault RoleType.Peer form.node.role_type
+                in
+                div [ class "field mb-5" ]
+                    [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.authority ]
+                    , viewSelectAuthority "" { onSelect = OnChangeRoleAuthority, selection = role_type }
                     ]
+
+            NodeType.Circle ->
+                let
+                    mode =
+                        withDefault NodeMode.Coordinated form.node.mode
+                in
+                div [ class "field mb-5" ]
+                    [ label [ class "label pt-2 mr-4 is-pulled-left" ] [ textH T.governance ]
+                    , viewSelectGovernance "" { onSelect = OnChangeCircleGovernance, selection = mode }
+                    ]
+        , viewMandateInput model.txt form.node.mandate op_
+        , br [] []
+        , br [] []
+        , div [ class "field" ]
+            [ div [ class "control" ]
+                [ textarea
+                    [ class "textarea"
+                    , rows 3
+                    , placeholder (upH T.leaveCommentOpt)
+                    , value message
+                    , onInput <| OnChangePost "message"
+                    ]
+                    []
                 ]
+            , p [ class "help-label" ] [ textH model.txt.message_help ]
+            ]
+        , br [] []
+        ]
+
+
+viewRoleAuthority : Model -> Html Msg
+viewRoleAuthority model =
+    let
+        form =
+            model.nodeDoc.form
+    in
+    div [ class "modal-card-body" ]
+        [ viewNodeBreadcrumb form model.nodeStep
+
+        -- Show the help information
+        --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
+        , div [ class "subtitle" ] [ text "Select a role template" ]
+
+        -- Show the choices as card.
+        --RoleType.list
+        , [ ( RoleType.Peer, T.peerRoleInfo ), ( RoleType.Coordinator, T.coordinatorRoleInfo ) ]
+            |> List.map
+                (\( x, description ) ->
+                    let
+                        isActive =
+                            Just x == form.node.role_type
+
+                        icon =
+                            "icon-user has-text-" ++ roleColor x
+                    in
+                    div
+                        [ class "card has-border column is-paddingless m-3 is-h"
+                        , attribute "style" "min-width: 150px;"
+                        , classList [ ( "is-selected", isActive ) ]
+
+                        -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
+                        ]
+                        [ div [ class "card-content p-4", onClick (OnChangeRoleAuthority x) ]
+                            [ h2 [ class "is-strong is-size-5" ]
+                                [ A.icon1 (icon ++ " icon-bg") (RoleType.toString x) ]
+                            , div [ class "content is-small" ]
+                                [ text description ]
+                            ]
+                        ]
+                )
+            |> div [ class "columns is-multiline" ]
+        ]
+
+
+viewVisibility : Model -> Html Msg
+viewVisibility model =
+    let
+        form =
+            model.nodeDoc.form
+    in
+    div [ class "modal-card-body" ]
+        [ viewNodeBreadcrumb form model.nodeStep
+        , div [ class "subtitle" ] [ text "Choose the circle visibility" ]
+
+        -- Show the choices as card.
+        , NodeVisibility.list
+            |> List.map
+                (\x ->
+                    let
+                        isActive =
+                            Just x == form.node.visibility
+
+                        ( icon, description ) =
+                            case x of
+                                NodeVisibility.Public ->
+                                    ( "icon-globe", T.visibilityPublic )
+
+                                NodeVisibility.Private ->
+                                    ( "icon-users", T.visibilityPrivate )
+
+                                NodeVisibility.Secret ->
+                                    ( "icon-lock", T.visibilitySeccret )
+                    in
+                    div
+                        [ class "card has-border column is-paddingless m-3 is-h"
+                        , classList [ ( "is-selected is-selectable", isActive ) ]
+
+                        -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
+                        ]
+                        [ div [ class "card-content p-4", onClick (OnChangeVisibility x) ]
+                            [ h2 [ class "is-strong is-size-5" ]
+                                [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
+                            , div [ class "content is-small" ]
+                                [ text description ]
+                            ]
+                        ]
+                )
+            |> div [ class "columns" ]
+        ]
