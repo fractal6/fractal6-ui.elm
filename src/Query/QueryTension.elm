@@ -231,6 +231,7 @@ nodeFragmentPayload =
         |> with Fractal.Object.NodeFragment.nameid
         |> with Fractal.Object.NodeFragment.type_
         |> with Fractal.Object.NodeFragment.role_type
+        |> with Fractal.Object.NodeFragment.role_ext
         |> with Fractal.Object.NodeFragment.color
         |> with Fractal.Object.NodeFragment.visibility
         |> with Fractal.Object.NodeFragment.mode

@@ -117,6 +117,11 @@ second_link =
     Object.selectionForField "(Maybe String)" "second_link" [] (Decode.string |> Decode.nullable)
 
 
+role_ext : SelectionSet (Maybe String) Fractal.Object.NodeFragment
+role_ext =
+    Object.selectionForField "(Maybe String)" "role_ext" [] (Decode.string |> Decode.nullable)
+
+
 role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.NodeFragment
 role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)

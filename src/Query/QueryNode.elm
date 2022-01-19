@@ -805,7 +805,7 @@ nodeRolesFullPayload =
 
 roleFullPayload : SelectionSet RoleExtFull Fractal.Object.RoleExt
 roleFullPayload =
-    SelectionSet.map7 RoleExtFull
+    SelectionSet.map8 RoleExtFull
         (Fractal.Object.RoleExt.id |> SelectionSet.map decodedId)
         Fractal.Object.RoleExt.name
         Fractal.Object.RoleExt.color
@@ -814,6 +814,10 @@ roleFullPayload =
         (Fractal.Object.RoleExt.mandate identity mandatePayload)
         (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
             Fractal.Object.RoleExt.nodesAggregate identity <|
+                SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
+        )
+        (SelectionSet.map (\x -> Maybe.map (\y -> y.count) x |> withDefault Nothing) <|
+            Fractal.Object.RoleExt.rolesAggregate identity <|
                 SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
         )
 

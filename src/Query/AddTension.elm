@@ -233,6 +233,7 @@ buildNodeFragmentRef users nf =
                     { commonFields
                         | first_link = users |> List.filter (\u -> u.username /= "") |> List.head |> Maybe.map (\us -> us.username) |> fromMaybe
                         , role_type = fromMaybe nf.role_type
+                        , role_ext = fromMaybe nf.role_ext
                     }
 
                 NodeType.Circle ->

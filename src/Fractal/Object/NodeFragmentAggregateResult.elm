@@ -74,6 +74,16 @@ second_linkMax =
     Object.selectionForField "(Maybe String)" "second_linkMax" [] (Decode.string |> Decode.nullable)
 
 
+role_extMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
+role_extMin =
+    Object.selectionForField "(Maybe String)" "role_extMin" [] (Decode.string |> Decode.nullable)
+
+
+role_extMax : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
+role_extMax =
+    Object.selectionForField "(Maybe String)" "role_extMax" [] (Decode.string |> Decode.nullable)
+
+
 colorMin : SelectionSet (Maybe String) Fractal.Object.NodeFragmentAggregateResult
 colorMin =
     Object.selectionForField "(Maybe String)" "colorMin" [] (Decode.string |> Decode.nullable)

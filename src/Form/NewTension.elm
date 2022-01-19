@@ -1460,7 +1460,7 @@ viewRoleExt model =
                         (\role ->
                             let
                                 isActive =
-                                    Just role.id == Dict.get "id" form.post
+                                    Just role.id == form.node.role_ext
 
                                 icon =
                                     "icon-user"

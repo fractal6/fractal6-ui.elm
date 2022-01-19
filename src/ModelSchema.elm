@@ -194,8 +194,7 @@ type alias RoleExtFull =
     , about : Maybe String
     , mandate : Maybe Mandate
     , n_nodes : Maybe Int
-
-    --, n_roles : Maybe Int
+    , n_roles : Maybe Int
     }
 
 
@@ -346,6 +345,7 @@ type alias NodeFragment =
     , nameid : Maybe String
     , type_ : Maybe NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
+    , role_ext : Maybe String
     , color : Maybe String
     , visibility : Maybe NodeVisibility.NodeVisibility
     , mode : Maybe NodeMode.NodeMode
@@ -377,6 +377,7 @@ node2NodeFragment node_m children nData =
     , visibility = Maybe.map (\n -> n.visibility) node_m
     , mode = Maybe.map (\n -> n.mode) node_m
     , role_type = Maybe.map (\n -> n.role_type) node_m |> withDefault Nothing
+    , role_ext = Nothing
     , color = Maybe.map (\n -> n.color) node_m |> withDefault Nothing
     , about = Maybe.map (\n -> n.about) nData |> withDefault Nothing
     , mandate = Maybe.map (\n -> n.mandate) nData |> withDefault Nothing
@@ -409,6 +410,7 @@ nodeFragmentUpdate n_m n =
             , visibility = mor n.visibility nf.visibility
             , mode = mor n.mode nf.mode
             , role_type = mor n.role_type nf.role_type
+            , role_ext = Nothing
             , color = mor n.color nf.color
             , about = mor n.about nf.about
             , mandate = mor n.mandate nf.mandate
@@ -494,7 +496,7 @@ initMandate =
 
 initNodeFragment : Maybe NodeType.NodeType -> NodeFragment
 initNodeFragment nt =
-    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 initEventFragment : EventFragment

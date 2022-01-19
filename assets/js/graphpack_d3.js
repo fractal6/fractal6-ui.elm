@@ -888,15 +888,9 @@ export const GraphPack = {
         return this.colorCircleRange[k%this.colorCircleRange.length]
     },
 
-    colorToTextColor(color) {
+    colorToTextColor(color) { // @duplicate: exists as elm function.
         var c;
-        if ( [ "#7FDBFF"
-            , "#39CCCC"
-            , "#01FF70"
-            , "#FFDC00"
-            , "#AAAAAA"
-            , "#DDDDDD"
-        ].includes(color.toUpperCase()) ) {
+        if (["#7FDBFF" ,"#39CCCC" ,"#01FF70" ,"#FFDC00" ,"#AAAAAA" ,"#DDDDDD" ].includes(color.toUpperCase())) {
             c = "#000";
         } else {
             c = "#fff";

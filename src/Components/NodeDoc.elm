@@ -289,9 +289,11 @@ updatePost2 field value_m data =
 updateFromRoleExt : RoleExtFull -> NodeDoc -> NodeDoc
 updateFromRoleExt role data =
     data
-        |> updatePost "id" role.id
         |> updatePost "name" role.name
+        -- rewite nameid by appending the #number of this role used
+        |> (\x -> updatePost2 "nameid" (Maybe.map (\nameid -> nameid ++ "-" ++ String.fromInt (withDefault 0 role.n_roles)) x.form.node.nameid) x)
         |> updatePost "role_type" (RoleType.toString role.role_type)
+        |> updatePost "role_ext" role.id
         |> updatePost2 "about" role.about
         |> updatePost2 "color" role.color
         |> (\x ->
@@ -933,6 +935,9 @@ updateNodeForm field value form =
 
         "role_type" ->
             { form | node = { node | role_type = RoleType.fromString value } }
+
+        "role_ext" ->
+            { form | node = { node | role_ext = Just value } }
 
         "color" ->
             { form | node = { node | color = Just value } }
