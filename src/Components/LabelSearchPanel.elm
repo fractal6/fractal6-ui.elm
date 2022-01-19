@@ -220,7 +220,7 @@ update_ apis message model =
         OnOpen targets isDepth ->
             -- if isDepth
             --   * fetch label recurcively in children
-            --   * else stick to given targets (focus like behaviour)
+            --   * else stick to given targets
             if model.isOpen == False then
                 let
                     nameids =
@@ -447,10 +447,10 @@ view_ isInternal op (State model) =
                         ]
 
             Loading ->
-                div [ class "spinner" ] [ text "" ]
+                div [ class "spinner" ] []
 
             LoadingSlowly ->
-                div [ class "spinner" ] [ text "" ]
+                div [ class "spinner" ] []
 
             NotAsked ->
                 text ""
@@ -563,7 +563,7 @@ viewNew op (State model) =
             [ class "button is-small is-primary mr-2"
             , onClick (OnOpen op.targets False)
             ]
-            [ A.icon1 "icon-1x icon-plus" "", text "Label" ]
+            [ A.icon1 "icon-1x icon-plus" "", textH T.label ]
         , if List.length op.selectedLabels > 0 then
             viewLabels op.selectedLabels
 

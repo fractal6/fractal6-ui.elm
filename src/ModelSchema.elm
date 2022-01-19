@@ -57,6 +57,7 @@ type alias Node =
     , parent : Maybe NodeId
     , type_ : NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
+    , color : Maybe String
     , first_link : Maybe User
     , visibility : NodeVisibility.NodeVisibility
     , mode : NodeMode.NodeMode
@@ -345,6 +346,7 @@ type alias NodeFragment =
     , nameid : Maybe String
     , type_ : Maybe NodeType.NodeType
     , role_type : Maybe RoleType.RoleType
+    , color : Maybe String
     , visibility : Maybe NodeVisibility.NodeVisibility
     , mode : Maybe NodeMode.NodeMode
     , about : Maybe String
@@ -375,6 +377,7 @@ node2NodeFragment node_m children nData =
     , visibility = Maybe.map (\n -> n.visibility) node_m
     , mode = Maybe.map (\n -> n.mode) node_m
     , role_type = Maybe.map (\n -> n.role_type) node_m |> withDefault Nothing
+    , color = Maybe.map (\n -> n.color) node_m |> withDefault Nothing
     , about = Maybe.map (\n -> n.about) nData |> withDefault Nothing
     , mandate = Maybe.map (\n -> n.mandate) nData |> withDefault Nothing
     , first_link = Maybe.map (\n -> n.first_link |> Maybe.map (\u -> u.username)) node_m |> withDefault Nothing
@@ -406,6 +409,7 @@ nodeFragmentUpdate n_m n =
             , visibility = mor n.visibility nf.visibility
             , mode = mor n.mode nf.mode
             , role_type = mor n.role_type nf.role_type
+            , color = mor n.color nf.color
             , about = mor n.about nf.about
             , mandate = mor n.mandate nf.mandate
             , first_link = mor n.first_link nf.first_link
@@ -462,6 +466,7 @@ initNode =
     , parent = Nothing
     , type_ = NodeType.Circle
     , role_type = Nothing
+    , color = Nothing
     , first_link = Nothing
     , visibility = NodeVisibility.Public
     , mode = NodeMode.Coordinated
@@ -489,7 +494,7 @@ initMandate =
 
 initNodeFragment : Maybe NodeType.NodeType -> NodeFragment
 initNodeFragment nt =
-    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+    NodeFragment Nothing Nothing nt Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 initEventFragment : EventFragment

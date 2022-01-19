@@ -32,6 +32,16 @@ import Text as T exposing (textH, textT, upH)
 import Time
 
 
+
+{- NodeDoc
+
+   Shared object for view and input around a Node object (and NodeFragment),
+   and controlled by a tension source (TensionForm).
+   Viewing and editing node name, mandate and changing a role authority or circle
+   governance for examples.
+-}
+
+
 type alias NodeDoc =
     { form : TensionForm
     , result : GqlData PatchTensionPayloadID
@@ -245,7 +255,7 @@ hasMandate mandate_m =
     let
         mandate =
             --data.form.node.mandate
-            mandate_m |> withDefault initMandate
+            withDefault initMandate mandate_m
     in
     mandate.purpose
         /= ""
@@ -263,11 +273,41 @@ hasMandate mandate_m =
 
 updatePost : String -> String -> NodeDoc -> NodeDoc
 updatePost field value data =
-    let
-        form =
-            data.form
-    in
     { data | form = updateNodeForm field value data.form }
+
+
+updatePost2 : String -> Maybe String -> NodeDoc -> NodeDoc
+updatePost2 field value_m data =
+    case value_m of
+        Just value ->
+            { data | form = updateNodeForm field value data.form }
+
+        Nothing ->
+            data
+
+
+updateFromRoleExt : RoleExtFull -> NodeDoc -> NodeDoc
+updateFromRoleExt role data =
+    data
+        |> updatePost "id" role.id
+        |> updatePost "name" role.name
+        |> updatePost "role_type" (RoleType.toString role.role_type)
+        |> updatePost2 "about" role.about
+        |> updatePost2 "color" role.color
+        |> (\x ->
+                let
+                    form =
+                        x.form
+
+                    node =
+                        form.node
+                in
+                { x | form = { form | node = { node | mandate = role.mandate } } }
+           )
+
+
+
+--
 
 
 type alias OrgaNodeData msg =
@@ -282,8 +322,7 @@ type alias OrgaNodeData msg =
 
 
 type alias Op msg =
-    { targets : List String
-    , data : NodeDoc
+    { data : NodeDoc
 
     -- Blob control
     , onBlobEdit : BlobType.BlobType -> msg
@@ -390,48 +429,37 @@ viewAboutSection editView data =
     let
         type_ =
             withDefault NodeType.Role data.node.type_
+
+        nameid =
+            data.node.nameid
+                |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
+                |> withDefault ""
     in
     div []
         [ div [ class "media subtitle" ]
             [ div [ class "media-left" ]
                 [ A.icon "icon-info icon-1half" ]
             , div [ class "media-content nodeName" ]
-                [ if data.source == TensionBaseUri && data.hasBeenPushed then
-                    let
-                        nameid =
-                            data.node.nameid
-                                |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
-                                |> withDefault ""
-                    in
-                    span []
-                        [ textH T.about
-                        , text T.space_
-                        , a
+                [ span []
+                    [ textH T.about
+                    , text T.space_
+                    , if data.source == TensionBaseUri && data.hasBeenPushed then
+                        a
                             [ class "is-discrete-2"
                             , nameid |> uriFromNameid OverviewBaseUri |> href
                             ]
                             [ withDefault "" data.node.name |> text ]
-                        ]
 
-                  else if data.source == OverviewBaseUri then
-                    let
-                        nameid =
-                            data.node.nameid
-                                |> Maybe.map (\nid -> nodeIdCodec data.receiver nid type_)
-                                |> withDefault ""
-                    in
-                    span []
-                        [ textH T.about
-                        , text T.space_
-                        , a
+                      else if data.source == OverviewBaseUri then
+                        a
                             [ class "is-discrete-2"
                             , Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href
                             ]
                             [ withDefault "" data.node.name |> text ]
-                        ]
 
-                  else
-                    span [] [ textH T.about ]
+                      else
+                        text ""
+                    ]
                 ]
             , case data.toolbar of
                 Just tb ->
@@ -510,33 +538,27 @@ viewAboutInput hasBeenPushed source txt node op =
                     , attribute "data-nextfocus" "aboutField"
                     , type_ "text"
                     , placeholder (upH T.name)
-                    , value (node.name |> withDefault "")
+                    , value (withDefault "" node.name)
                     , onInput <| op.onChangePost "name"
                     , required True
                     ]
                     []
                 , if hasBeenPushed == False then
-                    let
-                        ref =
-                            List.head op.targets |> withDefault "" |> String.replace "#" "/"
-                    in
                     div [ class "urlForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-body control" ]
                                 [ div [] [ text "URL" ]
                                 , input
-                                    [ class "input px-2"
+                                    [ class "input px-1"
                                     , disabled True
                                     , value "https://fractale.co/o/"
-
-                                    -- @debug: show the full url (user ref var) when hoovering
-                                    , attribute "style" "width: 11.4em"
+                                    , attribute "style" "width: 11em"
                                     ]
                                     []
                                 , input
-                                    [ class "input"
+                                    [ class "input pl-1"
                                     , type_ "text"
-                                    , value (node.nameid |> withDefault "")
+                                    , value (withDefault "" node.nameid)
                                     , onInput <| op.onChangePost "nameid"
                                     ]
                                     []
@@ -557,7 +579,7 @@ viewAboutInput hasBeenPushed source txt node op =
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
                     , placeholder (upH T.aboutOpt)
-                    , value (node.about |> withDefault "")
+                    , value (withDefault "" node.about)
                     , onInput <| op.onChangePost "about"
                     ]
                     []
@@ -574,13 +596,13 @@ viewMandateInput txt mandate op =
             mandate |> Maybe.map (\m -> m.purpose) |> withDefault ""
 
         responsabilities =
-            mandate |> Maybe.map (\m -> m.responsabilities |> withDefault "") |> withDefault ""
+            mandate |> Maybe.map (\m -> withDefault "" m.responsabilities) |> withDefault ""
 
         domains =
-            mandate |> Maybe.map (\m -> m.domains |> withDefault "") |> withDefault ""
+            mandate |> Maybe.map (\m -> withDefault "" m.domains) |> withDefault ""
 
         policies =
-            mandate |> Maybe.map (\m -> m.policies |> withDefault "") |> withDefault ""
+            mandate |> Maybe.map (\m -> withDefault "" m.policies) |> withDefault ""
 
         showResponsabilities =
             op.data.doAddResponsabilities || responsabilities /= ""
@@ -911,6 +933,9 @@ updateNodeForm field value form =
 
         "role_type" ->
             { form | node = { node | role_type = RoleType.fromString value } }
+
+        "color" ->
+            { form | node = { node | color = Just value } }
 
         "visibility" ->
             { form | node = { node | visibility = NodeVisibility.fromString value } }

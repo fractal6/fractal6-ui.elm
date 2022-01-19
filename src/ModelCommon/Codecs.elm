@@ -498,6 +498,7 @@ nodeFromFragment parentid f =
     , parent = Nothing
     , type_ = withDefault NodeType.Circle f.type_
     , role_type = f.role_type
+    , color = f.color
     , first_link = Maybe.map (\fs -> User fs Nothing) f.first_link
     , visibility = withDefault NodeVisibility.Private f.visibility
     , mode = withDefault NodeMode.Coordinated f.mode

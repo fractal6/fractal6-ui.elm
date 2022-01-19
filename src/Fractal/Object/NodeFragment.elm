@@ -122,6 +122,11 @@ role_type =
     Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
 
 
+color : SelectionSet (Maybe String) Fractal.Object.NodeFragment
+color =
+    Object.selectionForField "(Maybe String)" "color" [] (Decode.string |> Decode.nullable)
+
+
 type alias ChildrenAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFragmentFilter }
 

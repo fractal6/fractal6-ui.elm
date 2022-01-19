@@ -620,6 +620,11 @@ nodeNotFound =
     "Node is archived, hidden or has moved."
 
 
+label : String
+label =
+    "label"
+
+
 
 --Canvas
 

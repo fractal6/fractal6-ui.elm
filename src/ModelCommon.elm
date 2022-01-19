@@ -126,7 +126,7 @@ type alias TensionForm =
     , action : Maybe TensionAction.TensionAction
     , emitter : Maybe EmitterOrReceiver
     , receiver : Maybe EmitterOrReceiver
-    , post : Post -- createdBy, createdAt, title, message...
+    , post : Post -- createdBy, createdAt, title, message and Node attr...
 
     -- data
     , events : List Ev
@@ -442,23 +442,28 @@ type InputViewMode
 --
 
 
-getTargets : GqlData LocalGraph -> Maybe (List RoleType.RoleType) -> List PNode
-getTargets lg exclude_role_type_m =
+getTargets : GqlData LocalGraph -> List RoleType.RoleType -> List PNode
+getTargets lg exclude_role_types =
     case lg of
         Success path ->
-            case exclude_role_type_m of
-                Just exclude_role_types_ ->
-                    -- Exclude the roles givens in the list
-                    let
-                        exclude_role_types =
-                            List.map (\x -> Just x) exclude_role_types_
-                    in
-                    path.path ++ (path.focus.children |> List.filter (\x -> not (List.member x.role_type exclude_role_types)) |> List.map shrinkNode)
+            -- Exclude the roles givens in the list
+            let
+                exclude_role_types_ =
+                    List.map (\x -> Just x) exclude_role_types
+            in
+            path.path ++ (path.focus.children |> List.filter (\x -> not (List.member x.role_type exclude_role_types_)) |> List.map shrinkNode)
 
-                Nothing ->
-                    -- Keep only circle
-                    path.path ++ (path.focus.children |> List.filter (\x -> isCircle x.nameid) |> List.map shrinkNode)
+        _ ->
+            []
 
+
+getCircles : GqlData LocalGraph -> List PNode
+getCircles lg =
+    case lg of
+        Success path ->
+            path.path
+
+        -- ++ (path.focus.children |> List.filter (\x -> isCircle x.nameid) |> List.map shrinkNode)
         _ ->
             []
 

@@ -20,11 +20,12 @@ type NodeFragmentHasFilter
     | First_link
     | Second_link
     | Role_type
+    | Color
 
 
 list : List NodeFragmentHasFilter
 list =
-    [ Nameid, Name, About, Mandate, Skills, Children, Visibility, Mode, Type_, First_link, Second_link, Role_type ]
+    [ Nameid, Name, About, Mandate, Skills, Children, Visibility, Mode, Type_, First_link, Second_link, Role_type, Color ]
 
 
 decoder : Decoder NodeFragmentHasFilter
@@ -68,6 +69,9 @@ decoder =
 
                     "role_type" ->
                         Decode.succeed Role_type
+
+                    "color" ->
+                        Decode.succeed Color
 
                     _ ->
                         Decode.fail ("Invalid NodeFragmentHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -114,6 +118,9 @@ toString enum____ =
 
         Role_type ->
             "role_type"
+
+        Color ->
+            "color"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -165,6 +172,9 @@ fromString enumString____ =
 
         "role_type" ->
             Just Role_type
+
+        "color" ->
+            Just Color
 
         _ ->
             Nothing

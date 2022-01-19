@@ -1,6 +1,8 @@
 module Extra exposing (..)
 
 import Dict exposing (Dict)
+import Html exposing (Html)
+import Html.Attributes exposing (attribute)
 import Regex exposing (Regex)
 import String
 
@@ -79,6 +81,11 @@ mor ma mb =
 
 
 -- Colors
+
+
+colorAttr : String -> Html.Attribute msg
+colorAttr color =
+    attribute "style" ("background-color:" ++ color ++ "; color:" ++ colorToTextColor color ++ ";")
 
 
 colorToTextColor : String -> String

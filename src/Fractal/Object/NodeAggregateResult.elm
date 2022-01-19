@@ -102,3 +102,13 @@ rightsSum =
 rightsAvg : SelectionSet (Maybe Float) Fractal.Object.NodeAggregateResult
 rightsAvg =
     Object.selectionForField "(Maybe Float)" "rightsAvg" [] (Decode.float |> Decode.nullable)
+
+
+colorMin : SelectionSet (Maybe String) Fractal.Object.NodeAggregateResult
+colorMin =
+    Object.selectionForField "(Maybe String)" "colorMin" [] (Decode.string |> Decode.nullable)
+
+
+colorMax : SelectionSet (Maybe String) Fractal.Object.NodeAggregateResult
+colorMax =
+    Object.selectionForField "(Maybe String)" "colorMax" [] (Decode.string |> Decode.nullable)

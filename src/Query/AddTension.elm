@@ -224,6 +224,7 @@ buildNodeFragmentRef users nf =
                         , mandate = Maybe.map buildMandate nf.mandate |> fromMaybe
                         , visibility = fromMaybe nf.visibility
                         , mode = fromMaybe nf.mode
+                        , color = fromMaybe nf.color
                     }
             in
             case type_ of

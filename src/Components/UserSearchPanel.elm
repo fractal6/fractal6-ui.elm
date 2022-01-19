@@ -1,5 +1,6 @@
 module Components.UserSearchPanel exposing (..)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
 import Codecs exposing (LookupResult)
@@ -12,7 +13,6 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
-import Assets as A
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -426,10 +426,10 @@ view_ op (State model) =
                     ]
 
             Loading ->
-                div [ class "spinner" ] [ text "" ]
+                div [ class "spinner" ] []
 
             LoadingSlowly ->
-                div [ class "spinner" ] [ text "" ]
+                div [ class "spinner" ] []
 
             NotAsked ->
                 text ""

@@ -2,7 +2,7 @@ module ModelCommon.View exposing (..)
 
 import Assets as A
 import Dict exposing (Dict)
-import Extra exposing (colorToTextColor, ternary)
+import Extra exposing (colorAttr, ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeType as NodeType
@@ -38,6 +38,7 @@ import ModelSchema
         , PNode
         , Post
         , RoleExt
+        , RoleExtFull
         , Tension
         , User
         , UserCtx
@@ -251,10 +252,7 @@ viewLabel cls label =
     let
         color =
             label.color
-                |> Maybe.map
-                    (\c ->
-                        [ attribute "style" ("background-color:" ++ c ++ "; color:" ++ colorToTextColor c ++ ";") ]
-                    )
+                |> Maybe.map (\c -> [ colorAttr c ])
                 |> withDefault []
     in
     span ([ class ("tag is-rounded " ++ cls) ] ++ color) [ text label.name ]
@@ -404,10 +402,29 @@ viewRoleExt cls r =
     let
         color =
             r.color
-                |> Maybe.map
-                    (\c ->
-                        [ attribute "style" ("background-color:" ++ c ++ "; color:" ++ colorToTextColor c ++ ";") ]
-                    )
+                |> Maybe.map (\c -> [ colorAttr c ])
+                |> withDefault []
+    in
+    span
+        ([ class ("button buttonRole " ++ cls) ] ++ color)
+        [ if r.role_type == RoleType.Coordinator then
+            span [ class "is-queen" ] []
+
+          else if r.role_type == RoleType.Owner then
+            span [ class "is-king" ] []
+
+          else
+            text ""
+        , text r.name
+        ]
+
+
+viewRoleExt2 : String -> RoleExtFull -> Html msg
+viewRoleExt2 cls r =
+    let
+        color =
+            r.color
+                |> Maybe.map (\c -> [ colorAttr c ])
                 |> withDefault []
     in
     span

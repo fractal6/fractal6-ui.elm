@@ -26,6 +26,7 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryPublicOrga
+    , queryRoles
     , roleFullPayload
     , tidPayload
     , userPayload
@@ -326,6 +327,7 @@ nodeOrgaPayload =
         |> with (Fractal.Object.Node.parent identity nodeIdPayload)
         |> with Fractal.Object.Node.type_
         |> with Fractal.Object.Node.role_type
+        |> with Fractal.Object.Node.color
         |> with (Fractal.Object.Node.first_link identity userPayload)
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.mode
@@ -867,6 +869,41 @@ labelFullPayload =
             Fractal.Object.Label.nodesAggregate identity <|
                 SelectionSet.map Count Fractal.Object.NodeAggregateResult.count
         )
+
+
+
+{-
+   Query Roles
+-}
+
+
+rolesDecoder : Maybe (List (Maybe NodeRolesFull)) -> Maybe (List RoleExtFull)
+rolesDecoder data =
+    data
+        |> Maybe.map
+            (\d ->
+                if List.length d == 0 then
+                    Nothing
+
+                else
+                    d
+                        |> List.filterMap identity
+                        |> List.map (\x -> x.roles |> withDefault [])
+                        |> List.concat
+                        |> Just
+            )
+        |> withDefault Nothing
+
+
+{-| Fetch on the given nodes only
+-}
+queryRoles url nids msg =
+    makeGQLQuery url
+        (Query.queryNode
+            (nidsFilter nids)
+            nodeRolesFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse rolesDecoder >> msg)
 
 
 

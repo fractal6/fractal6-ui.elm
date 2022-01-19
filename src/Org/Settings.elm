@@ -1840,7 +1840,7 @@ viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
 viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text "" ]
+            div [ class "box spinner" ] []
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg

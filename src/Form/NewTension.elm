@@ -4,7 +4,18 @@ import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (LookupResult)
 import Components.LabelSearchPanel as LabelSearchPanel
-import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, viewRoleNeeded, withDefaultData, withMaybeData)
+import Components.Loading as Loading
+    exposing
+        ( ErrorData
+        , GqlData
+        , ModalData
+        , RequestResult(..)
+        , viewAuthNeeded
+        , viewGqlErrors
+        , viewRoleNeeded
+        , withDefaultData
+        , withMaybeData
+        )
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc
     exposing
@@ -37,12 +48,41 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, InputViewMode(..), TensionForm, UserState(..), getChildren, getNode, getParentFragmentFromRole, getParents, getTargets, initTensionForm)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
-import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor)
+import ModelCommon
+    exposing
+        ( Ev
+        , InputViewMode(..)
+        , TensionForm
+        , UserState(..)
+        , getChildren
+        , getCircles
+        , getNode
+        , getParentFragmentFromRole
+        , getTargets
+        , initTensionForm
+        )
+import ModelCommon.Codecs
+    exposing
+        ( FractalBaseRoute(..)
+        , getOrgaRoles
+        , nid2rootid
+        , nid2type
+        , nodeIdCodec
+        )
+import ModelCommon.View
+    exposing
+        ( FormText
+        , action2SourceStr
+        , getNodeTextFromNodeType
+        , getTensionText
+        , roleColor
+        , tensionTypeColor
+        , viewRoleExt2
+        )
 import ModelSchema exposing (..)
 import Ports
 import Query.AddTension exposing (addOneTension)
+import Query.QueryNode exposing (queryRoles)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -57,16 +97,18 @@ type alias Model =
     , nodeDoc : NodeDoc -- form
     , result : GqlData Tension
     , sources : List UserRole
-    , targets : List PNode
     , step : TensionStep
     , isModalActive : Bool
     , activeTab : TensionTab
     , viewMode : InputViewMode
     , activeButton : Maybe Int
+    , path_data : GqlData LocalGraph
     , labelsPanel : LabelSearchPanel.State
-    , path_data : Maybe LocalGraph
+
+    -- Role/Circle
     , nodeStep : NodeStep
     , txt : FormText
+    , roles_result : GqlData (List RoleExtFull)
 
     -- Common
     , refresh_trial : Int
@@ -128,17 +170,19 @@ initModel user =
     { user = user
     , result = NotAsked
     , sources = []
-    , targets = []
     , step = TensionFinal
     , isModalActive = False
     , activeTab = NewTensionTab
     , viewMode = Write
     , activeButton = Nothing
     , nodeDoc = NodeDoc.create "" user
+    , path_data = NotAsked
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
-    , path_data = Nothing
+
+    -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
     , txt = getTensionText
+    , roles_result = Loading
 
     -- Common
     , refresh_trial = 0
@@ -220,32 +264,10 @@ setUser_ user (State model) =
 setPath_ : LocalGraph -> State -> State
 setPath_ p (State model) =
     let
-        targets =
-            getTargets (Success p) (Just [ RoleType.Guest, RoleType.Member ])
-
         newModel =
             setTarget (shrinkNode p.focus) model
     in
-    { newModel | path_data = Just p, targets = targets } |> State
-
-
-
---setTargets_ : GqlData NodesDict -> State -> State
---setTargets_ odata (State model) =
---    let
---        targets =
---            case odata of
---                Success od ->
---                    getParents model.nodeDoc.form.target.nameid odata
---                        ++ (getChildren model.nodeDoc.form.target.nameid odata |> List.filter (\n -> n.role_type == Nothing))
---                        -- Circle
---                        ++ ([ model.nodeDoc.form.target.nameid, model.nodeDoc.form.source.nameid ] |> List.map (\nid -> getNode nid odata) |> List.filterMap identity)
---                        |> LE.uniqueBy (\n -> n.nameid)
---
---                _ ->
---                    []
---    in
---    State { model | targets = targets }
+    { newModel | path_data = Success p } |> State
 
 
 fixGlitch_ : State -> State
@@ -470,6 +492,7 @@ type Msg
     | OnClose ModalData
     | OnCloseSafe String String
     | OnSwitchTab TensionTab
+    | OnGotRoles (GqlData (List RoleExtFull))
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
     | OnChangeInputViewMode InputViewMode
@@ -478,9 +501,10 @@ type Msg
     | OnChangeTensionSource UserRole
     | OnChangeTensionTarget PNode
     | OnChangeRoleAuthority RoleType.RoleType
-    | OnChangeVisibility NodeVisibility.NodeVisibility
     | OnChangeCircleGovernance NodeMode.NodeMode
     | OnChangePost String String
+    | OnSelectRoleExt RoleExtFull
+    | OnSelectVisibility NodeVisibility.NodeVisibility
     | OnAddDomains
     | OnAddPolicies
     | OnAddResponsabilities
@@ -618,7 +642,27 @@ update_ apis message model =
                 )
 
         OnSwitchTab tab ->
-            ( switchTab tab model, out0 [ Ports.bulma_driver "tensionModal" ] )
+            let
+                cmds =
+                    case tab of
+                        NewRoleTab ->
+                            if withMaybeData model.roles_result == Nothing then
+                                let
+                                    nameids =
+                                        getCircles model.path_data |> List.map .nameid
+                                in
+                                [ queryRoles apis nameids OnGotRoles ]
+
+                            else
+                                []
+
+                        _ ->
+                            []
+            in
+            ( switchTab tab model, out0 ([ Ports.bulma_driver "tensionModal" ] ++ cmds) )
+
+        OnGotRoles result ->
+            ( { model | roles_result = result }, noOut )
 
         OnChangeNodeStep step ->
             ( changeNodeStep step model, out0 [ Ports.bulma_driver "tensionModal" ] )
@@ -640,20 +684,19 @@ update_ apis message model =
             ( setTarget target model, noOut )
 
         OnChangeRoleAuthority role_type ->
-            ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
-
-        OnChangeVisibility visibility ->
-            let
-                k =
-                    Debug.log "ya" visibility
-            in
-            ( { model | nodeDoc = NodeDoc.updatePost "visibility" (NodeVisibility.toString visibility) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
+            ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, noOut )
 
         OnChangeCircleGovernance mode ->
             ( { model | nodeDoc = NodeDoc.updatePost "mode" (NodeMode.toString mode) model.nodeDoc }, noOut )
 
         OnChangePost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, noOut )
+
+        OnSelectRoleExt role ->
+            ( { model | nodeDoc = NodeDoc.updateFromRoleExt role model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
+
+        OnSelectVisibility visibility ->
+            ( { model | nodeDoc = NodeDoc.updatePost "visibility" (NodeVisibility.toString visibility) model.nodeDoc }, out0 [ send (OnChangeNodeStep NodeValidateStep) ] )
 
         OnAddResponsabilities ->
             ( { model | nodeDoc = NodeDoc.addResponsabilities model.nodeDoc }, noOut )
@@ -1010,7 +1053,9 @@ viewRecipients model =
                                 ]
                                 [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
                         )
-                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid) model.targets)
+                        (getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
+                            |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
+                        )
                 ]
             ]
         ]
@@ -1177,7 +1222,7 @@ viewTension model =
                         [ div [ class "control" ]
                             [ LabelSearchPanel.viewNew
                                 { selectedLabels = form.labels
-                                , targets = model.targets
+                                , targets = getCircles model.path_data
                                 }
                                 model.labelsPanel
                                 |> Html.map LabelSearchPanelMsg
@@ -1248,7 +1293,7 @@ viewCircle model =
                 ]
                     ++ (case model.nodeStep of
                             RoleAuthorityStep ->
-                                [ viewRoleAuthority model
+                                [ viewRoleExt model
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
@@ -1258,7 +1303,7 @@ viewCircle model =
                                 ]
 
                             CircleVisibilityStep ->
-                                [ viewVisibility model
+                                [ viewCircleVisibility model
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
@@ -1347,7 +1392,6 @@ viewNodeValidate model =
 
         op_ =
             { data = model.nodeDoc
-            , targets = model.targets |> List.map (\n -> n.nameid)
             , onChangePost = OnChangePost
             , onAddDomains = OnAddDomains
             , onAddPolicies = OnAddPolicies
@@ -1397,8 +1441,8 @@ viewNodeValidate model =
         ]
 
 
-viewRoleAuthority : Model -> Html Msg
-viewRoleAuthority model =
+viewRoleExt : Model -> Html Msg
+viewRoleExt model =
     let
         form =
             model.nodeDoc.form
@@ -1409,40 +1453,55 @@ viewRoleAuthority model =
         -- Show the help information
         --showMsg "roleAuthority-0" "is-info is-light" "icon-info" T.roleAuthorityHeader ""
         , div [ class "subtitle" ] [ text "Select a role template" ]
+        , case model.roles_result of
+            Success roles ->
+                roles
+                    |> List.map
+                        (\role ->
+                            let
+                                isActive =
+                                    Just role.id == Dict.get "id" form.post
 
-        -- Show the choices as card.
-        --RoleType.list
-        , [ ( RoleType.Peer, T.peerRoleInfo ), ( RoleType.Coordinator, T.coordinatorRoleInfo ) ]
-            |> List.map
-                (\( x, description ) ->
-                    let
-                        isActive =
-                            Just x == form.node.role_type
+                                icon =
+                                    "icon-user"
+                            in
+                            div
+                                [ class "card has-border column is-paddingless m-3 is-h"
+                                , classList [ ( "is-selected", isActive ) ]
+                                , attribute "style" "min-width: 150px;"
 
-                        icon =
-                            "icon-user has-text-" ++ roleColor x
-                    in
-                    div
-                        [ class "card has-border column is-paddingless m-3 is-h"
-                        , attribute "style" "min-width: 150px;"
-                        , classList [ ( "is-selected", isActive ) ]
+                                -- @debug: onClick here do not work sometimes (for the 2nd element of the list ???
+                                ]
+                                [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
+                                    [ h2 [ class "level mb-3 is-size-5" ]
+                                        [ -- div [ class "level-left" ] [ A.icon (icon ++ " icon-bg") ]
+                                          div [ class "level-left" ] [ viewRoleExt2 "" role ]
+                                        ]
+                                    , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
+                                    ]
+                                ]
+                        )
+                    |> (\l ->
+                            l
+                                ++ [ div
+                                        [ class "card-content button-light has-text-link"
+                                        , onClick (OnChangeNodeStep NodeValidateStep)
+                                        ]
+                                        [ text "Or create from scratch" ]
+                                   ]
+                       )
+                    |> div [ class "columns is-multiline" ]
 
-                        -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
-                        ]
-                        [ div [ class "card-content p-4", onClick (OnChangeRoleAuthority x) ]
-                            [ h2 [ class "is-strong is-size-5" ]
-                                [ A.icon1 (icon ++ " icon-bg") (RoleType.toString x) ]
-                            , div [ class "content is-small" ]
-                                [ text description ]
-                            ]
-                        ]
-                )
-            |> div [ class "columns is-multiline" ]
+            Failure err ->
+                viewGqlErrors err
+
+            _ ->
+                div [ class "spinner" ] []
         ]
 
 
-viewVisibility : Model -> Html Msg
-viewVisibility model =
+viewCircleVisibility : Model -> Html Msg
+viewCircleVisibility model =
     let
         form =
             model.nodeDoc.form
@@ -1476,11 +1535,9 @@ viewVisibility model =
 
                         -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
                         ]
-                        [ div [ class "card-content p-4", onClick (OnChangeVisibility x) ]
-                            [ h2 [ class "is-strong is-size-5" ]
-                                [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
-                            , div [ class "content is-small" ]
-                                [ text description ]
+                        [ div [ class "card-content p-4", onClick (OnSelectVisibility x) ]
+                            [ h2 [ class "is-strong is-size-5" ] [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
+                            , div [ class "content is-small" ] [ text description ]
                             ]
                         ]
                 )

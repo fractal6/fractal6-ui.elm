@@ -32,18 +32,19 @@ type NodeHasFilter
     | Docs
     | Labels
     | Roles
+    | Role_ext
+    | Role_type
+    | Color
     | First_link
     | Second_link
     | Skills
-    | Role_type
-    | Role_ext
     | Contracts
     | Orga_agg
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, Children, Docs, Labels, Roles, First_link, Second_link, Skills, Role_type, Role_ext, Contracts, Orga_agg ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Orga_agg ]
 
 
 decoder : Decoder NodeHasFilter
@@ -124,6 +125,15 @@ decoder =
                     "roles" ->
                         Decode.succeed Roles
 
+                    "role_ext" ->
+                        Decode.succeed Role_ext
+
+                    "role_type" ->
+                        Decode.succeed Role_type
+
+                    "color" ->
+                        Decode.succeed Color
+
                     "first_link" ->
                         Decode.succeed First_link
 
@@ -132,12 +142,6 @@ decoder =
 
                     "skills" ->
                         Decode.succeed Skills
-
-                    "role_type" ->
-                        Decode.succeed Role_type
-
-                    "role_ext" ->
-                        Decode.succeed Role_ext
 
                     "contracts" ->
                         Decode.succeed Contracts
@@ -227,6 +231,15 @@ toString enum____ =
         Roles ->
             "roles"
 
+        Role_ext ->
+            "role_ext"
+
+        Role_type ->
+            "role_type"
+
+        Color ->
+            "color"
+
         First_link ->
             "first_link"
 
@@ -235,12 +248,6 @@ toString enum____ =
 
         Skills ->
             "skills"
-
-        Role_type ->
-            "role_type"
-
-        Role_ext ->
-            "role_ext"
 
         Contracts ->
             "contracts"
@@ -335,6 +342,15 @@ fromString enumString____ =
         "roles" ->
             Just Roles
 
+        "role_ext" ->
+            Just Role_ext
+
+        "role_type" ->
+            Just Role_type
+
+        "color" ->
+            Just Color
+
         "first_link" ->
             Just First_link
 
@@ -343,12 +359,6 @@ fromString enumString____ =
 
         "skills" ->
             Just Skills
-
-        "role_type" ->
-            Just Role_type
-
-        "role_ext" ->
-            Just Role_ext
 
         "contracts" ->
             Just Contracts

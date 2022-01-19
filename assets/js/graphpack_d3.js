@@ -561,7 +561,11 @@ export const GraphPack = {
             ctx2d.beginPath();
             ctx2d.font = fontSize + "px " + this.fontstyleCircle;
             ctx2d.textAlign = "center";
-            ctx2d.fillStyle = this.nameColor + opac;
+            if (node.data.color) {
+                ctx2d.fillStyle = this.colorToTextColor(node.data.color);
+            } else {
+                ctx2d.fillStyle = this.nameColor + opac;
+            }
             ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY);
             if (node.data.role_type == RoleType.Bot) {
                 ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY+node.ctx.rayon*0.7);
@@ -884,6 +888,22 @@ export const GraphPack = {
         return this.colorCircleRange[k%this.colorCircleRange.length]
     },
 
+    colorToTextColor(color) {
+        var c;
+        if ( [ "#7FDBFF"
+            , "#39CCCC"
+            , "#01FF70"
+            , "#FFDC00"
+            , "#AAAAAA"
+            , "#DDDDDD"
+        ].includes(color.toUpperCase()) ) {
+            c = "#000";
+        } else {
+            c = "#fff";
+        }
+        return c
+    },
+
     getNodeColor(node, opac) {
         var z = this.zoomedNode || this.focusedNode;
         var color, depth;
@@ -899,7 +919,7 @@ export const GraphPack = {
             grd.addColorStop(0.2, color + opac);
             grd.addColorStop(1, this.colorCircle(depth+1) + opac);
         } else if (node.data.type_ === NodeType.Role) {
-            color = this.roleColors[node.data.role_type] || this.roleColors["_default_"];
+            color = node.data.color || this.roleColors[node.data.role_type] || this.roleColors["_default_"];
             if (color.substring(0, 1) == "r") {
                 grd = color;
             } else {

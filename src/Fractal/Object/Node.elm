@@ -322,6 +322,36 @@ roles fillInOptionals____ object____ =
     Object.selectionForCompositeField "roles" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+type alias RoleExtOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.RoleExtFilter }
+
+
+role_ext :
+    (RoleExtOptionalArguments -> RoleExtOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.RoleExt
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+role_ext fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeRoleExtFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "role_ext" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.Node
+role_type =
+    Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
+
+
+color : SelectionSet (Maybe String) Fractal.Object.Node
+color =
+    Object.selectionForField "(Maybe String)" "color" [] (Decode.string |> Decode.nullable)
+
+
 type alias FirstLinkOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.UserFilter }
 
@@ -365,31 +395,6 @@ second_link fillInOptionals____ object____ =
 skills : SelectionSet (Maybe (List String)) Fractal.Object.Node
 skills =
     Object.selectionForField "(Maybe (List String))" "skills" [] (Decode.string |> Decode.list |> Decode.nullable)
-
-
-role_type : SelectionSet (Maybe Fractal.Enum.RoleType.RoleType) Fractal.Object.Node
-role_type =
-    Object.selectionForField "(Maybe Enum.RoleType.RoleType)" "role_type" [] (Fractal.Enum.RoleType.decoder |> Decode.nullable)
-
-
-type alias RoleExtOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.RoleExtFilter }
-
-
-role_ext :
-    (RoleExtOptionalArguments -> RoleExtOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.RoleExt
-    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
-role_ext fillInOptionals____ object____ =
-    let
-        filledInOptionals____ =
-            fillInOptionals____ { filter = Absent }
-
-        optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeRoleExtFilter ]
-                |> List.filterMap Basics.identity
-    in
-    Object.selectionForCompositeField "role_ext" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
 type alias ContractsOptionalArguments =

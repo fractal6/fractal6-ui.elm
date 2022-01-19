@@ -882,7 +882,7 @@ update global message model =
         ChangeLabel ->
             let
                 targets =
-                    getTargets model.path_data Nothing
+                    getCircles model.path_data
             in
             ( model, Cmd.map LabelSearchPanelMsg (send (LabelSearchPanel.OnOpen targets True)), Cmd.none )
 
@@ -1744,7 +1744,7 @@ viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
 viewJoinOrgaStep step =
     case step of
         JoinInit _ ->
-            div [ class "box spinner" ] [ text "" ]
+            div [ class "box spinner" ] []
 
         JoinNotAuthorized errMsg ->
             viewGqlErrors errMsg
@@ -1763,4 +1763,4 @@ viewJoinOrgaStep step =
                     viewGqlErrors err
 
                 _ ->
-                    div [ class "box spinner" ] [ text "" ]
+                    div [ class "box spinner" ] []
