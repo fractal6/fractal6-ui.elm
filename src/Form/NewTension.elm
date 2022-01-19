@@ -25,11 +25,12 @@ import Components.NodeDoc as NodeDoc
         , viewSelectAuthority
         , viewSelectGovernance
         )
+import Components.UserInput as UserInput
 import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onClickPD2, onEnter, onKeydown, onTab)
 import Extra.Views exposing (showMsg)
-import Form exposing (isPostEmpty, isPostSendable)
+import Form exposing (isPostEmpty, isPostSendable, isUsersSendable)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -60,28 +61,17 @@ import ModelCommon
         , getParentFragmentFromRole
         , getTargets
         , initTensionForm
+        , isSelfContract
+        , makeCandidateContractForm
+        , tensionToActionForm
         )
-import ModelCommon.Codecs
-    exposing
-        ( FractalBaseRoute(..)
-        , getOrgaRoles
-        , nid2rootid
-        , nid2type
-        , nodeIdCodec
-        )
-import ModelCommon.View
-    exposing
-        ( FormText
-        , action2SourceStr
-        , getNodeTextFromNodeType
-        , getTensionText
-        , roleColor
-        , tensionTypeColor
-        , viewRoleExt2
-        )
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
+import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor, viewRoleExt2)
 import ModelSchema exposing (..)
 import Ports
+import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
+import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (queryRoles)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T exposing (textH, textT, upH)
@@ -101,9 +91,10 @@ type alias Model =
     , isModalActive : Bool
     , activeTab : TensionTab
     , viewMode : InputViewMode
-    , activeButton : Maybe Int
+    , activeButton : Maybe Int -- 0: creating role, 1: creating tension (no pushing blob)
     , path_data : GqlData LocalGraph
-    , labelsPanel : LabelSearchPanel.State
+    , action_result : GqlData IdPayload
+    , doInvite : Bool
 
     -- Role/Circle
     , nodeStep : NodeStep
@@ -114,6 +105,10 @@ type alias Model =
     , refresh_trial : Int
     , preventGlitch : Bool -- Debug flag to avoid have a glitch when clikin on a link in the modal that will reset it and make its border likeliy to change (from success to init)
     , modal_confirm : ModalConfirm Msg
+
+    -- Components
+    , labelsPanel : LabelSearchPanel.State
+    , userInput : UserInput.State
     }
 
 
@@ -177,7 +172,8 @@ initModel user =
     , activeButton = Nothing
     , nodeDoc = NodeDoc.create "" user
     , path_data = NotAsked
-    , labelsPanel = LabelSearchPanel.init "" SelectLabel user
+    , action_result = NotAsked
+    , doInvite = False
 
     -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
@@ -188,6 +184,10 @@ initModel user =
     , refresh_trial = 0
     , preventGlitch = True
     , modal_confirm = ModalConfirm.init NoMsg
+
+    -- Components
+    , labelsPanel = LabelSearchPanel.init "" SelectLabel user
+    , userInput = UserInput.init user
     }
 
 
@@ -496,6 +496,9 @@ type Msg
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
     | OnChangeInputViewMode InputViewMode
+    | DoInvite
+    | OnInvite Time.Posix
+    | PushAck (GqlData IdPayload)
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource UserRole
@@ -517,8 +520,6 @@ type Msg
       --| OnCancelUser Int
       --| OnShowLookupFs
       --| OnCancelLookupFs
-      -- Labels
-    | LabelSearchPanelMsg LabelSearchPanel.Msg
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -526,6 +527,9 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+      -- Components
+    | LabelSearchPanelMsg LabelSearchPanel.Msg
+    | UserInputMsg UserInput.Msg
 
 
 type alias Out =
@@ -673,6 +677,62 @@ update_ apis message model =
         OnChangeInputViewMode viewMode ->
             ( setViewMode viewMode model, noOut )
 
+        DoInvite ->
+            ( { model | doInvite = True }, noOut )
+
+        OnInvite time ->
+            let
+                form =
+                    model.nodeDoc.form
+
+                aform =
+                    tensionToActionForm form
+
+                node =
+                    form.node
+
+                newModel =
+                    model
+                        |> post "createdAt" (fromTime time)
+                        |> setEvents
+                            [ Ev TensionEvent.MemberLinked
+                                ""
+                                ((List.head form.users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email))
+                                    |> withDefault ""
+                                )
+                            ]
+            in
+            ( { newModel | action_result = LoadingSlowly }
+            , if isSelfContract form.uctx form.users then
+                out0 [ actionRequest apis aform PushAck ]
+
+              else
+                let
+                    contractForm =
+                        makeCandidateContractForm aform
+                in
+                out0 [ addOneContract apis contractForm PushAck ]
+            )
+
+        PushAck result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( { model | action_result = NotAsked }
+                    , out1 [ DoAuth model.nodeDoc.form.uctx ]
+                    )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit OnInvite) 500 ] [ DoUpdateToken ] )
+
+                OkAuth _ ->
+                    ( { model | action_result = result }, noOut )
+
+                DuplicateErr ->
+                    ( { model | action_result = Failure [ "Duplicate Error: A similar contract already exists, please check it out." ] }, noOut )
+
+                _ ->
+                    ( { model | action_result = result }, noOut )
+
         -- Doc change
         OnChangeTensionType type_ ->
             ( setTensionType type_ model, noOut )
@@ -759,9 +819,13 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushTension OnTensionAck) 500 ] [ DoUpdateToken ] )
 
                 OkAuth tension ->
+                    let
+                        data =
+                            { model | nodeDoc = NodeDoc.setId tension.id model.nodeDoc }
+                    in
                     case model.activeTab of
                         NewTensionTab ->
-                            ( setResult result model, out1 [ DoPushTension tension ] )
+                            ( setResult result data, out1 [ DoPushTension tension ] )
 
                         NewRoleTab ->
                             let
@@ -770,7 +834,7 @@ update_ apis message model =
                                         |> Maybe.map (\nid -> nodeIdCodec model.nodeDoc.form.target.nameid nid (withDefault NodeType.Role model.nodeDoc.form.node.type_))
                                         |> withDefault ""
                             in
-                            ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
+                            ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                         NewCircleTab ->
                             let
@@ -779,7 +843,7 @@ update_ apis message model =
                                         |> Maybe.map (\nid -> nodeIdCodec model.nodeDoc.form.target.nameid nid (withDefault NodeType.Circle model.nodeDoc.form.node.type_))
                                         |> withDefault ""
                             in
-                            ( setResult result model, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
+                            ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                 DuplicateErr ->
                     ( setResult (Failure [ "Duplicate Error: this name is already taken." ]) model, noOut )
@@ -811,7 +875,6 @@ update_ apis message model =
         --    )
         --OnCancelLookupFs ->
         --    ( closeLookup model, noOut )
-        -- Labels
         LabelSearchPanelMsg msg ->
             let
                 ( panel, out ) =
@@ -834,6 +897,23 @@ update_ apis message model =
             in
             ( { newModel | labelsPanel = panel }
             , out2 (out.cmds |> List.map (\m -> Cmd.map LabelSearchPanelMsg m) |> List.append cmds) out.gcmds
+            )
+
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                users =
+                    out.result
+                        |> Maybe.map (\( selected, u ) -> ternary selected u [])
+                        |> withDefault model.nodeDoc.form.users
+
+                ( cmds, gcmds ) =
+                    ( [], [] )
+            in
+            ( { model | userInput = data, nodeDoc = NodeDoc.setUsers users model.nodeDoc }
+            , out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds)
             )
 
         -- Confirm Modal
@@ -863,6 +943,7 @@ subscriptions (State model) =
     --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
     ]
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
+        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
 
 
 
@@ -872,6 +953,7 @@ subscriptions (State model) =
 
 
 type alias Op =
+    -- @obsolete ?
     { users_data : GqlData UsersDict }
 
 
@@ -1077,6 +1159,27 @@ viewSuccess res model =
             , target "_blank"
             ]
             [ textH T.checkItOut ]
+        , if model.activeTab == NewRoleTab && model.activeButton == Just 0 then
+            case model.action_result of
+                Success _ ->
+                    div []
+                        [ A.icon1 "icon-check icon-2x has-text-success" " "
+                        , if isSelfContract model.nodeDoc.form.uctx model.nodeDoc.form.users then
+                            text "Welcome to your new role."
+
+                          else
+                            text "User has been invited."
+                        ]
+
+                _ ->
+                    if model.doInvite then
+                        viewInviteRole model
+
+                    else
+                        div [ class "field m-2" ] [ a [ onClick DoInvite, target "blank_" ] [ text "Or invite someone." ] ]
+
+          else
+            text ""
         ]
 
 
@@ -1542,4 +1645,60 @@ viewCircleVisibility model =
                         ]
                 )
             |> div [ class "columns" ]
+        ]
+
+
+viewInviteRole : Model -> Html Msg
+viewInviteRole model =
+    let
+        form =
+            model.nodeDoc.form
+
+        isLoading =
+            model.action_result == LoadingSlowly
+    in
+    div [ class "columns is-centered mt-2" ]
+        [ div [ class "column is-8" ]
+            [ UserInput.view { label_text = "Invite someone for this role (or link yourself):" } model.userInput |> Html.map UserInputMsg
+            , viewComment model
+            , case model.action_result of
+                Failure err ->
+                    div [ class "field" ] [ viewGqlErrors err ]
+
+                _ ->
+                    text ""
+            , div [ class "field" ]
+                [ div [ class "is-pulled-right" ]
+                    [ button
+                        ([ class "button is-light is-link"
+                         , classList [ ( "is-loading", isLoading ) ]
+                         , disabled (not (isUsersSendable form.users) || isLoading)
+                         ]
+                            ++ [ onClick (OnSubmit OnInvite) ]
+                        )
+                        [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> textH ]
+                    ]
+                ]
+            ]
+        ]
+
+
+viewComment : Model -> Html Msg
+viewComment model =
+    let
+        message =
+            Dict.get "message" model.nodeDoc.form.post |> withDefault ""
+    in
+    div [ class "field" ]
+        [ div [ class "control submitFocus" ]
+            [ textarea
+                [ class "textarea"
+                , rows 3
+                , placeholder (upH T.leaveCommentOpt)
+                , value message
+                , onInput <| OnChangePost "message"
+                ]
+                []
+            ]
+        , p [ class "help-label" ] [ textH T.invitationMessageHelp ]
         ]

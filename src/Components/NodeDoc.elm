@@ -125,6 +125,15 @@ setUctx uctx data =
     { data | form = { form | uctx = uctx } }
 
 
+setId : String -> NodeDoc -> NodeDoc
+setId tid data =
+    let
+        form =
+            data.form
+    in
+    { data | form = { form | id = tid } }
+
+
 setTensionType : TensionType.TensionType -> NodeDoc -> NodeDoc
 setTensionType type_ data =
     let
@@ -185,6 +194,15 @@ setStatus status data =
             data.form
     in
     { data | form = { f | status = Just status } }
+
+
+setUsers : List UserForm -> NodeDoc -> NodeDoc
+setUsers users data =
+    let
+        f =
+            data.form
+    in
+    { data | form = { f | users = users } }
 
 
 setEvents : List Ev -> NodeDoc -> NodeDoc

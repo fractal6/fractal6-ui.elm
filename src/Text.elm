@@ -982,6 +982,11 @@ firstLinkCircleMessageHelp =
     "Assign an user to a coordinator Role (first link)."
 
 
+invitationMessageHelp : String
+invitationMessageHelp =
+    "Add an invitation message."
+
+
 tensionAdded : String
 tensionAdded =
     "tension added."

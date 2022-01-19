@@ -36,6 +36,7 @@ import ModelCommon.Codecs
         , memberIdCodec
         , nearestCircleid
         , nid2rootid
+        , nodeFromFragment
         , voteIdCodec
         )
 import ModelSchema exposing (..)
@@ -322,6 +323,19 @@ initUserForm =
     { username = "", name = Nothing, email = "", pattern = "" }
 
 
+tensionToActionForm : TensionForm -> ActionForm
+tensionToActionForm form =
+    initActionForm form.id (LoggedIn form.uctx)
+        |> (\f ->
+                { f
+                    | node = nodeFromFragment form.target.nameid form.node
+                    , users = form.users
+                    , events = form.events
+                    , post = form.post
+                }
+           )
+
+
 
 {-
    Contract Form
@@ -413,6 +427,12 @@ makeCandidateContractForm form =
     , candidates = candidates
     , pending_candidates = pending_candidates
     }
+
+
+isSelfContract : UserCtx -> List UserForm -> Bool
+isSelfContract uctx users =
+    -- Assume List.length model.form.users == 1
+    List.member uctx.username (List.map (\x -> x.username) users)
 
 
 

@@ -357,6 +357,7 @@ type alias NodeFragment =
 
 
 type alias SubNodeFragment =
+    -- @deprecated ?
     { name : Maybe String
     , nameid : Maybe String
     , type_ : Maybe NodeType.NodeType

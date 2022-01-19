@@ -27,7 +27,17 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (ActionForm, Ev, UserState(..), blobFromTensionHead, initActionForm, makeCandidateContractForm)
+import ModelCommon
+    exposing
+        ( ActionForm
+        , Ev
+        , UserForm
+        , UserState(..)
+        , blobFromTensionHead
+        , initActionForm
+        , isSelfContract
+        , makeCandidateContractForm
+        )
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nid2rootid)
 import ModelCommon.View exposing (roleColor, viewUserFull)
 import ModelSchema exposing (..)
@@ -381,14 +391,15 @@ setActionForm data =
                 LinkAction ->
                     [ Ev TensionEvent.MemberLinked
                         (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
-                        (mor frag.first_link (node.first_link |> Maybe.map (\x -> x.username)) |> withDefault "")
+                        (mor
+                            (List.head data.form.users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email))
+                            (node.first_link |> Maybe.map (\x -> x.username))
+                            |> withDefault ""
+                        )
                     ]
 
                 UnLinkAction user ->
-                    [ Ev TensionEvent.MemberUnlinked
-                        user.username
-                        ""
-                    ]
+                    [ Ev TensionEvent.MemberUnlinked user.username "" ]
 
                 ArchiveAction ->
                     [ Ev TensionEvent.BlobArchived "" "" ]
@@ -534,7 +545,7 @@ type Msg
     | OnOpenModal2 PanelState (GqlData NodesDict)
     | OnCloseModal ModalData
     | OnCloseModalSafe String String
-    | OnUpdatePost String String
+    | OnChangePost String String
     | OnChangeVisibility NodeVisibility.NodeVisibility
     | OnChangeMode NodeMode.NodeMode
     | OnChangeRoleType RoleType.RoleType
@@ -614,14 +625,14 @@ update_ apis message model =
         PushAction form state ->
             case state of
                 LinkAction ->
-                    let
-                        contractForm =
-                            makeCandidateContractForm form
-                    in
-                    if isSelfContract model then
+                    if isSelfContract model.form.uctx model.form.users then
                         ( model, out0 [ actionRequest apis form PushAck ] )
 
                     else
+                        let
+                            contractForm =
+                                makeCandidateContractForm form
+                        in
                         ( model, out0 [ addOneContract apis contractForm PushAck ] )
 
                 _ ->
@@ -708,10 +719,10 @@ update_ apis message model =
                                         [ DoUpdateNode model.form.node.nameid (\n -> { n | role_type = role_type }) ]
 
                             LinkAction ->
-                                if isSelfContract model then
+                                if isSelfContract model.form.uctx model.form.users then
                                     let
                                         fs =
-                                            Just { username = withDefault "" model.form.fragment.first_link, name = Nothing }
+                                            Just { username = model.form.uctx.username, name = model.form.uctx.name }
                                     in
                                     [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
 
@@ -746,7 +757,7 @@ update_ apis message model =
                 )
             )
 
-        OnUpdatePost field value ->
+        OnChangePost field value ->
             ( updatePost field value model, noOut )
 
         OnChangeVisibility visibility ->
@@ -868,32 +879,16 @@ update_ apis message model =
 
                 users =
                     out.result
-                        |> Maybe.map
-                            (\( selected, u ) ->
-                                if selected then
-                                    u
-
-                                else
-                                    []
-                            )
+                        |> Maybe.map (\( selected, u ) -> ternary selected u [])
                         |> withDefault model.form.users
 
                 ( cmds, gcmds ) =
                     ( [], [] )
 
-                -- Only valide because It can has only one user selected here.
-                -- updated fragment is used to build the old/new value of the event.
-                -- COntract is build directly from form.users
-                fragment =
-                    model.form.fragment
-
-                frag =
-                    { fragment | first_link = List.head users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email) }
-
                 form =
                     model.form
             in
-            ( { model | userInput = data, form = { form | users = users, fragment = frag } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
+            ( { model | userInput = data, form = { form | users = users } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
 
 
 subscriptions : State -> List (Sub Msg)
@@ -1067,10 +1062,11 @@ viewModalContent op model =
                     div
                         [ class "box is-light" ]
                         [ A.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH (action2post model.state (isSelfContract model) ++ ".")
+                        , textH (action2post model.state (isSelfContract model.form.uctx model.form.users) ++ ".")
                         ]
 
                 Failure err ->
+                    -- @deprecated: failure is shown in Step1.
                     viewGqlErrors err
 
                 _ ->
@@ -1116,16 +1112,16 @@ viewStep1 op model =
 
                 LinkAction ->
                     [ UserInput.view { label_text = "Invite someone (or link yourself):" } model.userInput |> Html.map UserInputMsg
-                    , viewComment op model
+                    , viewComment model
                     ]
 
                 UnLinkAction user ->
                     [ div [ class "mb-5" ] [ text "Confirm to unlink user: ", viewUserFull 2 True True user ]
-                    , viewComment op model
+                    , viewComment model
                     ]
 
                 _ ->
-                    [ viewComment op model ]
+                    [ viewComment model ]
         , div [ class "modal-card-foot", attribute "style" "display: block;" ]
             [ case model.action_result of
                 Failure err ->
@@ -1149,15 +1145,15 @@ viewStep1 op model =
                          ]
                             ++ [ onClick (OnSubmit OnActionSubmit) ]
                         )
-                        [ action2submitstr model.state (isSelfContract model) |> text ]
+                        [ action2submitstr model.state (isSelfContract model.form.uctx model.form.users) |> text ]
                     ]
                 ]
             ]
         ]
 
 
-viewComment : Op -> Model -> Html Msg
-viewComment op model =
+viewComment : Model -> Html Msg
+viewComment model =
     let
         message =
             Dict.get "message" model.form.post |> withDefault ""
@@ -1169,11 +1165,15 @@ viewComment op model =
                 , rows 3
                 , placeholder (upH T.leaveCommentOpt)
                 , value message
-                , onInput <| OnUpdatePost "message"
+                , onInput <| OnChangePost "message"
                 ]
                 []
             ]
-        , p [ class "help-label" ] [ textH T.tensionMessageHelp ]
+        , if model.state == LinkAction then
+            p [ class "help-label" ] [ textH T.invitationMessageHelp ]
+
+          else
+            p [ class "help-label" ] [ textH T.tensionMessageHelp ]
         ]
 
 
@@ -1295,8 +1295,3 @@ viewRoleAuthority op model =
                 )
             |> div [ class "columns is-multiline" ]
         ]
-
-
-isSelfContract : Model -> Bool
-isSelfContract model =
-    List.member model.form.uctx.username (List.map (\x -> x.username) model.form.users)
