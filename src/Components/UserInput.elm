@@ -418,7 +418,7 @@ viewUserSelectors op model =
 viewEmailSelector : Op -> Model -> Html Msg
 viewEmailSelector op model =
     div [ class "panel sidePanel" ]
-        [ div [ class "selectors has-background-grey" ]
+        [ div [ class "selectors has-background-info-light" ]
             [ p
                 [ class "panel-block"
                 , onClick (OnClickEmail model.form.pattern)

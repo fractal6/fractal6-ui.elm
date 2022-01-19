@@ -465,7 +465,7 @@ viewLabelSelectors isInternal labels op model =
     let
         viewEdit =
             p
-                [ class "panel-block is-md is-w"
+                [ class "panel-block is-md is-w discrete-link"
                 , if isInternal then
                     attribute "style" "border-bottom: 1px solid;"
 

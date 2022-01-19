@@ -128,31 +128,15 @@ hr {
 }
 
 .panel-heading {
-  font-weight: var(--weight-bold);
+    font-weight: var(--weight-bold);
 }
 
 .panel-tabs {
-  a {
-    &.is-active {
-      border-bottom-color: var(--link-active);
+    a {
+        &.is-active {
+            border-bottom-color: var(--link-active);
+        }
     }
-  }
-}
-
-.panel-block {
-  &:hover {
-    color: var(--link-hover);
-
-    .panel-icon {
-      color: var(--link-hover);
-    }
-  }
-
-  &.is-active {
-    .panel-icon {
-      color: var(--link-active);
-    }
-  }
 }
 
 .help-label {
@@ -249,7 +233,7 @@ a.is-link {
 .discrete-link {
     color: inherit;
     &:hover {
-        color: var(--link);
+        color: var(--link) !important;
     }
 }
 
@@ -1155,19 +1139,22 @@ a.is-link {
     .is-username {
         color: var(--text-light2) !important;
     }
-
-    p {
-        &.panel-block {
-            border-bottom-color: var(--border-color);
-            &:hover {
-                cursor: pointer !important;
-                background: var(--hbc) !important;
-            }
-        }
-        .panel-icon {
-            font-size: 1.5rem;
+    .panel-block, .panel-icon {
+        &:hover {
+            cursor: pointer !important;
+            background: var(--hbc) !important;
         }
     }
+    .panel-block {
+        border-bottom-color: var(--border-color);
+        &.is-active .panel-icon, &:hover .panel-icon {
+            color: var(--link-active) !important;
+        }
+    }
+    .panel-icon {
+        font-size: 1.5rem;
+    }
+
 }
 
 
@@ -1682,6 +1669,9 @@ tr.mediaBox {
     }
     .panel-heading {
         background-color: var(--modal-header-background);
+    }
+    .panel-block, .panel-icon {
+        color: var(--text-light2);
     }
     .breadcrumb {
         a, a:hover {

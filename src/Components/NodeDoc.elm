@@ -534,7 +534,8 @@ viewMandateSubSection name maybePara =
 viewAboutInput hasBeenPushed source txt node op =
     div [ class "pb-0" ]
         [ div [ class "field" ]
-            [ div [ class "control" ]
+            [ label [ class "label" ] [ textH T.name ]
+            , div [ class "control" ]
                 [ input
                     [ class "input autofocus followFocus"
                     , attribute "data-nextfocus" "aboutField"
@@ -574,7 +575,8 @@ viewAboutInput hasBeenPushed source txt node op =
             , p [ class "help-label" ] [ textH txt.name_help ]
             ]
         , div [ class "field" ]
-            [ div [ class "control" ]
+            [ label [ class "label" ] [ textH T.about ]
+            , div [ class "control" ]
                 [ input
                     [ id "aboutField"
                     , class "input followFocus"
