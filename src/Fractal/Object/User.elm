@@ -267,6 +267,11 @@ events fillInOptionals____ object____ =
     Object.selectionForCompositeField "events" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
 
 
+markAllAsRead : SelectionSet (Maybe String) Fractal.Object.User
+markAllAsRead =
+    Object.selectionForField "(Maybe String)" "markAllAsRead" [] (Decode.string |> Decode.nullable)
+
+
 type alias SubscriptionsAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 

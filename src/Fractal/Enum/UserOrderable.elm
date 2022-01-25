@@ -17,11 +17,12 @@ type UserOrderable
     | EmailHash
     | Bio
     | Utc
+    | MarkAllAsRead
 
 
 list : List UserOrderable
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, Bio, Utc ]
+    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, Bio, Utc, MarkAllAsRead ]
 
 
 decoder : Decoder UserOrderable
@@ -56,6 +57,9 @@ decoder =
 
                     "utc" ->
                         Decode.succeed Utc
+
+                    "markAllAsRead" ->
+                        Decode.succeed MarkAllAsRead
 
                     _ ->
                         Decode.fail ("Invalid UserOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -93,6 +97,9 @@ toString enum____ =
 
         Utc ->
             "utc"
+
+        MarkAllAsRead ->
+            "markAllAsRead"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -135,6 +142,9 @@ fromString enumString____ =
 
         "utc" ->
             Just Utc
+
+        "markAllAsRead" ->
+            Just MarkAllAsRead
 
         _ ->
             Nothing

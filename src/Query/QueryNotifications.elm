@@ -1,6 +1,7 @@
 module Query.QueryNotifications exposing (queryNotifications)
 
 import Dict exposing (Dict)
+import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -54,7 +55,7 @@ userNotificationsDecoder data =
                                     (\x ->
                                         case x.event of
                                             Just e ->
-                                                UserEvent x.isRead e |> Just
+                                                UserEvent x.id x.isRead e |> Just
 
                                             Nothing ->
                                                 Nothing
@@ -84,6 +85,27 @@ notificationsFilter f a =
     }
 
 
+contractFilter a =
+    -- @debug: see nested filter dgraph
+    { a
+        | filter =
+            Input.buildEventKindFilter
+                (\b ->
+                    { b
+                        | contractFilter =
+                            Input.buildContractFilter
+                                (\c ->
+                                    { c | status = Present { eq = Present ContractStatus.Open, in_ = Absent } }
+                                )
+                                |> Present
+                    }
+                )
+                |> Present
+        , first = Absent
+        , offset = Absent
+    }
+
+
 
 --
 -- Payload
@@ -91,7 +113,7 @@ notificationsFilter f a =
 
 
 type alias UserEvent_ =
-    { isRead : Bool, event : Maybe (List EventKind) }
+    { id : String, isRead : Bool, event : Maybe (List EventKind) }
 
 
 type alias UserNotifications =
@@ -107,8 +129,9 @@ userNotificationsPayload f =
 notificationsPayload : SelectionSet UserEvent_ Fractal.Object.UserEvent
 notificationsPayload =
     SelectionSet.succeed UserEvent_
+        |> with (Fractal.Object.UserEvent.id |> SelectionSet.map decodedId)
         |> with Fractal.Object.UserEvent.isRead
-        |> with (Fractal.Object.UserEvent.event identity eventKindType)
+        |> with (Fractal.Object.UserEvent.event contractFilter eventKindType)
 
 
 eventKindType : SelectionSet EventKind Fractal.Union.EventKind
@@ -122,7 +145,6 @@ eventKindType =
 tensionEventPayload : SelectionSet EventNotif Fractal.Object.Event
 tensionEventPayload =
     SelectionSet.succeed EventNotif
-        |> with (Fractal.Object.Event.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Event.createdAt |> SelectionSet.map decodedTime)
         |> with (Fractal.Object.Event.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
         |> with Fractal.Object.Event.event_type

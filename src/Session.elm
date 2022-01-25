@@ -7,6 +7,9 @@ import Components.Loading as Loading
         ( GqlData
         , WebData
         )
+import Fractal.Enum.NodeMode as NodeMode
+import Fractal.Enum.NodeVisibility as NodeVisibility
+import Fractal.Enum.RoleType as RoleType
 import Json.Decode as JD
 import ModelCommon exposing (ActionState, AssigneeForm, LabelForm, UserState(..))
 import ModelCommon.Codecs exposing (NodeFocus)

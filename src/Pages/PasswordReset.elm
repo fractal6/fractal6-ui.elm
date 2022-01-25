@@ -225,7 +225,7 @@ view_ global model =
                                     viewResetForm2 global model
 
                                 RemoteData.Success False ->
-                                    div [ class "notification is-light is-warning" ] [ textH "The session expired, please try again." ]
+                                    div [ class "notification is-light is-warning" ] [ textH "The session has expired, please try again." ]
 
                                 RemoteData.Failure err ->
                                     viewHttpErrors err

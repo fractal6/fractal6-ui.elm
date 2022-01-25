@@ -902,9 +902,9 @@ buildAddUserInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { name = Absent, emailHash = Absent, bio = Absent, utc = Absent, notifyByEmail = Absent, subscriptions = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent }
+                { name = Absent, emailHash = Absent, bio = Absent, utc = Absent, notifyByEmail = Absent, subscriptions = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent }
     in
-    AddUserInput { createdAt = required____.createdAt, lastAck = required____.lastAck, username = required____.username, name = optionals____.name, password = required____.password, email = required____.email, emailHash = optionals____.emailHash, emailValidated = required____.emailValidated, bio = optionals____.bio, utc = optionals____.utc, notifyByEmail = optionals____.notifyByEmail, subscriptions = optionals____.subscriptions, rights = required____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events }
+    AddUserInput { createdAt = required____.createdAt, lastAck = required____.lastAck, username = required____.username, name = optionals____.name, password = required____.password, email = required____.email, emailHash = optionals____.emailHash, emailValidated = required____.emailValidated, bio = optionals____.bio, utc = optionals____.utc, notifyByEmail = optionals____.notifyByEmail, subscriptions = optionals____.subscriptions, rights = required____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead }
 
 
 type alias AddUserInputRequiredFields =
@@ -931,6 +931,7 @@ type alias AddUserInputOptionalFields =
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
+    , markAllAsRead : OptionalArgument String
     }
 
 
@@ -959,6 +960,7 @@ type alias AddUserInputRaw =
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
+    , markAllAsRead : OptionalArgument String
     }
 
 
@@ -973,7 +975,7 @@ type AddUserInput
 encodeAddUserInput : AddUserInput -> Value
 encodeAddUserInput (AddUserInput input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.lastAck |> Just ), ( "username", Encode.string input____.username |> Just ), ( "name", Encode.string |> Encode.optional input____.name ), ( "password", Encode.string input____.password |> Just ), ( "email", Encode.string input____.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input____.emailHash ), ( "emailValidated", Encode.bool input____.emailValidated |> Just ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef input____.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.lastAck |> Just ), ( "username", Encode.string input____.username |> Just ), ( "name", Encode.string |> Encode.optional input____.name ), ( "password", Encode.string input____.password |> Just ), ( "email", Encode.string input____.email |> Just ), ( "emailHash", Encode.string |> Encode.optional input____.emailHash ), ( "emailValidated", Encode.bool input____.emailValidated |> Just ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef input____.rights |> Just ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ) ]
 
 
 buildAddUserRightsInput :
@@ -6672,9 +6674,9 @@ buildUserPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, bio = Absent, utc = Absent, notifyByEmail = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent }
+                { createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, bio = Absent, utc = Absent, notifyByEmail = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent }
     in
-    UserPatch { createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, password = optionals____.password, email = optionals____.email, emailHash = optionals____.emailHash, emailValidated = optionals____.emailValidated, bio = optionals____.bio, utc = optionals____.utc, notifyByEmail = optionals____.notifyByEmail, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events }
+    UserPatch { createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, password = optionals____.password, email = optionals____.email, emailHash = optionals____.emailHash, emailValidated = optionals____.emailValidated, bio = optionals____.bio, utc = optionals____.utc, notifyByEmail = optionals____.notifyByEmail, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead }
 
 
 type alias UserPatchOptionalFields =
@@ -6697,6 +6699,7 @@ type alias UserPatchOptionalFields =
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
+    , markAllAsRead : OptionalArgument String
     }
 
 
@@ -6725,6 +6728,7 @@ type alias UserPatchRaw =
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
+    , markAllAsRead : OptionalArgument String
     }
 
 
@@ -6739,7 +6743,7 @@ type UserPatch
 encodeUserPatch : UserPatch -> Value
 encodeUserPatch (UserPatch input____) =
     Encode.maybeObject
-        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "emailHash", Encode.string |> Encode.optional input____.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input____.emailValidated ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ) ]
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "emailHash", Encode.string |> Encode.optional input____.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input____.emailValidated ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ) ]
 
 
 buildUserRef :
@@ -6749,9 +6753,9 @@ buildUserRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, bio = Absent, utc = Absent, notifyByEmail = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent }
+                { id = Absent, createdAt = Absent, lastAck = Absent, username = Absent, name = Absent, password = Absent, email = Absent, emailHash = Absent, emailValidated = Absent, bio = Absent, utc = Absent, notifyByEmail = Absent, subscriptions = Absent, rights = Absent, roles = Absent, backed_roles = Absent, tensions_created = Absent, tensions_assigned = Absent, contracts = Absent, events = Absent, markAllAsRead = Absent }
     in
-    UserRef { id = optionals____.id, createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, password = optionals____.password, email = optionals____.email, emailHash = optionals____.emailHash, emailValidated = optionals____.emailValidated, bio = optionals____.bio, utc = optionals____.utc, notifyByEmail = optionals____.notifyByEmail, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events }
+    UserRef { id = optionals____.id, createdAt = optionals____.createdAt, lastAck = optionals____.lastAck, username = optionals____.username, name = optionals____.name, password = optionals____.password, email = optionals____.email, emailHash = optionals____.emailHash, emailValidated = optionals____.emailValidated, bio = optionals____.bio, utc = optionals____.utc, notifyByEmail = optionals____.notifyByEmail, subscriptions = optionals____.subscriptions, rights = optionals____.rights, roles = optionals____.roles, backed_roles = optionals____.backed_roles, tensions_created = optionals____.tensions_created, tensions_assigned = optionals____.tensions_assigned, contracts = optionals____.contracts, events = optionals____.events, markAllAsRead = optionals____.markAllAsRead }
 
 
 type alias UserRefOptionalFields =
@@ -6775,6 +6779,7 @@ type alias UserRefOptionalFields =
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
+    , markAllAsRead : OptionalArgument String
     }
 
 
@@ -6804,6 +6809,7 @@ type alias UserRefRaw =
     , tensions_assigned : OptionalArgument (List TensionRef)
     , contracts : OptionalArgument (List ContractRef)
     , events : OptionalArgument (List UserEventRef)
+    , markAllAsRead : OptionalArgument String
     }
 
 
@@ -6818,7 +6824,7 @@ type UserRef
 encodeUserRef : UserRef -> Value
 encodeUserRef (UserRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "emailHash", Encode.string |> Encode.optional input____.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input____.emailValidated ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "lastAck", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.lastAck ), ( "username", Encode.string |> Encode.optional input____.username ), ( "name", Encode.string |> Encode.optional input____.name ), ( "password", Encode.string |> Encode.optional input____.password ), ( "email", Encode.string |> Encode.optional input____.email ), ( "emailHash", Encode.string |> Encode.optional input____.emailHash ), ( "emailValidated", Encode.bool |> Encode.optional input____.emailValidated ), ( "bio", Encode.string |> Encode.optional input____.bio ), ( "utc", Encode.string |> Encode.optional input____.utc ), ( "notifyByEmail", Encode.bool |> Encode.optional input____.notifyByEmail ), ( "subscriptions", (encodeTensionRef |> Encode.list) |> Encode.optional input____.subscriptions ), ( "rights", encodeUserRightsRef |> Encode.optional input____.rights ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "backed_roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.backed_roles ), ( "tensions_created", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_created ), ( "tensions_assigned", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_assigned ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "events", (encodeUserEventRef |> Encode.list) |> Encode.optional input____.events ), ( "markAllAsRead", Encode.string |> Encode.optional input____.markAllAsRead ) ]
 
 
 buildUserRightsFilter :

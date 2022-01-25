@@ -14,11 +14,13 @@ import Components.Loading as Loading
         , viewAuthNeeded
         , viewGqlErrors
         , viewHttpErrors
+        , withMapData
         , withMaybeData
         , withMaybeSlowly
         )
 import Dict exposing (Dict)
 import Extra exposing (ternary)
+import Extra.Events exposing (onClickPD2)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.ContractType as ContractType
@@ -40,6 +42,7 @@ import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
@@ -96,6 +99,7 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { uctx : UserCtx
     , notifications_data : GqlData UserEvents
+    , eid : String
 
     -- Common
     , modalAuth : ModalAuth
@@ -113,6 +117,10 @@ type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
     | LoadNotifications
     | GotNotifications (GqlData UserEvents)
+    | MarkAsRead String
+    | GotMarkAsRead (GqlData IdPayload)
+    | MarkAllAsRead
+    | GotMarkAllAsRead (GqlData IdPayload)
       -- Token refresh
     | DoOpenAuthModal UserCtx
     | DoCloseAuthModal String
@@ -152,6 +160,7 @@ init global flags =
         model =
             { uctx = uctx
             , notifications_data = Loading
+            , eid = ""
 
             -- common
             , modalAuth = Inactive
@@ -202,6 +211,56 @@ update global message model =
 
                 _ ->
                     ( { model | notifications_data = result }, Cmd.none, Cmd.none )
+
+        MarkAsRead eid ->
+            ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
+
+        GotMarkAsRead result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, send (DoOpenAuthModal model.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    -- modified event inplace toSet isRead...
+                    let
+                        newData =
+                            withMapData
+                                (LE.updateIf (\a -> a.id == model.eid)
+                                    (\a -> { a | isRead = True })
+                                )
+                                model.notifications_data
+                    in
+                    ( { model | notifications_data = newData }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        MarkAllAsRead ->
+            ( model, markAllAsRead apis model.uctx.username GotMarkAllAsRead, Cmd.none )
+
+        GotMarkAllAsRead result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, send (DoOpenAuthModal model.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep MarkAllAsRead 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    -- modified event inplace toSet isRead...
+                    let
+                        newData =
+                            withMapData
+                                (List.map (\a -> ternary (isTensionEvent a.event) { a | isRead = True } a))
+                                model.notifications_data
+                    in
+                    ( { model | notifications_data = newData }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- Token refresh
         DoOpenAuthModal uctx ->
@@ -343,8 +402,8 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "notifications", class "section columns is-centered" ]
-        [ div [ class "column is-6" ]
+    div [ id "notifications", class "section columns" ]
+        [ div [ class "column is-6 is-offset-3 " ]
             [ h2 [ class "title" ] [ text "Notifications" ]
             , case model.notifications_data of
                 Success notifications ->
@@ -366,6 +425,7 @@ view_ global model =
                 Failure err ->
                     viewGqlErrors err
             ]
+        , div [ class "column is-2 has-text-centered" ] [ div [ class "button", onClick MarkAllAsRead ] [ text "Mark all as read" ] ]
         ]
 
 
@@ -373,30 +433,7 @@ viewNotifications : UserEvents -> Model -> Html Msg
 viewNotifications notifications model =
     notifications
         |> List.map
-            (\ue ->
-                let
-                    n =
-                        case List.head ue.event of
-                            Just (TensionEvent e) ->
-                                e.tension.receiver
-
-                            Just (ContractEvent c) ->
-                                c.tension.receiver
-
-                            Nothing ->
-                                PNode "" ""
-                in
-                div [ class "media mt-1" ]
-                    [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga False n.nameid ] ]
-                    , div [ class "media-content" ]
-                        [ Lazy.lazy2 viewUserEvent model.now ue
-
-                        --, nav [class "level is-mobile"]
-                        ]
-
-                    --, div [class "media-right"] [ button [class "delete"][]]
-                    ]
-            )
+            (\ue -> Lazy.lazy2 viewUserEvent model.now ue)
         |> div []
 
 
@@ -406,16 +443,17 @@ viewUserEvent now ue =
         firstEvent =
             List.head ue.event
 
-        ( isContract, ev ) =
+        ( isContract, ev, node ) =
             case firstEvent of
                 Just (TensionEvent e) ->
                     let
                         link =
-                            eventToLink e
+                            eventToLink ue e
                     in
                     ( False
                     , Dict.fromList
-                        [ ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
+                        [ ( "id", ue.id )
+                        , ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
                         , ( "title_", e.tension.title )
                         , ( "target", e.tension.receiver.name )
                         , ( "orga", nid2rootid e.tension.receiver.nameid )
@@ -424,16 +462,18 @@ viewUserEvent now ue =
                         , ( "link", link )
                         , ( "icon", eventToIcon e.event_type )
                         ]
+                    , e.tension.receiver
                     )
 
                 Just (ContractEvent c) ->
                     let
                         link =
-                            contractToLink c
+                            contractToLink ue c
                     in
                     ( True
                     , Dict.fromList
-                        [ ( "contract", c.contract_type |> contractTypeToText )
+                        [ ( "id", ue.id )
+                        , ( "contract", c.contract_type |> contractTypeToText )
                         , ( "title", c.event.event_type |> contractEventToText )
                         , ( "target", c.tension.receiver.name )
                         , ( "orga", nid2rootid c.tension.receiver.nameid )
@@ -442,16 +482,53 @@ viewUserEvent now ue =
                         , ( "link", link )
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
+                    , c.tension.receiver
                     )
 
                 Nothing ->
-                    ( False, Dict.empty )
+                    ( False, Dict.empty, PNode "" "" )
     in
     if isContract then
-        viewContractMedia now ev
+        div [ class "media mt-1" ]
+            [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga False node.nameid ] ]
+            , div [ class "media-content" ]
+                [ viewContractMedia now ev
+
+                --, nav [class "level is-mobile"]
+                ]
+            , if not ue.isRead then
+                div
+                    [ class "media-right tooltip"
+                    , attribute "data-tooltip" "A vote is waited from you."
+                    ]
+                    [ div [ class "Circle has-text-info" ] [] ]
+
+              else
+                text ""
+            ]
+
+    else if not isContract && not (Dict.isEmpty ev) then
+        div [ class "media mt-1" ]
+            [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga False node.nameid ] ]
+            , div [ class "media-content" ]
+                [ viewEventMedia now ev
+
+                --, nav [class "level is-mobile"]
+                ]
+            , if not ue.isRead then
+                div
+                    [ class "media-right tooltip"
+                    , attribute "data-tooltip" "Mark as read."
+                    , onClick (MarkAsRead ue.id)
+                    ]
+                    [ div [ class "Circle has-text-link is-w" ] [] ]
+
+              else
+                text ""
+            ]
 
     else
-        viewEventMedia now ev
+        text ""
 
 
 viewEventMedia : Time.Posix -> Dict String String -> Html Msg
@@ -504,8 +581,8 @@ viewContractMedia now ev =
         ]
 
 
-eventToLink : EventNotif -> String
-eventToLink e =
+eventToLink : UserEvent -> EventNotif -> String
+eventToLink ue e =
     if
         List.member e.event_type
             [ TensionEvent.Closed
@@ -519,16 +596,38 @@ eventToLink e =
             ]
     then
         (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
-            ++ "?goto="
+            ++ "?eid="
+            ++ ue.id
+            ++ "&goto="
             ++ e.createdAt
 
     else if List.member e.event_type [ TensionEvent.BlobPushed, TensionEvent.BlobArchived, TensionEvent.BlobUnarchived, TensionEvent.Visibility, TensionEvent.Authority ] then
-        Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref
+        (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            ++ "?eid="
+            ++ ue.id
 
     else
-        Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref
+        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            ++ "?eid="
+            ++ ue.id
 
 
-contractToLink : ContractNotif -> String
-contractToLink c =
+contractToLink : UserEvent -> ContractNotif -> String
+contractToLink ue c =
     Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
+
+
+isTensionEvent event =
+    let
+        ev =
+            List.head event
+    in
+    case ev of
+        Just (TensionEvent _) ->
+            True
+
+        Just (ContractEvent _) ->
+            False
+
+        Nothing ->
+            False

@@ -734,8 +734,19 @@ update global message model =
                     let
                         ndata =
                             hotNodeInsert n model.orga_data
+
+                        pdata =
+                            if model.node_focus.nameid == nameid then
+                                let
+                                    fun2 focus =
+                                        { focus | visibility = n.visibility, mode = n.mode, name = n.name }
+                                in
+                                Maybe.map (\x -> { x | focus = fun2 x.focus }) model.path_data
+
+                            else
+                                model.path_data
                     in
-                    ( { model | orga_data = Success ndata }
+                    ( { model | orga_data = Success ndata, path_data = pdata }
                     , Cmd.none
                     , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
                     )

@@ -195,7 +195,7 @@ refreshAuthModal modalAuth msgs =
             , div [ class "box" ] <|
                 case modalAuth of
                     Active form ->
-                        [ p [ class "field" ] [ text "Your session expired. Please, confirm your password:" ]
+                        [ p [ class "field" ] [ text "Your session has expired. Please, confirm your password:" ]
                         , div [ class "field" ]
                             [ div [ class "field" ]
                                 [ div [ class "control" ]

@@ -27,11 +27,12 @@ type UserHasFilter
     | Tensions_assigned
     | Contracts
     | Events
+    | MarkAllAsRead
 
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, NotifyByEmail, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events ]
+    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, NotifyByEmail, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events, MarkAllAsRead ]
 
 
 decoder : Decoder UserHasFilter
@@ -96,6 +97,9 @@ decoder =
 
                     "events" ->
                         Decode.succeed Events
+
+                    "markAllAsRead" ->
+                        Decode.succeed MarkAllAsRead
 
                     _ ->
                         Decode.fail ("Invalid UserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -163,6 +167,9 @@ toString enum____ =
 
         Events ->
             "events"
+
+        MarkAllAsRead ->
+            "markAllAsRead"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -235,6 +242,9 @@ fromString enumString____ =
 
         "events" ->
             Just Events
+
+        "markAllAsRead" ->
+            Just MarkAllAsRead
 
         _ ->
             Nothing

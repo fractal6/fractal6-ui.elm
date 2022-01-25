@@ -539,7 +539,8 @@ type alias UserEvents =
 
 
 type alias UserEvent =
-    { isRead : Bool
+    { id : String
+    , isRead : Bool
     , event : List EventKind
     }
 
@@ -550,8 +551,7 @@ type EventKind
 
 
 type alias EventNotif =
-    { id : String
-    , createdAt : String
+    { createdAt : String
     , createdBy : Username
     , event_type : TensionEvent.TensionEvent
     , tension : { id : String, receiver : PNode, title : String }

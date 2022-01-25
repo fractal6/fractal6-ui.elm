@@ -1323,7 +1323,7 @@ Note: To edit mandates you need to publish the modifications done in the corresp
 
 authCoordinated : String
 authCoordinated =
-    "Where Coordinator roles (orange) have the governance authority."
+    "Where Coordinator roles have the governance authority."
 
 
 authAgile : String

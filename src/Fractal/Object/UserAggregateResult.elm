@@ -112,3 +112,13 @@ utcMin =
 utcMax : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
 utcMax =
     Object.selectionForField "(Maybe String)" "utcMax" [] (Decode.string |> Decode.nullable)
+
+
+markAllAsReadMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
+markAllAsReadMin =
+    Object.selectionForField "(Maybe String)" "markAllAsReadMin" [] (Decode.string |> Decode.nullable)
+
+
+markAllAsReadMax : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
+markAllAsReadMax =
+    Object.selectionForField "(Maybe String)" "markAllAsReadMax" [] (Decode.string |> Decode.nullable)

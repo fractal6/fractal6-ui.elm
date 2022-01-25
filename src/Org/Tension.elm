@@ -98,7 +98,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
-import Query.PatchUser exposing (toggleTensionSubscription)
+import Query.PatchUser exposing (markAsRead, toggleTensionSubscription)
 import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.QueryUser exposing (getIsSubscribe)
@@ -180,6 +180,7 @@ type alias Model =
     , tension_blobs : GqlData TensionBlobs
     , expandedEvents : List Int
     , isSubscribed : GqlData Bool
+    , eid : String
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionForm
@@ -290,6 +291,8 @@ type Msg
     | GotTensionBlobs (GqlData TensionBlobs)
     | ExpandEvent Int
     | ToggleSubscription String
+    | MarkAsRead String
+    | GotMarkAsRead (GqlData IdPayload)
       --
       -- Page Action
       --
@@ -417,6 +420,7 @@ init global flags =
             , tension_blobs = Loading
             , expandedEvents = []
             , isSubscribed = fromMaybeData global.session.isSubscribed Loading
+            , eid = ""
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionForm tid global.session.user
@@ -490,6 +494,12 @@ init global flags =
                     Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad tid cid_m))
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
+            , case Dict.get "eid" query |> Maybe.map List.head |> withDefault Nothing of
+                Just eid ->
+                    send (MarkAsRead eid)
+
+                Nothing ->
+                    Cmd.none
             ]
     in
     ( model
@@ -693,6 +703,23 @@ update global message model =
             case model.isSubscribed of
                 Success b ->
                     ( model, toggleTensionSubscription apis username model.tensionid (not b) GotIsSucribe, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
+
+        MarkAsRead eid ->
+            ( { model | eid = eid }, markAsRead apis eid True GotMarkAsRead, Cmd.none )
+
+        GotMarkAsRead result ->
+            case parseErr result model.refresh_trial of
+                Authenticate ->
+                    ( model, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+
+                RefreshToken i ->
+                    ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
+
+                OkAuth _ ->
+                    ( model, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )

@@ -1,4 +1,4 @@
-module Query.PatchUser exposing (toggleTensionSubscription)
+module Query.PatchUser exposing (markAllAsRead, markAsRead, toggleTensionSubscription)
 
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -9,8 +9,10 @@ import Fractal.Mutation as Mutation
 import Fractal.Object
 import Fractal.Object.Node
 import Fractal.Object.Tension
+import Fractal.Object.UpdateUserEventPayload
 import Fractal.Object.UpdateUserPayload
 import Fractal.Object.User
+import Fractal.Object.UserEvent
 import Fractal.Object.UserRights
 import Fractal.Scalar
 import GqlClient exposing (..)
@@ -87,6 +89,116 @@ toggleSubscriptionInput username tid doSet =
             \_ ->
                 { set = ternary doSet patch Absent
                 , remove = ternary doSet Absent patch
+                }
+    in
+    { input = Input.buildUpdateUserInput inputReq inputOpt }
+
+
+
+{-
+   Mark notif as read
+-}
+
+
+type alias PatchUserPayload =
+    { user : Maybe (List (Maybe IdPayload)) }
+
+
+userIdDecoder : Maybe PatchUserPayload -> Maybe IdPayload
+userIdDecoder data =
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.user
+                    |> Maybe.map (List.filterMap identity)
+                    |> withDefault []
+                    |> List.head
+            )
+
+
+markAsRead url eid isRead msg =
+    makeGQLMutation url
+        (Mutation.updateUserEvent
+            (markAsReadInput eid isRead)
+            (SelectionSet.map PatchUserPayload <|
+                Fractal.Object.UpdateUserEventPayload.userEvent identity
+                    -- markAsReadPayload
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.UserEvent.id)
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse userIdDecoder >> msg)
+
+
+markAsReadInput : String -> Bool -> Mutation.UpdateUserEventRequiredArguments
+markAsReadInput eid isRead =
+    let
+        inputReq =
+            { filter =
+                Input.buildUserEventFilter
+                    (\ft -> { ft | id = Present [ encodeId eid ] })
+            }
+
+        patch =
+            Input.buildUserEventPatch
+                (\s ->
+                    { s | isRead = Present isRead }
+                )
+                |> Present
+
+        inputOpt =
+            \_ ->
+                { set = patch
+                , remove = Absent
+                }
+    in
+    { input = Input.buildUpdateUserEventInput inputReq inputOpt }
+
+
+
+{-
+   Mark all notif as read
+-}
+
+
+markAllAsRead url username msg =
+    makeGQLMutation url
+        (Mutation.updateUser
+            (markAllAsReadInput username)
+            (SelectionSet.map PatchUserPayload <|
+                Fractal.Object.UpdateUserPayload.user identity
+                    -- markAsReadPayload
+                    (SelectionSet.map IdPayload
+                        (SelectionSet.map decodedId Fractal.Object.User.id)
+                    )
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse userIdDecoder >> msg)
+
+
+markAllAsReadInput : String -> Mutation.UpdateUserRequiredArguments
+markAllAsReadInput username =
+    let
+        inputReq =
+            { filter =
+                Input.buildUserFilter
+                    (\ft ->
+                        { ft | username = { eq = Present username, regexp = Absent, in_ = Absent } |> Present }
+                    )
+            }
+
+        patch =
+            Input.buildUserPatch
+                (\s ->
+                    { s | markAllAsRead = Present "" }
+                )
+                |> Present
+
+        inputOpt =
+            \_ ->
+                { set = patch
+                , remove = Absent
                 }
     in
     { input = Input.buildUpdateUserInput inputReq inputOpt }
