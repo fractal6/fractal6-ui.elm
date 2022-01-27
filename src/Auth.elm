@@ -48,8 +48,14 @@ messageToErrState message_ trial =
         message =
             String.toLower message_
     in
-    if startsWith "token is expired" message || startsWith "no token found" message then
+    if contains "token is expired" message || startsWith "no token found" message then
         Authenticate
+
+    else if startsWith "duplicate error" message then
+        DuplicateErr
+
+    else if contains "already exists for field" message then
+        DuplicateErr
 
     else if startsWith "access denied" message then
         if trial == 0 then
@@ -57,12 +63,6 @@ messageToErrState message_ trial =
 
         else
             UnknownErr
-
-    else if startsWith "duplicate error" message then
-        DuplicateErr
-
-    else if contains "already exists for field" message then
-        DuplicateErr
 
     else
         UnknownErr
