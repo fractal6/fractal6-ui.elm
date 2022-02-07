@@ -1,4 +1,4 @@
-port module Global exposing
+module Global exposing
     ( Flags
     , Model
     , Msg(..)
@@ -403,11 +403,8 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ loggedOutOkFromJs (always LoggedOutUserOk)
+        [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
         ]
-
-
-port loggedOutOkFromJs : (() -> msg) -> Sub msg
 
 
 

@@ -258,7 +258,16 @@ initCircleTab type_ model =
 
 setUser_ : UserState -> State -> State
 setUser_ user (State model) =
-    { model | user = user } |> State
+    { model | user = user }
+        |> (\x ->
+                case user of
+                    LoggedIn uctx ->
+                        { x | nodeDoc = NodeDoc.setUctx uctx x.nodeDoc }
+
+                    LoggedOut ->
+                        x
+           )
+        |> State
 
 
 setPath_ : LocalGraph -> State -> State
@@ -341,7 +350,7 @@ setResult result data =
 
 setUctx : UserCtx -> Model -> Model
 setUctx uctx data =
-    { data | nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
+    { data | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
 
 
 setSources : List UserRole -> Model -> Model

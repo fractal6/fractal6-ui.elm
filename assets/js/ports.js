@@ -324,9 +324,9 @@ const actions = {
         // @DEBUG: Maybe List encoder ?
         if (user_ctx.roles && user_ctx.roles.length == 0) delete user_ctx.roles
         localStorage.setItem(user_ctx.key, JSON.stringify(user_ctx.data));
-    },
-    'LOAD_USERCTX' : (app, session, user_ctx_key) => {
-        app.ports.loadUserCtxFromJs.send(JSON.parse(localStorage.getItem(user_ctx_key)));
+
+        // Update Page/Components accordingly
+        app.ports.loadUserCtxFromJs.send(user_ctx.data);
     },
     'SAVE_WINDOWPOS' : (app, session, data) => {
         localStorage.setItem("window_pos", JSON.stringify(data));

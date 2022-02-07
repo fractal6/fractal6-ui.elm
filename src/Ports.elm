@@ -48,6 +48,16 @@ port triggerNotifFromJs : (() -> msg) -> Sub msg
 
 
 
+-- User
+
+
+port loggedOutOkFromJs : (() -> msg) -> Sub msg
+
+
+port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
+
+
+
 -- Modal
 
 
@@ -247,14 +257,6 @@ saveUserCtx userCtx =
     outgoing
         { action = "SAVE_USERCTX"
         , data = data
-        }
-
-
-loadUserCtx : String -> Cmd msg
-loadUserCtx key =
-    outgoing
-        { action = "LOAD_USERCTX"
-        , data = JE.string key
         }
 
 
@@ -484,6 +486,25 @@ lgPD sub messageErr message =
                     messageErr (JD.errorToString err)
          )
             << JD.decodeValue localGraphDecoder
+        )
+
+
+
+-- uctx Decoder
+
+
+uctxPD : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (UserCtx -> msg) -> Sub msg
+uctxPD sub messageErr message =
+    sub
+        ((\x ->
+            case x of
+                Ok n ->
+                    message n
+
+                Err err ->
+                    messageErr (JD.errorToString err)
+         )
+            << JD.decodeValue userCtxDecoder
         )
 
 
