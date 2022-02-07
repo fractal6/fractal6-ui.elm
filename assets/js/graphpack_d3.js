@@ -198,7 +198,7 @@ export const GraphPack = {
     rayonFactorRole: 0.95,
     rayonFactorGuest: 0.75,
     rayonFactorBot: 0.5,
-    guestSizeDivider: 7,
+    guestSizeDivider: 1,
     // y-axis offset for the top node
     nodeOffsetY: 0,
 
@@ -761,7 +761,6 @@ export const GraphPack = {
             if (!maybeFocus) {
                 console.warn("Unknown node:", focus);
                 console.warn("Redirecting to root");
-
                 maybeFocus = this.setFocus(this.rootNode);
                 //delay = 0.5;
             }

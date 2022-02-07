@@ -121,7 +121,7 @@ mapGlobalOutcmds gcmds =
                         ( Cmd.none, send UpdateUserToken )
 
                     DoFetchNode nameid ->
-                        ( send (FetchNewNode nameid), Cmd.none )
+                        ( send (FetchNewNode nameid False), Cmd.none )
 
                     DoPushTension tension ->
                         ( send (PushTension tension), Cmd.none )
@@ -216,7 +216,7 @@ type Msg
     | DoJoinOrga3 Node Time.Posix
     | JoinAck (GqlData IdPayload)
       -- Graphpack
-    | FetchNewNode String
+    | FetchNewNode String Bool
     | NewNodesAck (GqlData (List Node))
     | AddNodes (List Node)
     | UpdateNode String (Node -> Node)
@@ -226,6 +226,7 @@ type Msg
     | NodeClicked String
     | NodeHovered String
     | NodeFocused LocalGraph
+    | DoFocus String
     | DoClearTooltip
     | ToggleGraphReverse
       -- Token refresh
@@ -696,8 +697,18 @@ update global message model =
             in
             ( { model | tensions_data = Success tensions }, Cmd.none, send (UpdateSessionTensions (Just tensions)) )
 
-        FetchNewNode nameid ->
-            ( model, queryNodesSub apis nameid NewNodesAck, Cmd.none )
+        FetchNewNode nameid focus ->
+            ( model
+            , Cmd.batch
+                [ queryNodesSub apis nameid NewNodesAck
+                , if focus then
+                    sendSleep (DoFocus nameid) 1000
+
+                  else
+                    Cmd.none
+                ]
+            , Cmd.none
+            )
 
         NewNodesAck result ->
             case result of
@@ -779,7 +790,7 @@ update global message model =
             in
             ( { model | orga_data = Success ndata, next_focus = Just parentid_new }
               --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
-            , Cmd.batch [ send (FetchNewNode nameid_new) ]
+            , Cmd.batch [ send (FetchNewNode nameid_new False) ]
             , Cmd.none
             )
 
@@ -805,13 +816,22 @@ update global message model =
                 nameids =
                     path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
-                cmd =
-                    queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                cmds =
+                    [ queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                    , if not (isFailure model.node_data) && (Dict.get model.node_focus.nameid (model.orga_data |> withMaybeData |> withDefault Dict.empty) == Nothing) then
+                        send (FetchNewNode model.node_focus.nameid True)
+
+                      else
+                        Cmd.none
+                    ]
             in
             ( { model | path_data = Just path }
-            , Cmd.batch [ Ports.drawButtonsGraphPack, cmd, Ports.bulma_driver "" ]
+            , Cmd.batch ([ Ports.drawButtonsGraphPack, Ports.bulma_driver "" ] ++ cmds)
             , send (UpdateSessionPath (Just path))
             )
+
+        DoFocus nameid ->
+            ( model, Ports.focusGraphPack nameid, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )

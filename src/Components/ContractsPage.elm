@@ -9,6 +9,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
 import Form exposing (isPostEmpty)
+import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -455,7 +456,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( data, noOut )
+                    ( data, ternary (data.voteForm.vote > 0) (out1 [ DoUpdateToken ]) noOut )
 
                 _ ->
                     ( data, noOut )
@@ -886,6 +887,16 @@ viewContractBox c op model =
                 ]
             ]
         , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ T.space_), byAt op.now c.createdBy c.createdAt ] ]
+        , div [ class "" ] <|
+            case c.status of
+                ContractStatus.Closed ->
+                    [ span [ class "has-text-success" ] [ textH "closed" ] ]
+
+                ContractStatus.Canceled ->
+                    [ span [ class "has-text-warning" ] [ textH "canceled" ] ]
+
+                ContractStatus.Open ->
+                    []
         ]
 
 
@@ -919,13 +930,13 @@ viewVoteBox c op model =
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 1 ) ]
                     , onClick (OnSubmit <| DoVote 1)
                     ]
-                    [ span [ class "mx-4" ] [ textH "accept" ] ]
+                    [ span [ class "mx-4" ] [ textH T.accept ] ]
                 , div
                     [ class "button is-danger is-rounded"
                     , classList [ ( "is-loading", isLoading && model.voteForm.vote == 0 ) ]
                     , onClick (OnSubmit <| DoVote 0)
                     ]
-                    [ span [ class "mx-4" ] [ textH "decline" ] ]
+                    [ span [ class "mx-4" ] [ textH T.decline ] ]
                 ]
             , if isParticipant then
                 div [ class "help has-text-centered" ] [ text "You've already voted, but you can still change your vote." ]

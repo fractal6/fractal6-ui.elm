@@ -82,6 +82,9 @@ tensionTypeColor elt tt =
         TensionType.Help ->
             "has-" ++ elt ++ "-warning"
 
+        TensionType.Alert ->
+            "has-" ++ elt ++ "-danger"
+
 
 tensionTypeSpan : TensionType.TensionType -> Html msg
 tensionTypeSpan type_ =
@@ -641,11 +644,11 @@ roleColor rt =
         RoleType.Guest ->
             "primary"
 
-        RoleType.Retired ->
-            "primary"
-
         RoleType.Pending ->
             "primary"
+
+        RoleType.Retired ->
+            "warning"
 
 
 

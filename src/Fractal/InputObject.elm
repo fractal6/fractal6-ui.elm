@@ -705,9 +705,9 @@ buildAddRoleExtInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { about = Absent, color = Absent, mandate = Absent, nodes = Absent, roles = Absent }
+                { about = Absent, color = Absent, mandate = Absent, roles = Absent, nodes = Absent }
     in
-    AddRoleExtInput { rootnameid = required____.rootnameid, name = required____.name, about = optionals____.about, role_type = required____.role_type, color = optionals____.color, mandate = optionals____.mandate, nodes = optionals____.nodes, roles = optionals____.roles }
+    AddRoleExtInput { rootnameid = required____.rootnameid, name = required____.name, about = optionals____.about, role_type = required____.role_type, color = optionals____.color, mandate = optionals____.mandate, roles = optionals____.roles, nodes = optionals____.nodes }
 
 
 type alias AddRoleExtInputRequiredFields =
@@ -721,8 +721,8 @@ type alias AddRoleExtInputOptionalFields =
     { about : OptionalArgument String
     , color : OptionalArgument String
     , mandate : OptionalArgument MandateRef
-    , nodes : OptionalArgument (List NodeRef)
     , roles : OptionalArgument (List NodeRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
@@ -738,8 +738,8 @@ type alias AddRoleExtInputRaw =
     , role_type : Fractal.Enum.RoleType.RoleType
     , color : OptionalArgument String
     , mandate : OptionalArgument MandateRef
-    , nodes : OptionalArgument (List NodeRef)
     , roles : OptionalArgument (List NodeRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
@@ -754,7 +754,7 @@ type AddRoleExtInput
 encodeAddRoleExtInput : AddRoleExtInput -> Value
 encodeAddRoleExtInput (AddRoleExtInput input____) =
     Encode.maybeObject
-        [ ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "about", Encode.string |> Encode.optional input____.about ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString input____.role_type |> Just ), ( "color", Encode.string |> Encode.optional input____.color ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ) ]
+        [ ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "name", Encode.string input____.name |> Just ), ( "about", Encode.string |> Encode.optional input____.about ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString input____.role_type |> Just ), ( "color", Encode.string |> Encode.optional input____.color ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
 
 
 buildAddTensionInput :
@@ -4699,9 +4699,9 @@ buildRoleExtPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { rootnameid = Absent, name = Absent, about = Absent, role_type = Absent, color = Absent, mandate = Absent, nodes = Absent, roles = Absent }
+                { rootnameid = Absent, name = Absent, about = Absent, role_type = Absent, color = Absent, mandate = Absent, roles = Absent, nodes = Absent }
     in
-    RoleExtPatch { rootnameid = optionals____.rootnameid, name = optionals____.name, about = optionals____.about, role_type = optionals____.role_type, color = optionals____.color, mandate = optionals____.mandate, nodes = optionals____.nodes, roles = optionals____.roles }
+    RoleExtPatch { rootnameid = optionals____.rootnameid, name = optionals____.name, about = optionals____.about, role_type = optionals____.role_type, color = optionals____.color, mandate = optionals____.mandate, roles = optionals____.roles, nodes = optionals____.nodes }
 
 
 type alias RoleExtPatchOptionalFields =
@@ -4711,8 +4711,8 @@ type alias RoleExtPatchOptionalFields =
     , role_type : OptionalArgument Fractal.Enum.RoleType.RoleType
     , color : OptionalArgument String
     , mandate : OptionalArgument MandateRef
-    , nodes : OptionalArgument (List NodeRef)
     , roles : OptionalArgument (List NodeRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
@@ -4728,8 +4728,8 @@ type alias RoleExtPatchRaw =
     , role_type : OptionalArgument Fractal.Enum.RoleType.RoleType
     , color : OptionalArgument String
     , mandate : OptionalArgument MandateRef
-    , nodes : OptionalArgument (List NodeRef)
     , roles : OptionalArgument (List NodeRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
@@ -4744,7 +4744,7 @@ type RoleExtPatch
 encodeRoleExtPatch : RoleExtPatch -> Value
 encodeRoleExtPatch (RoleExtPatch input____) =
     Encode.maybeObject
-        [ ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ) ]
+        [ ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
 
 
 buildRoleExtRef :
@@ -4754,9 +4754,9 @@ buildRoleExtRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, rootnameid = Absent, name = Absent, about = Absent, role_type = Absent, color = Absent, mandate = Absent, nodes = Absent, roles = Absent }
+                { id = Absent, rootnameid = Absent, name = Absent, about = Absent, role_type = Absent, color = Absent, mandate = Absent, roles = Absent, nodes = Absent }
     in
-    RoleExtRef { id = optionals____.id, rootnameid = optionals____.rootnameid, name = optionals____.name, about = optionals____.about, role_type = optionals____.role_type, color = optionals____.color, mandate = optionals____.mandate, nodes = optionals____.nodes, roles = optionals____.roles }
+    RoleExtRef { id = optionals____.id, rootnameid = optionals____.rootnameid, name = optionals____.name, about = optionals____.about, role_type = optionals____.role_type, color = optionals____.color, mandate = optionals____.mandate, roles = optionals____.roles, nodes = optionals____.nodes }
 
 
 type alias RoleExtRefOptionalFields =
@@ -4767,8 +4767,8 @@ type alias RoleExtRefOptionalFields =
     , role_type : OptionalArgument Fractal.Enum.RoleType.RoleType
     , color : OptionalArgument String
     , mandate : OptionalArgument MandateRef
-    , nodes : OptionalArgument (List NodeRef)
     , roles : OptionalArgument (List NodeRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
@@ -4785,8 +4785,8 @@ type alias RoleExtRefRaw =
     , role_type : OptionalArgument Fractal.Enum.RoleType.RoleType
     , color : OptionalArgument String
     , mandate : OptionalArgument MandateRef
-    , nodes : OptionalArgument (List NodeRef)
     , roles : OptionalArgument (List NodeRef)
+    , nodes : OptionalArgument (List NodeRef)
     }
 
 
@@ -4801,7 +4801,7 @@ type RoleExtRef
 encodeRoleExtRef : RoleExtRef -> Value
 encodeRoleExtRef (RoleExtRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "name", Encode.string |> Encode.optional input____.name ), ( "about", Encode.string |> Encode.optional input____.about ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "roles", (encodeNodeRef |> Encode.list) |> Encode.optional input____.roles ), ( "nodes", (encodeNodeRef |> Encode.list) |> Encode.optional input____.nodes ) ]
 
 
 buildRoleType_hash :

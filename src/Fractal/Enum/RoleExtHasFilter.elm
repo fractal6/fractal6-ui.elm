@@ -14,13 +14,13 @@ type RoleExtHasFilter
     | Role_type
     | Color
     | Mandate
-    | Nodes
     | Roles
+    | Nodes
 
 
 list : List RoleExtHasFilter
 list =
-    [ Rootnameid, Name, About, Role_type, Color, Mandate, Nodes, Roles ]
+    [ Rootnameid, Name, About, Role_type, Color, Mandate, Roles, Nodes ]
 
 
 decoder : Decoder RoleExtHasFilter
@@ -47,11 +47,11 @@ decoder =
                     "mandate" ->
                         Decode.succeed Mandate
 
-                    "nodes" ->
-                        Decode.succeed Nodes
-
                     "roles" ->
                         Decode.succeed Roles
+
+                    "nodes" ->
+                        Decode.succeed Nodes
 
                     _ ->
                         Decode.fail ("Invalid RoleExtHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -81,11 +81,11 @@ toString enum____ =
         Mandate ->
             "mandate"
 
-        Nodes ->
-            "nodes"
-
         Roles ->
             "roles"
+
+        Nodes ->
+            "nodes"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -120,11 +120,11 @@ fromString enumString____ =
         "mandate" ->
             Just Mandate
 
-        "nodes" ->
-            Just Nodes
-
         "roles" ->
             Just Roles
+
+        "nodes" ->
+            Just Nodes
 
         _ ->
             Nothing

@@ -685,12 +685,6 @@ update_ apis message model =
                 form =
                     model.nodeDoc.form
 
-                aform =
-                    tensionToActionForm form
-
-                node =
-                    form.node
-
                 newModel =
                     model
                         |> post "createdAt" (fromTime time)
@@ -701,6 +695,9 @@ update_ apis message model =
                                     |> withDefault ""
                                 )
                             ]
+
+                aform =
+                    tensionToActionForm newModel.nodeDoc.form
             in
             ( { newModel | action_result = LoadingSlowly }
             , if isSelfContract form.uctx form.users then
@@ -725,7 +722,13 @@ update_ apis message model =
                     ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit OnInvite) 500 ] [ DoUpdateToken ] )
 
                 OkAuth _ ->
-                    ( { model | action_result = result }, noOut )
+                    let
+                        form =
+                            model.nodeDoc.form
+                    in
+                    ( { model | action_result = result }
+                    , ternary (isSelfContract form.uctx form.users) (out1 [ DoUpdateToken ]) noOut
+                    )
 
                 DuplicateErr ->
                     ( { model | action_result = Failure [ "Duplicate Error: A similar contract already exists, please check it out." ] }, noOut )

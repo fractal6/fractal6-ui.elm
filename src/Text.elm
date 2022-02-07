@@ -625,6 +625,16 @@ label =
     "label"
 
 
+accept : String
+accept =
+    "accept"
+
+
+decline : String
+decline =
+    "decline"
+
+
 
 --Canvas
 

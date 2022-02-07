@@ -1058,11 +1058,29 @@ viewModalContent op model =
 
         StepAck ->
             case model.action_result of
-                Success _ ->
+                Success data ->
+                    let
+                        selfContract =
+                            isSelfContract model.form.uctx model.form.users
+                    in
                     div
                         [ class "box is-light" ]
                         [ A.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH (action2post model.state (isSelfContract model.form.uctx model.form.users) ++ ".")
+                        , textH (action2post model.state selfContract ++ ". ")
+                        , if model.state == LinkAction && not selfContract then
+                            let
+                                link =
+                                    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+                            in
+                            a
+                                [ href link
+                                , onClickPD (OnCloseModal { reset = True, link = link })
+                                , target "_blank"
+                                ]
+                                [ textH T.checkItOut ]
+
+                          else
+                            text ""
                         ]
 
                 Failure err ->
