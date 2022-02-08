@@ -1388,10 +1388,7 @@ update global message model =
         DoOpenAuthModal uctx ->
             ( { model
                 | modalAuth =
-                    Active
-                        { post = Dict.fromList [ ( "username", uctx.username ) ]
-                        , result = RemoteData.NotAsked
-                        }
+                    Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
               }
             , Cmd.none
             , Ports.open_auth_modal
@@ -1406,12 +1403,12 @@ update global message model =
 
         ChangeAuthPost field value ->
             case model.modalAuth of
-                Active form ->
+                Active form r ->
                     let
                         newForm =
                             { form | post = Dict.insert field value form.post }
                     in
-                    ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -1429,8 +1426,8 @@ update global message model =
 
                 other ->
                     case model.modalAuth of
-                        Active form ->
-                            ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
+                        Active f r ->
+                            ( { model | modalAuth = Active f r }, Cmd.none, Cmd.none )
 
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )
@@ -1441,11 +1438,11 @@ update global message model =
                     let
                         form =
                             case model.modalAuth of
-                                Active f ->
+                                Active f _ ->
                                     f
 
                                 Inactive ->
-                                    UserAuthForm Dict.empty RemoteData.NotAsked
+                                    UserAuthForm Dict.empty
                     in
                     --ENTER
                     if isPostSendable [ "password" ] form.post then

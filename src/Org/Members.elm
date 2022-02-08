@@ -377,10 +377,7 @@ update global message model =
         DoOpenAuthModal uctx ->
             ( { model
                 | modalAuth =
-                    Active
-                        { post = Dict.fromList [ ( "username", uctx.username ) ]
-                        , result = RemoteData.NotAsked
-                        }
+                    Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
               }
             , Cmd.none
             , Ports.open_auth_modal
@@ -400,12 +397,12 @@ update global message model =
 
         ChangeAuthPost field value ->
             case model.modalAuth of
-                Active form ->
+                Active f r ->
                     let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
+                        form =
+                            { f | post = Dict.insert field value f.post }
                     in
-                    ( { model | modalAuth = Active newForm }, Cmd.none, Cmd.none )
+                    ( { model | modalAuth = Active form r }, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -419,7 +416,7 @@ update global message model =
                     let
                         cmd =
                             case model.modalAuth of
-                                Active f ->
+                                Active f _ ->
                                     case Dict.get "msg" f.post of
                                         Just "GotOrga" ->
                                             sendSleep (Navigate (uriFromNameid OverviewBaseUri model.node_focus.rootnameid)) 500
@@ -437,8 +434,8 @@ update global message model =
 
                 _ ->
                     case model.modalAuth of
-                        Active form ->
-                            ( { model | modalAuth = Active { form | result = result } }, Cmd.none, Cmd.none )
+                        Active f _ ->
+                            ( { model | modalAuth = Active f result }, Cmd.none, Cmd.none )
 
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )
@@ -449,11 +446,11 @@ update global message model =
                     let
                         form =
                             case model.modalAuth of
-                                Active f ->
+                                Active f _ ->
                                     f
 
                                 Inactive ->
-                                    UserAuthForm Dict.empty RemoteData.NotAsked
+                                    UserAuthForm Dict.empty
                     in
                     --ENTER
                     if isPostSendable [ "password" ] form.post then

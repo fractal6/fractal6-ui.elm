@@ -63,6 +63,7 @@ import ModelCommon
         , initTensionForm
         , isSelfContract
         , makeCandidateContractForm
+        , sortNode
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
@@ -1149,6 +1150,7 @@ viewRecipients model =
                         )
                         (getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
                             |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
+                            |> List.sortWith sortNode
                         )
                 ]
             ]

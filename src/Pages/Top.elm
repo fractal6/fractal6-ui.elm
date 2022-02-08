@@ -49,6 +49,7 @@ type alias Flags =
 
 type alias Model =
     { form : UserAuthForm
+    , result : WebData UserCtx
     , viewMode : ViewMode
     }
 
@@ -86,7 +87,8 @@ init global flags =
                     Cmd.none
 
         model =
-            { form = { post = Dict.empty, result = RemoteData.NotAsked }
+            { form = { post = Dict.empty }
+            , result = RemoteData.NotAsked
             , viewMode = Login
             }
     in
@@ -118,7 +120,7 @@ update global msg model =
             ( { model | form = formUpdated }, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model
+            ( { model | result = RemoteData.Loading }
             , case model.viewMode of
                 Login ->
                     login apis form.post GotSignin
@@ -139,14 +141,8 @@ update global msg model =
 
                         _ ->
                             []
-
-                form =
-                    model.form
-
-                formUpdated =
-                    { form | result = result }
             in
-            ( { model | form = formUpdated }
+            ( { model | result = result }
             , Cmd.none
             , Cmd.batch cmds
             )
@@ -156,7 +152,7 @@ update global msg model =
                 form =
                     model.form
             in
-            ( { model | viewMode = viewMode, form = { form | result = RemoteData.NotAsked } }, Cmd.none, Ports.bulma_driver "" )
+            ( { model | viewMode = viewMode, result = RemoteData.NotAsked }, Cmd.none, Ports.bulma_driver "" )
 
         SubmitEnter key ->
             case key of
@@ -242,7 +238,7 @@ viewSignBox model =
                 Signup ->
                     viewSignup model
             , div []
-                [ case model.form.result of
+                [ case model.result of
                     RemoteData.Failure err ->
                         viewHttpErrors err
 
@@ -313,6 +309,7 @@ viewLogin model =
                     button
                         [ id "submitButton"
                         , class "button is-success"
+                        , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                         , onClick (SubmitUser model.form)
                         ]
                         [ text "Sign in" ]
@@ -402,6 +399,7 @@ viewSignup model =
                     button
                         [ id "submitButton2"
                         , class "button is-success"
+                        , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                         , onClick (SubmitUser model.form)
                         ]
                         [ text "Sign up" ]

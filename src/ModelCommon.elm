@@ -78,13 +78,12 @@ uctxFromUser user =
 
 type alias UserAuthForm =
     { post : Dict String String
-    , result : WebData UserCtx
     }
 
 
 type ModalAuth
     = Inactive
-    | Active UserAuthForm
+    | Active UserAuthForm (WebData UserCtx)
 
 
 
@@ -798,3 +797,28 @@ getTensionRights uctx th_d path_d =
 
         _ ->
             False
+
+
+{-| First Circle then role, each group
+sorted alphabetically
+-}
+sortNode a b =
+    let
+        len_a =
+            List.length (String.split "#" a.nameid)
+
+        len_b =
+            List.length (String.split "#" b.nameid)
+    in
+    if len_a < len_b then
+        LT
+
+    else if len_a == len_b then
+        if a.nameid < b.nameid then
+            LT
+
+        else
+            GT
+
+    else
+        GT

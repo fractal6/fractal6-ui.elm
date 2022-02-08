@@ -41,7 +41,9 @@ page =
 
 
 type alias Model =
-    { form : UserAuthForm }
+    { form : UserAuthForm
+    , result : WebData UserCtx
+    }
 
 
 
@@ -66,8 +68,8 @@ init global flags =
                     Cmd.none
 
         model =
-            { form =
-                { post = Dict.empty, result = RemoteData.NotAsked }
+            { form = { post = Dict.empty }
+            , result = RemoteData.NotAsked
             }
     in
     ( model
@@ -107,7 +109,7 @@ update global msg model =
             ( { model | form = formUpdated }, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model
+            ( { model | result = RemoteData.Loading }
             , login apis form.post GotSignin
             , Cmd.none
             )
@@ -123,14 +125,8 @@ update global msg model =
 
                         _ ->
                             []
-
-                form =
-                    model.form
-
-                formUpdated =
-                    { form | result = result }
             in
-            ( { model | form = formUpdated }
+            ( { model | result = result }
             , Cmd.none
             , Cmd.batch cmds
             )
@@ -235,6 +231,7 @@ viewLogin global model =
                             button
                                 [ id "submitButton"
                                 , class "button is-success"
+                                , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                                 , onClick (SubmitUser model.form)
                                 ]
                                 [ text "Sign in" ]
@@ -247,7 +244,7 @@ viewLogin global model =
                 ]
             ]
         , div []
-            [ case model.form.result of
+            [ case model.result of
                 RemoteData.Failure err ->
                     viewHttpErrors err
 

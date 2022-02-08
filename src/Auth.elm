@@ -163,38 +163,25 @@ parseErr2 data trial =
 
 
 refreshAuthModal modalAuth msgs =
-    let
-        form_m =
-            case modalAuth of
-                Active f ->
-                    Just f
-
-                Inactive ->
-                    Nothing
-
-        username =
-            Maybe.map (\f -> Dict.get "username" f.post |> withDefault "") form_m
-                |> withDefault ""
-
-        onCloseModal =
-            if username == "" then
-                msgs.closeModal (Route.toHref Route.Logout)
-
-            else
-                msgs.closeModal ""
-    in
+    --let
+    --    onCloseModal =
+    --        if username == "" then
+    --            msgs.closeModal (Route.toHref Route.Logout)
+    --        else
+    --            msgs.closeModal ""
+    --in
     div
         [ id "refreshAuthModal"
         , class "modal modal-pos-top modal-fx-fadeIn"
-        , classList [ ( "is-active", form_m /= Nothing ) ]
+        , classList [ ( "is-active", modalAuth /= Inactive ) ]
         , attribute "data-modal-close" "closeAuthModalFromJs"
         ]
-        [ div [ class "modal-background", onClick onCloseModal ] []
+        [ div [ class "modal-background", onClick <| msgs.closeModal "" ] []
         , div [ class "modal-content" ]
             [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
             , div [ class "box" ] <|
                 case modalAuth of
-                    Active form ->
+                    Active form result ->
                         [ p [ class "field" ] [ text "Your session has expired. Please, confirm your password:" ]
                         , div [ class "field" ]
                             [ div [ class "field" ]
@@ -203,7 +190,7 @@ refreshAuthModal modalAuth msgs =
                                         [ class "input is-disabled"
                                         , type_ "username"
                                         , name "username"
-                                        , value username
+                                        , value (Dict.get "username" form.post |> withDefault "")
                                         , disabled True
                                         ]
                                         []
@@ -242,7 +229,7 @@ refreshAuthModal modalAuth msgs =
                                 ]
                             ]
                         , div []
-                            [ case form_m |> Maybe.map (\f -> f.result) |> withDefault RemoteData.NotAsked of
+                            [ case result of
                                 RemoteData.Failure err ->
                                     viewHttpErrors err
 
@@ -254,5 +241,5 @@ refreshAuthModal modalAuth msgs =
                     Inactive ->
                         []
             ]
-        , button [ class "modal-close is-large", onClick onCloseModal ] []
+        , button [ class "modal-close is-large", onClick <| msgs.closeModal "" ] []
         ]

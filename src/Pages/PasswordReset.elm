@@ -44,6 +44,7 @@ page =
 
 type alias Model =
     { form : UserAuthForm
+    , result : WebData UserCtx
     , challenge_data : RemoteData Http.Error String
     , reset_result : WebData Bool
     , token_reset : Maybe String
@@ -77,8 +78,8 @@ init global flags =
                     Cmd.none
 
         model =
-            { form =
-                { post = Dict.empty, result = RemoteData.NotAsked }
+            { form = { post = Dict.empty }
+            , result = RemoteData.NotAsked
             , challenge_data = RemoteData.Loading
             , reset_result = RemoteData.NotAsked
             , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
@@ -335,7 +336,7 @@ viewResetForm global model =
                 ]
             ]
         , div []
-            [ case model.form.result of
+            [ case model.result of
                 RemoteData.Failure err ->
                     viewHttpErrors err
 
@@ -426,7 +427,7 @@ viewResetForm2 global model =
                 ]
             ]
         , div []
-            [ case model.form.result of
+            [ case model.result of
                 RemoteData.Failure err ->
                     viewHttpErrors err
 
