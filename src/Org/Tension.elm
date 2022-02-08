@@ -359,6 +359,7 @@ type Msg
     | ExpandRoles
     | CollapseRoles
     | ScrollToElement String
+    | UpdateUctx UserCtx
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
@@ -1261,7 +1262,10 @@ update global message model =
                 node =
                     blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid
             in
-            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
+            ( { model | actionPanel = ActionPanel.setUser_ global.session.user model.actionPanel }
+            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node)
+            , Cmd.none
+            )
 
         -- New tension
         DoCreateTension lg ->
@@ -1472,6 +1476,12 @@ update global message model =
         ScrollToElement did ->
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
+        UpdateUctx uctx ->
+            ( { model | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data }
+            , Cmd.none
+            , Cmd.none
+            )
+
         -- Components
         HelpMsg msg ->
             let
@@ -1567,6 +1577,7 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
@@ -2213,7 +2224,7 @@ viewEventMemberLinked : Time.Posix -> Event -> Maybe TensionAction.TensionAction
 viewEventMemberLinked now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user-check has-text-success" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.hasBeen, strong [] [ text T.linked ], text T.toThisRole, text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.new), text T.hasBeen, strong [] [ text T.linked ], text T.toThisRole, text (formatDate now event.createdAt) ]
         ]
     ]
 
@@ -2222,7 +2233,7 @@ viewEventMemberUnlinked : Time.Posix -> Event -> Maybe TensionAction.TensionActi
 viewEventMemberUnlinked now event action_m =
     [ div [ class "media-left" ] [ A.icon "icon-user has-text-danger" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.hasBeen, strong [] [ text T.unlinked ], text T.toThisRole, text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink (withDefault "" event.old), text T.hasBeen, strong [] [ text T.unlinked ], text T.toThisRole, text (formatDate now event.createdAt) ]
         ]
     ]
 

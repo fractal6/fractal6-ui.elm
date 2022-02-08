@@ -1,4 +1,4 @@
-module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscriptions, update, view)
+module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, setUser_, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -283,6 +283,24 @@ action2color action =
 isOpen_ : State -> Bool
 isOpen_ (State model) =
     model.isOpen
+
+
+setUser_ : UserState -> State -> State
+setUser_ user (State model) =
+    { model | user = user }
+        |> (\x ->
+                case user of
+                    LoggedIn uctx ->
+                        let
+                            form =
+                                x.form
+                        in
+                        { x | form = { form | uctx = uctx } }
+
+                    LoggedOut ->
+                        x
+           )
+        |> State
 
 
 

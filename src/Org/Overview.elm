@@ -616,7 +616,10 @@ update global message model =
                                 |> withDefault ( "", "" )
                             )
             in
-            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
+            ( { model | actionPanel = ActionPanel.setUser_ global.session.user model.actionPanel }
+            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node)
+            , Cmd.none
+            )
 
         -- Join
         DoJoinOrga rootnameid ->
