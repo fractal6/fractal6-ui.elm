@@ -1075,7 +1075,7 @@ export const GraphPack = {
         return {
             name: node.data.name,
             nameid: node.data.nameid,
-            useCanJoin: node.data.userCanJoin
+            userCanJoin: node.data.userCanJoin
         }
     },
 
@@ -1097,27 +1097,24 @@ export const GraphPack = {
 
     getNodeData(node) {
         // @debug: LocalGraph/Node Encoder/Decoder
-        var rootNode = this.getRNode(this.rootNode);
-        var focusNode = {
-            name: node.data.name,
-            nameid: node.data.nameid,
-            type_: node.data.type_,
-            visibility: node.data.visibility,
-            mode: node.data.mode,
-            children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
-                return {
-                    name: n.data.name,
-                    nameid: n.data.nameid,
-                    role_type: n.data.role_type
-                }
-            }) : [],
-            source: node.data.source,
-        };
-
         return {
-            root: rootNode,
+            root: this.getRNode(this.rootNode),
             path: this.getNodePath(node),
-            focus: focusNode
+            focus: {
+                name: node.data.name,
+                nameid: node.data.nameid,
+                type_: node.data.type_,
+                visibility: node.data.visibility,
+                mode: node.data.mode,
+                children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
+                    return {
+                        name: n.data.name,
+                        nameid: n.data.nameid,
+                        role_type: n.data.role_type
+                    }
+                }) : [],
+                source: node.data.source,
+            }
         }
     },
 

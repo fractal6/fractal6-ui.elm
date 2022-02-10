@@ -2,6 +2,7 @@ module Query.QueryNode exposing
     ( MemberNode
     , blobIdPayload
     , cidPayload
+    , contractEventPayload
     , emiterOrReceiverPayload
     , fetchNode
     , fetchNodeData
@@ -18,6 +19,7 @@ module Query.QueryNode exposing
     , pNodePayload
     , queryFocusNode
     , queryGraphPack
+    , queryJournal
     , queryLabels
     , queryLabelsDown
     , queryLocalGraph
@@ -28,6 +30,7 @@ module Query.QueryNode exposing
     , queryPublicOrga
     , queryRoles
     , roleFullPayload
+    , tensionEventPayload
     , tidPayload
     , userPayload
     )
@@ -43,6 +46,8 @@ import Fractal.InputObject as Input
 import Fractal.Object
 import Fractal.Object.Blob
 import Fractal.Object.Contract
+import Fractal.Object.Event
+import Fractal.Object.EventFragment
 import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
@@ -1019,3 +1024,67 @@ labelPayload =
         (Fractal.Object.Label.id |> SelectionSet.map decodedId)
         Fractal.Object.Label.name
         Fractal.Object.Label.color
+
+
+
+{-
+   Query journal
+-}
+
+
+type alias JournalNode =
+    { nameid : String, event_history : Maybe (List EventNotif) }
+
+
+journalDecoder : Maybe JournalNode -> Maybe (List EventNotif)
+journalDecoder data =
+    data
+        |> Maybe.map
+            (\x ->
+                withDefault [] x.event_history
+            )
+
+
+queryJournal url nameid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nameid)
+            (SelectionSet.map2 JournalNode
+                Fractal.Object.Node.nameid
+                (Fractal.Object.Node.events_history identity tensionEventPayload)
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse journalDecoder >> msg)
+
+
+tensionEventPayload : SelectionSet EventNotif Fractal.Object.Event
+tensionEventPayload =
+    SelectionSet.succeed EventNotif
+        |> with (Fractal.Object.Event.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Event.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Event.event_type
+        |> with
+            (Fractal.Object.Event.tension identity
+                (SelectionSet.map3 (\a b c -> { id = a, receiver = b, title = c })
+                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    (Fractal.Object.Tension.receiver identity pNodePayload)
+                    Fractal.Object.Tension.title
+                )
+            )
+
+
+contractEventPayload : SelectionSet ContractNotif Fractal.Object.Contract
+contractEventPayload =
+    SelectionSet.succeed ContractNotif
+        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
+        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Contract.contract_type
+        |> with (Fractal.Object.Contract.event identity <| SelectionSet.map (\x -> { event_type = x }) Fractal.Object.EventFragment.event_type)
+        |> with
+            (Fractal.Object.Contract.tension identity
+                (SelectionSet.map2 (\a b -> { id = a, receiver = b })
+                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    (Fractal.Object.Tension.receiver identity pNodePayload)
+                )
+            )

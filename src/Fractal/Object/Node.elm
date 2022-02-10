@@ -73,6 +73,11 @@ rootnameid =
     Object.selectionForField "String" "rootnameid" [] Decode.string
 
 
+isRoot : SelectionSet Bool Fractal.Object.Node
+isRoot =
+    Object.selectionForField "Bool" "isRoot" [] Decode.bool
+
+
 type alias ParentOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter }
 
@@ -209,11 +214,6 @@ rights =
 isArchived : SelectionSet Bool Fractal.Object.Node
 isArchived =
     Object.selectionForField "Bool" "isArchived" [] Decode.bool
-
-
-isRoot : SelectionSet Bool Fractal.Object.Node
-isRoot =
-    Object.selectionForField "Bool" "isRoot" [] Decode.bool
 
 
 isPersonal : SelectionSet (Maybe Bool) Fractal.Object.Node
@@ -441,6 +441,30 @@ orga_agg fillInOptionals____ object____ =
     Object.selectionForCompositeField "orga_agg" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias EventsHistoryOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFilter
+    , order : OptionalArgument Fractal.InputObject.EventOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+events_history :
+    (EventsHistoryOptionalArguments -> EventsHistoryOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Event
+    -> SelectionSet (Maybe (List decodesTo)) Fractal.Object.Node
+events_history fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeEventOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "events_history" optionalArgs____ object____ (Basics.identity >> Decode.list >> Decode.nullable)
+
+
 type alias TensionsOutAggregateOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.TensionFilter }
 
@@ -579,3 +603,23 @@ contractsAggregate fillInOptionals____ object____ =
                 |> List.filterMap Basics.identity
     in
     Object.selectionForCompositeField "contractsAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
+type alias EventsHistoryAggregateOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.EventFilter }
+
+
+events_historyAggregate :
+    (EventsHistoryAggregateOptionalArguments -> EventsHistoryAggregateOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.EventAggregateResult
+    -> SelectionSet (Maybe decodesTo) Fractal.Object.Node
+events_historyAggregate fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeEventFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "events_historyAggregate" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

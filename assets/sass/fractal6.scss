@@ -1235,6 +1235,14 @@ a.is-link {
     }
 }
 
+#journalTab {
+   .content {
+       padding-left: 10px;
+       padding-right: 10px;
+       margin-bottom: 1rem;
+   }
+}
+
 .mediaBox {
     cursor: initial;
     &.is-hoverable:hover {

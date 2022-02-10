@@ -533,9 +533,9 @@ buildAddNodeInput required____ fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { updatedAt = Absent, parent = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, source = Absent, isPersonal = Absent, userCanJoin = Absent, children = Absent, docs = Absent, labels = Absent, roles = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, second_link = Absent, skills = Absent, contracts = Absent, orga_agg = Absent }
+                { updatedAt = Absent, parent = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, source = Absent, isPersonal = Absent, userCanJoin = Absent, children = Absent, docs = Absent, labels = Absent, roles = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, second_link = Absent, skills = Absent, contracts = Absent, orga_agg = Absent, events_history = Absent }
     in
-    AddNodeInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, name = required____.name, nameid = required____.nameid, rootnameid = required____.rootnameid, parent = optionals____.parent, type_ = required____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, about = optionals____.about, mandate = optionals____.mandate, source = optionals____.source, visibility = required____.visibility, mode = required____.mode, rights = required____.rights, isArchived = required____.isArchived, isRoot = required____.isRoot, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, children = optionals____.children, docs = optionals____.docs, labels = optionals____.labels, roles = optionals____.roles, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, second_link = optionals____.second_link, skills = optionals____.skills, contracts = optionals____.contracts, orga_agg = optionals____.orga_agg }
+    AddNodeInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, name = required____.name, nameid = required____.nameid, rootnameid = required____.rootnameid, isRoot = required____.isRoot, parent = optionals____.parent, type_ = required____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, about = optionals____.about, mandate = optionals____.mandate, source = optionals____.source, visibility = required____.visibility, mode = required____.mode, rights = required____.rights, isArchived = required____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, children = optionals____.children, docs = optionals____.docs, labels = optionals____.labels, roles = optionals____.roles, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, second_link = optionals____.second_link, skills = optionals____.skills, contracts = optionals____.contracts, orga_agg = optionals____.orga_agg, events_history = optionals____.events_history }
 
 
 type alias AddNodeInputRequiredFields =
@@ -544,12 +544,12 @@ type alias AddNodeInputRequiredFields =
     , name : String
     , nameid : String
     , rootnameid : String
+    , isRoot : Bool
     , type_ : Fractal.Enum.NodeType.NodeType
     , visibility : Fractal.Enum.NodeVisibility.NodeVisibility
     , mode : Fractal.Enum.NodeMode.NodeMode
     , rights : Int
     , isArchived : Bool
-    , isRoot : Bool
     }
 
 
@@ -575,6 +575,7 @@ type alias AddNodeInputOptionalFields =
     , skills : OptionalArgument (List String)
     , contracts : OptionalArgument (List VoteRef)
     , orga_agg : OptionalArgument OrgaAggRef
+    , events_history : OptionalArgument (List EventRef)
     }
 
 
@@ -590,6 +591,7 @@ type alias AddNodeInputRaw =
     , name : String
     , nameid : String
     , rootnameid : String
+    , isRoot : Bool
     , parent : OptionalArgument NodeRef
     , type_ : Fractal.Enum.NodeType.NodeType
     , tensions_out : OptionalArgument (List TensionRef)
@@ -601,7 +603,6 @@ type alias AddNodeInputRaw =
     , mode : Fractal.Enum.NodeMode.NodeMode
     , rights : Int
     , isArchived : Bool
-    , isRoot : Bool
     , isPersonal : OptionalArgument Bool
     , userCanJoin : OptionalArgument Bool
     , children : OptionalArgument (List NodeRef)
@@ -616,6 +617,7 @@ type alias AddNodeInputRaw =
     , skills : OptionalArgument (List String)
     , contracts : OptionalArgument (List VoteRef)
     , orga_agg : OptionalArgument OrgaAggRef
+    , events_history : OptionalArgument (List EventRef)
     }
 
 
@@ -630,7 +632,7 @@ type AddNodeInput
 encodeAddNodeInput : AddNodeInput -> Value
 encodeAddNodeInput (AddNodeInput input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string input____.name |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input____.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString input____.visibility |> Just ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString input____.mode |> Just ), ( "rights", Encode.int input____.rights |> Just ), ( "isArchived", Encode.bool input____.isArchived |> Just ), ( "isRoot", Encode.bool input____.isRoot |> Just ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ) ]
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string input____.name |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "isRoot", Encode.bool input____.isRoot |> Just ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input____.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString input____.visibility |> Just ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString input____.mode |> Just ), ( "rights", Encode.int input____.rights |> Just ), ( "isArchived", Encode.bool input____.isArchived |> Just ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ) ]
 
 
 buildAddOrgaAggInput :
@@ -3308,9 +3310,9 @@ buildNodeFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, type_ = Absent, about = Absent, visibility = Absent, mode = Absent, isArchived = Absent, isRoot = Absent, isPersonal = Absent, role_type = Absent, skills = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+                { id = Absent, createdAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, isRoot = Absent, type_ = Absent, about = Absent, visibility = Absent, mode = Absent, isArchived = Absent, isPersonal = Absent, role_type = Absent, skills = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    NodeFilter { id = optionals____.id, createdAt = optionals____.createdAt, name = optionals____.name, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, type_ = optionals____.type_, about = optionals____.about, visibility = optionals____.visibility, mode = optionals____.mode, isArchived = optionals____.isArchived, isRoot = optionals____.isRoot, isPersonal = optionals____.isPersonal, role_type = optionals____.role_type, skills = optionals____.skills, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    NodeFilter { id = optionals____.id, createdAt = optionals____.createdAt, name = optionals____.name, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, isRoot = optionals____.isRoot, type_ = optionals____.type_, about = optionals____.about, visibility = optionals____.visibility, mode = optionals____.mode, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, role_type = optionals____.role_type, skills = optionals____.skills, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias NodeFilterOptionalFields =
@@ -3319,12 +3321,12 @@ type alias NodeFilterOptionalFields =
     , name : OptionalArgument StringTermFilter
     , nameid : OptionalArgument StringHashFilter_StringRegExpFilter
     , rootnameid : OptionalArgument StringHashFilter_StringRegExpFilter
+    , isRoot : OptionalArgument Bool
     , type_ : OptionalArgument NodeType_hash
     , about : OptionalArgument StringFullTextFilter
     , visibility : OptionalArgument NodeVisibility_hash
     , mode : OptionalArgument NodeMode_hash
     , isArchived : OptionalArgument Bool
-    , isRoot : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
     , role_type : OptionalArgument RoleType_hash
     , skills : OptionalArgument StringTermFilter
@@ -3346,12 +3348,12 @@ type alias NodeFilterRaw =
     , name : OptionalArgument StringTermFilter
     , nameid : OptionalArgument StringHashFilter_StringRegExpFilter
     , rootnameid : OptionalArgument StringHashFilter_StringRegExpFilter
+    , isRoot : OptionalArgument Bool
     , type_ : OptionalArgument NodeType_hash
     , about : OptionalArgument StringFullTextFilter
     , visibility : OptionalArgument NodeVisibility_hash
     , mode : OptionalArgument NodeMode_hash
     , isArchived : OptionalArgument Bool
-    , isRoot : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
     , role_type : OptionalArgument RoleType_hash
     , skills : OptionalArgument StringTermFilter
@@ -3373,7 +3375,7 @@ type NodeFilter
 encodeNodeFilter : NodeFilter -> Value
 encodeNodeFilter (NodeFilter input____) =
     Encode.maybeObject
-        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input____.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.rootnameid ), ( "type_", encodeNodeType_hash |> Encode.optional input____.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input____.about ), ( "visibility", encodeNodeVisibility_hash |> Encode.optional input____.visibility ), ( "mode", encodeNodeMode_hash |> Encode.optional input____.mode ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "role_type", encodeRoleType_hash |> Encode.optional input____.role_type ), ( "skills", encodeStringTermFilter |> Encode.optional input____.skills ), ( "has", (Encode.enum Fractal.Enum.NodeHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeNodeFilter |> Encode.optional input____.not ) ]
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "name", encodeStringTermFilter |> Encode.optional input____.name ), ( "nameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.nameid ), ( "rootnameid", encodeStringHashFilter_StringRegExpFilter |> Encode.optional input____.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "type_", encodeNodeType_hash |> Encode.optional input____.type_ ), ( "about", encodeStringFullTextFilter |> Encode.optional input____.about ), ( "visibility", encodeNodeVisibility_hash |> Encode.optional input____.visibility ), ( "mode", encodeNodeMode_hash |> Encode.optional input____.mode ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "role_type", encodeRoleType_hash |> Encode.optional input____.role_type ), ( "skills", encodeStringTermFilter |> Encode.optional input____.skills ), ( "has", (Encode.enum Fractal.Enum.NodeHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeNodeFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeNodeFilter |> Encode.optional input____.not ) ]
 
 
 buildNodeFragmentFilter :
@@ -3692,9 +3694,9 @@ buildNodePatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, source = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isRoot = Absent, isPersonal = Absent, userCanJoin = Absent, children = Absent, docs = Absent, labels = Absent, roles = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, second_link = Absent, skills = Absent, contracts = Absent, orga_agg = Absent }
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, isRoot = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, source = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isPersonal = Absent, userCanJoin = Absent, children = Absent, docs = Absent, labels = Absent, roles = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, second_link = Absent, skills = Absent, contracts = Absent, orga_agg = Absent, events_history = Absent }
     in
-    NodePatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, name = optionals____.name, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, about = optionals____.about, mandate = optionals____.mandate, source = optionals____.source, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isRoot = optionals____.isRoot, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, children = optionals____.children, docs = optionals____.docs, labels = optionals____.labels, roles = optionals____.roles, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, second_link = optionals____.second_link, skills = optionals____.skills, contracts = optionals____.contracts, orga_agg = optionals____.orga_agg }
+    NodePatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, name = optionals____.name, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, isRoot = optionals____.isRoot, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, about = optionals____.about, mandate = optionals____.mandate, source = optionals____.source, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, children = optionals____.children, docs = optionals____.docs, labels = optionals____.labels, roles = optionals____.roles, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, second_link = optionals____.second_link, skills = optionals____.skills, contracts = optionals____.contracts, orga_agg = optionals____.orga_agg, events_history = optionals____.events_history }
 
 
 type alias NodePatchOptionalFields =
@@ -3704,6 +3706,7 @@ type alias NodePatchOptionalFields =
     , name : OptionalArgument String
     , nameid : OptionalArgument String
     , rootnameid : OptionalArgument String
+    , isRoot : OptionalArgument Bool
     , parent : OptionalArgument NodeRef
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , tensions_out : OptionalArgument (List TensionRef)
@@ -3715,7 +3718,6 @@ type alias NodePatchOptionalFields =
     , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
     , rights : OptionalArgument Int
     , isArchived : OptionalArgument Bool
-    , isRoot : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
     , userCanJoin : OptionalArgument Bool
     , children : OptionalArgument (List NodeRef)
@@ -3730,6 +3732,7 @@ type alias NodePatchOptionalFields =
     , skills : OptionalArgument (List String)
     , contracts : OptionalArgument (List VoteRef)
     , orga_agg : OptionalArgument OrgaAggRef
+    , events_history : OptionalArgument (List EventRef)
     }
 
 
@@ -3745,6 +3748,7 @@ type alias NodePatchRaw =
     , name : OptionalArgument String
     , nameid : OptionalArgument String
     , rootnameid : OptionalArgument String
+    , isRoot : OptionalArgument Bool
     , parent : OptionalArgument NodeRef
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , tensions_out : OptionalArgument (List TensionRef)
@@ -3756,7 +3760,6 @@ type alias NodePatchRaw =
     , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
     , rights : OptionalArgument Int
     , isArchived : OptionalArgument Bool
-    , isRoot : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
     , userCanJoin : OptionalArgument Bool
     , children : OptionalArgument (List NodeRef)
@@ -3771,6 +3774,7 @@ type alias NodePatchRaw =
     , skills : OptionalArgument (List String)
     , contracts : OptionalArgument (List VoteRef)
     , orga_agg : OptionalArgument OrgaAggRef
+    , events_history : OptionalArgument (List EventRef)
     }
 
 
@@ -3785,7 +3789,7 @@ type NodePatch
 encodeNodePatch : NodePatch -> Value
 encodeNodePatch (NodePatch input____) =
     Encode.maybeObject
-        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string |> Encode.optional input____.name ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ) ]
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string |> Encode.optional input____.name ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ) ]
 
 
 buildNodeRef :
@@ -3795,9 +3799,9 @@ buildNodeRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, source = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isRoot = Absent, isPersonal = Absent, userCanJoin = Absent, children = Absent, docs = Absent, labels = Absent, roles = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, second_link = Absent, skills = Absent, contracts = Absent, orga_agg = Absent }
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, name = Absent, nameid = Absent, rootnameid = Absent, isRoot = Absent, parent = Absent, type_ = Absent, tensions_out = Absent, tensions_in = Absent, about = Absent, mandate = Absent, source = Absent, visibility = Absent, mode = Absent, rights = Absent, isArchived = Absent, isPersonal = Absent, userCanJoin = Absent, children = Absent, docs = Absent, labels = Absent, roles = Absent, role_ext = Absent, role_type = Absent, color = Absent, first_link = Absent, second_link = Absent, skills = Absent, contracts = Absent, orga_agg = Absent, events_history = Absent }
     in
-    NodeRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, name = optionals____.name, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, about = optionals____.about, mandate = optionals____.mandate, source = optionals____.source, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isRoot = optionals____.isRoot, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, children = optionals____.children, docs = optionals____.docs, labels = optionals____.labels, roles = optionals____.roles, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, second_link = optionals____.second_link, skills = optionals____.skills, contracts = optionals____.contracts, orga_agg = optionals____.orga_agg }
+    NodeRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, name = optionals____.name, nameid = optionals____.nameid, rootnameid = optionals____.rootnameid, isRoot = optionals____.isRoot, parent = optionals____.parent, type_ = optionals____.type_, tensions_out = optionals____.tensions_out, tensions_in = optionals____.tensions_in, about = optionals____.about, mandate = optionals____.mandate, source = optionals____.source, visibility = optionals____.visibility, mode = optionals____.mode, rights = optionals____.rights, isArchived = optionals____.isArchived, isPersonal = optionals____.isPersonal, userCanJoin = optionals____.userCanJoin, children = optionals____.children, docs = optionals____.docs, labels = optionals____.labels, roles = optionals____.roles, role_ext = optionals____.role_ext, role_type = optionals____.role_type, color = optionals____.color, first_link = optionals____.first_link, second_link = optionals____.second_link, skills = optionals____.skills, contracts = optionals____.contracts, orga_agg = optionals____.orga_agg, events_history = optionals____.events_history }
 
 
 type alias NodeRefOptionalFields =
@@ -3808,6 +3812,7 @@ type alias NodeRefOptionalFields =
     , name : OptionalArgument String
     , nameid : OptionalArgument String
     , rootnameid : OptionalArgument String
+    , isRoot : OptionalArgument Bool
     , parent : OptionalArgument NodeRef
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , tensions_out : OptionalArgument (List TensionRef)
@@ -3819,7 +3824,6 @@ type alias NodeRefOptionalFields =
     , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
     , rights : OptionalArgument Int
     , isArchived : OptionalArgument Bool
-    , isRoot : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
     , userCanJoin : OptionalArgument Bool
     , children : OptionalArgument (List NodeRef)
@@ -3834,6 +3838,7 @@ type alias NodeRefOptionalFields =
     , skills : OptionalArgument (List String)
     , contracts : OptionalArgument (List VoteRef)
     , orga_agg : OptionalArgument OrgaAggRef
+    , events_history : OptionalArgument (List EventRef)
     }
 
 
@@ -3850,6 +3855,7 @@ type alias NodeRefRaw =
     , name : OptionalArgument String
     , nameid : OptionalArgument String
     , rootnameid : OptionalArgument String
+    , isRoot : OptionalArgument Bool
     , parent : OptionalArgument NodeRef
     , type_ : OptionalArgument Fractal.Enum.NodeType.NodeType
     , tensions_out : OptionalArgument (List TensionRef)
@@ -3861,7 +3867,6 @@ type alias NodeRefRaw =
     , mode : OptionalArgument Fractal.Enum.NodeMode.NodeMode
     , rights : OptionalArgument Int
     , isArchived : OptionalArgument Bool
-    , isRoot : OptionalArgument Bool
     , isPersonal : OptionalArgument Bool
     , userCanJoin : OptionalArgument Bool
     , children : OptionalArgument (List NodeRef)
@@ -3876,6 +3881,7 @@ type alias NodeRefRaw =
     , skills : OptionalArgument (List String)
     , contracts : OptionalArgument (List VoteRef)
     , orga_agg : OptionalArgument OrgaAggRef
+    , events_history : OptionalArgument (List EventRef)
     }
 
 
@@ -3890,7 +3896,7 @@ type NodeRef
 encodeNodeRef : NodeRef -> Value
 encodeNodeRef (NodeRef input____) =
     Encode.maybeObject
-        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string |> Encode.optional input____.name ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ) ]
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string |> Encode.optional input____.name ), ( "nameid", Encode.string |> Encode.optional input____.nameid ), ( "rootnameid", Encode.string |> Encode.optional input____.rootnameid ), ( "isRoot", Encode.bool |> Encode.optional input____.isRoot ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString |> Encode.optional input____.type_ ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString |> Encode.optional input____.visibility ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString |> Encode.optional input____.mode ), ( "rights", Encode.int |> Encode.optional input____.rights ), ( "isArchived", Encode.bool |> Encode.optional input____.isArchived ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ) ]
 
 
 buildNodeType_hash :

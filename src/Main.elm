@@ -81,7 +81,8 @@ update msg model =
             ( model
             , Cmd.batch
                 [ Global.send (UrlChanged_ url)
-                , Cmd.map Global (Global.send <| UpdateReferer model.url)
+                , Cmd.map Global (Global.send (UpdateReferer model.url))
+                , Cmd.map Global Global.now
                 ]
             )
 

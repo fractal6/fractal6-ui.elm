@@ -30,7 +30,7 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (nidFilter, nodeDecoder, nodeOrgaPayload, pNodePayload)
+import Query.QueryNode exposing (contractEventPayload, nidFilter, nodeDecoder, nodeOrgaPayload, pNodePayload, tensionEventPayload)
 import Query.QueryUser exposing (usernameFilter)
 import RemoteData exposing (RemoteData)
 
@@ -140,36 +140,3 @@ eventKindType =
         { onEvent = SelectionSet.map TensionEvent tensionEventPayload
         , onContract = SelectionSet.map ContractEvent contractEventPayload
         }
-
-
-tensionEventPayload : SelectionSet EventNotif Fractal.Object.Event
-tensionEventPayload =
-    SelectionSet.succeed EventNotif
-        |> with (Fractal.Object.Event.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Event.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Event.event_type
-        |> with
-            (Fractal.Object.Event.tension identity
-                (SelectionSet.map3 (\a b c -> { id = a, receiver = b, title = c })
-                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                    (Fractal.Object.Tension.receiver identity pNodePayload)
-                    Fractal.Object.Tension.title
-                )
-            )
-
-
-contractEventPayload : SelectionSet ContractNotif Fractal.Object.Contract
-contractEventPayload =
-    SelectionSet.succeed ContractNotif
-        |> with (Fractal.Object.Contract.id |> SelectionSet.map decodedId)
-        |> with (Fractal.Object.Contract.createdAt |> SelectionSet.map decodedTime)
-        |> with (Fractal.Object.Contract.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
-        |> with Fractal.Object.Contract.contract_type
-        |> with (Fractal.Object.Contract.event identity <| SelectionSet.map (\x -> { event_type = x }) Fractal.Object.EventFragment.event_type)
-        |> with
-            (Fractal.Object.Contract.tension identity
-                (SelectionSet.map2 (\a b -> { id = a, receiver = b })
-                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
-                    (Fractal.Object.Tension.receiver identity pNodePayload)
-                )
-            )

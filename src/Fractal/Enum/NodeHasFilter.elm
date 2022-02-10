@@ -14,6 +14,7 @@ type NodeHasFilter
     | Name
     | Nameid
     | Rootnameid
+    | IsRoot
     | Parent
     | Type_
     | Tensions_out
@@ -25,7 +26,6 @@ type NodeHasFilter
     | Mode
     | Rights
     | IsArchived
-    | IsRoot
     | IsPersonal
     | UserCanJoin
     | Children
@@ -40,11 +40,12 @@ type NodeHasFilter
     | Skills
     | Contracts
     | Orga_agg
+    | Events_history
 
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsRoot, IsPersonal, UserCanJoin, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Orga_agg ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, IsRoot, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Orga_agg, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -70,6 +71,9 @@ decoder =
 
                     "rootnameid" ->
                         Decode.succeed Rootnameid
+
+                    "isRoot" ->
+                        Decode.succeed IsRoot
 
                     "parent" ->
                         Decode.succeed Parent
@@ -103,9 +107,6 @@ decoder =
 
                     "isArchived" ->
                         Decode.succeed IsArchived
-
-                    "isRoot" ->
-                        Decode.succeed IsRoot
 
                     "isPersonal" ->
                         Decode.succeed IsPersonal
@@ -149,6 +150,9 @@ decoder =
                     "orga_agg" ->
                         Decode.succeed Orga_agg
 
+                    "events_history" ->
+                        Decode.succeed Events_history
+
                     _ ->
                         Decode.fail ("Invalid NodeHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
@@ -176,6 +180,9 @@ toString enum____ =
 
         Rootnameid ->
             "rootnameid"
+
+        IsRoot ->
+            "isRoot"
 
         Parent ->
             "parent"
@@ -209,9 +216,6 @@ toString enum____ =
 
         IsArchived ->
             "isArchived"
-
-        IsRoot ->
-            "isRoot"
 
         IsPersonal ->
             "isPersonal"
@@ -255,6 +259,9 @@ toString enum____ =
         Orga_agg ->
             "orga_agg"
 
+        Events_history ->
+            "events_history"
+
 
 {-| Convert from a String representation to an elm representation enum.
 This is the inverse of the Enum `toString` function. So you can call `toString` and then convert back `fromString` safely.
@@ -288,6 +295,9 @@ fromString enumString____ =
         "rootnameid" ->
             Just Rootnameid
 
+        "isRoot" ->
+            Just IsRoot
+
         "parent" ->
             Just Parent
 
@@ -320,9 +330,6 @@ fromString enumString____ =
 
         "isArchived" ->
             Just IsArchived
-
-        "isRoot" ->
-            Just IsRoot
 
         "isPersonal" ->
             Just IsPersonal
@@ -365,6 +372,9 @@ fromString enumString____ =
 
         "orga_agg" ->
             Just Orga_agg
+
+        "events_history" ->
+            Just Events_history
 
         _ ->
             Nothing

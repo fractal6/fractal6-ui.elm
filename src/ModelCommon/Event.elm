@@ -15,7 +15,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global
-import Html exposing (Html, a, br, button, div, hr, i, p, span, sub, text)
+import Html exposing (Html, a, br, button, div, hr, i, p, small, span, strong, sub, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id)
 import Html.Events exposing (onClick)
 import Identicon
@@ -31,8 +31,8 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.View exposing (statusColor)
-import ModelSchema exposing (EmitterOrReceiver, Label, NodeExt, Post, Tension, User, UserCtx, Username)
+import ModelCommon.View exposing (byAt, statusColor)
+import ModelSchema exposing (ContractNotif, EmitterOrReceiver, EventNotif, Label, NodeExt, Post, Tension, User, UserCtx, UserEvent, Username)
 import Text as T exposing (textH, textT, upH)
 import Time
 
@@ -137,3 +137,89 @@ eventToIcon ev =
 
         _ ->
             ""
+
+
+eventToLink : UserEvent -> EventNotif -> String
+eventToLink ue e =
+    if
+        List.member e.event_type
+            [ TensionEvent.Closed
+            , TensionEvent.Reopened
+            , TensionEvent.CommentPushed
+            , TensionEvent.Moved
+            , TensionEvent.UserLeft
+            , TensionEvent.UserJoined
+            , TensionEvent.MemberLinked
+            , TensionEvent.MemberUnlinked
+            ]
+    then
+        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            ++ "?eid="
+            ++ ue.id
+            ++ "&goto="
+            ++ e.createdAt
+
+    else if List.member e.event_type [ TensionEvent.BlobPushed, TensionEvent.BlobArchived, TensionEvent.BlobUnarchived, TensionEvent.Visibility, TensionEvent.Authority ] then
+        (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            ++ "?eid="
+            ++ ue.id
+
+    else
+        (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            ++ "?eid="
+            ++ ue.id
+
+
+contractToLink : UserEvent -> ContractNotif -> String
+contractToLink ue c =
+    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid c.tension.receiver.nameid, param2 = c.tension.id, param3 = c.id } |> toHref
+
+
+viewEventMedia : Time.Posix -> Bool -> Dict String String -> Html msg
+viewEventMedia now inline ev =
+    div [ class "content" ]
+        [ p [] <|
+            [ a
+                [ class "discrete-link"
+                , href (Dict.get "link" ev |> withDefault "#")
+                ]
+              <|
+                List.intersperse (text " ") <|
+                    [ A.icon (Dict.get "icon" ev |> withDefault "")
+                    , strong [ class "ml-1" ] [ Dict.get "title" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text "in" ]
+                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+
+                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
+                    , text ":"
+                    , span [ class "is-highlight-3" ] [ Dict.get "title_" ev |> withDefault "" |> text ]
+                    ]
+            , small [ class "help", classList [ ( "is-pulled-right", inline ) ] ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            ]
+        ]
+
+
+viewContractMedia : Time.Posix -> Dict String String -> Html msg
+viewContractMedia now ev =
+    div [ class "content" ]
+        [ p [] <|
+            [ a
+                [ class "discrete-link"
+                , href (Dict.get "link" ev |> withDefault "#")
+                ]
+              <|
+                List.intersperse (text " ") <|
+                    [ A.icon "icon-edit"
+                    , strong [ class "ml-1" ] [ Dict.get "contract" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text "to" ]
+
+                    --, A.icon (Dict.get "icon" ev |> withDefault "")
+                    , strong [] [ Dict.get "title" ev |> withDefault "" |> text ]
+                    , span [ class "is-discrete" ] [ text "in" ]
+                    , span [ class "is-italic" ] [ Dict.get "target" ev |> withDefault "" |> text ]
+
+                    --, span [ class "has-text-grey-light pl-1" ] [ text "o/", Dict.get "orga" ev |> withDefault "" |> text ]
+                    ]
+            , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+            ]
+        ]

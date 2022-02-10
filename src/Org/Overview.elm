@@ -42,7 +42,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, style, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, list, name, placeholder, required, rows, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -72,16 +72,19 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
+import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, viewContractMedia, viewEventMedia)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, fetchNodeData, queryGraphPack, queryNodesSub)
+import Query.QueryNode exposing (fetchNode, fetchNodeData, queryGraphPack, queryJournal, queryNodesSub)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), NodesQuickSearch)
+import String
+import String.Extra as SE
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -154,6 +157,7 @@ type alias Model =
     , orga_data : GqlData NodesDict
     , users_data : GqlData UsersDict
     , tensions_data : GqlData TensionsList
+    , journal_data : GqlData (List EventNotif)
     , node_data : GqlData NodeData
     , init_tensions : Bool
     , init_data : Bool
@@ -161,6 +165,7 @@ type alias Model =
     , window_pos : WindowPos
     , node_hovered : Maybe Node
     , next_focus : Maybe String
+    , activity_tab : ActivityTab
 
     -- common
     , node_action : ActionState
@@ -175,6 +180,11 @@ type alias Model =
     , tensionForm : NTF.State
     , actionPanel : ActionPanel.State
     }
+
+
+type ActivityTab
+    = TensionTab
+    | JournalTab
 
 
 nfirstTensions : Int
@@ -206,6 +216,8 @@ type Msg
     | ChangePattern String
     | ChangeNodeLookup (LookupResult Node)
     | SearchKeyDown Int
+    | ChangeActivityTab ActivityTab
+    | GotJournal (GqlData (List EventNotif))
       -- New Tension
     | DoCreateTension LocalGraph
       -- Node Action
@@ -293,6 +305,7 @@ init global flags =
             , orga_data = fromMaybeData session.orga_data Loading
             , users_data = fromMaybeData session.users_data Loading
             , tensions_data = fromMaybeData session.tensions_data Loading
+            , journal_data = NotAsked
             , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
             , init_data = True
@@ -302,6 +315,7 @@ init global flags =
                     |> withDefault { topRight = "doc", bottomLeft = "activities" }
             , node_hovered = Nothing
             , next_focus = Nothing
+            , activity_tab = TensionTab
 
             -- Node Action
             -- Common
@@ -590,6 +604,20 @@ update global message model =
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
+
+        ChangeActivityTab tab ->
+            let
+                cmd =
+                    if withMaybeData model.journal_data == Nothing then
+                        queryJournal apis model.node_focus.nameid GotJournal
+
+                    else
+                        Cmd.none
+            in
+            ( { model | activity_tab = tab, journal_data = LoadingSlowly }, cmd, Cmd.none )
+
+        GotJournal result ->
+            ( { model | journal_data = result }, Cmd.none, Cmd.none )
 
         -- New tension triggers
         DoCreateTension lg ->
@@ -1438,40 +1466,91 @@ viewActivies model =
                 , div [ class "level-right" ]
                     [ div [ class "tabs is-small" ]
                         [ ul []
-                            [ li [ class "is-active" ] [ a [ href "#" ] [ A.icon1 "icon-exchange icon-sm" (upH T.tension) ] ]
-                            , li [] [ a [ class "has-text-grey", href "#" ] [ A.icon1 "icon-history icon-sm" (upH T.journal) ] ]
+                            [ li [ classList [ ( "is-active", model.activity_tab == TensionTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= TensionTab ) ] ]
+                                    [ A.icon1 "icon-exchange icon-sm" (upH T.tension) ]
+                                ]
+                            , li [ classList [ ( "is-active", model.activity_tab == JournalTab ) ] ]
+                                [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= JournalTab ) ] ]
+                                    [ A.icon1 "icon-history icon-sm" (upH T.journal) ]
+                                ]
                             ]
                         ]
                     ]
                 ]
             ]
         , div [ class "content is-size-7", classList [ ( "spinner", model.tensions_data == LoadingSlowly ), ( "is-lazy", model.init_tensions ) ] ]
-            [ case model.tensions_data of
-                Success tensions ->
-                    if List.length tensions > 0 then
-                        List.map (\t -> mediaTension model.now model.node_focus t False True "is-size-6" Navigate) tensions
-                            ++ ternary (List.length tensions > 5)
-                                [ div [ class "is-aligned-center mt-1 mb-2" ]
-                                    [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
-                                ]
-                                []
-                            |> div [ id "tensionsTab" ]
+            [ case model.activity_tab of
+                TensionTab ->
+                    case model.tensions_data of
+                        Success tensions ->
+                            if List.length tensions > 0 then
+                                List.map (\x -> mediaTension model.now model.node_focus x False True "is-size-6" Navigate) tensions
+                                    ++ ternary (List.length tensions > 5)
+                                        [ div [ class "is-aligned-center mt-1 mb-2" ]
+                                            [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
+                                        ]
+                                        []
+                                    |> div [ id "tensionsTab" ]
 
-                    else
-                        case model.node_focus.type_ of
-                            NodeType.Role ->
-                                div [ class "m-4" ] [ textH T.noOpenTensionRole ]
+                            else
+                                case model.node_focus.type_ of
+                                    NodeType.Role ->
+                                        div [ class "m-4" ] [ textH T.noOpenTensionRole ]
 
-                            NodeType.Circle ->
-                                div [ class "m-4" ] [ textH T.noOpenTensionCircle ]
+                                    NodeType.Circle ->
+                                        div [ class "m-4" ] [ textH T.noOpenTensionCircle ]
 
-                Failure err ->
-                    viewGqlErrors err
+                        Failure err ->
+                            viewGqlErrors err
 
-                _ ->
-                    text ""
+                        _ ->
+                            text ""
+
+                JournalTab ->
+                    case model.journal_data of
+                        Success events ->
+                            List.map (\x -> viewEventNotif model.now x) events
+                                |> div [ id "journalTab" ]
+
+                        Failure err ->
+                            viewGqlErrors err
+
+                        LoadingSlowly ->
+                            div [ class "spinner" ] []
+
+                        _ ->
+                            text ""
             ]
         ]
+
+
+viewEventNotif : Time.Posix -> EventNotif -> Html Msg
+viewEventNotif now e =
+    let
+        ue =
+            UserEvent "" False []
+
+        link =
+            eventToLink ue e
+
+        ev =
+            Dict.fromList
+                [ ( "id", ue.id )
+                , ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
+                , ( "title_", e.tension.title )
+                , ( "target", e.tension.receiver.name )
+                , ( "orga", nid2rootid e.tension.receiver.nameid )
+                , ( "date", e.createdAt )
+                , ( "author", e.createdBy.username )
+                , ( "link", link )
+                , ( "icon", eventToIcon e.event_type )
+                ]
+
+        node =
+            e.tension.receiver
+    in
+    viewEventMedia now True ev
 
 
 

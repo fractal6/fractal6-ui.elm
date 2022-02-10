@@ -4,6 +4,7 @@ module Global exposing
     , Msg(..)
     , init
     , navigate
+    , now
     , send
     , sendNow
     , sendSleep
