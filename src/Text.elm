@@ -1140,7 +1140,7 @@ askCoordo =
 
 joinForTension : String
 joinForTension =
-    "Please, Join this organisation to be able to create a tension."
+    "Please, Join this organisation to be able to create a tension (or retry)."
 
 
 joinForComment : String
@@ -1150,7 +1150,7 @@ joinForComment =
 
 joinForCircle : String
 joinForCircle =
-    "Please, Join this organisation to be able to create a circle."
+    "Please, Join this organisation to be able to create a circle (or retry)."
 
 
 nodeNotExist : String

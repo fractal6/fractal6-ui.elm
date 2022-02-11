@@ -486,7 +486,7 @@ viewUserEvent now ue =
     in
     if isContract then
         div [ class "media mt-1" ]
-            [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga False node.nameid ] ]
+            [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
             , div [ class "media-content" ]
                 [ viewContractMedia now ev
 

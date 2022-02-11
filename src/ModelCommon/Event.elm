@@ -57,16 +57,45 @@ contractEventToText : TensionEvent.TensionEvent -> String
 contractEventToText c =
     case c of
         TensionEvent.Moved ->
-            "move tension"
+            "Move tension"
 
         TensionEvent.MemberLinked ->
-            "New First Link"
+            "New first-link"
 
         TensionEvent.UserJoined ->
-            "New Member"
+            "New member"
 
         _ ->
             "@TODO contractEventToText"
+
+
+cev2c : TensionEvent.TensionEvent -> String
+cev2c c =
+    case c of
+        TensionEvent.Moved ->
+            "Congratulations, tension has been moved."
+
+        TensionEvent.MemberLinked ->
+            "Congratulations, you have been link to this role."
+
+        TensionEvent.UserJoined ->
+            "Congratulations, you've joined this organization."
+
+        _ ->
+            "@TODO contractEventToText"
+
+
+cev2p : TensionEvent.TensionEvent -> String
+cev2p c =
+    case c of
+        TensionEvent.MemberLinked ->
+            "Congratulations, user has been linked."
+
+        TensionEvent.UserJoined ->
+            "Congratulations, user has joined the organization."
+
+        _ ->
+            cev2c c
 
 
 eventToIcon : TensionEvent.TensionEvent -> String

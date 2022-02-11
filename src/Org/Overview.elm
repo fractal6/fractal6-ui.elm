@@ -78,6 +78,7 @@ import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Query.AddContract exposing (addOneContract)
 import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, fetchNodeData, queryGraphPack, queryJournal, queryNodesSub)
 import Query.QueryTension exposing (queryAllTension)
@@ -403,7 +404,12 @@ update global message model =
             ( model, queryGraphPack apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
         PushGuest form ->
-            ( model, actionRequest apis form JoinAck, Cmd.none )
+            --( model, actionRequest apis form JoinAck, Cmd.none )
+            let
+                contractForm =
+                    makeCandidateContractForm form
+            in
+            ( model, addOneContract apis contractForm JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -687,14 +693,17 @@ update global message model =
 
                 form =
                     { f
-                        | bid = "" -- do no set bid to pass the backend
-                        , events = [ Ev TensionEvent.UserJoined f.uctx.username node.nameid ]
+                        | events = [ Ev TensionEvent.UserJoined "" f.uctx.username ]
                         , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
+                        , users = [ { username = f.uctx.username, name = Nothing, email = "", pattern = "" } ]
                         , node = node
                     }
             in
             ( { model | node_action = JoinOrga (JoinValidation form LoadingSlowly) }
-            , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
+            , Cmd.batch
+                [ send (PushGuest form)
+                , send DoOpenModal
+                ]
             , Cmd.none
             )
 

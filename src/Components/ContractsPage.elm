@@ -26,7 +26,7 @@ import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, uctxFromUser)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nodeIdCodec, uriFromUsername)
-import ModelCommon.Event exposing (contractEventToText, contractTypeToText)
+import ModelCommon.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
 import ModelCommon.View
     exposing
         ( byAt
@@ -878,8 +878,8 @@ viewContractBox c op model =
                         in
                         span [] <|
                             List.intersperse (text " ") <|
-                                [ text user
-                                , text "has been invited."
+                                [ viewUserFull 1 True True { username = user, name = Nothing }
+                                , text "has been invited as guest."
                                 ]
 
                     _ ->
@@ -904,6 +904,10 @@ viewVoteBox : ContractFull -> Op -> Model -> Html Msg
 viewVoteBox c op model =
     let
         -- @doublon
+        isCandidate =
+            c.candidates |> withDefault [] |> List.map (\x -> x.username) |> List.member model.form.uctx.username
+
+        -- @doublon
         isParticipant =
             c.participants |> List.map (\x -> memberIdDecodec x.node.nameid) |> List.member model.form.uctx.username
 
@@ -916,7 +920,11 @@ viewVoteBox c op model =
     if isSuccess && model.voteForm.vote == 1 then
         div [ class "notification is-success is-light" ]
             [ A.icon1 "icon-check icon-2x has-text-success" " "
-            , text "Congratulations, you have been link to this role."
+            , if isCandidate then
+                text (cev2c c.event.event_type)
+
+              else
+                text (cev2p c.event.event_type)
             ]
 
     else if isSuccess && model.voteForm.vote == 0 then
