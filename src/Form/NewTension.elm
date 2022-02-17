@@ -724,9 +724,7 @@ update_ apis message model =
         PushAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | action_result = NotAsked }
-                    , out1 [ DoAuth model.nodeDoc.form.uctx ]
-                    )
+                    ( { model | action_result = NotAsked }, out1 [ DoAuth model.nodeDoc.form.uctx ] )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (OnSubmit OnInvite) 500 ] [ DoUpdateToken ] )

@@ -7,6 +7,7 @@ import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.JoinOrga as JoinOrga
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
@@ -130,8 +131,6 @@ type alias Model =
     , role_result_del : GqlData RoleExtFull
 
     -- Common
-    , node_action : ActionState
-    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     , modal_confirm : ModalConfirm Msg
@@ -141,6 +140,7 @@ type alias Model =
     -- Components
     , help : Help.State
     , tensionForm : NTF.State
+    , joinOrga : JoinOrga.State
     }
 
 
@@ -241,7 +241,6 @@ resetForm model =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
-    | PushGuest ActionForm
     | Submit (Time.Posix -> Msg) -- Get Current Time
       -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
@@ -282,11 +281,6 @@ type Msg
     | UpdateNodePost String String
       -- New Tension
     | DoCreateTension LocalGraph
-      -- JoinOrga Action
-    | DoJoinOrga String
-    | DoJoinOrga2 (GqlData Node)
-    | DoJoinOrga3 Node Time.Posix
-    | JoinAck (GqlData IdPayload)
       -- Token refresh
     | DoOpenAuthModal UserCtx
     | DoCloseAuthModal String
@@ -303,8 +297,6 @@ type Msg
     | InitModals
     | LogErr String
     | Navigate String
-    | DoOpenModal
-    | DoCloseModal ModalData
     | ExpandRoles
     | CollapseRoles
       -- Confirm Modal
@@ -314,6 +306,7 @@ type Msg
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
+    | JoinOrgaMsg JoinOrga.Msg
 
 
 
@@ -382,8 +375,6 @@ init global flags =
             , role_result_del = NotAsked
 
             -- Common
-            , node_action = NoOp
-            , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
             , refresh_trial = 0
@@ -391,6 +382,7 @@ init global flags =
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , modal_confirm = ModalConfirm.init NoMsg
+            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             }
 
         cmds =
@@ -432,9 +424,6 @@ update global message model =
             global.session.apis
     in
     case message of
-        PushGuest form ->
-            ( model, actionRequest apis form JoinAck, Cmd.none )
-
         PassedSlowLoadTreshold ->
             let
                 labels =
@@ -949,77 +938,6 @@ update global message model =
             in
             ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
-        -- Join
-        DoJoinOrga rootnameid ->
-            case global.session.user of
-                LoggedOut ->
-                    ( { model | node_action = ActionAuthNeeded }
-                    , send DoOpenModal
-                    , Cmd.none
-                    )
-
-                LoggedIn _ ->
-                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
-                    , Cmd.none
-                    )
-
-        DoJoinOrga2 result ->
-            case result of
-                Success n ->
-                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , send (Submit <| DoJoinOrga3 n)
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
-
-        DoJoinOrga3 node time ->
-            let
-                ( tid, bid ) =
-                    node.source
-                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
-                        |> withDefault ( "", "" )
-
-                f =
-                    initActionForm tid global.session.user
-
-                form =
-                    { f
-                        | bid = "" -- do no set bid to pass the backend
-                        , events = [ Ev TensionEvent.UserJoined f.uctx.username node.nameid ]
-                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
-                        , node = node
-                    }
-            in
-            ( { model | node_action = JoinOrga (JoinValidation form LoadingSlowly) }
-            , Cmd.batch [ send (PushGuest form), send DoOpenModal ]
-            , Cmd.none
-            )
-
-        JoinAck result ->
-            case model.node_action of
-                JoinOrga (JoinValidation form _) ->
-                    case parseErr result model.refresh_trial of
-                        Authenticate ->
-                            ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
-
-                        RefreshToken i ->
-                            ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
-
-                        OkAuth _ ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , Cmd.none
-                            , send UpdateUserToken
-                            )
-
-                        _ ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         -- Token Refresh
         DoOpenAuthModal uctx ->
             ( { model
@@ -1030,16 +948,10 @@ update global message model =
             )
 
         DoCloseAuthModal link ->
-            let
-                cmd =
-                    ternary (link /= "") (send (Navigate link)) Cmd.none
-            in
-            case model.node_action of
-                JoinOrga _ ->
-                    ( { model | modalAuth = Inactive }, Cmd.batch [ cmd, send (DoCloseModal { reset = True, link = "" }) ], Ports.close_auth_modal )
-
-                _ ->
-                    ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
+            ( { model | modalAuth = Inactive }
+            , ternary (link /= "") (send (Navigate link)) Cmd.none
+            , Ports.close_auth_modal
+            )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -1150,20 +1062,6 @@ update global message model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
-        DoOpenModal ->
-            ( { model | isModalActive = True }, Ports.open_modal "actionModal", Cmd.none )
-
-        DoCloseModal data ->
-            let
-                gcmd =
-                    if data.link /= "" then
-                        send (Navigate data.link)
-
-                    else
-                        Cmd.none
-            in
-            ( { model | isModalActive = False }, gcmd, Ports.close_modal )
-
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
 
@@ -1191,15 +1089,25 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        JoinOrgaMsg msg ->
+            let
+                ( data, out ) =
+                    JoinOrga.update apis msg model.joinOrga
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | joinOrga = data }, out.cmds |> List.map (\m -> Cmd.map JoinOrgaMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
-    [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
-    , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     , Ports.cancelColorFromJs (always CloseColor)
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         |> Sub.batch
 
 
@@ -1216,7 +1124,6 @@ view global model =
             , path_data = global.session.path_data
             , baseUri = SettingsBaseUri
             , data = model.helperBar
-            , onJoin = DoJoinOrga model.node_focus.rootnameid
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
             , onCreateTension = DoCreateTension
@@ -1230,7 +1137,7 @@ view global model =
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        , setupActionModal model
+        , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         ]
     }
 
@@ -1790,69 +1697,3 @@ viewRolesExt txt_yes text_no list_d list_ext_d =
 
         _ ->
             text ""
-
-
-
--- Actions
-
-
-setupActionModal : Model -> Html Msg
-setupActionModal model =
-    let
-        onClose =
-            DoCloseModal { reset = True, link = "" }
-    in
-    div
-        [ id "actionModal"
-        , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isModalActive ) ]
-        , attribute "data-modal-close" "closeModalFromJs"
-        ]
-        [ div
-            [ class "modal-background modal-escape"
-            , attribute "data-modal" "actionModal"
-            , onClick onClose
-            ]
-            []
-        , div [ class "modal-content" ]
-            [ case model.node_action of
-                JoinOrga step ->
-                    viewJoinOrgaStep step
-
-                NoOp ->
-                    text ""
-
-                AskErr err ->
-                    viewGqlErrors [ err ]
-
-                ActionAuthNeeded ->
-                    viewAuthNeeded DoCloseModal
-            ]
-        , button [ class "modal-close is-large", onClick onClose ] []
-        ]
-
-
-viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
-viewJoinOrgaStep step =
-    case step of
-        JoinInit _ ->
-            div [ class "box spinner" ] []
-
-        JoinNotAuthorized errMsg ->
-            viewGqlErrors errMsg
-
-        JoinValidation form result ->
-            case result of
-                Success _ ->
-                    div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH T.welcomIn
-                        , text " "
-                        , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
-                        ]
-
-                Failure err ->
-                    viewGqlErrors err
-
-                _ ->
-                    div [ class "box spinner" ] []

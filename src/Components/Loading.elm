@@ -259,7 +259,7 @@ viewGqlErrors errMsg =
                             Ok err_ ->
                                 err_.errors
                                     |> List.head
-                                    |> Maybe.map (\x -> upT x.message)
+                                    |> Maybe.map (\x -> upH x.message)
                                     |> withDefault e
 
                             Err err_ ->
@@ -267,7 +267,7 @@ viewGqlErrors errMsg =
                                     Ok err2_ ->
                                         err2_
                                             |> List.head
-                                            |> Maybe.map (\x -> upT x.message)
+                                            |> Maybe.map (\x -> upH x.message)
                                             |> withDefault e
 
                                     Err t ->

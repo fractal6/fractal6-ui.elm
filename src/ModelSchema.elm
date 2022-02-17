@@ -548,6 +548,7 @@ type alias UserEvent =
 type EventKind
     = TensionEvent EventNotif
     | ContractEvent ContractNotif
+    | NotifEvent NotifNotif
 
 
 type alias EventNotif =
@@ -565,6 +566,15 @@ type alias ContractNotif =
     , contract_type : ContractType.ContractType
     , event : { event_type : TensionEvent.TensionEvent }
     , tension : { id : String, receiver : PNode }
+    }
+
+
+type alias NotifNotif =
+    { createdAt : String
+    , createdBy : Username
+    , message : Maybe String
+    , tension : Maybe { id : String, receiver : PNode }
+    , contract : Maybe { id : String }
     }
 
 

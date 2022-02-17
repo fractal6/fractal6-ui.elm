@@ -252,3 +252,15 @@ viewContractMedia now ev =
             , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
             ]
         ]
+
+
+viewNotifMedia : Time.Posix -> Dict String String -> Html msg
+viewNotifMedia now ev =
+    div [ class "content" ]
+        [ a [ class "discrete-link", href (Dict.get "link" ev |> withDefault "#") ] <|
+            List.intersperse (text " ") <|
+                [ A.icon (Dict.get "icon" ev |> withDefault "")
+                , Dict.get "title" ev |> withDefault "no input message." |> text
+                ]
+        , small [ class "help" ] [ byAt now (Username (Dict.get "author" ev |> withDefault "")) (Dict.get "date" ev |> withDefault "") ]
+        ]

@@ -3,8 +3,7 @@ module ModelCommon exposing (..)
 import Array exposing (Array)
 import Components.Loading as Loading
     exposing
-        ( ErrorData
-        , GqlData
+        ( GqlData
         , RequestResult(..)
         , WebData
         , withMaybeDataMap
@@ -84,20 +83,6 @@ type alias UserAuthForm =
 type ModalAuth
     = Inactive
     | Active UserAuthForm (WebData UserCtx)
-
-
-
---
--- Action Step and Form Data
---
-
-
-type ActionState
-    = ActionAuthNeeded
-    | AskErr String
-    | NoOp
-      --  @debug: move this to Components
-    | JoinOrga (JoinStep ActionForm)
 
 
 
@@ -428,22 +413,23 @@ makeCandidateContractForm form =
     }
 
 
+form2cid : ActionForm -> String
+form2cid form =
+    let
+        -- @codefactor: put it in Codec.contractIdCodec.
+        -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
+        ( et, old, new ) =
+            List.head form.events
+                |> Maybe.map (\x -> ( TensionEvent.toString x.event_type, x.old, x.new ))
+                |> withDefault ( "", "", "" )
+    in
+    contractIdCodec form.tid et old new
+
+
 isSelfContract : UserCtx -> List UserForm -> Bool
 isSelfContract uctx users =
     -- Assume List.length model.form.users == 1
     List.member uctx.username (List.map (\x -> x.username) users)
-
-
-
--- Steps
-
-
-{-| Join Step
--}
-type JoinStep form
-    = JoinInit (GqlData Node)
-    | JoinValidation form (GqlData IdPayload)
-    | JoinNotAuthorized ErrorData
 
 
 
@@ -699,7 +685,7 @@ getNodeRights uctx target odata =
     if List.length orgaRoles == 0 then
         []
 
-    else if isOwner orgaRoles then
+    else if isOwner uctx target.nameid then
         List.filter (\r -> r.role_type == RoleType.Owner) orgaRoles
 
     else
@@ -773,7 +759,7 @@ getTensionRights uctx th_d path_d =
                         --    True
                         --
 
-                    else if isOwner orgaRoles then
+                    else if isOwner uctx p.focus.nameid then
                         -- is Owner
                         True
 

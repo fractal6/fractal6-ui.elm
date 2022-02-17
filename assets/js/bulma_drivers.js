@@ -121,10 +121,10 @@ export function BulmaDriver(app, target, handlers) {
 
     // Special Elm function
 
-    const $helpTrigger = $doc.querySelectorAll('.helpTrigger');
-    if ($helpTrigger.length > 0) {
-        $helpTrigger.forEach( el => {
-            setupHandler("click", triggerHelp, el, el, app);
+    const $themeTrigger = $doc.querySelectorAll('#themeTrigger');
+    if ($themeTrigger.length > 0) {
+        $themeTrigger.forEach( el => {
+            setupHandler("click", triggerTheme, el, el, app);
         });
     }
 
@@ -135,12 +135,34 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
-    const $themeTrigger = $doc.querySelectorAll('#themeTrigger');
-    if ($themeTrigger.length > 0) {
-        $themeTrigger.forEach( el => {
-            setupHandler("click", triggerTheme, el, el, app);
+    const $helpTrigger = $doc.querySelectorAll('.helpTrigger');
+    if ($helpTrigger.length > 0) {
+        $helpTrigger.forEach( el => {
+            setupHandler("click", triggerHelp, el, el, app);
         });
     }
+
+    const $joinTrigger = $doc.querySelectorAll('.joinTrigger');
+    if ($joinTrigger.length > 0) {
+        $joinTrigger.forEach( el => {
+            setupHandler("click", triggerJoin, el, el, app);
+        });
+    }
+
+    const $joinTrigger2 = $doc.querySelectorAll('.joinPendingTrigger');
+    if ($joinTrigger2.length > 0) {
+        $joinTrigger2.forEach( el => {
+            setupHandler("click", triggerJoin2, el, el, app);
+        });
+    }
+
+    const $inviteTrigger = $doc.querySelectorAll('.inviteTrigger');
+    if ($inviteTrigger.length > 0) {
+        $inviteTrigger.forEach( el => {
+            setupHandler("click", triggerInvite, el, el, app);
+        });
+    }
+
 
     //
     // Activate autofocus
@@ -472,6 +494,18 @@ function closeModal(e, modal, app) {
 
 function triggerHelp(e, el, app) {
     app.ports.triggerHelpFromJs.send(null)
+}
+
+function triggerJoin(e, el, app) {
+    app.ports.triggerJoinFromJs.send(null)
+}
+
+function triggerJoin2(e, el, app) {
+    app.ports.triggerJoinPendingFromJs.send(null)
+}
+
+function triggerInvite(e, el, app) {
+    app.ports.triggerInviteFromJs.send(null)
 }
 
 function triggerNotif(e, el, app) {

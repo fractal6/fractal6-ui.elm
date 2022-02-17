@@ -36,7 +36,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
-import ModelCommon.Event exposing (contractEventToText, contractToLink, contractTypeToText, eventToIcon, eventToLink, viewContractMedia, viewEventMedia)
+import ModelCommon.Event exposing (contractEventToText, contractToLink, contractTypeToText, eventToIcon, eventToLink, viewContractMedia, viewEventMedia, viewNotifMedia)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
@@ -254,7 +254,7 @@ update global message model =
                     let
                         newData =
                             withMapData
-                                (List.map (\a -> ternary (isTensionEvent a.event) { a | isRead = True } a))
+                                (List.map (\a -> ternary (editableEvent a.event) { a | isRead = True } a))
                                 model.notifications_data
                     in
                     ( { model | notifications_data = newData }, Cmd.none, Cmd.none )
@@ -438,106 +438,135 @@ viewUserEvent now ue =
     let
         firstEvent =
             List.head ue.event
+    in
+    case firstEvent of
+        Just (TensionEvent e) ->
+            let
+                node =
+                    e.tension.receiver
 
-        ( isContract, ev, node ) =
-            case firstEvent of
-                Just (TensionEvent e) ->
-                    let
-                        link =
-                            eventToLink ue e
-                    in
-                    ( False
-                    , Dict.fromList
+                ev =
+                    Dict.fromList
                         [ ( "id", ue.id )
                         , ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
                         , ( "title_", e.tension.title )
-                        , ( "target", e.tension.receiver.name )
-                        , ( "orga", nid2rootid e.tension.receiver.nameid )
+                        , ( "target", node.name )
+                        , ( "orga", nid2rootid node.nameid )
                         , ( "date", e.createdAt )
                         , ( "author", e.createdBy.username )
-                        , ( "link", link )
+                        , ( "link", eventToLink ue e )
                         , ( "icon", eventToIcon e.event_type )
                         ]
-                    , e.tension.receiver
-                    )
+            in
+            viewNotif ue node (viewEventMedia now False ev)
 
-                Just (ContractEvent c) ->
-                    let
-                        link =
-                            contractToLink ue c
-                    in
-                    ( True
-                    , Dict.fromList
+        Just (ContractEvent c) ->
+            let
+                node =
+                    c.tension.receiver
+
+                ev =
+                    Dict.fromList
                         [ ( "id", ue.id )
                         , ( "contract", c.contract_type |> contractTypeToText )
                         , ( "title", c.event.event_type |> contractEventToText )
-                        , ( "target", c.tension.receiver.name )
-                        , ( "orga", nid2rootid c.tension.receiver.nameid )
+                        , ( "target", node.name )
+                        , ( "orga", nid2rootid node.nameid )
                         , ( "date", c.createdAt )
                         , ( "author", c.createdBy.username )
-                        , ( "link", link )
+                        , ( "link", contractToLink ue c )
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
-                    , c.tension.receiver
-                    )
+            in
+            div [ class "media mt-1" ]
+                [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
+                , div [ class "media-content" ] [ viewContractMedia now ev ]
+                , if not ue.isRead then
+                    div
+                        [ class "media-right tooltip"
+                        , attribute "data-tooltip" "A vote is waited from you."
+                        ]
+                        [ div [ class "Circle has-text-info" ] [] ]
+
+                  else
+                    text ""
+                ]
+
+        Just (NotifEvent n) ->
+            case n.tension of
+                Just tension ->
+                    let
+                        node =
+                            tension.receiver
+
+                        ev_ =
+                            Dict.fromList
+                                [ ( "id", ue.id )
+                                , ( "title", withDefault "no input message." n.message )
+
+                                --, ( "title_", tension.title )
+                                , ( "target", node.name )
+                                , ( "orga", nid2rootid node.nameid )
+                                , ( "date", n.createdAt )
+                                , ( "author", n.createdBy.username )
+                                , ( "icon", "icon-info" )
+                                ]
+                    in
+                    case n.contract of
+                        Just contract ->
+                            -- Contract notification (e.g contract cancelled)
+                            let
+                                link =
+                                    (Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id, param3 = contract.id } |> toHref)
+                                        ++ "?eid="
+                                        ++ ue.id
+
+                                ev =
+                                    Dict.insert "link" link ev_
+                            in
+                            viewNotif ue node (viewNotifMedia now ev)
+
+                        Nothing ->
+                            let
+                                link =
+                                    (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid tension.receiver.nameid, param2 = tension.id } |> toHref)
+                                        ++ "?eid="
+                                        ++ ue.id
+
+                                ev =
+                                    Dict.insert "link" link ev_
+                            in
+                            viewNotif ue node (viewNotifMedia now ev)
 
                 Nothing ->
-                    ( False, Dict.empty, PNode "" "" )
-    in
-    if isContract then
-        div [ class "media mt-1" ]
-            [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
-            , div [ class "media-content" ]
-                [ viewContractMedia now ev
+                    text "Notification not implemented."
 
-                --, nav [class "level is-mobile"]
+        Nothing ->
+            text ""
+
+
+viewNotif : UserEvent -> PNode -> Html Msg -> Html Msg
+viewNotif ue node content =
+    div [ class "media mt-1" ]
+        [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
+        , div [ class "media-content" ] [ content ]
+        , if not ue.isRead then
+            div
+                [ class "media-right tooltip"
+                , attribute "data-tooltip" "Mark as read."
+                , onClick (MarkAsRead ue.id)
                 ]
-            , if not ue.isRead then
-                div
-                    [ class "media-right tooltip"
-                    , attribute "data-tooltip" "A vote is waited from you."
-                    ]
-                    [ div [ class "Circle has-text-info" ] [] ]
+                [ div [ class "Circle has-text-link is-w" ] [] ]
 
-              else
-                text ""
-            ]
-
-    else if not isContract && not (Dict.isEmpty ev) then
-        div [ class "media mt-1" ]
-            [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
-            , div [ class "media-content" ]
-                [ viewEventMedia now False ev
-
-                --, nav [class "level is-mobile"]
-                ]
-            , if not ue.isRead then
-                div
-                    [ class "media-right tooltip"
-                    , attribute "data-tooltip" "Mark as read."
-                    , onClick (MarkAsRead ue.id)
-                    ]
-                    [ div [ class "Circle has-text-link is-w" ] [] ]
-
-              else
-                text ""
-            ]
-
-    else
-        text ""
+          else
+            text ""
+        ]
 
 
-isTensionEvent event =
-    let
-        ev =
-            List.head event
-    in
-    case ev of
-        Just (TensionEvent _) ->
-            True
-
+editableEvent event =
+    case List.head event of
         Just (ContractEvent _) ->
             False
 
-        Nothing ->
-            False
+        _ ->
+            True

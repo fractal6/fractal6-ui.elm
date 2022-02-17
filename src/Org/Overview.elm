@@ -8,6 +8,7 @@ import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
+import Components.JoinOrga as JoinOrga
 import Components.Loading as Loading
     exposing
         ( GqlData
@@ -65,7 +66,6 @@ import ModelCommon.Codecs
         , getCoordoRoles
         , getOrgaRoles
         , isOwner
-        , memberIdCodec
         , nameidFromFlags
         , nearestCircleid
         , nid2rootid
@@ -78,8 +78,6 @@ import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.AddContract exposing (addOneContract)
-import Query.PatchTension exposing (actionRequest)
 import Query.QueryNode exposing (fetchNode, fetchNodeData, queryGraphPack, queryJournal, queryNodesSub)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
@@ -169,8 +167,6 @@ type alias Model =
     , activity_tab : ActivityTab
 
     -- common
-    , node_action : ActionState
-    , isModalActive : Bool
     , modalAuth : ModalAuth
     , helperBar : HelperBar
     , refresh_trial : Int
@@ -180,6 +176,7 @@ type alias Model =
     , help : Help.State
     , tensionForm : NTF.State
     , actionPanel : ActionPanel.State
+    , joinOrga : JoinOrga.State
     }
 
 
@@ -200,7 +197,6 @@ nfirstTensions =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | LoadOrga
-    | PushGuest ActionForm
     | PushTension Tension
     | Submit (Time.Posix -> Msg) -- Get the current time
       -- Gql Data Queries
@@ -223,11 +219,6 @@ type Msg
     | DoCreateTension LocalGraph
       -- Node Action
     | DoActionEdit String Node
-      -- JoinOrga Action
-    | DoJoinOrga String
-    | DoJoinOrga2 (GqlData Node)
-    | DoJoinOrga3 Node Time.Posix
-    | JoinAck (GqlData IdPayload)
       -- Graphpack
     | FetchNewNode String Bool
     | NewNodesAck (GqlData (List Node))
@@ -254,14 +245,13 @@ type Msg
     | InitModals
     | LogErr String
     | Navigate String
-    | DoOpenModal
-    | DoCloseModal ModalData
     | ExpandRoles
     | CollapseRoles
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | ActionPanelMsg ActionPanel.Msg
+    | JoinOrgaMsg JoinOrga.Msg
 
 
 
@@ -310,6 +300,7 @@ init global flags =
             , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
             , init_data = True
+            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
                 global.session.window_pos
@@ -320,8 +311,6 @@ init global flags =
 
             -- Node Action
             -- Common
-            , node_action = withDefault NoOp global.session.node_action
-            , isModalActive = False
             , modalAuth = Inactive
             , helperBar = HelperBar.create
             , help = Help.init global.session.user
@@ -402,14 +391,6 @@ update global message model =
     case message of
         LoadOrga ->
             ( model, queryGraphPack apis model.node_focus.rootnameid GotOrga, Cmd.none )
-
-        PushGuest form ->
-            --( model, actionRequest apis form JoinAck, Cmd.none )
-            let
-                contractForm =
-                    makeCandidateContractForm form
-            in
-            ( model, addOneContract apis contractForm JoinAck, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -655,80 +636,6 @@ update global message model =
             , Cmd.none
             )
 
-        -- Join
-        DoJoinOrga rootnameid ->
-            case global.session.user of
-                LoggedOut ->
-                    ( { model | node_action = ActionAuthNeeded }
-                    , send DoOpenModal
-                    , Cmd.none
-                    )
-
-                LoggedIn _ ->
-                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , Cmd.batch [ fetchNode apis rootnameid DoJoinOrga2, send DoOpenModal ]
-                    , Cmd.none
-                    )
-
-        DoJoinOrga2 result ->
-            case result of
-                Success n ->
-                    ( { model | node_action = JoinOrga (JoinInit LoadingSlowly) }
-                    , send (Submit <| DoJoinOrga3 n)
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | node_action = JoinOrga (JoinInit result) }, Cmd.none, Cmd.none )
-
-        DoJoinOrga3 node time ->
-            let
-                ( tid, bid ) =
-                    node.source
-                        |> Maybe.map (\b -> ( b.tension.id, b.id ))
-                        |> withDefault ( "", "" )
-
-                f =
-                    initActionForm tid global.session.user
-
-                form =
-                    { f
-                        | events = [ Ev TensionEvent.UserJoined "" f.uctx.username ]
-                        , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
-                        , users = [ { username = f.uctx.username, name = Nothing, email = "", pattern = "" } ]
-                        , node = node
-                    }
-            in
-            ( { model | node_action = JoinOrga (JoinValidation form LoadingSlowly) }
-            , Cmd.batch
-                [ send (PushGuest form)
-                , send DoOpenModal
-                ]
-            , Cmd.none
-            )
-
-        JoinAck result ->
-            case model.node_action of
-                JoinOrga (JoinValidation form _) ->
-                    case parseErr result model.refresh_trial of
-                        Authenticate ->
-                            ( model, send (DoOpenAuthModal form.uctx), Cmd.none )
-
-                        RefreshToken i ->
-                            ( { model | refresh_trial = i }, sendSleep (PushGuest form) 500, send UpdateUserToken )
-
-                        OkAuth _ ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }
-                            , queryNodesSub apis (memberIdCodec form.node.nameid form.uctx.username) NewNodesAck
-                            , Cmd.none
-                            )
-
-                        _ ->
-                            ( { model | node_action = JoinOrga (JoinValidation form result) }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         -- Graphpack
         PushTension tension ->
             let
@@ -892,20 +799,6 @@ update global message model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
-        DoOpenModal ->
-            ( { model | isModalActive = True }, Ports.open_modal "actionModal", Cmd.none )
-
-        DoCloseModal data ->
-            let
-                cmd =
-                    if data.link /= "" then
-                        send (Navigate data.link)
-
-                    else
-                        Cmd.none
-            in
-            ( { model | isModalActive = False }, cmd, Ports.close_modal )
-
         DoOpenAuthModal uctx ->
             ( { model
                 | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
@@ -915,16 +808,10 @@ update global message model =
             )
 
         DoCloseAuthModal link ->
-            let
-                cmd =
-                    ternary (link /= "") (send (Navigate link)) Cmd.none
-            in
-            case model.node_action of
-                JoinOrga _ ->
-                    ( { model | modalAuth = Inactive }, Cmd.batch [ cmd, send (DoCloseModal { reset = True, link = "" }) ], Ports.close_auth_modal )
-
-                _ ->
-                    ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
+            ( { model | modalAuth = Inactive }
+            , ternary (link /= "") (send (Navigate link)) Cmd.none
+            , Ports.close_auth_modal
+            )
 
         ChangeAuthPost field value ->
             case model.modalAuth of
@@ -1030,6 +917,16 @@ update global message model =
             in
             ( { model | actionPanel = data }, out.cmds |> List.map (\m -> Cmd.map ActionPanelMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        JoinOrgaMsg msg ->
+            let
+                ( data, out ) =
+                    JoinOrga.update apis msg model.joinOrga
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | joinOrga = data }, out.cmds |> List.map (\m -> Cmd.map JoinOrgaMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1038,11 +935,12 @@ subscriptions _ model =
     , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
     , Ports.lgPD nodeDataFromJs LogErr DoCreateTension
     , Ports.lookupNodeFromJs ChangeNodeLookup
-    , Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
+    , Ports.uctxPD Ports.openAuthModalFromJs LogErr DoOpenAuthModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         |> Sub.batch
 
 
@@ -1082,7 +980,6 @@ view global model =
             , path_data = model.path_data
             , baseUri = OverviewBaseUri
             , data = model.helperBar
-            , onJoin = DoJoinOrga model.node_focus.rootnameid
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
             , onCreateTension = DoCreateTension
@@ -1094,9 +991,9 @@ view global model =
           Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
         , Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-        , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
-        , setupActionModal model
+        , Help.view {} model.help |> Html.map HelpMsg
+        , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         ]
     }
 
@@ -1560,72 +1457,6 @@ viewEventNotif now e =
             e.tension.receiver
     in
     viewEventMedia now True ev
-
-
-
--- Actions
-
-
-setupActionModal : Model -> Html Msg
-setupActionModal model =
-    let
-        onClose =
-            DoCloseModal { reset = True, link = "" }
-    in
-    div
-        [ id "actionModal"
-        , class "modal modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isModalActive ) ]
-        , attribute "data-modal-close" "closeModalFromJs"
-        ]
-        [ div
-            [ class "modal-background modal-escape"
-            , attribute "data-modal" "actionModal"
-            , onClick onClose
-            ]
-            []
-        , div [ class "modal-content" ]
-            [ case model.node_action of
-                JoinOrga step ->
-                    viewJoinOrgaStep step
-
-                NoOp ->
-                    text ""
-
-                AskErr err ->
-                    viewGqlErrors [ err ]
-
-                ActionAuthNeeded ->
-                    viewAuthNeeded DoCloseModal
-            ]
-        , button [ class "modal-close is-large", onClick onClose ] []
-        ]
-
-
-viewJoinOrgaStep : JoinStep ActionForm -> Html Msg
-viewJoinOrgaStep step =
-    case step of
-        JoinInit _ ->
-            div [ class "box spinner" ] []
-
-        JoinValidation form result ->
-            case result of
-                Success _ ->
-                    div [ class "box is-light", onClick (DoCloseModal { reset = True, link = "" }) ]
-                        [ A.icon1 "icon-check icon-2x has-text-success" " "
-                        , textH T.welcomIn
-                        , text " "
-                        , span [ class "has-font-weight-semibold" ] [ text form.node.name ]
-                        ]
-
-                Failure err ->
-                    viewGqlErrors err
-
-                _ ->
-                    div [ class "box spinner" ] []
-
-        JoinNotAuthorized errMsg ->
-            viewGqlErrors errMsg
 
 
 

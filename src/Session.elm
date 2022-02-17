@@ -11,7 +11,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Json.Decode as JD
-import ModelCommon exposing (ActionState, AssigneeForm, LabelForm, UserState(..))
+import ModelCommon exposing (AssigneeForm, LabelForm, UserState(..))
 import ModelCommon.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
@@ -65,7 +65,6 @@ type alias Session =
     , tension_head : Maybe TensionHead
     , isAdmin : Maybe Bool
     , isSubscribed : Maybe Bool
-    , node_action : Maybe ActionState
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
     , window_pos : Maybe WindowPos
@@ -119,7 +118,6 @@ resetSession flags =
     , tension_head = Nothing
     , isAdmin = Nothing
     , isSubscribed = Nothing
-    , node_action = Nothing
     , node_quickSearch = Nothing
     , window_pos = Nothing
     , apis = flags.apis
@@ -175,7 +173,6 @@ fromLocalSession flags =
       , tension_head = Nothing
       , isAdmin = Nothing
       , isSubscribed = Nothing
-      , node_action = Nothing
       , node_quickSearch = Nothing
       , window_pos = window_pos
       , apis = flags.apis

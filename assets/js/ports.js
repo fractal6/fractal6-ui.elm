@@ -186,6 +186,10 @@ const actions = {
         document.getElementById("navbarTop").classList.remove('has-modal-active2');
         InitBulma(app, session, "")
     },
+
+    'RAISE_AUTH_MODAL': (app, session, uctx) => {
+        app.ports.openAuthModalFromJs.send(uctx);
+    },
     //
     // Quick Search
     //

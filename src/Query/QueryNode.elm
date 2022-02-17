@@ -16,6 +16,7 @@ module Query.QueryNode exposing
     , nodeDecoder
     , nodeIdPayload
     , nodeOrgaPayload
+    , notifEventPayload
     , pNodePayload
     , queryFocusNode
     , queryGraphPack
@@ -52,6 +53,7 @@ import Fractal.Object.Label
 import Fractal.Object.Mandate
 import Fractal.Object.Node
 import Fractal.Object.NodeAggregateResult
+import Fractal.Object.Notif
 import Fractal.Object.OrgaAgg
 import Fractal.Object.RoleExt
 import Fractal.Object.Tension
@@ -1088,3 +1090,19 @@ contractEventPayload =
                     (Fractal.Object.Tension.receiver identity pNodePayload)
                 )
             )
+
+
+notifEventPayload : SelectionSet NotifNotif Fractal.Object.Notif
+notifEventPayload =
+    SelectionSet.succeed NotifNotif
+        |> with (Fractal.Object.Notif.createdAt |> SelectionSet.map decodedTime)
+        |> with (Fractal.Object.Notif.createdBy identity <| SelectionSet.map Username Fractal.Object.User.username)
+        |> with Fractal.Object.Notif.message
+        |> with
+            (Fractal.Object.Notif.tension_ identity
+                (SelectionSet.map2 (\a b -> { id = a, receiver = b })
+                    (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
+                    (Fractal.Object.Tension.receiver identity pNodePayload)
+                )
+            )
+        |> with (Fractal.Object.Notif.contract identity (SelectionSet.map IdPayload (SelectionSet.map decodedId Fractal.Object.Contract.id)))

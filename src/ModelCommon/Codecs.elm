@@ -360,6 +360,16 @@ nearestCircleid nameid =
             nameid
 
 
+getRootids : List UserRole -> List String
+getRootids roles =
+    -- Return all rootnameid a user belongs to
+    roles
+        |> List.filter (\r -> r.role_type /= RoleType.Retired)
+        |> List.filter (\r -> r.role_type /= RoleType.Pending)
+        |> List.map (\r -> nid2rootid r.nameid)
+        |> LE.unique
+
+
 getOrgaRoles : List String -> List UserRole -> List UserRole
 getOrgaRoles nameids roles =
     -- Return all roles of an user inside organisations given the nameids in those organisations
@@ -367,7 +377,10 @@ getOrgaRoles nameids roles =
         rootnameids =
             List.map (\nid -> nid2rootid nid) nameids
     in
-    List.filter (\r -> List.member (nid2rootid r.nameid) rootnameids) roles
+    roles
+        |> List.filter (\r -> r.role_type /= RoleType.Retired)
+        |> List.filter (\r -> r.role_type /= RoleType.Pending)
+        |> List.filter (\r -> List.member (nid2rootid r.nameid) rootnameids)
 
 
 getCircleRoles : List String -> List UserRole -> List UserRole
@@ -385,21 +398,38 @@ getCoordoRoles roles =
     List.filter (\r -> r.role_type == RoleType.Coordinator) roles
 
 
-isOwner : List UserRole -> Bool
-isOwner roles =
-    List.any (\r -> r.role_type == RoleType.Owner) roles
+isOwner : UserCtx -> String -> Bool
+isOwner uctx nameid =
+    uctx.roles
+        |> List.filter (\r -> nid2rootid r.nameid == nid2rootid nameid)
+        |> List.any (\r -> r.role_type == RoleType.Owner)
 
 
-userHasRole : UserCtx -> String -> Bool
-userHasRole uctx nameid =
+isPending : UserCtx -> String -> Bool
+isPending uctx nameid =
+    uctx.roles
+        |> List.filter (\r -> nid2rootid r.nameid == nid2rootid nameid)
+        |> List.any (\r -> r.role_type == RoleType.Pending)
+
+
+isMember : UserCtx -> String -> Bool
+isMember uctx nameid =
+    (List.length <|
+        getOrgaRoles [ nameid ] uctx.roles
+    )
+        > 0
+
+
+hasRole : UserCtx -> String -> Bool
+hasRole uctx nameid =
     uctx.roles
         |> List.filter (\r -> r.role_type /= RoleType.Guest)
         |> List.map (\r -> nearestCircleid r.nameid)
         |> List.member nameid
 
 
-userIsCoordo : UserCtx -> String -> Bool
-userIsCoordo uctx nameid =
+isCoordo : UserCtx -> String -> Bool
+isCoordo uctx nameid =
     uctx.roles
         |> List.filter (\r -> r.role_type == RoleType.Coordinator)
         |> List.map (\r -> nearestCircleid r.nameid)

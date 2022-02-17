@@ -25,6 +25,7 @@ import ModelCommon.Codecs
         ( ActionType(..)
         , FractalBaseRoute(..)
         , NodeFocus
+        , getOrgaRoles
         , getTensionCharac
         , nid2rootid
         , uriFromNameid
@@ -203,15 +204,11 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
         ]
 
 
-viewJoinNeeded : (String -> msg) -> NodeFocus -> Html msg
-viewJoinNeeded doJoin focus =
+viewJoinNeeded : NodeFocus -> Html msg
+viewJoinNeeded focus =
     div [ class "box has-background-primary has-text-light" ]
         [ p []
-            [ button
-                [ class "button is-small"
-                , onClick (doJoin focus.rootnameid)
-                ]
-                [ text "Join" ]
+            [ button [ class "button is-small joinTrigger" ] [ text "Join" ]
             , text " this organisation to participate to this conversation."
             ]
         ]
@@ -606,8 +603,7 @@ viewOrgaMedia_ user root =
                         LoggedIn uctx ->
                             let
                                 roles =
-                                    uctx.roles
-                                        |> List.filter (\r -> r.role_type /= RoleType.Member && nid2rootid r.nameid == root.nameid)
+                                    getOrgaRoles [ root.nameid ] uctx.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
@@ -645,7 +641,7 @@ roleColor rt =
             "primary"
 
         RoleType.Pending ->
-            "primary"
+            "warning"
 
         RoleType.Retired ->
             "warning"

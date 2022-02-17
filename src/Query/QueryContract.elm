@@ -3,6 +3,7 @@ module Query.QueryContract exposing
     , contractPayload
     , getContract
     , getContractComments
+    , getContractId
     , getContracts
     )
 
@@ -78,6 +79,14 @@ getContractComments url form msg =
     makeGQLQuery url
         (Query.getContract (\x -> { x | id = encodeId form.cid |> Present, contractid = Absent })
             contractCommentsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+getContractId url contractid msg =
+    makeGQLQuery url
+        (Query.getContract (\x -> { x | id = Absent, contractid = Present contractid })
+            (SelectionSet.map IdPayload (SelectionSet.map decodedId Fractal.Object.Contract.id))
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 

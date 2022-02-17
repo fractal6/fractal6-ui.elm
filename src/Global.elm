@@ -13,6 +13,7 @@ module Global exposing
     , view
     )
 
+import Auth exposing (parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Codecs exposing (WindowPos)
@@ -207,7 +208,16 @@ update msg model =
                     )
 
                 _ ->
-                    ( newModel, Cmd.none )
+                    if parseErr2 result 1 == Auth.Authenticate then
+                        case model.session.user of
+                            LoggedIn uctx ->
+                                ( newModel, Ports.raiseAuthModal uctx )
+
+                            LoggedOut ->
+                                ( newModel, Cmd.none )
+
+                    else
+                        ( newModel, Cmd.none )
 
         RedirectOnLoggedIn ->
             let

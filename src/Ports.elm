@@ -44,6 +44,15 @@ import ModelSchema
 port triggerHelpFromJs : (() -> msg) -> Sub msg
 
 
+port triggerJoinFromJs : (() -> msg) -> Sub msg
+
+
+port triggerJoinPendingFromJs : (() -> msg) -> Sub msg
+
+
+port triggerInviteFromJs : (() -> msg) -> Sub msg
+
+
 port triggerNotifFromJs : (() -> msg) -> Sub msg
 
 
@@ -59,6 +68,9 @@ port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
 
 
 -- Modal
+
+
+port openAuthModalFromJs : (JD.Value -> msg) -> Sub msg
 
 
 port closeModalFromJs : (JD.Value -> msg) -> Sub msg
@@ -280,6 +292,14 @@ removeSession userCtx =
 
 
 --- Modal
+
+
+raiseAuthModal : UserCtx -> Cmd msg
+raiseAuthModal userCtx =
+    outgoing
+        { action = "RAISE_AUTH_MODAL"
+        , data = userCtxEncoder userCtx
+        }
 
 
 open_modal : String -> Cmd msg

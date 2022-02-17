@@ -635,6 +635,42 @@ deleteUser requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteUser" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddUserRightsRequiredArguments =
+    { input : List Fractal.InputObject.AddUserRightsInput }
+
+
+addUserRights :
+    AddUserRightsRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddUserRightsPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addUserRights requiredArgs____ object____ =
+    Object.selectionForCompositeField "addUserRights" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddUserRightsInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateUserRightsRequiredArguments =
+    { input : Fractal.InputObject.UpdateUserRightsInput }
+
+
+updateUserRights :
+    UpdateUserRightsRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateUserRightsPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateUserRights requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateUserRights" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateUserRightsInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteUserRightsRequiredArguments =
+    { filter : Fractal.InputObject.UserRightsFilter }
+
+
+deleteUserRights :
+    DeleteUserRightsRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteUserRightsPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteUserRights requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteUserRights" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserRightsFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
 type alias AddUserEventRequiredArguments =
     { input : List Fractal.InputObject.AddUserEventInput }
 
@@ -671,37 +707,37 @@ deleteUserEvent requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteUserEvent" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserEventFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias AddUserRightsRequiredArguments =
-    { input : List Fractal.InputObject.AddUserRightsInput }
+type alias AddNotifRequiredArguments =
+    { input : List Fractal.InputObject.AddNotifInput }
 
 
-addUserRights :
-    AddUserRightsRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.AddUserRightsPayload
+addNotif :
+    AddNotifRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddNotifPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addUserRights requiredArgs____ object____ =
-    Object.selectionForCompositeField "addUserRights" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddUserRightsInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+addNotif requiredArgs____ object____ =
+    Object.selectionForCompositeField "addNotif" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddNotifInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias UpdateUserRightsRequiredArguments =
-    { input : Fractal.InputObject.UpdateUserRightsInput }
+type alias UpdateNotifRequiredArguments =
+    { input : Fractal.InputObject.UpdateNotifInput }
 
 
-updateUserRights :
-    UpdateUserRightsRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.UpdateUserRightsPayload
+updateNotif :
+    UpdateNotifRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateNotifPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-updateUserRights requiredArgs____ object____ =
-    Object.selectionForCompositeField "updateUserRights" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateUserRightsInput ] object____ (Basics.identity >> Decode.nullable)
+updateNotif requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateNotif" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateNotifInput ] object____ (Basics.identity >> Decode.nullable)
 
 
-type alias DeleteUserRightsRequiredArguments =
-    { filter : Fractal.InputObject.UserRightsFilter }
+type alias DeleteNotifRequiredArguments =
+    { filter : Fractal.InputObject.NotifFilter }
 
 
-deleteUserRights :
-    DeleteUserRightsRequiredArguments
-    -> SelectionSet decodesTo Fractal.Object.DeleteUserRightsPayload
+deleteNotif :
+    DeleteNotifRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteNotifPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-deleteUserRights requiredArgs____ object____ =
-    Object.selectionForCompositeField "deleteUserRights" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserRightsFilter ] object____ (Basics.identity >> Decode.nullable)
+deleteNotif requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteNotif" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeNotifFilter ] object____ (Basics.identity >> Decode.nullable)

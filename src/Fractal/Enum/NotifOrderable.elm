@@ -2,55 +2,55 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.EventKindType exposing (..)
+module Fractal.Enum.NotifOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type EventKindType
-    = Event
-    | Contract
-    | Notif
+type NotifOrderable
+    = CreatedAt
+    | UpdatedAt
+    | Message
 
 
-list : List EventKindType
+list : List NotifOrderable
 list =
-    [ Event, Contract, Notif ]
+    [ CreatedAt, UpdatedAt, Message ]
 
 
-decoder : Decoder EventKindType
+decoder : Decoder NotifOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "Event" ->
-                        Decode.succeed Event
+                    "createdAt" ->
+                        Decode.succeed CreatedAt
 
-                    "Contract" ->
-                        Decode.succeed Contract
+                    "updatedAt" ->
+                        Decode.succeed UpdatedAt
 
-                    "Notif" ->
-                        Decode.succeed Notif
+                    "message" ->
+                        Decode.succeed Message
 
                     _ ->
-                        Decode.fail ("Invalid EventKindType type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid NotifOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : EventKindType -> String
+toString : NotifOrderable -> String
 toString enum____ =
     case enum____ of
-        Event ->
-            "Event"
+        CreatedAt ->
+            "createdAt"
 
-        Contract ->
-            "Contract"
+        UpdatedAt ->
+            "updatedAt"
 
-        Notif ->
-            "Notif"
+        Message ->
+            "message"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +64,17 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe EventKindType
+fromString : String -> Maybe NotifOrderable
 fromString enumString____ =
     case enumString____ of
-        "Event" ->
-            Just Event
+        "createdAt" ->
+            Just CreatedAt
 
-        "Contract" ->
-            Just Contract
+        "updatedAt" ->
+            Just UpdatedAt
 
-        "Notif" ->
-            Just Notif
+        "message" ->
+            Just Message
 
         _ ->
             Nothing

@@ -22,6 +22,7 @@ import Json.Decode as Decode
 type alias Fragments decodesTo =
     { onEvent : SelectionSet decodesTo Fractal.Object.Event
     , onContract : SelectionSet decodesTo Fractal.Object.Contract
+    , onNotif : SelectionSet decodesTo Fractal.Object.Notif
     }
 
 
@@ -34,6 +35,7 @@ fragments selections____ =
     Object.exhaustiveFragmentSelection
         [ Object.buildFragment "Event" selections____.onEvent
         , Object.buildFragment "Contract" selections____.onContract
+        , Object.buildFragment "Notif" selections____.onNotif
         ]
 
 
@@ -44,4 +46,5 @@ maybeFragments : Fragments (Maybe decodesTo)
 maybeFragments =
     { onEvent = Graphql.SelectionSet.empty |> Graphql.SelectionSet.map (\_ -> Nothing)
     , onContract = Graphql.SelectionSet.empty |> Graphql.SelectionSet.map (\_ -> Nothing)
+    , onNotif = Graphql.SelectionSet.empty |> Graphql.SelectionSet.map (\_ -> Nothing)
     }

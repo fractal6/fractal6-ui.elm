@@ -41,6 +41,10 @@ type AddNodePayload
     = AddNodePayload
 
 
+type AddNotifPayload
+    = AddNotifPayload
+
+
 type AddOrgaAggPayload
     = AddOrgaAggPayload
 
@@ -133,6 +137,10 @@ type DeleteNodePayload
     = DeleteNodePayload
 
 
+type DeleteNotifPayload
+    = DeleteNotifPayload
+
+
 type DeleteOrgaAggPayload
     = DeleteOrgaAggPayload
 
@@ -221,6 +229,14 @@ type NodeFragmentAggregateResult
     = NodeFragmentAggregateResult
 
 
+type Notif
+    = Notif
+
+
+type NotifAggregateResult
+    = NotifAggregateResult
+
+
 type OrgaAgg
     = OrgaAgg
 
@@ -307,6 +323,10 @@ type UpdateNodeFragmentPayload
 
 type UpdateNodePayload
     = UpdateNodePayload
+
+
+type UpdateNotifPayload
+    = UpdateNotifPayload
 
 
 type UpdateOrgaAggPayload

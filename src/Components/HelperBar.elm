@@ -12,7 +12,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid, nid2type, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (roleColor, viewRole)
 import ModelSchema exposing (LocalGraph, UserRole)
 import Ports
@@ -50,7 +50,6 @@ type alias Op msg =
     , user : UserState
     , path_data : Maybe LocalGraph
     , data : HelperBar
-    , onJoin : msg
     , onExpand : msg
     , onCollapse : msg
     , onCreateTension : LocalGraph -> msg
@@ -95,22 +94,27 @@ viewPathLevel op =
                             Just path ->
                                 let
                                     roles =
-                                        List.filter (\r -> nid2rootid r.nameid == rootnameid) uctx.roles
+                                        getOrgaRoles [ rootnameid ] uctx.roles
                                 in
-                                if List.length roles > 0 then
-                                    memberButtons roles { op | baseUri = OverviewBaseUri }
+                                if isPending uctx rootnameid then
+                                    -- show Pending button (redicrect to contract)...
+                                    div [ id "joinPending", class "button is-small has-text-weight-semibold is-warning joinPendingTrigger" ]
+                                        [ textH "Pending invitation" ]
+
+                                else if List.length roles == 0 then
+                                    userCanJoin
+                                        |> Maybe.map (\ucj -> joinButton)
+                                        |> withDefault (text "")
 
                                 else
-                                    userCanJoin
-                                        |> Maybe.map (\ucj -> joinButton op.onJoin)
-                                        |> withDefault (text "")
+                                    memberButtons roles { op | baseUri = OverviewBaseUri }
 
                             Nothing ->
                                 div [ class "ph-button-1" ] []
 
                     LoggedOut ->
                         userCanJoin
-                            |> Maybe.map (\ucj -> joinButton op.onJoin)
+                            |> Maybe.map (\ucj -> joinButton)
                             |> withDefault (text "")
                 ]
             ]
@@ -245,13 +249,9 @@ viewTree baseUri uriQuery g =
         ]
 
 
-joinButton : msg -> Html msg
-joinButton msg =
-    div
-        [ class "button is-small has-text-weight-semibold is-primary"
-        , attribute "data-modal" "actionModal"
-        , onClick msg
-        ]
+joinButton : Html msg
+joinButton =
+    div [ id "join", class "button is-small has-text-weight-semibold is-primary joinTrigger" ]
         [ textH T.joinOrga ]
 
 
@@ -287,14 +287,14 @@ memberButtons roles_ op =
     roles
         |> List.indexedMap
             (\i r ->
-                if (r.role_type /= RoleType.Member && r.role_type /= RoleType.Owner) || (r.role_type == RoleType.Owner && i == 0) then
+                if r.role_type == RoleType.Member then
+                    [ text "" ]
+
+                else
                     [ viewRole op.baseUri r
 
                     --++ [ span [ class "is-vbar-1" ] [] ]
                     ]
-
-                else
-                    [ text "" ]
             )
         |> List.concat
         |> List.reverse

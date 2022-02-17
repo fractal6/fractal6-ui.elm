@@ -14,6 +14,8 @@ Options:
     -w, --write         save/replace in file.
     -t, --template TEMPLATE      template to user.
 
+MODULE_NAME: default, modal.
+
 Examples:
     melm.py add Components.MoveTension
     melm.py push Components.MoveTension Org.Tension
@@ -140,13 +142,13 @@ class ElmSpa(object):
                 reg =  r"\n",
                 pos = -3,
                 t = '''
-                ${module_basename}Msg msg ->
-                    let
-                        ( data, out ) = ${module_basename}.update apis msg model.${module_basename_lower1}
+            ${module_basename}Msg msg ->
+                let
+                    ( data, out ) = ${module_basename}.update apis msg model.${module_basename_lower1}
 
-                        ( cmds, gcmds ) = %s
-                    in
-                    ( %s )
+                    ( cmds, gcmds ) = %s
+                in
+                ( %s )
                 ''' % ('mapGlobalOutcmds out.gcmds' if not push_in_submodule else '([], [])'
                     ,"{model | ${module_basename_lower1} = data}, out.cmds |> List.map (\m -> Cmd.map ${module_basename}Msg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds" if not push_in_submodule else
                     "{ model | ${module_basename_lower1} = data }, out2 (List.map (\m -> Cmd.map ${module_basename}Msg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds)")

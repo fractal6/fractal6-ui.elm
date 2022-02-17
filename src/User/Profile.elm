@@ -10,6 +10,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Form exposing (isPostSendable)
 import Form.Help as Help
+import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
@@ -19,7 +20,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, nid2rootid, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRootids, nid2rootid, uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View exposing (getAvatar3, roleColor, viewOrgaMedia)
 import ModelSchema exposing (..)
@@ -193,7 +194,7 @@ update global message model =
         LoadNodes uctx ->
             let
                 rootids =
-                    uctx.roles |> List.map (\r -> nid2rootid r.nameid) |> LE.unique
+                    getRootids uctx.roles
             in
             ( model, queryNodeExt apis rootids GotNodes, Cmd.none )
 

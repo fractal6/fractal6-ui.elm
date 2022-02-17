@@ -30,7 +30,16 @@ import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(.
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
-import Query.QueryNode exposing (contractEventPayload, nidFilter, nodeDecoder, nodeOrgaPayload, pNodePayload, tensionEventPayload)
+import Query.QueryNode
+    exposing
+        ( contractEventPayload
+        , nidFilter
+        , nodeDecoder
+        , nodeOrgaPayload
+        , notifEventPayload
+        , pNodePayload
+        , tensionEventPayload
+        )
 import Query.QueryUser exposing (usernameFilter)
 import RemoteData exposing (RemoteData)
 
@@ -139,4 +148,5 @@ eventKindType =
     Fractal.Union.EventKind.fragments
         { onEvent = SelectionSet.map TensionEvent tensionEventPayload
         , onContract = SelectionSet.map ContractEvent contractEventPayload
+        , onNotif = SelectionSet.map NotifEvent notifEventPayload
         }

@@ -919,6 +919,50 @@ aggregateUser fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateUser" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
+type alias QueryUserRightsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter
+    , order : OptionalArgument Fractal.InputObject.UserRightsOrder
+    , first : OptionalArgument Int
+    , offset : OptionalArgument Int
+    }
+
+
+queryUserRights :
+    (QueryUserRightsOptionalArguments -> QueryUserRightsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserRights
+    -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
+queryUserRights fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserRightsFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeUserRightsOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "queryUserRights" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+
+
+type alias AggregateUserRightsOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter }
+
+
+aggregateUserRights :
+    (AggregateUserRightsOptionalArguments -> AggregateUserRightsOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.UserRightsAggregateResult
+    -> SelectionSet (Maybe decodesTo) RootQuery
+aggregateUserRights fillInOptionals____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { filter = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserRightsFilter ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "aggregateUserRights" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+
+
 type alias GetUserEventRequiredArguments =
     { id : Fractal.ScalarCodecs.Id }
 
@@ -975,45 +1019,57 @@ aggregateUserEvent fillInOptionals____ object____ =
     Object.selectionForCompositeField "aggregateUserEvent" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
 
 
-type alias QueryUserRightsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter
-    , order : OptionalArgument Fractal.InputObject.UserRightsOrder
+type alias GetNotifRequiredArguments =
+    { id : Fractal.ScalarCodecs.Id }
+
+
+getNotif :
+    GetNotifRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.Notif
+    -> SelectionSet (Maybe decodesTo) RootQuery
+getNotif requiredArgs____ object____ =
+    Object.selectionForCompositeField "getNotif" [ Argument.required "id" requiredArgs____.id (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias QueryNotifOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NotifFilter
+    , order : OptionalArgument Fractal.InputObject.NotifOrder
     , first : OptionalArgument Int
     , offset : OptionalArgument Int
     }
 
 
-queryUserRights :
-    (QueryUserRightsOptionalArguments -> QueryUserRightsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.UserRights
+queryNotif :
+    (QueryNotifOptionalArguments -> QueryNotifOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.Notif
     -> SelectionSet (Maybe (List (Maybe decodesTo))) RootQuery
-queryUserRights fillInOptionals____ object____ =
+queryNotif fillInOptionals____ object____ =
     let
         filledInOptionals____ =
             fillInOptionals____ { filter = Absent, order = Absent, first = Absent, offset = Absent }
 
         optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserRightsFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeUserRightsOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNotifFilter, Argument.optional "order" filledInOptionals____.order Fractal.InputObject.encodeNotifOrder, Argument.optional "first" filledInOptionals____.first Encode.int, Argument.optional "offset" filledInOptionals____.offset Encode.int ]
                 |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "queryUserRights" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
+    Object.selectionForCompositeField "queryNotif" optionalArgs____ object____ (Basics.identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
-type alias AggregateUserRightsOptionalArguments =
-    { filter : OptionalArgument Fractal.InputObject.UserRightsFilter }
+type alias AggregateNotifOptionalArguments =
+    { filter : OptionalArgument Fractal.InputObject.NotifFilter }
 
 
-aggregateUserRights :
-    (AggregateUserRightsOptionalArguments -> AggregateUserRightsOptionalArguments)
-    -> SelectionSet decodesTo Fractal.Object.UserRightsAggregateResult
+aggregateNotif :
+    (AggregateNotifOptionalArguments -> AggregateNotifOptionalArguments)
+    -> SelectionSet decodesTo Fractal.Object.NotifAggregateResult
     -> SelectionSet (Maybe decodesTo) RootQuery
-aggregateUserRights fillInOptionals____ object____ =
+aggregateNotif fillInOptionals____ object____ =
     let
         filledInOptionals____ =
             fillInOptionals____ { filter = Absent }
 
         optionalArgs____ =
-            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeUserRightsFilter ]
+            [ Argument.optional "filter" filledInOptionals____.filter Fractal.InputObject.encodeNotifFilter ]
                 |> List.filterMap Basics.identity
     in
-    Object.selectionForCompositeField "aggregateUserRights" optionalArgs____ object____ (Basics.identity >> Decode.nullable)
+    Object.selectionForCompositeField "aggregateNotif" optionalArgs____ object____ (Basics.identity >> Decode.nullable)

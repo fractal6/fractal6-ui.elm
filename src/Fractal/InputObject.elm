@@ -31,6 +31,8 @@ import Fractal.Enum.NodeMode
 import Fractal.Enum.NodeOrderable
 import Fractal.Enum.NodeType
 import Fractal.Enum.NodeVisibility
+import Fractal.Enum.NotifHasFilter
+import Fractal.Enum.NotifOrderable
 import Fractal.Enum.OrgaAggHasFilter
 import Fractal.Enum.OrgaAggOrderable
 import Fractal.Enum.PendingUserHasFilter
@@ -633,6 +635,62 @@ encodeAddNodeInput : AddNodeInput -> Value
 encodeAddNodeInput (AddNodeInput input____) =
     Encode.maybeObject
         [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "name", Encode.string input____.name |> Just ), ( "nameid", Encode.string input____.nameid |> Just ), ( "rootnameid", Encode.string input____.rootnameid |> Just ), ( "isRoot", Encode.bool input____.isRoot |> Just ), ( "parent", encodeNodeRef |> Encode.optional input____.parent ), ( "type_", Encode.enum Fractal.Enum.NodeType.toString input____.type_ |> Just ), ( "tensions_out", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_out ), ( "tensions_in", (encodeTensionRef |> Encode.list) |> Encode.optional input____.tensions_in ), ( "about", Encode.string |> Encode.optional input____.about ), ( "mandate", encodeMandateRef |> Encode.optional input____.mandate ), ( "source", encodeBlobRef |> Encode.optional input____.source ), ( "visibility", Encode.enum Fractal.Enum.NodeVisibility.toString input____.visibility |> Just ), ( "mode", Encode.enum Fractal.Enum.NodeMode.toString input____.mode |> Just ), ( "rights", Encode.int input____.rights |> Just ), ( "isArchived", Encode.bool input____.isArchived |> Just ), ( "isPersonal", Encode.bool |> Encode.optional input____.isPersonal ), ( "userCanJoin", Encode.bool |> Encode.optional input____.userCanJoin ), ( "children", (encodeNodeRef |> Encode.list) |> Encode.optional input____.children ), ( "docs", (encodeBlobRef |> Encode.maybe |> Encode.list) |> Encode.optional input____.docs ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "roles", (encodeRoleExtRef |> Encode.list) |> Encode.optional input____.roles ), ( "role_ext", encodeRoleExtRef |> Encode.optional input____.role_ext ), ( "role_type", Encode.enum Fractal.Enum.RoleType.toString |> Encode.optional input____.role_type ), ( "color", Encode.string |> Encode.optional input____.color ), ( "first_link", encodeUserRef |> Encode.optional input____.first_link ), ( "second_link", encodeUserRef |> Encode.optional input____.second_link ), ( "skills", (Encode.string |> Encode.list) |> Encode.optional input____.skills ), ( "contracts", (encodeVoteRef |> Encode.list) |> Encode.optional input____.contracts ), ( "orga_agg", encodeOrgaAggRef |> Encode.optional input____.orga_agg ), ( "events_history", (encodeEventRef |> Encode.list) |> Encode.optional input____.events_history ) ]
+
+
+buildAddNotifInput :
+    AddNotifInputRequiredFields
+    -> (AddNotifInputOptionalFields -> AddNotifInputOptionalFields)
+    -> AddNotifInput
+buildAddNotifInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent }
+    in
+    AddNotifInput { createdBy = required____.createdBy, createdAt = required____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract }
+
+
+type alias AddNotifInputRequiredFields =
+    { createdBy : UserRef
+    , createdAt : Fractal.ScalarCodecs.DateTime
+    }
+
+
+type alias AddNotifInputOptionalFields =
+    { updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , message : OptionalArgument String
+    , tension_ : OptionalArgument TensionRef
+    , contract : OptionalArgument ContractRef
+    }
+
+
+{-| Type alias for the `AddNotifInput` attributes. Note that this type
+needs to use the `AddNotifInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddNotifInputRaw =
+    { createdBy : UserRef
+    , createdAt : Fractal.ScalarCodecs.DateTime
+    , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , message : OptionalArgument String
+    , tension_ : OptionalArgument TensionRef
+    , contract : OptionalArgument ContractRef
+    }
+
+
+{-| Type for the AddNotifInput input object.
+-}
+type AddNotifInput
+    = AddNotifInput AddNotifInputRaw
+
+
+{-| Encode a AddNotifInput into a value that can be used as an argument.
+-}
+encodeAddNotifInput : AddNotifInput -> Value
+encodeAddNotifInput (AddNotifInput input____) =
+    Encode.maybeObject
+        [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ) ]
 
 
 buildAddOrgaAggInput :
@@ -2308,15 +2366,16 @@ buildEventKindFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { memberTypes = Absent, eventFilter = Absent, contractFilter = Absent }
+                { memberTypes = Absent, eventFilter = Absent, contractFilter = Absent, notifFilter = Absent }
     in
-    EventKindFilter { memberTypes = optionals____.memberTypes, eventFilter = optionals____.eventFilter, contractFilter = optionals____.contractFilter }
+    EventKindFilter { memberTypes = optionals____.memberTypes, eventFilter = optionals____.eventFilter, contractFilter = optionals____.contractFilter, notifFilter = optionals____.notifFilter }
 
 
 type alias EventKindFilterOptionalFields =
     { memberTypes : OptionalArgument (List Fractal.Enum.EventKindType.EventKindType)
     , eventFilter : OptionalArgument EventFilter
     , contractFilter : OptionalArgument ContractFilter
+    , notifFilter : OptionalArgument NotifFilter
     }
 
 
@@ -2329,6 +2388,7 @@ type alias EventKindFilterRaw =
     { memberTypes : OptionalArgument (List Fractal.Enum.EventKindType.EventKindType)
     , eventFilter : OptionalArgument EventFilter
     , contractFilter : OptionalArgument ContractFilter
+    , notifFilter : OptionalArgument NotifFilter
     }
 
 
@@ -2343,7 +2403,7 @@ type EventKindFilter
 encodeEventKindFilter : EventKindFilter -> Value
 encodeEventKindFilter (EventKindFilter input____) =
     Encode.maybeObject
-        [ ( "memberTypes", (Encode.enum Fractal.Enum.EventKindType.toString |> Encode.list) |> Encode.optional input____.memberTypes ), ( "eventFilter", encodeEventFilter |> Encode.optional input____.eventFilter ), ( "contractFilter", encodeContractFilter |> Encode.optional input____.contractFilter ) ]
+        [ ( "memberTypes", (Encode.enum Fractal.Enum.EventKindType.toString |> Encode.list) |> Encode.optional input____.memberTypes ), ( "eventFilter", encodeEventFilter |> Encode.optional input____.eventFilter ), ( "contractFilter", encodeContractFilter |> Encode.optional input____.contractFilter ), ( "notifFilter", encodeNotifFilter |> Encode.optional input____.notifFilter ) ]
 
 
 buildEventKindRef :
@@ -2353,14 +2413,15 @@ buildEventKindRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { eventRef = Absent, contractRef = Absent }
+                { eventRef = Absent, contractRef = Absent, notifRef = Absent }
     in
-    EventKindRef { eventRef = optionals____.eventRef, contractRef = optionals____.contractRef }
+    EventKindRef { eventRef = optionals____.eventRef, contractRef = optionals____.contractRef, notifRef = optionals____.notifRef }
 
 
 type alias EventKindRefOptionalFields =
     { eventRef : OptionalArgument EventRef
     , contractRef : OptionalArgument ContractRef
+    , notifRef : OptionalArgument NotifRef
     }
 
 
@@ -2372,6 +2433,7 @@ references to itself either directly (recursive) or indirectly (circular). See
 type alias EventKindRefRaw =
     { eventRef : OptionalArgument EventRef
     , contractRef : OptionalArgument ContractRef
+    , notifRef : OptionalArgument NotifRef
     }
 
 
@@ -2386,7 +2448,7 @@ type EventKindRef
 encodeEventKindRef : EventKindRef -> Value
 encodeEventKindRef (EventKindRef input____) =
     Encode.maybeObject
-        [ ( "eventRef", encodeEventRef |> Encode.optional input____.eventRef ), ( "contractRef", encodeContractRef |> Encode.optional input____.contractRef ) ]
+        [ ( "eventRef", encodeEventRef |> Encode.optional input____.eventRef ), ( "contractRef", encodeContractRef |> Encode.optional input____.contractRef ), ( "notifRef", encodeNotifRef |> Encode.optional input____.notifRef ) ]
 
 
 buildEventOrder :
@@ -3965,6 +4027,208 @@ encodeNodeVisibility_hash : NodeVisibility_hash -> Value
 encodeNodeVisibility_hash input____ =
     Encode.maybeObject
         [ ( "eq", Encode.enum Fractal.Enum.NodeVisibility.toString |> Encode.optional input____.eq ), ( "in", (Encode.enum Fractal.Enum.NodeVisibility.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.in_ ) ]
+
+
+buildNotifFilter :
+    (NotifFilterOptionalFields -> NotifFilterOptionalFields)
+    -> NotifFilter
+buildNotifFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { id = Absent, createdAt = Absent, message = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    NotifFilter { id = optionals____.id, createdAt = optionals____.createdAt, message = optionals____.message, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias NotifFilterOptionalFields =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.NotifHasFilter.NotifHasFilter))
+    , and : OptionalArgument (List (Maybe NotifFilter))
+    , or : OptionalArgument (List (Maybe NotifFilter))
+    , not : OptionalArgument NotifFilter
+    }
+
+
+{-| Type alias for the `NotifFilter` attributes. Note that this type
+needs to use the `NotifFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NotifFilterRaw =
+    { id : OptionalArgument (List Fractal.ScalarCodecs.Id)
+    , createdAt : OptionalArgument DateTimeFilter
+    , message : OptionalArgument StringFullTextFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.NotifHasFilter.NotifHasFilter))
+    , and : OptionalArgument (List (Maybe NotifFilter))
+    , or : OptionalArgument (List (Maybe NotifFilter))
+    , not : OptionalArgument NotifFilter
+    }
+
+
+{-| Type for the NotifFilter input object.
+-}
+type NotifFilter
+    = NotifFilter NotifFilterRaw
+
+
+{-| Encode a NotifFilter into a value that can be used as an argument.
+-}
+encodeNotifFilter : NotifFilter -> Value
+encodeNotifFilter (NotifFilter input____) =
+    Encode.maybeObject
+        [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "message", encodeStringFullTextFilter |> Encode.optional input____.message ), ( "has", (Encode.enum Fractal.Enum.NotifHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeNotifFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeNotifFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeNotifFilter |> Encode.optional input____.not ) ]
+
+
+buildNotifOrder :
+    (NotifOrderOptionalFields -> NotifOrderOptionalFields)
+    -> NotifOrder
+buildNotifOrder fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    NotifOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
+
+
+type alias NotifOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.NotifOrderable.NotifOrderable
+    , desc : OptionalArgument Fractal.Enum.NotifOrderable.NotifOrderable
+    , then_ : OptionalArgument NotifOrder
+    }
+
+
+{-| Type alias for the `NotifOrder` attributes. Note that this type
+needs to use the `NotifOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NotifOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.NotifOrderable.NotifOrderable
+    , desc : OptionalArgument Fractal.Enum.NotifOrderable.NotifOrderable
+    , then_ : OptionalArgument NotifOrder
+    }
+
+
+{-| Type for the NotifOrder input object.
+-}
+type NotifOrder
+    = NotifOrder NotifOrderRaw
+
+
+{-| Encode a NotifOrder into a value that can be used as an argument.
+-}
+encodeNotifOrder : NotifOrder -> Value
+encodeNotifOrder (NotifOrder input____) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.NotifOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.NotifOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeNotifOrder |> Encode.optional input____.then_ ) ]
+
+
+buildNotifPatch :
+    (NotifPatchOptionalFields -> NotifPatchOptionalFields)
+    -> NotifPatch
+buildNotifPatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent }
+    in
+    NotifPatch { createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract }
+
+
+type alias NotifPatchOptionalFields =
+    { createdBy : OptionalArgument UserRef
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , message : OptionalArgument String
+    , tension_ : OptionalArgument TensionRef
+    , contract : OptionalArgument ContractRef
+    }
+
+
+{-| Type alias for the `NotifPatch` attributes. Note that this type
+needs to use the `NotifPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NotifPatchRaw =
+    { createdBy : OptionalArgument UserRef
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , message : OptionalArgument String
+    , tension_ : OptionalArgument TensionRef
+    , contract : OptionalArgument ContractRef
+    }
+
+
+{-| Type for the NotifPatch input object.
+-}
+type NotifPatch
+    = NotifPatch NotifPatchRaw
+
+
+{-| Encode a NotifPatch into a value that can be used as an argument.
+-}
+encodeNotifPatch : NotifPatch -> Value
+encodeNotifPatch (NotifPatch input____) =
+    Encode.maybeObject
+        [ ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ) ]
+
+
+buildNotifRef :
+    (NotifRefOptionalFields -> NotifRefOptionalFields)
+    -> NotifRef
+buildNotifRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { id = Absent, createdBy = Absent, createdAt = Absent, updatedAt = Absent, message = Absent, tension_ = Absent, contract = Absent }
+    in
+    NotifRef { id = optionals____.id, createdBy = optionals____.createdBy, createdAt = optionals____.createdAt, updatedAt = optionals____.updatedAt, message = optionals____.message, tension_ = optionals____.tension_, contract = optionals____.contract }
+
+
+type alias NotifRefOptionalFields =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdBy : OptionalArgument UserRef
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , message : OptionalArgument String
+    , tension_ : OptionalArgument TensionRef
+    , contract : OptionalArgument ContractRef
+    }
+
+
+{-| Type alias for the `NotifRef` attributes. Note that this type
+needs to use the `NotifRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias NotifRefRaw =
+    { id : OptionalArgument Fractal.ScalarCodecs.Id
+    , createdBy : OptionalArgument UserRef
+    , createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , updatedAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , message : OptionalArgument String
+    , tension_ : OptionalArgument TensionRef
+    , contract : OptionalArgument ContractRef
+    }
+
+
+{-| Type for the NotifRef input object.
+-}
+type NotifRef
+    = NotifRef NotifRefRaw
+
+
+{-| Encode a NotifRef into a value that can be used as an argument.
+-}
+encodeNotifRef : NotifRef -> Value
+encodeNotifRef (NotifRef input____) =
+    Encode.maybeObject
+        [ ( "id", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.optional input____.id ), ( "createdBy", encodeUserRef |> Encode.optional input____.createdBy ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "tension_", encodeTensionRef |> Encode.optional input____.tension_ ), ( "contract", encodeContractRef |> Encode.optional input____.contract ) ]
 
 
 buildOrgaAggFilter :
@@ -5936,6 +6200,55 @@ encodeUpdateNodeInput : UpdateNodeInput -> Value
 encodeUpdateNodeInput (UpdateNodeInput input____) =
     Encode.maybeObject
         [ ( "filter", encodeNodeFilter input____.filter |> Just ), ( "set", encodeNodePatch |> Encode.optional input____.set ), ( "remove", encodeNodePatch |> Encode.optional input____.remove ) ]
+
+
+buildUpdateNotifInput :
+    UpdateNotifInputRequiredFields
+    -> (UpdateNotifInputOptionalFields -> UpdateNotifInputOptionalFields)
+    -> UpdateNotifInput
+buildUpdateNotifInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateNotifInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateNotifInputRequiredFields =
+    { filter : NotifFilter }
+
+
+type alias UpdateNotifInputOptionalFields =
+    { set : OptionalArgument NotifPatch
+    , remove : OptionalArgument NotifPatch
+    }
+
+
+{-| Type alias for the `UpdateNotifInput` attributes. Note that this type
+needs to use the `UpdateNotifInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateNotifInputRaw =
+    { filter : NotifFilter
+    , set : OptionalArgument NotifPatch
+    , remove : OptionalArgument NotifPatch
+    }
+
+
+{-| Type for the UpdateNotifInput input object.
+-}
+type UpdateNotifInput
+    = UpdateNotifInput UpdateNotifInputRaw
+
+
+{-| Encode a UpdateNotifInput into a value that can be used as an argument.
+-}
+encodeUpdateNotifInput : UpdateNotifInput -> Value
+encodeUpdateNotifInput (UpdateNotifInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeNotifFilter input____.filter |> Just ), ( "set", encodeNotifPatch |> Encode.optional input____.set ), ( "remove", encodeNotifPatch |> Encode.optional input____.remove ) ]
 
 
 buildUpdateOrgaAggInput :
