@@ -18,7 +18,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserState(..), initTensionForm, uctxFromUser)
-import ModelCommon.View exposing (tensionTypeColor)
+import ModelCommon.View exposing (tensionTypeColor, tensionTypeIcon)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (patchLiteral)
@@ -378,7 +378,7 @@ viewModalContent op (State model) =
                                 , classList [ ( "is-active", isActive ), ( "is-selected", isActive ) ]
                                 , onClick (OnSetType tensionType)
                                 ]
-                                [ text (TensionType.toString tensionType) ]
+                                [ A.icon1 (tensionTypeIcon tensionType) (TensionType.toString tensionType) ]
                             ]
                     )
                     TensionType.list

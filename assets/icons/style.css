@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'fractaleicon';
-  src:  url('fonts/fractaleicon.eot?h9ujys');
-  src:  url('fonts/fractaleicon.eot?h9ujys#iefix') format('embedded-opentype'),
-    url('fonts/fractaleicon.ttf?h9ujys') format('truetype'),
-    url('fonts/fractaleicon.woff?h9ujys') format('woff'),
-    url('fonts/fractaleicon.svg?h9ujys#fractaleicon') format('svg');
+  src:  url('fonts/fractaleicon.eot?icuz6a');
+  src:  url('fonts/fractaleicon.eot?icuz6a#iefix') format('embedded-opentype'),
+    url('fonts/fractaleicon.ttf?icuz6a') format('truetype'),
+    url('fonts/fractaleicon.woff?icuz6a') format('woff'),
+    url('fonts/fractaleicon.svg?icuz6a#fractaleicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -312,6 +312,9 @@
 }
 .icon-power:before {
   content: "\e93e";
+}
+.icon-radio:before {
+  content: "\e962";
 }
 .icon-refresh-ccw:before {
   content: "\e93f";

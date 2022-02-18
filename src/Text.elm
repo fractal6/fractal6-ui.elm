@@ -1291,6 +1291,7 @@ tensionTypeDoc =
 * **Operational**: A general category of tension which can be a task, an issue or whatever that need to be share in the organisation.
 * **Governance**: concerning the structure of the organisation its mandates etc.
 * **Help**: for help requests, questions or clarifications.
+* **Alert**: for alert requests, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
     """
 
 

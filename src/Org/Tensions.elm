@@ -51,7 +51,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid)
 import ModelCommon.Requests exposing (fetchChildren, fetchTensionAll, fetchTensionCount, fetchTensionExt, fetchTensionInt, getQuickDoc, login)
-import ModelCommon.View exposing (mediaTension, tensionTypeColor)
+import ModelCommon.View exposing (mediaTension, tensionIcon2, tensionTypeColor)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -62,7 +62,7 @@ import Query.QueryTension exposing (queryExtTension, queryIntTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), LabelSearchPanelOnClickAction(..), Screen, UserSearchPanelOnClickAction(..))
 import Task
-import Text as T exposing (textH, textT)
+import Text as T exposing (textH, textT, upH)
 import Time
 import Url exposing (Url)
 
@@ -264,40 +264,26 @@ defaultStatus =
 
 type TypeFilter
     = AllTypes
-    | GovernanceType
-    | OperationalType
-    | HelpType
+    | OneType TensionType.TensionType
 
 
 typeFilterEncoder : TypeFilter -> String
 typeFilterEncoder x =
     case x of
-        GovernanceType ->
-            "governance"
-
-        OperationalType ->
-            "operational"
-
-        HelpType ->
-            "help"
-
         AllTypes ->
             "all"
+
+        OneType t ->
+            TensionType.toString t |> String.toLower
 
 
 typeFilterDecoder : String -> TypeFilter
 typeFilterDecoder x =
-    case x of
-        "governance" ->
-            GovernanceType
+    case TensionType.fromString (upH x) of
+        Just t ->
+            OneType t
 
-        "operational" ->
-            OperationalType
-
-        "help" ->
-            HelpType
-
-        _ ->
+        Nothing ->
             AllTypes
 
 
@@ -434,14 +420,8 @@ typeDecoder typeF =
         AllTypes ->
             Nothing
 
-        GovernanceType ->
-            Just TensionType.Governance
-
-        OperationalType ->
-            Just TensionType.Operational
-
-        HelpType ->
-            Just TensionType.Help
+        OneType t ->
+            Just t
 
 
 
@@ -1331,15 +1311,16 @@ viewSearchBar model =
                         , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
-                                [ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
+                                ([ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
                                     [ ternary (model.typeFilter == AllTypes) checked unchecked, textH (typeFilterEncoder AllTypes) ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter OperationalType ]
-                                    [ ternary (model.typeFilter == OperationalType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Operational) ] [ textH (typeFilterEncoder OperationalType) ] ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter GovernanceType ]
-                                    [ ternary (model.typeFilter == GovernanceType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Governance) ] [ textH (typeFilterEncoder GovernanceType) ] ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter HelpType ]
-                                    [ ternary (model.typeFilter == HelpType) checked unchecked, span [ class (tensionTypeColor "text" TensionType.Help) ] [ textH (typeFilterEncoder HelpType) ] ]
-                                ]
+                                 ]
+                                    ++ List.map
+                                        (\t ->
+                                            div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter (OneType t) ]
+                                                [ ternary (model.typeFilter == OneType t) checked unchecked, span [ class (tensionTypeColor "text" t) ] [ tensionIcon2 t ] ]
+                                        )
+                                        TensionType.list
+                                )
                             ]
                         ]
                     , div [ class "control", onClick ChangeAuthor ]

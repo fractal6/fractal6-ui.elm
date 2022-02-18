@@ -67,7 +67,7 @@ import ModelCommon
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
-import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionTypeColor, viewRoleExt2)
+import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -1216,7 +1216,7 @@ viewHeader model =
                                 [ span [ class "dropdown-trigger button-light" ]
                                     [ span [ attribute "aria-controls" "type-menu" ]
                                         [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                                            [ text (TensionType.toString tension_type), span [ class "ml-2 arrow down" ] [] ]
+                                            [ tensionIcon2 tension_type, span [ class "ml-2 arrow down" ] [] ]
                                         ]
                                     ]
                                 , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
@@ -1227,7 +1227,7 @@ viewHeader model =
                                                     [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
                                                     , onClick (OnChangeTensionType t)
                                                     ]
-                                                    [ TensionType.toString t |> text ]
+                                                    [ tensionIcon2 t ]
                                             )
                                             TensionType.list
                                     ]
@@ -1235,7 +1235,7 @@ viewHeader model =
 
                           else
                             span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                                [ text (TensionType.toString tension_type) ]
+                                [ tensionIcon2 tension_type ]
                         ]
                     ]
             , viewRecipients model

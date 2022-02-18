@@ -87,9 +87,38 @@ tensionTypeColor elt tt =
             "has-" ++ elt ++ "-danger"
 
 
-tensionTypeSpan : TensionType.TensionType -> Html msg
-tensionTypeSpan type_ =
-    span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" type_ ] [ text (TensionType.toString type_), span [ class "ml-2 arrow down" ] [] ]
+tensionTypeIcon : TensionType.TensionType -> String
+tensionTypeIcon tt =
+    case tt of
+        TensionType.Operational ->
+            "icon-circle1 icon-xs"
+
+        TensionType.Governance ->
+            "icon-circle1 icon-xs"
+
+        TensionType.Help ->
+            "icon-question"
+
+        TensionType.Alert ->
+            "icon-radio"
+
+
+tensionIcon : TensionType.TensionType -> Html msg
+tensionIcon type_ =
+    let
+        cls =
+            ""
+    in
+    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon (tensionTypeIcon type_) ]
+
+
+tensionIcon2 : TensionType.TensionType -> Html msg
+tensionIcon2 type_ =
+    let
+        cls =
+            ""
+    in
+    span [ class <| String.join " " <| [ cls, tensionTypeColor "text" type_ ] ] [ A.icon1 (tensionTypeIcon type_) (TensionType.toString type_) ]
 
 
 mediaTension : Time.Posix -> NodeFocus -> Tension -> Bool -> Bool -> String -> (String -> msg) -> Html msg
@@ -132,7 +161,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                 [ class "tooltip has-tooltip-arrow"
                 , attribute "data-tooltip" (TensionType.toString tension.type_)
                 ]
-                [ div [ class <| "Circle " ++ tensionTypeColor "text" tension.type_ ] [ text "" ] ]
+                [ tensionIcon tension.type_ ]
             ]
         , div [ class "media-content" ]
             [ div [ class "content mb-0" ]

@@ -6,6 +6,7 @@ import Dict
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD2)
 import Form exposing (isPostSendable)
+import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
@@ -183,7 +184,7 @@ viewCommentInput op uctx tension form result viewMode =
             result == LoadingSlowly
 
         isSendable =
-            isPostSendable [ "message" ] form.post
+            isPostSendable [ "message" ] form.post || (form.events |> List.filter (\x -> x.event_type == TensionEvent.Reopened || x.event_type == TensionEvent.Closed) |> List.length) > 0
 
         doSubmit =
             ternary isSendable [ onClick (op.doSubmit <| op.doSubmitComment Nothing) ] []

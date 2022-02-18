@@ -79,6 +79,7 @@ import ModelCommon.View
         ( actionNameStr
         , archiveActionToggle
         , statusColor
+        , tensionIcon2
         , tensionTypeColor
         , viewActionIcon
         , viewActionIconLink
@@ -1558,11 +1559,6 @@ view_ global model =
         ]
 
 
-viewTypeBadge : TensionType.TensionType -> Html Msg
-viewTypeBadge type_ =
-    span [] [ span [ class <| "Circle " ++ tensionTypeColor "text" type_ ] [ text T.space_ ], type_ |> TensionType.toString |> text ]
-
-
 viewTension : UserState -> TensionHead -> Model -> Html Msg
 viewTension u t model =
     let
@@ -1644,7 +1640,7 @@ viewTension u t model =
                         , classList [ ( "is-w", model.isTensionAdmin || isAuthor ) ]
                         , ternary (model.isTensionAdmin || isAuthor) (onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)) (onClick NoMsg)
                         ]
-                        [ viewTypeBadge t.type_ ]
+                        [ tensionIcon2 t.type_ ]
                     , if t.type_ /= TensionType.Governance || t.status == TensionStatus.Open then
                         -- As Governance tension get automatically closed when there are created,
                         -- there status is not relevant, I can cause confusion to user as the object exists.
@@ -1998,9 +1994,9 @@ viewEventType now event =
     , div [ class "media-content" ]
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.type_ ], text (formatDate now event.createdAt) ]
         , span [ class "ml-3" ]
-            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
+            [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
             , span [ class "right-arrow" ] []
-            , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> viewTypeBadge ]
+            , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
             ]
         ]
     ]
