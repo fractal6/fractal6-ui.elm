@@ -33,8 +33,28 @@ import ModelCommon.Codecs
         )
 import ModelCommon.View exposing (byAt, statusColor)
 import ModelSchema exposing (ContractNotif, EmitterOrReceiver, EventNotif, Label, NodeExt, Post, Tension, User, UserCtx, UserEvent, Username)
+import String.Extra as SE
 import Text as T exposing (textH, textT, upH)
 import Time
+
+
+eventTypeToText : TensionEvent.TensionEvent -> String
+eventTypeToText e =
+    case e of
+        TensionEvent.Created ->
+            "New tension"
+
+        TensionEvent.Closed ->
+            "Tension closed"
+
+        TensionEvent.Reopened ->
+            "Tension reopened"
+
+        TensionEvent.CommentPushed ->
+            "New comment"
+
+        _ ->
+            e |> TensionEvent.toString |> SE.humanize
 
 
 contractTypeToText : ContractType.ContractType -> String
@@ -62,11 +82,14 @@ contractEventToText c =
         TensionEvent.MemberLinked ->
             "New first-link"
 
+        TensionEvent.MemberUnlinked ->
+            "Retired first-link"
+
         TensionEvent.UserJoined ->
             "New member"
 
         _ ->
-            "@TODO contractEventToText"
+            c |> TensionEvent.toString |> SE.humanize
 
 
 cev2c : TensionEvent.TensionEvent -> String
@@ -77,6 +100,9 @@ cev2c c =
 
         TensionEvent.MemberLinked ->
             "Congratulations, you have been link to this role."
+
+        TensionEvent.MemberUnlinked ->
+            "Congratulations, you have been unlink to this role."
 
         TensionEvent.UserJoined ->
             "Congratulations, you've joined this organization."

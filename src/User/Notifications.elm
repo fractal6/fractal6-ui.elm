@@ -36,7 +36,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), nid2rootid)
-import ModelCommon.Event exposing (contractEventToText, contractToLink, contractTypeToText, eventToIcon, eventToLink, viewContractMedia, viewEventMedia, viewNotifMedia)
+import ModelCommon.Event exposing (contractEventToText, contractToLink, contractTypeToText, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia, viewNotifMedia)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (byAt, viewOrga)
 import ModelSchema exposing (..)
@@ -46,7 +46,6 @@ import Query.PatchUser exposing (markAllAsRead, markAsRead)
 import Query.QueryNotifications exposing (queryNotifications)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
-import String.Extra as SE
 import Task
 import Text as T exposing (textH, textT)
 import Time
@@ -448,7 +447,7 @@ viewUserEvent now ue =
                 ev =
                     Dict.fromList
                         [ ( "id", ue.id )
-                        , ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
+                        , ( "title", e.event_type |> eventTypeToText )
                         , ( "title_", e.tension.title )
                         , ( "target", node.name )
                         , ( "orga", nid2rootid node.nameid )

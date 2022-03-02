@@ -1302,17 +1302,17 @@ visibilityInfoHeader =
 
 visibilityPublic : String
 visibilityPublic =
-    "The entire world can see it."
+    "The entire world can view."
 
 
 visibilityPrivate : String
 visibilityPrivate =
-    "Only member of the organisation can see it."
+    "Only members of the organisation can view."
 
 
 visibilitySeccret : String
 visibilitySeccret =
-    "Only roles below this circle can see it."
+    "Only roles inside this circle can view."
 
 
 circleAuthorityHeader : String
