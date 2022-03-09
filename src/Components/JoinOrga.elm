@@ -1,13 +1,14 @@
-module Components.JoinOrga exposing (Msg(..), State, init, subscriptions, update, view)
+module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.UserInput as UserInput
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD)
-import Form exposing (isPostEmpty)
+import Form exposing (isPostEmpty, isUsersSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
@@ -22,6 +23,7 @@ import ModelCommon.Codecs exposing (isMember, isPending, memberIdCodec, nid2root
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
+import Query.PatchTension exposing (actionRequest)
 import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode)
 import Session exposing (Apis, GlobalCmd(..))
@@ -38,6 +40,7 @@ type alias Model =
     , isOpen : Bool
     , form : ActionForm
     , step : JoinStep
+    , node_data : GqlData Node
     , nameid : String
     , join_result : GqlData IdPayload
     , isPending : Bool
@@ -45,13 +48,16 @@ type alias Model =
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+
+    -- Components
+    , userInput : UserInput.State
     }
 
 
 type JoinStep
-    = StepOne (GqlData Node)
-    | StepAck IdPayload
-    | JoinNotAuthorized ErrorData
+    = JoinOne
+    | InviteOne
+    | JoinNotAuthorized ErrorData --  @obsolete ?
     | AuthNeeded
 
 
@@ -60,7 +66,8 @@ initModel nameid user =
     { user = user
     , isOpen = False
     , form = initActionForm "" user -- set later
-    , step = StepOne Loading
+    , step = JoinOne
+    , node_data = Loading
     , join_result = NotAsked
     , nameid = nameid
     , isPending = False
@@ -68,6 +75,9 @@ initModel nameid user =
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+
+    -- Components
+    , userInput = UserInput.init user
     }
 
 
@@ -118,8 +128,8 @@ setJoinResult result model =
     { model | join_result = result }
 
 
-makeForm : UserState -> Node -> Time.Posix -> ActionForm
-makeForm user node time =
+makeJoinForm : UserState -> Node -> Time.Posix -> ActionForm
+makeJoinForm user node time =
     let
         ( tid, bid ) =
             node.source
@@ -133,6 +143,23 @@ makeForm user node time =
         | events = [ Ev TensionEvent.UserJoined "" f.uctx.username ]
         , post = Dict.fromList [ ( "createdAt", fromTime time ) ]
         , users = [ { username = f.uctx.username, name = Nothing, email = "", pattern = "" } ]
+        , node = node
+    }
+
+
+makeInviteForm : UserState -> Node -> Time.Posix -> ActionForm
+makeInviteForm user node time =
+    let
+        ( tid, bid ) =
+            node.source
+                |> Maybe.map (\b -> ( b.tension.id, b.id ))
+                |> withDefault ( "", "" )
+
+        f =
+            initActionForm tid user
+    in
+    { f
+        | post = Dict.fromList [ ( "createdAt", fromTime time ) ]
         , node = node
     }
 
@@ -166,7 +193,7 @@ isSendable model =
 
 
 type Msg
-    = OnOpen String
+    = OnOpen String JoinStep
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
@@ -178,8 +205,9 @@ type Msg
     | OnChangePost String String
     | OnSubmit (Time.Posix -> Msg)
       -- JoinOrga Action
-    | OnJoin (GqlData Node)
+    | OnGetNode (GqlData Node)
     | OnJoin2 Node Time.Posix
+    | OnInvite2 Node Time.Posix
     | OnJoinAck (GqlData IdPayload)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -188,6 +216,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | UserInputMsg UserInput.Msg
 
 
 type alias Out =
@@ -225,7 +254,7 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
-        OnOpen rootnameid ->
+        OnOpen rootnameid method ->
             case model.user of
                 LoggedOut ->
                     ( { model | step = AuthNeeded } |> open
@@ -233,9 +262,16 @@ update_ apis message model =
                     )
 
                 LoggedIn uctx ->
-                    if not (isMember uctx rootnameid || isPending uctx rootnameid) then
-                        ( model |> open
-                        , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnJoin ]
+                    if method == JoinOne && not (isMember uctx rootnameid || isPending uctx rootnameid) then
+                        -- Join
+                        ( { model | step = method } |> open
+                        , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnGetNode ]
+                        )
+
+                    else if method == InviteOne then
+                        -- Invite
+                        ( { model | step = method } |> open
+                        , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnGetNode ]
                         )
 
                     else
@@ -276,7 +312,7 @@ update_ apis message model =
                     let
                         -- Time is ignored here, we just want the contractid
                         form =
-                            makeForm model.user node (Time.millisToPosix 0)
+                            makeJoinForm model.user node (Time.millisToPosix 0)
                     in
                     ( { model | form = form }, out0 [ getContractId apis (form2cid form) OnContractIdAck ] )
 
@@ -300,12 +336,25 @@ update_ apis message model =
 
         --Query
         PushGuest form ->
-            --( model, actionRequest apis form JoinAck, Cmd.none )
-            let
-                contractForm =
-                    makeCandidateContractForm form
-            in
-            ( setJoinResult LoadingSlowly model, out0 [ addOneContract apis contractForm OnJoinAck ] )
+            if List.member model.step [ JoinOne ] then
+                -- Self invitation case
+                let
+                    contractForm =
+                        makeCandidateContractForm form
+                in
+                ( setJoinResult LoadingSlowly model, out0 [ addOneContract apis contractForm OnJoinAck ] )
+
+            else if List.member model.step [ InviteOne ] then
+                -- Send invitation case
+                let
+                    contractForm =
+                        makeCandidateContractForm form
+                in
+                ( setJoinResult LoadingSlowly model, out0 [ addOneContract apis contractForm OnJoinAck ] )
+
+            else
+                -- not implemented
+                ( model, noOut )
 
         -- Data
         OnChangePost field value ->
@@ -314,18 +363,41 @@ update_ apis message model =
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
 
-        OnJoin result ->
-            ( { model | step = StepOne result }
-            , case result of
-                Success n ->
-                    out0 [ send (OnSubmit <| OnJoin2 n) ]
+        OnGetNode result ->
+            let
+                newModel =
+                    { model | node_data = result }
+            in
+            case model.step of
+                JoinOne ->
+                    ( newModel
+                    , case result of
+                        Success n ->
+                            out0 [ send (OnSubmit <| OnJoin2 n) ]
+
+                        _ ->
+                            noOut
+                    )
+
+                InviteOne ->
+                    ( newModel
+                    , case result of
+                        Success n ->
+                            out0 [ send (OnSubmit <| OnInvite2 n) ]
+
+                        _ ->
+                            noOut
+                    )
 
                 _ ->
-                    noOut
-            )
+                    -- not implemented
+                    ( model, noOut )
 
         OnJoin2 node time ->
-            ( { model | form = makeForm model.user node time, join_result = NotAsked }, noOut )
+            ( { model | form = makeJoinForm model.user node time, join_result = NotAsked }, noOut )
+
+        OnInvite2 node time ->
+            ( { model | form = makeInviteForm model.user node time, join_result = NotAsked }, noOut )
 
         OnJoinAck result ->
             case parseErr result model.refresh_trial of
@@ -335,8 +407,8 @@ update_ apis message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushGuest model.form) 500 ] [ DoUpdateToken ] )
 
-                OkAuth res ->
-                    ( { model | join_result = result, step = StepAck res }
+                OkAuth _ ->
+                    ( { model | join_result = result }
                     , out1 [ DoFetchNode (memberIdCodec model.form.node.nameid model.form.uctx.username) ]
                     )
 
@@ -363,14 +435,56 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        -- Components
+        UserInputMsg msg ->
+            let
+                ( data, out ) =
+                    UserInput.update apis msg model.userInput
+
+                users =
+                    out.result
+                        |> Maybe.map (\( selected, u ) -> ternary selected u [])
+                        |> withDefault model.form.users
+
+                form =
+                    model.form
+
+                events =
+                    case out.result of
+                        Just ( selected, us ) ->
+                            case us of
+                                [ u ] ->
+                                    let
+                                        uname =
+                                            -- do not store publicly email
+                                            ternary (u.username /= "") u.username ((String.split "@" u.email |> List.head |> withDefault "") ++ "@...")
+                                    in
+                                    if selected then
+                                        form.events ++ [ Ev TensionEvent.UserJoined "" uname ]
+
+                                    else
+                                        form.events |> List.filter (\x -> x.new /= uname)
+
+                                _ ->
+                                    form.events
+
+                        Nothing ->
+                            form.events
+
+                ( cmds, gcmds ) =
+                    ( [], [] )
+            in
+            ( { model | userInput = data, form = { form | users = users, events = events } }, out2 (List.map (\m -> Cmd.map UserInputMsg m) out.cmds |> List.append cmds) (out.gcmds ++ gcmds) )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
-    [ Ports.triggerJoinFromJs (always (OnOpen (nid2rootid model.nameid)))
+    [ Ports.triggerJoinFromJs (always (OnOpen (nid2rootid model.nameid) JoinOne))
     , Ports.triggerJoinPendingFromJs (always (OnRedirectPending (nid2rootid model.nameid)))
     , Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
+        ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
 
 
 
@@ -407,31 +521,47 @@ viewModal op (State model) =
             []
         , div [ class "modal-content" ]
             [ -- class modal-card ?
-              viewJoinStep op (State model)
+              case model.join_result of
+                Success data ->
+                    viewSuccess data op model
+
+                _ ->
+                    viewJoinStep op model
             ]
         , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
-viewJoinStep : Op -> State -> Html Msg
-viewJoinStep op (State model) =
+viewSuccess : IdPayload -> Op -> Model -> Html Msg
+viewSuccess data op model =
+    let
+        link =
+            Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
+    in
+    if List.member model.step [ JoinOne, InviteOne ] then
+        div [ class "box is-light", onClick (OnClose { reset = True, link = "" }) ]
+            [ A.icon1 "icon-check icon-2x has-text-success" " "
+            , textH "Your request has been sent. "
+            , a
+                [ href link
+                , onClickPD (OnClose { reset = True, link = link })
+                , target "_blank"
+                ]
+                [ textH T.checkItOut ]
+            ]
+
+    else
+        text "step success not implemented. Please report this as a bug."
+
+
+viewJoinStep : Op -> Model -> Html Msg
+viewJoinStep op model =
     case model.step of
-        StepOne n ->
+        JoinOne ->
             div [ class "modal-card-body" ]
                 [ div [ class "field pb-2" ] [ text "What is your motivation to join this organisation ?" ]
-                , div [ class "field" ]
-                    [ div [ class "control submitFocus" ]
-                        [ textarea
-                            [ class "textarea"
-                            , rows 3
-                            , placeholder (upH T.leaveCommentOpt)
-                            , value (Dict.get "message" model.form.post |> withDefault "")
-                            , onInput <| OnChangePost "message"
-                            ]
-                            []
-                        ]
-                    ]
-                , case n of
+                , viewComment model
+                , case model.node_data of
                     Failure err ->
                         viewGqlErrors err
 
@@ -468,25 +598,42 @@ viewJoinStep op (State model) =
                             , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
                             , onClick (PushGuest model.form)
                             ]
-                            [ text "Join" ]
+                            [ text T.join ]
                         ]
                     ]
                 ]
 
-        StepAck data ->
-            let
-                link =
-                    Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = nid2rootid model.nameid, param2 = model.form.tid, param3 = data.id } |> toHref
-            in
-            div [ class "box is-light", onClick (OnClose { reset = True, link = "" }) ]
-                [ A.icon1 "icon-check icon-2x has-text-success" " "
-                , textH "Your request has been sent. "
-                , a
-                    [ href link
-                    , onClickPD (OnClose { reset = True, link = link })
-                    , target "_blank"
+        InviteOne ->
+            div [ class "modal-card-body" ]
+                [ UserInput.view { label_text = "Invite new member:" } model.userInput |> Html.map UserInputMsg
+                , viewComment model
+                , case model.node_data of
+                    Failure err ->
+                        viewGqlErrors err
+
+                    _ ->
+                        text ""
+                , case model.join_result of
+                    Failure err ->
+                        if model.isPending then
+                            div [ class "box is-light is-warning" ] [ text "An invitation is pending, please check it out." ]
+
+                        else
+                            viewGqlErrors err
+
+                    _ ->
+                        text ""
+                , div [ class "field is-grouped is-grouped-right" ]
+                    [ div [ class "control" ]
+                        [ button
+                            [ class "button is-primary"
+                            , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
+                            , onClick (PushGuest model.form)
+                            , disabled (not (isUsersSendable model.form.users))
+                            ]
+                            [ text T.invite ]
+                        ]
                     ]
-                    [ textH T.checkItOut ]
                 ]
 
         JoinNotAuthorized errMsg ->
@@ -494,3 +641,24 @@ viewJoinStep op (State model) =
 
         AuthNeeded ->
             viewAuthNeeded OnClose
+
+
+viewComment : Model -> Html Msg
+viewComment model =
+    div [ class "field" ]
+        [ div [ class "control submitFocus" ]
+            [ textarea
+                [ class "textarea"
+                , rows 3
+                , placeholder (upH T.leaveCommentOpt)
+                , value (Dict.get "message" model.form.post |> withDefault "")
+                , onInput <| OnChangePost "message"
+                ]
+                []
+            ]
+        , if List.member model.step [ InviteOne ] then
+            p [ class "help-label" ] [ textH T.invitationMessageHelp ]
+
+          else
+            text ""
+        ]

@@ -383,6 +383,13 @@ getOrgaRoles nameids roles =
         |> List.filter (\r -> List.member (nid2rootid r.nameid) rootnameids)
 
 
+getRoles : UserCtx -> List UserRole
+getRoles uctx =
+    uctx.roles
+        |> List.filter (\r -> r.role_type /= RoleType.Retired)
+        |> List.filter (\r -> r.role_type /= RoleType.Pending)
+
+
 getCircleRoles : List String -> List UserRole -> List UserRole
 getCircleRoles nameids roles =
     -- Return all roles of an user inside circles given the nameids of thoses circles (or the nearest circles if a role is given).

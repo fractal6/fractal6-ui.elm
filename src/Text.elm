@@ -285,6 +285,11 @@ invite =
     "invite"
 
 
+join : String
+join =
+    "join"
+
+
 link : String
 link =
     "link"

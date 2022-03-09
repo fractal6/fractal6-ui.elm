@@ -20,7 +20,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRootids, nid2rootid, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
 import ModelCommon.View exposing (getAvatar3, roleColor, viewOrgaMedia)
 import ModelSchema exposing (..)
@@ -192,11 +192,12 @@ update global message model =
     in
     case message of
         LoadNodes uctx ->
-            let
-                rootids =
-                    getRootids uctx.roles
-            in
-            ( model, queryNodeExt apis rootids GotNodes, Cmd.none )
+            case getRootids uctx.roles of
+                [] ->
+                    ( model, Cmd.none, Cmd.none )
+
+                rootids ->
+                    ( model, queryNodeExt apis rootids GotNodes, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -417,7 +418,7 @@ viewProfileRight : Model -> UserCtx -> Html Msg
 viewProfileRight model uctx =
     div []
         [ h1 [ class "subtitle" ] [ textH T.organisations ]
-        , if List.length uctx.roles == 0 then
+        , if List.length (getRoles uctx) == 0 then
             p [ class "section content" ] <|
                 List.intersperse (text " ")
                     [ p [] [ text "Welcome," ]
@@ -440,12 +441,34 @@ viewProfileRight model uctx =
                     viewGqlErrors err
 
                 _ ->
-                    div [ class "media box" ]
-                        [ div [ class "media-content" ]
-                            [ div [ class "columns" ]
-                                [ div [ class "column is-8" ]
-                                    [ div [ class "ph-line is-0" ] []
-                                    , div [ class "ph-line is-1" ] []
+                    div []
+                        [ div [ class "media box" ]
+                            [ div [ class "media-content" ]
+                                [ div [ class "columns" ]
+                                    [ div [ class "column is-8" ]
+                                        [ div [ class "ph-line is-0" ] []
+                                        , div [ class "ph-line is-1" ] []
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        , div [ class "media box" ]
+                            [ div [ class "media-content" ]
+                                [ div [ class "columns" ]
+                                    [ div [ class "column is-8" ]
+                                        [ div [ class "ph-line is-0" ] []
+                                        , div [ class "ph-line is-1" ] []
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        , div [ class "media box" ]
+                            [ div [ class "media-content" ]
+                                [ div [ class "columns" ]
+                                    [ div [ class "column is-8" ]
+                                        [ div [ class "ph-line is-0" ] []
+                                        , div [ class "ph-line is-1" ] []
+                                        ]
                                     ]
                                 ]
                             ]

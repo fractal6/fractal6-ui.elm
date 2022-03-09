@@ -168,6 +168,8 @@ type Msg
 type alias Out =
     { cmds : List (Cmd Msg)
     , gcmds : List GlobalCmd
+
+    -- Return True on user select and False on unselect
     , result : Maybe ( Bool, List UserForm ) -- define what data is to be returned
     }
 
@@ -236,7 +238,7 @@ update_ apis message model =
             ( data, Out [] [] (Just ( True, [ data.form ] )) )
 
         OnUnselect ->
-            ( unselect model, Out [] [] (Just ( False, [] )) )
+            ( unselect model, Out [] [] (Just ( False, [ model.form ] )) )
 
         DoQueryUser ->
             ( setDataResult LoadingSlowly model

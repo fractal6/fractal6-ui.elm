@@ -2164,7 +2164,7 @@ viewEventUserLeft now event action_m =
             withDefault TensionAction.NewRole action_m
 
         action_txt =
-            case event.old of
+            case event.new of
                 Just type_ ->
                     case RoleType.fromString type_ of
                         Just RoleType.Guest ->

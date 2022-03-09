@@ -427,8 +427,8 @@ setActionForm data =
 
                 LeaveAction ->
                     [ Ev TensionEvent.UserLeft
+                        data.form.uctx.username
                         (node.role_type |> Maybe.map (\rt -> RoleType.toString rt) |> withDefault "")
-                        node.nameid
                     ]
     in
     data |> setEvents events
@@ -1181,17 +1181,13 @@ viewStep1 op model =
 
 viewComment : Model -> Html Msg
 viewComment model =
-    let
-        message =
-            Dict.get "message" model.form.post |> withDefault ""
-    in
     div [ class "field" ]
         [ div [ class "control submitFocus" ]
             [ textarea
                 [ class "textarea"
                 , rows 3
                 , placeholder (upH T.leaveCommentOpt)
-                , value message
+                , value (Dict.get "message" model.form.post |> withDefault "")
                 , onInput <| OnChangePost "message"
                 ]
                 []
