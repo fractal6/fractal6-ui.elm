@@ -200,6 +200,11 @@ cancel =
     "cancel"
 
 
+confirm : String
+confirm =
+    "confirm"
+
+
 publish : String
 publish =
     "publish"
@@ -288,6 +293,11 @@ invite =
 join : String
 join =
     "join"
+
+
+inviteMember : String
+inviteMember =
+    "Invite member"
 
 
 link : String

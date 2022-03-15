@@ -2,55 +2,55 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.PendingUserHasFilter exposing (..)
+module Fractal.Enum.UserEventFragmentHasFilter exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type PendingUserHasFilter
-    = Email
-    | Events
-    | Token
+type UserEventFragmentHasFilter
+    = CreatedAt
+    | IsRead
+    | Event
 
 
-list : List PendingUserHasFilter
+list : List UserEventFragmentHasFilter
 list =
-    [ Email, Events, Token ]
+    [ CreatedAt, IsRead, Event ]
 
 
-decoder : Decoder PendingUserHasFilter
+decoder : Decoder UserEventFragmentHasFilter
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "email" ->
-                        Decode.succeed Email
+                    "createdAt" ->
+                        Decode.succeed CreatedAt
 
-                    "events" ->
-                        Decode.succeed Events
+                    "isRead" ->
+                        Decode.succeed IsRead
 
-                    "token" ->
-                        Decode.succeed Token
+                    "event" ->
+                        Decode.succeed Event
 
                     _ ->
-                        Decode.fail ("Invalid PendingUserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid UserEventFragmentHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : PendingUserHasFilter -> String
+toString : UserEventFragmentHasFilter -> String
 toString enum____ =
     case enum____ of
-        Email ->
-            "email"
+        CreatedAt ->
+            "createdAt"
 
-        Events ->
-            "events"
+        IsRead ->
+            "isRead"
 
-        Token ->
-            "token"
+        Event ->
+            "event"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +64,17 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe PendingUserHasFilter
+fromString : String -> Maybe UserEventFragmentHasFilter
 fromString enumString____ =
     case enumString____ of
-        "email" ->
-            Just Email
+        "createdAt" ->
+            Just CreatedAt
 
-        "events" ->
-            Just Events
+        "isRead" ->
+            Just IsRead
 
-        "token" ->
-            Just Token
+        "event" ->
+            Just Event
 
         _ ->
             Nothing

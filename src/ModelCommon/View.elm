@@ -361,7 +361,7 @@ viewUserFull size isLinked isBoxed user =
             ]
         , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ]
             [ Maybe.map (\name -> span [ class "is-name" ] [ text name ]) user.name |> withDefault (text "")
-            , span [ class "is-username" ] [ text ("@" ++ user.username) ]
+            , span [ class "is-username" ] [ text user.username ]
             ]
         ]
 

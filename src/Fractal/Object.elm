@@ -61,6 +61,10 @@ type AddTensionPayload
     = AddTensionPayload
 
 
+type AddUserEventFragmentPayload
+    = AddUserEventFragmentPayload
+
+
 type AddUserEventPayload
     = AddUserEventPayload
 
@@ -159,6 +163,10 @@ type DeleteRoleExtPayload
 
 type DeleteTensionPayload
     = DeleteTensionPayload
+
+
+type DeleteUserEventFragmentPayload
+    = DeleteUserEventFragmentPayload
 
 
 type DeleteUserEventPayload
@@ -349,6 +357,10 @@ type UpdateTensionPayload
     = UpdateTensionPayload
 
 
+type UpdateUserEventFragmentPayload
+    = UpdateUserEventFragmentPayload
+
+
 type UpdateUserEventPayload
     = UpdateUserEventPayload
 
@@ -379,6 +391,14 @@ type UserEvent
 
 type UserEventAggregateResult
     = UserEventAggregateResult
+
+
+type UserEventFragment
+    = UserEventFragment
+
+
+type UserEventFragmentAggregateResult
+    = UserEventFragmentAggregateResult
 
 
 type UserRights

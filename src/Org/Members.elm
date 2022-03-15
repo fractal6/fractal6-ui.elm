@@ -466,7 +466,8 @@ view_ model =
                 [ viewGuest model.now model.members_top T.guest model.node_focus ]
             ]
         , div [ class "column is-1 section" ]
-            [ div [ class "button is-primary", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ] [ text "Invite member" ]
+            [ div [ class "button is-primary", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
+                [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
             ]
         ]
 

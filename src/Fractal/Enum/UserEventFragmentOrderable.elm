@@ -2,55 +2,41 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Fractal.Enum.PendingUserHasFilter exposing (..)
+module Fractal.Enum.UserEventFragmentOrderable exposing (..)
 
 import Json.Decode as Decode exposing (Decoder)
 
 
-type PendingUserHasFilter
-    = Email
-    | Events
-    | Token
+type UserEventFragmentOrderable
+    = CreatedAt
 
 
-list : List PendingUserHasFilter
+list : List UserEventFragmentOrderable
 list =
-    [ Email, Events, Token ]
+    [ CreatedAt ]
 
 
-decoder : Decoder PendingUserHasFilter
+decoder : Decoder UserEventFragmentOrderable
 decoder =
     Decode.string
         |> Decode.andThen
             (\string ->
                 case string of
-                    "email" ->
-                        Decode.succeed Email
-
-                    "events" ->
-                        Decode.succeed Events
-
-                    "token" ->
-                        Decode.succeed Token
+                    "createdAt" ->
+                        Decode.succeed CreatedAt
 
                     _ ->
-                        Decode.fail ("Invalid PendingUserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
+                        Decode.fail ("Invalid UserEventFragmentOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
 {-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
-toString : PendingUserHasFilter -> String
+toString : UserEventFragmentOrderable -> String
 toString enum____ =
     case enum____ of
-        Email ->
-            "email"
-
-        Events ->
-            "events"
-
-        Token ->
-            "token"
+        CreatedAt ->
+            "createdAt"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -64,17 +50,11 @@ This is the inverse of the Enum `toString` function. So you can call `toString` 
 This can be useful for generating Strings to use for <select> menus to check which item was selected.
 
 -}
-fromString : String -> Maybe PendingUserHasFilter
+fromString : String -> Maybe UserEventFragmentOrderable
 fromString enumString____ =
     case enumString____ of
-        "email" ->
-            Just Email
-
-        "events" ->
-            Just Events
-
-        "token" ->
-            Just Token
+        "createdAt" ->
+            Just CreatedAt
 
         _ ->
             Nothing

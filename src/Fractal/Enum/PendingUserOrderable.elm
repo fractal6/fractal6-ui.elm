@@ -9,11 +9,12 @@ import Json.Decode as Decode exposing (Decoder)
 
 type PendingUserOrderable
     = Email
+    | Token
 
 
 list : List PendingUserOrderable
 list =
-    [ Email ]
+    [ Email, Token ]
 
 
 decoder : Decoder PendingUserOrderable
@@ -24,6 +25,9 @@ decoder =
                 case string of
                     "email" ->
                         Decode.succeed Email
+
+                    "token" ->
+                        Decode.succeed Token
 
                     _ ->
                         Decode.fail ("Invalid PendingUserOrderable type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -37,6 +41,9 @@ toString enum____ =
     case enum____ of
         Email ->
             "email"
+
+        Token ->
+            "token"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -55,6 +62,9 @@ fromString enumString____ =
     case enumString____ of
         "email" ->
             Just Email
+
+        "token" ->
+            Just Token
 
         _ ->
             Nothing

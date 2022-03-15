@@ -271,7 +271,11 @@ update_ apis message model =
                     else if method == InviteOne then
                         -- Invite
                         ( { model | step = method } |> open
-                        , out0 [ Ports.open_modal "JoinOrgaModal", fetchNode apis rootnameid OnGetNode ]
+                        , out0
+                            [ Ports.open_modal "JoinOrgaModal"
+                            , fetchNode apis rootnameid OnGetNode
+                            , Cmd.map UserInputMsg (send (UserInput.OnLoad NotAsked))
+                            ]
                         )
 
                     else
@@ -604,8 +608,12 @@ viewJoinStep op model =
                 ]
 
         InviteOne ->
+            let
+                name =
+                    model.node_data |> withMaybeData |> Maybe.map .name |> withDefault ""
+            in
             div [ class "modal-card-body" ]
-                [ UserInput.view { label_text = "Invite new member:" } model.userInput |> Html.map UserInputMsg
+                [ UserInput.view { label_text = "Invite member to " ++ name ++ ":" } model.userInput |> Html.map UserInputMsg
                 , viewComment model
                 , case model.node_data of
                     Failure err ->

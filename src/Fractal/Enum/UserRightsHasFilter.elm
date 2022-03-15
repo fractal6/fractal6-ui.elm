@@ -8,15 +8,16 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type UserRightsHasFilter
-    = CanLogin
+    = Type_
+    | CanLogin
     | CanCreateRoot
     | MaxPublicOrga
-    | Type_
+    | HasEmailNotifications
 
 
 list : List UserRightsHasFilter
 list =
-    [ CanLogin, CanCreateRoot, MaxPublicOrga, Type_ ]
+    [ Type_, CanLogin, CanCreateRoot, MaxPublicOrga, HasEmailNotifications ]
 
 
 decoder : Decoder UserRightsHasFilter
@@ -25,6 +26,9 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "type_" ->
+                        Decode.succeed Type_
+
                     "canLogin" ->
                         Decode.succeed CanLogin
 
@@ -34,8 +38,8 @@ decoder =
                     "maxPublicOrga" ->
                         Decode.succeed MaxPublicOrga
 
-                    "type_" ->
-                        Decode.succeed Type_
+                    "hasEmailNotifications" ->
+                        Decode.succeed HasEmailNotifications
 
                     _ ->
                         Decode.fail ("Invalid UserRightsHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -47,6 +51,9 @@ decoder =
 toString : UserRightsHasFilter -> String
 toString enum____ =
     case enum____ of
+        Type_ ->
+            "type_"
+
         CanLogin ->
             "canLogin"
 
@@ -56,8 +63,8 @@ toString enum____ =
         MaxPublicOrga ->
             "maxPublicOrga"
 
-        Type_ ->
-            "type_"
+        HasEmailNotifications ->
+            "hasEmailNotifications"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -74,6 +81,9 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe UserRightsHasFilter
 fromString enumString____ =
     case enumString____ of
+        "type_" ->
+            Just Type_
+
         "canLogin" ->
             Just CanLogin
 
@@ -83,8 +93,8 @@ fromString enumString____ =
         "maxPublicOrga" ->
             Just MaxPublicOrga
 
-        "type_" ->
-            Just Type_
+        "hasEmailNotifications" ->
+            Just HasEmailNotifications
 
         _ ->
             Nothing

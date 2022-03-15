@@ -501,16 +501,29 @@ deleteContract requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteContract" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeContractFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
+type alias AddPendingUserOptionalArguments =
+    { upsert : OptionalArgument Bool }
+
+
 type alias AddPendingUserRequiredArguments =
     { input : List Fractal.InputObject.AddPendingUserInput }
 
 
 addPendingUser :
-    AddPendingUserRequiredArguments
+    (AddPendingUserOptionalArguments -> AddPendingUserOptionalArguments)
+    -> AddPendingUserRequiredArguments
     -> SelectionSet decodesTo Fractal.Object.AddPendingUserPayload
     -> SelectionSet (Maybe decodesTo) RootMutation
-addPendingUser requiredArgs____ object____ =
-    Object.selectionForCompositeField "addPendingUser" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddPendingUserInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+addPendingUser fillInOptionals____ requiredArgs____ object____ =
+    let
+        filledInOptionals____ =
+            fillInOptionals____ { upsert = Absent }
+
+        optionalArgs____ =
+            [ Argument.optional "upsert" filledInOptionals____.upsert Encode.bool ]
+                |> List.filterMap Basics.identity
+    in
+    Object.selectionForCompositeField "addPendingUser" (optionalArgs____ ++ [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddPendingUserInput |> Encode.list) ]) object____ (Basics.identity >> Decode.nullable)
 
 
 type alias UpdatePendingUserRequiredArguments =
@@ -705,6 +718,42 @@ deleteUserEvent :
     -> SelectionSet (Maybe decodesTo) RootMutation
 deleteUserEvent requiredArgs____ object____ =
     Object.selectionForCompositeField "deleteUserEvent" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserEventFilter ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias AddUserEventFragmentRequiredArguments =
+    { input : List Fractal.InputObject.AddUserEventFragmentInput }
+
+
+addUserEventFragment :
+    AddUserEventFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.AddUserEventFragmentPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+addUserEventFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "addUserEventFragment" [ Argument.required "input" requiredArgs____.input (Fractal.InputObject.encodeAddUserEventFragmentInput |> Encode.list) ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias UpdateUserEventFragmentRequiredArguments =
+    { input : Fractal.InputObject.UpdateUserEventFragmentInput }
+
+
+updateUserEventFragment :
+    UpdateUserEventFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.UpdateUserEventFragmentPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+updateUserEventFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "updateUserEventFragment" [ Argument.required "input" requiredArgs____.input Fractal.InputObject.encodeUpdateUserEventFragmentInput ] object____ (Basics.identity >> Decode.nullable)
+
+
+type alias DeleteUserEventFragmentRequiredArguments =
+    { filter : Fractal.InputObject.UserEventFragmentFilter }
+
+
+deleteUserEventFragment :
+    DeleteUserEventFragmentRequiredArguments
+    -> SelectionSet decodesTo Fractal.Object.DeleteUserEventFragmentPayload
+    -> SelectionSet (Maybe decodesTo) RootMutation
+deleteUserEventFragment requiredArgs____ object____ =
+    Object.selectionForCompositeField "deleteUserEventFragment" [ Argument.required "filter" requiredArgs____.filter Fractal.InputObject.encodeUserEventFragmentFilter ] object____ (Basics.identity >> Decode.nullable)
 
 
 type alias AddNotifRequiredArguments =

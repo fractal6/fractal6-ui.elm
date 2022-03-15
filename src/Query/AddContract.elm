@@ -132,7 +132,10 @@ addContractInputEncoder f =
                             |> fromMaybe
                     , pending_candidates =
                         f.pending_candidates
-                            |> List.map (\p -> { email = Present p.email })
+                            |> List.map
+                                (\p ->
+                                    Input.buildPendingUserRef (\v -> { v | email = Present p.email })
+                                )
                             |> listToMaybe
                             |> fromMaybe
                 }

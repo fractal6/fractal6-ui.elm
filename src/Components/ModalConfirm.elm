@@ -93,11 +93,11 @@ viewConfirm op =
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "buttons" ]
                     [ button
-                        [ class "button is-small is-danger", onClick (op.onClose { reset = True, link = "" }) ]
-                        [ text "Cancel" ]
-                    , button
                         [ class "button is-small is-success", onClick op.onConfirm ]
-                        [ text "Confirm" ]
+                        [ textH T.confirm ]
+                    , button
+                        [ class "button is-small is-danger", onClick (op.onClose { reset = True, link = "" }) ]
+                        [ textH T.cancel ]
                     ]
                 ]
             ]

@@ -48,6 +48,8 @@ import Fractal.Enum.TensionHasFilter
 import Fractal.Enum.TensionOrderable
 import Fractal.Enum.TensionStatus
 import Fractal.Enum.TensionType
+import Fractal.Enum.UserEventFragmentHasFilter
+import Fractal.Enum.UserEventFragmentOrderable
 import Fractal.Enum.UserEventHasFilter
 import Fractal.Enum.UserEventOrderable
 import Fractal.Enum.UserHasFilter
@@ -734,27 +736,42 @@ buildAddPendingUserInput fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { email = Absent }
+                { email = Absent, events = Absent, token = Absent }
     in
-    { email = optionals____.email }
+    AddPendingUserInput { email = optionals____.email, events = optionals____.events, token = optionals____.token }
 
 
 type alias AddPendingUserInputOptionalFields =
-    { email : OptionalArgument String }
+    { email : OptionalArgument String
+    , events : OptionalArgument (List UserEventFragmentRef)
+    , token : OptionalArgument String
+    }
+
+
+{-| Type alias for the `AddPendingUserInput` attributes. Note that this type
+needs to use the `AddPendingUserInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddPendingUserInputRaw =
+    { email : OptionalArgument String
+    , events : OptionalArgument (List UserEventFragmentRef)
+    , token : OptionalArgument String
+    }
 
 
 {-| Type for the AddPendingUserInput input object.
 -}
-type alias AddPendingUserInput =
-    { email : OptionalArgument String }
+type AddPendingUserInput
+    = AddPendingUserInput AddPendingUserInputRaw
 
 
 {-| Encode a AddPendingUserInput into a value that can be used as an argument.
 -}
 encodeAddPendingUserInput : AddPendingUserInput -> Value
-encodeAddPendingUserInput input____ =
+encodeAddPendingUserInput (AddPendingUserInput input____) =
     Encode.maybeObject
-        [ ( "email", Encode.string |> Encode.optional input____.email ) ]
+        [ ( "email", Encode.string |> Encode.optional input____.email ), ( "events", (encodeUserEventFragmentRef |> Encode.list) |> Encode.optional input____.events ), ( "token", Encode.string |> Encode.optional input____.token ) ]
 
 
 buildAddRoleExtInput :
@@ -903,6 +920,55 @@ encodeAddTensionInput (AddTensionInput input____) =
         [ ( "createdBy", encodeUserRef input____.createdBy |> Just ), ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "updatedAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.updatedAt ), ( "message", Encode.string |> Encode.optional input____.message ), ( "emitter", encodeNodeRef input____.emitter |> Just ), ( "emitterid", Encode.string input____.emitterid |> Just ), ( "receiver", encodeNodeRef input____.receiver |> Just ), ( "receiverid", Encode.string input____.receiverid |> Just ), ( "title", Encode.string input____.title |> Just ), ( "type_", Encode.enum Fractal.Enum.TensionType.toString input____.type_ |> Just ), ( "status", Encode.enum Fractal.Enum.TensionStatus.toString input____.status |> Just ), ( "action", Encode.enum Fractal.Enum.TensionAction.toString |> Encode.optional input____.action ), ( "comments", (encodeCommentRef |> Encode.list) |> Encode.optional input____.comments ), ( "assignees", (encodeUserRef |> Encode.list) |> Encode.optional input____.assignees ), ( "labels", (encodeLabelRef |> Encode.list) |> Encode.optional input____.labels ), ( "blobs", (encodeBlobRef |> Encode.list) |> Encode.optional input____.blobs ), ( "history", (encodeEventRef |> Encode.list) |> Encode.optional input____.history ), ( "contracts", (encodeContractRef |> Encode.list) |> Encode.optional input____.contracts ), ( "subscribers", (encodeUserRef |> Encode.list) |> Encode.optional input____.subscribers ), ( "n_comments", Encode.int |> Encode.optional input____.n_comments ), ( "n_open_contracts", Encode.int |> Encode.optional input____.n_open_contracts ) ]
 
 
+buildAddUserEventFragmentInput :
+    AddUserEventFragmentInputRequiredFields
+    -> (AddUserEventFragmentInputOptionalFields -> AddUserEventFragmentInputOptionalFields)
+    -> AddUserEventFragmentInput
+buildAddUserEventFragmentInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { event = Absent }
+    in
+    AddUserEventFragmentInput { createdAt = required____.createdAt, isRead = required____.isRead, event = optionals____.event }
+
+
+type alias AddUserEventFragmentInputRequiredFields =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , isRead : Bool
+    }
+
+
+type alias AddUserEventFragmentInputOptionalFields =
+    { event : OptionalArgument (List EventKindRef) }
+
+
+{-| Type alias for the `AddUserEventFragmentInput` attributes. Note that this type
+needs to use the `AddUserEventFragmentInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias AddUserEventFragmentInputRaw =
+    { createdAt : Fractal.ScalarCodecs.DateTime
+    , isRead : Bool
+    , event : OptionalArgument (List EventKindRef)
+    }
+
+
+{-| Type for the AddUserEventFragmentInput input object.
+-}
+type AddUserEventFragmentInput
+    = AddUserEventFragmentInput AddUserEventFragmentInputRaw
+
+
+{-| Encode a AddUserEventFragmentInput into a value that can be used as an argument.
+-}
+encodeAddUserEventFragmentInput : AddUserEventFragmentInput -> Value
+encodeAddUserEventFragmentInput (AddUserEventFragmentInput input____) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) input____.createdAt |> Just ), ( "isRead", Encode.bool input____.isRead |> Just ), ( "event", (encodeEventKindRef |> Encode.list) |> Encode.optional input____.event ) ]
+
+
 buildAddUserEventInput :
     AddUserEventInputRequiredFields
     -> (AddUserEventInputOptionalFields -> AddUserEventInputOptionalFields)
@@ -1042,24 +1108,26 @@ buildAddUserRightsInput :
     AddUserRightsInputRequiredFields
     -> AddUserRightsInput
 buildAddUserRightsInput required____ =
-    { canLogin = required____.canLogin, canCreateRoot = required____.canCreateRoot, maxPublicOrga = required____.maxPublicOrga, type_ = required____.type_ }
+    { type_ = required____.type_, canLogin = required____.canLogin, canCreateRoot = required____.canCreateRoot, maxPublicOrga = required____.maxPublicOrga, hasEmailNotifications = required____.hasEmailNotifications }
 
 
 type alias AddUserRightsInputRequiredFields =
-    { canLogin : Bool
+    { type_ : Fractal.Enum.UserType.UserType
+    , canLogin : Bool
     , canCreateRoot : Bool
     , maxPublicOrga : Int
-    , type_ : Fractal.Enum.UserType.UserType
+    , hasEmailNotifications : Bool
     }
 
 
 {-| Type for the AddUserRightsInput input object.
 -}
 type alias AddUserRightsInput =
-    { canLogin : Bool
+    { type_ : Fractal.Enum.UserType.UserType
+    , canLogin : Bool
     , canCreateRoot : Bool
     , maxPublicOrga : Int
-    , type_ : Fractal.Enum.UserType.UserType
+    , hasEmailNotifications : Bool
     }
 
 
@@ -1068,7 +1136,7 @@ type alias AddUserRightsInput =
 encodeAddUserRightsInput : AddUserRightsInput -> Value
 encodeAddUserRightsInput input____ =
     Encode.maybeObject
-        [ ( "canLogin", Encode.bool input____.canLogin |> Just ), ( "canCreateRoot", Encode.bool input____.canCreateRoot |> Just ), ( "maxPublicOrga", Encode.int input____.maxPublicOrga |> Just ), ( "type_", Encode.enum Fractal.Enum.UserType.toString input____.type_ |> Just ) ]
+        [ ( "type_", Encode.enum Fractal.Enum.UserType.toString input____.type_ |> Just ), ( "canLogin", Encode.bool input____.canLogin |> Just ), ( "canCreateRoot", Encode.bool input____.canCreateRoot |> Just ), ( "maxPublicOrga", Encode.int input____.maxPublicOrga |> Just ), ( "hasEmailNotifications", Encode.bool input____.hasEmailNotifications |> Just ) ]
 
 
 buildAddVoteInput :
@@ -4398,13 +4466,14 @@ buildPendingUserFilter fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { has = Absent, and = Absent, or = Absent, not = Absent }
+                { email = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
     in
-    PendingUserFilter { has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+    PendingUserFilter { email = optionals____.email, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
 
 
 type alias PendingUserFilterOptionalFields =
-    { has : OptionalArgument (List (Maybe Fractal.Enum.PendingUserHasFilter.PendingUserHasFilter))
+    { email : OptionalArgument StringHashFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.PendingUserHasFilter.PendingUserHasFilter))
     , and : OptionalArgument (List (Maybe PendingUserFilter))
     , or : OptionalArgument (List (Maybe PendingUserFilter))
     , not : OptionalArgument PendingUserFilter
@@ -4417,7 +4486,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias PendingUserFilterRaw =
-    { has : OptionalArgument (List (Maybe Fractal.Enum.PendingUserHasFilter.PendingUserHasFilter))
+    { email : OptionalArgument StringHashFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.PendingUserHasFilter.PendingUserHasFilter))
     , and : OptionalArgument (List (Maybe PendingUserFilter))
     , or : OptionalArgument (List (Maybe PendingUserFilter))
     , not : OptionalArgument PendingUserFilter
@@ -4435,7 +4505,7 @@ type PendingUserFilter
 encodePendingUserFilter : PendingUserFilter -> Value
 encodePendingUserFilter (PendingUserFilter input____) =
     Encode.maybeObject
-        [ ( "has", (Encode.enum Fractal.Enum.PendingUserHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodePendingUserFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodePendingUserFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodePendingUserFilter |> Encode.optional input____.not ) ]
+        [ ( "email", encodeStringHashFilter |> Encode.optional input____.email ), ( "has", (Encode.enum Fractal.Enum.PendingUserHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodePendingUserFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodePendingUserFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodePendingUserFilter |> Encode.optional input____.not ) ]
 
 
 buildPendingUserOrder :
@@ -4490,27 +4560,42 @@ buildPendingUserPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { email = Absent }
+                { email = Absent, events = Absent, token = Absent }
     in
-    { email = optionals____.email }
+    PendingUserPatch { email = optionals____.email, events = optionals____.events, token = optionals____.token }
 
 
 type alias PendingUserPatchOptionalFields =
-    { email : OptionalArgument String }
+    { email : OptionalArgument String
+    , events : OptionalArgument (List UserEventFragmentRef)
+    , token : OptionalArgument String
+    }
+
+
+{-| Type alias for the `PendingUserPatch` attributes. Note that this type
+needs to use the `PendingUserPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias PendingUserPatchRaw =
+    { email : OptionalArgument String
+    , events : OptionalArgument (List UserEventFragmentRef)
+    , token : OptionalArgument String
+    }
 
 
 {-| Type for the PendingUserPatch input object.
 -}
-type alias PendingUserPatch =
-    { email : OptionalArgument String }
+type PendingUserPatch
+    = PendingUserPatch PendingUserPatchRaw
 
 
 {-| Encode a PendingUserPatch into a value that can be used as an argument.
 -}
 encodePendingUserPatch : PendingUserPatch -> Value
-encodePendingUserPatch input____ =
+encodePendingUserPatch (PendingUserPatch input____) =
     Encode.maybeObject
-        [ ( "email", Encode.string |> Encode.optional input____.email ) ]
+        [ ( "email", Encode.string |> Encode.optional input____.email ), ( "events", (encodeUserEventFragmentRef |> Encode.list) |> Encode.optional input____.events ), ( "token", Encode.string |> Encode.optional input____.token ) ]
 
 
 buildPendingUserRef :
@@ -4520,27 +4605,42 @@ buildPendingUserRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { email = Absent }
+                { email = Absent, events = Absent, token = Absent }
     in
-    { email = optionals____.email }
+    PendingUserRef { email = optionals____.email, events = optionals____.events, token = optionals____.token }
 
 
 type alias PendingUserRefOptionalFields =
-    { email : OptionalArgument String }
+    { email : OptionalArgument String
+    , events : OptionalArgument (List UserEventFragmentRef)
+    , token : OptionalArgument String
+    }
+
+
+{-| Type alias for the `PendingUserRef` attributes. Note that this type
+needs to use the `PendingUserRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias PendingUserRefRaw =
+    { email : OptionalArgument String
+    , events : OptionalArgument (List UserEventFragmentRef)
+    , token : OptionalArgument String
+    }
 
 
 {-| Type for the PendingUserRef input object.
 -}
-type alias PendingUserRef =
-    { email : OptionalArgument String }
+type PendingUserRef
+    = PendingUserRef PendingUserRefRaw
 
 
 {-| Encode a PendingUserRef into a value that can be used as an argument.
 -}
 encodePendingUserRef : PendingUserRef -> Value
-encodePendingUserRef input____ =
+encodePendingUserRef (PendingUserRef input____) =
     Encode.maybeObject
-        [ ( "email", Encode.string |> Encode.optional input____.email ) ]
+        [ ( "email", Encode.string |> Encode.optional input____.email ), ( "events", (encodeUserEventFragmentRef |> Encode.list) |> Encode.optional input____.events ), ( "token", Encode.string |> Encode.optional input____.token ) ]
 
 
 buildPointGeoFilter :
@@ -6496,6 +6596,55 @@ encodeUpdateTensionInput (UpdateTensionInput input____) =
         [ ( "filter", encodeTensionFilter input____.filter |> Just ), ( "set", encodeTensionPatch |> Encode.optional input____.set ), ( "remove", encodeTensionPatch |> Encode.optional input____.remove ) ]
 
 
+buildUpdateUserEventFragmentInput :
+    UpdateUserEventFragmentInputRequiredFields
+    -> (UpdateUserEventFragmentInputOptionalFields -> UpdateUserEventFragmentInputOptionalFields)
+    -> UpdateUserEventFragmentInput
+buildUpdateUserEventFragmentInput required____ fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { set = Absent, remove = Absent }
+    in
+    UpdateUserEventFragmentInput { filter = required____.filter, set = optionals____.set, remove = optionals____.remove }
+
+
+type alias UpdateUserEventFragmentInputRequiredFields =
+    { filter : UserEventFragmentFilter }
+
+
+type alias UpdateUserEventFragmentInputOptionalFields =
+    { set : OptionalArgument UserEventFragmentPatch
+    , remove : OptionalArgument UserEventFragmentPatch
+    }
+
+
+{-| Type alias for the `UpdateUserEventFragmentInput` attributes. Note that this type
+needs to use the `UpdateUserEventFragmentInput` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UpdateUserEventFragmentInputRaw =
+    { filter : UserEventFragmentFilter
+    , set : OptionalArgument UserEventFragmentPatch
+    , remove : OptionalArgument UserEventFragmentPatch
+    }
+
+
+{-| Type for the UpdateUserEventFragmentInput input object.
+-}
+type UpdateUserEventFragmentInput
+    = UpdateUserEventFragmentInput UpdateUserEventFragmentInputRaw
+
+
+{-| Encode a UpdateUserEventFragmentInput into a value that can be used as an argument.
+-}
+encodeUpdateUserEventFragmentInput : UpdateUserEventFragmentInput -> Value
+encodeUpdateUserEventFragmentInput (UpdateUserEventFragmentInput input____) =
+    Encode.maybeObject
+        [ ( "filter", encodeUserEventFragmentFilter input____.filter |> Just ), ( "set", encodeUserEventFragmentPatch |> Encode.optional input____.set ), ( "remove", encodeUserEventFragmentPatch |> Encode.optional input____.remove ) ]
+
+
 buildUpdateUserEventInput :
     UpdateUserEventInputRequiredFields
     -> (UpdateUserEventInputOptionalFields -> UpdateUserEventInputOptionalFields)
@@ -6743,6 +6892,190 @@ encodeUserEventFilter : UserEventFilter -> Value
 encodeUserEventFilter (UserEventFilter input____) =
     Encode.maybeObject
         [ ( "id", ((Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecId) |> Encode.list) |> Encode.optional input____.id ), ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "has", (Encode.enum Fractal.Enum.UserEventHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeUserEventFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeUserEventFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeUserEventFilter |> Encode.optional input____.not ) ]
+
+
+buildUserEventFragmentFilter :
+    (UserEventFragmentFilterOptionalFields -> UserEventFragmentFilterOptionalFields)
+    -> UserEventFragmentFilter
+buildUserEventFragmentFilter fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { createdAt = Absent, has = Absent, and = Absent, or = Absent, not = Absent }
+    in
+    UserEventFragmentFilter { createdAt = optionals____.createdAt, has = optionals____.has, and = optionals____.and, or = optionals____.or, not = optionals____.not }
+
+
+type alias UserEventFragmentFilterOptionalFields =
+    { createdAt : OptionalArgument DateTimeFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.UserEventFragmentHasFilter.UserEventFragmentHasFilter))
+    , and : OptionalArgument (List (Maybe UserEventFragmentFilter))
+    , or : OptionalArgument (List (Maybe UserEventFragmentFilter))
+    , not : OptionalArgument UserEventFragmentFilter
+    }
+
+
+{-| Type alias for the `UserEventFragmentFilter` attributes. Note that this type
+needs to use the `UserEventFragmentFilter` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserEventFragmentFilterRaw =
+    { createdAt : OptionalArgument DateTimeFilter
+    , has : OptionalArgument (List (Maybe Fractal.Enum.UserEventFragmentHasFilter.UserEventFragmentHasFilter))
+    , and : OptionalArgument (List (Maybe UserEventFragmentFilter))
+    , or : OptionalArgument (List (Maybe UserEventFragmentFilter))
+    , not : OptionalArgument UserEventFragmentFilter
+    }
+
+
+{-| Type for the UserEventFragmentFilter input object.
+-}
+type UserEventFragmentFilter
+    = UserEventFragmentFilter UserEventFragmentFilterRaw
+
+
+{-| Encode a UserEventFragmentFilter into a value that can be used as an argument.
+-}
+encodeUserEventFragmentFilter : UserEventFragmentFilter -> Value
+encodeUserEventFragmentFilter (UserEventFragmentFilter input____) =
+    Encode.maybeObject
+        [ ( "createdAt", encodeDateTimeFilter |> Encode.optional input____.createdAt ), ( "has", (Encode.enum Fractal.Enum.UserEventFragmentHasFilter.toString |> Encode.maybe |> Encode.list) |> Encode.optional input____.has ), ( "and", (encodeUserEventFragmentFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.and ), ( "or", (encodeUserEventFragmentFilter |> Encode.maybe |> Encode.list) |> Encode.optional input____.or ), ( "not", encodeUserEventFragmentFilter |> Encode.optional input____.not ) ]
+
+
+buildUserEventFragmentOrder :
+    (UserEventFragmentOrderOptionalFields -> UserEventFragmentOrderOptionalFields)
+    -> UserEventFragmentOrder
+buildUserEventFragmentOrder fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { asc = Absent, desc = Absent, then_ = Absent }
+    in
+    UserEventFragmentOrder { asc = optionals____.asc, desc = optionals____.desc, then_ = optionals____.then_ }
+
+
+type alias UserEventFragmentOrderOptionalFields =
+    { asc : OptionalArgument Fractal.Enum.UserEventFragmentOrderable.UserEventFragmentOrderable
+    , desc : OptionalArgument Fractal.Enum.UserEventFragmentOrderable.UserEventFragmentOrderable
+    , then_ : OptionalArgument UserEventFragmentOrder
+    }
+
+
+{-| Type alias for the `UserEventFragmentOrder` attributes. Note that this type
+needs to use the `UserEventFragmentOrder` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserEventFragmentOrderRaw =
+    { asc : OptionalArgument Fractal.Enum.UserEventFragmentOrderable.UserEventFragmentOrderable
+    , desc : OptionalArgument Fractal.Enum.UserEventFragmentOrderable.UserEventFragmentOrderable
+    , then_ : OptionalArgument UserEventFragmentOrder
+    }
+
+
+{-| Type for the UserEventFragmentOrder input object.
+-}
+type UserEventFragmentOrder
+    = UserEventFragmentOrder UserEventFragmentOrderRaw
+
+
+{-| Encode a UserEventFragmentOrder into a value that can be used as an argument.
+-}
+encodeUserEventFragmentOrder : UserEventFragmentOrder -> Value
+encodeUserEventFragmentOrder (UserEventFragmentOrder input____) =
+    Encode.maybeObject
+        [ ( "asc", Encode.enum Fractal.Enum.UserEventFragmentOrderable.toString |> Encode.optional input____.asc ), ( "desc", Encode.enum Fractal.Enum.UserEventFragmentOrderable.toString |> Encode.optional input____.desc ), ( "then", encodeUserEventFragmentOrder |> Encode.optional input____.then_ ) ]
+
+
+buildUserEventFragmentPatch :
+    (UserEventFragmentPatchOptionalFields -> UserEventFragmentPatchOptionalFields)
+    -> UserEventFragmentPatch
+buildUserEventFragmentPatch fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { createdAt = Absent, isRead = Absent, event = Absent }
+    in
+    UserEventFragmentPatch { createdAt = optionals____.createdAt, isRead = optionals____.isRead, event = optionals____.event }
+
+
+type alias UserEventFragmentPatchOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , isRead : OptionalArgument Bool
+    , event : OptionalArgument (List EventKindRef)
+    }
+
+
+{-| Type alias for the `UserEventFragmentPatch` attributes. Note that this type
+needs to use the `UserEventFragmentPatch` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserEventFragmentPatchRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , isRead : OptionalArgument Bool
+    , event : OptionalArgument (List EventKindRef)
+    }
+
+
+{-| Type for the UserEventFragmentPatch input object.
+-}
+type UserEventFragmentPatch
+    = UserEventFragmentPatch UserEventFragmentPatchRaw
+
+
+{-| Encode a UserEventFragmentPatch into a value that can be used as an argument.
+-}
+encodeUserEventFragmentPatch : UserEventFragmentPatch -> Value
+encodeUserEventFragmentPatch (UserEventFragmentPatch input____) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "event", (encodeEventKindRef |> Encode.list) |> Encode.optional input____.event ) ]
+
+
+buildUserEventFragmentRef :
+    (UserEventFragmentRefOptionalFields -> UserEventFragmentRefOptionalFields)
+    -> UserEventFragmentRef
+buildUserEventFragmentRef fillOptionals____ =
+    let
+        optionals____ =
+            fillOptionals____
+                { createdAt = Absent, isRead = Absent, event = Absent }
+    in
+    UserEventFragmentRef { createdAt = optionals____.createdAt, isRead = optionals____.isRead, event = optionals____.event }
+
+
+type alias UserEventFragmentRefOptionalFields =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , isRead : OptionalArgument Bool
+    , event : OptionalArgument (List EventKindRef)
+    }
+
+
+{-| Type alias for the `UserEventFragmentRef` attributes. Note that this type
+needs to use the `UserEventFragmentRef` type (not just a plain type alias) because it has
+references to itself either directly (recursive) or indirectly (circular). See
+<https://github.com/dillonkearns/elm-graphql/issues/33>.
+-}
+type alias UserEventFragmentRefRaw =
+    { createdAt : OptionalArgument Fractal.ScalarCodecs.DateTime
+    , isRead : OptionalArgument Bool
+    , event : OptionalArgument (List EventKindRef)
+    }
+
+
+{-| Type for the UserEventFragmentRef input object.
+-}
+type UserEventFragmentRef
+    = UserEventFragmentRef UserEventFragmentRefRaw
+
+
+{-| Encode a UserEventFragmentRef into a value that can be used as an argument.
+-}
+encodeUserEventFragmentRef : UserEventFragmentRef -> Value
+encodeUserEventFragmentRef (UserEventFragmentRef input____) =
+    Encode.maybeObject
+        [ ( "createdAt", (Fractal.ScalarCodecs.codecs |> Fractal.Scalar.unwrapEncoder .codecDateTime) |> Encode.optional input____.createdAt ), ( "isRead", Encode.bool |> Encode.optional input____.isRead ), ( "event", (encodeEventKindRef |> Encode.list) |> Encode.optional input____.event ) ]
 
 
 buildUserEventOrder :
@@ -7245,26 +7578,28 @@ buildUserRightsPatch fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { canLogin = Absent, canCreateRoot = Absent, maxPublicOrga = Absent, type_ = Absent }
+                { type_ = Absent, canLogin = Absent, canCreateRoot = Absent, maxPublicOrga = Absent, hasEmailNotifications = Absent }
     in
-    { canLogin = optionals____.canLogin, canCreateRoot = optionals____.canCreateRoot, maxPublicOrga = optionals____.maxPublicOrga, type_ = optionals____.type_ }
+    { type_ = optionals____.type_, canLogin = optionals____.canLogin, canCreateRoot = optionals____.canCreateRoot, maxPublicOrga = optionals____.maxPublicOrga, hasEmailNotifications = optionals____.hasEmailNotifications }
 
 
 type alias UserRightsPatchOptionalFields =
-    { canLogin : OptionalArgument Bool
+    { type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , canLogin : OptionalArgument Bool
     , canCreateRoot : OptionalArgument Bool
     , maxPublicOrga : OptionalArgument Int
-    , type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , hasEmailNotifications : OptionalArgument Bool
     }
 
 
 {-| Type for the UserRightsPatch input object.
 -}
 type alias UserRightsPatch =
-    { canLogin : OptionalArgument Bool
+    { type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , canLogin : OptionalArgument Bool
     , canCreateRoot : OptionalArgument Bool
     , maxPublicOrga : OptionalArgument Int
-    , type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , hasEmailNotifications : OptionalArgument Bool
     }
 
 
@@ -7273,7 +7608,7 @@ type alias UserRightsPatch =
 encodeUserRightsPatch : UserRightsPatch -> Value
 encodeUserRightsPatch input____ =
     Encode.maybeObject
-        [ ( "canLogin", Encode.bool |> Encode.optional input____.canLogin ), ( "canCreateRoot", Encode.bool |> Encode.optional input____.canCreateRoot ), ( "maxPublicOrga", Encode.int |> Encode.optional input____.maxPublicOrga ), ( "type_", Encode.enum Fractal.Enum.UserType.toString |> Encode.optional input____.type_ ) ]
+        [ ( "type_", Encode.enum Fractal.Enum.UserType.toString |> Encode.optional input____.type_ ), ( "canLogin", Encode.bool |> Encode.optional input____.canLogin ), ( "canCreateRoot", Encode.bool |> Encode.optional input____.canCreateRoot ), ( "maxPublicOrga", Encode.int |> Encode.optional input____.maxPublicOrga ), ( "hasEmailNotifications", Encode.bool |> Encode.optional input____.hasEmailNotifications ) ]
 
 
 buildUserRightsRef :
@@ -7283,26 +7618,28 @@ buildUserRightsRef fillOptionals____ =
     let
         optionals____ =
             fillOptionals____
-                { canLogin = Absent, canCreateRoot = Absent, maxPublicOrga = Absent, type_ = Absent }
+                { type_ = Absent, canLogin = Absent, canCreateRoot = Absent, maxPublicOrga = Absent, hasEmailNotifications = Absent }
     in
-    { canLogin = optionals____.canLogin, canCreateRoot = optionals____.canCreateRoot, maxPublicOrga = optionals____.maxPublicOrga, type_ = optionals____.type_ }
+    { type_ = optionals____.type_, canLogin = optionals____.canLogin, canCreateRoot = optionals____.canCreateRoot, maxPublicOrga = optionals____.maxPublicOrga, hasEmailNotifications = optionals____.hasEmailNotifications }
 
 
 type alias UserRightsRefOptionalFields =
-    { canLogin : OptionalArgument Bool
+    { type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , canLogin : OptionalArgument Bool
     , canCreateRoot : OptionalArgument Bool
     , maxPublicOrga : OptionalArgument Int
-    , type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , hasEmailNotifications : OptionalArgument Bool
     }
 
 
 {-| Type for the UserRightsRef input object.
 -}
 type alias UserRightsRef =
-    { canLogin : OptionalArgument Bool
+    { type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , canLogin : OptionalArgument Bool
     , canCreateRoot : OptionalArgument Bool
     , maxPublicOrga : OptionalArgument Int
-    , type_ : OptionalArgument Fractal.Enum.UserType.UserType
+    , hasEmailNotifications : OptionalArgument Bool
     }
 
 
@@ -7311,7 +7648,7 @@ type alias UserRightsRef =
 encodeUserRightsRef : UserRightsRef -> Value
 encodeUserRightsRef input____ =
     Encode.maybeObject
-        [ ( "canLogin", Encode.bool |> Encode.optional input____.canLogin ), ( "canCreateRoot", Encode.bool |> Encode.optional input____.canCreateRoot ), ( "maxPublicOrga", Encode.int |> Encode.optional input____.maxPublicOrga ), ( "type_", Encode.enum Fractal.Enum.UserType.toString |> Encode.optional input____.type_ ) ]
+        [ ( "type_", Encode.enum Fractal.Enum.UserType.toString |> Encode.optional input____.type_ ), ( "canLogin", Encode.bool |> Encode.optional input____.canLogin ), ( "canCreateRoot", Encode.bool |> Encode.optional input____.canCreateRoot ), ( "maxPublicOrga", Encode.int |> Encode.optional input____.maxPublicOrga ), ( "hasEmailNotifications", Encode.bool |> Encode.optional input____.hasEmailNotifications ) ]
 
 
 buildVoteFilter :

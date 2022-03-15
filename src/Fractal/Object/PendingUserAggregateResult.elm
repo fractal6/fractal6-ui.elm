@@ -32,3 +32,13 @@ emailMin =
 emailMax : SelectionSet (Maybe String) Fractal.Object.PendingUserAggregateResult
 emailMax =
     Object.selectionForField "(Maybe String)" "emailMax" [] (Decode.string |> Decode.nullable)
+
+
+tokenMin : SelectionSet (Maybe String) Fractal.Object.PendingUserAggregateResult
+tokenMin =
+    Object.selectionForField "(Maybe String)" "tokenMin" [] (Decode.string |> Decode.nullable)
+
+
+tokenMax : SelectionSet (Maybe String) Fractal.Object.PendingUserAggregateResult
+tokenMax =
+    Object.selectionForField "(Maybe String)" "tokenMax" [] (Decode.string |> Decode.nullable)

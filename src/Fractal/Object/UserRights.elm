@@ -20,6 +20,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+type_ : SelectionSet Fractal.Enum.UserType.UserType Fractal.Object.UserRights
+type_ =
+    Object.selectionForField "Enum.UserType.UserType" "type_" [] Fractal.Enum.UserType.decoder
+
+
 canLogin : SelectionSet Bool Fractal.Object.UserRights
 canLogin =
     Object.selectionForField "Bool" "canLogin" [] Decode.bool
@@ -35,6 +40,6 @@ maxPublicOrga =
     Object.selectionForField "Int" "maxPublicOrga" [] Decode.int
 
 
-type_ : SelectionSet Fractal.Enum.UserType.UserType Fractal.Object.UserRights
-type_ =
-    Object.selectionForField "Enum.UserType.UserType" "type_" [] Fractal.Enum.UserType.decoder
+hasEmailNotifications : SelectionSet Bool Fractal.Object.UserRights
+hasEmailNotifications =
+    Object.selectionForField "Bool" "hasEmailNotifications" [] Decode.bool

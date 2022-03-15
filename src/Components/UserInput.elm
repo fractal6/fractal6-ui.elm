@@ -107,7 +107,7 @@ clickEmail email model =
         form =
             model.form
     in
-    { model | form = { form | email = email, pattern = "" } }
+    { model | form = { form | email = String.toLower email, pattern = "" } }
 
 
 unselect : Model -> Model
