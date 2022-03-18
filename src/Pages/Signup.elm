@@ -249,6 +249,7 @@ viewSignup global model =
                         [ if isSignupSendable model.form.post then
                             button
                                 [ id "submitButton"
+                                , class "button is-success"
                                 , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
                                 , onClick (SubmitUser model.form)
                                 ]
