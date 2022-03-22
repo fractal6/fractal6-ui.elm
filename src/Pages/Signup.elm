@@ -1,11 +1,12 @@
 module Pages.Signup exposing (Flags, Model, Msg, page)
 
 import Assets as A
+import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isSignupSendable)
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
@@ -42,7 +43,7 @@ page =
 
 type alias Model =
     { form : UserAuthForm
-    , result : WebData UserCtx
+    , result : WebData Bool
     }
 
 
@@ -87,7 +88,7 @@ init global flags =
 type Msg
     = SubmitUser UserAuthForm
     | ChangeUserPost String String
-    | GotSignin (WebData UserCtx) -- use remotedata.
+    | GotSignup (WebData Bool)
     | SubmitKeyDown Int
 
 
@@ -110,25 +111,19 @@ update global msg model =
 
         SubmitUser form ->
             ( { model | result = RemoteData.Loading }
-            , signup apis form.post GotSignin
+            , signup apis form.post GotSignup
             , Cmd.none
             )
 
-        GotSignin result ->
-            let
-                cmds =
-                    case result of
-                        RemoteData.Success uctx ->
-                            [ send (UpdateUserSession uctx)
-                            , sendSleep RedirectOnLoggedIn 300
-                            ]
-
-                        _ ->
-                            []
-            in
+        GotSignup result ->
             ( { model | result = result }
+            , case result of
+                RemoteData.Success ok ->
+                    Nav.pushUrl global.key (toHref Route.Verification ++ "?email=" ++ (Dict.get "email" model.form.post |> withDefault ""))
+
+                _ ->
+                    Cmd.none
             , Cmd.none
-            , Cmd.batch cmds
             )
 
         SubmitKeyDown key ->
@@ -175,6 +170,7 @@ viewSignup global model =
                 ]
             , div [ class "card-content" ]
                 [ A.welcome
+                , div [ class "subtitle" ] [ text "Create your account:" ]
                 , div [ class "field is-horizntl" ]
                     [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
                     , div [ class "field-body" ]

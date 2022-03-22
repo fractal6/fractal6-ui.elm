@@ -1,10 +1,12 @@
 module Assets exposing (..)
 
 import Assets.Logo as Logo
-import Html exposing (Html, a, div, h1, h2, i, p, span, text)
+import Generated.Route as Route exposing (Route, toHref)
+import Html exposing (Html, a, div, h1, h2, hr, i, p, small, span, text)
 import Html.Attributes exposing (attribute, class, href, style)
 import Html.Lazy as Lazy
-import Text as T
+import String.Format as Format
+import Text as T exposing (textH, textT, upH)
 
 
 {-| Assets, such as images, videos, and audio. (We only have images for now.)
@@ -93,6 +95,13 @@ burger targetid =
         ]
 
 
+viewNotFound : Html msg
+viewNotFound =
+    div [ class "section" ]
+        [ h1 [ class "title" ] [ text "Sorry, Page Not found" ]
+        ]
+
+
 welcome : Html msg
 welcome =
     p [ class "field content is-aligned-center" ]
@@ -101,8 +110,13 @@ welcome =
         ]
 
 
-viewNotFound : Html msg
-viewNotFound =
-    div [ class "section" ]
-        [ h1 [ class "title" ] [ text "Sorry, Page Not found" ]
+almostThere : String -> String -> String -> Html msg
+almostThere username aim link =
+    div []
+        [ div [ class "title is-aligned-center" ] [ textH (T.almostThere ++ "...") ]
+        , div [ class "notification is-light is-info" ]
+            [ textH ("Please check your email ({{}}) {{}}." |> Format.value username |> Format.value aim)
+            , hr [ class "has-background-grey-light mt-5 mb-5" ] []
+            , small [] [ textH "No confirmation email received? Check your spam folder or ", a [ href link ] [ text "request new confirmation email." ] ]
+            ]
         ]

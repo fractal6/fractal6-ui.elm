@@ -1,11 +1,14 @@
 module Markdown exposing (renderMarkdown)
 
+import Assets as A
 import Extra exposing (regexFromString)
 import Generated.Route as Route exposing (Route, toHref)
-import Html exposing (Html, a, div, text)
+import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (class, href, style, target, title)
+import Markdown.Html
 import Markdown.Parser as Markdown
 import Markdown.Renderer exposing (defaultHtmlRenderer)
+import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), uriFromUsername)
 import Regex
 import String exposing (startsWith, toLower)
@@ -61,6 +64,19 @@ frac6Renderer =
 
                     Nothing ->
                         a attrs content
+        , html =
+            Markdown.Html.oneOf
+                [ Markdown.Html.tag "i"
+                    (\cls content ->
+                        span [] [ i [ class cls ] [], span [] content ]
+                    )
+                    |> Markdown.Html.withAttribute "class"
+                , Markdown.Html.tag "div"
+                    (\cls content ->
+                        div [ class (withDefault "" cls) ] content
+                    )
+                    |> Markdown.Html.withOptionalAttribute "class"
+                ]
     }
 
 

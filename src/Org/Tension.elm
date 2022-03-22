@@ -1,7 +1,7 @@
 module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr, refreshAuthModal, signupModal)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel
@@ -73,7 +73,7 @@ import ModelCommon.Codecs
         , tensionAction2NodeType
         , uriFromUsername
         )
-import ModelCommon.Requests exposing (getQuickDoc, login)
+import ModelCommon.Requests exposing (getQuickDoc, login, signupValidate)
 import ModelCommon.View
     exposing
         ( actionNameStr
@@ -183,6 +183,7 @@ type alias Model =
     , expandedEvents : List Int
     , isSubscribed : GqlData Bool
     , eid : String
+    , puid : String
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionForm
@@ -342,6 +343,7 @@ type Msg
     | SubmitUser UserAuthForm
     | GotSignin (WebData UserCtx)
     | SubmitKeyDown Int -- Detect Enter (for form sending)
+    | DoOpenSignupModal String
       -- Common
     | NoMsg
     | InitModals
@@ -416,6 +418,7 @@ init global flags =
             , expandedEvents = []
             , isSubscribed = fromMaybeData global.session.isSubscribed Loading
             , eid = ""
+            , puid = ""
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionForm tid global.session.user
@@ -491,6 +494,18 @@ init global flags =
             , case Dict.get "eid" query |> Maybe.map List.head |> withDefault Nothing of
                 Just eid ->
                     send (MarkAsRead eid)
+
+                Nothing ->
+                    Cmd.none
+            , case Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing of
+                Just puid ->
+                    case global.session.user of
+                        LoggedIn _ ->
+                            -- @future: manage multiple loggin
+                            Cmd.none
+
+                        LoggedOut ->
+                            send (DoOpenSignupModal puid)
 
                 Nothing ->
                     Cmd.none
@@ -1299,6 +1314,12 @@ update global message model =
             , Ports.open_auth_modal
             )
 
+        DoOpenSignupModal puid ->
+            ( { model | puid = puid, modalAuth = Active { post = Dict.fromList [ ( "puid", puid ) ] } RemoteData.NotAsked }
+            , Cmd.none
+            , Ports.open_auth_modal
+            )
+
         DoCloseAuthModal link ->
             let
                 cmd =
@@ -1319,23 +1340,33 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         SubmitUser form ->
-            ( model, login apis form.post GotSignin, Cmd.none )
+            case model.puid of
+                "" ->
+                    ( model, login apis form.post GotSignin, Cmd.none )
+
+                puid ->
+                    ( model, signupValidate apis form.post GotSignin, Cmd.none )
 
         GotSignin result ->
-            case result of
-                RemoteData.Success uctx ->
-                    ( { model | modalAuth = Inactive }
-                    , send (DoCloseAuthModal "")
-                    , send (UpdateUserSession uctx)
-                    )
+            case model.modalAuth of
+                Active form _ ->
+                    case result of
+                        RemoteData.Success uctx ->
+                            case model.puid of
+                                "" ->
+                                    ( { model | modalAuth = Inactive }
+                                    , send (DoCloseAuthModal "")
+                                    , send (UpdateUserSession uctx)
+                                    )
 
-                other ->
-                    case model.modalAuth of
-                        Active f r ->
-                            ( { model | modalAuth = Active f r }, Cmd.none, Cmd.none )
+                                puid ->
+                                    ( { model | modalAuth = Active form result }, Cmd.none, send (UpdateUserSession uctx) )
 
-                        Inactive ->
-                            ( model, Cmd.none, Cmd.none )
+                        _ ->
+                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
+
+                Inactive ->
+                    ( model, Cmd.none, Cmd.none )
 
         SubmitKeyDown key ->
             case key of
@@ -1529,7 +1560,12 @@ view global model =
     , body =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
-        , Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+        , case model.puid of
+            "" ->
+                Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
+
+            puid ->
+                Lazy.lazy2 signupModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg

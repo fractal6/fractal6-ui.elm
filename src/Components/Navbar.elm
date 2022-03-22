@@ -9,11 +9,13 @@ import ModelCommon exposing (UserState(..))
 import Text as T exposing (textH, textT, upH)
 
 
-type alias Op =
-    { user : UserState }
+type alias Op msg =
+    { user : UserState
+    , replaceUrl : String -> msg
+    }
 
 
-view : Op -> Html msg
+view : Op msg -> Html msg
 view op =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
@@ -65,7 +67,7 @@ view op =
         ]
 
 
-notificationButton : Op -> Html msg
+notificationButton : Op msg -> Html msg
 notificationButton op =
     case op.user of
         LoggedIn _ ->
@@ -80,7 +82,7 @@ notificationButton op =
             text ""
 
 
-helpButton : Op -> Html msg
+helpButton : Op msg -> Html msg
 helpButton op =
     case op.user of
         LoggedIn _ ->
@@ -95,7 +97,7 @@ helpButton op =
             text ""
 
 
-newButton : Op -> Html msg
+newButton : Op msg -> Html msg
 newButton op =
     case op.user of
         LoggedIn _ ->
@@ -116,7 +118,7 @@ newButton op =
             text ""
 
 
-userButton : Op -> Html msg
+userButton : Op msg -> Html msg
 userButton op =
     case op.user of
         LoggedIn uctx ->
@@ -136,7 +138,9 @@ userButton op =
                     , span [ id "themeTrigger", class "navbar-item is-w" ]
                         [ A.icon1 "icon-moon" "Toggle dark mode" ]
                     , hr [ class "navbar-divider" ] []
-                    , a [ class "navbar-item", href "/logout" ]
+
+                    -- Prevout logout to be log in the browser history (@debug do not work)
+                    , div [ class "navbar-item button-light", onClick (op.replaceUrl (toHref Route.Logout)) ]
                         [ A.icon1 "icon-power" (upH T.signout) ]
                     ]
                 ]

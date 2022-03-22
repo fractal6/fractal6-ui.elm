@@ -120,7 +120,7 @@ update global msg model =
                     case result of
                         RemoteData.Success uctx ->
                             [ send (UpdateUserSession uctx)
-                            , sendSleep RedirectOnLoggedIn 300
+                            , sendSleep RedirectOnLoggedIn 333
                             ]
 
                         _ ->

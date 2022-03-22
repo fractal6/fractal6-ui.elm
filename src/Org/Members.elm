@@ -346,8 +346,8 @@ update global message model =
 
                 _ ->
                     case model.modalAuth of
-                        Active f _ ->
-                            ( { model | modalAuth = Active f result }, Cmd.none, Cmd.none )
+                        Active form _ ->
+                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
 
                         Inactive ->
                             ( model, Cmd.none, Cmd.none )

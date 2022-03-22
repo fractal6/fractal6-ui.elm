@@ -1295,15 +1295,13 @@ viewCanvas us model =
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             -- Hidden class use in graphpack_d3.js
             [ div
-                [ id "root_cvbtn"
-                , class "button tooltip has-tooltip-arrow has-tooltip-right"
+                [ class "button tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.goRoot)
                 , onClick (NodeClicked model.node_focus.rootnameid)
                 ]
                 [ A.icon "icon-chevrons-up" ]
             , div
-                [ id "root_cvbtn"
-                , class "button tooltip has-tooltip-arrow has-tooltip-right"
+                [ class "button tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.goParent)
                 , case model.path_data of
                     Just g ->
@@ -1318,12 +1316,18 @@ viewCanvas us model =
                 ]
                 [ A.icon "icon-chevron-up" ]
             , div
-                [ id "invGraph_cvbtn"
-                , class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
+                [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.reverseTooltip)
                 , onClick ToggleGraphReverse
                 ]
                 [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
+            , div [ class "is-hbar" ] []
+            , div
+                [ class "button tooltip has-tooltip-arrow has-tooltip-right"
+                , attribute "data-tooltip" (upH T.inviteMember)
+                , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                ]
+                [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
             ]
         , div
             [ id "nodeTooltip"

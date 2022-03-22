@@ -330,6 +330,18 @@ signup api post msg =
         , headers = setHeaders api
         , url = api.auth ++ "/signup"
         , body = Http.jsonBody <| JE.dict identity JE.string post
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+signupValidate api post msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/validate"
+        , body = Http.jsonBody <| JE.dict identity JE.string post
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
         , tracker = Nothing

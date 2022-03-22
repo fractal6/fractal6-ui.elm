@@ -1,4 +1,4 @@
-module Auth exposing (ErrState(..), parseErr, parseErr2, refreshAuthModal)
+module Auth exposing (ErrState(..), parseErr, parseErr2, refreshAuthModal, signupModal)
 
 import Assets as A
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, errorsDecoder, toErrorData, viewHttpErrors)
@@ -10,13 +10,16 @@ import Html exposing (Html, a, br, button, div, i, input, label, p, span, text)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
+import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (ModalAuth(..))
 import ModelSchema exposing (UserCtx)
 import RemoteData exposing (RemoteData)
 import String exposing (contains, startsWith)
 import String.Extra as SE
+import String.Format as Format
 import Task
+import Text as T exposing (textH, textT, upH)
 
 
 
@@ -171,7 +174,7 @@ refreshAuthModal modalAuth msgs =
     --            msgs.closeModal ""
     --in
     div
-        [ id "refreshAuthModal"
+        [ id "authModal"
         , class "modal modal-pos-top modal-fx-fadeIn"
         , classList [ ( "is-active", modalAuth /= Inactive ) ]
         , attribute "data-modal-close" "closeAuthModalFromJs"
@@ -237,6 +240,104 @@ refreshAuthModal modalAuth msgs =
                                     text ""
                             ]
                         ]
+
+                    Inactive ->
+                        []
+            ]
+        , button [ class "modal-close is-large", onClick <| msgs.closeModal "" ] []
+        ]
+
+
+signupModal modalAuth msgs =
+    --let
+    --    onCloseModal =
+    --        if username == "" then
+    --            msgs.closeModal (Route.toHref Route.Logout)
+    --        else
+    --            msgs.closeModal ""
+    --in
+    div
+        [ id "authModal"
+        , class "modal modal-pos-top modal-fx-fadeIn"
+        , classList [ ( "is-active", modalAuth /= Inactive ) ]
+        , attribute "data-modal-close" "closeAuthModalFromJs"
+        ]
+        [ div [ class "modal-background", onClick <| msgs.closeModal "" ] []
+        , div [ class "modal-content" ]
+            [ div [ class "has-text-centered" ] [ A.logo2 "#343c3d" ]
+            , div [ class "box" ] <|
+                case modalAuth of
+                    Active form result ->
+                        case result of
+                            RemoteData.Success uctx ->
+                                [ T.welcomeLetter
+                                    |> Format.namedValue "username" uctx.username
+                                    |> renderMarkdown "is-human px-3 mt-2"
+                                , div [ class "is-aligned-center" ]
+                                    [ button [ class "button is-success is-light ", onClick <| msgs.closeModal "" ] [ text "Got it" ]
+                                    ]
+                                ]
+
+                            _ ->
+                                [ p [ class "field" ] [ text "You have been invited to join an organisation on Fractale.", br [] [], text "Please, setup your account:" ]
+                                , div [ class "field" ]
+                                    [ div [ class "field" ]
+                                        [ div [ class "label" ] [ text "Username" ]
+                                        , div [ class "control" ]
+                                            [ input
+                                                [ class "input autofocus followFocus"
+                                                , attribute "data-nextfocus" "passwordInput"
+                                                , type_ "username"
+                                                , placeholder "username"
+                                                , name "username"
+                                                , required True
+                                                , onInput (msgs.changePost "username")
+                                                , value (Dict.get "username" form.post |> withDefault "")
+                                                ]
+                                                []
+                                            ]
+                                        ]
+                                    , div [ class "field" ]
+                                        [ div [ class "label" ] [ text "Password" ]
+                                        , div [ class "control" ]
+                                            [ input
+                                                [ id "passwordInput"
+                                                , class "input"
+                                                , type_ "password"
+                                                , placeholder "password"
+                                                , name "password"
+                                                , required True
+                                                , onInput (msgs.changePost "password")
+                                                , onKeydown msgs.submitEnter
+                                                ]
+                                                []
+                                            ]
+                                        ]
+                                    ]
+                                , div [ class "field is-grouped is-grouped-right" ]
+                                    [ div [ class "control" ]
+                                        [ if Form.isPostSendable [ "username", "password" ] form.post then
+                                            button
+                                                [ id "submitButton"
+                                                , class "button is-success"
+                                                , onClick (msgs.submit form)
+                                                ]
+                                                [ textH T.confirm ]
+
+                                          else
+                                            button [ class "button", disabled True ]
+                                                [ textH T.confirm ]
+                                        ]
+                                    ]
+                                , div []
+                                    [ case result of
+                                        RemoteData.Failure err ->
+                                            viewHttpErrors err
+
+                                        _ ->
+                                            text ""
+                                    ]
+                                ]
 
                     Inactive ->
                         []

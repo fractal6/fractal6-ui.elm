@@ -18,6 +18,7 @@ import Pages.NotFound
 import Pages.Notifications
 import Pages.PasswordReset
 import Pages.Signup
+import Pages.Verification
 import Pages.Dynamic
 import Pages.New.Orga
 import Pages.M.Dynamic
@@ -52,6 +53,7 @@ type Model
     | Notifications_Model Pages.Notifications.Model
     | PasswordReset_Model Pages.PasswordReset.Model
     | Signup_Model Pages.Signup.Model
+    | Verification_Model Pages.Verification.Model
     | Dynamic_Model Pages.Dynamic.Model
     | New_Orga_Model Pages.New.Orga.Model
     | M_Dynamic_Model Pages.M.Dynamic.Model
@@ -82,6 +84,7 @@ type Msg
     | Notifications_Msg Pages.Notifications.Msg
     | PasswordReset_Msg Pages.PasswordReset.Msg
     | Signup_Msg Pages.Signup.Msg
+    | Verification_Msg Pages.Verification.Msg
     | Dynamic_Msg Pages.Dynamic.Msg
     | New_Orga_Msg Pages.New.Orga.Msg
     | M_Dynamic_Msg Pages.M.Dynamic.Msg
@@ -123,6 +126,7 @@ type alias UpgradedPages =
     , notifications : UpgradedPage Pages.Notifications.Flags Pages.Notifications.Model Pages.Notifications.Msg
     , passwordReset : UpgradedPage Pages.PasswordReset.Flags Pages.PasswordReset.Model Pages.PasswordReset.Msg
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
+    , verification : UpgradedPage Pages.Verification.Flags Pages.Verification.Model Pages.Verification.Msg
     , dynamic : UpgradedPage Pages.Dynamic.Flags Pages.Dynamic.Model Pages.Dynamic.Msg
     , new_orga : UpgradedPage Pages.New.Orga.Flags Pages.New.Orga.Model Pages.New.Orga.Msg
     , m_dynamic : UpgradedPage Pages.M.Dynamic.Flags Pages.M.Dynamic.Model Pages.M.Dynamic.Msg
@@ -155,6 +159,7 @@ pages =
     , notifications = Pages.Notifications.page |> Page.upgrade Notifications_Model Notifications_Msg
     , passwordReset = Pages.PasswordReset.page |> Page.upgrade PasswordReset_Model PasswordReset_Msg
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
+    , verification = Pages.Verification.page |> Page.upgrade Verification_Model Verification_Msg
     , dynamic = Pages.Dynamic.page |> Page.upgrade Dynamic_Model Dynamic_Msg
     , new_orga = Pages.New.Orga.page |> Page.upgrade New_Orga_Model New_Orga_Msg
     , m_dynamic = Pages.M.Dynamic.page |> Page.upgrade M_Dynamic_Model M_Dynamic_Msg
@@ -207,6 +212,9 @@ init route =
         
         Route.Signup ->
             pages.signup.init ()
+        
+        Route.Verification ->
+            pages.verification.init ()
         
         Route.Dynamic params ->
             pages.dynamic.init params
@@ -296,6 +304,9 @@ update bigMsg bigModel =
         
         ( Signup_Msg msg, Signup_Model model ) ->
             pages.signup.update msg model
+        
+        ( Verification_Msg msg, Verification_Model model ) ->
+            pages.verification.update msg model
         
         ( Dynamic_Msg msg, Dynamic_Model model ) ->
             pages.dynamic.update msg model
@@ -388,6 +399,9 @@ bundle bigModel =
         
         Signup_Model model ->
             pages.signup.bundle model
+        
+        Verification_Model model ->
+            pages.verification.bundle model
         
         Dynamic_Model model ->
             pages.dynamic.bundle model

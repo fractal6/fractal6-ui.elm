@@ -281,8 +281,8 @@ export const GraphPack = {
         var r = this.$canvas.getBoundingClientRect();
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
         this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
-
         this.$canvasButtons.classList.remove("is-invisible");
+
         this.$tooltip.classList.remove("is-invisible");
     },
 

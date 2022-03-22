@@ -1,15 +1,15 @@
 module Pages.PasswordReset exposing (Flags, Model, Msg, page)
 
-import Assets as A
+import Assets as A exposing (almostThere)
 import Browser.Navigation as Nav
 import Components.Loading as Loading exposing (WebData, expectJson, loadingSpin, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)
 import Form exposing (isPasswordReset2Sendable, isPasswordResetSendable)
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, img, input, label, li, nav, p, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, img, input, label, li, nav, p, small, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, src, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -202,7 +202,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Login"
+    { title = "Password reset"
     , body = [ view_ global model ]
     }
 
@@ -210,7 +210,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered section" ]
-        [ div [ class "column is-4" ]
+        [ div [ class "column is-5" ]
             [ case model.token_reset of
                 Just t ->
                     case model.reset_result of
@@ -240,7 +240,7 @@ view_ global model =
                 Nothing ->
                     case model.reset_result of
                         RemoteData.Success True ->
-                            div [ class "notification is-light is-success" ] [ textH "An email has been sent to you with instructions.", br [] [], text "(check your spam)" ]
+                            almostThere (Dict.get "email" model.form.post |> withDefault "") "to reset your password" (toHref Route.PasswordReset)
 
                         _ ->
                             viewResetForm global model

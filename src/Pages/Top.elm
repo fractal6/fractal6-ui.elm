@@ -6,7 +6,7 @@ import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErro
 import Dict exposing (Dict)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
@@ -66,7 +66,8 @@ type ViewMode
 type Msg
     = SubmitUser UserAuthForm
     | ChangeUserPost String String
-    | GotSignin (WebData UserCtx) -- use remotedata.
+    | GotSignin (WebData UserCtx)
+    | GotSignup (WebData Bool)
     | ChangeViewMode ViewMode
     | SubmitEnter Int
 
@@ -126,7 +127,7 @@ update global msg model =
                     login apis form.post GotSignin
 
                 Signup ->
-                    signup apis form.post GotSignin
+                    signup apis form.post GotSignup
             , Cmd.none
             )
 
@@ -145,6 +146,22 @@ update global msg model =
             ( { model | result = result }
             , Cmd.none
             , Cmd.batch cmds
+            )
+
+        GotSignup result ->
+            ( case result of
+                RemoteData.Failure err ->
+                    { model | result = RemoteData.Failure err }
+
+                _ ->
+                    model
+            , case result of
+                RemoteData.Success ok ->
+                    Nav.pushUrl global.key (toHref Route.Verification ++ "?email=" ++ (Dict.get "email" model.form.post |> withDefault ""))
+
+                _ ->
+                    Cmd.none
+            , Cmd.none
             )
 
         ChangeViewMode viewMode ->
@@ -326,6 +343,7 @@ viewSignup : Model -> Html Msg
 viewSignup model =
     div []
         [ A.welcome
+        , div [ class "subtitle" ] [ text "Create your account:" ]
         , div [ class "field is-horizntl" ]
             [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
             , div [ class "field-body" ]

@@ -17,6 +17,7 @@ type Route
     | Notifications
     | PasswordReset
     | Signup
+    | Verification
     | Dynamic { param1 : String }
     | New_Orga
     | M_Dynamic { param1 : String }
@@ -54,6 +55,7 @@ routes =
         , Parser.map Notifications (Parser.s "notifications")
         , Parser.map PasswordReset (Parser.s "password-reset")
         , Parser.map Signup (Parser.s "signup")
+        , Parser.map Verification (Parser.s "verification")
         , (Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map Dynamic
@@ -141,6 +143,9 @@ toHref route =
                 
                 Signup ->
                     [ "signup" ]
+                
+                Verification ->
+                    [ "verification" ]
                 
                 Dynamic { param1 } ->
                     [ param1 ]

@@ -17,10 +17,13 @@ import Auth exposing (parseErr2)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Codecs exposing (WindowPos)
-import Components
 import Components.Loading as Loading exposing (WebData, expectJson, toErrorData)
+import Components.Navbar as Navbar
 import Dict
+import Footbar
 import Generated.Route as Route exposing (Route)
+import Html exposing (Html, div, text)
+import Html.Attributes as Attr exposing (attribute, class, href, id, style)
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
@@ -413,13 +416,30 @@ subscriptions _ =
 
 
 -- VIEW
+--
+
+
+layout : { page : Document msg, session : Session, toMsg : Msg -> msg } -> Document msg
+layout { page, session, toMsg } =
+    { title = page.title
+    , body =
+        [ div [ id "app" ]
+            [ Navbar.view { user = session.user, replaceUrl = toMsg << ReplaceUrl }
+            , div [ id "body" ] <|
+                --[ div [ class "notification is-info" ] [ div [ class "delete" ] [] , text session.referer.path ] ] ++
+                page.body
+            , Footbar.view
+            ]
+        ]
+    }
 
 
 view : { page : Document msg, global : Model, toMsg : Msg -> msg } -> Document msg
 view { page, global, toMsg } =
-    Components.layout
+    layout
         { page = page
         , session = global.session
+        , toMsg = toMsg
         }
 
 
