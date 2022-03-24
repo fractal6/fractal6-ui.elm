@@ -200,7 +200,7 @@ update msg model =
             case result of
                 RemoteData.Success uctx ->
                     ( newModel
-                    , send <| UpdateUserSession uctx
+                    , send (UpdateUserSession uctx)
                     )
 
                 _ ->

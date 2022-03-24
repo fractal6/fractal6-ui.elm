@@ -329,6 +329,13 @@ const actions = {
         if (user_ctx.roles && user_ctx.roles.length == 0) delete user_ctx.roles
         localStorage.setItem(user_ctx.key, JSON.stringify(user_ctx.data));
 
+        // If version is outdated, reload.
+        console.log(user_ctx.data.client_version, VERSION)
+        if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
+            var loc = window.location;
+            window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
+        }
+
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
     },

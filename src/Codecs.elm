@@ -69,7 +69,7 @@ labelsEncoder users =
 
 userCtxDecoder : JD.Decoder UserCtx
 userCtxDecoder =
-    JD.map4 UserCtx
+    JD.map5 UserCtx
         (JD.field "username" JD.string)
         (JD.maybe <| JD.field "name" JD.string)
         (JD.field "rights" <|
@@ -78,7 +78,6 @@ userCtxDecoder =
                 (JD.field "canCreateRoot" JD.bool)
                 (JD.field "type_" <| UserType.decoder)
         )
-        --(JD.maybe <|
         (JD.field "roles"
             (JD.list <|
                 JD.map3 UserRole
@@ -89,6 +88,7 @@ userCtxDecoder =
             )
             |> JDE.withDefault []
         )
+        (JD.field "client_version" JD.string)
 
 
 userCtxEncoder : UserCtx -> JE.Value
@@ -115,6 +115,7 @@ userCtxEncoder userCtx =
                     userCtx.roles
             --(userCtx.roles |> withDefault [])
           )
+        , ( "client_version", JE.string userCtx.client_version )
         ]
 
 

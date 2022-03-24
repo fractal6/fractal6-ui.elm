@@ -26,7 +26,6 @@ import ModelSchema
         , Tension
         , TensionsCount
         , User
-        , UserCtx
         , UserRoleExtended
         , Username
         )

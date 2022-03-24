@@ -453,7 +453,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx "" Nothing initUserRights []
+    UserCtx "" Nothing initUserRights [] ""
 
 
 initNodeData : NodeData
@@ -600,6 +600,7 @@ type alias UserCtx =
     , name : Maybe String
     , rights : UserRights
     , roles : List UserRole
+    , client_version : String
     }
 
 
