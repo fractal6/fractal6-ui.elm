@@ -601,6 +601,7 @@ viewJoinStep op model =
                             [ class "button is-primary"
                             , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
                             , onClick (PushGuest model.form)
+                            , disabled ((Dict.get "message" model.form.post |> withDefault "") == "")
                             ]
                             [ text T.join ]
                         ]
