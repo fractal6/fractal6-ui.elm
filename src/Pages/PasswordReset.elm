@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)
 import Form exposing (isPasswordReset2Sendable, isPasswordResetSendable)
+import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, img, input, label, li, nav, p, small, span, text, textarea, ul)
@@ -22,6 +23,7 @@ import ModelCommon.Requests exposing (resetPassword, resetPassword2, resetPasswo
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT)
 
@@ -34,6 +36,21 @@ page =
         , subscriptions = subscriptions
         , view = view
         }
+
+
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoNavigate link ->
+                        ( Cmd.none, send (NavigateRaw link) )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
+            )
+        |> List.unzip
 
 
 
@@ -52,6 +69,7 @@ type alias Model =
     , isValid : WebData Bool
 
     -- common
+    , help : Help.State
     }
 
 
@@ -87,6 +105,7 @@ init global flags =
             , reset2_result = RemoteData.NotAsked
             , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
+            , help = Help.init global.session.user
             }
     in
     case model.token_reset of
@@ -122,6 +141,7 @@ type Msg
       --| FileLoaded String
     | SubmitKeyDown Int
     | GotUuidCheck (WebData Bool)
+    | HelpMsg Help.Msg
 
 
 
@@ -132,12 +152,12 @@ type Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         LoadCaptcha ->
             ( { model | challenge_data = RemoteData.Loading }, resetPasswordChallenge apis GotChallenge, Cmd.none )
 
@@ -212,16 +232,30 @@ update global msg model =
         GotUuidCheck result ->
             ( { model | isValid = result }, Cmd.none, Cmd.none )
 
+        HelpMsg msg ->
+            let
+                ( data, out ) =
+                    Help.update apis msg model.help
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | help = data }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    Sub.none
+    (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        |> Sub.batch
 
 
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Password reset"
-    , body = [ view_ global model ]
+    , body =
+        [ view_ global model
+        , Help.view {} model.help |> Html.map HelpMsg
+        ]
     }
 
 

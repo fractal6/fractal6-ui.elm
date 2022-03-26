@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Extra.Url exposing (queryParser)
 import Form exposing (isSignupSendable)
+import Form.Help as Help
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
@@ -23,6 +24,7 @@ import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Process
 import RemoteData exposing (RemoteData)
+import Session exposing (GlobalCmd(..))
 import String.Format as Format
 import Task
 import Text as T exposing (textH, textT, upH)
@@ -38,6 +40,21 @@ page =
         }
 
 
+mapGlobalOutcmds : List GlobalCmd -> ( List (Cmd Msg), List (Cmd Global.Msg) )
+mapGlobalOutcmds gcmds =
+    gcmds
+        |> List.map
+            (\m ->
+                case m of
+                    DoNavigate link ->
+                        ( Cmd.none, send (NavigateRaw link) )
+
+                    _ ->
+                        ( Cmd.none, Cmd.none )
+            )
+        |> List.unzip
+
+
 
 --
 -- Model
@@ -51,6 +68,7 @@ type alias Model =
     , email : Maybe String
 
     -- common
+    , help : Help.State
     }
 
 
@@ -76,6 +94,7 @@ init global flags =
             , result = RemoteData.NotAsked
             , email_token = Dict.get "email_token" query |> Maybe.map List.head |> withDefault Nothing
             , email = Dict.get "email" query |> Maybe.map List.head |> withDefault Nothing
+            , help = Help.init global.session.user
             }
     in
     ( model
@@ -98,15 +117,16 @@ init global flags =
 type Msg
     = SubmitVerification String
     | GotVerification (WebData UserCtx)
+    | HelpMsg Help.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
-update global msg model =
+update global message model =
     let
         apis =
             global.session.apis
     in
-    case msg of
+    case message of
         SubmitVerification token ->
             case global.session.user of
                 LoggedOut ->
@@ -129,16 +149,30 @@ update global msg model =
                     Cmd.none
             )
 
+        HelpMsg msg ->
+            let
+                ( data, out ) =
+                    Help.update apis msg model.help
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | help = data }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
-    Sub.none
+    (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        |> Sub.batch
 
 
 view : Global.Model -> Model -> Document Msg
 view global model =
     { title = "Signup"
-    , body = [ view_ global model ]
+    , body =
+        [ view_ global model
+        , Help.view {} model.help |> Html.map HelpMsg
+        ]
     }
 
 

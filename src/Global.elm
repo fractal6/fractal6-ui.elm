@@ -93,6 +93,7 @@ init flags url key =
 
 type Msg
     = Navigate Route
+    | NavigateRaw String
     | ReplaceUrl String
     | SetTime Time.Posix
     | UpdateReferer Url
@@ -131,6 +132,9 @@ update msg model =
     case msg of
         Navigate route ->
             ( model, Nav.pushUrl model.key (Route.toHref route) )
+
+        NavigateRaw route ->
+            ( model, Nav.pushUrl model.key route )
 
         ReplaceUrl url ->
             ( model, Nav.replaceUrl model.key url )
