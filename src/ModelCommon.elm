@@ -6,6 +6,7 @@ import Components.Loading as Loading
         ( GqlData
         , RequestResult(..)
         , WebData
+        , withMaybeData
         , withMaybeDataMap
         )
 import Dict exposing (Dict)
@@ -676,9 +677,27 @@ orgaToUsers nd =
 -}
 
 
+{-| Returns Admin roles, which covers the
+
+  - Admin User of the orga
+  - User with coordo role below that node
+  - User with the first corrdo role on parent, is no cordo below.
+
+-}
 getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole
-getNodeRights uctx target odata =
+getNodeRights uctx target_ odata =
     let
+        -- The authority to edit a Node is determined by the tension receiver Node,
+        -- which is the direct parent of the givent Node.
+        target =
+            withMaybeData odata
+                |> Maybe.map
+                    (\data ->
+                        Dict.get (target_.parent |> Maybe.map .nameid |> withDefault target_.nameid) data
+                    )
+                |> withDefault Nothing
+                |> withDefault initNode
+
         orgaRoles =
             getOrgaRoles [ target.nameid ] uctx.roles
     in
@@ -729,6 +748,13 @@ getNodeRights uctx target odata =
                         coordoRoles_
 
 
+{-| Return True if user has tension edition rights, which covers the:
+
+  - Orga Admin of the tension receiver node.
+  - Coordo of the tension receiver node.
+  - Assignee of the tension.
+
+-}
 getTensionRights : UserCtx -> GqlData TensionHead -> GqlData LocalGraph -> Bool
 getTensionRights uctx th_d path_d =
     case th_d of

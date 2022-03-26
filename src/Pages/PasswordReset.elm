@@ -50,6 +50,8 @@ type alias Model =
     , reset2_result : WebData UserCtx
     , token_reset : Maybe String
     , isValid : WebData Bool
+
+    -- common
     }
 
 

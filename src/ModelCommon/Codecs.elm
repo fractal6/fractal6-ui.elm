@@ -2,7 +2,6 @@ module ModelCommon.Codecs exposing (..)
 
 import Array exposing (Array)
 import Components.Loading exposing (GqlData, RequestResult(..), withMaybeData)
-import Dict
 import Extra exposing (cleanDup, ternary)
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -15,14 +14,9 @@ import Maybe exposing (withDefault)
 import ModelSchema
     exposing
         ( EmitterOrReceiver
-        , FocusNode
         , LocalGraph
         , Node
         , NodeFragment
-        , NodeId
-        , NodesDict
-        , TensionHead
-        , User
         , UserCtx
         , UserRole
         )

@@ -49,6 +49,8 @@ type alias Model =
     , result : WebData UserCtx
     , email_token : Maybe String
     , email : Maybe String
+
+    -- common
     }
 
 
