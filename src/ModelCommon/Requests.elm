@@ -389,7 +389,7 @@ resetPassword2 api post msg =
         , headers = []
         , url = api.auth ++ "/resetpassword2"
         , body = Http.jsonBody <| JE.dict identity JE.string post
-        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
         , tracker = Nothing
         }

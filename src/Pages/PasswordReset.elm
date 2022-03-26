@@ -47,6 +47,7 @@ type alias Model =
     , result : WebData UserCtx
     , challenge_data : RemoteData Http.Error String
     , reset_result : WebData Bool
+    , reset2_result : WebData UserCtx
     , token_reset : Maybe String
     , isValid : WebData Bool
     }
@@ -70,18 +71,18 @@ init global flags =
             queryParser global.url
 
         gcmd =
-            case global.session.user of
-                LoggedIn uctx ->
-                    Global.navigate <| Route.User_Dynamic { param1 = uctx.username }
-
-                LoggedOut ->
-                    Cmd.none
+            --case global.session.user of
+            --    LoggedIn uctx ->
+            --        Global.navigate <| Route.User_Dynamic { param1 = uctx.username }
+            --    LoggedOut ->
+            Cmd.none
 
         model =
             { form = { post = Dict.empty }
             , result = RemoteData.NotAsked
             , challenge_data = RemoteData.Loading
             , reset_result = RemoteData.NotAsked
+            , reset2_result = RemoteData.NotAsked
             , token_reset = Dict.get "x" query |> Maybe.map List.head |> withDefault Nothing
             , isValid = RemoteData.Loading
             }
@@ -113,6 +114,7 @@ type Msg
     | SubmitReset2 UserAuthForm
     | ChangeUserPost String String
     | GotReset (WebData Bool) -- use remotedata.
+    | GotReset2 (WebData UserCtx) -- use remotedata.
       --| GotChallenge (RemoteData Http.Error File)
     | GotChallenge (RemoteData Http.Error (Maybe Image))
       --| FileLoaded String
@@ -154,13 +156,27 @@ update global msg model =
             )
 
         SubmitReset2 form ->
-            ( { model | reset_result = RemoteData.Loading }
-            , resetPassword2 apis form.post GotReset
+            ( { model | reset2_result = RemoteData.Loading }
+            , resetPassword2 apis form.post GotReset2
             , Cmd.none
             )
 
         GotReset result ->
-            ( { model | reset_result = result }, Cmd.none, Cmd.none )
+            ( { model | reset_result = result }
+            , Cmd.none
+            , Cmd.none
+            )
+
+        GotReset2 result ->
+            ( { model | reset2_result = result }
+            , Cmd.none
+            , case result of
+                RemoteData.Success uctx ->
+                    send (UpdateUserSession uctx)
+
+                _ ->
+                    Cmd.none
+            )
 
         GotChallenge result ->
             case result of
@@ -213,8 +229,8 @@ view_ global model =
         [ div [ class "column is-5" ]
             [ case model.token_reset of
                 Just t ->
-                    case model.reset_result of
-                        RemoteData.Success True ->
+                    case model.reset2_result of
+                        RemoteData.Success _ ->
                             div []
                                 [ div [ class "notification is-light is-success" ] [ textH "Your password has been updated." ]
                                 , a [ href "/" ] [ text "Go to home page." ]
@@ -415,7 +431,7 @@ viewResetForm2 global model =
                             button
                                 [ id "submitButton"
                                 , class "button is-success"
-                                , classList [ ( "is-loading", model.reset_result == RemoteData.Loading ) ]
+                                , classList [ ( "is-loading", model.reset2_result == RemoteData.Loading ) ]
                                 , onClick (SubmitReset2 model.form)
                                 ]
                                 [ text "Reset password" ]
@@ -433,10 +449,7 @@ viewResetForm2 global model =
 
                 _ ->
                     text ""
-            , case model.reset_result of
-                RemoteData.Success False ->
-                    div [ class "notification is-light is-warning" ] [ textH "Something gone wrong, please try again." ]
-
+            , case model.reset2_result of
                 RemoteData.Failure err ->
                     viewHttpErrors err
 

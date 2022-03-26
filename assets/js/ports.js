@@ -330,7 +330,6 @@ const actions = {
         localStorage.setItem(user_ctx.key, JSON.stringify(user_ctx.data));
 
         // If version is outdated, reload.
-        console.log(user_ctx.data.client_version, VERSION)
         if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
             var loc = window.location;
             window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
