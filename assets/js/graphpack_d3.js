@@ -189,7 +189,7 @@ export const GraphPack = {
 
     // Graph fx settings
     isLoading: true,
-    minZoomDuration: 450, // 1250
+    minZoomDuration: 666, // 1250
     zoomFactorRoot: 2.02,
     zoomFactorCircle: 2.02,
     zoomFactorRole: 6,
