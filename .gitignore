@@ -3,7 +3,6 @@ node_modules
 public/
 dist/
 !public/index.html
-.idea
 
 # temp data from icomoon
 assets/icons/Read*.txt

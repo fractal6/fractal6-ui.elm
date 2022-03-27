@@ -313,7 +313,25 @@ switchTab tab model =
 
 changeNodeStep : NodeStep -> Model -> Model
 changeNodeStep step model =
-    { model | nodeStep = step }
+    let
+        nodeDoc =
+            model.nodeDoc
+
+        nd =
+            if model.activeTab == NewRoleTab && step == NodeValidateStep && nodeDoc.form.node.role_type == Nothing then
+                let
+                    form =
+                        nodeDoc.form
+
+                    node =
+                        form.node
+                in
+                { nodeDoc | form = { form | node = { node | role_type = Just RoleType.Peer } } }
+
+            else
+                nodeDoc
+    in
+    { model | nodeStep = step, nodeDoc = nd }
 
 
 close : Model -> Model
