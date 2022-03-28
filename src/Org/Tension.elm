@@ -610,13 +610,16 @@ update global message model =
 
                                 isAdmin =
                                     getTensionRights (uctxFromUser global.session.user) model.tension_head result
+
+                                newFocus =
+                                    focusFromNameid newPath.focus.nameid
                             in
-                            ( { model | path_data = Success newPath, isTensionAdmin = isAdmin }
+                            ( { model | path_data = Success newPath, isTensionAdmin = isAdmin, node_focus = newFocus }
                             , Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
                                 , send (UpdateSessionAdmin (Just isAdmin))
-                                , send (UpdateSessionFocusOnly (focusFromNameid newPath.focus.nameid |> Just))
+                                , send (UpdateSessionFocusOnly (Just newFocus))
                                 ]
                             )
 
