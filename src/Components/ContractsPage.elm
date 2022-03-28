@@ -229,6 +229,7 @@ type Msg
     = -- Data
       OnLoad String (Maybe String)
     | OnChangePost String String
+    | SetRootnameid String
     | DoClickContract String
     | DoQueryContracts
     | DoQueryContract String
@@ -315,6 +316,9 @@ update_ apis message model =
 
         OnChangePost field value ->
             ( updatePost field value model, noOut )
+
+        SetRootnameid rootnameid ->
+            ( { model | rootnameid = rootnameid }, noOut )
 
         DoClickContract cid ->
             let

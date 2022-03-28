@@ -675,7 +675,11 @@ update global message model =
 
                 OkAuth th ->
                     ( { model | tension_head = result }
-                    , Cmd.batch [ queryLocalGraph apis th.receiver.nameid (GotPath True), Ports.bulma_driver "" ]
+                    , Cmd.batch
+                        [ queryLocalGraph apis th.receiver.nameid (GotPath True)
+                        , Ports.bulma_driver ""
+                        , Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid th.receiver.nameid)))
+                        ]
                     , send (UpdateSessionTensionHead (withMaybeData result))
                     )
 

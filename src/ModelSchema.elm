@@ -700,7 +700,7 @@ decodeResponse decoder response =
                     Success d
 
                 Nothing ->
-                    Failure [ "No data returned." ]
+                    Failure [ "No data returned. Try to log-in or reload." ]
 
 
 mutationDecoder : Maybe a -> Maybe a
