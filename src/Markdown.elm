@@ -5,6 +5,7 @@ import Extra exposing (regexFromString)
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (class, href, style, target, title)
+import Html.Lazy as Lazy
 import Markdown.Html
 import Markdown.Parser as Markdown
 import Markdown.Renderer exposing (defaultHtmlRenderer)
@@ -16,6 +17,11 @@ import String exposing (startsWith, toLower)
 
 renderMarkdown : String -> String -> Html msg
 renderMarkdown style content =
+    Lazy.lazy2 renderMarkdown_ style content
+
+
+renderMarkdown_ : String -> String -> Html msg
+renderMarkdown_ style content =
     case
         content
             |> frac6Parser
