@@ -53,7 +53,7 @@ frac6Renderer =
                             not (startsWith "https://fractale.co" lk || startsWith "http://fractale.co" lk)
                                 && (startsWith "https://" lk || startsWith "http://" lk)
                         then
-                            [ href link.destination, target "blank_" ]
+                            [ href link.destination, target "_blank" ]
 
                         else
                             [ href link.destination, class "is-link" ]

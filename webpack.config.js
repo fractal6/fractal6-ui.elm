@@ -35,7 +35,9 @@ module.exports = (env, argv) => {
             auth: "http://localhost:8888/auth",
             graphql: "http://localhost:8888/api",
             rest: "http://localhost:8888/q",
-            data: "http://localhost:8888/data"
+            doc: "http://localhost:8888/data"
+            // @debug: CORS error
+            //doc: "https://gitlab.com/fractal6/doc/-/raw/master/data"
         }
     }
     else if (isProd) {
@@ -43,7 +45,7 @@ module.exports = (env, argv) => {
             auth: "https://api.fractale.co/auth",
             graphql: "https://api.fractale.co/api",
             rest: "https://api.fractale.co/q",
-            data: "https://api.fractale.co/data"
+            doc: "https://api.fractale.co/data"
         }
     }
 
@@ -75,7 +77,7 @@ module.exports = (env, argv) => {
                 'AUTH_API': JSON.stringify(API_URL.auth),
                 'GRAPHQL_API': JSON.stringify(API_URL.graphql),
                 'REST_API': JSON.stringify(API_URL.rest),
-                'DATA_API': JSON.stringify(API_URL.data),
+                'DOC_API': JSON.stringify(API_URL.doc),
                 'VERSION': JSON.stringify(commitHash)
             }),
             new webpack.LoaderOptionsPlugin({

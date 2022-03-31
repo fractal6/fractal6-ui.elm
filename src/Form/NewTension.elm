@@ -1092,12 +1092,12 @@ viewTensionTabs tab targ =
     div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "blank_" ]
+                [ a [ class "tootltip", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
                     [ A.icon1 "icon-exchange" "Tension" ]
                 ]
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "blank_" ]
+                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
                         [ A.icon1 "icon-leaf" "Role" ]
                     ]
 
@@ -1105,7 +1105,7 @@ viewTensionTabs tab targ =
                 text ""
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "blank_" ]
+                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
                         [ A.icon1 "icon-git-branch" "Circle" ]
                     ]
 
@@ -1206,7 +1206,7 @@ viewSuccess res model =
                         viewInviteRole model
 
                     else
-                        div [ class "field m-2" ] [ a [ onClick DoInvite, target "blank_" ] [ text "Or invite someone." ] ]
+                        div [ class "field m-2" ] [ a [ onClick DoInvite, target "_blank" ] [ text "Or invite someone." ] ]
 
           else
             text ""
@@ -1505,7 +1505,7 @@ viewNodeBreadcrumb form step =
         [ ul [] <|
             List.map
                 (\x ->
-                    li [ classList [ ( "is-active", x == step ) ] ] [ a [ onClickPD NoMsg, target "blank_" ] [ text (nodeStepToString form x) ] ]
+                    li [ classList [ ( "is-active", x == step ) ] ] [ a [ onClickPD NoMsg, target "_blank" ] [ text (nodeStepToString form x) ] ]
                 )
                 path
         ]

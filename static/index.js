@@ -30,7 +30,7 @@ window.addEventListener('load', _ => {
                 auth: AUTH_API,
                 gql: GRAPHQL_API,
                 rest: REST_API,
-                data: DATA_API,
+                doc: DOC_API,
                 version: VERSION
             },
             screen: { w: window.innerWidth, h: window.innerHeight }

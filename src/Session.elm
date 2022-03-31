@@ -30,7 +30,7 @@ type alias Apis =
     { auth : String
     , gql : String
     , rest : String
-    , data : String
+    , doc : String
     , version : String
     }
 
