@@ -519,10 +519,17 @@ viewMandateSection editView mandate_m role_type_m =
 
             Nothing ->
                 case role_type_m of
-                    Just RoleType.Guest ->
-                        a [ class "is-size-6", href "https://doc.fractale.co/role/guest" ] [ text "https://doc.fractale.co/role/guest" ]
+                    Just role_type ->
+                        let
+                            rt =
+                                RoleType.toString role_type |> String.toLower
 
-                    _ ->
+                            link =
+                                "https://doc.fractale.co/circle/#" ++ rt
+                        in
+                        a [ class "is-size-6", href link ] [ text link ]
+
+                    Nothing ->
                         div [ class "is-italic" ]
                             [ text "No description for this node."
                             , editView
