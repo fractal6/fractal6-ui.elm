@@ -83,8 +83,14 @@ frac6Renderer =
 frac6Parser : String -> String
 frac6Parser content =
     content
+        -- Username format
         |> Regex.replace (regexFromString "(^|\\s)@[\\w\\-\\.]+") userLink
+        -- Tension format
         |> Regex.replace (regexFromString "(^|\\s)\\b0x[0-9a-f]+") tensionLink
+        -- Autolink
+        |> Regex.replace (regexFromString "(^|\\s)https?://[\\w\\-\\.\\?\\#/,]+") autoLink
+        -- JumpLine
+        |> Regex.replace (regexFromString "\n[^\n]") (\m -> "  \n")
 
 
 userLink : Regex.Match -> String
@@ -94,11 +100,8 @@ userLink match =
             String.trimLeft match.match
 
         ( username, right_fragment ) =
-            if String.right 1 m == "." then
-                ( String.dropLeft 1 m |> String.dropRight 1, "." )
-
-            else if String.right 1 m == "-" then
-                ( String.dropLeft 1 m |> String.dropRight 1, "-" )
+            if List.member (String.right 1 m) [ ".", "-" ] then
+                ( String.dropRight 1 m, String.right 1 m )
 
             else
                 ( String.dropLeft 1 m, "" )
@@ -109,6 +112,28 @@ userLink match =
         ++ "]"
         ++ "("
         ++ uriFromUsername UsersBaseUri username
+        ++ ")"
+        ++ right_fragment
+
+
+autoLink : Regex.Match -> String
+autoLink match =
+    let
+        m =
+            String.trimLeft match.match
+
+        ( link, right_fragment ) =
+            if List.member (String.right 1 m) [ ".", "?", "," ] then
+                ( String.dropRight 1 m, String.right 1 m )
+
+            else
+                ( m, "" )
+    in
+    " ["
+        ++ link
+        ++ "]"
+        ++ "("
+        ++ link
         ++ ")"
         ++ right_fragment
 

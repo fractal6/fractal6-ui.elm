@@ -39,6 +39,7 @@ module Query.QueryNode exposing
 import Dict exposing (Dict)
 import Fractal.Enum.LabelOrderable as LabelOrderable
 import Fractal.Enum.NodeMode as NodeMode
+import Fractal.Enum.NodeOrderable as NodeOrderable
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleExtOrderable as RoleExtOrderable
@@ -196,21 +197,17 @@ queryNodeExt url nameids msg =
 
 nodeExtFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
 nodeExtFilter nameids a =
-    let
-        nameidsRegxp =
-            nameids
-                |> List.map (\n -> "^" ++ n ++ "$")
-                |> String.join "|"
-                |> SE.surround "/"
-    in
     { a
         | filter =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | nameid = { regexp = Present nameidsRegxp, eq = Absent, in_ = Absent } |> Present
+                        | nameid = { regexp = Absent, eq = Absent, in_ = List.map Just nameids |> Present } |> Present
                     }
                 )
+                |> Present
+        , order =
+            Input.buildNodeOrder (\b -> { b | desc = Present NodeOrderable.UpdatedAt })
                 |> Present
     }
 
@@ -969,18 +966,11 @@ queryLabelsDown url nids msg =
 
 nidsFilter : List String -> Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
 nidsFilter nids a =
-    let
-        nameidsRegxp =
-            nids
-                |> List.map (\n -> "^" ++ n ++ "$")
-                |> String.join "|"
-                |> SE.surround "/"
-    in
     { a
         | filter =
             Input.buildNodeFilter
                 (\c ->
-                    { c | nameid = Present { eq = Absent, in_ = Absent, regexp = Present nameidsRegxp } }
+                    { c | nameid = Present { eq = Absent, regexp = Absent, in_ = List.map Just nids |> Present } }
                 )
                 |> Present
     }
