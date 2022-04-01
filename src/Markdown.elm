@@ -96,7 +96,7 @@ frac6Parser content =
         -- Autolink
         |> Regex.replace (regexFromString "(^|\\s)https?://[\\w\\-\\.\\?\\#/,]+") autoLink
         -- JumpLine
-        |> Regex.replace (regexFromString "\n[^\n]") (\m -> "  \n")
+        |> Regex.replace (regexFromString "\n[^\n]") (\m -> "  " ++ m.match)
 
 
 userLink : Regex.Match -> String
