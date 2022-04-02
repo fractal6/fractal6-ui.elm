@@ -230,9 +230,6 @@ autoLink m full =
         match =
             m.match
 
-        d =
-            Debug.log "link" match
-
         ( parts, right ) =
             if List.member (String.right 1 match) [ ".", "," ] then
                 ( String.dropRight 1 match, String.right 1 match )
