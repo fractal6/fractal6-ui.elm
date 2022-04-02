@@ -44,7 +44,14 @@
         font-weight: 600;
         color: var(--is-highlight);
     }
+
+    &.fix-inline > p {
+      display: inline;
+    }
+
 }
+
+
 
 .box {// background of box is equal of $code-color.
     .markdown-body {

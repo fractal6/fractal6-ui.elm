@@ -219,7 +219,7 @@ viewHero model =
                 [ div [ class "column is-6-desktop is-6-widescreen is-5-fullhd" ]
                     [ h1 [ class "title is-1" ]
                         --[ text "Build unstoppable organisations" ]
-                        [ text "Collective intelligence at work" ]
+                        [ text "Collective intelligence", br [] [], text "at work" ]
                     , h2 [ class "subtitle" ] <|
                         List.intersperse (text " ")
                             [ span [ class "has-text-weight-semibold" ] [ text "Fractale" ]

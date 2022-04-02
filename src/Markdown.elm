@@ -6,6 +6,7 @@ import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, div, i, span, text)
 import Html.Attributes exposing (class, href, style, target, title)
 import Html.Lazy as Lazy
+import List.Extra as LE
 import Markdown.Html
 import Markdown.Parser as Markdown
 import Markdown.Renderer exposing (defaultHtmlRenderer)
@@ -29,11 +30,29 @@ renderMarkdown_ style content =
             |> Result.mapError deadEndsToString
             |> Result.andThen
                 (\ast ->
-                    Markdown.Renderer.render frac6Renderer ast
+                    Markdown.Renderer.render (frac6Renderer style True) ast
                 )
     of
         Ok rendered ->
             div [ class ("content markdown-body " ++ style) ] rendered
+
+        Err errors ->
+            text errors
+
+
+renderMdDefault : String -> String -> Html msg
+renderMdDefault style content =
+    case
+        content
+            |> Markdown.parse
+            |> Result.mapError deadEndsToString
+            |> Result.andThen
+                (\ast ->
+                    Markdown.Renderer.render (frac6Renderer style False) ast
+                )
+    of
+        Ok rendered ->
+            span [ class ("content markdown-body fix-inline " ++ style) ] rendered
 
         Err errors ->
             text errors
@@ -45,10 +64,11 @@ deadEndsToString deadEnds =
         |> String.join "\n"
 
 
-frac6Renderer : Markdown.Renderer.Renderer (Html msg)
-frac6Renderer =
+frac6Renderer : String -> Bool -> Markdown.Renderer.Renderer (Html msg)
+frac6Renderer style recursive =
     { defaultHtmlRenderer
         | link =
+            -- Differential external and internal link
             \link content ->
                 let
                     lk =
@@ -70,7 +90,21 @@ frac6Renderer =
 
                     Nothing ->
                         a attrs content
+        , text =
+            \t ->
+                if recursive then
+                    mardownRoutine
+                        style
+                        ( "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~&=]+", autoLink )
+                        [ ( "(^|\\s|[^\\w\\[\\`])@[\\w\\-\\.]+\\b", userLink )
+                        , ( "\\b0x[0-9a-f]+", tensionLink )
+                        ]
+                        t
+
+                else
+                    text t
         , html =
+            -- Html tag supported in the text
             Markdown.Html.oneOf
                 [ Markdown.Html.tag "i"
                     (\cls content ->
@@ -86,76 +120,142 @@ frac6Renderer =
     }
 
 
+mardownRoutine : String -> ( String, Regex.Match -> String -> String ) -> List ( String, Regex.Match -> String -> String ) -> String -> Html msg
+mardownRoutine style rep next_replacers content =
+    let
+        reg =
+            Tuple.first rep
+
+        replacer =
+            Tuple.second rep
+
+        matches =
+            Regex.find (regexFromString reg) content
+    in
+    Regex.split (regexFromString reg) content
+        |> List.indexedMap
+            (\i next_content ->
+                [ case LE.uncons next_replacers of
+                    Nothing ->
+                        text next_content
+
+                    Just ( next_replacer, rest_replacers ) ->
+                        mardownRoutine style next_replacer rest_replacers next_content
+                , case LE.getAt i matches of
+                    Just match ->
+                        renderMdDefault style (replacer match content)
+
+                    Nothing ->
+                        text " "
+                ]
+            )
+        |> List.concat
+        |> span []
+
+
+
+--
+-- Replacer routine
+--
+
+
 frac6Parser : String -> String
 frac6Parser content =
     content
         -- Username format
-        |> Regex.replace (regexFromString "(^|\\s)@[\\w\\-\\.]+") userLink
+        --|> Regex.replace (regexFromString "(^|\\s|[^\\w\\[\\`])@([\\w\\-\\.]+)\\b") userLink
         -- Tension format
-        |> Regex.replace (regexFromString "(^|\\s)\\b0x[0-9a-f]+") tensionLink
+        --|> Regex.replace (regexFromString "\\b0x[0-9a-f]+") tensionLink
         -- Autolink
-        |> Regex.replace (regexFromString "(^|\\s)https?://[\\w\\-\\.\\?\\#/,]+") autoLink
+        --|> Regex.replace (regexFromString "\\bhttps?://[\\w\\-\\+\\.\\?\\#/@~:=]+") autoLink
         -- JumpLine
         |> Regex.replace (regexFromString "\n[^\n]") (\m -> "  " ++ m.match)
 
 
-userLink : Regex.Match -> String
-userLink match =
+userLink : Regex.Match -> String -> String
+userLink m full =
     let
-        m =
-            String.trimLeft match.match
+        match =
+            m.match
 
-        ( username, right_fragment ) =
-            if List.member (String.right 1 m) [ ".", "-" ] then
-                ( String.dropRight 1 m, String.right 1 m )
+        ( parts, right ) =
+            if List.member (String.right 1 match) [ ".", "-" ] then
+                ( String.dropRight 1 match, String.right 1 match )
 
             else
-                ( String.dropLeft 1 m, "" )
+                ( match, "" )
+
+        ( left, username ) =
+            if String.left 1 parts /= "@" then
+                ( String.left 1 parts, String.dropLeft 1 parts )
+
+            else
+                ( " ", parts )
     in
-    " ["
-        ++ "@"
+    left
+        ++ "["
         ++ username
         ++ "]"
         ++ "("
-        ++ uriFromUsername UsersBaseUri username
+        ++ uriFromUsername UsersBaseUri (String.dropLeft 1 username)
         ++ ")"
-        ++ right_fragment
+        ++ right
 
 
-autoLink : Regex.Match -> String
-autoLink match =
+tensionLink : Regex.Match -> String -> String
+tensionLink m full =
     let
-        m =
-            String.trimLeft match.match
+        match =
+            m.match
 
-        ( link, right_fragment ) =
-            if List.member (String.right 1 m) [ ".", "?", "," ] then
-                ( String.dropRight 1 m, String.right 1 m )
+        ( left, tid ) =
+            if String.left 1 match /= "0" then
+                ( String.left 1 match, String.dropLeft 1 match )
 
             else
-                ( m, "" )
+                ( " ", match )
     in
-    " ["
-        ++ link
-        ++ "]"
-        ++ "("
-        ++ link
-        ++ ")"
-        ++ right_fragment
-
-
-tensionLink : Regex.Match -> String
-tensionLink match =
-    let
-        m =
-            String.trimLeft match.match
-
-        tid =
-            m
-    in
-    " ["
+    left
+        ++ "["
         ++ tid
         ++ "]"
         ++ "("
         ++ (Route.Tension_Dynamic_Dynamic { param1 = "", param2 = tid } |> toHref)
         ++ ")"
+
+
+autoLink : Regex.Match -> String -> String
+autoLink m full =
+    let
+        match =
+            m.match
+
+        d =
+            Debug.log "link" match
+
+        ( parts, right ) =
+            if List.member (String.right 1 match) [ ".", "," ] then
+                ( String.dropRight 1 match, String.right 1 match )
+
+            else
+                ( match, "" )
+
+        ( left, link ) =
+            if String.left 1 parts /= "h" then
+                ( String.left 1 parts, String.dropLeft 1 parts )
+
+            else
+                ( " ", parts )
+    in
+    if String.slice (m.index - 2) m.index full == "](" then
+        match
+
+    else
+        left
+            ++ "["
+            ++ link
+            ++ "]"
+            ++ "("
+            ++ link
+            ++ ")"
+            ++ right
