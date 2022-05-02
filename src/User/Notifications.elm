@@ -28,7 +28,7 @@ import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, small, span, strong, sup, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, title, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -134,6 +134,7 @@ type Msg
     | Navigate String
     | DoOpenModal
     | DoCloseModal ModalData
+    | GoBack
       -- Help
     | HelpMsg Help.Msg
 
@@ -354,6 +355,9 @@ update global message model =
             in
             ( model, gcmd, Ports.close_modal )
 
+        GoBack ->
+            ( model, Cmd.none, send <| NavigateRaw <| withDefault "" <| Maybe.map .path <| global.session.referer )
+
         -- Help
         HelpMsg msg ->
             let
@@ -398,8 +402,9 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "section columns" ]
-        [ div [ class "column is-6 is-offset-3 " ]
-            [ h2 [ class "title" ] [ text "Notifications" ]
+        [ div [ class "column is-6 is-offset-3" ]
+            [ div [ class "is-strong left-arrow is-w is-h mb-3", title "Go back", onClick GoBack ] []
+            , h2 [ class "title" ] [ text "Notifications" ]
             , case model.notifications_data of
                 Success notifications ->
                     if List.length notifications == 0 then

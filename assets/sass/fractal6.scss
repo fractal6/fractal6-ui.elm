@@ -2071,6 +2071,13 @@ tr.mediaBox {
     }
 }
 
+.left-arrow {
+    &::after {
+        content: " \27F5 ";
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+}
 .right-arrow {
     &::after {
         content: " \27F6 ";
