@@ -51,7 +51,7 @@ messageToErrState message_ trial =
         message =
             String.toLower message_
     in
-    if contains "token is expired" message || startsWith "no token found" message then
+    if contains "token is expired" message || contains "no token found" message then
         Authenticate
 
     else if startsWith "duplicate error" message then
