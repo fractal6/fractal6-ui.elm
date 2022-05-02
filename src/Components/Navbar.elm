@@ -3,7 +3,7 @@ module Components.Navbar exposing (view)
 import Assets as A
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
-import Html.Attributes as Attr exposing (attribute, class, href, id, style, target)
+import Html.Attributes as Attr exposing (attribute, class, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import ModelCommon exposing (UserState(..))
 import Text as T exposing (textH, textT, upH)
@@ -72,7 +72,7 @@ notificationButton op =
     case op.user of
         LoggedIn _ ->
             a
-                [ class "navbar-item", href (Route.toHref Route.Notifications) ]
+                [ class "navbar-item", href (Route.toHref Route.Notifications), title (upH T.notifications) ]
                 [ div
                     [ class "navbar-link is-arrowless is-rounded is-small notifTrigger" ]
                     [ A.icon "icon-bg icon-bell" ]
@@ -89,7 +89,9 @@ helpButton op =
             div
                 [ class "navbar-item" ]
                 [ div
-                    [ class "navbar-link is-arrowless has-background-navbar button is-rounded is-small helpTrigger" ]
+                    [ class "navbar-link is-arrowless has-background-navbar button is-rounded is-small helpTrigger"
+                    , title "Help and feedback"
+                    ]
                     [ A.icon "icon-question" ]
                 ]
 
