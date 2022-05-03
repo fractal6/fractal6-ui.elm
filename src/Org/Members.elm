@@ -457,17 +457,15 @@ view global model =
 view_ : Model -> Html Msg
 view_ model =
     div [ class "columns is-centered" ]
-        [ div [ class "column is-11 is-11-desktop is-9-fullhd" ]
-            [ div [ class "columns" ]
+        [ div [ class "column is-11 is-11-desktop is-10-fullhd" ]
+            [ div [ class "button is-primary is-pulled-right mt-3", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
+                [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
+            , div [ class "columns" ]
                 [ viewMembers model.now model.members_top model.node_focus ]
             , div [ class "columns" ]
                 [ viewMembersSub model.now model.members_sub model.node_focus ]
             , div [ class "columns" ]
                 [ viewGuest model.now model.members_top T.guest model.node_focus ]
-            ]
-        , div [ class "column is-1 section" ]
-            [ div [ class "button is-primary", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
-                [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
             ]
         ]
 
