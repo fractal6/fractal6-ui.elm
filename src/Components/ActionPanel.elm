@@ -1212,6 +1212,7 @@ viewVisibility op model =
 
         -- Show the choices as card.
         , NodeVisibility.list
+            |> List.filter (\v -> not (v == NodeVisibility.Secret && model.form.node.parent == Nothing))
             |> List.map
                 (\x ->
                     let

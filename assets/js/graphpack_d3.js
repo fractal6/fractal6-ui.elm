@@ -517,10 +517,14 @@ export const GraphPack = {
             ctx2d.lineWidth = 2;
         ctx2d.strokeStyle = "#5e6d6f" + opac;
         ctx2d.fillStyle = this.nameColor + opac;
-        if (node.data.visibility == NodeVisibility.Private) {
-            text = "\ue930 " + text;
-        } else if (node.data.visibility == NodeVisibility.Secret) {
-            text = "\ue91a " + text;
+        if (node.data.visibility !== this.getParent(node).data.visibility) {
+            if (node.data.visibility == NodeVisibility.Public) {
+                text = "\ue960 " + text;
+            } else if (node.data.visibility == NodeVisibility.Private) {
+                text = "\ue930 " + text;
+            } else if (node.data.visibility == NodeVisibility.Secret) {
+                text = "\ue91a " + text;
+            }
         }
         ctx2d.strokeText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
         ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY - node.ctx.rayon*0.4);
@@ -1068,6 +1072,10 @@ export const GraphPack = {
         var color = "rgb(" + pixel[0] + "," + pixel[1] + ","+ pixel[2] + ")";
         var node = this.colToCircle[color];
         return node;
+    },
+
+    getParent(node) {
+        return this.nodesDict[node.data.parent.nameid]
     },
 
     // Returns a RNode from a Node
