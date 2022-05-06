@@ -2020,7 +2020,7 @@ viewEventTitle now event =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.title ], text (formatDate now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong is-crossed" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "right-arrow" ] []
+            , span [ class "arrow-right" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
@@ -2038,7 +2038,7 @@ viewEventType now event =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.type_ ], text (formatDate now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
-            , span [ class "right-arrow" ] []
+            , span [ class "arrow-right" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> TensionType.fromString |> withDefault TensionType.Operational |> tensionIcon2 ]
             ]
         ]
@@ -2056,7 +2056,7 @@ viewEventVisibility now event =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text T.visibility ], text (formatDate now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "right-arrow" ] []
+            , span [ class "arrow-right" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
@@ -2082,7 +2082,7 @@ viewEventAuthority now event action =
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, text T.updated, span [ class "is-strong" ] [ text eventText ], text (formatDate now event.createdAt) ]
         , span [ class "ml-3" ]
             [ span [ class "is-strong" ] [ event.old |> withDefault "" |> text ]
-            , span [ class "right-arrow" ] []
+            , span [ class "arrow-right" ] []
             , span [ class "is-strong" ] [ event.new |> withDefault "" |> text ]
             ]
         ]
@@ -2232,7 +2232,7 @@ viewEventMoved now event =
         action_txt =
             "tension"
     in
-    [ div [ class "media-left" ] [ span [ class "right-arrow2 pl-0 pr-0 mr-0" ] [] ]
+    [ div [ class "media-left" ] [ span [ class "arrow-right2 pl-0 pr-0 mr-0" ] [] ]
     , div [ class "media-content" ]
         [ span [] <|
             List.intersperse (text " ")
@@ -2596,7 +2596,7 @@ viewSidePane u t model =
                                 [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                 , onClick (DoMove t)
                                 ]
-                                [ span [ class "right-arrow2 pl-0 pr-2" ] [], textH T.moveTension ]
+                                [ span [ class "arrow-right2 pl-0 pr-2" ] [], textH T.moveTension ]
                            , div
                                 [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                 , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)

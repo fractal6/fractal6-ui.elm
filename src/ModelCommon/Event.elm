@@ -188,7 +188,7 @@ eventToIcon ev =
             "icon-log-out"
 
         TensionEvent.Moved ->
-            "right-arrow2 pl-0 pr-0 mr-0"
+            "arrow-right2 pl-0 pr-0 mr-0"
 
         _ ->
             ""
@@ -206,21 +206,26 @@ eventToLink ue e =
             , TensionEvent.UserJoined
             , TensionEvent.MemberLinked
             , TensionEvent.MemberUnlinked
+            , TensionEvent.Visibility
+            , TensionEvent.Authority
             ]
     then
         (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            -- Comment
             ++ "?eid="
             ++ ue.id
             ++ "&goto="
             ++ e.createdAt
 
-    else if List.member e.event_type [ TensionEvent.BlobPushed, TensionEvent.BlobArchived, TensionEvent.BlobUnarchived, TensionEvent.Visibility, TensionEvent.Authority ] then
+    else if List.member e.event_type [ TensionEvent.BlobPushed, TensionEvent.BlobArchived, TensionEvent.BlobUnarchived ] then
         (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            -- Document/Mandate
             ++ "?eid="
             ++ ue.id
 
     else
         (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid e.tension.receiver.nameid, param2 = e.tension.id } |> toHref)
+            -- Tension
             ++ "?eid="
             ++ ue.id
 

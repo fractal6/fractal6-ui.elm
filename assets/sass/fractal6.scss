@@ -220,6 +220,9 @@ a.is-link {
 .has-border {
     border: 1px solid var(--grey);
 }
+.has-border-light {
+    border: 1px solid var(--border-color-light);
+}
 .is-md {
     font-size: 0.9rem !important;
 }
@@ -590,6 +593,13 @@ a.is-link {
 .card {
   border-radius: 6px;
   //border:1px solid var(--border-color-light) !important;
+}
+
+// Breadcumb
+.breadcrumb {
+    a:hover {
+        color: var(--link-hover);
+    }
 }
 
 // Hero
@@ -2045,6 +2055,9 @@ tr.mediaBox {
 .button-light {
     &:hover {
         cursor: pointer !important;
+        &.is-h, &.is-w {
+            color: var(--is-highlight) !important;
+        }
     }
     &:active:not(.dropdown-item) {
         -webkit-filter: invert(50%);
@@ -2069,28 +2082,43 @@ tr.mediaBox {
     &:active {
         background-color: inherit;
     }
+
 }
 
-.left-arrow {
+.arrow-left { // long
     &::after {
         content: " \27F5 ";
         padding-right: 5px;
         padding-left: 5px;
     }
 }
-.right-arrow {
+.arrow-right { // long
     &::after {
         content: " \27F6 ";
         padding-right: 5px;
         padding-left: 5px;
     }
 }
-.right-arrow2 {
+.arrow-right2 { // short
     font-size: 1rem;
     padding-right: 5px;
     padding-left: 5px;
     &::after {
         content: " \2192 ";
+    }
+}
+.arrow-up { // short
+    &::after {
+        content: " \2191 ";
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+}
+.arrow-down { // short
+    &::after {
+        content: " \2193 ";
+        padding-right: 5px;
+        padding-left: 5px;
     }
 }
 

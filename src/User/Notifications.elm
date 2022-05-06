@@ -403,7 +403,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "section columns" ]
         [ div [ class "column is-6 is-offset-3" ]
-            [ div [ class "is-strong left-arrow is-w is-h mb-3", title "Go back", onClick GoBack ] []
+            [ div [ class "is-strong arrow-left is-w is-h mb-3", title "Go back", onClick GoBack ] []
             , h2 [ class "title" ] [ text "Notifications" ]
             , case model.notifications_data of
                 Success notifications ->
@@ -444,8 +444,30 @@ viewUserEvent now ue =
             List.head ue.event
     in
     case firstEvent of
-        Just (TensionEvent e) ->
+        Just (TensionEvent e_) ->
             let
+                -- LabelAdded is the first entry of the list
+                -- when a label is added at the creation of a tension.
+                -- I guess is because the timestamp are equal which messed up the orders (@dgraph) ???
+                e =
+                    ue.event
+                        |> List.map
+                            (\uee ->
+                                case uee of
+                                    TensionEvent ee ->
+                                        if ee.event_type == TensionEvent.Created then
+                                            Just ee
+
+                                        else
+                                            Nothing
+
+                                    _ ->
+                                        Nothing
+                            )
+                        |> List.filterMap identity
+                        |> List.head
+                        |> withDefault e_
+
                 node =
                     e.tension.receiver
 

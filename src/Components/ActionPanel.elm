@@ -991,7 +991,7 @@ viewPanel op model =
                 ++ (if op.isAdmin then
                         [ -- Move Action
                           div [ class "dropdown-item button-light", onClick OnActionMove ]
-                            [ span [ class "right-arrow2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
+                            [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
 
                         -- Authority Action
                         , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]

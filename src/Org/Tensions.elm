@@ -127,6 +127,7 @@ type alias Model =
     , statusFilter : StatusFilter
     , typeFilter : TypeFilter
     , depthFilter : DepthFilter
+    , sortFilter : SortFilter
     , authors : List User
     , labels : List Label
     , tensions_count : GqlData TensionsCount
@@ -156,6 +157,20 @@ type TensionDirection
 
 
 -- Query parameters
+
+
+queryIsEmpty : Model -> Bool
+queryIsEmpty model =
+    model.statusFilter
+        == defaultStatusFilter
+        && model.typeFilter
+        == defaultTypeFilter
+        && model.depthFilter
+        == defaultDepthFilter
+        && model.authors
+        == defaultAuthorsFilter
+        && model.labels
+        == defaultLabelsFilter
 
 
 type TensionsView
@@ -200,6 +215,10 @@ type DepthFilter
     | AllSubChildren
 
 
+depthFilterList =
+    [ AllSubChildren, SelectedNode ]
+
+
 depthFilterEncoder : DepthFilter -> String
 depthFilterEncoder x =
     case x of
@@ -223,6 +242,10 @@ depthFilterDecoder x =
 defaultDepth : String
 defaultDepth =
     "all"
+
+
+defaultDepthFilter =
+    AllSubChildren
 
 
 type StatusFilter
@@ -262,6 +285,10 @@ defaultStatus =
     "open"
 
 
+defaultStatusFilter =
+    OpenStatus
+
+
 type TypeFilter
     = AllTypes
     | OneType TensionType.TensionType
@@ -292,48 +319,46 @@ defaultType =
     "all"
 
 
-queryIsEmpty : Model -> Bool
-queryIsEmpty model =
-    model.statusFilter
-        == defaultStatusFilter
-        && model.typeFilter
-        == defaultTypeFilter
-        && model.depthFilter
-        == defaultDepthFilter
-        && model.authors
-        == defaultAuthorsFilter
-        && model.labels
-        == defaultLabelsFilter
-
-
-defaultStatusFilter =
-    OpenStatus
-
-
 defaultTypeFilter =
     AllTypes
 
 
-defaultDepthFilter =
-    AllSubChildren
+type SortFilter
+    = NewestSort
+    | OldestSort
 
 
-defaultAuthorsFilter =
-    []
+sortFilterList =
+    [ NewestSort, OldestSort ]
 
 
-defaultLabelsFilter =
-    []
+sortFilterEncoder : SortFilter -> String
+sortFilterEncoder x =
+    case x of
+        NewestSort ->
+            "newest"
+
+        OldestSort ->
+            "oldest"
 
 
-loadEncoder : Int -> String
-loadEncoder x =
-    String.fromInt x
+sortFilterDecoder : String -> SortFilter
+sortFilterDecoder x =
+    case x of
+        "oldest" ->
+            OldestSort
+
+        _ ->
+            NewestSort
 
 
-loadDecoder : String -> Int
-loadDecoder x =
-    String.toInt x |> withDefault 0
+defaultSort : String
+defaultSort =
+    "newest"
+
+
+defaultSortFilter =
+    NewestSort
 
 
 
@@ -345,6 +370,10 @@ authorsEncoder authors =
     authors |> List.map (\x -> ( "u", x.username ))
 
 
+defaultAuthorsFilter =
+    []
+
+
 
 {- labels parameters -}
 
@@ -352,6 +381,14 @@ authorsEncoder authors =
 labelsEncoder : List Label -> List ( String, String )
 labelsEncoder labels =
     labels |> List.map (\x -> ( "l", x.name ))
+
+
+defaultLabelsFilter =
+    []
+
+
+
+{- limit -}
 
 
 nfirstL : Int
@@ -363,6 +400,16 @@ nfirstC : Int
 nfirstC =
     -- @debug message/warning if thera are more than nfirstC tensions
     1000
+
+
+loadEncoder : Int -> String
+loadEncoder x =
+    String.fromInt x
+
+
+loadDecoder : String -> Int
+loadDecoder x =
+    String.toInt x |> withDefault 0
 
 
 hasLoadMore : GqlData TensionsList -> Int -> Bool
@@ -449,10 +496,12 @@ type Msg
     | ChangeStatusFilter StatusFilter
     | ChangeTypeFilter TypeFilter
     | ChangeDepthFilter DepthFilter
+    | ChangeSortFilter SortFilter
     | ChangeAuthor
     | ChangeLabel
     | SearchKeyDown Int
     | ResetData
+    | OnGoRoot
     | OnClearFilter
     | SubmitSearchReset
     | SubmitSearch
@@ -531,6 +580,7 @@ init global flags =
             , statusFilter = Dict.get "s" query |> withDefault [] |> List.head |> withDefault "" |> statusFilterDecoder
             , typeFilter = Dict.get "t" query |> withDefault [] |> List.head |> withDefault "" |> typeFilterDecoder
             , depthFilter = Dict.get "d" query |> withDefault [] |> List.head |> withDefault "" |> depthFilterDecoder
+            , sortFilter = Dict.get "sort" query |> withDefault [] |> List.head |> withDefault "" |> sortFilterDecoder
             , authors = Dict.get "u" query |> withDefault [] |> List.map (\x -> User x Nothing)
             , labels = Dict.get "l" query |> withDefault [] |> List.map (\x -> Label "" x Nothing)
             , tensions_count = fromMaybeData global.session.tensions_count Loading
@@ -786,6 +836,9 @@ update global message model =
                 type_ =
                     typeDecoder model.typeFilter
 
+                sort_ =
+                    sortFilterEncoder model.sortFilter |> (\s -> ternary (s == defaultSort) Nothing (Just s))
+
                 offset =
                     -- In other words reset=True, it resets the offset (used by  panel filter (User, Label, etc)
                     ternary reset 0 model.offset
@@ -803,7 +856,7 @@ update global message model =
 
             else if model.viewMode == CircleView then
                 ( { model | tensions_all = LoadingSlowly }
-                , fetchTensionAll apis nameids nfirstC 0 model.pattern status model.authors model.labels type_ GotTensionsAll
+                , fetchTensionAll apis nameids nfirstC 0 model.pattern status model.authors model.labels type_ sort_ GotTensionsAll
                 , Ports.hide "footBar"
                 )
 
@@ -814,11 +867,11 @@ update global message model =
                   else
                     model
                 , Cmd.batch
-                    [ fetchTensionInt apis nameids first skip model.pattern status model.authors model.labels type_ (GotTensionsInt inc)
+                    [ fetchTensionInt apis nameids first skip model.pattern status model.authors model.labels type_ sort_ (GotTensionsInt inc)
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
                     --, fetchTensionExt apis nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
-                    , fetchTensionCount apis nameids model.pattern model.authors model.labels type_ GotTensionsCount
+                    , fetchTensionCount apis nameids model.pattern model.authors model.labels type_ Nothing GotTensionsCount
                     ]
                 , Ports.show "footBar"
                 )
@@ -840,6 +893,9 @@ update global message model =
 
         ChangeDepthFilter value ->
             ( { model | depthFilter = value }, send SubmitSearchReset, Cmd.none )
+
+        ChangeSortFilter value ->
+            ( { model | sortFilter = value }, send SubmitSearchReset, Cmd.none )
 
         ChangeAuthor ->
             let
@@ -878,11 +934,20 @@ update global message model =
                 ]
             )
 
+        OnGoRoot ->
+            let
+                node_focus =
+                    model.node_focus
+            in
+            ( { model | node_focus = { node_focus | nameid = node_focus.rootnameid } }, send SubmitSearchReset, Cmd.none )
+
         OnClearFilter ->
             let
                 query =
                     queryBuilder
-                        [ ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) ) ]
+                        [ ( "v", viewModeEncoder model.viewMode |> (\x -> ternary (x == defaultView) "" x) )
+                        , ( "sort", sortFilterEncoder model.sortFilter |> (\x -> ternary (x == defaultSort) "" x) )
+                        ]
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
             ( model
@@ -906,6 +971,7 @@ update global message model =
                          , ( "s", statusFilterEncoder model.statusFilter |> (\x -> ternary (x == defaultStatus) "" x) )
                          , ( "t", typeFilterEncoder model.typeFilter |> (\x -> ternary (x == defaultType) "" x) )
                          , ( "d", depthFilterEncoder model.depthFilter |> (\x -> ternary (x == defaultDepth) "" x) )
+                         , ( "sort", sortFilterEncoder model.sortFilter |> (\x -> ternary (x == defaultSort) "" x) )
                          , ( "load", loadEncoder model.offset |> (\x -> ternary (x == "0" || x == "1") "" x) )
                          ]
                             ++ authorsEncoder model.authors
@@ -1278,7 +1344,7 @@ viewSearchBar model =
                             , onKeydown SearchKeyDown
                             ]
                             []
-                        , span [ class "icon is-left" ] [ i [ class "icon-search" ] [] ]
+                        , span [ class "icon is-left" ] [ A.icon "icon-search" ]
                         ]
                     ]
                 ]
@@ -1288,7 +1354,7 @@ viewSearchBar model =
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "status-filter" ]
                             [ ternary (model.statusFilter /= defaultStatusFilter) (span [ class "badge is-link2" ] []) (text "")
                             , textH T.status
-                            , i [ class "ml-3 icon-chevron-down1 icon-tiny" ] []
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "status-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
@@ -1306,7 +1372,7 @@ viewSearchBar model =
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "type-filter" ]
                             [ ternary (model.typeFilter /= defaultTypeFilter) (span [ class "badge is-link2" ] []) (text "")
                             , textH T.type_
-                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                             [ div
@@ -1327,7 +1393,7 @@ viewSearchBar model =
                         [ div [ class "is-small button" ]
                             [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text "Author"
-                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , UserSearchPanel.view
                             { selectedAssignees = model.authors
@@ -1340,7 +1406,7 @@ viewSearchBar model =
                         [ div [ class "is-small button" ]
                             [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link2" ] []) (text "")
                             , text "Label"
-                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
@@ -1353,16 +1419,16 @@ viewSearchBar model =
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
                             [ ternary (model.depthFilter /= defaultDepthFilter) (span [ class "badge is-link2" ] []) (text "")
                             , textH T.depth
-                            , i [ class "ml-2 icon-chevron-down1 icon-tiny" ] []
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
                         , div [ id "depth-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
-                            [ div
-                                [ class "dropdown-content" ]
-                                [ div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter AllSubChildren ]
-                                    [ ternary (model.depthFilter == AllSubChildren) checked unchecked, textH (depthFilterEncoder AllSubChildren) ]
-                                , div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter SelectedNode ]
-                                    [ ternary (model.depthFilter == SelectedNode) checked unchecked, textH (depthFilterEncoder SelectedNode) ]
-                                ]
+                            [ div [ class "dropdown-content" ] <|
+                                List.map
+                                    (\t ->
+                                        div [ class "dropdown-item button-light", onClick <| ChangeDepthFilter t ]
+                                            [ ternary (model.depthFilter == t) checked unchecked, textH (depthFilterEncoder t) ]
+                                    )
+                                    depthFilterList
                             ]
                         ]
                     ]
@@ -1392,18 +1458,59 @@ viewSearchBar model =
         ]
 
 
+viewTensionsListHeader : Model -> Html Msg
+viewTensionsListHeader model =
+    let
+        checked =
+            A.icon1 "icon-check has-text-success" ""
+
+        unchecked =
+            A.icon1 "icon-check has-text-success is-invisible" ""
+    in
+    div
+        [ class "level is-marginless pt-3 pb-3 has-border-light has-background-header"
+        , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
+        ]
+        [ div [ class "level-left px-3" ]
+            [ viewTensionsCount model
+            , if model.node_focus.nameid /= model.node_focus.rootnameid then
+                span [ class "tag is-rounded is-small button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text "Go to root circle" ]
+
+              else
+                text ""
+            ]
+        , div [ class "level-right px-3" ]
+            [ div [ class "control dropdown" ]
+                [ div [ class "dropdown-trigger button-light is-h is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
+                    [ textH T.sort
+                    , A.icon "ml-1 icon-chevron-down1 icon-tiny"
+                    ]
+                , div [ id "sort-filter", class "dropdown-menu", attribute "role" "menu" ]
+                    [ div [ class "dropdown-content" ] <|
+                        List.map
+                            (\t ->
+                                div [ class "dropdown-item button-light", onClick <| ChangeSortFilter t ]
+                                    [ ternary (model.sortFilter == t) checked unchecked, t |> sortFilterEncoder |> textH ]
+                            )
+                            sortFilterList
+                    ]
+                ]
+            ]
+        ]
+
+
 viewTensionsCount : Model -> Html Msg
 viewTensionsCount model =
     case model.tensions_count of
         Success c ->
             let
                 activeCls =
-                    "has-background-header is-hovered has-text-weight-semibold"
+                    "is-hovered has-text-weight-semibold"
 
                 inactiveCls =
-                    "is-bg-"
+                    "has-background-header"
             in
-            div [ class "buttons has-addons mb-1" ]
+            div [ class "buttons has-addons m-0" ]
                 [ div
                     [ class "button is-rounded is-small"
                     , classList [ ( activeCls, model.statusFilter == OpenStatus ), ( inactiveCls, model.statusFilter /= OpenStatus ) ]
@@ -1419,7 +1526,7 @@ viewTensionsCount model =
                 ]
 
         LoadingSlowly ->
-            div [ class "buttons has-addons mb-1" ]
+            div [ class "buttons has-addons m-0" ]
                 [ button [ class "button is-rounded is-small" ] [ text "Open" ]
                 , button [ class "button is-rounded is-small" ] [ text "Closed" ]
                 ]
@@ -1443,11 +1550,11 @@ viewListTensions model =
                     model.tensions_int
 
                 other ->
-                    other |> List.sortBy .createdAt |> List.reverse |> Success
+                    other |> List.sortBy .createdAt |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l) |> Success
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12" ]
-            [ viewTensionsCount model
+            [ viewTensionsListHeader model
             , viewTensions model.now model.node_focus model.initPattern tensions_d ListTension
             ]
         ]
@@ -1510,7 +1617,7 @@ viewCircleTensions model =
                                 ]
                             , ts
                                 |> List.sortBy .createdAt
-                                |> List.reverse
+                                |> (\l -> ternary (model.sortFilter == defaultSortFilter) (List.reverse l) l)
                                 |> List.map
                                     (\t ->
                                         div [ class "box is-shrinked2 mb-2 mx-2" ]
@@ -1545,7 +1652,11 @@ viewCircleTensions model =
 
 viewTensions : Time.Posix -> NodeFocus -> Maybe String -> GqlData TensionsList -> TensionDirection -> Html Msg
 viewTensions now focus pattern tensionsData tensionDir =
-    div [ class "box is-shrinked", classList [ ( "spinner", tensionsData == LoadingSlowly ) ] ]
+    div
+        [ class "box is-shrinked"
+        , attribute "style" "border-top-left-radius: 0px; border-top-right-radius: 0px;"
+        , classList [ ( "spinner", tensionsData == LoadingSlowly ) ]
+        ]
         [ case tensionsData of
             Success tensions ->
                 if List.length tensions > 0 then

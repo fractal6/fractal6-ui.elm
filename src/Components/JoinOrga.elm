@@ -563,7 +563,7 @@ viewJoinStep op model =
     case model.step of
         JoinOne ->
             div [ class "modal-card-body" ]
-                [ div [ class "field pb-2" ] [ text "What is your motivation to join this organisation ?" ]
+                [ div [ class "field pb-2" ] [ textH T.explainJoin ]
                 , viewComment model
                 , case model.node_data of
                     Failure err ->

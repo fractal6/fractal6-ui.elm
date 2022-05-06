@@ -560,6 +560,11 @@ almostThere =
     "almost there"
 
 
+sort : String
+sort =
+    "sort"
+
+
 
 --Quick Search
 --(header)
@@ -1370,9 +1375,9 @@ labelsInfoHeader =
 labelsInfoDoc : String
 labelsInfoDoc =
     """
-  When you create a label here, you can then attach it to your tensions. You will also be able to filter the tension with a labels selection.
+  When you create a label here, you can then attach it to your tensions. You will also be able to filter the tension according to labels.
 
-  **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of that receiver circle.
+  **Scope**: The labels that you can attach to a tension are those who are present in either its receicer circle or in any of the parents of the receiver circle.
 
   """
 
@@ -1426,3 +1431,8 @@ In order to help your navigation, you will find some shortcuts in the top right 
 * the **user button** to access your profile and other utilies.
 
 """
+
+
+explainJoin : String
+explainJoin =
+    "Explain your motivation for joining this organisation ?"
