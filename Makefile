@@ -42,6 +42,11 @@ gen:
 	npm run graphql_build
 	rm schema.gql
 
+review:
+	# TODO: try elm-review
+	# INstall:
+	# npx elm-review init --template jfmengels/elm-review-config/application
+
 
 # =================================
 

@@ -1758,25 +1758,28 @@ viewConversation u t model =
         userInput =
             case u of
                 LoggedIn uctx ->
-                    let
-                        orgaRoles =
-                            getOrgaRoles [ t.emitter.nameid, t.receiver.nameid ] uctx.roles
-                    in
-                    case orgaRoles of
-                        [] ->
-                            viewJoinNeeded model.node_focus
+                    -- Author or member can comment tension.
+                    if
+                        -- is Author
+                        uctx.username
+                            == t.createdBy.username
+                            || -- is Member
+                               getOrgaRoles [ t.emitter.nameid, t.receiver.nameid ] uctx.roles
+                            /= []
+                    then
+                        let
+                            opNew =
+                                { doChangeViewMode = ChangeInputViewMode
+                                , doChangePost = ChangeTensionPost
+                                , doSubmit = Submit
+                                , doSubmitComment = SubmitComment
+                                , rows = 7
+                                }
+                        in
+                        viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode
 
-                        _ ->
-                            let
-                                opNew =
-                                    { doChangeViewMode = ChangeInputViewMode
-                                    , doChangePost = ChangeTensionPost
-                                    , doSubmit = Submit
-                                    , doSubmitComment = SubmitComment
-                                    , rows = 7
-                                    }
-                            in
-                            viewCommentInput opNew uctx t model.tension_form model.tension_patch model.inputViewMode
+                    else
+                        viewJoinNeeded model.node_focus
 
                 LoggedOut ->
                     viewJoinNeeded model.node_focus
