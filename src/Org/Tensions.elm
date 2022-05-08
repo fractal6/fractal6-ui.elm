@@ -501,7 +501,6 @@ type Msg
     | ChangeLabel
     | SearchKeyDown Int
     | ResetData
-    | OnGoRoot
     | OnClearFilter
     | SubmitSearchReset
     | SubmitSearch
@@ -523,6 +522,7 @@ type Msg
     | Navigate String
     | ExpandRoles
     | CollapseRoles
+    | OnGoRoot
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
@@ -934,13 +934,6 @@ update global message model =
                 ]
             )
 
-        OnGoRoot ->
-            let
-                node_focus =
-                    model.node_focus
-            in
-            ( { model | node_focus = { node_focus | nameid = node_focus.rootnameid } }, send SubmitSearchReset, Cmd.none )
-
         OnClearFilter ->
             let
                 query =
@@ -1191,6 +1184,13 @@ update global message model =
 
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
+
+        OnGoRoot ->
+            let
+                node_focus =
+                    model.node_focus
+            in
+            ( { model | node_focus = { node_focus | nameid = node_focus.rootnameid } }, send SubmitSearchReset, Cmd.none )
 
         -- Help
         HelpMsg msg ->

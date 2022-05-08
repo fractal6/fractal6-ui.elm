@@ -586,6 +586,18 @@ mdFromTension t =
         |> withDefault Nothing
 
 
+tidFromPath : GqlData LocalGraph -> Maybe String
+tidFromPath path =
+    case path of
+        Success p ->
+            p.focus.source
+                |> Maybe.map .tension
+                |> Maybe.map .id
+
+        _ ->
+            Nothing
+
+
 
 --
 -- Setters

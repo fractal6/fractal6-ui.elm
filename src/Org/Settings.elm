@@ -26,7 +26,7 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (toHref)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, style, target, type_, value)
@@ -299,6 +299,7 @@ type Msg
     | Navigate String
     | ExpandRoles
     | CollapseRoles
+    | OnGoRoot
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -1068,6 +1069,13 @@ update global message model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
+        OnGoRoot ->
+            let
+                query =
+                    model.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+            in
+            ( model, send (Navigate (uriFromNameid SettingsBaseUri model.node_focus.rootnameid ++ query)), Cmd.none )
+
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, Cmd.none, Cmd.none )
@@ -1144,11 +1152,19 @@ view global model =
 
 view_ : Model -> Html Msg
 view_ model =
+    let
+        goToParent =
+            if model.node_focus.nameid /= model.node_focus.rootnameid then
+                span [ class "tag is-rounded is-small button-light is-h has-text-weight-light mb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text "Go to root circle" ]
+
+            else
+                text ""
+    in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "section" ]
                 [ div [ class "columns" ]
-                    [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
+                    [ div [ class "column is-one-fifth" ] [ goToParent, viewSettingsMenu model ]
                     , div [ class "column" ] [ viewSettingsContent model ]
                     ]
                 ]

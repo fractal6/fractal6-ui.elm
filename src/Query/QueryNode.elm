@@ -578,7 +578,7 @@ nArchivedFilter a =
             Input.buildNodeFilter
                 (\b ->
                     { b
-                        | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Pending, RoleType.Retired ] }) |> Present
+                        | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired ] }) |> Present
                     }
                 )
                 |> Present

@@ -22,22 +22,24 @@ import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, placeholder, rows, target, type_, value)
-import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembersSub, getQuickDoc, login)
 import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest)
+import Query.QueryContract exposing (getContractId)
 import Query.QueryNode exposing (fetchNode, queryLocalGraph, queryMembersLocal)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
@@ -91,6 +93,8 @@ type alias Model =
     -- Page
     , members_top : GqlData (List Member)
     , members_sub : GqlData (List Member)
+    , pending_hover : Bool
+    , pending_hover_i : Maybe Int
 
     -- Common
     , modalAuth : ModalAuth
@@ -119,6 +123,10 @@ type Msg
       -- Page
     | GotMembers (GqlData (List Member)) -- GraphQL
     | GotMembersSub (GqlData (List Member)) -- Rest
+    | OnPendingHover Bool
+    | OnPendingRowHover (Maybe Int)
+    | OnGoToContract String
+    | OnGoContractAck (GqlData IdPayload)
       -- New Tension
     | DoCreateTension LocalGraph
       -- Token refresh
@@ -135,6 +143,7 @@ type Msg
     | Navigate String
     | ExpandRoles
     | CollapseRoles
+    | OnGoRoot
       -- Components
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
@@ -175,6 +184,8 @@ init global flags =
                     |> withDefault Loading
             , members_top = Loading
             , members_sub = Loading
+            , pending_hover = False
+            , pending_hover_i = Nothing
 
             -- Common
             , modalAuth = Inactive
@@ -270,6 +281,37 @@ update global message model =
                     { model | members_sub = result }
             in
             ( newModel, Cmd.none, Cmd.none )
+
+        OnPendingHover b ->
+            ( { model | pending_hover = b }, Cmd.none, Cmd.none )
+
+        OnPendingRowHover i ->
+            ( { model | pending_hover_i = i }, Cmd.none, Cmd.none )
+
+        OnGoToContract username ->
+            let
+                tid =
+                    tidFromPath model.path_data |> withDefault ""
+
+                contractid =
+                    contractIdCodec tid (TensionEvent.toString TensionEvent.UserJoined) "" username
+            in
+            ( model, getContractId apis contractid OnGoContractAck, Cmd.none )
+
+        OnGoContractAck result ->
+            case result of
+                Success c ->
+                    let
+                        tid =
+                            tidFromPath model.path_data |> withDefault ""
+
+                        link =
+                            toHref <| Route.Tension_Dynamic_Dynamic_Contract_Dynamic { param1 = model.node_focus.rootnameid, param2 = tid, param3 = c.id }
+                    in
+                    ( model, send (Navigate link), Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none, Cmd.none )
 
         -- New tension
         DoCreateTension lg ->
@@ -393,6 +435,13 @@ update global message model =
         CollapseRoles ->
             ( { model | helperBar = HelperBar.collapse model.helperBar }, Cmd.none, Cmd.none )
 
+        OnGoRoot ->
+            let
+                query =
+                    global.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+            in
+            ( model, send (Navigate (uriFromNameid MembersBaseUri model.node_focus.rootnameid ++ query)), Cmd.none )
+
         -- Help
         HelpMsg msg ->
             let
@@ -456,22 +505,36 @@ view global model =
 
 view_ : Model -> Html Msg
 view_ model =
+    let
+        rtid =
+            tidFromPath model.path_data |> withDefault ""
+    in
     div [ class "columns is-centered" ]
         [ div [ class "column is-11 is-11-desktop is-10-fullhd" ]
             [ div [ class "button is-primary is-pulled-right mt-3", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
                 [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
             , div [ class "columns" ]
-                [ viewMembers model.now model.members_top model.node_focus ]
+                [ Lazy.lazy3 viewMembers model.now model.members_top model.node_focus ]
             , div [ class "columns" ]
-                [ viewMembersSub model.now model.members_sub model.node_focus ]
+                [ Lazy.lazy3 viewMembersSub model.now model.members_sub model.node_focus ]
             , div [ class "columns" ]
-                [ viewGuest model.now model.members_top T.guest model.node_focus ]
+                [ div [ class "column is-3" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
+                , div [ class "column is-3" ] [ Lazy.lazy7 viewPending model.now model.members_top "pending" model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                ]
             ]
         ]
 
 
 viewMembers : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
 viewMembers now data focus =
+    let
+        goToParent =
+            if focus.nameid /= focus.rootnameid then
+                span [ class "tag is-rounded is-small button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text "Go to root circle" ]
+
+            else
+                text ""
+    in
     case data of
         Success members_ ->
             let
@@ -490,11 +553,14 @@ viewMembers now data focus =
             in
             case members of
                 [] ->
-                    div [ class "section" ] [ [ "No", T.member, "yet." ] |> String.join " " |> text ]
+                    div [ class "section" ] [ [ "No", T.member, "yet." ] |> String.join " " |> text, goToParent ]
 
                 mbs ->
                     div [ class "section" ]
-                        [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.directMembers ]
+                        [ h2 [ class "subtitle has-text-weight-semibold" ]
+                            [ textH T.directMembers
+                            , goToParent
+                            ]
                         , div [ class "table-containe" ]
                             -- @DEBUG: table-container with width=100%, do not work !
                             [ div [ class "table is-fullwidth" ]
@@ -604,7 +670,7 @@ viewGuest now members_d title focus =
     in
     if List.length guests > 0 then
         div [ class "section" ]
-            [ h2 [ class "subtitle has-text-weight-semibold" ] [ text title ]
+            [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH title ]
             , div [ class "table is-fullwidth" ]
                 [ thead []
                     [ tr [ class "has-background-header" ]
@@ -628,13 +694,65 @@ viewGuest now members_d title focus =
         div [] []
 
 
+viewPending : Time.Posix -> GqlData (List Member) -> String -> NodeFocus -> Bool -> Maybe Int -> String -> Html Msg
+viewPending now members_d title focus pending_hover pending_hover_i tid =
+    let
+        guests =
+            members_d
+                |> withDefaultData []
+                |> List.filter
+                    (\u ->
+                        u.roles
+                            |> List.map (\r -> r.role_type)
+                            |> List.member RoleType.Pending
+                    )
+    in
+    if List.length guests > 0 then
+        div [ class "section" ]
+            [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
+                [ textH title
+                , a
+                    [ class "button is-small is-primary mx-3"
+                    , classList [ ( "is-invisible", not pending_hover ) ]
+                    , href <| toHref <| Route.Tension_Dynamic_Dynamic_Contract { param1 = "", param2 = tid }
+                    ]
+                    [ text "Go to contracts" ]
+                ]
+            , div [ class "table is-fullwidth" ]
+                [ thead []
+                    [ tr [ class "has-background-header" ]
+                        [ th [] [ textH T.username ]
+                        , th [] [ textH T.name ]
+                        ]
+                    ]
+                , tbody [] <|
+                    List.indexedMap
+                        (\i m ->
+                            tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
+                                [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                , td [] [ m.name |> withDefault "--" |> text ]
+                                , if Just i == pending_hover_i then
+                                    td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text "Go to contract" ] ]
+
+                                  else
+                                    text ""
+                                ]
+                        )
+                        guests
+                ]
+            ]
+
+    else
+        div [] []
+
+
 memberRolesFilter : NodeFocus -> List UserRoleExtended -> List UserRoleExtended
 memberRolesFilter focus roles =
     roles
         |> List.map
             (\r ->
-                if r.role_type == RoleType.Guest then
-                    -- Filter Guest roles
+                if List.member r.role_type [ RoleType.Guest, RoleType.Pending ] then
+                    -- Filter Special roles
                     []
 
                 else if r.role_type == RoleType.Member && List.length roles > 1 then
