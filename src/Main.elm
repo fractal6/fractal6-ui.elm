@@ -98,7 +98,7 @@ update msg model =
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
-                , Ports.bulma_driver ""
+                , Ports.bulma_driver "" -- @warning: this also check if jwt cookie has expired !
                 , Ports.show "footBar"
                 ]
             )

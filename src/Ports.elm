@@ -254,16 +254,13 @@ saveUserCtx userCtx =
     let
         -- Stringigy a Dict
         --dataD = Dict.fromList [
-        --( "key", "user_ctx" ++ userCtx.username ),
         --( "data", JE.encode 0 <| userCtxEncoder userCtx )
         --]
         --datad = JE.dict identity JE.string dataD
         -- Turn the dict into Json string
         data =
             JE.object
-                --[ ( "key", JE.string <| "user_ctx" ++ userCtx.username )
-                [ ( "key", JE.string "user_ctx" )
-                , ( "data", userCtxEncoder userCtx )
+                [ ( "data", userCtxEncoder userCtx )
                 ]
     in
     outgoing
@@ -284,9 +281,7 @@ removeSession : UserCtx -> Cmd msg
 removeSession userCtx =
     outgoing
         { action = "REMOVE_SESSION"
-        , data = JE.string "user_ctx"
-
-        --, data = JE.string <| "user_ctx" ++ userCtx.username
+        , data = JE.string ""
         }
 
 

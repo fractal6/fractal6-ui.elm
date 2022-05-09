@@ -8,6 +8,8 @@ function initQuickSearch(qs, data) {
     qs.addAll(data);
 }
 
+const UCTX_KEY = "user_ctx";
+
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
     window.ports = {
@@ -152,8 +154,15 @@ const actions = {
     'BULMA': (app, session, id) => {
         InitBulma(app, session, id);
 
-        // Unlock tooltip
+        // Unlock tooltip (GP)
         session.gp.isFrozen = false;
+
+        // Check if jwt token has expired
+        var uctx = JSON.parse(localStorage.getItem(UCTX_KEY))
+        if (uctx !== null && (uctx.expiresAt === undefined || new Date(uctx.expiresAt) < new Date())) {
+            // refresh session
+            console.log("needs the refresh")
+        }
     },
     'TOGGLE_TH': (app, session, message) => {
         var $tt = document.getElementById("themeButton_port");
@@ -162,6 +171,9 @@ const actions = {
                 toggleTheme();
             });
         }
+    },
+    'SAVE_WINDOWPOS' : (app, session, data) => {
+        localStorage.setItem("window_pos", JSON.stringify(data));
     },
 
     //
@@ -325,9 +337,9 @@ const actions = {
     // User Ctx -- Localstorage
     //
     'SAVE_USERCTX' : (app, session, user_ctx) => {
-        // @DEBUG: Maybe List encoder ?
+        // @DEBUG: Maybe List encoder for multiple sessions ?
         if (user_ctx.roles && user_ctx.roles.length == 0) delete user_ctx.roles
-        localStorage.setItem(user_ctx.key, JSON.stringify(user_ctx.data));
+        localStorage.setItem(UCTX_KEY, JSON.stringify(user_ctx.data));
 
         // If version is outdated, reload.
         if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
@@ -338,11 +350,8 @@ const actions = {
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
     },
-    'SAVE_WINDOWPOS' : (app, session, data) => {
-        localStorage.setItem("window_pos", JSON.stringify(data));
-    },
-    'REMOVE_SESSION' : (app, session, user_ctx_key) => {
-        localStorage.removeItem(user_ctx_key);
+    'REMOVE_SESSION' : (app, session, _) => {
+        localStorage.removeItem(UCTX_KEY);
         localStorage.removeItem("theme");
         localStorage.removeItem("window_pos");
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/";
