@@ -33,7 +33,7 @@ import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, nameidFromFlags, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembersSub, getQuickDoc, login)
 import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser)
 import ModelSchema exposing (..)
@@ -420,7 +420,7 @@ view global model =
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ Lazy.lazy HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ model ]
+        , div [ id "mainPane" ] [ view_ global.session.user model ]
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
@@ -429,16 +429,28 @@ view global model =
     }
 
 
-view_ : Model -> Html Msg
-view_ model =
+view_ : UserState -> Model -> Html Msg
+view_ us model =
     let
         rtid =
             tidFromPath model.path_data |> withDefault ""
+
+        isAdmin =
+            case us of
+                LoggedIn uctx ->
+                    hasAdminRole uctx model.node_focus.rootnameid
+
+                LoggedOut ->
+                    False
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-11 is-11-desktop is-10-fullhd" ]
-            [ div [ class "button is-primary is-pulled-right mt-3", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
-                [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
+            [ if isAdmin then
+                div [ class "button is-primary is-pulled-right mt-3", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
+                    [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
+
+              else
+                text ""
             , div [ class "columns" ]
                 [ Lazy.lazy3 viewMembers model.now model.members_top model.node_focus ]
             , div [ class "columns" ]

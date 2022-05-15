@@ -59,19 +59,13 @@ import ModelCommon.Codecs
         , Flags_
         , FractalBaseRoute(..)
         , NodeFocus
-        , TensionCharac
         , focusFromNameid
-        , focusFromPath
         , focusState
-        , getCircleRoles
-        , getCoordoRoles
-        , getOrgaRoles
-        , isOwner
+        , hasAdminRole
         , nameidFromFlags
         , nearestCircleid
         , nid2rootid
         , uriFromNameid
-        , uriFromUsername
         )
 import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
 import ModelCommon.Requests exposing (login)
@@ -1205,6 +1199,15 @@ viewSearchList _ model =
 
 viewCanvas : UserState -> Model -> Html Msg
 viewCanvas us model =
+    let
+        isAdmin =
+            case us of
+                LoggedIn uctx ->
+                    hasAdminRole uctx model.node_focus.rootnameid
+
+                LoggedOut ->
+                    False
+    in
     div [ id "canvasParent", classList [ ( "spinner", model.orga_data == LoadingSlowly ) ] ]
         [ case model.orga_data of
             Failure err ->
@@ -1222,13 +1225,13 @@ viewCanvas us model =
         , canvas [ id "canvasOrga", class "is-invisible" ] []
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
             -- Hidden class use in graphpack_d3.js
-            [ div
+            ([ div
                 [ class "button tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.goRoot)
                 , onClick (NodeClicked model.node_focus.rootnameid)
                 ]
                 [ A.icon "icon-chevrons-up" ]
-            , div
+             , div
                 [ class "button tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.goParent)
                 , case model.path_data of
@@ -1243,20 +1246,27 @@ viewCanvas us model =
                         onClick NoMsg
                 ]
                 [ A.icon "icon-chevron-up" ]
-            , div
+             , div
                 [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-right"
                 , attribute "data-tooltip" (upH T.reverseTooltip)
                 , onClick ToggleGraphReverse
                 ]
                 [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
-            , div [ class "is-hbar" ] []
-            , div
-                [ class "button tooltip has-tooltip-arrow has-tooltip-right"
-                , attribute "data-tooltip" (upH T.inviteMember)
-                , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
-                ]
-                [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
-            ]
+             ]
+                ++ (if isAdmin then
+                        [ div [ class "is-hbar" ] []
+                        , div
+                            [ class "button tooltip has-tooltip-arrow has-tooltip-right"
+                            , attribute "data-tooltip" (upH T.inviteMember)
+                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                            ]
+                            [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
+                        ]
+
+                    else
+                        []
+                   )
+            )
         , div
             [ id "nodeTooltip"
             , class "is-invisible"

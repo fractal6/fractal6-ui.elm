@@ -681,7 +681,7 @@ orgaToUsers nd =
 
   - Admin User of the orga
   - User with coordo role below that node
-  - User with the first corrdo role on parent, is no cordo below.
+  - User with the first corrdo role on parent, if no cordo below.
 
 -}
 getNodeRights : UserCtx -> Node -> GqlData NodesDict -> List UserRole
