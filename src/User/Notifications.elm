@@ -1,9 +1,10 @@
 module User.Notifications exposing (Flags, Model, Msg, init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading
     exposing
@@ -79,11 +80,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoAuth uctx ->
-                        ( send (DoOpenAuthModal uctx), Cmd.none )
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -101,10 +105,10 @@ type alias Model =
     , eid : String
 
     -- Common
-    , modalAuth : ModalAuth
     , help : Help.State
     , refresh_trial : Int
     , now : Time.Posix
+    , authModal : AuthModal.State
     }
 
 
@@ -120,13 +124,6 @@ type Msg
     | GotMarkAsRead (GqlData IdPayload)
     | MarkAllAsRead
     | GotMarkAllAsRead (GqlData IdPayload)
-      -- Token refresh
-    | DoOpenAuthModal UserCtx
-    | DoCloseAuthModal String
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
     | PassedSlowLoadTreshold -- timer
@@ -137,6 +134,7 @@ type Msg
     | GoBack
       -- Help
     | HelpMsg Help.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 
@@ -163,10 +161,10 @@ init global flags =
             , eid = ""
 
             -- common
-            , modalAuth = Inactive
             , help = Help.init global.session.user
             , refresh_trial = 0
             , now = global.now
+            , authModal = AuthModal.init global.session.user Nothing
             }
     in
     ( model
@@ -198,7 +196,7 @@ update global message model =
         GotNotifications result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal model.uctx), Cmd.none )
+                    ( model, Ports.raiseAuthModal model.uctx, Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadNotifications 500, send UpdateUserToken )
@@ -218,7 +216,7 @@ update global message model =
         GotMarkAsRead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal model.uctx), Cmd.none )
+                    ( model, Ports.raiseAuthModal model.uctx, Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
@@ -244,7 +242,7 @@ update global message model =
         GotMarkAllAsRead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal model.uctx), Cmd.none )
+                    ( model, Ports.raiseAuthModal model.uctx, Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep MarkAllAsRead 500, send UpdateUserToken )
@@ -258,75 +256,6 @@ update global message model =
                                 model.notifications_data
                     in
                     ( { model | notifications_data = newData }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        -- Token refresh
-        DoOpenAuthModal uctx ->
-            ( { model
-                | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-              }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoCloseAuthModal link ->
-            let
-                cmd =
-                    ternary (link /= "") (send (Navigate link)) Cmd.none
-            in
-            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
-
-        ChangeAuthPost field value ->
-            case model.modalAuth of
-                Active form r ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            ( model, login apis form.post GotSignin, Cmd.none )
-
-        GotSignin result ->
-            case result of
-                RemoteData.Success uctx ->
-                    ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send (DoCloseAuthModal "") ]
-                    , send (UpdateUserSession uctx)
-                    )
-
-                _ ->
-                    case model.modalAuth of
-                        Active form _ ->
-                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
-
-                        Inactive ->
-                            ( model, Cmd.none, Cmd.none )
-
-        SubmitKeyDown key ->
-            case key of
-                13 ->
-                    let
-                        form =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    f
-
-                                Inactive ->
-                                    UserAuthForm Dict.empty
-                    in
-                    --ENTER
-                    if isPostSendable [ "password" ] form.post then
-                        ( model, send (SubmitUser form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -369,12 +298,23 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        AuthModalMsg msg ->
+            let
+                ( data, out ) =
+                    AuthModal.update apis msg model.authModal
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         |> Sub.batch
 
 
@@ -388,13 +328,7 @@ view global model =
     , body =
         [ view_ global model
         , Help.view {} model.help |> Html.map HelpMsg
-        , case model.modalAuth of
-            -- @debug: should not be necessary...
-            Active _ _ ->
-                refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-
-            Inactive ->
-                text ""
+        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         ]
     }
 

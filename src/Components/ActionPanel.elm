@@ -801,7 +801,7 @@ update_ apis message model =
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setActionResult NotAsked model
-                    , out1 [ DoAuth model.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal model.form.uctx ]
                     )
 
                 RefreshToken i ->

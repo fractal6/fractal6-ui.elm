@@ -53,6 +53,18 @@ eventTypeToText e =
         TensionEvent.CommentPushed ->
             "New comment"
 
+        TensionEvent.Moved ->
+            "Tension moved"
+
+        TensionEvent.TypeUpdated ->
+            "Tension type updated"
+
+        TensionEvent.BlobCommitted ->
+            "Mandate committed"
+
+        TensionEvent.BlobPushed ->
+            "Mandate updated"
+
         _ ->
             e |> TensionEvent.toString |> SE.humanize
 

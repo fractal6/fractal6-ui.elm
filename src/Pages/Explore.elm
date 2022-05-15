@@ -1,9 +1,10 @@
 module Pages.Explore exposing (Flags, Model, Msg, page)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewAuthNeeded, viewGqlErrors, viewHttpErrors)
 import Dict exposing (Dict)
@@ -59,11 +60,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoAuth uctx ->
-                        ( send (DoOpenAuthModal uctx), Cmd.none )
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -79,9 +83,9 @@ type alias Model =
     { orgas : GqlData (List NodeExt)
 
     -- Common
-    , modalAuth : ModalAuth
     , help : Help.State
     , refresh_trial : Int
+    , authModal : AuthModal.State
     }
 
 
@@ -94,13 +98,6 @@ type Msg
     | Submit (Time.Posix -> Msg) -- Get Current Time
     | LoadNodeExts
     | GotOrgas (GqlData (List NodeExt))
-      -- Token refresh
-    | DoOpenAuthModal UserCtx
-    | DoCloseAuthModal String
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
     | LogErr String
@@ -109,6 +106,7 @@ type Msg
     | DoCloseModal ModalData
       -- Help
     | HelpMsg Help.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 
@@ -125,9 +123,9 @@ init global flags =
             { orgas = Loading
 
             -- common
-            , modalAuth = Inactive
             , help = Help.init global.session.user
             , refresh_trial = 0
+            , authModal = AuthModal.init global.session.user Nothing
             }
 
         cmds =
@@ -169,75 +167,6 @@ update global message model =
         GotOrgas result ->
             ( { model | orgas = result }, Cmd.none, Cmd.none )
 
-        -- refresh token
-        DoOpenAuthModal uctx ->
-            ( { model
-                | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-              }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoCloseAuthModal link ->
-            let
-                cmd =
-                    ternary (link /= "") (send (Navigate link)) Cmd.none
-            in
-            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
-
-        ChangeAuthPost field value ->
-            case model.modalAuth of
-                Active form r ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            ( model, login apis form.post GotSignin, Cmd.none )
-
-        GotSignin result ->
-            case result of
-                RemoteData.Success uctx ->
-                    ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send (DoCloseAuthModal ""), send LoadNodeExts ]
-                    , send (UpdateUserSession uctx)
-                    )
-
-                _ ->
-                    case model.modalAuth of
-                        Active form _ ->
-                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
-
-                        Inactive ->
-                            ( model, Cmd.none, Cmd.none )
-
-        SubmitKeyDown key ->
-            case key of
-                13 ->
-                    let
-                        form =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    f
-
-                                Inactive ->
-                                    UserAuthForm Dict.empty
-                    in
-                    --ENTER
-                    if isPostSendable [ "password" ] form.post then
-                        ( model, send (SubmitUser form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
@@ -273,12 +202,23 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        AuthModalMsg msg ->
+            let
+                ( data, out ) =
+                    AuthModal.update apis msg model.authModal
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ _ =
     [ Ports.mcPD Ports.closeModalFromJs LogErr DoCloseModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         |> Sub.batch
 
 
@@ -292,13 +232,7 @@ view global model =
     , body =
         [ view_ global model
         , Help.view {} model.help |> Html.map HelpMsg
-        , case model.modalAuth of
-            -- @debug: should not be necessary...
-            Active _ _ ->
-                refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-
-            Inactive ->
-                text ""
+        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         ]
     }
 

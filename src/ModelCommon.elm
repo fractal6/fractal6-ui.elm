@@ -46,7 +46,7 @@ import Set
 
 {-
 
-   ModelCommonn are a collections of modesl forms share accros components
+   ModelCommon are a collections of modesl forms share accros components
    and utiliy function for data manipulations.
 
 -}
@@ -72,21 +72,9 @@ uctxFromUser user =
 
 
 --
--- Modal
+-- Forms
 --
-
-
-type alias UserAuthForm =
-    { post : Dict String String
-    }
-
-
-type ModalAuth
-    = Inactive
-    | Active UserAuthForm (WebData UserCtx)
-
-
-
+{- -}
 -- Tension Form
 
 

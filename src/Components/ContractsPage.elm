@@ -362,7 +362,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractsResult NotAsked model
-                    , out1 [ DoAuth data.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal data.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -382,7 +382,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractResult NotAsked model
-                    , out1 [ DoAuth data.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal data.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -402,7 +402,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setContractDelResult NotAsked model
-                    , out1 [ DoAuth data.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal data.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -454,7 +454,7 @@ update_ apis message model =
             in
             case parseErr result data.refresh_trial of
                 Authenticate ->
-                    ( { model | vote_result = NotAsked }, out1 [ DoAuth data.form.uctx ] )
+                    ( { model | vote_result = NotAsked }, out0 [ Ports.raiseAuthModal data.form.uctx ] )
 
                 RefreshToken i ->
                     ( { data | refresh_trial = i }, out2 [ sendSleep (OnSubmit <| DoVote model.voteForm.vote) 500 ] [ DoUpdateToken ] )
@@ -528,7 +528,7 @@ update_ apis message model =
         CommentAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | comment_result = NotAsked }, out1 [ DoAuth model.form.uctx ] )
+                    ( { model | comment_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep PushComment 500 ] [ DoUpdateToken ] )
@@ -556,7 +556,7 @@ update_ apis message model =
         CommentPatchAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | comment_result = NotAsked }, out1 [ DoAuth model.form.uctx ] )
+                    ( { model | comment_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep PushCommentPatch 500 ] [ DoUpdateToken ] )

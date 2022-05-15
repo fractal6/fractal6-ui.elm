@@ -406,7 +406,7 @@ update_ apis message model =
         OnJoinAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | join_result = NotAsked }, out1 [ DoAuth model.form.uctx ] )
+                    ( { model | join_result = NotAsked }, out0 [ Ports.raiseAuthModal model.form.uctx ] )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, out2 [ sendSleep (PushGuest model.form) 500 ] [ DoUpdateToken ] )

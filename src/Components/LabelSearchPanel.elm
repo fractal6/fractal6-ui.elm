@@ -344,7 +344,7 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setClickResult NotAsked data
-                    , out1 [ DoAuth data.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal data.form.uctx ]
                     )
 
                 RefreshToken i ->

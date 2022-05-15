@@ -2,6 +2,7 @@ module Pages.Signup exposing (Flags, Model, Msg, page)
 
 import Assets as A
 import Browser.Navigation as Nav
+import Components.AuthModal exposing (UserAuthForm)
 import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErrors)
 import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)

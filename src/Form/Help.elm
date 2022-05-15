@@ -364,7 +364,7 @@ update_ apis message model =
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResultAsk NotAsked model
-                    , out1 [ DoAuth form.nodeDoc.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal form.nodeDoc.form.uctx ]
                     )
 
                 RefreshToken i ->
@@ -384,7 +384,7 @@ update_ apis message model =
             case parseErr result model.refresh_trial of
                 Authenticate ->
                     ( setResultFeedback NotAsked model
-                    , out1 [ DoAuth form.nodeDoc.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal form.nodeDoc.form.uctx ]
                     )
 
                 RefreshToken i ->

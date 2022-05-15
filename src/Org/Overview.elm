@@ -2,10 +2,11 @@ port module Org.Overview exposing (Flags, Model, Msg, init, page, subscriptions,
 
 import Array
 import Assets as A
-import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
+import Components.AuthModal as AuthModal
 import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
@@ -72,7 +73,7 @@ import ModelCommon.Codecs
         , uriFromNameid
         , uriFromUsername
         )
-import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, viewContractMedia, viewEventMedia)
+import ModelCommon.Event exposing (contractToLink, eventToIcon, eventToLink, eventTypeToText, viewContractMedia, viewEventMedia)
 import ModelCommon.Requests exposing (login)
 import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
@@ -116,11 +117,8 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoAuth uctx ->
-                        ( send (DoOpenAuthModal uctx), Cmd.none )
-
-                    DoUpdateToken ->
-                        ( Cmd.none, send UpdateUserToken )
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     DoFetchNode nameid ->
                         ( send (FetchNewNode nameid False), Cmd.none )
@@ -139,6 +137,12 @@ mapGlobalOutcmds gcmds =
 
                     DoMoveNode a b c ->
                         ( send (MoveNode a b c), Cmd.none )
+
+                    DoUpdateToken ->
+                        ( Cmd.none, send UpdateUserToken )
+
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -167,7 +171,6 @@ type alias Model =
     , activity_tab : ActivityTab
 
     -- common
-    , modalAuth : ModalAuth
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
@@ -177,6 +180,7 @@ type alias Model =
     , tensionForm : NTF.State
     , actionPanel : ActionPanel.State
     , joinOrga : JoinOrga.State
+    , authModal : AuthModal.State
     }
 
 
@@ -233,13 +237,6 @@ type Msg
     | DoFocus String
     | DoClearTooltip
     | ToggleGraphReverse
-      -- Token refresh
-    | DoOpenAuthModal UserCtx
-    | DoCloseAuthModal String
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | NoMsg
     | InitModals
@@ -252,6 +249,7 @@ type Msg
     | NewTensionMsg NTF.Msg
     | ActionPanelMsg ActionPanel.Msg
     | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 
@@ -300,7 +298,6 @@ init global flags =
             , node_data = fromMaybeData session.node_data Loading
             , init_tensions = True
             , init_data = True
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
                 global.session.window_pos
@@ -309,15 +306,17 @@ init global flags =
             , next_focus = Nothing
             , activity_tab = TensionTab
 
-            -- Node Action
             -- Common
-            , modalAuth = Inactive
+            , refresh_trial = 0
+            , now = global.now
+
+            -- Components
             , helperBar = HelperBar.create
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , actionPanel = ActionPanel.init global.session.user
-            , refresh_trial = 0
-            , now = global.now
+            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
+            , authModal = AuthModal.init global.session.user Nothing
             }
 
         cmds_ =
@@ -423,7 +422,7 @@ update global message model =
         GotOrga result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal (uctxFromUser global.session.user)), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
@@ -799,87 +798,6 @@ update global message model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
-        DoOpenAuthModal uctx ->
-            ( { model
-                | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-              }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoCloseAuthModal link ->
-            ( { model | modalAuth = Inactive }
-            , ternary (link /= "") (send (Navigate link)) Cmd.none
-            , Ports.close_auth_modal
-            )
-
-        ChangeAuthPost field value ->
-            case model.modalAuth of
-                Active form r ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            ( model, login apis form.post GotSignin, Cmd.none )
-
-        GotSignin result ->
-            case result of
-                RemoteData.Success uctx ->
-                    let
-                        cmd =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    case Dict.get "msg" f.post of
-                                        Just "GotOrga" ->
-                                            sendSleep (Navigate (uriFromNameid OverviewBaseUri model.node_focus.rootnameid)) 500
-
-                                        _ ->
-                                            Cmd.none
-
-                                _ ->
-                                    Cmd.none
-                    in
-                    ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send (DoCloseAuthModal ""), cmd ]
-                    , send (UpdateUserSession uctx)
-                    )
-
-                _ ->
-                    case model.modalAuth of
-                        Active form _ ->
-                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
-
-                        Inactive ->
-                            ( model, Cmd.none, Cmd.none )
-
-        SubmitKeyDown key ->
-            case key of
-                13 ->
-                    let
-                        form =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    f
-
-                                Inactive ->
-                                    UserAuthForm Dict.empty
-                    in
-                    --ENTER
-                    if isPostSendable [ "password" ] form.post then
-                        ( model, send (SubmitUser form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         ExpandRoles ->
             ( { model | helperBar = HelperBar.expand model.helperBar }, Cmd.none, Cmd.none )
 
@@ -927,6 +845,16 @@ update global message model =
             in
             ( { model | joinOrga = data }, out.cmds |> List.map (\m -> Cmd.map JoinOrgaMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        AuthModalMsg msg ->
+            let
+                ( data, out ) =
+                    AuthModal.update apis msg model.authModal
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -935,12 +863,12 @@ subscriptions _ model =
     , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
     , Ports.lgPD nodeDataFromJs LogErr DoCreateTension
     , Ports.lookupNodeFromJs ChangeNodeLookup
-    , Ports.uctxPD Ports.openAuthModalFromJs LogErr DoOpenAuthModal
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         |> Sub.batch
 
 
@@ -990,10 +918,10 @@ view global model =
         [ --div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
           Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
-        , Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
         , Help.view {} model.help |> Html.map HelpMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         ]
     }
 
@@ -1447,7 +1375,7 @@ viewEventNotif now e =
         ev =
             Dict.fromList
                 [ ( "id", ue.id )
-                , ( "title", e.event_type |> TensionEvent.toString |> SE.humanize )
+                , ( "title", e.event_type |> eventTypeToText )
                 , ( "title_", e.tension.title )
                 , ( "target", e.tension.receiver.name )
                 , ( "orga", nid2rootid e.tension.receiver.nameid )

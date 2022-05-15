@@ -1,7 +1,8 @@
 module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
-import Auth exposing (ErrState(..), parseErr2, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
+import Components.AuthModal as AuthModal
 import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -54,11 +55,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoAuth uctx ->
-                        ( send (DoOpenAuthModal uctx), Cmd.none )
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -77,10 +81,9 @@ type alias Model =
     , result : WebData NodeId
 
     -- common
-    , isModalActive : Bool -- Only use by JoinOrga for now. (other actions rely on Bulma drivers)
-    , modalAuth : ModalAuth
     , help : Help.State
     , refresh_trial : Int
+    , authModal : AuthModal.State
     }
 
 
@@ -110,10 +113,9 @@ init global flags =
             in
             ( { form = form
               , result = RemoteData.NotAsked
-              , isModalActive = False
-              , modalAuth = Inactive
               , help = Help.init global.session.user
               , refresh_trial = 0
+              , authModal = AuthModal.init global.session.user Nothing
               }
             , send (Navigate "/")
             , Cmd.none
@@ -128,10 +130,9 @@ init global flags =
               , result = RemoteData.NotAsked
 
               --common
-              , isModalActive = False
-              , modalAuth = Inactive
               , help = Help.init global.session.user
               , refresh_trial = 0
+              , authModal = AuthModal.init global.session.user Nothing
               }
             , Cmd.none
             , Cmd.none
@@ -150,18 +151,11 @@ type Msg
     | ChangeNodePost String String -- {field value}
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (WebData NodeId)
-      -- Token refresh
-    | DoOpenAuthModal UserCtx
-    | DoCloseAuthModal String
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Common
     | Navigate String
-    | DoCloseModal String
       -- Help
     | HelpMsg Help.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )
@@ -186,7 +180,7 @@ update global message model =
         OrgaAck result ->
             case parseErr2 result model.refresh_trial of
                 Authenticate ->
-                    ( { model | result = RemoteData.NotAsked }, send (DoOpenAuthModal model.form.uctx), Cmd.none )
+                    ( { model | result = RemoteData.NotAsked }, Ports.raiseAuthModal model.form.uctx, Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushOrga model.form) 500, send UpdateUserToken )
@@ -224,85 +218,6 @@ update global message model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
-        DoCloseModal link ->
-            let
-                gcmd =
-                    if link /= "" then
-                        send (Navigate link)
-
-                    else
-                        Cmd.none
-            in
-            ( { model | isModalActive = False }, gcmd, Ports.close_modal )
-
-        DoOpenAuthModal uctx ->
-            ( { model
-                | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-              }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoCloseAuthModal link ->
-            let
-                cmd =
-                    ternary (link /= "") (send (Navigate link)) Cmd.none
-            in
-            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
-
-        ChangeAuthPost field value ->
-            case model.modalAuth of
-                Active form r ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            ( model, login apis form.post GotSignin, Cmd.none )
-
-        GotSignin result ->
-            case result of
-                RemoteData.Success uctx ->
-                    ( { model | modalAuth = Inactive }
-                    , send (DoCloseAuthModal "")
-                    , send (UpdateUserSession uctx)
-                    )
-
-                _ ->
-                    case model.modalAuth of
-                        Active form _ ->
-                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
-
-                        Inactive ->
-                            ( model, Cmd.none, Cmd.none )
-
-        SubmitKeyDown key ->
-            case key of
-                13 ->
-                    let
-                        form =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    f
-
-                                Inactive ->
-                                    UserAuthForm Dict.empty
-                    in
-                    --ENTER
-                    if isPostSendable [ "password" ] form.post then
-                        ( model, send (SubmitUser form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         -- Help
         HelpMsg msg ->
             let
@@ -314,10 +229,21 @@ update global message model =
             in
             ( { model | help = help }, out.cmds |> List.map (\m -> Cmd.map HelpMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        AuthModalMsg msg ->
+            let
+                ( data, out ) =
+                    AuthModal.update apis msg model.authModal
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
     (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         |> Sub.batch
 
 
@@ -327,6 +253,7 @@ view global model =
     , body =
         [ view_ global model
         , Help.view {} model.help |> Html.map HelpMsg
+        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         ]
     }
 
@@ -338,7 +265,6 @@ view_ global model =
             [ h1 [ class "title has-text-centered" ] [ text "Create your organisation" ]
             , viewOrgaForm global model
             ]
-        , refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         ]
 
 

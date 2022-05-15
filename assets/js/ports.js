@@ -161,7 +161,7 @@ const actions = {
         var uctx = JSON.parse(localStorage.getItem(UCTX_KEY))
         if (uctx !== null && (uctx.expiresAt === undefined || new Date(uctx.expiresAt) < new Date())) {
             // refresh session
-            console.log("needs the refresh")
+            app.ports.openAuthModalFromJs.send(uctx);
         }
     },
     'TOGGLE_TH': (app, session, message) => {

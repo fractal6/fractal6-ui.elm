@@ -2,9 +2,10 @@ module Org.Settings exposing (Flags, Model, Msg, init, page, subscriptions, upda
 
 import Array
 import Assets as A
-import Auth exposing (ErrState(..), parseErr, refreshAuthModal)
+import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (QuickDoc)
+import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
@@ -80,11 +81,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoAuth uctx ->
-                        ( send (DoOpenAuthModal uctx), Cmd.none )
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
+
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -131,7 +135,6 @@ type alias Model =
     , role_result_del : GqlData RoleExtFull
 
     -- Common
-    , modalAuth : ModalAuth
     , helperBar : HelperBar
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
@@ -141,6 +144,7 @@ type alias Model =
     , help : Help.State
     , tensionForm : NTF.State
     , joinOrga : JoinOrga.State
+    , authModal : AuthModal.State
     }
 
 
@@ -281,13 +285,6 @@ type Msg
     | UpdateNodePost String String
       -- New Tension
     | DoCreateTension LocalGraph
-      -- Token refresh
-    | DoOpenAuthModal UserCtx
-    | DoCloseAuthModal String
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
       -- Color Picker
     | OpenColor
     | CloseColor
@@ -308,6 +305,7 @@ type Msg
     | HelpMsg Help.Msg
     | NewTensionMsg NTF.Msg
     | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 
@@ -376,7 +374,6 @@ init global flags =
             , role_result_del = NotAsked
 
             -- Common
-            , modalAuth = Inactive
             , helperBar = HelperBar.create
             , refresh_trial = 0
             , url = global.url
@@ -384,6 +381,7 @@ init global flags =
             , tensionForm = NTF.init global.session.user
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
+            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             }
 
         cmds =
@@ -610,7 +608,7 @@ update global message model =
         GotLabel result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | label_result = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
+                    ( { model | label_result = NotAsked }, Ports.raiseAuthModal model.artefact_form.uctx, Cmd.none )
 
                 RefreshToken i ->
                     if model.label_add then
@@ -672,7 +670,7 @@ update global message model =
         GotLabelDel result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | label_result_del = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
+                    ( { model | label_result_del = NotAsked }, Ports.raiseAuthModal model.artefact_form.uctx, Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteLabel model.artefact_form.id) 500, send UpdateUserToken )
@@ -800,7 +798,7 @@ update global message model =
         GotRole result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | role_result = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
+                    ( { model | role_result = NotAsked }, Ports.raiseAuthModal model.artefact_form.uctx, Cmd.none )
 
                 RefreshToken i ->
                     if model.role_add then
@@ -862,7 +860,7 @@ update global message model =
         GotRoleDel result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | role_result_del = NotAsked }, send (DoOpenAuthModal model.artefact_form.uctx), Cmd.none )
+                    ( { model | role_result_del = NotAsked }, Ports.raiseAuthModal model.artefact_form.uctx, Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (Submit <| SubmitDeleteRole model.artefact_form.id) 500, send UpdateUserToken )
@@ -938,88 +936,6 @@ update global message model =
                     mapGlobalOutcmds out.gcmds
             in
             ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
-        -- Token Refresh
-        DoOpenAuthModal uctx ->
-            ( { model
-                | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-              }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoCloseAuthModal link ->
-            ( { model | modalAuth = Inactive }
-            , ternary (link /= "") (send (Navigate link)) Cmd.none
-            , Ports.close_auth_modal
-            )
-
-        ChangeAuthPost field value ->
-            case model.modalAuth of
-                Active form r ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            ( model, login apis form.post GotSignin, Cmd.none )
-
-        GotSignin result ->
-            case result of
-                RemoteData.Success uctx ->
-                    let
-                        cmd =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    case Dict.get "msg" f.post of
-                                        Just "GotOrga" ->
-                                            sendSleep (Navigate (uriFromNameid OverviewBaseUri model.node_focus.rootnameid)) 500
-
-                                        _ ->
-                                            Cmd.none
-
-                                _ ->
-                                    Cmd.none
-                    in
-                    ( { model | modalAuth = Inactive }
-                    , Cmd.batch [ send (DoCloseAuthModal ""), cmd ]
-                    , send (UpdateUserSession uctx)
-                    )
-
-                _ ->
-                    case model.modalAuth of
-                        Active form _ ->
-                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
-
-                        Inactive ->
-                            ( model, Cmd.none, Cmd.none )
-
-        SubmitKeyDown key ->
-            case key of
-                13 ->
-                    let
-                        form =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    f
-
-                                Inactive ->
-                                    UserAuthForm Dict.empty
-                    in
-                    --ENTER
-                    if isPostSendable [ "password" ] form.post then
-                        ( model, send (SubmitUser form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
 
         -- Color Picker
         OpenColor ->
@@ -1107,6 +1023,16 @@ update global message model =
             in
             ( { model | joinOrga = data }, out.cmds |> List.map (\m -> Cmd.map JoinOrgaMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        AuthModalMsg msg ->
+            let
+                ( data, out ) =
+                    AuthModal.update apis msg model.authModal
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1116,6 +1042,7 @@ subscriptions _ model =
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         |> Sub.batch
 
 
@@ -1141,11 +1068,11 @@ view global model =
     , body =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ model ]
-        , Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         ]
     }
 

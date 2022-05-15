@@ -77,8 +77,8 @@ type alias Session =
 type GlobalCmd
     = --| Delay msg1 Float
       --| SubmitDelay Int
-      DoAuth UserCtx
-    | DoUpdateToken
+      DoUpdateToken
+    | DoUpdateUserSession UserCtx
     | DoNavigate String
     | DoReplaceUrl String
     | DoModalAsk String String -- SafeClose

@@ -1,10 +1,11 @@
 module Org.Tension exposing (Flags, Model, Msg, TensionTab(..), init, page, subscriptions, update, view)
 
 import Assets as A
-import Auth exposing (ErrState(..), parseErr, refreshAuthModal, signupModal)
+import Auth exposing (ErrState(..), parseErr)
 import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc)
 import Components.ActionPanel as ActionPanel
+import Components.AuthModal as AuthModal
 import Components.Comments exposing (viewComment, viewCommentInput)
 import Components.ContractsPage as ContractsPage
 import Components.DocToolBar as DocToolBar exposing (ActionView(..))
@@ -145,14 +146,14 @@ mapGlobalOutcmds gcmds =
                     DoNavigate link ->
                         ( send (Navigate link), Cmd.none )
 
-                    DoAuth uctx ->
-                        ( send (DoOpenAuthModal uctx), Cmd.none )
+                    DoReplaceUrl url ->
+                        ( Cmd.none, send (ReplaceUrl url) )
 
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
 
-                    DoReplaceUrl url ->
-                        ( Cmd.none, send (ReplaceUrl url) )
+                    DoUpdateUserSession uctx ->
+                        ( Cmd.none, send (UpdateUserSession uctx) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -183,7 +184,6 @@ type alias Model =
     , expandedEvents : List Int
     , isSubscribed : GqlData Bool
     , eid : String
-    , puid : String
 
     -- Form (Title, Status, Comment)
     , tension_form : TensionForm
@@ -207,7 +207,6 @@ type alias Model =
     , isLabelOpen : Bool
 
     -- Common
-    , modalAuth : ModalAuth
     , inputViewMode : InputViewMode
     , helperBar : HelperBar
     , refresh_trial : Int
@@ -223,6 +222,7 @@ type alias Model =
     , contractsPage : ContractsPage.State
     , selectType : SelectType.State
     , joinOrga : JoinOrga.State
+    , authModal : AuthModal.State
     }
 
 
@@ -336,14 +336,6 @@ type Msg
     | DoActionEdit String Blob
       -- New Tension
     | DoCreateTension LocalGraph
-      -- Token refresh
-    | DoOpenAuthModal UserCtx
-    | DoCloseAuthModal String
-    | ChangeAuthPost String String
-    | SubmitUser UserAuthForm
-    | GotSignin (WebData UserCtx)
-    | SubmitKeyDown Int -- Detect Enter (for form sending)
-    | DoOpenSignupModal String
       -- Common
     | NoMsg
     | InitModals
@@ -365,6 +357,7 @@ type Msg
     | SelectTypeMsg SelectType.Msg
     | ActionPanelMsg ActionPanel.Msg
     | JoinOrgaMsg JoinOrga.Msg
+    | AuthModalMsg AuthModal.Msg
 
 
 
@@ -418,7 +411,6 @@ init global flags =
             , expandedEvents = []
             , isSubscribed = fromMaybeData global.session.isSubscribed Loading
             , eid = ""
-            , puid = ""
 
             -- Form (Title, Status, Comment)
             , tension_form = initTensionForm tid global.session.user
@@ -446,7 +438,6 @@ init global flags =
             , labelsPanel = LabelSearchPanel.init tid AssignLabel global.session.user
 
             -- Common
-            , modalAuth = Inactive
             , inputViewMode = Write
             , helperBar = HelperBar.create
             , help = Help.init global.session.user
@@ -458,6 +449,7 @@ init global flags =
             , actionPanel = ActionPanel.init global.session.user
             , now = global.now
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
+            , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             }
 
         refresh =
@@ -497,18 +489,7 @@ init global flags =
 
                 Nothing ->
                     Cmd.none
-            , case Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing of
-                Just puid ->
-                    case global.session.user of
-                        LoggedIn _ ->
-                            -- @future: manage multiple loggin
-                            Cmd.none
-
-                        LoggedOut ->
-                            send (DoOpenSignupModal puid)
-
-                Nothing ->
-                    Cmd.none
+            , Cmd.map AuthModalMsg (send AuthModal.OnStart)
             ]
     in
     ( model
@@ -642,7 +623,7 @@ update global message model =
         GotOrga result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal (uctxFromUser global.session.user)), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
@@ -671,7 +652,7 @@ update global message model =
         GotTensionHead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
@@ -695,7 +676,7 @@ update global message model =
         GotIsSucribe result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
@@ -726,7 +707,7 @@ update global message model =
         GotMarkAsRead result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (MarkAsRead model.eid) 500, send UpdateUserToken )
@@ -791,7 +772,7 @@ update global message model =
         CommentAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | tension_patch = NotAsked }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+                    ( { model | tension_patch = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadTensionComments 500, send UpdateUserToken )
@@ -890,7 +871,7 @@ update global message model =
         CommentPatchAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | comment_result = NotAsked }, send (DoOpenAuthModal model.comment_form.uctx), Cmd.none )
+                    ( { model | comment_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PushCommentPatch 500, send UpdateUserToken )
@@ -950,7 +931,7 @@ update global message model =
         TitleAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | title_result = NotAsked }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+                    ( { model | title_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PushTitle 500, send UpdateUserToken )
@@ -1067,7 +1048,7 @@ update global message model =
             in
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | nodeDoc = NodeDoc.setResult NotAsked model.nodeDoc }, send (DoOpenAuthModal newDoc.form.uctx), Cmd.none )
+                    ( { model | nodeDoc = NodeDoc.setResult NotAsked model.nodeDoc }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep (PushBlob_ newDoc.form) 500, send UpdateUserToken )
@@ -1125,7 +1106,7 @@ update global message model =
         PushBlobAck result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( { model | publish_result = NotAsked }, send (DoOpenAuthModal model.tension_form.uctx), Cmd.none )
+                    ( { model | publish_result = NotAsked }, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep PublishBlob 500, send UpdateUserToken )
@@ -1312,91 +1293,6 @@ update global message model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
-        DoOpenAuthModal uctx ->
-            ( { model
-                | modalAuth =
-                    Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-              }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoOpenSignupModal puid ->
-            ( { model | puid = puid, modalAuth = Active { post = Dict.fromList [ ( "puid", puid ) ] } RemoteData.NotAsked }
-            , Cmd.none
-            , Ports.open_auth_modal
-            )
-
-        DoCloseAuthModal link ->
-            let
-                cmd =
-                    ternary (link /= "") (send (Navigate link)) Cmd.none
-            in
-            ( { model | modalAuth = Inactive }, cmd, Ports.close_auth_modal )
-
-        ChangeAuthPost field value ->
-            case model.modalAuth of
-                Active form r ->
-                    let
-                        newForm =
-                            { form | post = Dict.insert field value form.post }
-                    in
-                    ( { model | modalAuth = Active newForm r }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitUser form ->
-            case model.puid of
-                "" ->
-                    ( model, login apis form.post GotSignin, Cmd.none )
-
-                puid ->
-                    ( model, signupValidate apis form.post GotSignin, Cmd.none )
-
-        GotSignin result ->
-            case model.modalAuth of
-                Active form _ ->
-                    case result of
-                        RemoteData.Success uctx ->
-                            case model.puid of
-                                "" ->
-                                    ( { model | modalAuth = Inactive }
-                                    , send (DoCloseAuthModal "")
-                                    , send (UpdateUserSession uctx)
-                                    )
-
-                                puid ->
-                                    ( { model | modalAuth = Active form result }, Cmd.none, send (UpdateUserSession uctx) )
-
-                        _ ->
-                            ( { model | modalAuth = Active form result }, Cmd.none, Cmd.none )
-
-                Inactive ->
-                    ( model, Cmd.none, Cmd.none )
-
-        SubmitKeyDown key ->
-            case key of
-                13 ->
-                    let
-                        form =
-                            case model.modalAuth of
-                                Active f _ ->
-                                    f
-
-                                Inactive ->
-                                    UserAuthForm Dict.empty
-                    in
-                    --ENTER
-                    if isPostSendable [ "password" ] form.post then
-                        ( model, send (SubmitUser form), Cmd.none )
-
-                    else
-                        ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, Cmd.none )
-
         ChangeInputViewMode viewMode ->
             ( { model | inputViewMode = viewMode }, Cmd.none, Cmd.none )
 
@@ -1523,6 +1419,16 @@ update global message model =
             in
             ( { model | joinOrga = data }, out.cmds |> List.map (\m -> Cmd.map JoinOrgaMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        AuthModalMsg msg ->
+            let
+                ( data, out ) =
+                    AuthModal.update apis msg model.authModal
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1536,6 +1442,7 @@ subscriptions _ model =
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         |> Sub.batch
 
 
@@ -1567,17 +1474,12 @@ view global model =
     , body =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
-        , case model.puid of
-            "" ->
-                Lazy.lazy2 refreshAuthModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
-
-            puid ->
-                Lazy.lazy2 signupModal model.modalAuth { closeModal = DoCloseAuthModal, changePost = ChangeAuthPost, submit = SubmitUser, submitEnter = SubmitKeyDown }
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
         , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         ]
     }
 
