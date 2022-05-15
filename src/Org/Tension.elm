@@ -182,7 +182,7 @@ type alias Model =
     , tension_comments : GqlData TensionComments
     , tension_blobs : GqlData TensionBlobs
     , expandedEvents : List Int
-    , isSubscribed : GqlData Bool
+    , subscribe_result : GqlData Bool
     , eid : String
 
     -- Form (Title, Status, Comment)
@@ -409,7 +409,7 @@ init global flags =
             , tension_comments = Loading
             , tension_blobs = Loading
             , expandedEvents = []
-            , isSubscribed = fromMaybeData global.session.isSubscribed Loading
+            , subscribe_result = NotAsked
             , eid = ""
 
             -- Form (Title, Status, Comment)
@@ -492,7 +492,7 @@ init global flags =
             , Cmd.map AuthModalMsg (send AuthModal.OnStart)
             ]
     in
-    ( model
+    ( { model | subscribe_result = withMapData (\x -> withDefault False x.isSubscribed) model.tension_head }
     , Cmd.batch cmds
     , if fs.menuChange || refresh then
         -- No refresh here because all the focus is not encoded in the tension URL.
@@ -519,15 +519,19 @@ update global message model =
 
         LoadTensionHead ->
             let
-                cmd =
+                ( uctx, cmd ) =
                     case global.session.user of
-                        LoggedIn uctx ->
-                            getIsSubscribe apis uctx.username model.tensionid GotIsSucribe
+                        LoggedIn uctx_ ->
+                            ( uctx_
+                              -- Now directly loaded in TensionLoad query
+                              --, getIsSubscribe apis uctx_.username model.tensionid GotIsSucribe
+                            , Cmd.none
+                            )
 
                         LoggedOut ->
-                            Cmd.none
+                            ( initUserctx, Cmd.none )
             in
-            ( model, Cmd.batch [ getTensionHead apis model.tensionid GotTensionHead, cmd ], Cmd.none )
+            ( model, Cmd.batch [ getTensionHead apis uctx model.tensionid GotTensionHead, cmd ], Cmd.none )
 
         LoadTensionComments ->
             ( model, pushTensionPatch apis model.tension_form CommentAck, Cmd.none )
@@ -658,7 +662,7 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
 
                 OkAuth th ->
-                    ( { model | tension_head = result }
+                    ( { model | tension_head = result, subscribe_result = fromMaybeData th.isSubscribed NotAsked }
                     , Cmd.batch
                         [ queryLocalGraph apis th.receiver.nameid (GotPath True)
                         , Ports.bulma_driver ""
@@ -681,8 +685,15 @@ update global message model =
                 RefreshToken i ->
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
 
+                OkAuth d ->
+                    let
+                        th =
+                            withMapData (\x -> { x | isSubscribed = Just d }) model.tension_head
+                    in
+                    ( { model | subscribe_result = result, tension_head = th }, Cmd.none, send (UpdateSessionTensionHead (withMaybeData th)) )
+
                 _ ->
-                    ( { model | isSubscribed = result }, Cmd.none, send (UpdateSessionSubscribe (withMaybeData result)) )
+                    ( { model | subscribe_result = result }, Cmd.none, Cmd.none )
 
         GotTensionComments result ->
             ( { model | tension_comments = result }, Cmd.none, Ports.bulma_driver "" )
@@ -694,9 +705,12 @@ update global message model =
             ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Cmd.none )
 
         ToggleSubscription username ->
-            case model.isSubscribed of
-                Success b ->
-                    ( model, toggleTensionSubscription apis username model.tensionid (not b) GotIsSucribe, Cmd.none )
+            case model.tension_head of
+                Success th ->
+                    ( { model | subscribe_result = LoadingSlowly }
+                    , toggleTensionSubscription apis username model.tensionid (not (withDefault False th.isSubscribed)) GotIsSucribe
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( model, Cmd.none, Cmd.none )
@@ -2460,22 +2474,16 @@ viewSidePane u t model =
           case u of
             LoggedIn uctx ->
                 let
-                    ( iconElt, txt, isLoading ) =
-                        case model.isSubscribed of
-                            Success True ->
-                                ( A.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText, False )
+                    ( iconElt, txt ) =
+                        case model.tension_head |> withMaybeData |> Maybe.map (\x -> x.isSubscribed) |> withDefault Nothing of
+                            Just True ->
+                                ( A.icon1 "icon-bell-off icon-1x" (upH T.unsubscribe), T.tensionSubscribeText )
 
-                            Success False ->
-                                ( A.icon1 "icon-bell icon-1x" (upH T.subscribe), T.tensionUnsubscribeText, False )
+                            Just False ->
+                                ( A.icon1 "icon-bell icon-1x" (upH T.subscribe), T.tensionUnsubscribeText )
 
-                            LoadingSlowly ->
-                                ( text "", "", True )
-
-                            Failure err ->
-                                ( viewGqlErrors err, "", False )
-
-                            _ ->
-                                ( text "", "", False )
+                            Nothing ->
+                                ( text "", "" )
                 in
                 div [ class "media pb-0" ]
                     [ div [ class "media-content" ]
@@ -2486,8 +2494,14 @@ viewSidePane u t model =
                             , style "border-radius" "5px"
                             , onClick (ToggleSubscription uctx.username)
                             ]
-                            [ iconElt, loadingSpin isLoading ]
+                            [ iconElt, loadingSpin (model.subscribe_result == LoadingSlowly) ]
                         , p [ class "help" ] [ textH txt ]
+                        , case model.subscribe_result of
+                            Failure err ->
+                                viewGqlErrors err
+
+                            _ ->
+                                text ""
                         ]
                     ]
 

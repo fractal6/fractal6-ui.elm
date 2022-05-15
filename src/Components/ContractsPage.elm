@@ -1,4 +1,4 @@
-module Components.ContractsPage exposing (Msg(..), State, init, subscriptions, update, view)
+module Components.ContractsPage exposing (Msg(..), State, hasCid, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -160,9 +160,14 @@ init rid user =
 
 
 -- Global methods
---isOpen_ : State -> Bool
---isOpen_ (State model) =
---    model.isOpen
+
+
+hasCid : State -> Bool
+hasCid (State model) =
+    model.activeView == ContractView
+
+
+
 --- State Controls
 
 

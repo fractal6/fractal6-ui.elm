@@ -5,7 +5,7 @@ import Extra.Events exposing (onClickPD)
 import Generated.Route as Route exposing (Route)
 import Graphql.Http as GqlHttp
 import Html exposing (Html, a, button, div, img, p, span, text)
-import Html.Attributes exposing (alt, class, height, href, src, width)
+import Html.Attributes exposing (alt, attribute, class, height, href, src, width)
 import Http
 import Json.Decode as JD
 import Maybe exposing (withDefault)
@@ -233,7 +233,7 @@ loadingDiv =
 loadingSpin : Bool -> Html msg
 loadingSpin isLoading =
     if isLoading then
-        span [ class "mx-5 spinner2 is-small" ] []
+        span [ class "spinner2 is-small", attribute "style" "left: 13px;" ] []
 
     else
         text ""

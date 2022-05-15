@@ -212,6 +212,9 @@ type alias TensionHead =
     , status : TensionStatus.TensionStatus
 
     --
+    , isSubscribed : Maybe Bool
+
+    --
     , blobs : Maybe (List Blob) -- head / len() == 1
     , contracts : Maybe (List IdPayload) -- head / len() == 1
     , history : Maybe (List Event)
@@ -701,7 +704,7 @@ decodeResponse decoder response =
                     Success d
 
                 Nothing ->
-                    Failure [ "No data returned. Try to log-in or reload." ]
+                    Failure [ "No data returned. Try to refresh the page or to delog/relog." ]
 
 
 mutationDecoder : Maybe a -> Maybe a

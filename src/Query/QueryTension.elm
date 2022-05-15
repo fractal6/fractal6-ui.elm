@@ -10,7 +10,6 @@ module Query.QueryTension exposing
     , queryCircleTension
     , queryExtTension
     , queryIntTension
-    , tensionHeadPayload
     , tensionPayload
     )
 
@@ -43,7 +42,7 @@ import Fractal.Scalar
 import Fractal.ScalarCodecs
 import GqlClient exposing (..)
 import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
-import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, with)
+import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import List.Extra exposing (uniqueBy)
 import Maybe exposing (withDefault)
 import ModelSchema exposing (..)
@@ -68,10 +67,10 @@ nBlobPerTension =
     50
 
 
-getTensionHead url tensionid msg =
+getTensionHead url uctx tensionid msg =
     makeGQLQuery url
         (Query.getTension { id = encodeId tensionid }
-            tensionHeadPayload
+            (tensionHeadPayload uctx)
         )
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
@@ -92,8 +91,8 @@ getTensionBlobs url tensionid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-tensionHeadPayload : SelectionSet TensionHead Fractal.Object.Tension
-tensionHeadPayload =
+tensionHeadPayload : UserCtx -> SelectionSet TensionHead Fractal.Object.Tension
+tensionHeadPayload uctx =
     SelectionSet.succeed TensionHead
         |> with (Fractal.Object.Tension.id |> SelectionSet.map decodedId)
         |> with (Fractal.Object.Tension.createdAt |> SelectionSet.map decodedTime)
@@ -106,6 +105,29 @@ tensionHeadPayload =
         |> with (Fractal.Object.Tension.receiver identity emiterOrReceiverPayload)
         |> with Fractal.Object.Tension.action
         |> with Fractal.Object.Tension.status
+        |> (\x ->
+                case uctx.username of
+                    "" ->
+                        hardcoded Nothing x
+
+                    username ->
+                        with
+                            (Fractal.Object.Tension.subscribers
+                                (\a ->
+                                    { a
+                                        | filter =
+                                            Input.buildUserFilter
+                                                (\d ->
+                                                    { d | username = Present { eq = Present username, regexp = Absent, in_ = Absent } }
+                                                )
+                                                |> Present
+                                    }
+                                )
+                                (SelectionSet.map identity Fractal.Object.User.username)
+                                |> SelectionSet.map (Maybe.map (\y -> List.length y > 0))
+                            )
+                            x
+           )
         |> with
             (Fractal.Object.Tension.blobs
                 (\args ->

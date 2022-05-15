@@ -64,7 +64,6 @@ type alias Session =
     , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
     , isAdmin : Maybe Bool
-    , isSubscribed : Maybe Bool
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
     , window_pos : Maybe WindowPos
@@ -117,7 +116,6 @@ resetSession flags =
     , tensions_count = Nothing
     , tension_head = Nothing
     , isAdmin = Nothing
-    , isSubscribed = Nothing
     , node_quickSearch = Nothing
     , window_pos = Nothing
     , apis = flags.apis
@@ -172,7 +170,6 @@ fromLocalSession flags =
       , tensions_count = Nothing
       , tension_head = Nothing
       , isAdmin = Nothing
-      , isSubscribed = Nothing
       , node_quickSearch = Nothing
       , window_pos = window_pos
       , apis = flags.apis

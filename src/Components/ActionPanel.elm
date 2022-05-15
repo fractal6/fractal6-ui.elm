@@ -817,7 +817,7 @@ update_ apis message model =
                     ( model |> setActionResult result, noOut )
 
         OnActionMove ->
-            ( model, out0 [ getTensionHead apis model.form.tid GotTensionToMove ] )
+            ( model, out0 [ getTensionHead apis model.form.uctx model.form.tid GotTensionToMove ] )
 
         GotTensionToMove result ->
             case result of

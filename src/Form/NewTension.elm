@@ -1206,7 +1206,7 @@ viewSuccess res model =
                         viewInviteRole model
 
                     else
-                        div [ class "field m-2" ] [ a [ onClick DoInvite, target "_blank" ] [ text "Or invite someone." ] ]
+                        span [ class "m-2" ] [ text "Or ", a [ class "button is-primary", onClick DoInvite, target "_blank" ] [ text "invite someone" ], text " to this role." ]
 
           else
             text ""

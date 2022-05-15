@@ -116,7 +116,6 @@ type Msg
     | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
     | UpdateSessionAdmin (Maybe Bool)
-    | UpdateSessionSubscribe (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
     | UpdateSessionScreen Screen
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
@@ -370,13 +369,6 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | isAdmin = data } }, Cmd.none )
-
-        UpdateSessionSubscribe data ->
-            let
-                session =
-                    model.session
-            in
-            ( { model | session = { session | isSubscribed = data } }, Cmd.none )
 
         UpdateSessionWindow data ->
             let
