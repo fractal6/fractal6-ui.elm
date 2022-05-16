@@ -82,6 +82,7 @@ import String.Extra as SE
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
+import Url exposing (Url)
 
 
 
@@ -270,7 +271,7 @@ init global flags =
             focusState OverviewBaseUri session.referer global.url session.node_focus newFocus
 
         isInit =
-            session.orga_data == Nothing
+            session.orga_data == Nothing || session.path_data == Nothing
 
         fs =
             { fs_ | isInit = fs_.isInit || isInit }
@@ -284,7 +285,7 @@ init global flags =
         -- Model init
         model =
             { node_focus = newFocus
-            , path_data = ternary fs.orgChange Nothing global.session.path_data -- Loaded from GraphPack
+            , path_data = ternary fs.orgChange Nothing session.path_data -- Loaded from GraphPack
             , orga_data = fromMaybeData session.orga_data Loading
             , users_data = fromMaybeData session.users_data Loading
             , tensions_data = fromMaybeData session.tensions_data Loading
@@ -294,7 +295,7 @@ init global flags =
             , init_data = True
             , node_quickSearch = { qs | pattern = "", idx = 0 }
             , window_pos =
-                global.session.window_pos
+                session.window_pos
                     |> withDefault { topRight = "doc", bottomLeft = "activities" }
             , node_hovered = Nothing
             , next_focus = Nothing
@@ -306,11 +307,11 @@ init global flags =
 
             -- Components
             , helperBar = HelperBar.create
-            , help = Help.init global.session.user
-            , tensionForm = NTF.init global.session.user
-            , actionPanel = ActionPanel.init global.session.user
-            , joinOrga = JoinOrga.init newFocus.nameid global.session.user
-            , authModal = AuthModal.init global.session.user Nothing
+            , help = Help.init session.user
+            , tensionForm = NTF.init session.user
+            , actionPanel = ActionPanel.init session.user
+            , joinOrga = JoinOrga.init newFocus.nameid session.user
+            , authModal = AuthModal.init session.user Nothing
             }
 
         cmds_ =
@@ -846,8 +847,21 @@ update global message model =
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                -- reload silently the page if needed
+                cmds_extra =
+                    out.result
+                        |> Maybe.map
+                            (\o ->
+                                if Tuple.first o == True then
+                                    [ Nav.replaceUrl global.key (Url.toString global.url) ]
+
+                                else
+                                    []
+                            )
+                        |> withDefault []
             in
-            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -900,6 +914,7 @@ view global model =
             { user = global.session.user
             , uriQuery = global.url.query
             , path_data = model.path_data
+            , focus = model.node_focus
             , baseUri = OverviewBaseUri
             , data = model.helperBar
             , onExpand = ExpandRoles

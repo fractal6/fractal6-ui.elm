@@ -20,6 +20,7 @@ import Fractal.ScalarCodecs
 import Graphql.Http
 import Maybe exposing (withDefault)
 import RemoteData exposing (RemoteData)
+import Text as T
 
 
 
@@ -704,7 +705,7 @@ decodeResponse decoder response =
                     Success d
 
                 Nothing ->
-                    Failure [ "No data returned. Try to refresh the page or to delog/relog." ]
+                    Failure [ T.noDataError ]
 
 
 mutationDecoder : Maybe a -> Maybe a

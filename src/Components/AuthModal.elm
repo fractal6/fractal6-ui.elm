@@ -36,6 +36,7 @@ type State
 type alias Model =
     { user : UserState
     , modalAuth : ModalAuth
+    , refreshAfter : Bool
     , puid : Maybe String
     }
 
@@ -44,6 +45,7 @@ initModel : UserState -> Maybe String -> Model
 initModel user puid =
     { user = user
     , modalAuth = Inactive
+    , refreshAfter = False
     , puid = puid
     }
 
@@ -78,7 +80,7 @@ init user puid =
 type Msg
     = -- Token refresh
       OnStart
-    | DoOpenAuthModal UserCtx
+    | DoOpenAuthModal Bool UserCtx
     | DoOpenSignupModal String
     | DoCloseAuthModal String
     | ChangeAuthPost String String
@@ -141,13 +143,14 @@ update_ apis message model =
                 Nothing ->
                     ( model, noOut )
 
-        DoOpenAuthModal uctx ->
+        DoOpenAuthModal refresh uctx ->
             if uctx.username == "" then
                 ( model, out0 [ send (DoCloseAuthModal (Route.toHref Route.Logout)) ] )
 
             else
                 ( { model
                     | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
+                    , refreshAfter = refresh
                   }
                 , out0 [ Ports.open_auth_modal ]
                 )
@@ -190,12 +193,12 @@ update_ apis message model =
                             case model.puid of
                                 Just _ ->
                                     ( { model | modalAuth = Active form result }
-                                    , out1 [ DoUpdateUserSession uctx ]
+                                    , Out [] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
 
                                 Nothing ->
                                     ( { model | modalAuth = Inactive }
-                                    , out2 [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ]
+                                    , Out [ send (DoCloseAuthModal "") ] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
                                     )
 
                         _ ->
@@ -236,7 +239,7 @@ update_ apis message model =
 
 subscriptions : List (Sub Msg)
 subscriptions =
-    [ Ports.uctxPD Ports.openAuthModalFromJs LogErr DoOpenAuthModal
+    [ Ports.uctxPD2 Ports.openAuthModalFromJs LogErr DoOpenAuthModal
     ]
 
 

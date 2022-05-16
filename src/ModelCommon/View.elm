@@ -207,7 +207,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                     text ""
                 , if showRecip then
                     span []
-                        [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver
+                        [ viewTensionArrow "" tension.emitter tension.receiver
                         , span [] [ viewTensionDateAndUser now "has-text-weight-light is-pulled-right" tension.createdAt tension.createdBy ]
                         ]
 
@@ -246,7 +246,7 @@ viewJoinNeeded focus =
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
 viewTensionArrow cls emitter receiver =
     span [ class cls ]
-        [ span [ class "is-small is-light is-inverted is-static" ]
+        [ span [ class "is-small is-light is-inverted is-static has-text-weight-light" ]
             [ viewNodeRef OverviewBaseUri emitter ]
         , span [ class "arrow-right" ] []
         , span [ class "is-small is-light is-inverted is-static" ]

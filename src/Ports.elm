@@ -22,6 +22,7 @@ import Components.Loading exposing (ModalData)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Encode as JE
+import Maybe exposing (withDefault)
 import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelSchema
     exposing
@@ -520,6 +521,21 @@ uctxPD sub messageErr message =
                     messageErr (JD.errorToString err)
          )
             << JD.decodeValue userCtxDecoder
+        )
+
+
+uctxPD2 : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (Bool -> UserCtx -> msg) -> Sub msg
+uctxPD2 sub messageErr message =
+    sub
+        ((\x ->
+            case x of
+                Ok n ->
+                    message (withDefault False n.refresh) n.uctx
+
+                Err err ->
+                    messageErr (JD.errorToString err)
+         )
+            << JD.decodeValue (JD.map2 (\a b -> { uctx = a, refresh = b }) (JD.field "uctx" userCtxDecoder) (JD.maybe <| JD.field "refresh" JD.bool))
         )
 
 

@@ -627,7 +627,7 @@ init global flags =
                    )
 
         cmds =
-            [ if fs.focusChange then
+            [ if fs.focusChange || model.path_data == Loading then
                 [ queryLocalGraph apis newFocus.nameid (GotPath True), send ResetData ]
 
               else if getTargetsHere model == [] then
@@ -1136,8 +1136,21 @@ update global message model =
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                -- reload silently the page if needed
+                cmds_extra =
+                    out.result
+                        |> Maybe.map
+                            (\o ->
+                                if Tuple.first o == True then
+                                    [ Nav.replaceUrl global.key (Url.toString model.url) ]
+
+                                else
+                                    []
+                            )
+                        |> withDefault []
             in
-            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1163,7 +1176,8 @@ view global model =
         helperData =
             { user = global.session.user
             , uriQuery = model.url.query
-            , path_data = global.session.path_data
+            , path_data = withMaybeData model.path_data
+            , focus = model.node_focus
             , baseUri = TensionsBaseUri
             , data = model.helperBar
             , onExpand = ExpandRoles

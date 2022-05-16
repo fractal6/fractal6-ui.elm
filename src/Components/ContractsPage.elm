@@ -1,9 +1,9 @@
-module Components.ContractsPage exposing (Msg(..), State, hasCid, init, subscriptions, update, view)
+module Components.ContractsPage exposing (Msg(..), State, hasCid, hasLoadFailure, init, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.Comments exposing (viewComment, viewContractCommentInput)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, loadingSpin, viewGqlErrors, withMapData, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -167,6 +167,16 @@ hasCid (State model) =
     model.activeView == ContractView
 
 
+hasLoadFailure : State -> Bool
+hasLoadFailure (State model) =
+    case model.activeView of
+        ContractView ->
+            isFailure model.contract_result
+
+        ContractsView ->
+            isFailure model.contracts_result
+
+
 
 --- State Controls
 
@@ -309,15 +319,18 @@ update_ apis message model =
                 form =
                     model.form
 
-                f =
-                    { form | tid = tid, cid = withDefault form.cid cid_m }
-            in
-            case cid_m of
-                Just cid ->
-                    ( { model | form = f, activeView = ContractView }, out0 [ send (DoQueryContract cid) ] )
+                cid =
+                    withDefault form.cid cid_m
 
-                Nothing ->
+                f =
+                    { form | tid = tid, cid = cid }
+            in
+            case cid of
+                "" ->
                     ( { model | form = f, activeView = ContractsView }, out0 [ send DoQueryContracts ] )
+
+                _ ->
+                    ( { model | form = f, activeView = ContractView }, out0 [ send (DoQueryContract cid) ] )
 
         OnChangePost field value ->
             ( updatePost field value model, noOut )
@@ -868,16 +881,28 @@ viewContractBox c op model =
 
                             role =
                                 { name = withDefault "" n.name
-                                , nameid = Maybe.map (\x -> nodeIdCodec op.receiverid x NodeType.Role) n.nameid |> withDefault ""
+                                , nameid =
+                                    if op.receiverid == "" then
+                                        ""
+
+                                    else
+                                        Maybe.map (\x -> nodeIdCodec op.receiverid x NodeType.Role) n.nameid |> withDefault ""
                                 , role_type = withDefault RoleType.Peer n.role_type
                                 }
+
+                            baseUri =
+                                if op.receiverid == "" then
+                                    MandateBaseUri "" c.tension.id
+
+                                else
+                                    OverviewBaseUri
                         in
                         div [ class "subtitle", attribute "style" "line-height: 2.5; " ] <|
                             List.intersperse (text " ") <|
                                 [ viewUserFull 1 True True { username = user, name = Nothing }
                                 , text "has been invited"
                                 , text "to play the role"
-                                , span [ class "is-text-aligned" ] [ viewRole OverviewBaseUri role, text "." ]
+                                , span [ class "is-text-aligned" ] [ viewRole baseUri role, text "." ]
                                 ]
 
                     TensionEvent.UserJoined ->

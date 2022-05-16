@@ -1253,6 +1253,11 @@ rolesTop =
     "Roles in parent circles"
 
 
+noDataError : String
+noDataError =
+    "No data returned. You may try to refresh the page."
+
+
 
 --
 -- Tooltip

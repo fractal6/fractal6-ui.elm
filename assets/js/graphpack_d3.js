@@ -68,13 +68,20 @@ const formatGraph = dataset =>  {
         }
 
         // Filter hidden node
-        if (!aData.parent && aData.nameid.split("#").length > 1) {
-            delete dataDict[aData.nameid]
-            return
-        }
+        //if (!aData.parent && aData.nameid.split("#").length > 1) {
+        //    delete dataDict[aData.nameid]
+        //    return
+        //}
 
         if(aData.parent) {
-            dataDict[aData.parent.nameid].children.push(dataDict[aData.nameid])
+            // If private date contains public, some parent may be
+            // hidden here.
+            if (!dataDict[aData.parent.nameid]) {
+                aData.parent = null;
+                dataTree.push(dataDict[aData.nameid])
+            } else {
+                dataDict[aData.parent.nameid].children.push(dataDict[aData.nameid])
+            }
         } else {
             dataTree.push(dataDict[aData.nameid])
         }
@@ -100,6 +107,9 @@ const computeDepth = (obj, depth, neigbor) => {
         neigbor = neigbor;
     }
 
+    // Happens ff some node are hidden...
+    //if (!obj) return {maxdepth, cumchild}
+
     obj.depth = currentdepth;
     obj.neigbor = neigbor;
 
@@ -122,7 +132,7 @@ const computeDepth = (obj, depth, neigbor) => {
     maxdepth = maxdepth + 1;
     cumchild = cumchild + 1;
     obj.cumchild = cumchild;
-    return {maxdepth, cumchild};
+    return {maxdepth, cumchild}
 }
 
 
@@ -956,9 +966,27 @@ export const GraphPack = {
                 console.warn("Graph is empty, aborting");
                 return
             }
-            graph = formatGraph(dataNodes);
-            if (graph.length > 1) console.warn("More than 1 graph given -> Some nodes are not connected.");
-            else graph = graph[0];
+            graph = formatGraph(dataNodes, focusid);
+            if (!graph) {
+                console.warn("Could not load graph.");
+            } else if (graph.length > 1) {
+                console.warn("More than 1 graph given -> Some nodes are not connected.");
+                // Keep only the relevant tree
+                // Get last parent thant contains focusid
+                var root;
+                var rootid = focusid;
+                var i = 0; // infinite loop security
+                while (rootid && i < 1000) {
+                    root = dataNodes.find(x => x.nameid == rootid);
+                    if (!root) break
+                    rootid = root.parent ? root.parent.nameid : null;
+                    i++;
+                }
+                if (root)
+                    graph = graph.find(x => x.nameid === root.nameid);
+            } else {
+                graph = graph[0];
+            }
         }
         else
             graph = dataNodes;
@@ -1012,6 +1040,7 @@ export const GraphPack = {
             this.focusedNode = n;
         }
 
+        // @DEBUG: Let it crash if focusedNode is undefined (hidden node)
         this.setZoomed();
 
         if (setViewport) {
@@ -1449,7 +1478,7 @@ export const GraphPack = {
         //
 
         this.nodeSize = this.nodeSizeTopDown;
-        this.resetGraphPack(dataNodes, true);
+        this.resetGraphPack(dataNodes, true, data.focusid);
 
         /*////////////////////////////////////////////////////////////
         ////////////////// Events Handler callback ///////////////////

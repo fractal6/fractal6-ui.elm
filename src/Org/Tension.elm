@@ -19,6 +19,7 @@ import Components.Loading as Loading
         , RequestResult(..)
         , WebData
         , fromMaybeData
+        , isFailure
         , loadingSpin
         , viewAuthNeeded
         , viewGqlErrors
@@ -175,6 +176,7 @@ type alias Model =
 
     -- Page
     , tensionid : String
+    , contractid : Maybe String
     , activeTab : TensionTab
     , actionView : ActionView
     , jumpTo : Maybe String
@@ -401,6 +403,7 @@ init global flags =
             , users_data = fromMaybeData global.session.users_data NotAsked
             , lookup_users = []
             , tensionid = tid
+            , contractid = cid_m
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
             , jumpTo = Dict.get "goto" query |> Maybe.map List.head |> withDefault Nothing
@@ -454,46 +457,9 @@ init global flags =
 
         refresh =
             tensionChanged2 model.tension_head global.url || model.tension_head == Loading
-
-        cmds =
-            [ if refresh then
-                send LoadTensionHead
-
-              else
-                Cmd.none
-            , case tab of
-                Conversation ->
-                    getTensionComments apis tid GotTensionComments
-
-                Document ->
-                    case model.actionView of
-                        DocView ->
-                            Cmd.none
-
-                        DocEdit ->
-                            Cmd.none
-
-                        DocVersion ->
-                            getTensionBlobs apis tid GotTensionBlobs
-
-                        NoView ->
-                            Cmd.none
-
-                Contracts ->
-                    Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad tid cid_m))
-            , sendSleep PassedSlowLoadTreshold 500
-            , sendSleep InitModals 400
-            , case Dict.get "eid" query |> Maybe.map List.head |> withDefault Nothing of
-                Just eid ->
-                    send (MarkAsRead eid)
-
-                Nothing ->
-                    Cmd.none
-            , Cmd.map AuthModalMsg (send AuthModal.OnStart)
-            ]
     in
     ( { model | subscribe_result = withMapData (\x -> withDefault False x.isSubscribed) model.tension_head }
-    , Cmd.batch cmds
+    , Cmd.batch (refresh_cmds refresh global model)
     , if fs.menuChange || refresh then
         -- No refresh here because all the focus is not encoded in the tension URL.
         send (UpdateSessionFocus (Just newFocus))
@@ -501,6 +467,68 @@ init global flags =
       else
         Cmd.none
     )
+
+
+refresh_cmds : Bool -> Global.Model -> Model -> List (Cmd Msg)
+refresh_cmds refresh global model =
+    let
+        apis =
+            global.session.apis
+
+        query =
+            queryParser global.url
+    in
+    [ if refresh then
+        send LoadTensionHead
+
+      else
+        Cmd.none
+    , case model.activeTab of
+        Conversation ->
+            getTensionComments apis model.tensionid GotTensionComments
+
+        Document ->
+            case model.actionView of
+                DocView ->
+                    Cmd.none
+
+                DocEdit ->
+                    Cmd.none
+
+                DocVersion ->
+                    getTensionBlobs apis model.tensionid GotTensionBlobs
+
+                NoView ->
+                    Cmd.none
+
+        Contracts ->
+            Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad model.tensionid model.contractid))
+    , sendSleep PassedSlowLoadTreshold 500
+    , sendSleep InitModals 400
+    , case Dict.get "eid" query |> Maybe.map List.head |> withDefault Nothing of
+        Just eid ->
+            send (MarkAsRead eid)
+
+        Nothing ->
+            Cmd.none
+    , Cmd.map AuthModalMsg (send AuthModal.OnStart)
+    ]
+
+
+hasLoadFailure : Model -> Bool
+hasLoadFailure model =
+    isFailure model.tension_head
+        || (case model.activeTab of
+                Conversation ->
+                    isFailure model.tension_comments
+
+                Document ->
+                    -- get from blob, no @auth here @DEBUG.
+                    False
+
+                Contracts ->
+                    ContractsPage.hasLoadFailure model.contractsPage
+           )
 
 
 
@@ -1440,8 +1468,22 @@ update global message model =
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                -- If token has been refreshed AND tension_head is in a error state
+                -- reload the page.
+                cmds_extra =
+                    out.result
+                        |> Maybe.map
+                            (\o ->
+                                if Tuple.first o == True && hasLoadFailure model then
+                                    refresh_cmds True global model
+
+                                else
+                                    []
+                            )
+                        |> withDefault []
             in
-            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
@@ -1470,7 +1512,8 @@ view global model =
         helperData =
             { user = global.session.user
             , uriQuery = global.url.query
-            , path_data = global.session.path_data
+            , path_data = withMaybeData model.path_data
+            , focus = model.node_focus
             , baseUri = TensionsBaseUri
             , data = model.helperBar
             , onExpand = ExpandRoles
@@ -1507,6 +1550,11 @@ view_ global model =
                     viewTension global.session.user t model
 
                 Failure err ->
+                    -- If user has only contract visibility right...
+                    --if ContractsPage.hasCid model.contractsPage then
+                    --    ContractsPage.view { emitterid = "", receiverid = "", isAdmin = model.isTensionAdmin, now = model.now } model.contractsPage
+                    --        |> Html.map ContractsPageMsg
+                    --else
                     viewGqlErrors err
 
                 LoadingSlowly ->

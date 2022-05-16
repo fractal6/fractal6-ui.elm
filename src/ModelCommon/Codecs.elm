@@ -37,6 +37,7 @@ type FractalBaseRoute
     = OverviewBaseUri
     | TensionsBaseUri
     | TensionBaseUri
+    | MandateBaseUri String String
     | MembersBaseUri
     | SettingsBaseUri
     | UsersBaseUri
@@ -79,6 +80,9 @@ toString route =
         TensionBaseUri ->
             -- /tensions
             "/tension"
+
+        MandateBaseUri nameid tid ->
+            Route.toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nameid, param2 = tid })
 
         MembersBaseUri ->
             -- /tensions
@@ -149,15 +153,23 @@ basePathChanged loc url =
 
 uriFromNameid : FractalBaseRoute -> String -> String
 uriFromNameid loc nameid =
-    [ toString loc ]
-        ++ String.split "#" nameid
-        |> String.join "/"
+    if nameid == "" then
+        "#"
+
+    else
+        [ toString loc ]
+            ++ String.split "#" nameid
+            |> String.join "/"
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
 uriFromUsername loc username =
-    [ toString loc, username ]
-        |> String.join "/"
+    if username == "" then
+        "#"
+
+    else
+        [ toString loc, username ]
+            |> String.join "/"
 
 
 nameidFromFlags : Flags_ -> String

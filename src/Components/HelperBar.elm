@@ -12,7 +12,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (roleColor, viewRole)
 import ModelSchema exposing (LocalGraph, UserRole)
 import Ports
@@ -49,6 +49,7 @@ type alias Op msg =
     , uriQuery : Maybe String
     , user : UserState
     , path_data : Maybe LocalGraph
+    , focus : NodeFocus
     , data : HelperBar
     , onExpand : msg
     , onCollapse : msg
@@ -126,7 +127,7 @@ viewNavLevel op =
     let
         focusid =
             Maybe.map (\x -> x.focus.nameid) op.path_data
-                |> withDefault ""
+                |> withDefault op.focus.nameid
     in
     nav [ class "tabs is-boxed" ]
         [ ul [ class "" ]

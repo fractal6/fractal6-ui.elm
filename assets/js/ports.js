@@ -161,7 +161,7 @@ const actions = {
         var uctx = JSON.parse(localStorage.getItem(UCTX_KEY))
         if (uctx !== null && (uctx.expiresAt === undefined || new Date(uctx.expiresAt) < new Date())) {
             // refresh session
-            app.ports.openAuthModalFromJs.send(uctx);
+            app.ports.openAuthModalFromJs.send({uctx:uctx, refresh:true});
         }
     },
     'TOGGLE_TH': (app, session, message) => {
@@ -200,7 +200,7 @@ const actions = {
     },
 
     'RAISE_AUTH_MODAL': (app, session, uctx) => {
-        app.ports.openAuthModalFromJs.send(uctx);
+        app.ports.openAuthModalFromJs.send({uctx:uctx});
     },
     //
     // Quick Search
@@ -303,10 +303,12 @@ const actions = {
         var $canvas = document.getElementById("canvasOrga");
         if ($canvas) {
             var gp = session.gp;
-            gp.resetGraphPack(data.data, true, gp.focusedNode.data.nameid);
+            var focusid = gp.focusedNode ? gp.focusedNode.data.nameid : null;
+            gp.resetGraphPack(data.data, true, focusid);
             gp.drawCanvas();
             gp.drawCanvas(true);
-        }
+        } // else
+        // Some hidden data here...
     },
     'REMOVEDRAW_GRAPHPACK' : (app, session, data) => {
         var $canvas = document.getElementById("canvasOrga");
