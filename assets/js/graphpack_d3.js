@@ -107,9 +107,6 @@ const computeDepth = (obj, depth, neigbor) => {
         neigbor = neigbor;
     }
 
-    // Happens ff some node are hidden...
-    //if (!obj) return {maxdepth, cumchild}
-
     obj.depth = currentdepth;
     obj.neigbor = neigbor;
 
@@ -333,6 +330,8 @@ export const GraphPack = {
 
     //The draw function of the canvas that gets called on each frame
     drawCanvas(isHidden) {
+        if (!this.graph) return
+
         var ctx2d;
         if (isHidden) {
             ctx2d = this.hiddenCtx2d;
@@ -965,6 +964,9 @@ export const GraphPack = {
             if (dataNodes.length == 0) {
                 console.warn("Graph is empty, aborting");
                 return
+            } else if (dataNodes.filter(x => x.nameid === focusid) == 0) {
+                console.warn("Focus Node not found, aborting");
+                return
             }
             graph = formatGraph(dataNodes, focusid);
             if (!graph) {
@@ -1319,7 +1321,6 @@ export const GraphPack = {
         //this.$nextToChart.style.overflowY = "auto";
 
         this.sizeDom();
-        this.clearCanvas(this.ctx2d);
 
         // Not ready
         //this.loading()
@@ -1327,6 +1328,7 @@ export const GraphPack = {
     },
 
     drawStargate(radius, down) {
+        this.clearCanvas(this.ctx2d);
         if (radius > 33) {
             down = -1
         } else if (radius <= 0) {
@@ -1372,12 +1374,14 @@ export const GraphPack = {
         //ctx.arc(x, y, r, 0, 2*Math.PI, false);
         //ctx.stroke();
         //ctx.fill();
-        sleep(100).then(() => {
-            if (this.isLoading) {
-                this.clearCanvas(this.ctx2d);
-                this.drawStargate(radius+down*4, down);
-            }
-        });
+
+        // Make it blink (consumes CPU for nothing really valuable)
+        //sleep(333).then(() => {
+        //    if (this.isLoading) {
+        //        this.clearCanvas(this.ctx2d);
+        //        this.drawStargate(radius+down, down);
+        //    }
+        //});
     },
 
     loading() {
@@ -1589,6 +1593,7 @@ export const GraphPack = {
 
         // On Resize handle
         window.onresize = () => {
+            if (!this.focusedNode) return
             this.rtime = new Date();
             if (this.timeout === false) {
                 this.timeout = true;
@@ -1602,6 +1607,7 @@ export const GraphPack = {
         /////////////////////// Initiate /////////////////////////////
         //////////////////////////////////////////////////////////////
 
+        if (!this.graph) return
         console.log("Orga Canvas Initalization");
         this.isLoading = false;
 		this.drawCanvas(true); // to add node.ctx

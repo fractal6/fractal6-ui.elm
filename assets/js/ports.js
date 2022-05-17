@@ -279,6 +279,9 @@ const actions = {
             if (ok) {
                 session.isInit = false;
                 gp.zoomToNode(data.focusid, 0.5);
+            } else {
+                gp.isLoading = true;
+                gp.init_canvas()
             }
 
             // Setup Node quickSearch
