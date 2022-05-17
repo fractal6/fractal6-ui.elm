@@ -34,6 +34,7 @@ import Session exposing (GlobalCmd(..))
 import Task
 import Text as T exposing (textH, textT, upH)
 import Time
+import Url as Url
 
 
 page : Page Flags Model Msg
@@ -236,8 +237,21 @@ update global message model =
 
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
+
+                -- reload silently the page if needed
+                cmds_extra =
+                    out.result
+                        |> Maybe.map
+                            (\o ->
+                                if Tuple.first o == True then
+                                    [ Nav.replaceUrl global.key (Url.toString global.url) ]
+
+                                else
+                                    []
+                            )
+                        |> withDefault []
             in
-            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+            ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
 
 subscriptions : Global.Model -> Model -> Sub Msg
