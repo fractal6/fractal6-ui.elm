@@ -156,7 +156,11 @@ update_ apis message model =
                 )
 
         DoOpenSignupModal puid ->
-            ( { model | puid = Just puid, modalAuth = Active { post = Dict.fromList [ ( "puid", puid ) ] } RemoteData.NotAsked }
+            ( { model
+                | puid = Just puid
+                , modalAuth = Active { post = Dict.fromList [ ( "puid", puid ) ] } RemoteData.NotAsked
+                , refreshAfter = True
+              }
             , out0 [ Ports.open_auth_modal ]
             )
 

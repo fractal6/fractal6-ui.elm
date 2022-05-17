@@ -965,14 +965,18 @@ export const GraphPack = {
                 console.warn("Graph is empty, aborting");
                 return
             } else if (dataNodes.filter(x => x.nameid === focusid) == 0) {
-                console.warn("Focus Node not found, aborting");
-                return
+                console.warn("Focus node not found");
+                focusid = null
             }
-            graph = formatGraph(dataNodes, focusid);
+            graph = formatGraph(dataNodes);
             if (!graph) {
                 console.warn("Could not load graph.");
             } else if (graph.length > 1) {
                 console.warn("More than 1 graph given -> Some nodes are not connected.");
+                if (!focusid) {
+                    console.warn("no focus found, aborting.");
+                    return
+                }
                 // Keep only the relevant tree
                 // Get last parent thant contains focusid
                 var root;
@@ -1038,9 +1042,13 @@ export const GraphPack = {
             //this.focusedNode = this.nodes.find(n => {n.data.nameid === n });
             this.focusedNode = this.nodesDict[n];
         } else {
-            // assume node
+            // Assume node
             this.focusedNode = n;
         }
+
+        // Fallback on Root on fails (e.g. Owner role)
+        if (!this.focusedNode)
+            this.focusedNode = this.rootNode
 
         if (!this.focusedNode) return
         this.setZoomed();
