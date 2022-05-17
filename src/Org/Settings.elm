@@ -1314,7 +1314,7 @@ viewLabels model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [] [ viewLabel "" (Label d.id d.name d.color) ]
+                                                [ td [ onClick (SafeEdit <| EditLabel d) ] [ viewLabel "button-light" (Label d.id d.name d.color) ]
                                                 , td [ class "is-aligned-left" ] [ d.description |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
                                                     [ if n_nodes > 1 then
@@ -1565,7 +1565,7 @@ viewRoles model =
                                                     n_nodes =
                                                         withDefault 0 d.n_nodes
                                                 in
-                                                [ td [] [ viewRoleExt "" (RoleExt d.id d.name d.color d.role_type) ]
+                                                [ td [ onClick (SafeEdit <| EditRole d) ] [ viewRoleExt "button-light" (RoleExt d.id d.name d.color d.role_type) ]
                                                 , td [ class "is-aligned-left" ] [ d.about |> withDefault "" |> text |> List.singleton |> span [] ]
                                                 , td [ class "is-aligned-left" ] [ ternary (NodeDoc.hasMandate d.mandate) (span [ class "is-w", onClick (ToggleMandate d.id) ] [ A.icon0 "icon-book-open" ]) (text "") ]
                                                 , td [ attribute "style" "min-width: 9.4rem;" ]
