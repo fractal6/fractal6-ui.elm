@@ -1042,7 +1042,7 @@ export const GraphPack = {
             this.focusedNode = n;
         }
 
-        // @DEBUG: Let it crash if focusedNode is undefined (hidden node)
+        if (!this.focusedNode) return
         this.setZoomed();
 
         if (setViewport) {

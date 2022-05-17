@@ -350,15 +350,17 @@ viewUserFull size isLinked isBoxed user =
 
                 _ ->
                     ( "p-1", getAvatar1 )
-    in
-    span (ternary isBoxed [ class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] [])
-        [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
-            [ if isLinked then
-                a [ href (uriFromUsername UsersBaseUri user.username) ] [ avatar user.username ]
 
-              else
-                avatar user.username
-            ]
+        ( ob, lk ) =
+            if isLinked then
+                ( a, [ href (uriFromUsername UsersBaseUri user.username) ] )
+
+            else
+                ( span, [] )
+    in
+    ob (ternary isBoxed ([ class ("box is-light field " ++ pad), attribute "style" "display:inline;" ] ++ lk) ([] ++ lk))
+        [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
+            [ avatar user.username ]
         , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ]
             [ Maybe.map (\name -> span [ class "is-name" ] [ text name ]) user.name |> withDefault (text "")
             , span [ class "is-username" ] [ text user.username ]

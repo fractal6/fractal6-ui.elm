@@ -511,7 +511,8 @@ viewUserEvent now ue =
                             viewNotif ue node (viewNotifMedia now ev)
 
                 Nothing ->
-                    text "Notification not implemented."
+                    -- Something has beed removed, contract ?
+                    text ""
 
         Nothing ->
             text ""

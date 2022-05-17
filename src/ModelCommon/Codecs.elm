@@ -153,13 +153,18 @@ basePathChanged loc url =
 
 uriFromNameid : FractalBaseRoute -> String -> String
 uriFromNameid loc nameid =
-    if nameid == "" then
-        "#"
+    case loc of
+        MandateBaseUri _ _ ->
+            toString loc
 
-    else
-        [ toString loc ]
-            ++ String.split "#" nameid
-            |> String.join "/"
+        _ ->
+            if nameid == "" then
+                "#"
+
+            else
+                [ toString loc ]
+                    ++ String.split "#" nameid
+                    |> String.join "/"
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
