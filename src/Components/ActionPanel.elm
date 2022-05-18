@@ -3,7 +3,7 @@ module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, setUser_,
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Browser.Events as Events
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.MoveTension as MoveTension
 import Components.UserInput as UserInput
@@ -814,7 +814,8 @@ update_ apis message model =
                     ( setActionResult (Failure [ "Duplicate Error: A similar contract already exists, please check it out." ]) model, noOut )
 
                 _ ->
-                    ( model |> setActionResult result, noOut )
+                    -- Update the token on failure (e.g. secret circle leave will raise an error while operation processed.
+                    ( setActionResult result model, ternary (isFailure result) (out1 [ DoUpdateToken ]) noOut )
 
         OnActionMove ->
             ( model, out0 [ getTensionHead apis model.form.uctx model.form.tid GotTensionToMove ] )

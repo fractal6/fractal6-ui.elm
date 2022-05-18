@@ -2,7 +2,7 @@ module Components.AuthModal exposing (Msg(..), State, UserAuthForm, init, signup
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, viewGqlErrors, viewHttpErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isSuccess, viewGqlErrors, viewHttpErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -165,8 +165,22 @@ update_ apis message model =
             )
 
         DoCloseAuthModal link ->
+            let
+                ret =
+                    case model.modalAuth of
+                        Active _ result ->
+                            case result of
+                                RemoteData.Success uctx ->
+                                    Just ( model.refreshAfter, uctx )
+
+                                _ ->
+                                    Nothing
+
+                        _ ->
+                            Nothing
+            in
             ( { model | modalAuth = Inactive }
-            , out2 [ Ports.close_auth_modal ] (ternary (link /= "") [ DoNavigate link ] [])
+            , Out [ Ports.close_auth_modal ] (ternary (link /= "") [ DoNavigate link ] []) ret
             )
 
         ChangeAuthPost field value ->
@@ -197,7 +211,7 @@ update_ apis message model =
                             case model.puid of
                                 Just _ ->
                                     ( { model | modalAuth = Active form result }
-                                    , Out [] [ DoUpdateUserSession uctx ] (Just ( model.refreshAfter, uctx ))
+                                    , Out [] [ DoUpdateUserSession uctx ] (Just ( False, uctx ))
                                     )
 
                                 Nothing ->

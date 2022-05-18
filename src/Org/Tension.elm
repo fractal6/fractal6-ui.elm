@@ -515,22 +515,6 @@ refresh_cmds refresh global model =
     ]
 
 
-hasLoadFailure : Model -> Bool
-hasLoadFailure model =
-    isFailure model.tension_head
-        || (case model.activeTab of
-                Conversation ->
-                    isFailure model.tension_comments
-
-                Document ->
-                    -- get from blob, no @auth here @DEBUG.
-                    False
-
-                Contracts ->
-                    ContractsPage.hasLoadFailure model.contractsPage
-           )
-
-
 
 --- UPDATE ----
 
@@ -1469,14 +1453,13 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
 
-                -- If token has been refreshed AND tension_head is in a error state
-                -- reload the page.
+                -- reload silently the page if needed
                 cmds_extra =
                     out.result
                         |> Maybe.map
                             (\o ->
-                                if Tuple.first o == True && hasLoadFailure model then
-                                    refresh_cmds True global model
+                                if Tuple.first o == True then
+                                    [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else
                                     []
