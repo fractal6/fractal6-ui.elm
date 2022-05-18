@@ -8,7 +8,7 @@ import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Http
+import Http exposing (expectWhatever)
 import Image exposing (Image)
 import Json.Decode as JD
 import Json.Decode.Extra as JDE
@@ -321,6 +321,13 @@ login api post msg =
         , expect = expectJson (RemoteData.fromResult >> msg) userCtxDecoder
         , timeout = Nothing
         , tracker = Nothing
+        }
+
+
+logout api msg =
+    Http.get
+        { url = api.auth ++ "/logout"
+        , expect = expectWhatever (\_ -> msg)
         }
 
 

@@ -3,7 +3,9 @@ module Pages.Logout exposing (Flags, Model, Msg, page)
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send, sendSleep)
 import Html
+import Http
 import ModelCommon exposing (UserState(..))
+import ModelCommon.Requests exposing (logout)
 import Page exposing (Document, Page)
 
 
@@ -40,7 +42,7 @@ init global flags =
                 LoggedIn _ ->
                     send LoggedOutUser
     in
-    ( {}, Cmd.none, gcmd )
+    ( {}, logout global.session.apis NoOp, gcmd )
 
 
 update : Global.Model -> Msg -> Model -> ( Model, Cmd Msg, Cmd Global.Msg )

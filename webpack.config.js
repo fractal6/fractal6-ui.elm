@@ -36,7 +36,8 @@ module.exports = (env, argv) => {
             graphql: "http://localhost:8888/api",
             rest: "http://localhost:8888/q",
             doc: "http://localhost:8888/data"
-            // @debug: CORS error
+            // @debug: CORS error.
+            // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
             //doc: "https://gitlab.com/fractal6/doc/-/raw/master/data"
         }
     }
