@@ -325,9 +325,14 @@ login api post msg =
 
 
 logout api msg =
-    Http.get
-        { url = api.auth ++ "/logout"
+    Http.riskyRequest
+        { method = "GET"
+        , headers = []
+        , url = api.auth ++ "/logout"
         , expect = expectWhatever (\_ -> msg)
+        , body = Http.emptyBody
+        , timeout = Nothing
+        , tracker = Nothing
         }
 
 
