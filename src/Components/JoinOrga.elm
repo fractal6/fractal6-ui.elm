@@ -170,14 +170,31 @@ makeInviteForm user node time =
 
 canExitSafe : Model -> Bool
 canExitSafe model =
+    let
+        a =
+            Debug.log "not hasData" (not (hasData model && withMaybeData model.join_result == Nothing))
+
+        b =
+            Debug.log "not send" (not (isUsersSendable model.form.users))
+    in
     -- Condition to close safely (e.g. empty form data)
-    (hasData model && withMaybeData model.join_result == Nothing) == False
+    not (hasData model && withMaybeData model.join_result == Nothing)
+        && (case model.step of
+                JoinOne ->
+                    True
+
+                InviteOne ->
+                    not (isUsersSendable model.form.users)
+
+                _ ->
+                    False
+           )
 
 
 hasData : Model -> Bool
 hasData model =
     -- When you can commit (e.g. empty form data)
-    isPostEmpty [ "message" ] model.form.post == False || not (isUsersSendable model.form.users)
+    not (isPostEmpty [ "message" ] model.form.post)
 
 
 isSendable : Model -> Bool
@@ -564,7 +581,7 @@ viewJoinStep op model =
         JoinOne ->
             div [ class "modal-card-body" ]
                 [ div [ class "field pb-2" ] [ textH T.explainJoin ]
-                , viewComment model
+                , viewComment False model
                 , case model.node_data of
                     Failure err ->
                         viewGqlErrors err
@@ -615,7 +632,7 @@ viewJoinStep op model =
             in
             div [ class "modal-card-body" ]
                 [ UserInput.view { label_text = "Invite member to " ++ name ++ ":" } model.userInput |> Html.map UserInputMsg
-                , viewComment model
+                , viewComment True model
                 , case model.node_data of
                     Failure err ->
                         viewGqlErrors err
@@ -652,14 +669,14 @@ viewJoinStep op model =
             viewAuthNeeded OnClose
 
 
-viewComment : Model -> Html Msg
-viewComment model =
+viewComment : Bool -> Model -> Html Msg
+viewComment isOpt model =
     div [ class "field" ]
         [ div [ class "control submitFocus" ]
             [ textarea
                 [ class "textarea"
                 , rows 3
-                , placeholder (upH T.leaveCommentOpt)
+                , placeholder <| upH <| ternary isOpt T.leaveCommentOpt "Text"
                 , value (Dict.get "message" model.form.post |> withDefault "")
                 , onInput <| OnChangePost "message"
                 ]
