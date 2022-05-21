@@ -126,6 +126,7 @@ type alias PNode =
 
 
 type alias EmitterOrReceiver =
+    -- similar to UserRole
     { name : String
     , nameid : String
     , role_type : Maybe RoleType.RoleType
@@ -617,6 +618,7 @@ type alias UserRights =
 
 
 type alias UserRole =
+    -- similar to EmitterOrReceiver
     { name : String
     , nameid : String
     , role_type : RoleType.RoleType

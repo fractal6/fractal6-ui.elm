@@ -66,7 +66,7 @@ import ModelCommon
         , sortNode
         , tensionToActionForm
         )
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nid2rootid, nid2type, nodeIdCodec)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec)
 import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
 import ModelSchema exposing (..)
 import Ports
@@ -274,10 +274,48 @@ setUser_ user (State model) =
 setPath_ : LocalGraph -> State -> State
 setPath_ p (State model) =
     let
-        newModel =
-            setTarget (shrinkNode p.focus) model
+        sources =
+            getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
+                |> List.filter (\r -> r.role_type /= RoleType.Owner)
+
+        extras =
+            getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
+                |> List.filter (\r -> r.role_type == RoleType.Owner)
+
+        default_source =
+            case List.filter (\r -> nearestCircleid r.nameid == p.focus.nameid) sources |> List.head of
+                Just r ->
+                    -- First roles in target
+                    r
+
+                Nothing ->
+                    case
+                        List.filter
+                            (\r ->
+                                nearestCircleid r.nameid
+                                    == (List.reverse p.path
+                                            |> List.tail
+                                            |> Maybe.map List.head
+                                            |> withDefault Nothing
+                                            |> Maybe.map .nameid
+                                            |> withDefault ""
+                                       )
+                            )
+                            sources
+                            |> List.head
+                    of
+                        Just r ->
+                            -- or first roles in parent
+                            r
+
+                        Nothing ->
+                            -- or first role in orga
+                            (sources ++ extras) |> List.head |> withDefault model.nodeDoc.form.source
     in
-    { newModel | path_data = Success p } |> State
+    { model | sources = sources, path_data = Success p }
+        |> setSource default_source
+        |> setTarget (shrinkNode p.focus)
+        |> State
 
 
 fixGlitch_ : State -> State
@@ -370,14 +408,6 @@ setResult result data =
 setUctx : UserCtx -> Model -> Model
 setUctx uctx data =
     { data | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx data.nodeDoc }
-
-
-setSources : List UserRole -> Model -> Model
-setSources sources data =
-    { data
-        | sources = sources
-        , nodeDoc = NodeDoc.setSource (List.head sources |> withDefault data.nodeDoc.form.source) data.nodeDoc
-    }
 
 
 setTensionType : TensionType.TensionType -> Model -> Model
@@ -622,20 +652,16 @@ update_ apis message model =
         OnOpen ->
             case model.user of
                 LoggedIn uctx ->
-                    let
-                        sources =
-                            getOrgaRoles [ nid2rootid model.nodeDoc.form.target.nameid ] model.nodeDoc.form.uctx.roles
-                    in
-                    if sources == [] && model.refresh_trial == 0 then
+                    if model.sources == [] && model.refresh_trial == 0 then
                         ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )
 
-                    else if sources == [] then
+                    else if model.sources == [] then
                         ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) model |> open
                         , out0 [ Ports.open_modal "tensionModal" ]
                         )
 
                     else
-                        ( model |> setUctx uctx |> setSources sources |> open
+                        ( model |> setUctx uctx |> open
                         , out0 [ Ports.open_modal "tensionModal" ]
                         )
 
