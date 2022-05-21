@@ -10,6 +10,7 @@ import Components.Loading as Loading
         , GqlData
         , ModalData
         , RequestResult(..)
+        , isSuccess
         , viewAuthNeeded
         , viewGqlErrors
         , viewRoleNeeded
@@ -271,8 +272,22 @@ setUser_ user (State model) =
         |> State
 
 
-setPath_ : LocalGraph -> State -> State
-setPath_ p (State model) =
+fixGlitch_ : State -> State
+fixGlitch_ (State model) =
+    { model | preventGlitch = False } |> State
+
+
+
+--- State Controls
+
+
+open : Model -> Model
+open data =
+    { data | isModalActive = True }
+
+
+setPath : LocalGraph -> Model -> Model
+setPath p model =
     let
         sources =
             getOrgaRoles [ nid2rootid p.focus.nameid ] model.nodeDoc.form.uctx.roles
@@ -315,21 +330,6 @@ setPath_ p (State model) =
     { model | sources = sources, path_data = Success p }
         |> setSource default_source
         |> setTarget (shrinkNode p.focus)
-        |> State
-
-
-fixGlitch_ : State -> State
-fixGlitch_ (State model) =
-    { model | preventGlitch = False } |> State
-
-
-
---- State Controls
-
-
-open : Model -> Model
-open data =
-    { data | isModalActive = True }
 
 
 switchTab : TensionTab -> Model -> Model
@@ -545,7 +545,7 @@ type Msg
       PushTension (GqlData Tension -> Msg)
     | OnSubmit (Time.Posix -> Msg)
       -- Modal control
-    | OnOpen
+    | OnOpen LocalGraph
     | OnResetModel
     | OnClose ModalData
     | OnCloseSafe String String
@@ -649,24 +649,28 @@ update_ apis message model =
             ( model, out0 [ sendNow next ] )
 
         -- Modal control
-        OnOpen ->
-            case model.user of
+        OnOpen p ->
+            let
+                data =
+                    setPath p model
+            in
+            case data.user of
                 LoggedIn uctx ->
-                    if model.sources == [] && model.refresh_trial == 0 then
-                        ( { model | refresh_trial = 1 }, Out [ sendSleep OnOpen 500 ] [ DoUpdateToken ] Nothing )
+                    if data.sources == [] && data.refresh_trial == 0 then
+                        ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen p) 500 ] [ DoUpdateToken ] Nothing )
 
-                    else if model.sources == [] then
-                        ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) model |> open
+                    else if data.sources == [] then
+                        ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) data |> open
                         , out0 [ Ports.open_modal "tensionModal" ]
                         )
 
                     else
-                        ( model |> setUctx uctx |> open
+                        ( data |> setUctx uctx |> open
                         , out0 [ Ports.open_modal "tensionModal" ]
                         )
 
                 LoggedOut ->
-                    ( setStep AuthNeeded model |> open, out0 [ Ports.open_modal "tensionModal" ] )
+                    ( setStep AuthNeeded data |> open, out0 [ Ports.open_modal "tensionModal" ] )
 
         OnClose data ->
             let
@@ -1009,19 +1013,30 @@ subscriptions (State model) =
 
 type alias Op =
     -- @obsolete ?
-    { users_data : GqlData UsersDict }
+    { users_data : GqlData UsersDict
+    , path_data : GqlData LocalGraph
+    }
 
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    if model.preventGlitch then
-        text ""
+    -- @obsolete: remove it.
+    --if model.preventGlitch then
+    --    text ""
+    --else
+    div []
+        [ viewModal op (State model)
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        , viewButton op model
+        ]
 
-    else
-        div []
-            [ viewModal op (State model)
-            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-            ]
+
+viewButton : Op -> Model -> Html Msg
+viewButton op model =
+    div [ class "tensionButton", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isModalActive ) ] ]
+        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> Maybe.map (\p -> [ onClick (OnOpen p) ]) |> withDefault []))
+            [ A.icon "icon-plus icon-2x" ]
+        ]
 
 
 viewModal : Op -> State -> Html Msg

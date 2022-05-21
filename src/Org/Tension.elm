@@ -1287,14 +1287,13 @@ update global message model =
             )
 
         -- New tension
-        DoCreateTension lg ->
+        DoCreateTension p ->
             let
                 tf =
                     model.tensionForm
                         |> NTF.setUser_ global.session.user
-                        |> NTF.setPath_ lg
             in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
+            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen p)), Cmd.none )
 
         NewTensionMsg msg ->
             let
@@ -1515,7 +1514,7 @@ view global model =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
         , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg

@@ -606,9 +606,8 @@ update global message model =
                 tf =
                     model.tensionForm
                         |> NTF.setUser_ global.session.user
-                        |> NTF.setPath_ lg
             in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send NTF.OnOpen), Cmd.none )
+            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen lg)), Cmd.none )
 
         -- Node Action
         DoActionEdit domid node ->
@@ -927,7 +926,7 @@ view global model =
         [ --div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
           Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
-        , NTF.view { users_data = model.users_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { users_data = model.users_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
         , Help.view {} model.help |> Html.map HelpMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg

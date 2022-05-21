@@ -1325,6 +1325,31 @@ tr.mediaBox {
     margin-left: -27px;
 }
 
+.tensionButton {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 900;
+    margin: 50px;
+    @media (max-width: $tablet){
+        margin: 25px;
+    }
+    @media (min-width: $tablet){
+        margin: 50px;
+    }
+
+    & > .button {
+        height: 50px;
+        width: 50px;
+        border-radius: 25px;
+        opacity: 0.9;
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+}
+
 //
 // Members
 //

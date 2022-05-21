@@ -170,13 +170,6 @@ makeInviteForm user node time =
 
 canExitSafe : Model -> Bool
 canExitSafe model =
-    let
-        a =
-            Debug.log "not hasData" (not (hasData model && withMaybeData model.join_result == Nothing))
-
-        b =
-            Debug.log "not send" (not (isUsersSendable model.form.users))
-    in
     -- Condition to close safely (e.g. empty form data)
     not (hasData model && withMaybeData model.join_result == Nothing)
         && (case model.step of
