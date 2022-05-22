@@ -1130,25 +1130,21 @@ viewSettingsMenu model =
 
 viewSettingsContent : Model -> Html Msg
 viewSettingsContent model =
-    let
-        isRoot =
-            model.node_focus.nameid == model.node_focus.rootnameid
-    in
     case model.menuFocus of
         LabelsMenu ->
             div []
                 [ --@todo lazy loading...
                   viewLabels model
-                , viewLabelsExt T.labelsTop (ternary isRoot "" (T.noLabelsTop ++ ".")) model.labels model.labels_top
-                , viewLabelsExt T.labelsSub (T.noLabelsSub ++ ".") model.labels model.labels_sub
+                , viewLabelsExt T.labelsTop model.labels model.labels_top
+                , viewLabelsExt T.labelsSub model.labels model.labels_sub
                 ]
 
         RolesMenu ->
             div []
                 [ --@todo lazy loading...
                   viewRoles model
-                , viewRolesExt T.rolesTop (ternary isRoot "" (T.noRolesTop ++ ".")) model.roles model.roles_top
-                , viewRolesExt T.rolesSub (T.noRolesSub ++ ".") model.roles model.roles_sub
+                , viewRolesExt T.rolesTop model.roles model.roles_top
+                , viewRolesExt T.rolesSub model.roles model.roles_sub
                 ]
 
         GlobalMenu ->
@@ -1162,9 +1158,9 @@ viewSettingsContent model =
                     ]
                 , div [ class "media" ]
                     [ div [ class "field" ]
-                        [ input [ id "switch1", class "switch is-rounded is-success", type_ "checkbox", name "switch1", checked True ] []
-                        , label [ for "switch1" ] [ text T.space_, text T.orgaUserInvitation ]
-                        , span [ class "help" ] [ text T.orgaUserInvitationHelp ]
+                        [ input [ id "switch2", class "switch is-rounded is-success", type_ "checkbox", name "switch2", checked True ] []
+                        , label [ for "switch2" ] [ text T.space_, text T.guestCanCreateTension ]
+                        , span [ class "help" ] [ text T.guestCanCreateTensionHelp ]
                         ]
                     ]
                 ]
@@ -1379,12 +1375,12 @@ viewLabels model =
         ]
 
 
-viewLabelsExt : String -> String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
-viewLabelsExt txt_yes text_no list_d list_ext_d =
+viewLabelsExt : String -> GqlData (List LabelFull) -> WebData (List Label) -> Html Msg
+viewLabelsExt txt_yes list_d list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.length data == 0 then
-                div [ class "mt-6" ] [ textH text_no ]
+                text ""
 
             else
                 let
@@ -1645,12 +1641,12 @@ viewRoles model =
         ]
 
 
-viewRolesExt : String -> String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
-viewRolesExt txt_yes text_no list_d list_ext_d =
+viewRolesExt : String -> GqlData (List RoleExtFull) -> WebData (List RoleExt) -> Html Msg
+viewRolesExt txt_yes list_d list_ext_d =
     case list_ext_d of
         RemoteData.Success data ->
             if List.length data == 0 then
-                div [ class "mt-6" ] [ textH text_no ]
+                text ""
 
             else
                 let

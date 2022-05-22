@@ -1205,32 +1205,12 @@ newReceiver =
 
 noLabels : String
 noLabels =
-    "No label here yet"
+    "No label in this circle yet"
 
 
 noRoles : String
 noRoles =
-    "No role here yet"
-
-
-noLabelsSub : String
-noLabelsSub =
-    "No new sub-circle label yet"
-
-
-noLabelsTop : String
-noLabelsTop =
-    "No new parent label yet"
-
-
-noRolesSub : String
-noRolesSub =
-    "No new sub-circle role yet"
-
-
-noRolesTop : String
-noRolesTop =
-    "No new parent role yet"
+    "No role in this circle yet"
 
 
 labelsSub : String
@@ -1451,3 +1431,13 @@ orgaUserInvitation =
 orgaUserInvitationHelp : String
 orgaUserInvitationHelp =
     "User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract."
+
+
+guestCanCreateTension : String
+guestCanCreateTension =
+    "Guest can create tension"
+
+
+guestCanCreateTensionHelp : String
+guestCanCreateTensionHelp =
+    "Guest are user that has been invited but do not play any role in the organisation."
