@@ -1441,3 +1441,13 @@ In order to help your navigation, you will find some shortcuts in the top right 
 explainJoin : String
 explainJoin =
     "Explain your motivation for joining this organisation ?"
+
+
+orgaUserInvitation : String
+orgaUserInvitation =
+    "Users can join the organisation"
+
+
+orgaUserInvitationHelp : String
+orgaUserInvitationHelp =
+    "User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract."

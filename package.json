@@ -22,7 +22,14 @@
     "localprod": "webpack-dev-server --hot --port 8000 --mode production",
     "prod": "webpack --mode production"
   },
-  "keywords": ["graphql", "elm", "fractal", "organisation", "d3", "spa"],
+  "keywords": [
+    "graphql",
+    "elm",
+    "fractal",
+    "organisation",
+    "d3",
+    "spa"
+  ],
   "author": "Adrien Dulac",
   "license": "GPLv2",
   "dependencies": {
@@ -33,6 +40,7 @@
     "@dillonkearns/elm-graphql": "^4.0.3",
     "bulma": "^0.9.1",
     "bulma-modal-fx": "^1.1.1",
+    "bulma-switch": "^2.0.4",
     "d3": "^5.16.0",
     "d3-scale": "^3.2.3",
     "elm": "0.19.1-3",

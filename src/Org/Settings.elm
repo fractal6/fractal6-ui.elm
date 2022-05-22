@@ -30,7 +30,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, colspan, disabled, href, id, list, placeholder, rows, style, target, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -206,7 +206,7 @@ menuToString menu =
             upH "Organisation"
 
         EditMenu ->
-            upH "edit node"
+            upH "edit circle"
 
 
 menuToIcon : MenuSettings -> String
@@ -1092,19 +1092,11 @@ view global model =
 
 view_ : Model -> Html Msg
 view_ model =
-    let
-        goToParent =
-            if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "tag is-rounded is-small button-light is-h has-text-weight-light mb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text "Go to root circle" ]
-
-            else
-                text ""
-    in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "section" ]
                 [ div [ class "columns" ]
-                    [ div [ class "column is-one-fifth" ] [ goToParent, viewSettingsMenu model ]
+                    [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]
                     , div [ class "column" ] [ viewSettingsContent model ]
                     ]
                 ]
@@ -1160,7 +1152,22 @@ viewSettingsContent model =
                 ]
 
         GlobalMenu ->
-            div [] [ text "Work in progress" ]
+            div []
+                [ div [ class "media" ]
+                    [ div [ class "field" ]
+                        [ input [ id "switch1", class "switch is-rounded is-success", type_ "checkbox", name "switch1", checked True ] []
+                        , label [ for "switch1" ] [ text T.space_, text T.orgaUserInvitation ]
+                        , span [ class "help" ] [ text T.orgaUserInvitationHelp ]
+                        ]
+                    ]
+                , div [ class "media" ]
+                    [ div [ class "field" ]
+                        [ input [ id "switch1", class "switch is-rounded is-success", type_ "checkbox", name "switch1", checked True ] []
+                        , label [ for "switch1" ] [ text T.space_, text T.orgaUserInvitation ]
+                        , span [ class "help" ] [ text T.orgaUserInvitationHelp ]
+                        ]
+                    ]
+                ]
 
         EditMenu ->
             -- redirection
@@ -1260,7 +1267,7 @@ viewLabelAddBox model =
                 ]
             ]
         , div []
-            [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ]
+            [ span [ class "help-label" ] [ text "Preview: " ]
             , viewLabel "" (Label "" (ternary (name == "") "label name" name) color)
             ]
         , case result of
@@ -1274,8 +1281,16 @@ viewLabelAddBox model =
 
 viewLabels : Model -> Html Msg
 viewLabels model =
+    let
+        goToParent =
+            if model.node_focus.nameid /= model.node_focus.rootnameid then
+                span [ class "help-label is-grey-light button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+
+            else
+                text ""
+    in
     div [ id "labelsTable" ]
-        [ h2 [ class "subtitle" ] [ textH T.labels ]
+        [ h2 [ class "subtitle" ] [ textH T.labels, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success", classList [ ( "is-active", model.label_add ) ], onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
@@ -1489,7 +1504,7 @@ viewRoleAddBox model =
                 ]
             ]
         , div [ class "field mt-2 mb-3" ]
-            [ span [ class "help-label", attribute "style" "display:initial !important;" ] [ text "Preview: " ]
+            [ span [ class "help-label" ] [ text "Preview: " ]
             , viewRoleExt "" (RoleExt "" (ternary (name == "") "role name" name) color role_type)
             ]
         , viewMandateInput (getNodeTextFromNodeType NodeType.Role)
@@ -1524,8 +1539,16 @@ viewRoleAddBox model =
 
 viewRoles : Model -> Html Msg
 viewRoles model =
+    let
+        goToParent =
+            if model.node_focus.nameid /= model.node_focus.rootnameid then
+                span [ class "help-label is-grey-light button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+
+            else
+                text ""
+    in
     div [ id "rolesTable" ]
-        [ h2 [ class "subtitle" ] [ textH T.roles ]
+        [ h2 [ class "subtitle" ] [ textH T.roles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success level-right", classList [ ( "is-active", model.role_add ) ], onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]

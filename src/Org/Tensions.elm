@@ -1414,7 +1414,7 @@ viewTensionsListHeader model =
         [ div [ class "level-left px-3" ]
             [ viewTensionsCount model
             , if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "tag is-rounded is-small button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text "Go to root circle" ]
+                span [ class "help-label is-grey-light button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
               else
                 text ""
@@ -1601,7 +1601,7 @@ viewTensions now focus pattern tensionsData tensionDir =
             Success tensions ->
                 if List.length tensions > 0 then
                     tensions
-                        |> List.map (\t -> mediaTension now focus t True True "is-size-5" Navigate)
+                        |> List.map (\t -> mediaTension now focus t True True "is-size-6 t-o" Navigate)
                         |> div [ id "tensionsTab" ]
 
                 else if pattern /= Nothing then

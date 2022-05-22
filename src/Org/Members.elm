@@ -482,7 +482,7 @@ viewMembers now data focus =
     let
         goToParent =
             if focus.nameid /= focus.rootnameid then
-                span [ class "tag is-rounded is-small button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text "Go to root circle" ]
+                span [ class "help-label is-grey-light button-light is-h has-text-weight-light", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
 
             else
                 text ""

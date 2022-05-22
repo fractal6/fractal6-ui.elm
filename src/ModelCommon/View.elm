@@ -135,23 +135,9 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
 
         labels_m =
             tension.labels |> Maybe.map (\ls -> ternary (List.length ls == 0) Nothing (Just ls)) |> withDefault Nothing
-
-        ( default_size, title_size ) =
-            case size of
-                "is-size-7" ->
-                    ( "is-size-7", "is-size-7" )
-
-                "is-size-6" ->
-                    ( "is-size-6", "is-size-6" )
-
-                "is-size-5" ->
-                    ( "is-size-6", "is-size-5" )
-
-                _ ->
-                    ( "is-size-6", "is-size-5" )
     in
     div
-        [ class ("media mediaBox is-hoverable " ++ default_size)
+        [ class ("media mediaBox is-hoverable " ++ size)
 
         --, onClick (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref |> navigate)
         --, href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
@@ -166,7 +152,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
         , div [ class "media-content" ]
             [ div [ class "content mb-0" ]
                 [ a
-                    [ class ("is-human discrete-link " ++ title_size)
+                    [ class ("is-human discrete-link " ++ size)
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]

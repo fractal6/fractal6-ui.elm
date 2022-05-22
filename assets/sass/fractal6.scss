@@ -141,7 +141,7 @@ hr {
 
 .help-label {
   color: var(--grey) !important;
-  display: block !important;
+  //display: block !important;
   font-size: $size-small !important;
   margin-top: 0.25rem !important;
 }
@@ -1243,7 +1243,14 @@ a.is-link {
             font-size: $size-6 !important;
         }
     }
+
+    .t-o{
+        font-size: 1rem !important;
+
+    }
 }
+
+
 
 #journalTab {
    .content {
