@@ -301,6 +301,30 @@ createOrga api post msg =
         }
 
 
+setUserCanJoin api nameid val msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/setusercanjoin"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "val", JE.bool val ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+setGuestCanCreateTension api nameid val msg =
+    Http.riskyRequest
+        { method = "POST"
+        , headers = setHeaders api
+        , url = api.auth ++ "/setguestcancreatetension"
+        , body = Http.jsonBody <| JE.object [ ( "nameid", JE.string nameid ), ( "val", JE.bool val ) ]
+        , expect = expectJson (RemoteData.fromResult >> msg) JD.bool
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
 
 --
 -- User management

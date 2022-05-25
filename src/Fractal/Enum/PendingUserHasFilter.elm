@@ -8,14 +8,18 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type PendingUserHasFilter
-    = Email
-    | Events
+    = UpdatedAt
+    | Username
+    | Password
+    | Email
+    | Email_token
     | Token
+    | Contracts
 
 
 list : List PendingUserHasFilter
 list =
-    [ Email, Events, Token ]
+    [ UpdatedAt, Username, Password, Email, Email_token, Token, Contracts ]
 
 
 decoder : Decoder PendingUserHasFilter
@@ -24,14 +28,26 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "updatedAt" ->
+                        Decode.succeed UpdatedAt
+
+                    "username" ->
+                        Decode.succeed Username
+
+                    "password" ->
+                        Decode.succeed Password
+
                     "email" ->
                         Decode.succeed Email
 
-                    "events" ->
-                        Decode.succeed Events
+                    "email_token" ->
+                        Decode.succeed Email_token
 
                     "token" ->
                         Decode.succeed Token
+
+                    "contracts" ->
+                        Decode.succeed Contracts
 
                     _ ->
                         Decode.fail ("Invalid PendingUserHasFilter type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -43,14 +59,26 @@ decoder =
 toString : PendingUserHasFilter -> String
 toString enum____ =
     case enum____ of
+        UpdatedAt ->
+            "updatedAt"
+
+        Username ->
+            "username"
+
+        Password ->
+            "password"
+
         Email ->
             "email"
 
-        Events ->
-            "events"
+        Email_token ->
+            "email_token"
 
         Token ->
             "token"
+
+        Contracts ->
+            "contracts"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -67,14 +95,26 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe PendingUserHasFilter
 fromString enumString____ =
     case enumString____ of
+        "updatedAt" ->
+            Just UpdatedAt
+
+        "username" ->
+            Just Username
+
+        "password" ->
+            Just Password
+
         "email" ->
             Just Email
 
-        "events" ->
-            Just Events
+        "email_token" ->
+            Just Email_token
 
         "token" ->
             Just Token
+
+        "contracts" ->
+            Just Contracts
 
         _ ->
             Nothing

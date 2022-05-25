@@ -1325,6 +1325,11 @@ visibilitySeccret =
     "Only roles inside this circle can view."
 
 
+visibilityRestriction : String
+visibilityRestriction =
+    "User can join the organisation on invitation only."
+
+
 circleAuthorityHeader : String
 circleAuthorityHeader =
     "The governance authority is characterized by the right to do a set of actions."
@@ -1430,7 +1435,7 @@ orgaUserInvitation =
 
 orgaUserInvitationHelp : String
 orgaUserInvitationHelp =
-    "User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract."
+    "User will be able to open a contract to join the organisation. The user will join as a Guest only after a coordinator validate the contract. For public organisation only."
 
 
 guestCanCreateTension : String

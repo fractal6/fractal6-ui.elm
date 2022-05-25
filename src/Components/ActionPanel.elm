@@ -1207,13 +1207,17 @@ viewComment model =
 
 viewVisibility : Op -> Model -> Html Msg
 viewVisibility op model =
+    let
+        isRoot =
+            model.form.node.parent == Nothing
+    in
     div []
         [ -- Show the help information
           showMsg "visibility-0" "is-info is-light" "icon-info" T.visibilityInfoHeader ""
 
         -- Show the choices as card.
         , NodeVisibility.list
-            |> List.filter (\v -> not (v == NodeVisibility.Secret && model.form.node.parent == Nothing))
+            |> List.filter (\v -> not (v == NodeVisibility.Secret && isRoot))
             |> List.map
                 (\x ->
                     let
@@ -1226,7 +1230,7 @@ viewVisibility op model =
                                     ( "icon-globe", T.visibilityPublic )
 
                                 NodeVisibility.Private ->
-                                    ( "icon-users", T.visibilityPrivate )
+                                    ( "icon-users", T.visibilityPrivate ++ " " ++ ternary isRoot T.visibilityRestriction "" )
 
                                 NodeVisibility.Secret ->
                                     ( "icon-lock", T.visibilitySeccret )

@@ -28,6 +28,7 @@ type NodeHasFilter
     | IsArchived
     | IsPersonal
     | UserCanJoin
+    | GuestCanCreateTension
     | Children
     | Docs
     | Labels
@@ -45,7 +46,7 @@ type NodeHasFilter
 
 list : List NodeHasFilter
 list =
-    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, IsRoot, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Orga_agg, Events_history ]
+    [ CreatedBy, CreatedAt, UpdatedAt, Name, Nameid, Rootnameid, IsRoot, Parent, Type_, Tensions_out, Tensions_in, About, Mandate, Source, Visibility, Mode, Rights, IsArchived, IsPersonal, UserCanJoin, GuestCanCreateTension, Children, Docs, Labels, Roles, Role_ext, Role_type, Color, First_link, Second_link, Skills, Contracts, Orga_agg, Events_history ]
 
 
 decoder : Decoder NodeHasFilter
@@ -113,6 +114,9 @@ decoder =
 
                     "userCanJoin" ->
                         Decode.succeed UserCanJoin
+
+                    "guestCanCreateTension" ->
+                        Decode.succeed GuestCanCreateTension
 
                     "children" ->
                         Decode.succeed Children
@@ -222,6 +226,9 @@ toString enum____ =
 
         UserCanJoin ->
             "userCanJoin"
+
+        GuestCanCreateTension ->
+            "guestCanCreateTension"
 
         Children ->
             "children"
@@ -336,6 +343,9 @@ fromString enumString____ =
 
         "userCanJoin" ->
             Just UserCanJoin
+
+        "guestCanCreateTension" ->
+            Just GuestCanCreateTension
 
         "children" ->
             Just Children

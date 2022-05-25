@@ -327,7 +327,7 @@ setPath p model =
                             -- or first role in orga
                             (sources ++ extras) |> List.head |> withDefault model.nodeDoc.form.source
     in
-    { model | sources = sources, path_data = Success p }
+    { model | sources = sources ++ extras, path_data = Success p }
         |> setSource default_source
         |> setTarget (shrinkNode p.focus)
 

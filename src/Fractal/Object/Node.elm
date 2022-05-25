@@ -226,6 +226,11 @@ userCanJoin =
     Object.selectionForField "(Maybe Bool)" "userCanJoin" [] (Decode.bool |> Decode.nullable)
 
 
+guestCanCreateTension : SelectionSet (Maybe Bool) Fractal.Object.Node
+guestCanCreateTension =
+    Object.selectionForField "(Maybe Bool)" "guestCanCreateTension" [] (Decode.bool |> Decode.nullable)
+
+
 type alias ChildrenOptionalArguments =
     { filter : OptionalArgument Fractal.InputObject.NodeFilter
     , order : OptionalArgument Fractal.InputObject.NodeOrder

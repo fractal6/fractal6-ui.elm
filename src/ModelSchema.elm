@@ -133,6 +133,13 @@ type alias EmitterOrReceiver =
     }
 
 
+type alias NodeRights =
+    { visibility : NodeVisibility.NodeVisibility
+    , userCanJoin : Maybe Bool
+    , guestCanCreateTension : Maybe Bool
+    }
+
+
 
 --
 -- Tension

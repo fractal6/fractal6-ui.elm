@@ -6,6 +6,7 @@ module Query.QueryNode exposing
     , emiterOrReceiverPayload
     , fetchNode
     , fetchNodeData
+    , getCircleRights
     , getLabels
     , getRoles
     , labelFullPayload
@@ -583,6 +584,29 @@ nArchivedFilter a =
                 )
                 |> Present
     }
+
+
+
+{-
+   Query  Orga rights
+-}
+
+
+getCircleRights url nameid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nameid)
+            nodeRightsPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+nodeRightsPayload : SelectionSet NodeRights Fractal.Object.Node
+nodeRightsPayload =
+    SelectionSet.succeed NodeRights
+        |> with Fractal.Object.Node.visibility
+        |> with Fractal.Object.Node.userCanJoin
+        |> with Fractal.Object.Node.guestCanCreateTension
 
 
 

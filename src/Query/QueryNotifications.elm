@@ -131,8 +131,10 @@ type alias UserNotifications =
 
 userNotificationsPayload : NotificationsForm -> SelectionSet UserNotifications Fractal.Object.User
 userNotificationsPayload f =
-    SelectionSet.succeed UserNotifications
+    SelectionSet.succeed (\a _ -> UserNotifications a)
         |> with (Fractal.Object.User.events (notificationsFilter f) notificationsPayload)
+        -- @debug; needs of @isPrivate
+        |> with Fractal.Object.User.username
 
 
 notificationsPayload : SelectionSet UserEvent_ Fractal.Object.UserEvent

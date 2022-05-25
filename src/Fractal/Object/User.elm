@@ -44,24 +44,14 @@ name =
     Object.selectionForField "(Maybe String)" "name" [] (Decode.string |> Decode.nullable)
 
 
-password : SelectionSet String Fractal.Object.User
-password =
-    Object.selectionForField "String" "password" [] Decode.string
-
-
 email : SelectionSet String Fractal.Object.User
 email =
     Object.selectionForField "String" "email" [] Decode.string
 
 
-emailHash : SelectionSet (Maybe String) Fractal.Object.User
-emailHash =
-    Object.selectionForField "(Maybe String)" "emailHash" [] (Decode.string |> Decode.nullable)
-
-
-emailValidated : SelectionSet Bool Fractal.Object.User
-emailValidated =
-    Object.selectionForField "Bool" "emailValidated" [] Decode.bool
+password : SelectionSet String Fractal.Object.User
+password =
+    Object.selectionForField "String" "password" [] Decode.string
 
 
 bio : SelectionSet (Maybe String) Fractal.Object.User
@@ -74,9 +64,9 @@ utc =
     Object.selectionForField "(Maybe String)" "utc" [] (Decode.string |> Decode.nullable)
 
 
-notifyByEmail : SelectionSet (Maybe Bool) Fractal.Object.User
+notifyByEmail : SelectionSet Bool Fractal.Object.User
 notifyByEmail =
-    Object.selectionForField "(Maybe Bool)" "notifyByEmail" [] (Decode.bool |> Decode.nullable)
+    Object.selectionForField "Bool" "notifyByEmail" [] Decode.bool
 
 
 type alias SubscriptionsOptionalArguments =

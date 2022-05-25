@@ -9,7 +9,7 @@ import Components.AuthModal as AuthModal
 import Components.ColorPicker as ColorPicker exposing (ColorPicker)
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMapData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
 import Dict exposing (Dict)
@@ -20,13 +20,9 @@ import Extra.Views exposing (showMsg)
 import Form exposing (isPostSendable)
 import Form.Help as Help
 import Form.NewTension as NTF exposing (TensionTab(..))
-import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
-import Fractal.Enum.TensionAction as TensionAction
-import Fractal.Enum.TensionEvent as TensionEvent
-import Fractal.Enum.TensionStatus as TensionStatus
-import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
@@ -38,7 +34,7 @@ import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, focusFromNameid, focusState, nameidFromFlags, nid2rootid, uriFromNameid, uriFromUsername)
-import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, login)
+import ModelCommon.Requests exposing (fetchLabelsSub, fetchLabelsTop, fetchRolesSub, fetchRolesTop, login, setGuestCanCreateTension, setUserCanJoin)
 import ModelCommon.View exposing (getNodeTextFromNodeType, roleColor, viewLabel, viewRoleExt)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -53,7 +49,7 @@ import Query.PatchNode
         , updateOneRole
         )
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (fetchNode, getLabels, getRoles, queryLocalGraph)
+import Query.QueryNode exposing (fetchNode, getCircleRights, getLabels, getRoles, queryLocalGraph)
 import RemoteData exposing (RemoteData)
 import Session exposing (Apis, GlobalCmd(..))
 import Task
@@ -133,6 +129,11 @@ type alias Model =
     , role_edit : Maybe RoleExtFull
     , role_result : GqlData RoleExtFull
     , role_result_del : GqlData RoleExtFull
+
+    -- Orga
+    , orga_rights : GqlData NodeRights
+    , switch_result : WebData Bool
+    , switch_index : Int
 
     -- Common
     , helperBar : HelperBar
@@ -283,6 +284,12 @@ type Msg
     | AddPolicies
     | AddResponsabilities
     | UpdateNodePost String String
+      -- Orga
+    | GotRootRights (GqlData NodeRights)
+    | SwitchUserCanJoin Int Bool
+    | SwitchGuestCanCreateTension Int Bool
+    | GotUserCanJoin (WebData Bool)
+    | GotGuestCanCreateTension (WebData Bool)
       -- New Tension
     | DoCreateTension LocalGraph
       -- Color Picker
@@ -373,6 +380,11 @@ init global flags =
             , role_result = NotAsked
             , role_result_del = NotAsked
 
+            -- Orga
+            , orga_rights = NotAsked
+            , switch_result = RemoteData.NotAsked
+            , switch_index = -1
+
             -- Common
             , helperBar = HelperBar.create
             , refresh_trial = 0
@@ -402,7 +414,10 @@ init global flags =
                             , fetchRolesSub apis newFocus.nameid GotRolesSub
                             ]
 
-                        _ ->
+                        GlobalMenu ->
+                            [ getCircleRights apis (nid2rootid newFocus.nameid) GotRootRights ]
+
+                        EditMenu ->
                             []
                    )
     in
@@ -917,6 +932,69 @@ update global message model =
             , Cmd.none
             )
 
+        -- Orga
+        GotRootRights result ->
+            ( { model | orga_rights = result }, Cmd.none, Cmd.none )
+
+        SwitchUserCanJoin i confirmed ->
+            let
+                val =
+                    withMaybeData model.orga_rights |> Maybe.map .userCanJoin |> withDefault Nothing |> withDefault False
+
+                isPublic =
+                    withMaybeData model.orga_rights |> Maybe.map .visibility |> Maybe.map (\x -> x == NodeVisibility.Public) |> withDefault False
+            in
+            if val == False && not isPublic && not confirmed then
+                -- show modal to confirm root circle is going to be public
+                ( model
+                , send <|
+                    DoModalConfirmOpen (SwitchUserCanJoin i True)
+                        { message = Just ( "Please confirm the change", "" )
+                        , txts = [ ( "Enabling this setting will make the visibility of the root circle ", "" ), ( "Public", "is-strong" ), ( ".", "" ) ]
+                        }
+                , Cmd.none
+                )
+
+            else
+                ( { model | switch_result = RemoteData.Loading, switch_index = i }, setUserCanJoin apis (nid2rootid model.node_focus.nameid) (not val) GotUserCanJoin, Cmd.none )
+
+        GotUserCanJoin result ->
+            let
+                data =
+                    { model | switch_result = result }
+            in
+            case result of
+                RemoteData.Success v ->
+                    ( { data | orga_rights = withMapData (\x -> { x | userCanJoin = Just v }) model.orga_rights }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( data, Cmd.none, Cmd.none )
+
+        SwitchGuestCanCreateTension i _ ->
+            let
+                val =
+                    withMaybeData model.orga_rights |> Maybe.map .guestCanCreateTension |> withDefault Nothing |> withDefault False
+            in
+            ( { model | switch_result = RemoteData.Loading, switch_index = i }, setGuestCanCreateTension apis (nid2rootid model.node_focus.nameid) (not val) GotGuestCanCreateTension, Cmd.none )
+
+        GotGuestCanCreateTension result ->
+            let
+                data =
+                    { model | switch_result = result }
+            in
+            case result of
+                RemoteData.Success v ->
+                    ( { data | orga_rights = withMapData (\x -> { x | guestCanCreateTension = Just v }) model.orga_rights }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( data, Cmd.none, Cmd.none )
+
         -- New tension
         DoCreateTension lg ->
             let
@@ -1148,22 +1226,7 @@ viewSettingsContent model =
                 ]
 
         GlobalMenu ->
-            div []
-                [ div [ class "media" ]
-                    [ div [ class "field" ]
-                        [ input [ id "switch1", class "switch is-rounded is-success", type_ "checkbox", name "switch1", checked True ] []
-                        , label [ for "switch1" ] [ text T.space_, text T.orgaUserInvitation ]
-                        , span [ class "help" ] [ text T.orgaUserInvitationHelp ]
-                        ]
-                    ]
-                , div [ class "media" ]
-                    [ div [ class "field" ]
-                        [ input [ id "switch2", class "switch is-rounded is-success", type_ "checkbox", name "switch2", checked True ] []
-                        , label [ for "switch2" ] [ text T.space_, text T.guestCanCreateTension ]
-                        , span [ class "help" ] [ text T.guestCanCreateTensionHelp ]
-                        ]
-                    ]
-                ]
+            viewOrgaSettings model.orga_rights model.switch_result model.switch_index
 
         EditMenu ->
             -- redirection
@@ -1671,4 +1734,72 @@ viewRolesExt txt_yes list_d list_ext_d =
             div [ class "spinner" ] []
 
         _ ->
+            text ""
+
+
+type alias SwitchRecord =
+    { index : Int -- reference index
+    , msg :
+        Int
+        -> Bool
+        -> Msg -- Msg
+    , title : String -- title text
+    , help : String -- help text
+    , val : NodeRights -> Maybe Bool
+    }
+
+
+viewOrgaSettings : GqlData NodeRights -> WebData Bool -> Int -> Html Msg
+viewOrgaSettings orga_rights switch_result switch_index =
+    let
+        switches =
+            [ SwitchRecord 0 SwitchUserCanJoin T.orgaUserInvitation T.orgaUserInvitationHelp .userCanJoin
+            , SwitchRecord 1 SwitchGuestCanCreateTension T.guestCanCreateTension T.guestCanCreateTensionHelp .guestCanCreateTension
+            ]
+    in
+    case orga_rights of
+        Success or ->
+            div [] <|
+                List.map
+                    (\x ->
+                        let
+                            ref_name =
+                                "switch" ++ String.fromInt x.index
+                        in
+                        div [ class "media" ]
+                            [ div [ class "field" ]
+                                [ input [ onClick (x.msg x.index False), id ref_name, class "switch is-rounded is-success", type_ "checkbox", name ref_name, checked (x.val or == Just True) ] []
+                                , label [ for ref_name ]
+                                    [ text T.space_
+                                    , text x.title
+
+                                    -- Use loadingSlowly because here it causes eyes distraction !
+                                    --, loadingSpin ((switch_result == RemoteData.Loading) && switch_index == x.index)
+                                    ]
+                                , case switch_result of
+                                    RemoteData.Failure e ->
+                                        if switch_index == x.index then
+                                            viewHttpErrors e
+
+                                        else
+                                            text ""
+
+                                    _ ->
+                                        text ""
+                                , span [ class "help" ] [ text x.help ]
+                                ]
+                            ]
+                    )
+                    switches
+
+        Loading ->
+            div [ class "spinner" ] []
+
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        Failure err ->
+            viewGqlErrors err
+
+        NotAsked ->
             text ""

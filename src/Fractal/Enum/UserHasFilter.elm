@@ -12,10 +12,8 @@ type UserHasFilter
     | LastAck
     | Username
     | Name
-    | Password
     | Email
-    | EmailHash
-    | EmailValidated
+    | Password
     | Bio
     | Utc
     | NotifyByEmail
@@ -32,7 +30,7 @@ type UserHasFilter
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, EmailValidated, Bio, Utc, NotifyByEmail, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events, MarkAllAsRead ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Utc, NotifyByEmail, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events, MarkAllAsRead ]
 
 
 decoder : Decoder UserHasFilter
@@ -53,17 +51,11 @@ decoder =
                     "name" ->
                         Decode.succeed Name
 
-                    "password" ->
-                        Decode.succeed Password
-
                     "email" ->
                         Decode.succeed Email
 
-                    "emailHash" ->
-                        Decode.succeed EmailHash
-
-                    "emailValidated" ->
-                        Decode.succeed EmailValidated
+                    "password" ->
+                        Decode.succeed Password
 
                     "bio" ->
                         Decode.succeed Bio
@@ -123,17 +115,11 @@ toString enum____ =
         Name ->
             "name"
 
-        Password ->
-            "password"
-
         Email ->
             "email"
 
-        EmailHash ->
-            "emailHash"
-
-        EmailValidated ->
-            "emailValidated"
+        Password ->
+            "password"
 
         Bio ->
             "bio"
@@ -198,17 +184,11 @@ fromString enumString____ =
         "name" ->
             Just Name
 
-        "password" ->
-            Just Password
-
         "email" ->
             Just Email
 
-        "emailHash" ->
-            Just EmailHash
-
-        "emailValidated" ->
-            Just EmailValidated
+        "password" ->
+            Just Password
 
         "bio" ->
             Just Bio

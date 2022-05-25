@@ -12,9 +12,8 @@ type UserOrderable
     | LastAck
     | Username
     | Name
-    | Password
     | Email
-    | EmailHash
+    | Password
     | Bio
     | Utc
     | MarkAllAsRead
@@ -22,7 +21,7 @@ type UserOrderable
 
 list : List UserOrderable
 list =
-    [ CreatedAt, LastAck, Username, Name, Password, Email, EmailHash, Bio, Utc, MarkAllAsRead ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Utc, MarkAllAsRead ]
 
 
 decoder : Decoder UserOrderable
@@ -43,14 +42,11 @@ decoder =
                     "name" ->
                         Decode.succeed Name
 
-                    "password" ->
-                        Decode.succeed Password
-
                     "email" ->
                         Decode.succeed Email
 
-                    "emailHash" ->
-                        Decode.succeed EmailHash
+                    "password" ->
+                        Decode.succeed Password
 
                     "bio" ->
                         Decode.succeed Bio
@@ -83,14 +79,11 @@ toString enum____ =
         Name ->
             "name"
 
-        Password ->
-            "password"
-
         Email ->
             "email"
 
-        EmailHash ->
-            "emailHash"
+        Password ->
+            "password"
 
         Bio ->
             "bio"
@@ -128,14 +121,11 @@ fromString enumString____ =
         "name" ->
             Just Name
 
-        "password" ->
-            Just Password
-
         "email" ->
             Just Email
 
-        "emailHash" ->
-            Just EmailHash
+        "password" ->
+            Just Password
 
         "bio" ->
             Just Bio

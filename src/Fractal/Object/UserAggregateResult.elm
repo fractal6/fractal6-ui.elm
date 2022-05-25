@@ -64,16 +64,6 @@ nameMax =
     Object.selectionForField "(Maybe String)" "nameMax" [] (Decode.string |> Decode.nullable)
 
 
-passwordMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
-passwordMin =
-    Object.selectionForField "(Maybe String)" "passwordMin" [] (Decode.string |> Decode.nullable)
-
-
-passwordMax : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
-passwordMax =
-    Object.selectionForField "(Maybe String)" "passwordMax" [] (Decode.string |> Decode.nullable)
-
-
 emailMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
 emailMin =
     Object.selectionForField "(Maybe String)" "emailMin" [] (Decode.string |> Decode.nullable)
@@ -84,14 +74,14 @@ emailMax =
     Object.selectionForField "(Maybe String)" "emailMax" [] (Decode.string |> Decode.nullable)
 
 
-emailHashMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
-emailHashMin =
-    Object.selectionForField "(Maybe String)" "emailHashMin" [] (Decode.string |> Decode.nullable)
+passwordMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
+passwordMin =
+    Object.selectionForField "(Maybe String)" "passwordMin" [] (Decode.string |> Decode.nullable)
 
 
-emailHashMax : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
-emailHashMax =
-    Object.selectionForField "(Maybe String)" "emailHashMax" [] (Decode.string |> Decode.nullable)
+passwordMax : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
+passwordMax =
+    Object.selectionForField "(Maybe String)" "passwordMax" [] (Decode.string |> Decode.nullable)
 
 
 bioMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult

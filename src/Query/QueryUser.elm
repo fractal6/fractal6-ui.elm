@@ -155,12 +155,17 @@ getIsSubscribe url username tid msg =
 
 
 type alias IsSubscribe =
-    { subscriptions : Maybe (List IdPayload) }
+    { subscriptions : Maybe (List IdPayload)
+
+    -- @debug; needs of @isPrivate
+    , username : String
+    }
 
 
 isSubscribePayload : String -> SelectionSet IsSubscribe Fractal.Object.User
 isSubscribePayload tid =
-    SelectionSet.map IsSubscribe
+    SelectionSet.map2 IsSubscribe
         (Fractal.Object.User.subscriptions (\a -> { a | filter = Present <| Input.buildTensionFilter (\x -> { x | id = Present [ encodeId tid ] }) })
             (SelectionSet.map IdPayload (Fractal.Object.Tension.id |> SelectionSet.map decodedId))
         )
+        Fractal.Object.User.username
