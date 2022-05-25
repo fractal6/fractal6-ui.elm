@@ -2314,9 +2314,6 @@ viewSidePane u t model =
         labels =
             t.labels |> withDefault []
 
-        actionType_m =
-            Maybe.map (\c -> c.action_type) tc
-
         blob_m =
             t.blobs |> withDefault [] |> List.head
 
@@ -2357,7 +2354,13 @@ viewSidePane u t model =
             isAdmin || isAuthor
 
         hasBlobRight =
-            isAdmin && actionType_m /= Just NEW && blob_m /= Nothing
+            isAdmin && Maybe.map .action_type tc /= Just NEW && blob_m /= Nothing
+
+        rid =
+            nid2rootid t.receiver.nameid
+
+        isRoot =
+            t.emitter.nameid == rid && t.receiver.nameid == rid
     in
     div [ class "tensionSidePane" ] <|
         [ -- Assignees/User select
@@ -2539,19 +2542,32 @@ viewSidePane u t model =
                 text ""
         ]
             -- Extra action (Move, Lock, ...)
-            ++ (if isAdmin || isAuthor then
+            ++ (if not isRoot && (isAdmin || isAuthor) then
                     [ hr [ class "has-background-border-light" ] [] ]
-                        ++ [ div
-                                [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
-                                , onClick (DoMove t)
-                                ]
-                                [ span [ class "arrow-right2 pl-0 pr-2" ] [], textH T.moveTension ]
-                           , div
-                                [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
-                                , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
-                                ]
-                                [ A.icon "icon-disc mr-1", text "Change type" ]
+                        ++ [-- div [][]
                            ]
+                        ++ (if not isRoot then
+                                [ div
+                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    , onClick (DoMove t)
+                                    ]
+                                    [ span [ class "arrow-right2 pl-0 pr-2" ] [], textH T.moveTension ]
+                                ]
+
+                            else
+                                []
+                           )
+                        ++ (if isAdmin && (Maybe.map .doc_type tc /= Just NODE) then
+                                [ div
+                                    [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
+                                    , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)
+                                    ]
+                                    [ A.icon "icon-disc mr-1", text "Change type" ]
+                                ]
+
+                            else
+                                []
+                           )
                         ++ (if isAdmin then
                                 [--, div [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4" ] [ A.icon "icon-lock icon-sm mr-1", text "Lock tension" ]
                                 ]
