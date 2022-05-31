@@ -6,6 +6,7 @@ import Extra exposing (mor)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -614,6 +615,25 @@ type alias UserCtx =
     , roles : List UserRole
     , client_version : String
     , expiresAt : String
+    }
+
+
+type alias UserFull =
+    { username : String
+    , name : Maybe String
+    , rights : UserRights
+    , roles : List UserRole
+
+    --
+    , email : String
+    , notifyByEmail : Bool
+    , lang : Lang.Lang
+
+    --, bio : Maybe String
+    --, location : Maybe String
+    --, utc: Maybe String
+    --, links : Maybe (List String)
+    --, skills : Maybe (List String)
     }
 
 

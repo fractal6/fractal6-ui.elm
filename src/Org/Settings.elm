@@ -1226,7 +1226,10 @@ viewSettingsContent model =
                 ]
 
         GlobalMenu ->
-            viewOrgaSettings model.orga_rights model.switch_result model.switch_index
+            div []
+                [ h2 [ class "subtitle" ] [ text "Organisation settings" ]
+                , viewOrgaSettings model.orga_rights model.switch_result model.switch_index
+                ]
 
         EditMenu ->
             -- redirection

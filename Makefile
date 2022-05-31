@@ -20,7 +20,7 @@ run_prod:
 run_old:
 	npm run start
 
-build: assets
+build_: assets
 	npm run build
 
 prod:

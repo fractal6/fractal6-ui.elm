@@ -83,7 +83,7 @@ init global flags =
         gcmd =
             case global.session.user of
                 LoggedIn uctx ->
-                    Nav.replaceUrl global.key <| Route.toHref <| Route.User_Dynamic { param1 = uctx.username }
+                    Nav.replaceUrl global.key <| Route.toHref <| Route.Dynamic { param1 = uctx.username }
 
                 LoggedOut ->
                     Cmd.none

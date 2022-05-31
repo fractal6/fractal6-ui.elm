@@ -19,12 +19,14 @@ type Route
     | Signup
     | Verification
     | Dynamic { param1 : String }
+    | Dynamic_Settings { param1 : String }
     | New_Orga
     | M_Dynamic { param1 : String }
     | O_Dynamic { param1 : String }
     | S_Dynamic { param1 : String }
     | T_Dynamic { param1 : String }
     | User_Dynamic { param1 : String }
+    | User_Dynamic_Settings { param1 : String }
     | M_Dynamic_Dynamic { param1 : String, param2 : String }
     | O_Dynamic_Dynamic { param1 : String, param2 : String }
     | S_Dynamic_Dynamic { param1 : String, param2 : String }
@@ -59,6 +61,9 @@ routes =
         , (Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map Dynamic
+        , (Parser.string </> Parser.s "settings")
+          |> Parser.map (\param1 -> { param1 = param1 })
+          |> Parser.map Dynamic_Settings
         , Parser.map New_Orga (Parser.s "new" </> Parser.s "orga")
         , (Parser.s "m" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
@@ -75,6 +80,9 @@ routes =
         , (Parser.s "user" </> Parser.string)
           |> Parser.map (\param1 -> { param1 = param1 })
           |> Parser.map User_Dynamic
+        , (Parser.s "user" </> Parser.string </> Parser.s "settings")
+          |> Parser.map (\param1 -> { param1 = param1 })
+          |> Parser.map User_Dynamic_Settings
         , (Parser.s "m" </> Parser.string </> Parser.string)
           |> Parser.map (\param1 param2 -> { param1 = param1, param2 = param2 })
           |> Parser.map M_Dynamic_Dynamic
@@ -150,6 +158,9 @@ toHref route =
                 Dynamic { param1 } ->
                     [ param1 ]
                 
+                Dynamic_Settings { param1 } ->
+                    [ param1, "settings" ]
+                
                 New_Orga ->
                     [ "new", "orga" ]
                 
@@ -167,6 +178,9 @@ toHref route =
                 
                 User_Dynamic { param1 } ->
                     [ "user", param1 ]
+                
+                User_Dynamic_Settings { param1 } ->
+                    [ "user", param1, "settings" ]
                 
                 M_Dynamic_Dynamic { param1, param2 } ->
                     [ "m", param1, param2 ]

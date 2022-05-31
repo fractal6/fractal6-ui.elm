@@ -20,12 +20,14 @@ import Pages.PasswordReset
 import Pages.Signup
 import Pages.Verification
 import Pages.Dynamic
+import Pages.Dynamic.Settings
 import Pages.New.Orga
 import Pages.M.Dynamic
 import Pages.O.Dynamic
 import Pages.S.Dynamic
 import Pages.T.Dynamic
 import Pages.User.Dynamic
+import Pages.User.Dynamic.Settings
 import Pages.M.Dynamic.Dynamic
 import Pages.O.Dynamic.Dynamic
 import Pages.S.Dynamic.Dynamic
@@ -55,12 +57,14 @@ type Model
     | Signup_Model Pages.Signup.Model
     | Verification_Model Pages.Verification.Model
     | Dynamic_Model Pages.Dynamic.Model
+    | Dynamic_Settings_Model Pages.Dynamic.Settings.Model
     | New_Orga_Model Pages.New.Orga.Model
     | M_Dynamic_Model Pages.M.Dynamic.Model
     | O_Dynamic_Model Pages.O.Dynamic.Model
     | S_Dynamic_Model Pages.S.Dynamic.Model
     | T_Dynamic_Model Pages.T.Dynamic.Model
     | User_Dynamic_Model Pages.User.Dynamic.Model
+    | User_Dynamic_Settings_Model Pages.User.Dynamic.Settings.Model
     | M_Dynamic_Dynamic_Model Pages.M.Dynamic.Dynamic.Model
     | O_Dynamic_Dynamic_Model Pages.O.Dynamic.Dynamic.Model
     | S_Dynamic_Dynamic_Model Pages.S.Dynamic.Dynamic.Model
@@ -86,12 +90,14 @@ type Msg
     | Signup_Msg Pages.Signup.Msg
     | Verification_Msg Pages.Verification.Msg
     | Dynamic_Msg Pages.Dynamic.Msg
+    | Dynamic_Settings_Msg Pages.Dynamic.Settings.Msg
     | New_Orga_Msg Pages.New.Orga.Msg
     | M_Dynamic_Msg Pages.M.Dynamic.Msg
     | O_Dynamic_Msg Pages.O.Dynamic.Msg
     | S_Dynamic_Msg Pages.S.Dynamic.Msg
     | T_Dynamic_Msg Pages.T.Dynamic.Msg
     | User_Dynamic_Msg Pages.User.Dynamic.Msg
+    | User_Dynamic_Settings_Msg Pages.User.Dynamic.Settings.Msg
     | M_Dynamic_Dynamic_Msg Pages.M.Dynamic.Dynamic.Msg
     | O_Dynamic_Dynamic_Msg Pages.O.Dynamic.Dynamic.Msg
     | S_Dynamic_Dynamic_Msg Pages.S.Dynamic.Dynamic.Msg
@@ -128,12 +134,14 @@ type alias UpgradedPages =
     , signup : UpgradedPage Pages.Signup.Flags Pages.Signup.Model Pages.Signup.Msg
     , verification : UpgradedPage Pages.Verification.Flags Pages.Verification.Model Pages.Verification.Msg
     , dynamic : UpgradedPage Pages.Dynamic.Flags Pages.Dynamic.Model Pages.Dynamic.Msg
+    , dynamic_settings : UpgradedPage Pages.Dynamic.Settings.Flags Pages.Dynamic.Settings.Model Pages.Dynamic.Settings.Msg
     , new_orga : UpgradedPage Pages.New.Orga.Flags Pages.New.Orga.Model Pages.New.Orga.Msg
     , m_dynamic : UpgradedPage Pages.M.Dynamic.Flags Pages.M.Dynamic.Model Pages.M.Dynamic.Msg
     , o_dynamic : UpgradedPage Pages.O.Dynamic.Flags Pages.O.Dynamic.Model Pages.O.Dynamic.Msg
     , s_dynamic : UpgradedPage Pages.S.Dynamic.Flags Pages.S.Dynamic.Model Pages.S.Dynamic.Msg
     , t_dynamic : UpgradedPage Pages.T.Dynamic.Flags Pages.T.Dynamic.Model Pages.T.Dynamic.Msg
     , user_dynamic : UpgradedPage Pages.User.Dynamic.Flags Pages.User.Dynamic.Model Pages.User.Dynamic.Msg
+    , user_dynamic_settings : UpgradedPage Pages.User.Dynamic.Settings.Flags Pages.User.Dynamic.Settings.Model Pages.User.Dynamic.Settings.Msg
     , m_dynamic_dynamic : UpgradedPage Pages.M.Dynamic.Dynamic.Flags Pages.M.Dynamic.Dynamic.Model Pages.M.Dynamic.Dynamic.Msg
     , o_dynamic_dynamic : UpgradedPage Pages.O.Dynamic.Dynamic.Flags Pages.O.Dynamic.Dynamic.Model Pages.O.Dynamic.Dynamic.Msg
     , s_dynamic_dynamic : UpgradedPage Pages.S.Dynamic.Dynamic.Flags Pages.S.Dynamic.Dynamic.Model Pages.S.Dynamic.Dynamic.Msg
@@ -161,12 +169,14 @@ pages =
     , signup = Pages.Signup.page |> Page.upgrade Signup_Model Signup_Msg
     , verification = Pages.Verification.page |> Page.upgrade Verification_Model Verification_Msg
     , dynamic = Pages.Dynamic.page |> Page.upgrade Dynamic_Model Dynamic_Msg
+    , dynamic_settings = Pages.Dynamic.Settings.page |> Page.upgrade Dynamic_Settings_Model Dynamic_Settings_Msg
     , new_orga = Pages.New.Orga.page |> Page.upgrade New_Orga_Model New_Orga_Msg
     , m_dynamic = Pages.M.Dynamic.page |> Page.upgrade M_Dynamic_Model M_Dynamic_Msg
     , o_dynamic = Pages.O.Dynamic.page |> Page.upgrade O_Dynamic_Model O_Dynamic_Msg
     , s_dynamic = Pages.S.Dynamic.page |> Page.upgrade S_Dynamic_Model S_Dynamic_Msg
     , t_dynamic = Pages.T.Dynamic.page |> Page.upgrade T_Dynamic_Model T_Dynamic_Msg
     , user_dynamic = Pages.User.Dynamic.page |> Page.upgrade User_Dynamic_Model User_Dynamic_Msg
+    , user_dynamic_settings = Pages.User.Dynamic.Settings.page |> Page.upgrade User_Dynamic_Settings_Model User_Dynamic_Settings_Msg
     , m_dynamic_dynamic = Pages.M.Dynamic.Dynamic.page |> Page.upgrade M_Dynamic_Dynamic_Model M_Dynamic_Dynamic_Msg
     , o_dynamic_dynamic = Pages.O.Dynamic.Dynamic.page |> Page.upgrade O_Dynamic_Dynamic_Model O_Dynamic_Dynamic_Msg
     , s_dynamic_dynamic = Pages.S.Dynamic.Dynamic.page |> Page.upgrade S_Dynamic_Dynamic_Model S_Dynamic_Dynamic_Msg
@@ -219,6 +229,9 @@ init route =
         Route.Dynamic params ->
             pages.dynamic.init params
         
+        Route.Dynamic_Settings params ->
+            pages.dynamic_settings.init params
+        
         Route.New_Orga ->
             pages.new_orga.init ()
         
@@ -236,6 +249,9 @@ init route =
         
         Route.User_Dynamic params ->
             pages.user_dynamic.init params
+        
+        Route.User_Dynamic_Settings params ->
+            pages.user_dynamic_settings.init params
         
         Route.M_Dynamic_Dynamic params ->
             pages.m_dynamic_dynamic.init params
@@ -311,6 +327,9 @@ update bigMsg bigModel =
         ( Dynamic_Msg msg, Dynamic_Model model ) ->
             pages.dynamic.update msg model
         
+        ( Dynamic_Settings_Msg msg, Dynamic_Settings_Model model ) ->
+            pages.dynamic_settings.update msg model
+        
         ( New_Orga_Msg msg, New_Orga_Model model ) ->
             pages.new_orga.update msg model
         
@@ -328,6 +347,9 @@ update bigMsg bigModel =
         
         ( User_Dynamic_Msg msg, User_Dynamic_Model model ) ->
             pages.user_dynamic.update msg model
+        
+        ( User_Dynamic_Settings_Msg msg, User_Dynamic_Settings_Model model ) ->
+            pages.user_dynamic_settings.update msg model
         
         ( M_Dynamic_Dynamic_Msg msg, M_Dynamic_Dynamic_Model model ) ->
             pages.m_dynamic_dynamic.update msg model
@@ -406,6 +428,9 @@ bundle bigModel =
         Dynamic_Model model ->
             pages.dynamic.bundle model
         
+        Dynamic_Settings_Model model ->
+            pages.dynamic_settings.bundle model
+        
         New_Orga_Model model ->
             pages.new_orga.bundle model
         
@@ -423,6 +448,9 @@ bundle bigModel =
         
         User_Dynamic_Model model ->
             pages.user_dynamic.bundle model
+        
+        User_Dynamic_Settings_Model model ->
+            pages.user_dynamic_settings.bundle model
         
         M_Dynamic_Dynamic_Model model ->
             pages.m_dynamic_dynamic.bundle model

@@ -62,7 +62,7 @@ uctxPayload =
                 )
                 |> SelectionSet.map (\x -> withDefault [] x)
             )
-        -- not used here
+        -- Not got from the graph
         |> hardcoded ""
         |> hardcoded ""
 

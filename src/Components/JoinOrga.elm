@@ -57,7 +57,6 @@ type alias Model =
 type JoinStep
     = JoinOne
     | InviteOne
-    | JoinNotAuthorized ErrorData --  @obsolete ?
     | AuthNeeded
 
 
@@ -180,7 +179,7 @@ canExitSafe model =
                     not (isUsersSendable model.form.users)
 
                 _ ->
-                    False
+                    True
            )
 
 
@@ -654,9 +653,6 @@ viewJoinStep op model =
                         ]
                     ]
                 ]
-
-        JoinNotAuthorized errMsg ->
-            viewGqlErrors errMsg
 
         AuthNeeded ->
             viewAuthNeeded OnClose

@@ -14,13 +14,20 @@ var App = require( '../src/Main' );
 window.addEventListener('load', _ => {
 
     // Local session
+    // --
+    // User session
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
+    // Window pos
     var window_pos = JSON.parse(localStorage.getItem("window_pos"));
+    // Theme
     var theme = localStorage.getItem("theme");
     if (theme) document.documentElement.className = theme;
     else document.documentElement.className = "dark";
+    // Lang
+    // ...
 
     // Init Elm
+    // --
     window.ports.init(App.Elm.Main.init({
         node: document.getElementById('main'),
         flags: {

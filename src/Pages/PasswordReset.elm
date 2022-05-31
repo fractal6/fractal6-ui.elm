@@ -94,7 +94,7 @@ init global flags =
         gcmd =
             --case global.session.user of
             --    LoggedIn uctx ->
-            --        Global.navigate <| Route.User_Dynamic { param1 = uctx.username }
+            --        Global.navigate <| Route.Dynamic { param1 = uctx.username }
             --    LoggedOut ->
             Cmd.none
 

@@ -225,7 +225,7 @@ update msg model =
                         LoggedIn uctx ->
                             let
                                 home =
-                                    Route.User_Dynamic { param1 = uctx.username }
+                                    Route.Dynamic { param1 = uctx.username }
                             in
                             case model.session.referer of
                                 Just referer ->
