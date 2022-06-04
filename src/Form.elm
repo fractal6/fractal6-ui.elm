@@ -32,6 +32,14 @@ isPostSendable keys post =
         |> List.all (\x -> String.length x > 0)
 
 
+isPostSendableOr : List String -> Post -> Bool
+isPostSendableOr keys post =
+    keys
+        |> List.map
+            (\k -> Dict.get k post)
+        |> List.any (\x -> x /= Nothing)
+
+
 isLoginSendable : Post -> Bool
 isLoginSendable post =
     isPostSendable [ "username", "password" ] post

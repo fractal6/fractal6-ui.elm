@@ -22,12 +22,12 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getRoles, getRootids, nid2rootid, uriFromNameid)
 import ModelCommon.Requests exposing (getQuickDoc, login)
-import ModelCommon.View exposing (getAvatar3, roleColor, viewOrgaMedia)
+import ModelCommon.View exposing (viewOrgaMedia, viewProfileC)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
 import Query.QueryNode exposing (queryNodeExt)
-import Query.QueryUser exposing (queryUctx)
+import Query.QueryUser exposing (queryUserProfile)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
@@ -84,8 +84,7 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { username : String
-    , user : GqlData UserCtx
-    , uctx_my : Maybe UserCtx
+    , user : GqlData UserProfile
     , orgas : GqlData (List NodeExt)
 
     -- Common
@@ -102,9 +101,9 @@ type alias Model =
 type Msg
     = PassedSlowLoadTreshold -- timer
     | Submit (Time.Posix -> Msg) -- Get Current Time
-    | LoadNodes UserCtx
+    | LoadNodes (List UserRole)
     | GotNodes (GqlData (List NodeExt))
-    | GotUctx (GqlData UserCtx)
+    | GotProfile (GqlData UserProfile)
       -- Common
     | NoMsg
     | LogErr String
@@ -129,30 +128,9 @@ init global flags =
         username =
             flags.param1 |> Url.percentDecode |> withDefault ""
 
-        uctx_my =
-            case global.session.user of
-                LoggedIn uctx ->
-                    Just uctx
-
-                LoggedOut ->
-                    Nothing
-
-        uctx_data =
-            case uctx_my of
-                Just uctx ->
-                    if uctx.username == username then
-                        Success uctx
-
-                    else
-                        Loading
-
-                Nothing ->
-                    Loading
-
         model =
             { username = username
-            , user = uctx_data
-            , uctx_my = uctx_my
+            , user = Loading
             , orgas = Loading
 
             -- common
@@ -162,12 +140,7 @@ init global flags =
             }
 
         cmds =
-            [ case uctx_data of
-                Success uctx ->
-                    send (LoadNodes uctx)
-
-                _ ->
-                    queryUctx apis username GotUctx
+            [ queryUserProfile apis username GotProfile
             , sendSleep PassedSlowLoadTreshold 500
             ]
     in
@@ -188,8 +161,8 @@ update global message model =
             global.session.apis
     in
     case message of
-        LoadNodes uctx ->
-            case getRootids uctx.roles of
+        LoadNodes roles ->
+            case getRootids roles of
                 [] ->
                     ( model, Cmd.none, Cmd.none )
 
@@ -209,14 +182,14 @@ update global message model =
         GotNodes result ->
             case parseErr result model.refresh_trial of
                 Authenticate ->
-                    ( model, Ports.raiseAuthModal (withDefault initUserctx model.uctx_my), Cmd.none )
+                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
 
                 RefreshToken i ->
                     let
-                        uctx =
-                            withMaybeData model.user |> withDefault initUserctx
+                        roles =
+                            withMaybeData model.user |> Maybe.map .roles |> withDefault []
                     in
-                    ( { model | refresh_trial = i }, sendSleep (LoadNodes uctx) 500, send UpdateUserToken )
+                    ( { model | refresh_trial = i }, sendSleep (LoadNodes roles) 500, send UpdateUserToken )
 
                 OkAuth _ ->
                     ( { model | orgas = result }, Cmd.none, Cmd.none )
@@ -224,10 +197,10 @@ update global message model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        GotUctx result ->
+        GotProfile result ->
             case result of
-                Success uctx ->
-                    ( { model | user = result }, send (LoadNodes uctx), Cmd.none )
+                Success user ->
+                    ( { model | user = result }, send (LoadNodes user.roles), Cmd.none )
 
                 _ ->
                     ( { model | user = result }, Cmd.none, Cmd.none )
@@ -310,7 +283,7 @@ view global model =
     , body =
         [ case model.user of
             Success user ->
-                view_ global model user
+                view_ user model
 
             NotAsked ->
                 text ""
@@ -329,41 +302,25 @@ view global model =
     }
 
 
-view_ : Global.Model -> Model -> UserCtx -> Html Msg
-view_ _ model uctx =
+view_ : UserProfile -> Model -> Html Msg
+view_ user model =
     div [ id "profile", class "section" ]
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
                 [ div [ class "columns is-centered" ]
-                    [ viewProfileLeft model uctx ]
+                    [ viewProfileC user ]
                 ]
             , div [ class "column is-7 " ]
-                [ viewProfileRight model uctx ]
+                [ viewProfileRight user model ]
             ]
         ]
 
 
-viewProfileLeft : Model -> UserCtx -> Html Msg
-viewProfileLeft _ uctx =
-    div []
-        [ div [ class "content" ] [ getAvatar3 uctx.username ]
-        , div [ class "content" ]
-            [ case uctx.name of
-                Just name ->
-                    div [ class "title is-4" ] [ text name ]
-
-                Nothing ->
-                    div [] []
-            , div [ class "is-size-5" ] [ text ("@" ++ uctx.username) ]
-            ]
-        ]
-
-
-viewProfileRight : Model -> UserCtx -> Html Msg
-viewProfileRight model uctx =
+viewProfileRight : UserProfile -> Model -> Html Msg
+viewProfileRight user model =
     div []
         [ h1 [ class "subtitle" ] [ textH T.organisations ]
-        , if List.length (getRoles uctx) == 0 then
+        , if List.length (getRoles user) == 0 then
             p [ class "section content" ] <|
                 List.intersperse (text " ")
                     [ p [] [ text "Welcome," ]
@@ -380,7 +337,7 @@ viewProfileRight model uctx =
           else
             case model.orgas of
                 Success orgas ->
-                    viewUserOrgas uctx orgas
+                    viewUserOrgas user orgas
 
                 Failure err ->
                     viewGqlErrors err
@@ -421,9 +378,9 @@ viewProfileRight model uctx =
         ]
 
 
-viewUserOrgas : UserCtx -> List NodeExt -> Html Msg
-viewUserOrgas uctx orgas =
+viewUserOrgas : UserCommon a -> List NodeExt -> Html Msg
+viewUserOrgas user orgas =
     orgas
         |> List.map
-            (\root -> viewOrgaMedia (LoggedIn uctx) root)
+            (\root -> viewOrgaMedia (Just user) root)
         |> div [ class "nodesList" ]

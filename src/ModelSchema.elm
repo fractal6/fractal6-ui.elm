@@ -25,6 +25,11 @@ import Text as T
 
 
 
+{-
+   @WARNING: changing field order may break Json decoder.
+   The decoder's field have to be ordered following the
+   alias type definition.
+-}
 --
 -- Frontend Data Structure
 --
@@ -601,11 +606,6 @@ type alias NotificationsForm =
 --
 -- User auth
 --
-{-
-   @WARNING: changing field order will break user decoder.
-   The decoder's field have to be ordered following the
-   alias type definition.
--}
 
 
 type alias UserCtx =
@@ -618,6 +618,24 @@ type alias UserCtx =
     }
 
 
+type alias UserProfile =
+    { username : String
+    , name : Maybe String
+    , rights : UserRights
+    , roles : List UserRole
+
+    --
+    , notifyByEmail : Bool
+    , lang : Lang.Lang
+    , bio : Maybe String
+    , location : Maybe String
+
+    --, utc: Maybe String
+    --, links : Maybe (List String)
+    --, skills : Maybe (List String)
+    }
+
+
 type alias UserFull =
     { username : String
     , name : Maybe String
@@ -625,15 +643,35 @@ type alias UserFull =
     , roles : List UserRole
 
     --
-    , email : String
     , notifyByEmail : Bool
     , lang : Lang.Lang
+    , bio : Maybe String
+    , location : Maybe String
 
-    --, bio : Maybe String
-    --, location : Maybe String
     --, utc: Maybe String
     --, links : Maybe (List String)
     --, skills : Maybe (List String)
+    -- private
+    , email : String
+    }
+
+
+type alias UserCommon a =
+    { a
+        | username : String
+        , name : Maybe String
+        , rights : UserRights
+        , roles : List UserRole
+
+        --
+        , notifyByEmail : Bool
+        , lang : Lang.Lang
+        , bio : Maybe String
+        , location : Maybe String
+
+        --, utc: Maybe String
+        --, links : Maybe (List String)
+        --, skills : Maybe (List String)
     }
 
 

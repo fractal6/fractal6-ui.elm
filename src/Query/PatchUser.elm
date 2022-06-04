@@ -1,4 +1,9 @@
-module Query.PatchUser exposing (markAllAsRead, markAsRead, toggleTensionSubscription)
+module Query.PatchUser exposing
+    ( markAllAsRead
+    , markAsRead
+    , patchUser
+    , toggleTensionSubscription
+    )
 
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -16,13 +21,79 @@ import Fractal.Object.UserEvent
 import Fractal.Object.UserRights
 import Fractal.Scalar
 import GqlClient exposing (..)
-import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..))
+import Graphql.OptionalArgument as OptionalArgument exposing (OptionalArgument(..), fromMaybe)
 import Graphql.SelectionSet as SelectionSet exposing (SelectionSet, hardcoded, with)
 import Maybe exposing (withDefault)
+import ModelCommon exposing (UserProfileForm)
 import ModelSchema exposing (..)
-import Query.QueryUser exposing (IsSubscribe, isSubscribePayload)
+import Query.QueryUser exposing (IsSubscribe, isSubscribePayload, userFullPayload, userProfilePayload)
 import RemoteData exposing (RemoteData)
 import String.Extra as SE
+
+
+
+{-
+   Update settings
+-}
+
+
+type alias UserPatchPayload =
+    { user : Maybe (List (Maybe UserFull)) }
+
+
+userPatchDecoder : Maybe UserPatchPayload -> Maybe UserFull
+userPatchDecoder data =
+    data
+        |> Maybe.andThen
+            (\d ->
+                d.user
+                    |> Maybe.map (List.filterMap identity)
+                    |> withDefault []
+                    |> List.head
+            )
+
+
+patchUser url form msg =
+    makeGQLMutation url
+        (Mutation.updateUser
+            (userProfileInputEncoder form)
+            (SelectionSet.map UserPatchPayload <|
+                Fractal.Object.UpdateUserPayload.user identity
+                    userFullPayload
+            )
+        )
+        (RemoteData.fromResult >> decodeResponse userPatchDecoder >> msg)
+
+
+userProfileInputEncoder : UserProfileForm -> Mutation.UpdateUserRequiredArguments
+userProfileInputEncoder form =
+    let
+        inputReq =
+            { filter =
+                Input.buildUserFilter
+                    (\f ->
+                        { f | username = { eq = Present form.username, regexp = Absent, in_ = Absent } |> Present }
+                    )
+            }
+
+        inputOpt =
+            \_ ->
+                { set =
+                    Input.buildUserPatch
+                        (\s ->
+                            { s
+                                | name = fromMaybe (Dict.get "name" form.post)
+                                , bio = fromMaybe (Dict.get "bio" form.post)
+                                , location = fromMaybe (Dict.get "location" form.post)
+                                , lang = fromMaybe form.lang
+                                , notifyByEmail = fromMaybe form.notifyByEmail
+                            }
+                        )
+                        |> Present
+                , remove = Absent
+                }
+    in
+    { input = Input.buildUpdateUserInput inputReq inputOpt }
 
 
 

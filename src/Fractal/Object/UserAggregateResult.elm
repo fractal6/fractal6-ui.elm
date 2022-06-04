@@ -94,6 +94,16 @@ bioMax =
     Object.selectionForField "(Maybe String)" "bioMax" [] (Decode.string |> Decode.nullable)
 
 
+locationMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
+locationMin =
+    Object.selectionForField "(Maybe String)" "locationMin" [] (Decode.string |> Decode.nullable)
+
+
+locationMax : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
+locationMax =
+    Object.selectionForField "(Maybe String)" "locationMax" [] (Decode.string |> Decode.nullable)
+
+
 utcMin : SelectionSet (Maybe String) Fractal.Object.UserAggregateResult
 utcMin =
     Object.selectionForField "(Maybe String)" "utcMin" [] (Decode.string |> Decode.nullable)

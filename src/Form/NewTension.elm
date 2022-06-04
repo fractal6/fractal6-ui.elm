@@ -44,7 +44,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, style, tabindex, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -905,7 +905,7 @@ update_ apis message model =
                             ( setResult result data, out1 [ DoPushTension tension, DoFetchNode newNameid ] )
 
                 DuplicateErr ->
-                    ( setResult (Failure [ "Duplicate Error: this name is already taken." ]) model, noOut )
+                    ( setResult (Failure [ "Duplicate Error: this name (URL) is already taken." ]) model, noOut )
 
                 _ ->
                     ( setResult result model, noOut )
@@ -1020,15 +1020,15 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    -- @obsolete: remove it.
-    --if model.preventGlitch then
-    --    text ""
-    --else
-    div []
-        [ viewModal op (State model)
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        , viewButton op model
-        ]
+    if model.preventGlitch then
+        text ""
+
+    else
+        div []
+            [ viewModal op (State model)
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , viewButton op model
+            ]
 
 
 viewButton : Op -> Model -> Html Msg
@@ -1103,117 +1103,6 @@ viewStep op (State model) =
             viewAuthNeeded OnClose
 
 
-viewSources : Model -> TensionStep -> Html Msg
-viewSources model nextStep =
-    div [ class "modal-card submitFocus" ]
-        [ div [ class "modal-card-head" ]
-            [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.nodeDoc.form.action |> text ] ]
-        , div [ class "modal-card-body" ]
-            [ div [ class "buttons buttonRadio", attribute "style" "margin-bottom: 2em; margin-right: 2em; margin-left: 2em;" ] <|
-                List.map
-                    (\r ->
-                        button
-                            [ class ("button buttonRole tooltip has-tooltip-arrow defaultSubmit has-tooltip-bottom is-" ++ roleColor r.role_type)
-                            , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
-                            , onClick (OnTensionStep nextStep)
-                            ]
-                            [ text r.name ]
-                    )
-                    model.sources
-            ]
-        ]
-
-
-viewTensionTabs : TensionTab -> PNode -> Html Msg
-viewTensionTabs tab targ =
-    let
-        type_ =
-            nid2type targ.nameid
-    in
-    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
-        [ ul []
-            [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
-                    [ A.icon1 "icon-exchange" "Tension" ]
-                ]
-            , if type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
-                        [ A.icon1 "icon-leaf" "Role" ]
-                    ]
-
-              else
-                text ""
-            , if type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
-                        [ A.icon1 "icon-git-branch" "Circle" ]
-                    ]
-
-              else
-                text ""
-            ]
-        ]
-
-
-viewRecipients : Model -> Html Msg
-viewRecipients model =
-    let
-        form =
-            model.nodeDoc.form
-    in
-    div [ class "level-right" ]
-        [ span [ class "has-text-grey-light is-size-6" ] [ textH (T.from ++ ": ") ]
-        , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger " ]
-                [ span [ attribute "aria-controls" "source-menu" ]
-                    [ span
-                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
-                        [ text form.source.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
-                    ]
-                ]
-            , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
-                [ div [ class "dropdown-content" ] <|
-                    List.map
-                        (\t ->
-                            div
-                                [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
-                                , onClick (OnChangeTensionSource t)
-                                ]
-                                [ A.icon1 "icon-user" t.name ]
-                        )
-                        (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
-                ]
-            ]
-        , span [ class "right-arro mx-3" ] []
-        , span [ class "has-text-grey-light is-size-6" ] [ textH (T.to ++ ": ") ]
-        , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger " ]
-                [ span [ attribute "aria-controls" "target-menu" ]
-                    [ span
-                        [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
-                        [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
-                    ]
-                ]
-            , div [ id "target-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
-                [ div [ class "dropdown-content" ] <|
-                    List.map
-                        (\t ->
-                            div
-                                [ class <| "dropdown-item has-text-weight-semibold button-light"
-                                , onClick (OnChangeTensionTarget t)
-                                ]
-                                [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
-                        )
-                        (getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
-                            |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
-                            |> List.sortWith sortNode
-                        )
-                ]
-            ]
-        ]
-
-
 viewSuccess : Tension -> Model -> Html Msg
 viewSuccess res model =
     let
@@ -1256,6 +1145,51 @@ viewSuccess res model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
+    div [ class "panel-heading pt-4 pb-3", attribute "style" "border-bottom: 1px solid;" ]
+        [ div [ class "level modal-card-title is-size-6" ]
+            [ div [ class "level-left" ]
+                [ span [ class "has-text-weight-semibold" ] [ textT model.txt.title ] ]
+            , div [ class "level-item" ]
+                [ viewTensionType model ]
+            , div [ class "level-right" ] [ viewRecipients model ]
+            ]
+        ]
+
+
+viewTensionTabs : TensionTab -> PNode -> Html Msg
+viewTensionTabs tab targ =
+    let
+        type_ =
+            nid2type targ.nameid
+    in
+    div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
+        [ ul []
+            [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
+                [ a [ class "tootltip has-tooltip-bottom", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                    [ A.icon1 "icon-exchange" "Tension" ]
+                ]
+            , if type_ == NodeType.Circle then
+                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
+                    [ a [ class "tootltip has-tooltip-bottom", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                        [ A.icon1 "icon-leaf" "Role" ]
+                    ]
+
+              else
+                text ""
+            , if type_ == NodeType.Circle then
+                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
+                    [ a [ class "tootltip has-tooltip-bottom", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                        [ A.icon1 "icon-git-branch" "Circle" ]
+                    ]
+
+              else
+                text ""
+            ]
+        ]
+
+
+viewTensionType : Model -> Html Msg
+viewTensionType model =
     let
         form =
             model.nodeDoc.form
@@ -1263,41 +1197,113 @@ viewHeader model =
         tension_type =
             withDefault TensionType.Operational form.type_
     in
-    div [ class "panel-heading" ]
-        [ div [ class "level modal-card-title" ]
-            [ div [ class "level-left" ] <|
-                List.intersperse (text T.space_)
-                    [ span [ class "is-size-6 has-text-weight-semibold" ]
-                        [ textT model.txt.title
-                        , span [ class "has-text-weight-medium" ] [ text " | " ]
-                        , if model.activeTab == NewTensionTab then
-                            span [ class "dropdown", style "vertical-align" "unset" ]
-                                [ span [ class "dropdown-trigger button-light" ]
-                                    [ span [ attribute "aria-controls" "type-menu" ]
-                                        [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                                            [ tensionIcon2 tension_type, span [ class "ml-2 arrow down" ] [] ]
-                                        ]
-                                    ]
-                                , div [ id "type-menu", class "dropdown-menu", attribute "role" "menu" ]
-                                    [ div [ class "dropdown-content" ] <|
-                                        List.map
-                                            (\t ->
-                                                div
-                                                    [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
-                                                    , onClick (OnChangeTensionType t)
-                                                    ]
-                                                    [ tensionIcon2 t ]
-                                            )
-                                            TensionType.list
-                                    ]
-                                ]
-
-                          else
-                            span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
-                                [ tensionIcon2 tension_type ]
+    div []
+        [ span [ class "has-text-grey-light" ] [ textH ("type" ++ ":" ++ T.space_) ]
+        , if model.activeTab == NewTensionTab then
+            span [ class "dropdown", style "vertical-align" "unset" ]
+                [ span [ class "dropdown-trigger button-light" ]
+                    [ span [ attribute "aria-controls" "type-menu" ]
+                        [ span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
+                            [ tensionIcon2 tension_type ]
+                        , span [ class "ml-2 arrow down" ] []
                         ]
                     ]
-            , viewRecipients model
+                , div [ id "type-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
+                    [ div [ class "dropdown-content" ] <|
+                        List.map
+                            (\t ->
+                                div
+                                    [ class <| "dropdown-item button-light " ++ tensionTypeColor "text" t
+                                    , onClick (OnChangeTensionType t)
+                                    ]
+                                    [ tensionIcon2 t ]
+                            )
+                            TensionType.list
+                    ]
+                ]
+
+          else
+            span [ class <| "has-text-weight-medium " ++ tensionTypeColor "text" tension_type ]
+                [ tensionIcon2 tension_type ]
+        ]
+
+
+viewRecipients : Model -> Html Msg
+viewRecipients model =
+    let
+        form =
+            model.nodeDoc.form
+    in
+    div []
+        [ -- @DEBUG: emitter is ignored now...
+          --span [ class "has-text-grey-light" ] [ textH (T.from ++ T.space_) ]
+          --, span [ class "dropdown" ]
+          --    [ span [ class "dropdown-trigger " ]
+          --        [ span [ attribute "aria-controls" "source-menu" ]
+          --            [ span
+          --                [ class "button is-small is-light is-rounded", attribute "style" "border:1px solid black;" ]
+          --                [ text form.source.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+          --            ]
+          --        ]
+          --    , div [ id "source-menu", class "dropdown-menu", attribute "role" "menu" ]
+          --        [ div [ class "dropdown-content" ] <|
+          --            List.map
+          --                (\t ->
+          --                    div
+          --                        [ class <| "dropdown-item has-text-weight-semibold button-light has-text-" ++ (roleColor t.role_type |> String.replace "primary" "info")
+          --                        , onClick (OnChangeTensionSource t)
+          --                        ]
+          --                        [ A.icon1 "icon-user" t.name ]
+          --                )
+          --                (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
+          --        ]
+          --    ]
+          span [ class "has-text-grey-light" ] [ textH (T.to ++ ":" ++ T.space_) ]
+        , span [ class "dropdown" ]
+            [ span [ class "dropdown-trigger" ]
+                [ span [ attribute "aria-controls" "target-menu" ]
+                    [ span
+                        -- @debug display: why is not alianged
+                        [ class "button is-small has-border is-rounded", style "display" "inline" ]
+                        [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
+                    ]
+                ]
+            , div [ id "target-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
+                [ div [ class "dropdown-content" ] <|
+                    List.map
+                        (\t ->
+                            div
+                                [ class <| "dropdown-item has-text-weight-semibold button-light"
+                                , onClick (OnChangeTensionTarget t)
+                                ]
+                                [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
+                        )
+                        (getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
+                            |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
+                            |> List.sortWith sortNode
+                        )
+                ]
+            ]
+        ]
+
+
+viewSources : Model -> TensionStep -> Html Msg
+viewSources model nextStep =
+    div [ class "modal-card submitFocus" ]
+        [ div [ class "modal-card-head" ]
+            [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.nodeDoc.form.action |> text ] ]
+        , div [ class "modal-card-body" ]
+            [ div [ class "buttons buttonRadio", attribute "style" "margin-bottom: 2em; margin-right: 2em; margin-left: 2em;" ] <|
+                List.map
+                    (\r ->
+                        button
+                            [ class ("button buttonRole tooltip has-tooltip-arrow defaultSubmit has-tooltip-bottom is-" ++ roleColor r.role_type)
+                            , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
+                            , onClick (OnTensionStep nextStep)
+                            ]
+                            [ text r.name ]
+                    )
+                    model.sources
             ]
         ]
 
@@ -1348,6 +1354,7 @@ viewTension model =
                                 , attribute "data-nextfocus" "textAreaModal"
                                 , type_ "text"
                                 , placeholder (upH T.title)
+                                , spellcheck True
                                 , required True
                                 , value title
                                 , onInput (OnChangePost "title")
@@ -1566,6 +1573,7 @@ viewNodeValidate model =
 
         op_ =
             { data = model.nodeDoc
+            , result = model.result
             , onChangePost = OnChangePost
             , onAddDomains = OnAddDomains
             , onAddPolicies = OnAddPolicies

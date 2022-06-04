@@ -52,7 +52,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, style, target, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, readonly, rows, spellcheck, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -1589,6 +1589,7 @@ viewTension u t model =
                                     , class "input is-human"
                                     , type_ "text"
                                     , placeholder "Title*"
+                                    , spellcheck True
                                     , value title
                                     , onInput (ChangeTensionPost "title")
                                     ]
@@ -1639,9 +1640,9 @@ viewTension u t model =
                       else
                         text ""
                     , viewTensionDateAndUser model.now "is-discrete" t.createdAt t.createdBy
-                    , viewTensionArrow "is-pulled-right" t.emitter t.receiver
 
-                    --, div [ class "mx-2 mt-4" ] [ viewTensionArrow "" t.emitter t.receiver ]
+                    -- @DEBUG: emitter and receiver not used anymore ?
+                    --, viewTensionArrow "is-pulled-right" t.emitter t.receiver
                     ]
                 ]
             ]
@@ -1952,7 +1953,7 @@ viewEventStatus now event status =
                     ( "icon-alert-circle", T.closed )
     in
     [ span [ class "media-left" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
-    , span [ class "media-content", attribute "style" "padding-top: 2px;margin-left: -4px" ]
+    , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
         ]
     ]
@@ -2276,6 +2277,7 @@ viewDocument u t b model =
                     let
                         msgs =
                             { data = model.nodeDoc
+                            , result = NotAsked
                             , onBlobEdit = DoBlobEdit
                             , onCancelBlob = CancelBlob
                             , onSubmitBlob = SubmitBlob
@@ -2447,62 +2449,67 @@ viewSidePane u t model =
             ]
 
         -- Document
-        , div
-            [ class "media" ]
-            [ div [ class "media-content" ] <|
-                (case u of
-                    LoggedIn _ ->
-                        let
-                            domid =
-                                "actionPanelContent"
-                        in
-                        [ div [ id domid ]
-                            [ h2
-                                [ class "subtitle is-h"
-                                , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                                , Maybe.map (\b -> onClick (DoActionEdit domid b)) blob_m |> withDefault (onClick NoMsg)
-                                ]
-                                [ textH T.document
-                                , if ActionPanel.isOpen_ model.actionPanel then
-                                    A.icon "icon-x is-pulled-right"
+        , -- Hide if there is no document
+          if t.action == Nothing then
+            text ""
 
-                                  else if hasBlobRight || hasRole then
-                                    A.icon "icon-settings is-pulled-right"
+          else
+            div
+                [ class "media" ]
+                [ div [ class "media-content" ] <|
+                    (case u of
+                        LoggedIn _ ->
+                            let
+                                domid =
+                                    "actionPanelContent"
+                            in
+                            [ div [ id domid ]
+                                [ h2
+                                    [ class "subtitle is-h"
+                                    , classList [ ( "is-w", hasBlobRight || hasRole ) ]
+                                    , Maybe.map (\b -> onClick (DoActionEdit domid b)) blob_m |> withDefault (onClick NoMsg)
+                                    ]
+                                    [ textH T.document
+                                    , if ActionPanel.isOpen_ model.actionPanel then
+                                        A.icon "icon-x is-pulled-right"
+
+                                      else if hasBlobRight || hasRole then
+                                        A.icon "icon-settings is-pulled-right"
+
+                                      else
+                                        text ""
+                                    ]
+                                , if hasBlobRight || hasRole then
+                                    let
+                                        panelData =
+                                            { tc = tc
+                                            , isAdmin = hasBlobRight
+                                            , hasRole = hasRole
+                                            , isRight = False
+                                            , domid = domid
+                                            , orga_data = model.orga_data
+                                            }
+                                    in
+                                    ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
 
                                   else
                                     text ""
                                 ]
-                            , if hasBlobRight || hasRole then
-                                let
-                                    panelData =
-                                        { tc = tc
-                                        , isAdmin = hasBlobRight
-                                        , hasRole = hasRole
-                                        , isRight = False
-                                        , domid = domid
-                                        , orga_data = model.orga_data
-                                        }
-                                in
-                                ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
-
-                              else
-                                text ""
                             ]
-                        ]
 
-                    LoggedOut ->
-                        [ h2 [ class "subtitle" ] [ textH T.document ] ]
-                )
-                    ++ [ div []
-                            [ case t.action of
-                                Just action ->
-                                    viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (actionNameStr action)) ""
+                        LoggedOut ->
+                            [ h2 [ class "subtitle" ] [ textH T.document ] ]
+                    )
+                        ++ [ div []
+                                [ case t.action of
+                                    Just action ->
+                                        viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (actionNameStr action)) ""
 
-                                Nothing ->
-                                    div [ class "help is-italic" ] [ textH T.noDocument ]
-                            ]
-                       ]
-            ]
+                                    Nothing ->
+                                        div [ class "help is-italic" ] [ textH T.noDocument ]
+                                ]
+                           ]
+                ]
         , -- Subscriptions
           case u of
             LoggedIn uctx ->

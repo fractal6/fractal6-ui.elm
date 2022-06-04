@@ -42,7 +42,7 @@ import ModelSchema
         , RoleExtFull
         , Tension
         , User
-        , UserCtx
+        , UserCommon
         , UserRole
         , UserRoleExtended
         , Username
@@ -150,9 +150,9 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                 [ tensionIcon tension.type_ ]
             ]
         , div [ class "media-content" ]
-            [ div [ class "content mb-0" ]
+            [ div [ class "content mb-1" ]
                 [ a
-                    [ class ("is-human discrete-link " ++ size)
+                    [ class ("has-text-weight-semibold is-human discrete-link " ++ size)
                     , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                     ]
                     [ text tension.title ]
@@ -162,59 +162,49 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
 
                     Nothing ->
                         text ""
-                , span [ class "level is-pulled-right icons-list" ]
-                    [ case tension.action of
-                        Just action ->
-                            viewActionIconLink action focus.rootnameid tension.id "" "is-small level-item"
-
-                        Nothing ->
-                            text ""
-                    , if n_comments > 1 then
-                        a
-                            [ class "tooltip has-tooltip-arrow level-item discrete-link"
-                            , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
-                            , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                ]
+            , span [ class "level is-smaller2 is-mobile" ]
+                [ div [ class "level-left" ]
+                    [ if showStatus then
+                        span
+                            [ class "tooltip has-tooltip-arrow has-tooltip-right"
+                            , attribute "data-tooltip" (TensionStatus.toString tension.status)
                             ]
-                            [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
+                            [ A.icon ("icon-alert-circle icon-sm marginTensionStatus has-text-" ++ statusColor tension.status) ]
 
                       else
                         text ""
+                    , if showRecip then
+                        viewTensionDateAndUser now "has-text-weight-light" tension.createdAt tension.createdBy
+
+                      else
+                        span [ class "has-text-weight-light" ] [ text (T.by ++ " "), viewUsernameLink tension.createdBy.username ]
                     ]
+                , div [ class "level-right" ]
+                    []
                 ]
-            , span [ class "is-smaller2" ]
-                [ if showStatus then
-                    span
-                        [ class "tooltip has-tooltip-arrow has-tooltip-right"
-                        , attribute "data-tooltip" (TensionStatus.toString tension.status)
+            ]
+        , div [ class "media-right" ]
+            [ ternary showRecip (viewCircleTarget "is-pulled-right" tension.receiver) (text "")
+            , br [] []
+            , span [ class "level is-mobile icons-list" ]
+                [ case tension.action of
+                    Just action ->
+                        viewActionIconLink action focus.rootnameid tension.id "" "is-small level-item"
+
+                    Nothing ->
+                        text ""
+                , if n_comments > 1 then
+                    a
+                        [ class "tooltip has-tooltip-arrow level-item discrete-link"
+                        , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
+                        , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                         ]
-                        [ A.icon ("icon-alert-circle icon-sm is-overlay marginTensionStatus has-text-" ++ statusColor tension.status) ]
+                        [ A.icon0 "icon-message-square icon-sm", text (String.fromInt (n_comments - 1)) ]
 
                   else
                     text ""
-                , if showRecip then
-                    span []
-                        [ viewTensionArrow "" tension.emitter tension.receiver
-                        , span [] [ viewTensionDateAndUser now "has-text-weight-light is-pulled-right" tension.createdAt tension.createdBy ]
-                        ]
-
-                  else
-                    --span [] [ atBy now "has-text-weight-light" tension.createdAt tension.createdBy ]
-                    span []
-                        [ -- span [ class "is-invisible" ] [ text "fixme" ]
-                          span [ class "has-text-weight-light is-pulled-righ" ] [ text (T.by ++ " "), viewUsernameLink tension.createdBy.username ]
-                        ]
                 ]
-
-            --[ span [ class "column is-7 is-variable" ] [ viewTensionArrow "has-text-weight-light" tension.emitter tension.receiver ]
-            --, span [ class "column" ]
-            --    [ case tension.action of
-            --        Just action ->
-            --            viewActionIconLink action focus.rootnameid tension.id "" "is-small"
-            --        Nothing ->
-            --            text ""
-            --    , span [ class "is-pulled-right" ] [ viewTensionDateAndUser now tension.createdAt tension.createdBy ]
-            --    ]
-            --]
             ]
         ]
 
@@ -227,6 +217,11 @@ viewJoinNeeded focus =
             , text " this organisation to participate to this conversation."
             ]
         ]
+
+
+viewCircleTarget : String -> EmitterOrReceiver -> Html msg
+viewCircleTarget cls er =
+    span [ class ("tag has-border-light tag-circl is-rounded " ++ cls) ] [ viewNodeRef OverviewBaseUri er ]
 
 
 viewTensionArrow : String -> EmitterOrReceiver -> EmitterOrReceiver -> Html msg
@@ -281,7 +276,7 @@ viewLabel cls label =
 
 viewUsernameLink : String -> Html msg
 viewUsernameLink username =
-    a [ href (uriFromUsername UsersBaseUri username) ] [ "@" ++ username |> text ]
+    a [ href (uriFromUsername UsersBaseUri username) ] [ text username ]
 
 
 viewUsers : List User -> Html msg
@@ -348,8 +343,12 @@ viewUserFull size isLinked isBoxed user =
         [ span [ class "mr-2", attribute "style" (ternary isBoxed "position:relative;top:6px;" "") ]
             [ avatar user.username ]
         , span [ attribute "style" (ternary isBoxed "" "position:relative;top:-4px;") ]
-            [ Maybe.map (\name -> span [ class "is-name" ] [ text name ]) user.name |> withDefault (text "")
-            , span [ class "is-username" ] [ text user.username ]
+            [ case user.name of
+                Just name ->
+                    span [] [ span [ class "is-name" ] [ text name ], span [ class "is-username ml-2" ] [ text user.username ] ]
+
+                Nothing ->
+                    span [ class "is-username" ] [ text user.username ]
             ]
         ]
 
@@ -458,6 +457,40 @@ viewRoleExt2 cls r =
         ]
 
 
+viewProfileC : UserCommon a -> Html msg
+viewProfileC user =
+    div [ attribute "style" "max-width:333px;" ]
+        [ div [ class "content" ] [ getAvatar3 user.username ]
+        , div [ class "content" ]
+            [ case user.name of
+                Just name ->
+                    div [ class "is-strong is-size-4" ] [ text name ]
+
+                Nothing ->
+                    text ""
+            , div [ class "is-discrete is-size-6" ] [ text ("@" ++ user.username) ]
+            ]
+        , case user.bio of
+            Nothing ->
+                text ""
+
+            Just "" ->
+                text ""
+
+            Just bio ->
+                div [ class "content" ] [ text bio ]
+        , case user.location of
+            Nothing ->
+                text ""
+
+            Just "" ->
+                text ""
+
+            Just location ->
+                div [ class "content" ] [ A.icon1 "icon-map-pin" location ]
+        ]
+
+
 
 {-
    Date and authors
@@ -562,13 +595,13 @@ viewNodeRefShort baseUri nid =
     a [ href ref ] [ name |> text ]
 
 
-viewOrgaMedia : UserState -> NodeExt -> Html msg
-viewOrgaMedia user root =
-    Lazy.lazy2 viewOrgaMedia_ user root
+viewOrgaMedia : Maybe (UserCommon a) -> NodeExt -> Html msg
+viewOrgaMedia user_m root =
+    Lazy.lazy2 viewOrgaMedia_ user_m root
 
 
-viewOrgaMedia_ : UserState -> NodeExt -> Html msg
-viewOrgaMedia_ user root =
+viewOrgaMedia_ : Maybe (UserCommon a) -> NodeExt -> Html msg
+viewOrgaMedia_ user_m root =
     let
         n_members =
             root.orga_agg |> Maybe.map (\agg -> withDefault 0 agg.n_members) |> withDefault 0
@@ -616,11 +649,11 @@ viewOrgaMedia_ user root =
                     ]
                 ]
              ]
-                ++ (case user of
-                        LoggedIn uctx ->
+                ++ (case user_m of
+                        Just user ->
                             let
                                 roles =
-                                    getOrgaRoles [ root.nameid ] uctx.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
+                                    getOrgaRoles [ root.nameid ] user.roles |> List.filter (\r -> r.role_type /= RoleType.Member)
                             in
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
@@ -629,7 +662,7 @@ viewOrgaMedia_ user root =
                                 )
                             ]
 
-                        LoggedOut ->
+                        Nothing ->
                             []
                    )
             )
@@ -751,12 +784,12 @@ viewActionIconLink action org tid words cls =
             getTensionCharac action
     in
     a
-        [ class "actionLink tooltip has-tooltip-arrow discrete-link"
+        [ class ("actionLink tooltip has-tooltip-arrow discrete-link " ++ cls)
         , classList [ ( "has-text-warning", charac.action_type == ARCHIVE ) ]
         , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
         , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
         ]
-        [ span [ class cls ] [ viewActionIcon action ]
+        [ viewActionIcon action
         , text words
         ]
 

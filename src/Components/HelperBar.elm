@@ -77,11 +77,11 @@ viewPathLevel op =
             case op.path_data of
                 Just path ->
                     ( path.root |> Maybe.map (\r -> r.nameid) |> withDefault ""
-                    , path.root |> Maybe.map (\r -> r.userCanJoin) |> withDefault Nothing
+                    , path.root |> Maybe.map (\r -> r.userCanJoin == Just True) |> withDefault False
                     )
 
                 Nothing ->
-                    ( "", Nothing )
+                    ( "", False )
     in
     nav [ class "level is-mobile" ]
         [ div [ class "level-left" ]
@@ -102,10 +102,8 @@ viewPathLevel op =
                                     div [ id "joinPending", class "button is-small has-text-weight-semibold is-warning joinPendingTrigger" ]
                                         [ textH "Pending invitation" ]
 
-                                else if List.length roles == 0 then
-                                    userCanJoin
-                                        |> Maybe.map (\ucj -> joinButton)
-                                        |> withDefault (text "")
+                                else if List.length roles == 0 && userCanJoin then
+                                    joinButton
 
                                 else
                                     memberButtons roles { op | baseUri = OverviewBaseUri }
@@ -114,9 +112,11 @@ viewPathLevel op =
                                 div [ class "ph-button-1" ] []
 
                     LoggedOut ->
-                        userCanJoin
-                            |> Maybe.map (\ucj -> joinButton)
-                            |> withDefault (text "")
+                        if userCanJoin then
+                            joinButton
+
+                        else
+                            text ""
                 ]
             ]
         ]

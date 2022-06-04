@@ -4,6 +4,7 @@
 
 module Fractal.Object.User exposing (..)
 
+import Fractal.Enum.Lang
 import Fractal.InputObject
 import Fractal.Interface
 import Fractal.Object
@@ -59,14 +60,34 @@ bio =
     Object.selectionForField "(Maybe String)" "bio" [] (Decode.string |> Decode.nullable)
 
 
+location : SelectionSet (Maybe String) Fractal.Object.User
+location =
+    Object.selectionForField "(Maybe String)" "location" [] (Decode.string |> Decode.nullable)
+
+
 utc : SelectionSet (Maybe String) Fractal.Object.User
 utc =
     Object.selectionForField "(Maybe String)" "utc" [] (Decode.string |> Decode.nullable)
 
 
+links : SelectionSet (Maybe (List String)) Fractal.Object.User
+links =
+    Object.selectionForField "(Maybe (List String))" "links" [] (Decode.string |> Decode.list |> Decode.nullable)
+
+
+skills : SelectionSet (Maybe (List String)) Fractal.Object.User
+skills =
+    Object.selectionForField "(Maybe (List String))" "skills" [] (Decode.string |> Decode.list |> Decode.nullable)
+
+
 notifyByEmail : SelectionSet Bool Fractal.Object.User
 notifyByEmail =
     Object.selectionForField "Bool" "notifyByEmail" [] Decode.bool
+
+
+lang : SelectionSet Fractal.Enum.Lang.Lang Fractal.Object.User
+lang =
+    Object.selectionForField "Enum.Lang.Lang" "lang" [] Fractal.Enum.Lang.decoder
 
 
 type alias SubscriptionsOptionalArguments =

@@ -1,4 +1,14 @@
-module Query.QueryUser exposing (IsSubscribe, getIsSubscribe, isSubscribePayload, queryUctx, queryUser, usernameFilter)
+module Query.QueryUser exposing
+    ( IsSubscribe
+    , getIsSubscribe
+    , isSubscribePayload
+    , queryUser
+    , queryUserFull
+    , queryUserProfile
+    , userFullPayload
+    , userProfilePayload
+    , usernameFilter
+    )
 
 import Dict exposing (Dict)
 import Fractal.Enum.NodeType as NodeType
@@ -23,17 +33,8 @@ import String.Extra as SE
 
 {-
 
-   Query UserCtx
+   Query User
 -}
-
-
-queryUctx url username msg =
-    makeGQLQuery url
-        (Query.getUser
-            (usernameFilter username)
-            uctxPayload
-        )
-        (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
 usernameFilter : String -> Query.GetUserOptionalArguments -> Query.GetUserOptionalArguments
@@ -41,9 +42,27 @@ usernameFilter username a =
     { a | username = Present username }
 
 
-uctxPayload : SelectionSet UserCtx Fractal.Object.User
-uctxPayload =
-    SelectionSet.succeed UserCtx
+queryUserProfile url username msg =
+    makeGQLQuery url
+        (Query.getUser
+            (usernameFilter username)
+            userProfilePayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+queryUserFull url username msg =
+    makeGQLQuery url
+        (Query.getUser
+            (usernameFilter username)
+            userFullPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
+
+
+userProfilePayload : SelectionSet UserProfile Fractal.Object.User
+userProfilePayload =
+    SelectionSet.succeed UserProfile
         |> with Fractal.Object.User.username
         |> with Fractal.Object.User.name
         |> with
@@ -62,9 +81,44 @@ uctxPayload =
                 )
                 |> SelectionSet.map (\x -> withDefault [] x)
             )
-        -- Not got from the graph
-        |> hardcoded ""
-        |> hardcoded ""
+        |> with Fractal.Object.User.notifyByEmail
+        |> with Fractal.Object.User.lang
+        |> with Fractal.Object.User.bio
+        |> with Fractal.Object.User.location
+
+
+
+-- @DEBUG:
+-- 1. import withFragment does not work ?!?!
+-- 2. cant managed to use **extensible record** with selectionset.
+
+
+userFullPayload : SelectionSet UserFull Fractal.Object.User
+userFullPayload =
+    SelectionSet.succeed UserFull
+        |> with Fractal.Object.User.username
+        |> with Fractal.Object.User.name
+        |> with
+            (Fractal.Object.User.rights identity <|
+                SelectionSet.map3 UserRights
+                    Fractal.Object.UserRights.canLogin
+                    Fractal.Object.UserRights.canCreateRoot
+                    Fractal.Object.UserRights.type_
+            )
+        |> with
+            (Fractal.Object.User.roles identity
+                (SelectionSet.map3 UserRole
+                    Fractal.Object.Node.name
+                    Fractal.Object.Node.nameid
+                    (Fractal.Object.Node.role_type |> SelectionSet.map (\x -> withDefault RoleType.Peer x))
+                )
+                |> SelectionSet.map (\x -> withDefault [] x)
+            )
+        |> with Fractal.Object.User.notifyByEmail
+        |> with Fractal.Object.User.lang
+        |> with Fractal.Object.User.bio
+        |> with Fractal.Object.User.location
+        |> with Fractal.Object.User.email
 
 
 

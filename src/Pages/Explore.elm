@@ -256,13 +256,13 @@ view_ global model =
     div [ id "explore", class "section" ]
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-7" ]
-                [ viewPublicOrgas global.session.user model ]
+                [ viewPublicOrgas model ]
             ]
         ]
 
 
-viewPublicOrgas : UserState -> Model -> Html Msg
-viewPublicOrgas user model =
+viewPublicOrgas : Model -> Html Msg
+viewPublicOrgas model =
     div []
         [ h1 [ class "subtitle" ] [ textH T.exploreOrganisations ]
 
@@ -282,5 +282,5 @@ viewPublicOrgas user model =
                     [ viewGqlErrors err ]
 
                 Success nodes ->
-                    List.map (\n -> viewOrgaMedia user n) nodes
+                    List.map (\n -> viewOrgaMedia Nothing n) nodes
         ]

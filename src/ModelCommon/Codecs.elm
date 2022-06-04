@@ -17,6 +17,7 @@ import ModelSchema
         , LocalGraph
         , Node
         , NodeFragment
+        , UserCommon
         , UserCtx
         , UserRole
         )
@@ -394,9 +395,9 @@ getOrgaRoles nameids roles =
         |> List.filter (\r -> List.member (nid2rootid r.nameid) rootnameids)
 
 
-getRoles : UserCtx -> List UserRole
-getRoles uctx =
-    uctx.roles
+getRoles : UserCommon a -> List UserRole
+getRoles user =
+    user.roles
         |> List.filter (\r -> r.role_type /= RoleType.Retired)
         |> List.filter (\r -> r.role_type /= RoleType.Pending)
 

@@ -965,7 +965,7 @@ update global message model =
             in
             case result of
                 RemoteData.Success v ->
-                    ( { data | orga_rights = withMapData (\x -> { x | userCanJoin = Just v }) model.orga_rights }
+                    ( { data | switch_index = -1, orga_rights = withMapData (\x -> { x | userCanJoin = Just v }) model.orga_rights }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -987,7 +987,7 @@ update global message model =
             in
             case result of
                 RemoteData.Success v ->
-                    ( { data | orga_rights = withMapData (\x -> { x | guestCanCreateTension = Just v }) model.orga_rights }
+                    ( { data | switch_index = -1, orga_rights = withMapData (\x -> { x | guestCanCreateTension = Just v }) model.orga_rights }
                     , Cmd.none
                     , Cmd.none
                     )
@@ -1227,7 +1227,7 @@ viewSettingsContent model =
 
         GlobalMenu ->
             div []
-                [ h2 [ class "subtitle" ] [ text "Organisation settings" ]
+                [ h2 [ class "subtitle is-size-3" ] [ text "Organisation settings" ]
                 , viewOrgaSettings model.orga_rights model.switch_result model.switch_index
                 ]
 
@@ -1352,7 +1352,7 @@ viewLabels model =
                 text ""
     in
     div [ id "labelsTable" ]
-        [ h2 [ class "subtitle" ] [ textH T.labels, goToParent ]
+        [ h2 [ class "subtitle is-size-3" ] [ textH T.labels, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.labelsInfoHeader T.labelsInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success", classList [ ( "is-active", model.label_add ) ], onClick (SafeEdit AddLabel) ] [ textT T.newLabel ] ]
@@ -1610,7 +1610,7 @@ viewRoles model =
                 text ""
     in
     div [ id "rolesTable" ]
-        [ h2 [ class "subtitle" ] [ textH T.roles, goToParent ]
+        [ h2 [ class "subtitle is-size-3" ] [ textH T.roles, goToParent ]
         , div [ class "level" ]
             [ div [ class "mr-4" ] [ showMsg "labels-help" "mb-4" "icon-info" T.rolesInfoHeader T.rolesInfoDoc ]
             , div [ class "level-right" ] [ button [ class "button is-success level-right", classList [ ( "is-active", model.role_add ) ], onClick (SafeEdit AddRole) ] [ textT T.newRole ] ]

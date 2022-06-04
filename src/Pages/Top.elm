@@ -9,7 +9,7 @@ import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isSignupSendable)
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -217,17 +217,20 @@ viewHero model =
     div [ id "welcome", class "hero is-bold" ]
         [ div [ class "hero-body" ]
             [ div [ class "columns is-centered section" ]
-                [ div [ class "column is-6-desktop is-6-widescreen is-5-fullhd" ]
+                [ div [ class "column is-6-desktop is-6-widescreen is-6-fullhd" ]
                     [ h1 [ class "title is-1" ]
                         --[ text "Build unstoppable organisations" ]
-                        [ text "Collective intelligence", br [] [], text "at work" ]
+                        --[ text "Self-organization", br [] [], text "for humans" ]
+                        [ text "Collective Intelligence", br [] [], text "at Work" ]
                     , h2 [ class "subtitle" ] <|
                         List.intersperse (text " ")
                             [ span [ class "has-text-weight-semibold" ] [ text "Fractale" ]
                             , text "is a collaborative platform inspired by"
                             , text "self-organized"
                             , text "systems and"
-                            , text "open source culture. Join a network that enact collective intelligence to build transparent and resilient organisation."
+                            , text "open source culture. Join a network that enact"
+                            , text "collective intelligence"
+                            , text "to build transparent and resilient organisation."
                             ]
                     ]
                 , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd" ]

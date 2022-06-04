@@ -35,7 +35,7 @@ import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
 import ModelCommon.Codecs exposing (Flags_, FractalBaseRoute(..), NodeFocus, basePathChanged, contractIdCodec, focusFromNameid, focusState, hasAdminRole, nameidFromFlags, uriFromNameid, uriFromUsername)
 import ModelCommon.Requests exposing (fetchMembersSub, getQuickDoc, login)
-import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser)
+import ModelCommon.View exposing (roleColor, viewMemberRole, viewUser, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
@@ -477,6 +477,16 @@ view_ us model =
         ]
 
 
+viewUserRow : Time.Posix -> Member -> Html Msg
+viewUserRow now m =
+    tr []
+        [ td [ class "pr-0" ] [ viewUser True m.username ]
+        , td [ class "pt-3" ] [ viewUsernameLink m.username ]
+        , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
+        , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
+        ]
+
+
 viewMembers : Time.Posix -> GqlData (List Member) -> NodeFocus -> Html Msg
 viewMembers now data focus =
     let
@@ -525,15 +535,8 @@ viewMembers now data focus =
                                         ]
                                     ]
                                 , tbody [] <|
-                                    List.indexedMap
-                                        (\i m ->
-                                            tr []
-                                                [ td [ class "pr-0" ] [ viewUser True m.username ]
-                                                , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                                , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-                                                , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
-                                                ]
-                                        )
+                                    List.map
+                                        (\m -> viewUserRow now m)
                                         mbs
                                 ]
                             ]
@@ -584,15 +587,8 @@ viewMembersSub now data focus =
                                     ]
                                 ]
                             , tbody [] <|
-                                List.indexedMap
-                                    (\i m ->
-                                        tr []
-                                            [ td [ class "pr-0" ] [ viewUser True m.username ]
-                                            , td [ class "pt-3" ] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
-                                            , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
-                                            , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]
-                                            ]
-                                    )
+                                List.map
+                                    (\m -> viewUserRow now m)
                                     mbs
                             ]
                         ]
@@ -634,7 +630,7 @@ viewGuest now members_d title focus =
                     List.indexedMap
                         (\i m ->
                             tr []
-                                [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                [ td [] [ viewUsernameLink m.username ]
                                 , td [] [ m.name |> withDefault "--" |> text ]
                                 ]
                         )
@@ -681,7 +677,7 @@ viewPending now members_d title focus pending_hover pending_hover_i tid =
                     List.indexedMap
                         (\i m ->
                             tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
-                                [ td [] [ a [ href (uriFromUsername UsersBaseUri m.username) ] [ "@" ++ m.username |> text ] ]
+                                [ td [] [ viewUsernameLink m.username ]
                                 , td [] [ m.name |> withDefault "--" |> text ]
                                 , if Just i == pending_hover_i then
                                     td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text "Go to contract" ] ]

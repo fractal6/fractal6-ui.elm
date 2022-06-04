@@ -565,6 +565,11 @@ sort =
     "sort"
 
 
+new : String
+new =
+    "new"
+
+
 
 --Quick Search
 --(header)
@@ -1446,3 +1451,8 @@ guestCanCreateTension =
 guestCanCreateTensionHelp : String
 guestCanCreateTensionHelp =
     "Guest are user that has been invited but do not play any role in the organisation."
+
+
+notifyByEmail : String
+notifyByEmail =
+    "Enable email notifications."

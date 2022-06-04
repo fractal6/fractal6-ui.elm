@@ -170,7 +170,7 @@ a.is-link {
     color: var(--is-discrete) !important;
 }
 .is-discrete-2 {
-    color: var(--is-discrete) !important;
+    color: var(--is-highlight) !important;
     font-weight: 600;
     &:hover {
         color: var(--link2) !important;
@@ -188,10 +188,11 @@ a.is-link {
     }
 }
 .is-name{
-    color: var(--text);
+    color: var(--text-strong);
 }
 .is-username {
     color: var(--text-light2);
+    font-size: $size-7;
 }
 .has-background-evidence {
     background-color: var(--background-evidence) !important;
@@ -269,6 +270,9 @@ a.is-link {
 
 .is-strong {
     font-weight: bold;
+}
+strong {
+    color: var(--text-light);
 }
 
 .is-text-aligned {
@@ -485,7 +489,7 @@ a.is-link {
         padding: 0;
         .media {
             margin: 0;
-            padding: 1rem 1.25rem 1rem 0.9rem;
+            padding: 0.7rem 0.9rem;
         }
     }
 
@@ -493,7 +497,7 @@ a.is-link {
         padding: 0;
         .media {
             margin: 0;
-            padding: 0.5rem 0.7rem;
+            padding: 0.4rem 0.7rem;
         }
     }
 
@@ -651,12 +655,14 @@ a.is-link {
 #navbarTop {
     .navbar {
         //box-shadow: 0 1px 0 0 var(--grey-dark);
+        height: $navbar-height;
     }
 
     .navbar-item {
         font-size: 0.9rem !important;
     }
     .navbar-item, .navbar-link {
+        padding-top: 0 0;
         color: var(--white-ter);
         &:hover{
             color: var(--link2);
@@ -751,7 +757,7 @@ a.is-link {
         margin-bottom: 3rem !important;
         line-height: 1.1 !important;
         font-weight: 600 !important;
-        font-size: 3rem !important;
+        font-size: 3.5rem !important;
     }
 }
 
@@ -894,6 +900,7 @@ a.is-link {
 .buttonRole {
     //border-width: 0 !important;
     font-weight: 500;
+    border-radius: 10px !important;
     &.is-orange {
         background-color: var(--orange-frac6) !important;
         color: var(--white) !important;
@@ -925,13 +932,27 @@ a.is-link {
 #DocContainer {
     padding: 1rem;
     .subtitle {
-        color: var(--is-highlight2);
+        //color: var(--is-highlight2);
+        color: var(--text-light);
+        //a {
+        //    color: var(--text-light);
+        //    &:hover {
+        //        color: var(--link);
+        //    }
+        //}
+        font-weight: 600;
+        font-size: 1.25rem;
     }
 
     .media {
         margin-bottom: 1rem !important;
+        & .is-human {
+            margin-left: 10px;
+        }
     }
-    //.media-left { margin-right: 0 !important; }
+    .media-left {
+        margin-right: 10px;
+    }
 
     .is-small .docToolbar {
         .button {
@@ -947,9 +968,6 @@ a.is-link {
 
 .aboutDoc {
     .subtitle {
-    //    .nodeName a {
-    //        color: var(--link2) !important;
-    //    }
         a:hover, a:hover .content {
             color: var(--link2) !important;
         }
@@ -957,18 +975,17 @@ a.is-link {
 }
 
 .subSection {
-    padding-right: 1.5rem;
-    padding-left: 1.5rem;
+    //padding-right: 1.5rem;
+    //padding-left: 1.5rem;
     .label {
         color: var(--is-highlight3);
-        border-bottom: 1px solid var(--border-color-light);
+        //border-bottom: 1px solid var(--border-color-light);
     }
 
     &:not(last-child) {
         margin-bottom: 1rem;
     }
 }
-
 
 //
 // Tension/Blob Page
@@ -1143,12 +1160,6 @@ a.is-link {
     max-height: 250px;
     overflow-y: auto;
 
-    .is-name {
-        color: var(--text) !important;
-    }
-    .is-username {
-        color: var(--text-light2) !important;
-    }
     .panel-block, .panel-icon {
         &:hover {
             cursor: pointer !important;
@@ -1235,29 +1246,26 @@ a.is-link {
 
 #tensionsTab  {
     .tooltip {
-        // Increase the area of activation (better UX)
-        margin: -8px;
-        border: 8px solid transparent;
         &::before,
         &::after {
-            font-size: $size-6 !important;
+            font-size: $size-7 !important;
         }
     }
 
     .t-o{
         font-size: 1rem !important;
-
     }
 }
 
-
-
 #journalTab {
    .content {
-       padding-left: 10px;
-       padding-right: 10px;
-       margin-bottom: 1rem;
+       padding: 10px;
+       margin-bottom: 10px;
    }
+
+    .content + .content {
+        border-top: 1px var(--border-color-light) solid;
+    }
 }
 
 .mediaBox {
@@ -1312,10 +1320,8 @@ tr.mediaBox {
 }
 
 .labelsList {
-    line-height: 2;
     .tag {
         margin-right: 8px !important;
-        margin-bottom: 5px !important;
     }
 }
 
@@ -1328,12 +1334,24 @@ tr.mediaBox {
 }
 
 .marginTensionStatus {
-    margin-top: 0rem;
-    margin-left: -27px;
+    margin-left: -24px;
+    padding-right: 5px;
+}
+
+.icons-list {
+    .level-item {
+        justify-content: right;
+    }
+
+    .level-item:not(:last-child) {
+        margin-right: 0px !important;
+    }
 }
 
 .tensionButton {
     position: fixed;
+    // https://benfrain.com/easy-css-fix-fixed-positioning-android-2-2-2-3/
+    -webkit-backface-visibility: hidden;
     bottom: 0;
     right: 0;
     z-index: 900;
@@ -1354,7 +1372,6 @@ tr.mediaBox {
             opacity: 1;
         }
     }
-
 }
 
 //
@@ -1496,12 +1513,6 @@ tr.mediaBox {
         margin-right: 0;
         color: var(--white);
         background: var(--grey);
-    }
-}
-
-.icons-list {
-    .level-item:not(first-child) {
-        padding-left: 5px;
     }
 }
 
@@ -1666,13 +1677,6 @@ tr.mediaBox {
         }
     }
 
-    .is-name{
-        color: $dark;
-    }
-    .is-username {
-        color: lighten($dark, 20);
-    }
-
     .box.is-light {
         background-color: #dce3e3;
         color: black;
@@ -1783,6 +1787,11 @@ tr.mediaBox {
     .message-body {
         //padding: 0.75rem 0.75rem;
         padding: 0;
+    }
+
+    .panel-heading .level-left {
+        //background-image: linear-gradient(to bottom, var(--grey-lighter) 0%, var(--grey-lighter) 100%), linear-gradient(to bottom, var(--grey-lighter) 0%, var(--grey-lighter) 100%);
+        //background-clip: content-box, padding-box;
     }
 }
 

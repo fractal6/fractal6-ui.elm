@@ -15,6 +15,7 @@ import Extra exposing (toMapOfList)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
+import Fractal.Enum.Lang as Lang
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -307,6 +308,23 @@ tensionToActionForm form =
                     , post = form.post
                 }
            )
+
+
+
+-- User Profile Form
+
+
+type alias UserProfileForm =
+    { username : String
+    , notifyByEmail : Maybe Bool
+    , lang : Maybe Lang.Lang
+    , post : Post
+    }
+
+
+initUserProfileForm : String -> UserProfileForm
+initUserProfileForm username =
+    UserProfileForm username Nothing Nothing Dict.empty
 
 
 

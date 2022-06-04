@@ -37,7 +37,6 @@
     "@creativebulma/bulma-badge": "^1.0.1",
     "@creativebulma/bulma-tagsinput": "^1.0.3",
     "@creativebulma/bulma-tooltip": "^1.2.0",
-    "@dillonkearns/elm-graphql": "^4.0.3",
     "bulma": "^0.9.1",
     "bulma-modal-fx": "^1.1.1",
     "bulma-switch": "^2.0.4",
@@ -48,6 +47,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
+    "@dillonkearns/elm-graphql": "^4.2.4",
     "@fortawesome/fontawesome-free": "^5.15.1",
     "autoprefixer": "^9.8.6",
     "babel-loader": "^8.1.0",

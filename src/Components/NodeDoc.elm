@@ -2,7 +2,7 @@ module Components.NodeDoc exposing (..)
 
 import Assets as A
 import Components.DocToolBar exposing (ActionView(..))
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), viewGqlErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), isFailure, viewGqlErrors, withDefaultData, withMaybeData)
 import Dict
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
@@ -17,7 +17,7 @@ import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, br, button, canvas, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, type_, value)
+import Html.Attributes exposing (attribute, class, classList, disabled, href, id, list, name, placeholder, required, rows, selected, size, spellcheck, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import List.Extra as LE
@@ -343,6 +343,7 @@ type alias OrgaNodeData msg =
 
 type alias Op msg =
     { data : NodeDoc
+    , result : GqlData Tension -- result from new tension components
 
     -- Blob control
     , onBlobEdit : BlobType.BlobType -> msg
@@ -362,14 +363,14 @@ view : OrgaNodeData msg -> Maybe (Op msg) -> Html msg
 view data op_m =
     div [ id "DocContainer", class "box" ]
         [ case data.data of
+            Success tid ->
+                Lazy.lazy3 view_ tid data op_m
+
             Failure err ->
                 viewGqlErrors err
 
             LoadingSlowly ->
                 div [ class "spinner" ] []
-
-            Success tid ->
-                Lazy.lazy3 view_ tid data op_m
 
             _ ->
                 text ""
@@ -418,7 +419,7 @@ view_ tid data op_m =
                 |> withDefault (text "")
 
           else
-            div [] [ viewAboutSection (doEditView op_m BlobType.OnAbout) data ]
+            viewAboutSection (doEditView op_m BlobType.OnAbout) data
         , hr [ class "has-background-border-light" ] []
         , if blobTypeEdit == Just BlobType.OnMandate then
             op_m
@@ -436,7 +437,7 @@ view_ tid data op_m =
                 |> withDefault (text "")
 
           else
-            div [] [ viewMandateSection (doEditView op_m BlobType.OnMandate) data.node.mandate data.node.role_type ]
+            viewMandateSection (doEditView op_m BlobType.OnMandate) data.node.mandate data.node.role_type
         ]
 
 
@@ -459,22 +460,18 @@ viewAboutSection editView data =
         [ div [ class "media subtitle" ]
             [ div [ class "media-left" ]
                 [ A.icon "icon-info icon-1half" ]
-            , div [ class "media-content nodeName" ]
+            , div [ class "media-content" ]
                 [ span []
                     [ textH T.about
                     , text T.space_
                     , if data.source == TensionBaseUri && data.hasBeenPushed then
                         a
-                            [ class "is-discrete-2"
-                            , nameid |> uriFromNameid OverviewBaseUri |> href
-                            ]
+                            [ nameid |> uriFromNameid OverviewBaseUri |> href ]
                             [ withDefault "" data.node.name |> text ]
 
                       else if data.source == OverviewBaseUri then
                         a
-                            [ class "is-discrete-2"
-                            , Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href
-                            ]
+                            [ Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href ]
                             [ withDefault "" data.node.name |> text ]
 
                       else
@@ -491,7 +488,7 @@ viewAboutSection editView data =
             ]
         , case data.node.about of
             Just ab ->
-                p [ class "column is-fullwidth pt-0 pb-0 is-human" ] [ text ab ]
+                p [ class "is-human" ] [ text ab ]
 
             Nothing ->
                 text ""
@@ -571,7 +568,7 @@ viewAboutInput hasBeenPushed source txt node op =
                     , required True
                     ]
                     []
-                , if hasBeenPushed == False then
+                , if (source == TensionBaseUri && hasBeenPushed == False) || (source == OverviewBaseUri && isFailure op.result) then
                     div [ class "urlForm" ]
                         [ div [ class "field is-horizontal" ]
                             [ div [ class "field-body control" ]
@@ -608,6 +605,7 @@ viewAboutInput hasBeenPushed source txt node op =
                     , attribute "data-nextfocus" "textAreaModal"
                     , type_ "text"
                     , placeholder (upH T.aboutOpt)
+                    , spellcheck True
                     , value (withDefault "" node.about)
                     , onInput <| op.onChangePost "about"
                     ]

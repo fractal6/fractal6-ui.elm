@@ -15,13 +15,14 @@ type UserOrderable
     | Email
     | Password
     | Bio
+    | Location
     | Utc
     | MarkAllAsRead
 
 
 list : List UserOrderable
 list =
-    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Utc, MarkAllAsRead ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, MarkAllAsRead ]
 
 
 decoder : Decoder UserOrderable
@@ -50,6 +51,9 @@ decoder =
 
                     "bio" ->
                         Decode.succeed Bio
+
+                    "location" ->
+                        Decode.succeed Location
 
                     "utc" ->
                         Decode.succeed Utc
@@ -87,6 +91,9 @@ toString enum____ =
 
         Bio ->
             "bio"
+
+        Location ->
+            "location"
 
         Utc ->
             "utc"
@@ -129,6 +136,9 @@ fromString enumString____ =
 
         "bio" ->
             Just Bio
+
+        "location" ->
+            Just Location
 
         "utc" ->
             Just Utc

@@ -15,8 +15,12 @@ type UserHasFilter
     | Email
     | Password
     | Bio
+    | Location
     | Utc
+    | Links
+    | Skills
     | NotifyByEmail
+    | Lang
     | Subscriptions
     | Rights
     | Roles
@@ -30,7 +34,7 @@ type UserHasFilter
 
 list : List UserHasFilter
 list =
-    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Utc, NotifyByEmail, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events, MarkAllAsRead ]
+    [ CreatedAt, LastAck, Username, Name, Email, Password, Bio, Location, Utc, Links, Skills, NotifyByEmail, Lang, Subscriptions, Rights, Roles, Backed_roles, Tensions_created, Tensions_assigned, Contracts, Events, MarkAllAsRead ]
 
 
 decoder : Decoder UserHasFilter
@@ -60,11 +64,23 @@ decoder =
                     "bio" ->
                         Decode.succeed Bio
 
+                    "location" ->
+                        Decode.succeed Location
+
                     "utc" ->
                         Decode.succeed Utc
 
+                    "links" ->
+                        Decode.succeed Links
+
+                    "skills" ->
+                        Decode.succeed Skills
+
                     "notifyByEmail" ->
                         Decode.succeed NotifyByEmail
+
+                    "lang" ->
+                        Decode.succeed Lang
 
                     "subscriptions" ->
                         Decode.succeed Subscriptions
@@ -124,11 +140,23 @@ toString enum____ =
         Bio ->
             "bio"
 
+        Location ->
+            "location"
+
         Utc ->
             "utc"
 
+        Links ->
+            "links"
+
+        Skills ->
+            "skills"
+
         NotifyByEmail ->
             "notifyByEmail"
+
+        Lang ->
+            "lang"
 
         Subscriptions ->
             "subscriptions"
@@ -193,11 +221,23 @@ fromString enumString____ =
         "bio" ->
             Just Bio
 
+        "location" ->
+            Just Location
+
         "utc" ->
             Just Utc
 
+        "links" ->
+            Just Links
+
+        "skills" ->
+            Just Skills
+
         "notifyByEmail" ->
             Just NotifyByEmail
+
+        "lang" ->
+            Just Lang
 
         "subscriptions" ->
             Just Subscriptions

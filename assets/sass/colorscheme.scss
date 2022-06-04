@@ -58,7 +58,7 @@ $yellow-invert: #fff;
 $size-small2: 0.65rem;
 
 // Navbar
-$navbar-height: 2.75rem;
+$navbar-height: 2.6rem;
 $navbar-item-img-max-height: 1.5rem;
 $navbar-padding: 0rem;
 
@@ -217,11 +217,18 @@ $comment-header-background-color: $hbc;
 $text: $dark;
 $text-light: lighten($text, 10);
 $text-light2: lighten($text, 20);
-$text-strong: $grey;
+$text-strong: darken($text, 5);
 
 $title-color: $is-highlight3;
 $subtitle-color: $is-highlight3;
 $subtitle-strong-color: $is-highlight;
+
+// Border
+$border-color: $grey-light2;
+$border-color-light: $grey-light3;
+
+// Media
+$media-border-color: $border-color-light;
 
 // Box
 $box-color: $text;
@@ -235,10 +242,6 @@ $input-disabled-background-color: $grey-lighter;
 $input-disabled-color: $grey-lightest;
 $input-placeholder-color: $grey;
 $input-focus-border-color: $link2;
-
-// Border
-$border-color: $grey-light2;
-$border-color-light: $grey-light3;
 
 // Button
 $button-color: $text;
@@ -358,6 +361,9 @@ $button-vote-danger-background: $danger;
   --title-color: #{$title-color};
   --subtitle-color: #{$subtitle-color};
   --subtitle-strong-color: #{$subtitle-strong-color};
+
+  // Media
+  --media-border-color: #{$media-border-color};
 
   // Box
   --box-color: #{$box-color};
@@ -507,13 +513,20 @@ $comment-header-background-color: $chbc;
 
 // Text
 $text: $white-dimmed;
-$text-light: lighten($text, 10);
+$text-light: darken($text, 5);
 $text-light2: darken($text, 10);
-$text-strong: darken($text, 5);
+$text-strong: lighten($text, 5);
 
 $title-color: $is-highlight3;
 $subtitle-color: $is-highlight3;
 $subtitle-strong-color: $is-highlight;
+
+// Border
+$border-color: $grey;
+$border-color-light: $grey-darker2;
+
+// Media
+$media-border-color: $border-color-light;
 
 // Box
 $box-color: $text;
@@ -527,10 +540,6 @@ $input-disabled-background-color: $grey-dark;
 $input-disabled-color: $grey;
 $input-placeholder-color: $grey-light;
 $input-focus-border-color: darken($link2, 25);
-
-// Border
-$border-color: $grey;
-$border-color-light: $grey-darker2;
 
 // Button
 $button-color: $text;
@@ -656,6 +665,9 @@ $button-vote-danger-background: $danger-light;
   --title-color: #{$title-color};
   --subtitle-color: #{$subtitle-color};
   --subtitle-strong-color: #{$subtitle-strong-color};
+
+  // Media
+  --media-border-color: #{$media-border-color};
 
   // Box
   --box-color: #{$box-color};
