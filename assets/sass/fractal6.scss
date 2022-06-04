@@ -759,6 +759,12 @@ strong {
         font-weight: 600 !important;
         font-size: 3.5rem !important;
     }
+
+    .columns {
+        @include mobile {
+            padding: 0;
+        }
+    }
 }
 
 #tree-menu {
