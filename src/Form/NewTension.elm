@@ -1043,7 +1043,7 @@ viewModal : Op -> State -> Html Msg
 viewModal op (State model) =
     div
         [ id "tensionModal"
-        , class "modal is-light modal-fx-fadeIn"
+        , class "modal is-light modal-fx-slideTop"
         , classList [ ( "is-active", model.isModalActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]

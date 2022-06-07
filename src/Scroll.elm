@@ -44,7 +44,7 @@ scrollToBottom noop =
 scrollToElement : String -> msg -> Cmd msg
 scrollToElement id noop =
     Task.attempt (always noop)
-        (Browser.Dom.getElement id |> Task.andThen (scrollTo << .y << .element))
+        (Browser.Dom.getElement id |> Task.andThen (scrollTo << (\x -> x.y - 50) << .element))
 
 
 {-| Configuration for smooth scrolling.

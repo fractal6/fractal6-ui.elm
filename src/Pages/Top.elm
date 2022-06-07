@@ -219,18 +219,17 @@ viewHero model =
             [ div [ class "columns is-centered section" ]
                 [ div [ class "column is-6-desktop is-6-widescreen is-6-fullhd" ]
                     [ h1 [ class "title is-1" ]
-                        --[ text "Build unstoppable organisations" ]
+                        --[ text "Build unstoppable organizations" ]
                         --[ text "Self-organization", br [] [], text "for humans" ]
                         [ text "Collective Intelligence", br [] [], text "at Work" ]
                     , h2 [ class "subtitle" ] <|
                         List.intersperse (text " ")
                             [ span [ class "has-text-weight-semibold" ] [ text "Fractale" ]
                             , text "is a collaborative platform inspired by"
-                            , text "self-organized"
-                            , text "systems and"
-                            , text "open source culture. Join a network that enact"
-                            , text "collective intelligence"
-                            , text "to build transparent and resilient organisation."
+                            , text "self-organized systems and open source culture."
+                            , text "Join a network that enact collective intelligence to build transparent and resilient organization."
+
+                            --Design your organisations roles and cirlces, invite members, manage your tensions..
                             ]
                     ]
                 , div [ class "column is-4-desktop is-4-widescreen is-3-fullhd" ]
