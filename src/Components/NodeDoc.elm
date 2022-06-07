@@ -457,34 +457,31 @@ viewAboutSection editView data =
                 |> withDefault ""
     in
     div []
-        [ div [ class "media subtitle" ]
-            [ div [ class "media-left" ]
-                [ A.icon "icon-info icon-1half" ]
-            , div [ class "media-content" ]
-                [ span []
-                    [ textH T.about
-                    , text T.space_
-                    , if data.source == TensionBaseUri && data.hasBeenPushed then
-                        a
-                            [ nameid |> uriFromNameid OverviewBaseUri |> href ]
-                            [ withDefault "" data.node.name |> text ]
+        [ div [ class "level subtitle" ]
+            [ div [ class "level-left" ]
+                [ A.icon "icon-info icon-lg mr-2"
+                , textH T.about
+                , text T.space_
+                , if data.source == TensionBaseUri && data.hasBeenPushed then
+                    a
+                        [ nameid |> uriFromNameid OverviewBaseUri |> href ]
+                        [ withDefault "" data.node.name |> text ]
 
-                      else if data.source == OverviewBaseUri then
-                        a
-                            [ Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href ]
-                            [ withDefault "" data.node.name |> text ]
+                  else if data.source == OverviewBaseUri then
+                    a
+                        [ Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href ]
+                        [ withDefault "" data.node.name |> text ]
 
-                      else
-                        text ""
-                    ]
+                  else
+                    text ""
                 ]
             , case data.toolbar of
                 Just tb ->
                     -- from OverviewBaseUri: show toolbar that is linked to the tension id.
-                    div [ class "media-right is-marginless is-small" ] [ tb ]
+                    div [ class "level-right is-marginless is-small" ] [ tb ]
 
                 Nothing ->
-                    div [ class "media-right is-marginless buttonEdit" ] [ editView ]
+                    div [ class "level-right is-marginless buttonEdit" ] [ editView ]
             ]
         , case data.node.about of
             Just ab ->
@@ -498,12 +495,12 @@ viewAboutSection editView data =
 viewMandateSection : Html msg -> Maybe Mandate -> Maybe RoleType.RoleType -> Html msg
 viewMandateSection editView mandate_m role_type_m =
     div []
-        [ div [ class "media subtitle" ]
-            [ div [ class "media-left" ]
-                [ A.icon "icon-book-open icon-1half" ]
-            , div [ class "media-content" ]
-                [ textH T.mandate ]
-            , div [ class "media-right is-marginless buttonEdit" ] [ editView ]
+        [ div [ class "level subtitle" ]
+            [ div [ class "level-left" ]
+                [ A.icon "icon-book-open icon-lg mr-2"
+                , textH T.mandate
+                ]
+            , div [ class "level-right is-marginless buttonEdit" ] [ editView ]
             ]
         , case mandate_m of
             Just mandate ->

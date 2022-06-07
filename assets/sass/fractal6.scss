@@ -647,7 +647,6 @@ strong {
     }
 }
 
-
 .menu .menu-label {
     font-weight: bold !important;
 }
@@ -757,7 +756,10 @@ strong {
         margin-bottom: 3rem !important;
         line-height: 1.1 !important;
         font-weight: 600 !important;
-        font-size: 3.5rem !important;
+        font-size: 4rem !important;
+        @include mobile {
+            font-size: 3rem !important;
+        }
     }
 
     .columns {
@@ -936,28 +938,14 @@ strong {
 }
 
 #DocContainer {
-    padding: 1rem;
     .subtitle {
-        //color: var(--is-highlight2);
         color: var(--text-light);
-        //a {
-        //    color: var(--text-light);
-        //    &:hover {
-        //        color: var(--link);
-        //    }
-        //}
         font-weight: 600;
         font-size: 1.25rem;
     }
 
-    .media {
-        margin-bottom: 1rem !important;
-        & .is-human {
-            margin-left: 10px;
-        }
-    }
-    .media-left {
-        margin-right: 10px;
+    .level {
+        margin-bottom: 1rem;
     }
 
     .is-small .docToolbar {
@@ -969,7 +957,6 @@ strong {
     & > a, & > div > a, .content a {
         color: var(--blue);
     }
-
 }
 
 .aboutDoc {
