@@ -117,10 +117,10 @@ type Msg
     =
     -- Data
       OnLoad
-    | OnChangePost String String
-    | DoQueryData
     | OnSubmit (Time.Posix -> Msg)
-    | OnDataQuery Time.Posix
+    | OnChangePost String String
+    | DoDataQuery Time.Posix
+    | OnQueryData
     | OnDataAck (GqlData MyData)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -166,24 +166,24 @@ update_ apis message model =
     case message of
         -- Data
         OnLoad ->
-            (model, out0 [send <| OnSubmit OnDataQuery ])
-
-        OnChangePost field value ->
-            ( updatePost field value model, noOut )
+            (model, out0 [send <| OnSubmit DoDataQuery ])
 
         OnSubmit next ->
             ( model , out0 [ sendNow next ])
 
-        DoQueryData ->
+        OnChangePost field value ->
+            ( updatePost field value model, noOut )
+
+        OnQueryData ->
             -- Adapt your query
             ( setDataResult LoadingSlowly model
             , out0 [getData apis model.form OnDataAck]
             )
 
-        OnDataQuery time ->
+        DoDataQuery time ->
             -- setup your form
             (model
-            , out0 [ send DoQueryData ]
+            , out0 [ send OnQueryData ]
             )
 
         OnDataAck result ->
@@ -194,11 +194,11 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal data.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryData 500 ] [ DoUpdateToken ] )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
                     ( data, Out [] [] (Just ( True, d )) )

@@ -518,10 +518,10 @@ viewMandateSection editView mandate_m role_type_m =
                             rt =
                                 RoleType.toString role_type |> String.toLower
 
-                            link =
+                            md =
                                 "https://doc.fractale.co/circle/#" ++ rt
                         in
-                        a [ class "is-size-6", href link ] [ text link ]
+                        renderMarkdown "is-human" md
 
                     Nothing ->
                         div [ class "is-italic" ]

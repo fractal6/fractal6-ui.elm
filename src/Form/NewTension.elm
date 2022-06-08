@@ -526,7 +526,7 @@ resetModel data =
 
 canExitSafe : Model -> Bool
 canExitSafe data =
-    (hasData data && withMaybeData data.result == Nothing) == False
+    not (hasData data) || isSuccess data.result
 
 
 hasData : Model -> Bool

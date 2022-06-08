@@ -136,11 +136,11 @@ type Msg
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset
+    | OnSubmit (Time.Posix -> Msg)
     -- Data
     | OnChangePost String String
-    | DoQueryData
-    | OnSubmit (Time.Posix -> Msg)
-    | OnDataQuery Time.Posix
+    | DoDataQuery Time.Posix
+    | OnQueryData
     | OnDataAck (GqlData MyData)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -218,17 +218,16 @@ update_ apis message model =
         OnSubmit next ->
             ( model , out0 [ sendNow next ])
 
-        DoQueryData ->
+        DoDataQuery time ->
+            -- setup your form (time)
+            (model
+            , out0 [ send OnQueryData ]
+            )
+
+        OnQueryData ->
             -- Adapt your query
             ( setDataResult LoadingSlowly model
             , out0 [getData apis model.form OnDataAck]
-            )
-
-
-        OnDataQuery time ->
-            -- setup your form
-            (model
-            , out0 [ send DoQueryData ]
             )
 
         OnDataAck result ->
@@ -239,11 +238,11 @@ update_ apis message model =
             case parseErr result data.refresh_trial of
                 Authenticate ->
                     ( setDataResult NotAsked model
-                    , out0 [ Ports.raiseAuthModal data.form.uctx ]
+                    , out0 [ Ports.raiseAuthModal (uctxFromUser model.user) ]
                     )
 
                 RefreshToken i ->
-                    ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryData 500 ] [ DoUpdateToken ] )
+                    ( { data | refresh_trial = i }, out2 [ sendSleep OnQueryData 500 ] [ DoUpdateToken ] )
 
                 OkAuth d ->
                     ( data, Out [] [] (Just ( True, d )) )
@@ -384,7 +383,7 @@ viewModalContent op (State model) =
                          , classList [ ( "is-loading", isLoading ) ]
                          , disabled (not isSendable || isLoading)
                          ]
-                            ++ [ onClick (OnSubmit <| OnDataQuery ) ]
+                            ++ [ onClick (OnSubmit <| DoDataQuery ) ]
                         )
                         [ textH T.submit ]
                     ]

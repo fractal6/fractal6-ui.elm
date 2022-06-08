@@ -2,7 +2,7 @@ module Components.JoinOrga exposing (JoinStep(..), Msg(..), State, init, subscri
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), viewAuthNeeded, viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (ErrorData, GqlData, ModalData, RequestResult(..), isSuccess, viewAuthNeeded, viewGqlErrors, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.UserInput as UserInput
 import Dict exposing (Dict)
@@ -170,7 +170,7 @@ makeInviteForm user node time =
 canExitSafe : Model -> Bool
 canExitSafe model =
     -- Condition to close safely (e.g. empty form data)
-    not (hasData model && withMaybeData model.join_result == Nothing)
+    (not (hasData model)
         && (case model.step of
                 JoinOne ->
                     True
@@ -181,6 +181,8 @@ canExitSafe model =
                 _ ->
                     True
            )
+    )
+        || isSuccess model.join_result
 
 
 hasData : Model -> Bool

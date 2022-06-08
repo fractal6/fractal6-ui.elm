@@ -923,7 +923,7 @@ view global model =
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ --div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
+        [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
           Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
