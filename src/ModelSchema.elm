@@ -471,7 +471,7 @@ type alias Mandate =
 
 initUserctx : UserCtx
 initUserctx =
-    UserCtx "" Nothing initUserRights [] "" ""
+    UserCtx "" initUserRights [] "" ""
 
 
 initNodeData : NodeData
@@ -610,7 +610,6 @@ type alias NotificationsForm =
 
 type alias UserCtx =
     { username : String
-    , name : Maybe String
     , rights : UserRights
     , roles : List UserRole
     , client_version : String

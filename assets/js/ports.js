@@ -45,7 +45,7 @@ window.addEventListener('load', _ => {
                 // User Quick Search
                 qsu: new MiniSearch({
                     idField: 'username',
-                    storeFields: ['username'],
+                    storeFields: ['username', 'name'],
                     fields: ['username', 'name'],
                     searchOptions: { fuzzy: 0.3, },
                 }),

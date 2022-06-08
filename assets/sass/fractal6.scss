@@ -753,10 +753,10 @@ strong {
 
 #welcome {
     .title {
+        font-size: 4.2rem !important;
+        font-weight: 600 !important;
         margin-bottom: 3rem !important;
         line-height: 1.1 !important;
-        font-weight: 600 !important;
-        font-size: 4rem !important;
         @include mobile {
             font-size: 3rem !important;
         }
@@ -1778,13 +1778,16 @@ tr.mediaBox {
         }
     }
     .message-body {
-        //padding: 0.75rem 0.75rem;
         padding: 0;
     }
 
     .panel-heading .level-left {
         //background-image: linear-gradient(to bottom, var(--grey-lighter) 0%, var(--grey-lighter) 100%), linear-gradient(to bottom, var(--grey-lighter) 0%, var(--grey-lighter) 100%);
         //background-clip: content-box, padding-box;
+    }
+
+    .panel-heading {
+        border-bottom: 1px var(--border-color-light) solid;
     }
 }
 

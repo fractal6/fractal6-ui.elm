@@ -69,9 +69,8 @@ labelsEncoder users =
 
 userCtxDecoder : JD.Decoder UserCtx
 userCtxDecoder =
-    JD.map6 UserCtx
+    JD.map5 UserCtx
         (JD.field "username" JD.string)
-        (JD.maybe <| JD.field "name" JD.string)
         (JD.field "rights" <|
             JD.map3 UserRights
                 (JD.field "canLogin" JD.bool)
@@ -96,7 +95,6 @@ userCtxEncoder : UserCtx -> JE.Value
 userCtxEncoder userCtx =
     JE.object
         [ ( "username", JE.string userCtx.username )
-        , ( "name", JEE.maybe JE.string userCtx.name )
         , ( "rights"
           , JE.object
                 [ ( "canLogin", JE.bool userCtx.rights.canLogin )

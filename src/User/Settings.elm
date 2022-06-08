@@ -263,7 +263,15 @@ update global message model =
         GotUserPatch result ->
             case result of
                 Success user ->
-                    ( { model | switch_index = -1, user = Success user, user_result = result }, Cmd.none, Cmd.none )
+                    ( { model
+                        | switch_index = -1
+                        , user = Success user
+                        , user_result = result
+                        , form = initUserProfileForm model.username
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( { model | user_result = result }, Cmd.none, Cmd.none )

@@ -740,7 +740,7 @@ update_ apis message model =
                                 if isSelfContract model.form.uctx model.form.users then
                                     let
                                         fs =
-                                            Just { username = model.form.uctx.username, name = model.form.uctx.name }
+                                            model.form.users |> List.head |> Maybe.map (\u -> { username = u.username, name = u.name })
                                     in
                                     [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = fs }) ]
 

@@ -1145,7 +1145,7 @@ viewSuccess res model =
 
 viewHeader : Model -> Html Msg
 viewHeader model =
-    div [ class "panel-heading pt-4 pb-3", attribute "style" "border-bottom: 1px solid;" ]
+    div [ class "panel-heading pt-4 pb-3" ]
         [ div [ class "level modal-card-title is-size-6" ]
             [ div [ class "level-left" ]
                 [ span [ class "has-text-weight-semibold" ] [ textT model.txt.title ] ]

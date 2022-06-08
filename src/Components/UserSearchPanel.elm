@@ -375,7 +375,17 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div [ id id_target_name ]
         [ if model.isOpen then
-            view_ op (State model)
+            let
+                selectedAssignees =
+                    List.map
+                        -- name is not passed from url
+                        (\l ->
+                            List.filter (\u -> l.username == u.username) (withMaybeData model.assignees_data |> withDefault [])
+                        )
+                        op.selectedAssignees
+                        |> List.concat
+            in
+            view_ { op | selectedAssignees = selectedAssignees } (State model)
 
           else
             text ""
@@ -388,14 +398,16 @@ view_ op (State model) =
         [ case model.assignees_data of
             Success assignees_d ->
                 let
-                    user =
-                        model.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
-
+                    --user =
+                    --    model.form.uctx |> List.singleton |> List.map (\u -> User u.username u.name)
                     users =
                         if model.pattern == "" then
                             List.sortBy .username op.selectedAssignees
-                                ++ user
+                                -- First show looged user
+                                ++ List.filter (\u -> model.form.uctx.username == u.username) assignees_d
+                                -- sort by username
                                 ++ List.sortBy .username (List.take 42 assignees_d)
+                                -- uniq
                                 |> LE.uniqueBy .username
 
                         else
