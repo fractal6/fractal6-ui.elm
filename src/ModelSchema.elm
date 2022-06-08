@@ -146,6 +146,12 @@ type alias NodeRights =
     }
 
 
+type alias OrgaNode =
+    { name : String
+    , nameid : String
+    }
+
+
 
 --
 -- Tension

@@ -29,6 +29,7 @@ module Query.QueryNode exposing
     , queryMembersLocal
     , queryNodeExt
     , queryNodesSub
+    , queryOrgaNode
     , queryPublicOrga
     , queryRoles
     , roleFullPayload
@@ -192,6 +193,18 @@ queryNodeExt url nameids msg =
         (Query.queryNode
             (nodeExtFilter nameids)
             nodeOrgaExtPayload
+        )
+        (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
+
+
+queryOrgaNode url nameids msg =
+    makeGQLQuery url
+        (Query.queryNode
+            (nodeExtFilter nameids)
+            (SelectionSet.map2 OrgaNode
+                Fractal.Object.Node.name
+                Fractal.Object.Node.nameid
+            )
         )
         (RemoteData.fromResult >> decodeResponse nodesDecoder >> msg)
 

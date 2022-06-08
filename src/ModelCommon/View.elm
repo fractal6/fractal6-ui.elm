@@ -353,6 +353,25 @@ viewUserFull size isLinked isBoxed user =
         ]
 
 
+viewOrga0 : Bool -> String -> Html msg
+viewOrga0 isLinked nameid =
+    let
+        rid =
+            nid2rootid nameid
+    in
+    if isLinked then
+        a
+            [ class "image circleBase circle00"
+            , href (uriFromNameid OverviewBaseUri rid)
+            ]
+            [ getAvatarOrga rid ]
+
+    else
+        span
+            [ class "image circleBase circle00" ]
+            [ getAvatarOrga rid ]
+
+
 viewOrga : Bool -> String -> Html msg
 viewOrga isLinked nameid =
     let
