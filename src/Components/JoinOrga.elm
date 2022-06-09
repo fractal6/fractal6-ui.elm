@@ -607,7 +607,14 @@ viewJoinStep op model =
                     _ ->
                         text ""
                 , div [ class "field is-grouped is-grouped-right" ]
-                    [ div [ class "control" ]
+                    [ div [ class "is-pulled-left" ]
+                        [ button
+                            [ class "button is-light"
+                            , onClick (OnCloseSafe "" "")
+                            ]
+                            [ textH T.cancel ]
+                        ]
+                    , div [ class "control" ]
                         [ button
                             [ class "button is-primary"
                             , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
@@ -643,8 +650,15 @@ viewJoinStep op model =
 
                     _ ->
                         text ""
-                , div [ class "field is-grouped is-grouped-right" ]
-                    [ div [ class "control" ]
+                , div [ class "field" ]
+                    [ div [ class "is-pulled-left" ]
+                        [ button
+                            [ class "button is-light"
+                            , onClick (OnCloseSafe "" "")
+                            ]
+                            [ textH T.cancel ]
+                        ]
+                    , div [ class "is-pulled-right" ]
                         [ button
                             [ class "button is-primary"
                             , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
