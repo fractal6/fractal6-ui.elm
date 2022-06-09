@@ -180,7 +180,7 @@ export const GraphPack = {
 
     // Geometry
     minWidth: 300,
-    minHeight: 400,
+    minHeight: 444,
     width: null,
     height: null,
     mobileSize: null,
