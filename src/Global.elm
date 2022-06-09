@@ -78,7 +78,6 @@ init flags url key =
     ( Model flags url key session (Time.millisToPosix 0)
     , Cmd.batch
         ([ Ports.log "Hello!"
-         , Ports.toggle_theme
          , Ports.bulma_driver ""
          , now
          ]
@@ -115,8 +114,10 @@ type Msg
     | UpdateSessionTensionsAll (Maybe TensionsList)
     | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
+    | UpdateSessionOrgs (Maybe (List OrgaNode))
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
+    | UpdateSessionMenuleft (Maybe Bool)
     | UpdateSessionScreen Screen
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
@@ -328,6 +329,13 @@ update msg model =
             in
             ( { model | session = { session | tension_head = data } }, Cmd.none )
 
+        UpdateSessionOrgs data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | orgs_data = data } }, Cmd.none )
+
         UpdateSessionTensions data ->
             let
                 session =
@@ -377,6 +385,13 @@ update msg model =
             in
             ( { model | session = { session | window_pos = data } }, Cmd.none )
 
+        UpdateSessionMenuleft data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | menu_left = data } }, Cmd.none )
+
         UpdateSessionScreen data ->
             let
                 session =
@@ -407,6 +422,7 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
+        , Ports.updateMenuleftFomJs UpdateSessionMenuleft
         ]
 
 
@@ -415,12 +431,22 @@ subscriptions _ =
 --
 
 
-layout : { page : Document msg, session : Session, toMsg : Msg -> msg } -> Document msg
-layout { page, session, toMsg } =
+view : { page : Document msg, global : Model, url : Url, toMsg : Msg -> msg } -> Document msg
+view { page, global, url, toMsg } =
+    layout
+        { page = page
+        , url = url
+        , session = global.session
+        , toMsg = toMsg
+        }
+
+
+layout : { page : Document msg, url : Url, session : Session, toMsg : Msg -> msg } -> Document msg
+layout { page, url, session, toMsg } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Navbar.view { user = session.user, replaceUrl = toMsg << ReplaceUrl }
+            [ Navbar.view { user = session.user, url = url, replaceUrl = toMsg << ReplaceUrl }
             , div [ id "body" ] <|
                 --[ div [ class "notification is-info" ] [ div [ class "delete" ] [] , text session.referer.path ] ] ++
                 page.body
@@ -428,15 +454,6 @@ layout { page, session, toMsg } =
             ]
         ]
     }
-
-
-view : { page : Document msg, global : Model, toMsg : Msg -> msg } -> Document msg
-view { page, global, toMsg } =
-    layout
-        { page = page
-        , session = global.session
-        , toMsg = toMsg
-        }
 
 
 

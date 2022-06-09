@@ -63,7 +63,7 @@ view op =
     div [ id "helperBar", class "mb-3" ]
         [ div [ class "columns is-centered" ]
             [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ]
-                [ div [ class "mx-5 mb-5" ] [ viewPathLevel op ]
+                [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op ]
                 , viewNavLevel op
                 ]
             ]

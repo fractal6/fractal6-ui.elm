@@ -9,6 +9,7 @@ import Components.AuthModal as AuthModal
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
+import Components.OrgaMenu as OrgaMenu
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
@@ -67,7 +68,7 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -77,6 +78,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
+
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -111,6 +115,7 @@ type alias Model =
     , tensionForm : NTF.State
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
+    , orgaMenu : OrgaMenu.State
     }
 
 
@@ -147,6 +152,7 @@ type Msg
     | NewTensionMsg NTF.Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
 
 
 
@@ -194,6 +200,7 @@ init global flags =
             , now = global.now
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user Nothing
+            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
             }
 
         cmds =
@@ -202,6 +209,7 @@ init global flags =
             , fetchMembersSub apis newFocus.nameid GotMembersSub
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
+            , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             ]
     in
     ( model
@@ -401,6 +409,16 @@ update global message model =
             in
             ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
+        OrgaMenuMsg msg ->
+            let
+                ( data, out ) =
+                    OrgaMenu.update apis msg model.orgaMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -409,6 +427,7 @@ subscriptions _ model =
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
+        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         |> Sub.batch
 
 
@@ -439,6 +458,7 @@ view global model =
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
         ]
     }
 

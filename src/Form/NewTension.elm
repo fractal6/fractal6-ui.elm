@@ -44,7 +44,7 @@ import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (toHref)
 import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -67,7 +67,7 @@ import ModelCommon
         , sortNode
         , tensionToActionForm
         )
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
 import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
 import ModelSchema exposing (..)
 import Ports
@@ -1150,8 +1150,9 @@ viewHeader model =
             [ div [ class "level-left" ]
                 [ span [ class "has-text-weight-semibold" ] [ textT model.txt.title ] ]
             , div [ class "level-item" ]
+                [ viewRecipients model ]
+            , div [ class "level-right" ]
                 [ viewTensionType model ]
-            , div [ class "level-right" ] [ viewRecipients model ]
             ]
         ]
 
@@ -1637,39 +1638,54 @@ viewRoleExt model =
         , div [ class "subtitle" ] [ text "Select a role template" ]
         , case model.roles_result of
             Success roles ->
-                roles
-                    |> List.map
-                        (\role ->
-                            let
-                                isActive =
-                                    Just role.id == form.node.role_ext
+                List.map
+                    (\role ->
+                        let
+                            isActive =
+                                Just role.id == form.node.role_ext
 
-                                icon =
-                                    "icon-user"
-                            in
-                            div
-                                [ class "card has-border column is-paddingless m-3 is-h"
-                                , classList [ ( "is-selected", isActive ) ]
-                                , attribute "style" "min-width: 150px;"
+                            icon =
+                                "icon-user"
+                        in
+                        div
+                            [ class "card has-border column is-paddingless m-3 is-h"
+                            , classList [ ( "is-selected", isActive ) ]
+                            , attribute "style" "min-width: 150px;"
 
-                                -- @debug: onClick here do not work sometimes (for the 2nd element of the list ???
-                                ]
-                                [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
-                                    [ h2 [ class "level mb-3 is-size-5" ]
-                                        [ -- div [ class "level-left" ] [ A.icon (icon ++ " icon-bg") ]
-                                          div [ class "level-left" ] [ viewRoleExt2 "" role ]
-                                        ]
-                                    , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
+                            -- @debug: onClick here do not work sometimes (for the 2nd element of the list ???
+                            ]
+                            [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
+                                [ h2 [ class "level mb-3 is-size-5" ]
+                                    [ -- div [ class "level-left" ] [ A.icon (icon ++ " icon-bg") ]
+                                      div [ class "level-left" ] [ viewRoleExt2 "" role ]
                                     ]
+                                , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
                                 ]
-                        )
+                            ]
+                    )
+                    roles
                     |> (\l ->
                             l
-                                ++ [ div
-                                        [ class "card-content button-light has-text-link"
-                                        , onClick (OnChangeNodeStep NodeValidateStep)
+                                ++ [ div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
+                                        [ if List.length l == 0 then
+                                            span [ class "content is-small" ] [ text "No template role yet.", br [ class "mb-4" ] [], text "You can " ]
+
+                                          else
+                                            text ""
+                                        , span
+                                            [ class "button is-small has-text-link"
+                                            , title "A template role is a role that you can reuse in your organisation."
+                                            , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid ++ "?m=roles&a=new") "")
+                                            ]
+                                            [ textH "add a new template role" ]
+                                        , span [ class "content is-small px-2" ] [ text "or" ]
+                                        , span
+                                            [ class "button is-small has-text-link"
+                                            , title "An ad-hoc role is a role that you create from scratch."
+                                            , onClick (OnChangeNodeStep NodeValidateStep)
+                                            ]
+                                            [ textH "create an ad-hoc role" ]
                                         ]
-                                        [ text "Or create from scratch" ]
                                    ]
                        )
                     |> div [ class "columns is-multiline" ]

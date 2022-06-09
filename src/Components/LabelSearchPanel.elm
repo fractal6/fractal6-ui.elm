@@ -472,10 +472,10 @@ viewLabelSelectors isInternal labels op model =
                   else
                     attribute "style" "border-top: 1px solid;"
                 , if isInternal then
-                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")) "")
+                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri ((List.map .nameid op.targets |> List.head |> withDefault "") ++ "?m=labels&a=new")) "")
 
                   else
-                    onClick (Navigate (uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "")))
+                    onClick (Navigate (uriFromNameid SettingsBaseUri ((List.map .nameid op.targets |> List.head |> withDefault "") ++ "?m=labels&a=new")))
                 ]
                 [ A.icon1 "icon-edit-2" <| upH T.editLabels ]
     in

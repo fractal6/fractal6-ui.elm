@@ -8,7 +8,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route(..), fromUrl)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema
@@ -71,31 +71,92 @@ toString : FractalBaseRoute -> String
 toString route =
     case route of
         OverviewBaseUri ->
-            -- /overview
             "/o"
 
         TensionsBaseUri ->
-            -- /tensions
             "/t"
 
         TensionBaseUri ->
-            -- /tensions
             "/tension"
 
         MandateBaseUri nameid tid ->
             Route.toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nameid, param2 = tid })
 
         MembersBaseUri ->
-            -- /tensions
             "/m"
 
         SettingsBaseUri ->
-            -- /settings
             "/s"
 
         UsersBaseUri ->
-            -- /@username
+            -- /user
             ""
+
+
+urlToFractalRoute : Url -> Maybe FractalBaseRoute
+urlToFractalRoute url =
+    fromUrl url
+        |> Maybe.map
+            (\u ->
+                case u of
+                    O_Dynamic _ ->
+                        Just OverviewBaseUri
+
+                    O_Dynamic_Dynamic _ ->
+                        Just OverviewBaseUri
+
+                    O_Dynamic_Dynamic_Dynamic _ ->
+                        Just OverviewBaseUri
+
+                    T_Dynamic _ ->
+                        Just TensionBaseUri
+
+                    T_Dynamic_Dynamic _ ->
+                        Just TensionBaseUri
+
+                    T_Dynamic_Dynamic_Dynamic _ ->
+                        Just TensionBaseUri
+
+                    M_Dynamic _ ->
+                        Just MembersBaseUri
+
+                    M_Dynamic_Dynamic _ ->
+                        Just MembersBaseUri
+
+                    M_Dynamic_Dynamic_Dynamic _ ->
+                        Just MembersBaseUri
+
+                    S_Dynamic _ ->
+                        Just SettingsBaseUri
+
+                    S_Dynamic_Dynamic _ ->
+                        Just SettingsBaseUri
+
+                    S_Dynamic_Dynamic_Dynamic _ ->
+                        Just SettingsBaseUri
+
+                    Tension_Dynamic_Dynamic _ ->
+                        Just TensionBaseUri
+
+                    Tension_Dynamic_Dynamic_Action _ ->
+                        Just TensionBaseUri
+
+                    Tension_Dynamic_Dynamic_Contract _ ->
+                        Just TensionBaseUri
+
+                    Tension_Dynamic_Dynamic_Contract_Dynamic _ ->
+                        Just TensionBaseUri
+
+                    Dynamic _ ->
+                        Just UsersBaseUri
+
+                    Dynamic_Settings _ ->
+                        Just UsersBaseUri
+
+                    _ ->
+                        Nothing
+            )
+        |> withDefault Nothing
 
 
 focusState : FractalBaseRoute -> Maybe Url -> Url -> Maybe NodeFocus -> NodeFocus -> FocusState

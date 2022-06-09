@@ -20,6 +20,19 @@
     /* is-paddingless compatibility */
     //padding-top: 1.25rem;
 
+    @include until($fullhd) {
+    @include desktop {
+        &.has-menu-left {
+            // menu-left-width - 1rem
+            min-width: calc(100vw - 40px);
+            max-midth: calc(100vw - 40px);
+            width:     calc(100vw - 40px);
+            margin-left: 40px;
+        }
+        }
+    }
+    // @debug
+    //transition: all .2s ease;
 }
 
 // Modal
@@ -39,7 +52,6 @@ html.has-modal-active, html.has-modal-active2 {
         padding-right: 14px; /* Avoid width reflow */
     }
 }
-
 
 .dropdown-content {
       .dropdown-item:hover {
@@ -85,6 +97,13 @@ hr {
         display: inline-flex;
         flex-wrap: wrap;
         gap: 8px;
+    }
+}
+
+.mx-mobile {
+    @include touch {
+        margin-left: 25px !important;
+        margin-right: 25px !important;
     }
 }
 
@@ -719,10 +738,10 @@ strong {
     nav.tabs {
         font-size: 0.9rem;
         ul {
-            border-bottom-color: var(--border-color) !important;
+            border-bottom-color: var(--border-color-light) !important;
         }
         li.is-active a {
-            border-color: var(--border-color);
+            border-color: var(--border-color-light);
         }
     }
 
@@ -825,6 +844,67 @@ strong {
   }
 }
 
+#orga-menu {
+  z-index: 0;
+  height: 100%;
+  // Do not work but foopage has a higher z-index, or maybe because it has a delay !
+  //height: calc(100vh - #{$navbar-height});
+  width: 63px;
+  position: fixed;
+  //position: sticky;
+  top: calc(#{$navbar-height});
+  left: 0;
+
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none; /* for Firefox */
+  &::-webkit-scrollbar {
+      display: none; /* for Chrome, Safari, and Opera */
+  }
+
+  // Copy from mattermost ?
+  display: flex;
+  justify-content: space-around;
+  //align-items: center;
+  //flex: 1 1 auto;
+
+  //background-color: var(--menu-left-background-color);
+  background-color: var(--header-background-color);
+  //background-color: var(--navbar-brand-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
+
+  &.off {
+      width: 0 !important;
+  }
+  transition: width .2s ease;
+}
+
+.orgaMenu {
+//m-2 px-1 mb-3
+    margin-top: $size-small !important;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-left: solid 3px var(--header-background-color);
+
+    &:hover {
+        border-left: solid 3px white;
+    }
+
+    &.is-active {
+        border-left: solid 3px var(--link);
+    }
+
+    & > .here {
+        //display: flex;
+        position: fixed !important;
+        margin-left: 3.5rem !important;
+        padding: 10px !important;
+        z-index: 100;
+    }
+}
+
 #menuSettings {
   border-right: solid 1px var(--border-color-light) !important;
   margin-right: 2rem;
@@ -904,6 +984,17 @@ strong {
 //
 // Overview and Doc
 //
+
+#main-overview {
+    & > .column {
+        margin-top: 0;
+        padding-top: 0;
+        &  > * {
+            margin-top: 21px;
+            margin-bottom: 21px;
+        }
+    }
+}
 
 .buttonRole {
     //border-width: 0 !important;
@@ -1041,27 +1132,6 @@ strong {
             .ellipsis {
                 opacity: 0.75 !important;
             }
-        }
-        // CSS arrow please !
-        .message-header:after, .message-header:before {
-            right: 100%;
-            top: 50%;
-            border: solid transparent;
-            content: " ";
-            height: 0;
-            width: 0;
-            position: absolute;
-            pointer-events: none;
-        }
-        .message-header:after {
-            border-right-color: var(--comment-header-background-color) !important;
-            border-width: 8px;
-            margin-top: -8px;
-        }
-        .message-header:before {
-            border-right-color: var(--border-color-light);
-            border-width: 9px;
-            margin-top: -9px;
         }
 
         .message-body {
@@ -1791,7 +1861,6 @@ tr.mediaBox {
     }
 }
 
-
 .urlForm {
     height: 1.8rem !important;
     .field .input, .field-label {
@@ -2274,6 +2343,14 @@ tr.mediaBox {
     font-size: 0.8rem;
 }
 
+.circle01 {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    padding-top: 10px;
+    font-size: 0.85rem;
+}
+
 .circle1 {
     background: #00000052;
     width: 45px;
@@ -2284,7 +2361,6 @@ tr.mediaBox {
 }
 
 .circle2 {
-    background: #285a86;
     width: 55px;
     height: 55px;
     padding-top: 14px;
@@ -2298,9 +2374,39 @@ tr.mediaBox {
     font-size: 4rem;
 }
 
+.is-orga {
+    background: #285a86;
+}
+
+/*
+ * CSS arrow please
+ */
+
+.has-arrow-left:after, .has-arrow-left:before {
+    right: 100%;
+    top: 50%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+.has-arrow-left:after {
+    border-right-color: var(--comment-header-background-color) !important;
+    border-width: 8px;
+    margin-top: -8px;
+}
+.has-arrow-left:before {
+    border-right-color: var(--border-color-light);
+    border-width: 9px;
+    margin-top: -9px;
+}
+
 /*
  * Slider
  */
+
 .slider {
   transition: transform .5s ease, opacity .5s ease;
   &.is-slide-left {
@@ -2426,6 +2532,16 @@ tr.mediaBox {
     &.is-1 {
         width: 460px;
     }
+}
+
+.ph-circle {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderLine;
+    animation-timing-function: linear;
+    //background: linear-gradient(to right, #444444 8%, #555555 18%, #444444 33%);
+    background: linear-gradient(to right, var(--background-evidence) 0%, var(--ph-background) 10%, var(--background-evidence) 100%);
 }
 
 @keyframes placeHolderButton{

@@ -5,12 +5,16 @@ import Generated.Route as Route exposing (Route, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), urlToFractalRoute)
 import Text as T exposing (textH, textT, upH)
+import Url exposing (Url)
 
 
 type alias Op msg =
     { user : UserState
+    , url : Url
     , replaceUrl : String -> msg
     }
 
@@ -31,31 +35,33 @@ view op =
                     --, span [ class "has-text-orange", attribute "style" "padding-top: 10px; font-size: 0.65rem; margin-left: -2px;" ] [ text "Alpha" ]
                     , span [ class "has-text-orange", attribute "style" "position:relative; top: -10px; font-size: 0.65rem;" ] [ text "Beta" ]
                     ]
-                , div
-                    [ class "burger navbar-burger"
-                    , attribute "data-target" "userMenu"
-                    , attribute "aria-expanded" "false"
-                    , attribute "aria-label" "menu"
-                    , attribute "role" "button"
-                    ]
-                    [ span [ attribute "aria-hidden" "true" ] []
-                    , span [ attribute "aria-hidden" "true" ] []
-                    , span [ attribute "aria-hidden" "true" ] []
-                    ]
+                , A.burger "userMenu"
                 ]
             , div [ id "userMenu", class "navbar-menu" ]
-                [ div [ class "navbar-start" ]
-                    [ case op.user of
+                [ div [ class "navbar-start" ] <|
+                    (case op.user of
                         LoggedIn _ ->
-                            a [ class "navbar-item", href (toHref Route.Top) ]
-                                [ textH T.yourOrg ]
+                            let
+                                hasLeftMenuBurger =
+                                    urlToFractalRoute op.url
+                                        |> Maybe.map
+                                            (\url ->
+                                                List.member url [ OverviewBaseUri, TensionsBaseUri, TensionBaseUri, MembersBaseUri, SettingsBaseUri ]
+                                            )
+                                        |> withDefault False
+                            in
+                            [ if hasLeftMenuBurger then
+                                div [ class "navbar-item button-light pr-0 is-hidden-touch menuLeftTrigger" ] [ A.icon "icon-menu" ]
+
+                              else
+                                text ""
+                            , a [ class "navbar-item", href (toHref Route.Top) ] [ textH T.yourOrg ]
+                            ]
 
                         LoggedOut ->
-                            text ""
-                    , a
-                        [ class "navbar-item", href (toHref Route.Explore) ]
-                        [ textH T.explore ]
-                    ]
+                            []
+                    )
+                        ++ [ a [ class "navbar-item", href (toHref Route.Explore) ] [ textH T.explore ] ]
                 , div [ class "navbar-end" ]
                     [ notificationButton op
                     , helpButton op

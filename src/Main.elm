@@ -98,7 +98,11 @@ update msg model =
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd
-                , Ports.bulma_driver "" -- @warning: this also check if jwt cookie has expired !
+
+                -- @warning: bulma_driver:
+                -- * check if jwt cookie has expired !
+                -- * activate the Subscrition triggers
+                , Ports.bulma_driver ""
                 , Ports.show "footBar"
                 ]
             )
@@ -152,6 +156,7 @@ view model =
     Global.view
         { page = Pages.view model.page model.global |> documentMap Page
         , global = model.global
+        , url = model.url -- @debug url change in global is not passed to Global.view. Why ?
         , toMsg = Global
         }
 

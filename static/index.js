@@ -19,12 +19,25 @@ window.addEventListener('load', _ => {
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
     // Window pos
     var window_pos = JSON.parse(localStorage.getItem("window_pos"));
+    // Menu left
+    var menu_left = JSON.parse(localStorage.getItem("menu_left"));
     // Theme
     var theme = localStorage.getItem("theme");
     if (theme) document.documentElement.className = theme;
     else document.documentElement.className = "dark";
     // Lang
     // ...
+
+    // Setup the layout
+    if (menu_left == true) {
+        setTimeout(() => {
+            var $o = document.getElementById("body");
+            if ($o) {
+                console.log("hey")
+                $o.classList.add('has-menu-left');
+            }
+        }, 333);
+    }
 
     // Init Elm
     // --
@@ -33,6 +46,7 @@ window.addEventListener('load', _ => {
         flags: {
             uctx: uctx,
             window_pos: window_pos,
+            menu_left: menu_left,
             apis: {
                 auth: AUTH_API,
                 gql: GRAPHQL_API,

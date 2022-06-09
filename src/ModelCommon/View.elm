@@ -361,14 +361,14 @@ viewOrga0 isLinked nameid =
     in
     if isLinked then
         a
-            [ class "image circleBase circle00"
+            [ class "image circleBase circle1 is-orga"
             , href (uriFromNameid OverviewBaseUri rid)
             ]
             [ getAvatarOrga rid ]
 
     else
         span
-            [ class "image circleBase circle00" ]
+            [ class "image circleBase circle1 is-orga" ]
             [ getAvatarOrga rid ]
 
 
@@ -380,14 +380,14 @@ viewOrga isLinked nameid =
     in
     if isLinked then
         a
-            [ class "image circleBase circle2"
+            [ class "image circleBase circle2 is-orga"
             , href (uriFromNameid OverviewBaseUri rid)
             ]
             [ getAvatarOrga rid ]
 
     else
         span
-            [ class "image circleBase circle2" ]
+            [ class "image circleBase circle2 is-orga" ]
             [ getAvatarOrga rid ]
 
 

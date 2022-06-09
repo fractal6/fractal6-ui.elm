@@ -22,7 +22,6 @@ import Url exposing (Url)
 
 --
 -- Session / Global
--- @debug: rename this file Session ?
 --
 
 
@@ -42,6 +41,7 @@ type alias Screen =
 type alias SessionFlags =
     { uctx : Maybe JD.Value
     , window_pos : Maybe JD.Value
+    , menu_left : Maybe Bool
     , apis : Apis
     , screen : Screen
     }
@@ -63,10 +63,12 @@ type alias Session =
     , tensions_all : Maybe TensionsList
     , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
+    , orgs_data : Maybe (List OrgaNode)
     , isAdmin : Maybe Bool
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
     , window_pos : Maybe WindowPos
+    , menu_left : Maybe Bool
     , screen : Screen
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
@@ -74,14 +76,19 @@ type alias Session =
 
 
 type GlobalCmd
-    = --| Delay msg1 Float
-      --| SubmitDelay Int
+    = -- Session Auth
       DoUpdateToken
     | DoUpdateUserSession UserCtx
-    | DoNavigate String
+      -- Navigation
+    | DoNavigate String -- @FIX: replace by Global.NavigateRaw in the mapping function
     | DoReplaceUrl String
-    | DoModalAsk String String -- SafeClose
-      --
+      -- Safe close modal
+    | DoModalAsk String String
+      -- Menu Left
+    | DoSetMenuLeft Bool
+    | DoUpdateOrgs (Maybe (List OrgaNode))
+      -- @FIX: Make this in Global to define the mapGlobalOutcms only once ?!
+      -- OR better: User only Ports, and add Subscription in Global to trigger update from JS !
     | DoFetchNode String
     | DoPushTension Tension
     | DoAddNodes (List Node)
@@ -115,9 +122,11 @@ resetSession flags =
     , tensions_all = Nothing
     , tensions_count = Nothing
     , tension_head = Nothing
+    , orgs_data = Nothing
     , isAdmin = Nothing
     , node_quickSearch = Nothing
     , window_pos = Nothing
+    , menu_left = Nothing
     , apis = flags.apis
     , screen = flags.screen
     , authorsPanel = Nothing
@@ -169,9 +178,11 @@ fromLocalSession flags =
       , tensions_all = Nothing
       , tensions_count = Nothing
       , tension_head = Nothing
+      , orgs_data = Nothing
       , isAdmin = Nothing
       , node_quickSearch = Nothing
       , window_pos = window_pos
+      , menu_left = flags.menu_left
       , apis = flags.apis
       , screen = flags.screen
       , authorsPanel = Nothing

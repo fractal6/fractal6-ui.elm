@@ -2,7 +2,7 @@ module ${module_name} exposing (Msg(..), State, init, subscriptions, update, vie
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, isFailure, isSuccess)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)

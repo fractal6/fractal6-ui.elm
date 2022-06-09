@@ -62,7 +62,7 @@ viewComment op c form result =
 
               else
                 div [ class "message" ]
-                    [ div [ class "message-header pl-1-mobile" ]
+                    [ div [ class "message-header has-arrow-left pl-1-mobile" ]
                         [ span [ class "is-hidden-tablet" ] [ viewUser0 c.createdBy.username ]
                         , viewTensionDateAndUserC op.now c.createdAt c.createdBy
                         , case c.updatedAt of
@@ -119,7 +119,7 @@ viewUpdateInput op uctx comment form result =
             message /= comment.message
     in
     div [ class "message commentInput" ]
-        [ div [ class "message-header" ]
+        [ div [ class "message-header has-arrow-left" ]
             [ div [ class "tabs is-boxed is-small" ]
                 [ ul []
                     [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text "Write" ] ]
@@ -209,7 +209,7 @@ viewCommentInput op uctx tension form result viewMode =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header" ]
+                [ div [ class "message-header has-arrow-left" ]
                     [ div [ class "tabs is-boxed is-small" ]
                         [ ul []
                             [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text "Write" ] ]
@@ -292,7 +292,7 @@ viewContractCommentInput op uctx form result viewMode =
         [ div [ class "media-left is-hidden-mobile" ] [ viewUser2 uctx.username ]
         , div [ class "media-content" ]
             [ div [ class "message" ]
-                [ div [ class "message-header" ]
+                [ div [ class "message-header has-arrow-left" ]
                     [ div [ class "tabs is-boxed is-small" ]
                         [ ul []
                             [ li [ classList [ ( "is-active", viewMode == Write ) ] ] [ a [ onClickPD2 (op.doChangeViewMode Write), target "_blank" ] [ text "Write" ] ]

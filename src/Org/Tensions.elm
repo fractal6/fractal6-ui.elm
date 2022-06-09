@@ -26,6 +26,7 @@ import Components.Loading as Loading
         , withMaybeData
         , withMaybeDataMap
         )
+import Components.OrgaMenu as OrgaMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -103,6 +104,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
 
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -150,6 +154,7 @@ type alias Model =
     , labelsPanel : LabelSearchPanel.State
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
+    , orgaMenu : OrgaMenu.State
     }
 
 
@@ -527,6 +532,7 @@ type Msg
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
 
 
 
@@ -592,6 +598,7 @@ init global flags =
             , now = global.now
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
+            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
             }
 
         --
@@ -648,6 +655,7 @@ init global flags =
                 []
             , [ sendSleep PassedSlowLoadTreshold 500 ]
             , [ sendSleep InitModals 400 ]
+            , [ Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad) ]
             ]
                 |> List.concat
     in
@@ -1151,6 +1159,16 @@ update global message model =
             in
             ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
+        OrgaMenuMsg msg ->
+            let
+                ( data, out ) =
+                    OrgaMenu.update apis msg model.orgaMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1162,6 +1180,7 @@ subscriptions _ model =
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
+        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         |> Sub.batch
 
 
@@ -1187,11 +1206,12 @@ view global model =
     { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
         [ Lazy.lazy HelperBar.view helperData
-        , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
+        , div [ id "mainPane" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
         ]
     }
 
@@ -1206,7 +1226,7 @@ view_ global model =
         [ div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
             [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
                 [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
-                    [ div [ class "column pt-0 is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
+                    [ div [ class "column is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
                 , case model.children of
                     RemoteData.Failure err ->
                         viewHttpErrors err

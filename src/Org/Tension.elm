@@ -32,6 +32,7 @@ import Components.Loading as Loading
         )
 import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
+import Components.OrgaMenu as OrgaMenu
 import Components.SelectType as SelectType
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
@@ -156,6 +157,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
 
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -225,6 +229,7 @@ type alias Model =
     , selectType : SelectType.State
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
+    , orgaMenu : OrgaMenu.State
     }
 
 
@@ -360,6 +365,7 @@ type Msg
     | ActionPanelMsg ActionPanel.Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
 
 
 
@@ -453,6 +459,7 @@ init global flags =
             , now = global.now
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
+            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
             }
 
         refresh =
@@ -512,6 +519,7 @@ refresh_cmds refresh global model =
         Nothing ->
             Cmd.none
     , Cmd.map AuthModalMsg (send AuthModal.OnStart)
+    , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
     ]
 
 
@@ -1467,6 +1475,16 @@ update global message model =
             in
             ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
+        OrgaMenuMsg msg ->
+            let
+                ( data, out ) =
+                    OrgaMenu.update apis msg model.orgaMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1481,6 +1499,7 @@ subscriptions _ model =
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
+        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         |> Sub.batch
 
 
@@ -1519,6 +1538,7 @@ view global model =
         , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
         ]
     }
 

@@ -131,21 +131,6 @@ const actions = {
 
         setTimeout(() => {
             fitElement(id);
-            //window.onresize = () => {
-            //    session.rtime = new Date();
-            //    if (session.timeout === false) {
-            //        session.timeout = true;
-            //        // Smooth redraw
-            //        setTimeout( () => {
-            //            if (new Date() - session.rtime < session.delta) {
-            //                setTimeout(() => fitElement(id), session.delta);
-            //            } else {
-            //                session.timeout = false;
-            //                fitElement(id)
-            //            }
-            //        }, session.delta);
-            //    }
-            //};
         }, 300)
     },
     'LOGERR': (app, session, message) => {
@@ -164,16 +149,12 @@ const actions = {
             app.ports.openAuthModalFromJs.send({uctx:uctx, refresh:true});
         }
     },
-    'TOGGLE_TH': (app, session, message) => {
-        var $tt = document.getElementById("themeButton_port");
-        if ($tt) {
-            $tt.addEventListener("click", function(){
-                toggleTheme();
-            });
+    'SAVE_SESSION_ITEM' : (app, session, data) => {
+        localStorage.setItem(data.key, JSON.stringify(data.val));
+        if (data.key == "menu_left") {
+            app.ports.updateMenuleftFomJs.send(data.val);
         }
-    },
-    'SAVE_WINDOWPOS' : (app, session, data) => {
-        localStorage.setItem("window_pos", JSON.stringify(data));
+        session.gp.resizeMe();
     },
 
     //
@@ -310,6 +291,9 @@ const actions = {
             gp.resetGraphPack(data.data, true, focusid);
             gp.drawCanvas();
             gp.drawCanvas(true);
+
+            // Fix bad drawing... (observed when adding, moving or removing node)
+            gp.resizeMe();
         } // else
         // Some hidden data here...
     },
@@ -356,9 +340,12 @@ const actions = {
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
     },
     'REMOVE_SESSION' : (app, session, _) => {
+        // @TODO: make a list of item to delete instead !
+        // see also static/index.js
         localStorage.removeItem(UCTX_KEY);
         localStorage.removeItem("theme");
         localStorage.removeItem("window_pos");
+        localStorage.removeItem("menu_left");
         // Won't work for httpOnly cookie
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/";
         app.ports.loggedOutOkFromJs.send(null);

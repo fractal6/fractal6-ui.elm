@@ -57,11 +57,17 @@ port triggerInviteFromJs : (() -> msg) -> Sub msg
 port triggerNotifFromJs : (() -> msg) -> Sub msg
 
 
+port triggerMenuLeftFromJs : (() -> msg) -> Sub msg
+
+
 
 -- User
 
 
 port loggedOutOkFromJs : (() -> msg) -> Sub msg
+
+
+port updateMenuleftFomJs : (Maybe Bool -> msg) -> Sub msg
 
 
 port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
@@ -270,19 +276,35 @@ saveUserCtx userCtx =
         }
 
 
-saveWindowpos : WindowPos -> Cmd msg
-saveWindowpos x =
-    outgoing
-        { action = "SAVE_WINDOWPOS"
-        , data = windowEncoder x
-        }
-
-
 removeSession : UserCtx -> Cmd msg
 removeSession userCtx =
     outgoing
         { action = "REMOVE_SESSION"
         , data = JE.string ""
+        }
+
+
+saveWindowpos : WindowPos -> Cmd msg
+saveWindowpos x =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "window_pos" )
+                , ( "val", windowEncoder x )
+                ]
+        }
+
+
+saveMenuleft : Bool -> Cmd msg
+saveMenuleft x =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "menu_left" )
+                , ( "val", JE.bool x )
+                ]
         }
 
 

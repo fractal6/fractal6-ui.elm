@@ -27,6 +27,7 @@ import Components.Loading as Loading
         , withMaybeDataMap
         )
 import Components.NodeDoc as NodeDoc
+import Components.OrgaMenu as OrgaMenu
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -110,7 +111,7 @@ mapGlobalOutcmds gcmds =
             (\m ->
                 case m of
                     DoNavigate link ->
-                        ( send (Navigate link), Cmd.none )
+                        ( Cmd.none, send (NavigateRaw link) )
 
                     DoReplaceUrl url ->
                         ( Cmd.none, send (ReplaceUrl url) )
@@ -138,6 +139,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
+
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -176,6 +180,7 @@ type alias Model =
     , actionPanel : ActionPanel.State
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
+    , orgaMenu : OrgaMenu.State
     }
 
 
@@ -245,6 +250,7 @@ type Msg
     | ActionPanelMsg ActionPanel.Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
 
 
 
@@ -312,6 +318,7 @@ init global flags =
             , actionPanel = ActionPanel.init session.user
             , joinOrga = JoinOrga.init newFocus.nameid session.user
             , authModal = AuthModal.init session.user Nothing
+            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
             }
 
         cmds_ =
@@ -360,6 +367,7 @@ init global flags =
             cmds_
                 ++ [ sendSleep PassedSlowLoadTreshold 500
                    , sendSleep InitModals 400
+                   , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
                    ]
     in
     ( model2
@@ -665,8 +673,7 @@ update global message model =
 
                 cmds =
                     model.next_focus
-                        |> Maybe.map
-                            (\nid -> [ send (NodeClicked nid) ])
+                        |> Maybe.map (\nid -> [ send (NodeClicked nid) ])
                         |> withDefault [ Cmd.none ]
             in
             ( { model | orga_data = Success ndata, next_focus = Nothing }
@@ -862,6 +869,16 @@ update global message model =
             in
             ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
+        OrgaMenuMsg msg ->
+            let
+                ( data, out ) =
+                    OrgaMenu.update apis msg model.orgaMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -876,6 +893,7 @@ subscriptions _ model =
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
+        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         |> Sub.batch
 
 
@@ -925,11 +943,12 @@ view global model =
     , body =
         [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
           Lazy.lazy HelperBar.view helperData
-        , div [ id "mainPane", class "mt-5" ] [ view_ global model ]
+        , div [ id "mainPane" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = model.users_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
         ]
     }
 
@@ -989,20 +1008,16 @@ view_ global model =
                 _ ->
                     text "wrong position"
     in
-    div [ class "columns is-centered" ]
+    div [ id "main-overview", class "columns is-centered" ]
         [ div [ class "column is-6 is-5-desktop is-5-fullhd" ]
-            [ viewSearchBar global.session.user model
-            , viewCanvas global.session.user model
-            , br [] []
+            [ --viewSearchBar global.session.user model
+              viewCanvas global.session.user model
             , viewFromPos model.window_pos.bottomLeft
             ]
         , div [ class "divider is-vertical is-hidden-mobile", onClick SwitchWindow ] [ text "⇋" ]
-        , div
-            [ class "column is-6 is-5-fullhd" ]
-            [ div [ class "columns is-gapless" ]
-                [ div [ class "column is-12", id "nextToChart" ]
-                    [ viewFromPos model.window_pos.topRight ]
-                ]
+        , div [ class "column is-6 is-5-fullhd" ]
+            [ div [ id "nextToChart" ]
+                [ viewFromPos model.window_pos.topRight ]
             ]
         ]
 

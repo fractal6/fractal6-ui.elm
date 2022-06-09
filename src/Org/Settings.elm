@@ -12,6 +12,7 @@ import Components.JoinOrga as JoinOrga
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, loadingSpin, viewAuthNeeded, viewGqlErrors, viewHttpErrors, withDefaultData, withMapData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
+import Components.OrgaMenu as OrgaMenu
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
@@ -26,7 +27,7 @@ import Fractal.Enum.RoleType as RoleType
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, table, tbody, td, text, textarea, th, thead, tr, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, rows, style, target, type_, value)
+import Html.Attributes exposing (attribute, autofocus, checked, class, classList, colspan, disabled, for, href, id, list, name, placeholder, rows, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
 import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
@@ -85,6 +86,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateUserSession uctx ->
                         ( Cmd.none, send (UpdateUserSession uctx) )
+
+                    DoUpdateOrgs orgs ->
+                        ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -146,6 +150,7 @@ type alias Model =
     , tensionForm : NTF.State
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
+    , orgaMenu : OrgaMenu.State
     }
 
 
@@ -313,6 +318,7 @@ type Msg
     | NewTensionMsg NTF.Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
+    | OrgaMenuMsg OrgaMenu.Msg
 
 
 
@@ -337,6 +343,9 @@ init global flags =
 
         menu =
             Dict.get "m" query |> withDefault [] |> List.head |> withDefault "" |> menuDecoder
+
+        action =
+            Dict.get "a" query |> withDefault [] |> List.head |> withDefault ""
 
         -- Focus
         newFocus =
@@ -364,7 +373,7 @@ init global flags =
             , labels = Loading
             , labels_top = RemoteData.Loading
             , labels_sub = RemoteData.Loading
-            , label_add = False
+            , label_add = ternary (action == "new" && menu == LabelsMenu) True False
             , label_edit = Nothing
             , label_result = NotAsked
             , label_result_del = NotAsked
@@ -375,7 +384,7 @@ init global flags =
             , roles = Loading
             , roles_top = RemoteData.Loading
             , roles_sub = RemoteData.Loading
-            , role_add = False
+            , role_add = ternary (action == "new" && menu == RolesMenu) True False
             , role_edit = Nothing
             , role_result = NotAsked
             , role_result_del = NotAsked
@@ -394,12 +403,14 @@ init global flags =
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
+            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
             }
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
+            , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             ]
                 ++ (case menu of
                         LabelsMenu ->
@@ -1123,6 +1134,16 @@ update global message model =
             in
             ( { model | authModal = data }, out.cmds |> List.map (\m -> Cmd.map AuthModalMsg m) |> List.append (cmds ++ cmds_extra) |> Cmd.batch, Cmd.batch gcmds )
 
+        OrgaMenuMsg msg ->
+            let
+                ( data, out ) =
+                    OrgaMenu.update apis msg model.orgaMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1133,6 +1154,7 @@ subscriptions _ model =
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
+        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         |> Sub.batch
 
 
@@ -1164,6 +1186,7 @@ view global model =
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
         ]
     }
 
@@ -1298,6 +1321,7 @@ viewLabelAddBox model =
                     , placeholder "Label name"
                     , value name
                     , onInput (ChangeArtefactPost "name")
+                    , autofocus True
                     ]
                     []
                 ]
@@ -1539,6 +1563,7 @@ viewRoleAddBox model =
                     , placeholder "Role name"
                     , value name
                     , onInput (ChangeArtefactPost "name")
+                    , autofocus True
                     ]
                     []
                 ]

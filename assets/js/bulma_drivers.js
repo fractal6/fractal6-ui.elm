@@ -163,6 +163,12 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
+    const $menuLeftTrigger = $doc.querySelectorAll('.menuLeftTrigger');
+    if ($menuLeftTrigger.length > 0) {
+        $menuLeftTrigger.forEach( el => {
+            setupHandler("click", triggerMenuLeft, el, el, app);
+        });
+    }
 
     //
     // Activate autofocus
@@ -492,6 +498,10 @@ function closeModal(e, modal, app) {
     }
 }
 
+//
+// Other Triggers
+//
+
 function triggerHelp(e, el, app) {
     app.ports.triggerHelpFromJs.send(null)
 }
@@ -510,6 +520,14 @@ function triggerInvite(e, el, app) {
 
 function triggerNotif(e, el, app) {
     //app.ports.triggerNotifFromJs.send(null)
+}
+
+function triggerMenuLeft(e, el, app) {
+    var $target_ = document.getElementById("body");
+    if ($target_) {
+        $target_.classList.toggle('has-menu-left');
+    }
+    app.ports.triggerMenuLeftFromJs.send(null)
 }
 
 function triggerTheme(e, el, app) {
