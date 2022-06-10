@@ -788,6 +788,10 @@ strong {
     }
 }
 
+#loginForm, #signupForm {
+    max-width: 500px;
+}
+
 #tree-menu {
     a {
         padding-top: 8px;

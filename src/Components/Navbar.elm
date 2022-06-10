@@ -1,7 +1,7 @@
 module Components.Navbar exposing (view)
 
 import Assets as A
-import Generated.Route as Route exposing (Route, toHref)
+import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
@@ -152,7 +152,11 @@ userButton op =
                 ]
 
         LoggedOut ->
-            div [ class "navbar-item" ]
-                [ a [ class "button is-small is-primary has-text-weight-bold", href (toHref Route.Login) ]
-                    [ textH T.signin ]
-                ]
+            if fromUrl op.url == Just Signup then
+                text ""
+
+            else
+                div [ class "navbar-item" ]
+                    [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Route.Signup) ]
+                        [ textH T.join ]
+                    ]

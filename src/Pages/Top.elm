@@ -348,7 +348,7 @@ viewSignup : Model -> Html Msg
 viewSignup model =
     div []
         [ A.welcome
-        , div [ class "subtitle" ] [ text "Create your account:" ]
+        , div [ class "subtitle is-size-6 is-strong" ] [ text T.createYourAccount, text ":" ]
         , div [ class "field is-horizntl" ]
             [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
             , div [ class "field-body" ]

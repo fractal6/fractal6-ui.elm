@@ -65,6 +65,11 @@ signout =
     "Sign Out"
 
 
+createYourAccount : String
+createYourAccount =
+    "Create your account"
+
+
 createAccount : String
 createAccount =
     "or create an account"

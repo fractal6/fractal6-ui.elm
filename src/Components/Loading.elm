@@ -316,11 +316,11 @@ viewAuthNeeded forward =
             [ p []
                 [ text "Please "
                 , button
-                    [ class "button is-small is-success", onClickPD (forward { reset = True, link = Route.toHref Route.Login }) ]
+                    [ class "button is-small is-primary", onClickPD (forward { reset = True, link = Route.toHref Route.Login }) ]
                     [ text "Login" ]
                 , text " or "
                 , button
-                    [ class "button is-small is-primary", onClickPD (forward { reset = True, link = Route.toHref Route.Signup }) ]
+                    [ class "button is-small is-success", onClickPD (forward { reset = True, link = Route.toHref Route.Signup }) ]
                     [ text "Signup" ]
                 , text " to perform this action."
                 ]

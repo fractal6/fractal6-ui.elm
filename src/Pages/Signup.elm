@@ -156,7 +156,7 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ class "columns is-centered section" ]
-        [ div [ class "column is-4" ]
+        [ div [ class "" ]
             [ viewSignup global model ]
         ]
 
@@ -171,7 +171,7 @@ viewSignup global model =
                 ]
             , div [ class "card-content" ]
                 [ A.welcome
-                , div [ class "subtitle" ] [ text "Create your account:" ]
+                , div [ class "subtitle is-size-6 is-strong" ] [ text T.createYourAccount, text ":" ]
                 , div [ class "field is-horizntl" ]
                     [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
                     , div [ class "field-body" ]
