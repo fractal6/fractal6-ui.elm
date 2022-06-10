@@ -1346,7 +1346,9 @@ update global message model =
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
         UpdateUctx uctx ->
-            ( { model | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data }
+            ( { model
+                | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data
+              }
             , Cmd.none
             , Cmd.none
             )
@@ -1460,12 +1462,12 @@ update global message model =
                 ( cmds, gcmds ) =
                     mapGlobalOutcmds out.gcmds
 
-                -- reload silently the page if needed
                 cmds_extra =
                     out.result
                         |> Maybe.map
                             (\o ->
                                 if Tuple.first o == True then
+                                    -- reload silently the page if needed
                                     [ Nav.replaceUrl global.key (Url.toString global.url) ]
 
                                 else

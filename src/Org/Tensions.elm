@@ -1349,19 +1349,6 @@ viewSearchBar model =
                                 )
                             ]
                         ]
-                    , div [ class "control", onClick ChangeAuthor ]
-                        [ div [ class "is-small button" ]
-                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link2" ] []) (text "")
-                            , text "Author"
-                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
-                            ]
-                        , UserSearchPanel.view
-                            { selectedAssignees = model.authors
-                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
-                            }
-                            model.authorsPanel
-                            |> Html.map UserSearchPanelMsg
-                        ]
                     , div [ class "control", onClick ChangeLabel ]
                         [ div [ class "is-small button" ]
                             [ ternary (model.labels /= defaultLabelsFilter) (span [ class "badge is-link2" ] []) (text "")
@@ -1374,6 +1361,19 @@ viewSearchBar model =
                             }
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg
+                        ]
+                    , div [ class "control", onClick ChangeAuthor ]
+                        [ div [ class "is-small button" ]
+                            [ ternary (model.authors /= defaultAuthorsFilter) (span [ class "badge is-link2" ] []) (text "")
+                            , text "Author"
+                            , A.icon "ml-2 icon-chevron-down1 icon-tiny"
+                            ]
+                        , UserSearchPanel.view
+                            { selectedAssignees = model.authors
+                            , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            }
+                            model.authorsPanel
+                            |> Html.map UserSearchPanelMsg
                         ]
                     , div [ class "control dropdown" ]
                         [ div [ class "is-small button dropdown-trigger", attribute "aria-controls" "depth-filter" ]
