@@ -95,6 +95,7 @@ type GlobalCmd
     | DoUpdateNode String (Node -> Node)
     | DoDelNodes (List String)
     | DoMoveNode String String String
+    | DoFocus String
 
 
 type alias NodesQuickSearch =

@@ -12,7 +12,7 @@ import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty, isUsersSendable)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
+import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, style, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
@@ -34,8 +34,10 @@ type State
 type alias Model =
     { user : UserState
     , users_result : GqlData (List User)
-    , form : UserForm
+    , form : List UserForm
+    , pattern : String
     , lookup : List User
+    , multiSelect : Bool
     , users_orga : List User -- base user from orga
     , lastPattern : String -- last pattern used to fetch data
     , lastTime : Time.Posix -- last time data were fetch
@@ -47,12 +49,14 @@ type alias Model =
     }
 
 
-initModel : UserState -> Model
-initModel user =
+initModel : Bool -> UserState -> Model
+initModel multiSelect user =
     { user = user
     , users_result = NotAsked
-    , form = initUserForm
+    , form = []
+    , pattern = ""
     , lookup = []
+    , multiSelect = multiSelect
     , users_orga = []
     , lastPattern = ""
     , lastTime = Time.millisToPosix 0
@@ -64,9 +68,9 @@ initModel user =
     }
 
 
-init : UserState -> State
-init user =
-    initModel user |> State
+init : Bool -> UserState -> State
+init multiSelect user =
+    initModel multiSelect user |> State
 
 
 
@@ -79,7 +83,7 @@ init user =
 
 reset : Model -> Model
 reset model =
-    initModel model.user
+    initModel model.multiSelect model.user
 
 
 open : Model -> Model
@@ -96,36 +100,28 @@ clickUser : User -> Model -> Model
 clickUser user model =
     let
         form =
-            model.form
+            initUserForm
     in
-    { model | form = { form | username = user.username, name = user.name, pattern = "" } }
+    { model | form = model.form ++ [ { form | username = user.username, name = user.name } ], pattern = "" }
 
 
 clickEmail : String -> Model -> Model
 clickEmail email model =
     let
         form =
-            model.form
+            initUserForm
     in
-    { model | form = { form | email = String.toLower email, pattern = "" } }
+    { model | form = model.form ++ [ { form | email = String.toLower email |> String.trim } ], pattern = "" }
 
 
-unselect : Model -> Model
-unselect model =
-    let
-        form =
-            model.form
-    in
-    { model | form = initUserForm }
+unselect : Int -> Model -> Model
+unselect i model =
+    { model | form = LE.removeAt i model.form }
 
 
 setPattern : String -> Model -> Model
 setPattern value model =
-    let
-        form =
-            model.form
-    in
-    { model | form = { form | pattern = value } }
+    { model | pattern = value }
 
 
 setDataResult : GqlData (List User) -> Model -> Model
@@ -151,7 +147,7 @@ type Msg
     | OnInput Bool String
     | OnClickUser User
     | OnClickEmail String
-    | OnUnselect
+    | OnUnselect Int
     | DoQueryUser
     | OnUsersAck (GqlData (List User))
       -- Lookup
@@ -228,21 +224,21 @@ update_ apis message model =
                 data =
                     clickUser user model
             in
-            ( data, Out [] [] (Just ( True, [ data.form ] )) )
+            ( data, Out [] [] (Just ( True, data.form )) )
 
         OnClickEmail email ->
             let
                 data =
                     clickEmail email model
             in
-            ( data, Out [] [] (Just ( True, [ data.form ] )) )
+            ( data, Out [] [] (Just ( True, data.form )) )
 
-        OnUnselect ->
-            ( unselect model, Out [] [] (Just ( False, [ model.form ] )) )
+        OnUnselect i ->
+            ( unselect i model, Out [] [] (Just ( False, LE.getAt i model.form |> List.singleton |> List.filterMap identity )) )
 
         DoQueryUser ->
             ( setDataResult LoadingSlowly model
-            , out0 [ queryUser apis (String.toLower model.form.pattern) OnUsersAck ]
+            , out0 [ queryUser apis (String.toLower model.pattern |> String.trim) OnUsersAck ]
             )
 
         OnUsersAck result ->
@@ -260,7 +256,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryUser 500 ] [ DoUpdateToken ] )
 
                 OkAuth users ->
-                    ( data, out0 [ Ports.initUserSearchSeek (users ++ model.users_orga) model.form.pattern ] )
+                    ( data, out0 [ Ports.initUserSearchSeek (users ++ model.users_orga) model.pattern ] )
 
                 _ ->
                     ( data, noOut )
@@ -305,7 +301,7 @@ subscriptions =
 
 
 type alias Op =
-    { label_text : String }
+    { label_text : Html Msg }
 
 
 view : Op -> State -> Html Msg
@@ -320,30 +316,30 @@ viewInput : Op -> Model -> Html Msg
 viewInput op model =
     let
         hasSelected =
-            isUsersSendable [ model.form ]
+            List.length model.form > 0
 
-        selectedUser =
-            if hasSelected then
-                let
-                    user =
-                        User model.form.username model.form.name
-                in
-                div [ class "tagsinput tags has-addons" ]
-                    [ span [ class "tag is-rounded" ]
-                        [ if model.form.email /= "" then
-                            viewEmail model.form.email
+        selectedUsers =
+            List.indexedMap
+                (\i x ->
+                    let
+                        user =
+                            User x.username x.name
+                    in
+                    div [ class "tagsinput tags has-addons m-0 mr-2", classList [ ( "singleSelection", not model.multiSelect ) ] ]
+                        [ span [ class "tag is-rounded" ]
+                            [ if x.email /= "" then
+                                viewEmail x.email
 
-                          else
-                            viewUserFull 0 False False user
+                              else
+                                viewUserFull 0 False False user
+                            ]
+                        , span [ class "tag is-delete is-rounded", onClick (OnUnselect i) ] []
                         ]
-                    , span [ class "tag is-delete is-rounded", onClick OnUnselect ] []
-                    ]
-
-            else
-                text ""
+                )
+                model.form
 
         seemsEmail =
-            model.form.pattern
+            model.pattern
                 |> String.split "@"
                 |> (\l ->
                         case l of
@@ -360,25 +356,28 @@ viewInput op model =
     in
     div []
         [ div [ class "field mb-5" ]
-            [ label [ class "label" ]
-                [ text op.label_text ]
+            [ label [ class "label" ] [ op.label_text ]
             , div [ class "control" ]
-                [ selectedUser
-                , input
-                    [ id "userInput"
-                    , class "input is-rounded"
-                    , type_ "text"
-                    , placeholder <| ternary hasSelected "" "Username or email address"
-                    , value model.form.pattern
-                    , ternary hasSelected
-                        (onClick NoMsg)
-                        (onInput (OnInput seemsEmail))
+                (selectedUsers
+                    ++ [ textarea
+                            [ id "userInput"
+                            , class "input is-rounded"
 
-                    --, disabled hasSelected
-                    ]
-                    []
-                ]
-            , if model.form.pattern == "" then
+                            --, type_ "text"
+                            , rows 1
+                            , style "resize" "none"
+                            , placeholder <| ternary hasSelected "Invite someone else" "Username or email address"
+                            , value model.pattern
+                            , ternary (not model.multiSelect && hasSelected)
+                                (onClick NoMsg)
+                                (onInput (OnInput seemsEmail))
+
+                            --, disabled hasSelected
+                            ]
+                            []
+                       ]
+                )
+            , if model.pattern == "" then
                 text ""
 
               else if seemsEmail then
@@ -423,11 +422,11 @@ viewEmailSelector op model =
         [ div [ class "selectors has-background-info-light" ]
             [ p
                 [ class "panel-block"
-                , onClick (OnClickEmail model.form.pattern)
+                , onClick (OnClickEmail model.pattern)
                 ]
                 [ A.icon1 "icon-mail" T.invite
                 , text T.space_
-                , span [ class "is-italic" ] [ text "\"", text model.form.pattern, text "\"" ]
+                , span [ class "is-italic" ] [ text "\"", text (String.trim model.pattern), text "\"" ]
                 ]
             ]
         ]

@@ -12,7 +12,7 @@ import Form exposing (isPostEmpty, isUsersSendable)
 import Fractal.Enum.TensionEvent as TensionEvent
 import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
@@ -76,7 +76,7 @@ initModel nameid user =
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
-    , userInput = UserInput.init user
+    , userInput = UserInput.init True user
     }
 
 
@@ -176,7 +176,7 @@ canExitSafe model =
                     True
 
                 InviteOne ->
-                    not (isUsersSendable model.form.users)
+                    List.isEmpty model.form.events
 
                 _ ->
                     True
@@ -227,6 +227,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | UpdateUctx UserCtx
     | UserInputMsg UserInput.Msg
 
 
@@ -351,21 +352,12 @@ update_ apis message model =
 
         --Query
         PushGuest form ->
-            if List.member model.step [ JoinOne ] then
-                -- Self invitation case
+            if List.member model.step [ JoinOne, InviteOne ] then
                 let
-                    contractForm =
+                    contractForms =
                         makeCandidateContractForm form
                 in
-                ( setJoinResult LoadingSlowly model, out0 [ addOneContract apis contractForm OnJoinAck ] )
-
-            else if List.member model.step [ InviteOne ] then
-                -- Send invitation case
-                let
-                    contractForm =
-                        makeCandidateContractForm form
-                in
-                ( setJoinResult LoadingSlowly model, out0 [ addOneContract apis contractForm OnJoinAck ] )
+                ( setJoinResult LoadingSlowly model, out0 (List.map (\c -> addOneContract apis c OnJoinAck) contractForms) )
 
             else
                 -- not implemented
@@ -450,41 +442,54 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        UpdateUctx uctx ->
+            ( { model | user = LoggedIn uctx }, noOut )
+
         -- Components
         UserInputMsg msg ->
             let
                 ( data, out ) =
                     UserInput.update apis msg model.userInput
 
-                users =
-                    out.result
-                        |> Maybe.map (\( selected, u ) -> ternary selected u [])
-                        |> withDefault model.form.users
-
                 form =
                     model.form
 
-                events =
+                ( users, events ) =
                     case out.result of
                         Just ( selected, us ) ->
-                            case us of
-                                [ u ] ->
-                                    let
-                                        uname =
+                            if selected then
+                                ( us
+                                , List.map
+                                    (\u ->
+                                        if u.email /= "" then
                                             -- do not store publicly email
-                                            ternary (u.username /= "") u.username ((String.split "@" u.email |> List.head |> withDefault "") ++ "@...")
-                                    in
-                                    if selected then
-                                        form.events ++ [ Ev TensionEvent.UserJoined "" uname ]
+                                            Ev TensionEvent.UserJoined "" ((String.split "@" u.email |> List.head |> withDefault "") ++ "@...")
 
-                                    else
-                                        form.events |> List.filter (\x -> x.new /= uname)
+                                        else
+                                            Ev TensionEvent.UserJoined "" u.username
+                                    )
+                                    us
+                                )
 
-                                _ ->
-                                    form.events
+                            else
+                                -- Assume only one delete at a time
+                                case us of
+                                    [ u ] ->
+                                        let
+                                            i =
+                                                if u.email /= "" then
+                                                    LE.elemIndex u.email (List.map .email form.users) |> withDefault -1
+
+                                                else
+                                                    LE.elemIndex u.username (List.map .username form.users) |> withDefault -1
+                                        in
+                                        ( LE.removeAt i form.users, LE.removeAt i form.events )
+
+                                    _ ->
+                                        ( form.users, form.events )
 
                         Nothing ->
-                            form.events
+                            ( form.users, form.events )
 
                 ( cmds, gcmds ) =
                     ( [], [] )
@@ -498,6 +503,7 @@ subscriptions (State model) =
     , Ports.triggerJoinPendingFromJs (always (OnRedirectPending (nid2rootid model.nameid)))
     , Ports.mcPD Ports.closeModalFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
         ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
 
@@ -632,7 +638,7 @@ viewJoinStep op model =
                     model.node_data |> withMaybeData |> Maybe.map .name |> withDefault ""
             in
             div [ class "modal-card-body" ]
-                [ UserInput.view { label_text = "Invite member to " ++ name ++ ":" } model.userInput |> Html.map UserInputMsg
+                [ UserInput.view { label_text = span [] [ text "Invite members to ", strong [] [ text name ], text ":" ] } model.userInput |> Html.map UserInputMsg
                 , viewComment True model
                 , case model.node_data of
                     Failure err ->
@@ -663,7 +669,7 @@ viewJoinStep op model =
                             [ class "button is-primary"
                             , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
                             , onClick (PushGuest model.form)
-                            , disabled (not (isUsersSendable model.form.users))
+                            , disabled (List.isEmpty model.form.events)
                             ]
                             [ text T.invite ]
                         ]

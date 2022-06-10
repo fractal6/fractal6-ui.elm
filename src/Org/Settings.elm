@@ -1316,7 +1316,7 @@ viewLabelAddBox model =
             [ p [ class "control" ]
                 [ label [ class "label is-small" ] [ text "Label name *" ]
                 , input
-                    [ class "input"
+                    [ class "input autofocus"
                     , type_ "text"
                     , placeholder "Label name"
                     , value name
@@ -1558,7 +1558,7 @@ viewRoleAddBox model =
             [ p [ class "control" ]
                 [ label [ class "label is-small" ] [ text "Role name *" ]
                 , input
-                    [ class "input"
+                    [ class "input autofocus"
                     , type_ "text"
                     , placeholder "Role name"
                     , value name

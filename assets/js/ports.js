@@ -152,9 +152,12 @@ const actions = {
     'SAVE_SESSION_ITEM' : (app, session, data) => {
         localStorage.setItem(data.key, JSON.stringify(data.val));
         if (data.key == "menu_left") {
-            app.ports.updateMenuleftFomJs.send(data.val);
+            app.ports.updateMenuleftFromJs.send(data.val);
         }
         session.gp.resizeMe();
+    },
+    'RELOAD_MENU_LEFT': (app, session, uctx) => {
+        app.ports.reloadMenuleftFromJs.send(uctx);
     },
 
     //

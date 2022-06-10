@@ -1590,7 +1590,7 @@ viewCircleTensions model =
                         ]
                     )
                 |> List.concat
-                |> (\x -> ternary (List.length x == 0) [ div [] [ text "No tensions here." ] ] x)
+                |> (\x -> ternary (List.length x == 0) [ div [ class "ml-6 p-6" ] [ text "No tensions yet." ] ] x)
                 |> div
                     [ id "tensionsCircle"
                     , class "columns is-fullwidth is-marginless is-mobile kb-board"

@@ -159,33 +159,22 @@ update msg model =
 
         UpdateUserSession uctx ->
             let
-                maybeNewMemberid =
-                    Nothing
-
-                cmds =
-                    case model.session.orga_data of
-                        Just ndata ->
-                            case maybeNewMemberid of
-                                Just nid ->
-                                    [ Ports.saveUserCtx uctx
-
-                                    -- @obsolete: was used to remove the guest circle.
-                                    --, Ports.removeRedrawGraphPack ndata nid
-                                    ]
-
-                                Nothing ->
-                                    [ Ports.saveUserCtx uctx
-                                    , Ports.redrawGraphPack ndata
-                                    ]
-
-                        Nothing ->
-                            [ Ports.saveUserCtx uctx ]
-
                 session =
                     model.session
             in
             ( { model | session = { session | user = LoggedIn uctx } }
-            , Cmd.batch cmds
+              -- Update Components when Uctx change !
+            , [ case model.session.orga_data of
+                    Just ndata ->
+                        [ Ports.saveUserCtx uctx
+                        , Ports.redrawGraphPack ndata
+                        ]
+
+                    Nothing ->
+                        [ Ports.saveUserCtx uctx ]
+              ]
+                |> List.concat
+                |> Cmd.batch
             )
 
         UpdateUserToken ->
@@ -422,7 +411,7 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
-        , Ports.updateMenuleftFomJs UpdateSessionMenuleft
+        , Ports.updateMenuleftFromJs UpdateSessionMenuleft
         ]
 
 

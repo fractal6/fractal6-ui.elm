@@ -189,7 +189,7 @@ initModel user =
 
     -- Components
     , labelsPanel = LabelSearchPanel.init "" SelectLabel user
-    , userInput = UserInput.init user
+    , userInput = UserInput.init False user
     }
 
 
@@ -763,10 +763,10 @@ update_ apis message model =
 
               else
                 let
-                    contractForm =
+                    contractForms =
                         makeCandidateContractForm aform
                 in
-                out0 [ addOneContract apis contractForm PushAck ]
+                out0 (List.map (\c -> addOneContract apis c PushAck) contractForms)
             )
 
         PushAck result ->
@@ -1754,7 +1754,7 @@ viewInviteRole model =
     in
     div [ class "columns is-centered mt-2" ]
         [ div [ class "column is-8" ]
-            [ UserInput.view { label_text = "Invite someone for this role (or link yourself):" } model.userInput |> Html.map UserInputMsg
+            [ UserInput.view { label_text = text "Invite someone to this role (or link yourself):" } model.userInput |> Html.map UserInputMsg
             , viewComment model
             , case model.action_result of
                 Failure err ->

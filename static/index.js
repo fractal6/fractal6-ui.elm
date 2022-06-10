@@ -33,7 +33,6 @@ window.addEventListener('load', _ => {
         setTimeout(() => {
             var $o = document.getElementById("body");
             if ($o) {
-                console.log("hey")
                 $o.classList.add('has-menu-left');
             }
         }, 333);

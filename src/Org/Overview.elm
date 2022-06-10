@@ -134,6 +134,10 @@ mapGlobalOutcmds gcmds =
                     DoMoveNode a b c ->
                         ( send (MoveNode a b c), Cmd.none )
 
+                    DoFocus nameid ->
+                        -- delay cause bulma driver not working (rejoin orga after leave)
+                        ( sendSleep (OnFocus nameid) 500, Cmd.none )
+
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
 
@@ -234,8 +238,8 @@ type Msg
     | NodeClicked String
     | NodeHovered String
     | NodeFocused LocalGraph
-    | DoFocus String
-    | DoClearTooltip
+    | OnFocus String
+    | OnClearTooltip
     | ToggleGraphReverse
       -- Common
     | NoMsg
@@ -650,7 +654,7 @@ update global message model =
             , Cmd.batch
                 [ queryNodesSub apis nameid NewNodesAck
                 , if focus then
-                    sendSleep (DoFocus nameid) 1000
+                    sendSleep (OnFocus nameid) 750
 
                   else
                     Cmd.none
@@ -773,17 +777,17 @@ update global message model =
                     ]
             in
             ( { model | path_data = Just path }
-            , Cmd.batch ([ Ports.drawButtonsGraphPack, Ports.bulma_driver "" ] ++ cmds)
+            , Cmd.batch ([ Ports.drawButtonsGraphPack ] ++ cmds)
             , send (UpdateSessionPath (Just path))
             )
 
-        DoFocus nameid ->
+        OnFocus nameid ->
             ( model, Ports.focusGraphPack nameid, Cmd.none )
 
         ToggleGraphReverse ->
             ( model, () |> sendToggleGraphReverse, Cmd.none )
 
-        DoClearTooltip ->
+        OnClearTooltip ->
             ( model, Cmd.none, Ports.clearTooltip )
 
         -- Common
@@ -1057,7 +1061,7 @@ viewSearchBar us model =
         [ div
             [ class "field has-addons searchBar"
 
-            --, onMouseEnter DoClearTooltip
+            --, onMouseEnter OnClearTooltip
             ]
             ([ div [ class "control has-icons-left is-expanded" ]
                 [ input

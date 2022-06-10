@@ -173,35 +173,13 @@ viewSignup global model =
                 [ A.welcome
                 , div [ class "subtitle" ] [ text "Create your account:" ]
                 , div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
-                    , div [ class "field-body" ]
-                        [ div [ class "field" ]
-                            [ div [ class "control" ]
-                                [ input
-                                    [ class "input autofocus followFocus"
-                                    , attribute "data-nextfocus" "emailInput"
-                                    , type_ "text"
-                                    , placeholder "username"
-                                    , name "username"
-                                    , value (Dict.get "username" model.form.post |> withDefault "")
-                                    , attribute "autocomplete" "username"
-                                    , required True
-                                    , onInput (ChangeUserPost "username")
-                                    ]
-                                    []
-                                ]
-                            ]
-                        ]
-                    ]
-                , div [ class "field is-horizntl" ]
                     [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
                     , div [ class "field-body" ]
                         [ div [ class "field" ]
                             [ div [ class "control" ]
                                 [ input
-                                    [ id "emailInput"
-                                    , class "input followFocus"
-                                    , attribute "data-nextfocus" "passwordInput"
+                                    [ class "input autofocus followFocus"
+                                    , attribute "data-nextfocus" "usernameInput"
                                     , type_ "text"
                                     , placeholder "email"
                                     , name "email"
@@ -209,6 +187,28 @@ viewSignup global model =
                                     , attribute "autocomplete" "email"
                                     , required True
                                     , onInput (ChangeUserPost "email")
+                                    ]
+                                    []
+                                ]
+                            ]
+                        ]
+                    ]
+                , div [ class "field is-horizntl" ]
+                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+                    , div [ class "field-body" ]
+                        [ div [ class "field" ]
+                            [ div [ class "control" ]
+                                [ input
+                                    [ id "usernameInput"
+                                    , class "input followFocus"
+                                    , attribute "data-nextfocus" "passwordInput"
+                                    , type_ "text"
+                                    , placeholder "username"
+                                    , name "username"
+                                    , value (Dict.get "username" model.form.post |> withDefault "")
+                                    , attribute "autocomplete" "username"
+                                    , required True
+                                    , onInput (ChangeUserPost "username")
                                     ]
                                     []
                                 ]

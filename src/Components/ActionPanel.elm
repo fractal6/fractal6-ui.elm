@@ -38,7 +38,7 @@ import ModelCommon
         , isSelfContract
         , makeCandidateContractForm
         )
-import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nid2rootid)
+import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nearestCircleid, nid2rootid)
 import ModelCommon.View exposing (roleColor, viewUserFull)
 import ModelSchema exposing (..)
 import Ports
@@ -106,7 +106,7 @@ initModel user =
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
     , moveTension = MoveTension.init user
-    , userInput = UserInput.init user
+    , userInput = UserInput.init False user
     }
 
 
@@ -648,10 +648,10 @@ update_ apis message model =
 
                     else
                         let
-                            contractForm =
+                            contractForms =
                                 makeCandidateContractForm form
                         in
-                        ( model, out0 [ addOneContract apis contractForm PushAck ] )
+                        ( model, out0 (List.map (\c -> addOneContract apis c PushAck) contractForms) )
 
                 _ ->
                     ( model, out0 [ actionRequest apis form PushAck ] )
@@ -759,7 +759,9 @@ update_ apis message model =
 
                             LeaveAction ->
                                 -- Ignore Guest deletion (either non visible or very small)
-                                [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing }) ]
+                                [ DoUpdateNode model.form.node.nameid (\n -> { n | first_link = Nothing })
+                                , DoFocus (nearestCircleid model.form.node.nameid)
+                                ]
 
                     else
                         []
@@ -1139,7 +1141,7 @@ viewStep1 op model =
                             [ viewRoleAuthority op model ]
 
                 LinkAction ->
-                    [ UserInput.view { label_text = "Invite someone (or link yourself):" } model.userInput |> Html.map UserInputMsg
+                    [ UserInput.view { label_text = text "Invite someone to this role (or link yourself):" } model.userInput |> Html.map UserInputMsg
                     , viewComment model
                     ]
 

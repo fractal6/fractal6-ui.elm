@@ -350,35 +350,13 @@ viewSignup model =
         [ A.welcome
         , div [ class "subtitle" ] [ text "Create your account:" ]
         , div [ class "field is-horizntl" ]
-            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
-            , div [ class "field-body" ]
-                [ div [ class "field" ]
-                    [ div [ class "control" ]
-                        [ input
-                            [ class "input autofocus followFocus"
-                            , attribute "data-nextfocus" "emailInput2"
-                            , type_ "text"
-                            , placeholder "username"
-                            , name "username"
-                            , value (Dict.get "username" model.form.post |> withDefault "")
-                            , attribute "autocomplete" "username"
-                            , required True
-                            , onInput (ChangeUserPost "username")
-                            ]
-                            []
-                        ]
-                    ]
-                ]
-            ]
-        , div [ class "field is-horizntl" ]
             [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Email" ] ]
             , div [ class "field-body" ]
                 [ div [ class "field" ]
                     [ div [ class "control" ]
                         [ input
-                            [ id "emailInput2"
-                            , class "input followFocus"
-                            , attribute "data-nextfocus" "passwordInput2"
+                            [ class "input autofocus followFocus"
+                            , attribute "data-nextfocus" "usernameInput2"
                             , type_ "text"
                             , placeholder "email"
                             , name "email"
@@ -386,6 +364,28 @@ viewSignup model =
                             , attribute "autocomplete" "email"
                             , required True
                             , onInput (ChangeUserPost "email")
+                            ]
+                            []
+                        ]
+                    ]
+                ]
+            ]
+        , div [ class "field is-horizntl" ]
+            [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+            , div [ class "field-body" ]
+                [ div [ class "field" ]
+                    [ div [ class "control" ]
+                        [ input
+                            [ id "usernameInput2"
+                            , class "input followFocus"
+                            , attribute "data-nextfocus" "passwordInput2"
+                            , type_ "text"
+                            , placeholder "username"
+                            , name "username"
+                            , value (Dict.get "username" model.form.post |> withDefault "")
+                            , attribute "autocomplete" "username"
+                            , required True
+                            , onInput (ChangeUserPost "username")
                             ]
                             []
                         ]

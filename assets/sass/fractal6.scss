@@ -868,9 +868,7 @@ strong {
   //align-items: center;
   //flex: 1 1 auto;
 
-  //background-color: var(--menu-left-background-color);
   background-color: var(--header-background-color);
-  //background-color: var(--navbar-brand-background-color);
   box-shadow: inset -1px 0 0 var(--border-color-light);
 
   &.off {
@@ -903,6 +901,8 @@ strong {
         padding: 10px !important;
         z-index: 100;
     }
+
+    transition: top,height .2s ease;
 }
 
 #menuSettings {
@@ -1278,10 +1278,7 @@ strong {
 }
 
 .tagsinput {
-	position: absolute;
-	z-index: 100;
-	top: 4px;
-	left: 11px;
+    display: inline-flex;
 
     .box {
         border: none !important;
@@ -1299,6 +1296,13 @@ strong {
                 background-color: var(--white-ter);
             }
         }
+    }
+
+    &.singleSelection {
+        position: absolute;
+        top: 4px;
+        left: 11px;
+        z-index: 100;
     }
 }
 
@@ -1906,6 +1910,12 @@ tr.mediaBox {
     }
 }
 
+.modal {
+    *:not(.modal-card) > .modal-card-body {
+        border-radius: 10px;
+    }
+}
+
 #authModal {
     &.modal.is-active {
         z-index: 100 !important;
@@ -1919,7 +1929,6 @@ tr.mediaBox {
     .modal-content {
         margin-top: 5rem;
     }
-
 }
 
 #helpModal {

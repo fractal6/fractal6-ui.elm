@@ -103,6 +103,7 @@ setDataResult result model =
 type Msg
     = -- Data
       OnLoad
+    | OnReload UserCtx
     | OnDataAck (GqlData (List OrgaNode))
     | OnToggle
     | OnOrgHover (Maybe String)
@@ -170,6 +171,13 @@ update_ apis message model =
                 LoggedOut ->
                     ( model, noOut )
 
+        OnReload uctx ->
+            if not (isSuccess model.orgs_result) || List.length (getRootids uctx.roles) /= List.length (getRootids (uctxFromUser model.user).roles) then
+                ( { model | orgs_result = LoadingSlowly, user = LoggedIn uctx }, out0 [ send OnLoad ] )
+
+            else
+                ( model, noOut )
+
         OnDataAck result ->
             let
                 data =
@@ -217,6 +225,7 @@ update_ apis message model =
 subscriptions : List (Sub Msg)
 subscriptions =
     [ Ports.triggerMenuLeftFromJs (always OnToggle)
+    , Ports.uctxPD Ports.loadUserCtxFromJs LogErr OnReload
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
 

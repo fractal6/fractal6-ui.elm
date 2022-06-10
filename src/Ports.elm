@@ -67,7 +67,7 @@ port triggerMenuLeftFromJs : (() -> msg) -> Sub msg
 port loggedOutOkFromJs : (() -> msg) -> Sub msg
 
 
-port updateMenuleftFomJs : (Maybe Bool -> msg) -> Sub msg
+port updateMenuleftFromJs : (Maybe Bool -> msg) -> Sub msg
 
 
 port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
@@ -257,17 +257,17 @@ clearTooltip =
 
 
 saveUserCtx : UserCtx -> Cmd msg
-saveUserCtx userCtx =
+saveUserCtx uctx =
     let
         -- Stringigy a Dict
         --dataD = Dict.fromList [
-        --( "data", JE.encode 0 <| userCtxEncoder userCtx )
+        --( "data", JE.encode 0 <| userCtxEncoder uctx )
         --]
         --datad = JE.dict identity JE.string dataD
         -- Turn the dict into Json string
         data =
             JE.object
-                [ ( "data", userCtxEncoder userCtx )
+                [ ( "data", userCtxEncoder uctx )
                 ]
     in
     outgoing
@@ -277,7 +277,7 @@ saveUserCtx userCtx =
 
 
 removeSession : UserCtx -> Cmd msg
-removeSession userCtx =
+removeSession uctx =
     outgoing
         { action = "REMOVE_SESSION"
         , data = JE.string ""
@@ -313,10 +313,10 @@ saveMenuleft x =
 
 
 raiseAuthModal : UserCtx -> Cmd msg
-raiseAuthModal userCtx =
+raiseAuthModal uctx =
     outgoing
         { action = "RAISE_AUTH_MODAL"
-        , data = userCtxEncoder userCtx
+        , data = userCtxEncoder uctx
         }
 
 
@@ -557,7 +557,14 @@ uctxPD2 sub messageErr message =
                 Err err ->
                     messageErr (JD.errorToString err)
          )
-            << JD.decodeValue (JD.map2 (\a b -> { uctx = a, refresh = b }) (JD.field "uctx" userCtxDecoder) (JD.maybe <| JD.field "refresh" JD.bool))
+            << JD.decodeValue
+                (JD.map2
+                    (\a b ->
+                        { uctx = a, refresh = b }
+                    )
+                    (JD.field "uctx" userCtxDecoder)
+                    (JD.maybe <| JD.field "refresh" JD.bool)
+                )
         )
 
 

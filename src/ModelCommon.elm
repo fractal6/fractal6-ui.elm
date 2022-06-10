@@ -267,8 +267,8 @@ type alias ActionForm =
     , bid : String
     , node : Node
     , fragment : NodeFragment
-    , users : List UserForm
     , events : List Ev
+    , users : List UserForm -- Note: For contract, One event <-> One user (candidate)
     , post : Post
     }
 
@@ -376,48 +376,48 @@ buildVote contractid rootnameid username value =
     }
 
 
-makeCandidateContractForm : ActionForm -> ContractForm
+makeCandidateContractForm : ActionForm -> List ContractForm
 makeCandidateContractForm form =
-    let
-        -- @codefactor: put it in Codec.contractIdCodec.
-        -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
-        ( et, old, new ) =
-            List.head form.events
-                |> Maybe.map (\x -> ( TensionEvent.toString x.event_type, x.old, x.new ))
-                |> withDefault ( "", "", "" )
+    List.map2 Tuple.pair form.users form.events
+        |> List.map
+            (\( u, e ) ->
+                let
+                    -- @codefactor: put it in Codec.contractIdCodec.
+                    -- (pobleme with circular import due to TensionEvent defined in ModelCommon)
+                    ( et, old, new ) =
+                        ( TensionEvent.toString e.event_type, e.old, e.new )
 
-        contractid =
-            contractIdCodec form.tid et old new
+                    contractid =
+                        contractIdCodec form.tid et old new
 
-        rootnameid =
-            nid2rootid form.node.nameid
+                    rootnameid =
+                        nid2rootid form.node.nameid
 
-        -- Feed candidate and pendingcandidate
-        ( candidates, pending_candidates ) =
-            List.foldl
-                (\uf ( cand, pend ) ->
-                    if uf.email == "" then
-                        ( [ { username = uf.username } ], [] )
+                    -- Feed candidate and pendingcandidate (only one candidate/pendingCandidate supported)
+                    ( candidates, pending_candidates ) =
+                        List.foldl
+                            (\uf ( cand, pend ) ->
+                                if uf.email == "" then
+                                    ( [ { username = uf.username } ], [] )
 
-                    else
-                        ( [], [ { email = uf.email } ] )
-                )
-                ( [], [] )
-                form.users
-
-        --form.users |> @FUTURE: multiple invitation...
-    in
-    { uctx = form.uctx
-    , tid = form.tid
-    , event = form.events |> List.map ev2eventFragment |> List.head |> withDefault initEventFragment
-    , post = form.post
-    , status = ContractStatus.Open
-    , contract_type = ContractType.AnyCandidates
-    , contractid = contractid
-    , participants = [ buildVote contractid rootnameid form.uctx.username 1 ]
-    , candidates = candidates
-    , pending_candidates = pending_candidates
-    }
+                                else
+                                    ( [], [ { email = uf.email } ] )
+                            )
+                            ( [], [] )
+                            [ u ]
+                in
+                { uctx = form.uctx
+                , tid = form.tid
+                , event = ev2eventFragment e
+                , post = form.post
+                , status = ContractStatus.Open
+                , contract_type = ContractType.AnyCandidates
+                , contractid = contractid
+                , participants = [ buildVote contractid rootnameid form.uctx.username 1 ]
+                , candidates = candidates
+                , pending_candidates = pending_candidates
+                }
+            )
 
 
 form2cid : ActionForm -> String
@@ -435,8 +435,9 @@ form2cid form =
 
 isSelfContract : UserCtx -> List UserForm -> Bool
 isSelfContract uctx users =
-    -- Assume List.length model.form.users == 1
-    List.member uctx.username (List.map (\x -> x.username) users)
+    List.length users
+        == 1
+        && List.member uctx.username (List.map (\x -> x.username) users)
 
 
 
