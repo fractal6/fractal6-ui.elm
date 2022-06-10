@@ -10,7 +10,7 @@ import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
 import Generated.Route as Route exposing (Route)
 import Global exposing (send, sendNow, sendSleep)
-import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
+import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Html.Lazy as Lazy
@@ -144,16 +144,26 @@ update_ apis message model =
                     ( model, noOut )
 
         DoOpenAuthModal refresh uctx ->
-            if uctx.username == "" then
-                ( model, out0 [ send (DoCloseAuthModal (Route.toHref Route.Logout)) ] )
+            case model.user of
+                -- @DEBUG/codefactor: pass directly {user} to DoOpenAuthModal !
+                LoggedIn _ ->
+                    if model.modalAuth /= Inactive then
+                        -- already open, pass
+                        ( model, noOut )
 
-            else
-                ( { model
-                    | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
-                    , refreshAfter = refresh
-                  }
-                , out0 [ Ports.open_auth_modal ]
-                )
+                    else if uctx.username == "" then
+                        ( model, out0 [ send (DoCloseAuthModal (Route.toHref Route.Logout)) ] )
+
+                    else
+                        ( { model
+                            | modalAuth = Active { post = Dict.fromList [ ( "username", uctx.username ) ] } RemoteData.NotAsked
+                            , refreshAfter = refresh
+                          }
+                        , out0 [ Ports.open_auth_modal ]
+                        )
+
+                LoggedOut ->
+                    ( model, noOut )
 
         DoOpenSignupModal puid ->
             ( { model
@@ -380,16 +390,25 @@ signupModal op model =
                     Active form result ->
                         case result of
                             RemoteData.Success uctx ->
-                                [ T.welcomeLetter
-                                    |> Format.namedValue "username" uctx.username
-                                    |> renderMarkdown "is-human px-3 mt-2"
+                                [ div [ class "px-3 mt-2 mb-2" ]
+                                    [ T.welcomeLetter
+                                        |> Format.namedValue "username" uctx.username
+                                        |> renderMarkdown "is-human"
+                                    ]
                                 , div [ class "is-aligned-center" ]
                                     [ button [ class "button is-success is-light ", onClick <| DoCloseAuthModal "" ] [ text "Got it" ]
                                     ]
                                 ]
 
                             _ ->
-                                [ p [ class "field" ] [ text "You have been invited to join an organisation on Fractale.", br [] [], text "Please, setup your account:" ]
+                                [ p [ class "field" ]
+                                    [ text "You have been invited to join an organisation on "
+                                    , strong [] [ text "Fractale" ]
+                                    , text ". "
+                                    , br [ class "mb-1" ] []
+                                    , text "But first, you need to "
+                                    , strong [] [ text "setup your account:" ]
+                                    ]
                                 , div [ class "field" ]
                                     [ div [ class "field" ]
                                         [ div [ class "label" ] [ text "Username" ]

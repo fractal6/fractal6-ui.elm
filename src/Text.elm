@@ -1428,7 +1428,7 @@ In order to help your navigation, you will find some shortcuts in the top right 
 * the **notification button** (<i class="icon icon-bell"></i>) to see and access your last notifications.
 * the **help button** (<i class="icon icon-question"></i>) to access some documentation or contact us.
 * the **new button** (<i class="icon icon-plus"></i>) to create new organisations.
-* the **user button** to access your profile and other utilies.
+* the **user button** to access your profile and settings.
 
 """
 

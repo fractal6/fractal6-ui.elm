@@ -612,7 +612,7 @@ viewJoinStep op model =
 
                     _ ->
                         text ""
-                , div [ class "field is-grouped is-grouped-right" ]
+                , div [ class "field" ]
                     [ div [ class "is-pulled-left" ]
                         [ button
                             [ class "button is-light"
@@ -620,7 +620,7 @@ viewJoinStep op model =
                             ]
                             [ textH T.cancel ]
                         ]
-                    , div [ class "control" ]
+                    , div [ class "is-pulled-right" ]
                         [ button
                             [ class "button is-primary"
                             , classList [ ( "is-loading", model.join_result == LoadingSlowly ) ]
