@@ -224,9 +224,9 @@ type Msg
     | ChangeActivityTab ActivityTab
     | GotJournal (GqlData (List EventNotif))
       -- New Tension
-    | DoCreateTension LocalGraph
+    | CreateTension LocalGraph
       -- Node Action
-    | DoActionEdit String Node
+    | OpenActionPanel String Node
       -- Graphpack
     | FetchNewNode String Bool
     | NewNodesAck (GqlData (List Node))
@@ -613,7 +613,7 @@ update global message model =
             ( { model | journal_data = result }, Cmd.none, Cmd.none )
 
         -- New tension triggers
-        DoCreateTension p ->
+        CreateTension p ->
             let
                 tf =
                     model.tensionForm
@@ -622,7 +622,7 @@ update global message model =
             ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen p)), Cmd.none )
 
         -- Node Action
-        DoActionEdit domid node ->
+        OpenActionPanel domid node ->
             let
                 rootSource =
                     getNode (nid2rootid node.nameid) model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
@@ -889,7 +889,7 @@ subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
     , nodeHoveredFromJs NodeHovered
     , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
-    , Ports.lgPD nodeDataFromJs LogErr DoCreateTension
+    , Ports.lgPD nodeDataFromJs LogErr CreateTension
     , Ports.lookupNodeFromJs ChangeNodeLookup
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
@@ -940,7 +940,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = DoCreateTension
+            , onCreateTension = CreateTension
             }
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -1091,7 +1091,7 @@ viewSearchBar us model =
                                 [ span
                                     [ class "button is-small is-link2 is-wrapped"
                                     , attribute "data-modal" "actionModal"
-                                    , onClick (DoCreateTension p)
+                                    , onClick (CreateTension p)
                                     ]
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
 
@@ -1142,7 +1142,7 @@ viewActionPanel domid us node o actionPanel =
                         [ span
                             [ class "button is-small is-link2"
                             , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
-                            , onClick (DoActionEdit domid node)
+                            , onClick (OpenActionPanel domid node)
                             ]
                             [ i [ class "icon-ellipsis-v" ] [] ]
                         ]

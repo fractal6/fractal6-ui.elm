@@ -340,9 +340,9 @@ type Msg
       -- move tension
     | DoMove TensionHead
       -- Node Action
-    | DoActionEdit String Blob
+    | OpenActionPanel String Blob
       -- New Tension
-    | DoCreateTension LocalGraph
+    | CreateTension LocalGraph
       -- Common
     | NoMsg
     | InitModals
@@ -1286,7 +1286,7 @@ update global message model =
             )
 
         -- Node Action
-        DoActionEdit domid blob ->
+        OpenActionPanel domid blob ->
             let
                 parentid =
                     model.tension_head |> withMaybeDataMap (\th -> th.receiver.nameid) |> withDefault ""
@@ -1306,7 +1306,7 @@ update global message model =
             )
 
         -- New tension
-        DoCreateTension p ->
+        CreateTension p ->
             let
                 tf =
                     model.tensionForm
@@ -1531,7 +1531,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = DoCreateTension
+            , onCreateTension = CreateTension
             }
     in
     { title =
@@ -2499,7 +2499,7 @@ viewSidePane u t model =
                                 [ h2
                                     [ class "subtitle is-h"
                                     , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                                    , Maybe.map (\b -> onClick (DoActionEdit domid b)) blob_m |> withDefault (onClick NoMsg)
+                                    , Maybe.map (\b -> onClick (OpenActionPanel domid b)) blob_m |> withDefault (onClick NoMsg)
                                     ]
                                     [ textH T.document
                                     , if ActionPanel.isOpen_ model.actionPanel then

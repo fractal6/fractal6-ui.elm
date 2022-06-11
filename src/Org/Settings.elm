@@ -296,7 +296,7 @@ type Msg
     | GotUserCanJoin (WebData Bool)
     | GotGuestCanCreateTension (WebData Bool)
       -- New Tension
-    | DoCreateTension LocalGraph
+    | CreateTension LocalGraph
       -- Color Picker
     | OpenColor
     | CloseColor
@@ -1007,7 +1007,7 @@ update global message model =
                     ( data, Cmd.none, Cmd.none )
 
         -- New tension
-        DoCreateTension lg ->
+        CreateTension lg ->
             let
                 tf =
                     model.tensionForm
@@ -1174,7 +1174,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = DoCreateTension
+            , onCreateTension = CreateTension
             }
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])

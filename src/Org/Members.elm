@@ -138,7 +138,7 @@ type Msg
     | OnGoToContract String
     | OnGoContractAck (GqlData IdPayload)
       -- New Tension
-    | DoCreateTension LocalGraph
+    | CreateTension LocalGraph
       -- Common
     | NoMsg
     | InitModals
@@ -321,7 +321,7 @@ update global message model =
                     ( model, Cmd.none, Cmd.none )
 
         -- New tension
-        DoCreateTension lg ->
+        CreateTension lg ->
             let
                 tf =
                     model.tensionForm
@@ -447,7 +447,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = DoCreateTension
+            , onCreateTension = CreateTension
             }
     in
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])

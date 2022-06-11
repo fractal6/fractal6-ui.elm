@@ -984,12 +984,22 @@ viewPanel op model =
                         )
                     ]
                     [ A.icon1 "icon-edit-2" (upH T.edit) ]
-                , hr [ class "dropdown-divider" ] []
                 ]
 
              else
                 []
             )
+                ++ (-- New ACTION
+                    if model.form.node.role_type /= Just RoleType.Guest then
+                        [ div
+                            [ class "dropdown-item button-light" ]
+                            [ A.icon1 "icon-plus" (upH (T.add ++ "...")) ]
+                        , hr [ class "dropdown-divider" ] []
+                        ]
+
+                    else
+                        []
+                   )
                 -- ACTION
                 ++ (if op.isAdmin then
                         [ -- Move Action
