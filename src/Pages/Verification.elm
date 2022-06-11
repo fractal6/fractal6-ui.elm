@@ -211,9 +211,11 @@ viewVerification global model =
 welcome : UserCtx -> Html Msg
 welcome uctx =
     div []
-        [ T.welcomeLetter
-            |> Format.namedValue "username" uctx.username
-            |> renderMarkdown "is-human px-3 mt-2"
+        [ div [ class "px-3 mt-2 mb-2" ]
+            [ T.welcomeLetter
+                |> Format.namedValue "username" uctx.username
+                |> renderMarkdown "is-human"
+            ]
         , div [ class "is-aligned-center" ]
             [ a [ class "button is-success is-light", href (toHref Route.New_Orga) ] [ text "Got it, let's create my first organization." ]
             , br [] []

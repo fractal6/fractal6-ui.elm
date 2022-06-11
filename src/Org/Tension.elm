@@ -510,6 +510,17 @@ refresh_cmds refresh global model =
 
         Contracts ->
             Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad model.tensionid model.contractid))
+    , if model.node_focus.rootnameid == "" && not refresh then
+        -- Fix contract with empty rootnameid redirection
+        case model.tension_head of
+            Success th ->
+                Cmd.map ContractsPageMsg (send (ContractsPage.SetRootnameid (nid2rootid th.receiver.nameid)))
+
+            _ ->
+                Cmd.none
+
+      else
+        Cmd.none
     , sendSleep PassedSlowLoadTreshold 500
     , sendSleep InitModals 400
     , case Dict.get "eid" query |> Maybe.map List.head |> withDefault Nothing of
@@ -1346,9 +1357,7 @@ update global message model =
             ( model, Scroll.scrollToElement did NoMsg, Cmd.none )
 
         UpdateUctx uctx ->
-            ( { model
-                | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data
-              }
+            ( { model | isTensionAdmin = getTensionRights uctx model.tension_head model.path_data }
             , Cmd.none
             , Cmd.none
             )
@@ -1497,6 +1506,7 @@ subscriptions _ model =
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
+        ++ (ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
         ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))

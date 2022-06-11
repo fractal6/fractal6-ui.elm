@@ -1393,7 +1393,7 @@ viewTension model =
                                                 []
 
                                         Preview ->
-                                            div [] [ renderMarkdown "is-light is-human mt-4 mx-3" message, hr [ class "has-background-grey-lighter" ] [] ]
+                                            div [ class "mt-4 mx-3" ] [ renderMarkdown "is-light is-human" message, hr [ class "has-background-grey-lighter" ] [] ]
                                     ]
                                 , p [ class "help-label" ] [ textH model.txt.message_help ]
                                 , br [] []

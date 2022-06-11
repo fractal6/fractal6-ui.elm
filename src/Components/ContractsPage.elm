@@ -274,6 +274,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | UpdateUctx UserCtx
     | ChangeInputViewMode InputViewMode
     | ChangeUpdateViewMode InputViewMode
 
@@ -625,6 +626,30 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        UpdateUctx uctx ->
+            let
+                form =
+                    model.form
+
+                voteForm =
+                    model.voteForm
+
+                cForm =
+                    model.comment_form
+
+                cpForm =
+                    model.comment_patch_form
+            in
+            ( { model
+                | user = LoggedIn uctx
+                , form = { form | uctx = uctx }
+                , voteForm = { voteForm | uctx = uctx }
+                , comment_form = { cForm | uctx = uctx }
+                , comment_patch_form = { cpForm | uctx = uctx }
+              }
+            , noOut
+            )
+
         ChangeInputViewMode viewMode ->
             -- @codefactor: should write in comment_form, but tension page directly write in tension_head...
             ( { model | inputViewMode = viewMode }, noOut )
@@ -639,6 +664,7 @@ update_ apis message model =
 
 subscriptions =
     [ Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
 
 

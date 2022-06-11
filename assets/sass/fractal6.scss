@@ -789,7 +789,9 @@ strong {
 }
 
 #loginForm, #signupForm {
-    max-width: 500px;
+    @include desktop {
+        min-width: 400px;
+    }
 }
 
 #tree-menu {

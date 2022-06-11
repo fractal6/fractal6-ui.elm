@@ -258,21 +258,12 @@ clearTooltip =
 
 saveUserCtx : UserCtx -> Cmd msg
 saveUserCtx uctx =
-    let
-        -- Stringigy a Dict
-        --dataD = Dict.fromList [
-        --( "data", JE.encode 0 <| userCtxEncoder uctx )
-        --]
-        --datad = JE.dict identity JE.string dataD
-        -- Turn the dict into Json string
-        data =
+    outgoing
+        { action = "SAVE_USERCTX"
+        , data =
             JE.object
                 [ ( "data", userCtxEncoder uctx )
                 ]
-    in
-    outgoing
-        { action = "SAVE_USERCTX"
-        , data = data
         }
 
 

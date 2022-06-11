@@ -233,7 +233,7 @@ viewCommentInput op uctx tension form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown "is-human mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
+                                    div [ class "mt-4 mx-3" ] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
                             ]
                         ]
                     , case result of
@@ -316,7 +316,7 @@ viewContractCommentInput op uctx form result viewMode =
                                         []
 
                                 Preview ->
-                                    div [] [ renderMarkdown "is-human mt-4 mx-3" message, hr [ class "has-background-border-light" ] [] ]
+                                    div [ class "mt-4 mx-3" ] [ renderMarkdown "is-human" message, hr [ class "has-background-border-light" ] [] ]
                             ]
                         ]
                     , case result of
