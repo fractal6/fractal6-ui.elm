@@ -36,6 +36,7 @@ import Text as T
 
 
 type alias NodesDict =
+    -- @codefactor: rename to OrgaData ?
     Dict String Node
 
 
@@ -69,7 +70,7 @@ type alias Node =
     , visibility : NodeVisibility.NodeVisibility
     , mode : NodeMode.NodeMode
     , source : Maybe BlobId
-    , userCanJoin : Maybe Bool -- Only here because we reconstruct the LocalGraph from the node list in the graphpack code in assets/js.
+    , userCanJoin : Maybe Bool -- Only here tp build LocalGraph from OrgaData
     }
 
 

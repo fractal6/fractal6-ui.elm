@@ -1,4 +1,4 @@
-module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, setUser_, subscriptions, update, view)
+module Components.ActionPanel exposing (Msg(..), State, init, isOpen_, subscriptions, update, view)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
@@ -285,24 +285,6 @@ isOpen_ (State model) =
     model.isOpen
 
 
-setUser_ : UserState -> State -> State
-setUser_ user (State model) =
-    { model | user = user }
-        |> (\x ->
-                case user of
-                    LoggedIn uctx ->
-                        let
-                            form =
-                                x.form
-                        in
-                        { x | form = { form | uctx = uctx } }
-
-                    LoggedOut ->
-                        x
-           )
-        |> State
-
-
 
 --- State Controls
 
@@ -582,7 +564,9 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | UpdateUctx UserCtx
     | Navigate String
+    | Do (List GlobalCmd)
       -- Components
     | MoveTensionMsg MoveTension.Msg
     | UserInputMsg UserInput.Msg
@@ -850,8 +834,18 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        UpdateUctx uctx ->
+            let
+                form =
+                    model.form
+            in
+            ( { model | user = LoggedIn uctx, form = { form | uctx = uctx } }, noOut )
+
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
+
+        Do gcmds ->
+            ( model, out1 gcmds )
 
         OnCloseModalSafe link onCloseTxt ->
             if canExitSafe model then
@@ -916,6 +910,7 @@ subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ --Ports.mcPD Ports.closeActionPanelModalFromJs LogErr OnCloseModal
       Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
     ]
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (UserInput.subscriptions |> List.map (\s -> Sub.map UserInputMsg s))
@@ -992,7 +987,7 @@ viewPanel op model =
                 ++ (-- New ACTION
                     if model.form.node.role_type /= Just RoleType.Guest then
                         [ div
-                            [ class "dropdown-item button-light" ]
+                            [ class "dropdown-item button-light", onClick (Do [ DoCreateTension model.form.node.nameid ]) ]
                             [ A.icon1 "icon-plus" (upH (T.add ++ "...")) ]
                         , hr [ class "dropdown-divider" ] []
                         ]
@@ -1003,8 +998,12 @@ viewPanel op model =
                 -- ACTION
                 ++ (if op.isAdmin then
                         [ -- Move Action
-                          div [ class "dropdown-item button-light", onClick OnActionMove ]
-                            [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
+                          if model.form.node.parent /= Nothing then
+                            div [ class "dropdown-item button-light", onClick OnActionMove ]
+                                [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
+
+                          else
+                            text ""
 
                         -- Authority Action
                         , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]

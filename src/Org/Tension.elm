@@ -41,7 +41,7 @@ import Extra.Date exposing (formatDate)
 import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (TensionTab(..))
+import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -159,6 +159,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
+
+                    DoCreateTension nameid ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )
@@ -341,8 +344,6 @@ type Msg
     | DoMove TensionHead
       -- Node Action
     | OpenActionPanel String Blob
-      -- New Tension
-    | CreateTension LocalGraph
       -- Common
     | NoMsg
     | InitModals
@@ -1300,19 +1301,7 @@ update global message model =
                 node =
                     blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment parentid
             in
-            ( { model | actionPanel = ActionPanel.setUser_ global.session.user model.actionPanel }
-            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node)
-            , Cmd.none
-            )
-
-        -- New tension
-        CreateTension p ->
-            let
-                tf =
-                    model.tensionForm
-                        |> NTF.setUser_ global.session.user
-            in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen p)), Cmd.none )
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
 
         NewTensionMsg msg ->
             let
@@ -1531,7 +1520,6 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = CreateTension
             }
     in
     { title =

@@ -2,6 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Assets as A
+import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -53,7 +54,6 @@ type alias Op msg =
     , data : HelperBar
     , onExpand : msg
     , onCollapse : msg
-    , onCreateTension : LocalGraph -> msg
     }
 
 

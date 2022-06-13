@@ -1117,54 +1117,6 @@ export const GraphPack = {
         return this.nodesDict[node.data.parent.nameid]
     },
 
-    // Returns a RNode from a Node
-    getRNode(node) {
-        return {
-            name: node.data.name,
-            nameid: node.data.nameid,
-            userCanJoin: node.data.userCanJoin
-        }
-    },
-
-    // Returns a PNode from a Node
-    getPNode(node) {
-        return {
-            name: node.data.name,
-            nameid: node.data.nameid
-        }
-    },
-
-    // Returns the path from root to node.
-    getNodePath(node) {
-        var path = this.gPack.path(node).map(n => {
-            return this.getPNode(n)
-        });
-        return path
-    },
-
-    getNodeData(node) {
-        // @debug: LocalGraph/Node Encoder/Decoder
-        return {
-            root: this.getRNode(this.rootNode),
-            path: this.getNodePath(node),
-            focus: {
-                name: node.data.name,
-                nameid: node.data.nameid,
-                type_: node.data.type_,
-                visibility: node.data.visibility,
-                mode: node.data.mode,
-                children: (node.children) ? node.children.filter(n => n.data.type_ !== "Hidden").map(n => {
-                    return {
-                        name: n.data.name,
-                        nameid: n.data.nameid,
-                        role_type: n.data.role_type
-                    }
-                }) : [],
-                source: node.data.source,
-            }
-        }
-    },
-
     // Get node position and properties
     addNodeCtx(node) {
         var zoomCtx = this.zoomCtx;
@@ -1271,8 +1223,7 @@ export const GraphPack = {
     nodeClickedFromJs(node) {
         if (!node) return
         this.clearNodeHover();
-        var nameid = node.data.nameid;
-        this.app.ports.nodeClickedFromJs.send(nameid);
+        this.app.ports.nodeClickedFromJs.send(node.data.nameid);
     },
 
     nodeHoveredFromJs(node) {
@@ -1288,11 +1239,11 @@ export const GraphPack = {
     nodeFocusedFromJs(node) {
         // @DEBUG: why / where would node be undefined ?
         if (!node) return
-        this.app.ports.nodeFocusedFromJs.send(this.getNodeData(node));
+        this.app.ports.nodeFocusedFromJs.send(node.data.nameid);
     },
 
-    sendNodeDataFromJs(node) {
-        this.app.ports.nodeDataFromJs.send(this.getNodeData(node));
+    sendNodeRightClickFromJs(node) {
+        this.app.ports.nodeRightClickedFromJs.send(node.data.nameid);
     },
 
     //
@@ -1681,7 +1632,7 @@ export const GraphPack = {
                 this.isFrozen = false;
                 return false
             }
-            this.sendNodeDataFromJs(this.hoveredNode);
+            this.sendNodeRightClickFromJs(this.hoveredNode);
             this.isFrozen = false;
             return true
         });

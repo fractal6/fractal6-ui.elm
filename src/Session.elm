@@ -96,7 +96,7 @@ type GlobalCmd
     | DoDelNodes (List String)
     | DoMoveNode String String String
     | DoFocus String
-    | DoCreateTension LocalGraph
+    | DoCreateTension String
 
 
 type alias NodesQuickSearch =

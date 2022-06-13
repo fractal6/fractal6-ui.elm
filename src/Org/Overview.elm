@@ -34,7 +34,7 @@ import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (TensionTab(..))
+import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
@@ -138,6 +138,9 @@ mapGlobalOutcmds gcmds =
                         -- delay cause bulma driver not working (rejoin orga after leave)
                         ( sendSleep (OnFocus nameid) 500, Cmd.none )
 
+                    DoCreateTension nameid ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
+
                     DoUpdateToken ->
                         ( Cmd.none, send UpdateUserToken )
 
@@ -223,8 +226,6 @@ type Msg
     | SearchKeyDown Int
     | ChangeActivityTab ActivityTab
     | GotJournal (GqlData (List EventNotif))
-      -- New Tension
-    | CreateTension LocalGraph
       -- Node Action
     | OpenActionPanel String Node
       -- Graphpack
@@ -237,7 +238,7 @@ type Msg
       -- GP JS Interop
     | NodeClicked String
     | NodeHovered String
-    | NodeFocused LocalGraph
+    | NodeFocused String
     | OnFocus String
     | OnClearTooltip
     | ToggleGraphReverse
@@ -612,15 +613,6 @@ update global message model =
         GotJournal result ->
             ( { model | journal_data = result }, Cmd.none, Cmd.none )
 
-        -- New tension triggers
-        CreateTension p ->
-            let
-                tf =
-                    model.tensionForm
-                        |> NTF.setUser_ global.session.user
-            in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen p)), Cmd.none )
-
         -- Node Action
         OpenActionPanel domid node ->
             let
@@ -636,10 +628,7 @@ update global message model =
                                 |> withDefault ( "", "" )
                             )
             in
-            ( { model | actionPanel = ActionPanel.setUser_ global.session.user model.actionPanel }
-            , Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node)
-            , Cmd.none
-            )
+            ( model, Cmd.map ActionPanelMsg (send <| ActionPanel.OnOpen domid tid bid node), Cmd.none )
 
         -- Graphpack
         PushTension tension ->
@@ -761,25 +750,31 @@ update global message model =
             in
             ( { model | node_hovered = node }, cmd, Cmd.none )
 
-        NodeFocused path ->
+        NodeFocused nameid ->
             -- May change the node_focus var
-            let
-                nameids =
-                    path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
+            --
+            case localGraphFromOrga nameid model.orga_data of
+                Just path ->
+                    let
+                        nameids =
+                            path.focus.children |> List.map (\x -> x.nameid) |> List.append [ path.focus.nameid ]
 
-                cmds =
-                    [ queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
-                    , if not (isFailure model.node_data) && (Dict.get model.node_focus.nameid (model.orga_data |> withMaybeData |> withDefault Dict.empty) == Nothing) then
-                        send (FetchNewNode model.node_focus.nameid True)
+                        cmds =
+                            [ queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
+                            , if not (isFailure model.node_data) && (Dict.get model.node_focus.nameid (model.orga_data |> withMaybeData |> withDefault Dict.empty) == Nothing) then
+                                send (FetchNewNode model.node_focus.nameid True)
 
-                      else
-                        Cmd.none
-                    ]
-            in
-            ( { model | path_data = Just path }
-            , Cmd.batch ([ Ports.drawButtonsGraphPack ] ++ cmds)
-            , send (UpdateSessionPath (Just path))
-            )
+                              else
+                                Cmd.none
+                            ]
+                    in
+                    ( { model | path_data = Just path }
+                    , Cmd.batch ([ Ports.drawButtonsGraphPack ] ++ cmds)
+                    , send (UpdateSessionPath (Just path))
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
 
         OnFocus nameid ->
             ( model, Ports.focusGraphPack nameid, Cmd.none )
@@ -887,9 +882,9 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
+    , nodeRightClickedFromJs (\nameid -> NewTensionMsg <| NTF.OnOpen (FromNameid nameid))
     , nodeHoveredFromJs NodeHovered
-    , Ports.lgPD nodeFocusedFromJs LogErr NodeFocused
-    , Ports.lgPD nodeDataFromJs LogErr CreateTension
+    , nodeFocusedFromJs NodeFocused
     , Ports.lookupNodeFromJs ChangeNodeLookup
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
@@ -908,13 +903,13 @@ subscriptions _ model =
 port nodeClickedFromJs : (String -> msg) -> Sub msg
 
 
+port nodeRightClickedFromJs : (String -> msg) -> Sub msg
+
+
 port nodeHoveredFromJs : (String -> msg) -> Sub msg
 
 
-port nodeFocusedFromJs : (JD.Value -> msg) -> Sub msg
-
-
-port nodeDataFromJs : (JD.Value -> a) -> Sub a
+port nodeFocusedFromJs : (String -> msg) -> Sub msg
 
 
 
@@ -940,7 +935,6 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = CreateTension
             }
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -1091,7 +1085,7 @@ viewSearchBar us model =
                                 [ span
                                     [ class "button is-small is-link2 is-wrapped"
                                     , attribute "data-modal" "actionModal"
-                                    , onClick (CreateTension p)
+                                    , onClick <| NewTensionMsg (NTF.OnOpen (FromPath p))
                                     ]
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
 

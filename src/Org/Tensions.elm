@@ -515,8 +515,6 @@ type Msg
     | SubmitSearch
     | GoView TensionsView
     | SetOffset Int
-      -- New Tension
-    | CreateTension LocalGraph
       -- Common
     | NoMsg
     | InitModals
@@ -1070,25 +1068,6 @@ update global message model =
             , Cmd.batch (gcmds ++ [ panel |> LabelSearchPanel.getModel |> Just |> UpdateSessionLabelsPanel |> send ])
             )
 
-        -- New tension
-        CreateTension lg ->
-            let
-                tf =
-                    model.tensionForm
-                        |> NTF.setUser_ global.session.user
-            in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen lg)), Cmd.none )
-
-        NewTensionMsg msg ->
-            let
-                ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
-
-                ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
@@ -1115,7 +1094,17 @@ update global message model =
             in
             ( { model | node_focus = { node_focus | nameid = node_focus.rootnameid } }, send SubmitSearchReset, Cmd.none )
 
-        -- Help
+        -- Components
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         HelpMsg msg ->
             let
                 ( help, out ) =
@@ -1200,7 +1189,6 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = CreateTension
             }
     in
     { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -1445,7 +1433,7 @@ viewTensionsListHeader model =
                     [ textH T.sort
                     , A.icon "ml-1 icon-chevron-down1 icon-tiny"
                     ]
-                , div [ id "sort-filter", class "dropdown-menu", attribute "role" "menu" ]
+                , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
                     [ div [ class "dropdown-content" ] <|
                         List.map
                             (\t ->

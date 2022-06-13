@@ -137,8 +137,6 @@ type Msg
     | OnPendingRowHover (Maybe Int)
     | OnGoToContract String
     | OnGoContractAck (GqlData IdPayload)
-      -- New Tension
-    | CreateTension LocalGraph
       -- Common
     | NoMsg
     | InitModals
@@ -320,25 +318,6 @@ update global message model =
                 _ ->
                     ( model, Cmd.none, Cmd.none )
 
-        -- New tension
-        CreateTension lg ->
-            let
-                tf =
-                    model.tensionForm
-                        |> NTF.setUser_ global.session.user
-            in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen lg)), Cmd.none )
-
-        NewTensionMsg msg ->
-            let
-                ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
-
-                ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
         -- Common
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
@@ -365,7 +344,17 @@ update global message model =
             in
             ( model, send (Navigate (uriFromNameid MembersBaseUri model.node_focus.rootnameid ++ query)), Cmd.none )
 
-        -- Help
+        -- Components
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         HelpMsg msg ->
             let
                 ( help, out ) =
@@ -447,7 +436,6 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = CreateTension
             }
     in
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])

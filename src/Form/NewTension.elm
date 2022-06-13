@@ -63,6 +63,7 @@ import ModelCommon
         , getTargets
         , initTensionForm
         , isSelfContract
+        , localGraphFromOrga
         , makeCandidateContractForm
         , sortNode
         , tensionToActionForm
@@ -74,7 +75,7 @@ import Ports
 import Query.AddContract exposing (addOneContract)
 import Query.AddTension exposing (addOneTension)
 import Query.PatchTension exposing (actionRequest)
-import Query.QueryNode exposing (queryRoles)
+import Query.QueryNode exposing (queryLocalGraph, queryRoles)
 import Session exposing (Apis, GlobalCmd(..), LabelSearchPanelOnClickAction(..))
 import Text as T exposing (textH, textT, upH)
 import Time
@@ -132,6 +133,11 @@ type NodeStep
     = RoleAuthorityStep
     | CircleVisibilityStep
     | NodeValidateStep
+
+
+type NewTensionInput
+    = FromNameid String
+    | FromPath LocalGraph
 
 
 nodeStepToString : TensionForm -> NodeStep -> String
@@ -255,21 +261,6 @@ initCircleTab type_ model =
 
 
 -- Global methods
--- @debug; model.user not update after r UpdateUserSession !
-
-
-setUser_ : UserState -> State -> State
-setUser_ user (State model) =
-    { model | user = user }
-        |> (\x ->
-                case user of
-                    LoggedIn uctx ->
-                        { x | nodeDoc = NodeDoc.setUctx uctx x.nodeDoc }
-
-                    LoggedOut ->
-                        x
-           )
-        |> State
 
 
 fixGlitch_ : State -> State
@@ -544,8 +535,9 @@ type Msg
     = -- Data control
       PushTension (GqlData Tension -> Msg)
     | OnSubmit (Time.Posix -> Msg)
+    | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Modal control
-    | OnOpen LocalGraph
+    | OnOpen NewTensionInput
     | OnResetModel
     | OnClose ModalData
     | OnCloseSafe String String
@@ -585,6 +577,7 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | UpdateUctx UserCtx
       -- Components
     | LabelSearchPanelMsg LabelSearchPanel.Msg
     | UserInputMsg UserInput.Msg
@@ -648,29 +641,66 @@ update_ apis message model =
         OnSubmit next ->
             ( model, out0 [ sendNow next ] )
 
+        GotPath isInit result ->
+            case result of
+                Success path ->
+                    let
+                        prevPath =
+                            if isInit then
+                                { path | path = [] }
+
+                            else
+                                withDefaultData path model.path_data
+                    in
+                    case path.root of
+                        Just root ->
+                            let
+                                newPath =
+                                    { prevPath | root = Just root, path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+                            in
+                            ( model, out0 [ send (OnOpen (FromPath newPath)) ] )
+
+                        Nothing ->
+                            let
+                                newPath =
+                                    { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
+
+                                nameid =
+                                    List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
+                            in
+                            ( { model | path_data = Success newPath }, out0 [ queryLocalGraph apis nameid (GotPath False) ] )
+
+                _ ->
+                    ( { model | path_data = result }, noOut )
+
         -- Modal control
-        OnOpen p ->
-            let
-                data =
-                    setPath p model
-            in
-            case data.user of
+        OnOpen t ->
+            case model.user of
                 LoggedIn uctx ->
-                    if data.sources == [] && data.refresh_trial == 0 then
-                        ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen p) 500 ] [ DoUpdateToken ] Nothing )
+                    case t of
+                        FromNameid nameid ->
+                            ( model, out0 [ queryLocalGraph apis nameid (GotPath True) ] )
 
-                    else if data.sources == [] then
-                        ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) data |> open
-                        , out0 [ Ports.open_modal "tensionModal" ]
-                        )
+                        FromPath p ->
+                            let
+                                data =
+                                    setPath p model
+                            in
+                            if data.sources == [] && data.refresh_trial == 0 then
+                                ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p)) 500 ] [ DoUpdateToken ] Nothing )
 
-                    else
-                        ( data |> setUctx uctx |> open
-                        , out0 [ Ports.open_modal "tensionModal" ]
-                        )
+                            else if data.sources == [] then
+                                ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) data |> open
+                                , out0 [ Ports.open_modal "tensionModal" ]
+                                )
+
+                            else
+                                ( data |> setUctx uctx |> open
+                                , out0 [ Ports.open_modal "tensionModal" ]
+                                )
 
                 LoggedOut ->
-                    ( setStep AuthNeeded data |> open, out0 [ Ports.open_modal "tensionModal" ] )
+                    ( setStep AuthNeeded model |> open, out0 [ Ports.open_modal "tensionModal" ] )
 
         OnClose data ->
             let
@@ -992,11 +1022,15 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        UpdateUctx uctx ->
+            ( { model | user = LoggedIn uctx, nodeDoc = NodeDoc.setUctx uctx model.nodeDoc }, noOut )
+
 
 subscriptions : State -> List (Sub Msg)
 subscriptions (State model) =
     [ Ports.mcPD Ports.closeModalTensionFromJs LogErr OnClose
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
+    , Ports.uctxPD Ports.loadUserCtxFromJs LogErr UpdateUctx
 
     --, Ports.lookupUserFromJs OnChangeUserLookup
     --, Ports.cancelLookupFsFromJs (always OnCancelLookupFs)
@@ -1034,7 +1068,7 @@ view op (State model) =
 viewButton : Op -> Model -> Html Msg
 viewButton op model =
     div [ class "tensionButton", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isModalActive ) ] ]
-        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> Maybe.map (\p -> [ onClick (OnOpen p) ]) |> withDefault []))
+        [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> Maybe.map (\p -> [ onClick (OnOpen (FromPath p)) ]) |> withDefault []))
             [ A.icon "icon-plus icon-2x" ]
         ]
 

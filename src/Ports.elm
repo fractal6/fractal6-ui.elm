@@ -500,25 +500,6 @@ mcPD sub messageErr message =
 
 
 
--- Local graph Decoder
-
-
-lgPD : ((JD.Value -> msg) -> Sub msg) -> (String -> msg) -> (LocalGraph -> msg) -> Sub msg
-lgPD sub messageErr message =
-    sub
-        ((\x ->
-            case x of
-                Ok n ->
-                    message n
-
-                Err err ->
-                    messageErr (JD.errorToString err)
-         )
-            << JD.decodeValue localGraphDecoder
-        )
-
-
-
 -- uctx Decoder
 
 

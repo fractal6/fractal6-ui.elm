@@ -228,6 +228,7 @@ type Msg
     | NoMsg
     | LogErr String
     | UpdateUctx UserCtx
+      -- Components
     | UserInputMsg UserInput.Msg
 
 

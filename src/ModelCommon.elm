@@ -605,6 +605,81 @@ tidFromPath path =
             Nothing
 
 
+localGraphFromOrga : String -> GqlData NodesDict -> Maybe LocalGraph
+localGraphFromOrga nameid orga_d =
+    case orga_d of
+        Success orga ->
+            let
+                root_m =
+                    Dict.get (nid2rootid nameid) orga
+                        |> Maybe.map
+                            (\n ->
+                                { name = n.name
+                                , nameid = n.nameid
+                                , userCanJoin = n.userCanJoin
+                                }
+                            )
+
+                focus_m =
+                    Dict.get nameid orga
+                        |> Maybe.map
+                            (\n ->
+                                { name = n.name
+                                , nameid = n.nameid
+                                , type_ = n.type_
+                                , visibility = n.visibility
+                                , mode = n.mode
+                                , children =
+                                    DE.filterMap
+                                        (\_ c ->
+                                            Maybe.map
+                                                (\p ->
+                                                    if p.nameid == nameid then
+                                                        Just { name = c.name, nameid = c.nameid, role_type = c.role_type }
+
+                                                    else
+                                                        Nothing
+                                                )
+                                                c.parent
+                                                |> withDefault Nothing
+                                        )
+                                        orga
+                                        |> Dict.values
+                                , source = n.source
+                                }
+                            )
+
+                getPath : String -> List PNode
+                getPath nameid_ =
+                    Dict.get nameid_ orga
+                        |> Maybe.map
+                            (\n ->
+                                { name = n.name
+                                , nameid = n.nameid
+                                }
+                                    :: (case n.parent of
+                                            Just p ->
+                                                getPath p.nameid
+
+                                            Nothing ->
+                                                []
+                                       )
+                            )
+                        |> withDefault []
+            in
+            Maybe.map
+                (\f ->
+                    { root = root_m
+                    , path = getPath nameid |> List.reverse
+                    , focus = f
+                    }
+                )
+                focus_m
+
+        _ ->
+            Nothing
+
+
 
 --
 -- Setters

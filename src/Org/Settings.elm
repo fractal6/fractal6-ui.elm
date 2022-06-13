@@ -295,8 +295,6 @@ type Msg
     | SwitchGuestCanCreateTension Int Bool
     | GotUserCanJoin (WebData Bool)
     | GotGuestCanCreateTension (WebData Bool)
-      -- New Tension
-    | CreateTension LocalGraph
       -- Color Picker
     | OpenColor
     | CloseColor
@@ -1006,25 +1004,6 @@ update global message model =
                 _ ->
                     ( data, Cmd.none, Cmd.none )
 
-        -- New tension
-        CreateTension lg ->
-            let
-                tf =
-                    model.tensionForm
-                        |> NTF.setUser_ global.session.user
-            in
-            ( { model | tensionForm = tf }, Cmd.map NewTensionMsg (send (NTF.OnOpen lg)), Cmd.none )
-
-        NewTensionMsg msg ->
-            let
-                ( tf, out ) =
-                    NTF.update apis msg model.tensionForm
-
-                ( cmds, gcmds ) =
-                    mapGlobalOutcmds out.gcmds
-            in
-            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
-
         -- Color Picker
         OpenColor ->
             ( { model | colorPicker = ColorPicker.open model.colorPicker }
@@ -1090,7 +1069,17 @@ update global message model =
         DoModalConfirmSend ->
             ( { model | modal_confirm = ModalConfirm.close model.modal_confirm }, send model.modal_confirm.msg, Cmd.none )
 
-        -- Help
+        -- Components
+        NewTensionMsg msg ->
+            let
+                ( tf, out ) =
+                    NTF.update apis msg model.tensionForm
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | tensionForm = tf }, out.cmds |> List.map (\m -> Cmd.map NewTensionMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
         HelpMsg msg ->
             let
                 ( help, out ) =
@@ -1174,7 +1163,6 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
-            , onCreateTension = CreateTension
             }
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
