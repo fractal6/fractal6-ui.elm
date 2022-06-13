@@ -23,7 +23,18 @@ outsideClickClose targetId msg =
         |> JD.andThen
             (\isOut ->
                 if isOut then
-                    JD.succeed msg
+                    -- Ensure right click
+                    JD.oneOf
+                        [ JD.field "button" JD.int
+                            |> JD.andThen
+                                (\button ->
+                                    if button == 0 then
+                                        JD.succeed msg
+
+                                    else
+                                        JD.fail "non left click"
+                                )
+                        ]
 
                 else
                     JD.fail "outside click fail"

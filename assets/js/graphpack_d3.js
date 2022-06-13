@@ -1242,6 +1242,10 @@ export const GraphPack = {
         this.app.ports.nodeFocusedFromJs.send(node.data.nameid);
     },
 
+    sendNodeLeftClickFromJs(node) {
+        this.app.ports.nodeLeftClickedFromJs.send(node.data.nameid);
+    },
+
     sendNodeRightClickFromJs(node) {
         this.app.ports.nodeRightClickedFromJs.send(node.data.nameid);
     },
@@ -1455,29 +1459,34 @@ export const GraphPack = {
                 return true
             }
 
-            var p = this.getPointerCtx(e);
-            if (!this.checkIf(p, "InZoomed")) {
-                // Go to parent
-                this.nodeClickedFromJs(this.focusedNode.parent);
-                return
-            }
+            if (e.button === 0) {
+                var p = this.getPointerCtx(e);
+                if (!this.checkIf(p, "InZoomed")) {
+                    // Go to parent
+                    this.nodeClickedFromJs(this.focusedNode.parent);
+                    return
+                }
 
-            var node = this.getNodeUnderPointer(e, p);
-            var isUpdated = false;
-            if (node) {
-                isUpdated = true;
-                if (node === this.focusedNode) {
-                    // go to the parent node
-                    if (node !== this.rootNode) {
-                        node = node.parent;
-                    } else {
-                        isUpdated = false;
+                var node = this.getNodeUnderPointer(e, p);
+                var isUpdated = false;
+                if (node) {
+                    isUpdated = true;
+                    if (node === this.focusedNode) {
+                        // go to the parent node
+                        if (node !== this.rootNode) {
+                            node = node.parent;
+                        } else {
+                            isUpdated = false;
+                        }
                     }
                 }
-            }
 
-            if (isUpdated)
-                this.nodeClickedFromJs(node);
+                if (isUpdated)
+                    this.nodeClickedFromJs(node);
+
+            } else if (e.button === 2) {
+                //this.sendNodeRightClickFromJs(this.hoveredNode);
+            }
 
             return false;
         };
@@ -1579,7 +1588,18 @@ export const GraphPack = {
         this.$canvas.addEventListener("mousemove", canvasMouseMoveEvent);
         this.$canvas.addEventListener("mouseenter", canvasMouseEnterEvent);
         this.$canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
-        this.$canvas.addEventListener("click", nodeClickEvent);
+        this.$canvas.addEventListener("mousedown", nodeClickEvent);
+        this.$canvas.addEventListener("contextmenu", e => {
+            if (!this.isFrozen) {
+                e.preventDefault();
+                this.sendNodeRightClickFromJs(this.hoveredNode);
+                this.isFrozen = true;
+                return false
+            } else {
+                //@DEBUG: context menu is not reactivated !
+                return true
+            }
+        }, false);
 
 		//this.$canvas.addEventListener("wheel", e => { // or window.addEventListener("scroll"....
         //    if (this.isZooming || this.isFrozen) { return e.preventDefault() }
@@ -1632,7 +1652,7 @@ export const GraphPack = {
                 this.isFrozen = false;
                 return false
             }
-            this.sendNodeRightClickFromJs(this.hoveredNode);
+            this.sendNodeLeftClickFromJs(this.hoveredNode);
             this.isFrozen = false;
             return true
         });

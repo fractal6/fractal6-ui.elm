@@ -8,9 +8,9 @@ import Html.Attributes as Attr exposing (attribute, class, href, id, style, targ
 view : Html msg
 view =
     div [ id "footBar", class "footer" ]
-        [ div [ class "columns is-centered" ]
-            [ div [ class "column is-4" ] [ small [] [ text "Copyright © 2020 - 2022 The Fractale Team" ] ]
-            , div [ class "column is-4" ]
+        [ div [ class "level" ]
+            [ div [ class "level-left" ] [ small [] [ text "Copyright © 2020 - 2022 The Fractale Team" ] ]
+            , div [ class "level-item" ]
                 [ div [ class "contacts" ]
                     [ span [] [ a [ href "mailto:contact@fractale.co" ] [ text "Contact us" ] ]
                     , span [] [ text "-" ]
@@ -23,6 +23,6 @@ view =
                     --, span [] [ a [ href "https://github.com/fractal6", target "_blank" ] [ A.icon "icon-github"  ] ]
                     ]
                 ]
-            , div [ class "column is-4" ] []
+            , div [ class "level-item" ] []
             ]
         ]

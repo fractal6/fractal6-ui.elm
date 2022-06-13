@@ -882,7 +882,13 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
-    , nodeRightClickedFromJs (\nameid -> NewTensionMsg <| NTF.OnOpen (FromNameid nameid))
+    , nodeLeftClickedFromJs (\nameid -> NewTensionMsg <| NTF.OnOpen (FromNameid nameid))
+    , case model.node_hovered of
+        Just node ->
+            nodeRightClickedFromJs (\_ -> OpenActionPanel "actionPanelContentTooltip" node)
+
+        Nothing ->
+            Sub.none
     , nodeHoveredFromJs NodeHovered
     , nodeFocusedFromJs NodeFocused
     , Ports.lookupNodeFromJs ChangeNodeLookup
@@ -901,6 +907,9 @@ subscriptions _ model =
 
 
 port nodeClickedFromJs : (String -> msg) -> Sub msg
+
+
+port nodeLeftClickedFromJs : (String -> msg) -> Sub msg
 
 
 port nodeRightClickedFromJs : (String -> msg) -> Sub msg
