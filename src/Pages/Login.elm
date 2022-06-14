@@ -160,7 +160,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ class "columns is-centered section" ]
+    div [ id "loginForm", class "columns is-centered section is-marginless" ]
         [ div [ class "" ]
             [ viewLogin global model ]
         ]
@@ -168,79 +168,77 @@ view_ global model =
 
 viewLogin : Global.Model -> Model -> Html Msg
 viewLogin global model =
-    div [ id "loginForm" ]
-        [ div [ class "card" ]
-            [ div [ class "card-header" ]
-                [ div [ class "card-header-title" ]
-                    [ text "Login" ]
+    div [ class "card" ]
+        [ div [ class "card-header" ]
+            [ div [ class "card-header-title" ]
+                [ text "Login" ]
+            ]
+        , div [ class "card-content" ]
+            [ A.welcome
+            , div [ class "field is-horizntl" ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
+                , div [ class "field-body" ]
+                    [ div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ input
+                                [ class "input autofocus followFocus"
+                                , attribute "data-nextfocus" "passwordInput"
+                                , type_ "text"
+                                , placeholder "username or email"
+                                , name "username"
+                                , value (Dict.get "username" model.form.post |> withDefault "")
+                                , attribute "autocomplete" "username"
+                                , required True
+                                , onInput (ChangeUserPost "username")
+                                ]
+                                []
+                            ]
+                        ]
+                    ]
                 ]
-            , div [ class "card-content" ]
-                [ A.welcome
-                , div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Username" ] ]
-                    , div [ class "field-body" ]
-                        [ div [ class "field" ]
-                            [ div [ class "control" ]
-                                [ input
-                                    [ class "input autofocus followFocus"
-                                    , attribute "data-nextfocus" "passwordInput"
-                                    , type_ "text"
-                                    , placeholder "username or email"
-                                    , name "username"
-                                    , value (Dict.get "username" model.form.post |> withDefault "")
-                                    , attribute "autocomplete" "username"
-                                    , required True
-                                    , onInput (ChangeUserPost "username")
-                                    ]
-                                    []
+            , div [ class "field is-horizntl" ]
+                [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
+                , div [ class "field-body" ]
+                    [ div [ class "field" ]
+                        [ div [ class "control" ]
+                            [ input
+                                [ id "passwordInput"
+                                , class "input"
+                                , type_ "password"
+                                , placeholder "password"
+                                , name "password"
+                                , value (Dict.get "password" model.form.post |> withDefault "")
+                                , attribute "autocomplete" "password"
+                                , required True
+                                , onInput (ChangeUserPost "password")
+                                , onKeydown SubmitKeyDown
                                 ]
+                                []
                             ]
                         ]
                     ]
-                , div [ class "field is-horizntl" ]
-                    [ div [ class "field-lbl" ] [ label [ class "label" ] [ text "Password" ] ]
-                    , div [ class "field-body" ]
-                        [ div [ class "field" ]
-                            [ div [ class "control" ]
-                                [ input
-                                    [ id "passwordInput"
-                                    , class "input"
-                                    , type_ "password"
-                                    , placeholder "password"
-                                    , name "password"
-                                    , value (Dict.get "password" model.form.post |> withDefault "")
-                                    , attribute "autocomplete" "password"
-                                    , required True
-                                    , onInput (ChangeUserPost "password")
-                                    , onKeydown SubmitKeyDown
-                                    ]
-                                    []
-                                ]
+                ]
+            , br [] []
+            , div [ attribute "style" "width: 225px;" ]
+                [ a [ class "is-size-7 is-pulled-left mb-2", href (Route.toHref Route.Signup) ]
+                    [ textH T.createAccount ]
+                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.PasswordReset) ]
+                    [ textH T.passwordForgotten ]
+                ]
+            , div [ class "field is-grouped is-grouped-right" ]
+                [ div [ class "control" ]
+                    [ if isLoginSendable model.form.post then
+                        button
+                            [ id "submitButton"
+                            , class "button is-success"
+                            , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
+                            , onClick (SubmitUser model.form)
                             ]
-                        ]
-                    ]
-                , br [] []
-                , div [ attribute "style" "width: 225px;" ]
-                    [ a [ class "is-size-7 is-pulled-left mb-2", href (Route.toHref Route.Signup) ]
-                        [ textH T.createAccount ]
-                    , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.PasswordReset) ]
-                        [ textH T.passwordForgotten ]
-                    ]
-                , div [ class "field is-grouped is-grouped-right" ]
-                    [ div [ class "control" ]
-                        [ if isLoginSendable model.form.post then
-                            button
-                                [ id "submitButton"
-                                , class "button is-success"
-                                , classList [ ( "is-loading", model.result == RemoteData.Loading ) ]
-                                , onClick (SubmitUser model.form)
-                                ]
-                                [ text "Sign in" ]
+                            [ text "Sign in" ]
 
-                          else
-                            button [ class "button", disabled True ]
-                                [ text "Sign in" ]
-                        ]
+                      else
+                        button [ class "button", disabled True ]
+                            [ text "Sign in" ]
                     ]
                 ]
             ]

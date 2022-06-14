@@ -338,10 +338,10 @@ export function BulmaDriver(app, target, handlers) {
 
 function moveFocus(e, el) {
     if ((e.key == "Enter" || e.key == "Tab") && !e.ctrlKey) {
-        var $target = document.getElementById(el.dataset.nextfocus);
-        if ($target) {
+        var $t = document.getElementById(el.dataset.nextfocus);
+        if ($t) {
             e.preventDefault(); // prevent a line break on the next text area.
-            $target.focus();
+            $t.focus();
             return true
         }
     }
@@ -391,9 +391,9 @@ function burgerToggleHandler(e, el) {
     // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
     el.classList.toggle('is-active');
     // Get the target from the "data-target" attribute
-    var $target_ = document.getElementById(el.dataset.target);
-    if ($target_) {
-        $target_.classList.toggle('is-active');
+    var $t = document.getElementById(el.dataset.target);
+    if ($t) {
+        $t.classList.toggle('is-active');
     }
 }
 
@@ -401,9 +401,9 @@ function burgerToggleHandler(e, el) {
 function closeBurgers(e, objs) {
     objs.forEach(function(el) {
         el.classList.remove('is-active');
-        var $target_ = document.getElementById(el.dataset.target);
-        if ($target_) {
-            $target_.classList.remove('is-active');
+        var $t = document.getElementById(el.dataset.target);
+        if ($t) {
+            $t.classList.remove('is-active');
         }
     });
 }
@@ -413,9 +413,9 @@ function closeBurgersClick(e, objs) {
     objs.forEach(function(el) {
         if (closeOnClickBurger.includes(el.dataset.target)) {
             el.classList.remove('is-active');
-            var $target_ = document.getElementById(el.dataset.target);
-            if ($target_) {
-                $target_.classList.remove('is-active');
+            var $t = document.getElementById(el.dataset.target);
+            if ($t) {
+                $t.classList.remove('is-active');
             }
         }
     });
@@ -458,9 +458,9 @@ function buttonToggleHandler(e, btn) {
 function triggerModal(e, el) {
     document.documentElement.classList.add('has-modal-active');
     document.getElementById("navbarTop").classList.add('has-modal-active');
-    var $target_ = document.getElementById(el.dataset.modal);
-    if ($target_) {
-        $target_.classList.add("is-active");
+    var $t = document.getElementById(el.dataset.modal);
+    if ($t) {
+        $t.classList.add("is-active");
     }
 }
 
@@ -523,9 +523,9 @@ function triggerNotif(e, el, app) {
 }
 
 function triggerMenuLeft(e, el, app) {
-    var $target_ = document.getElementById("body");
-    if ($target_) {
-        $target_.classList.toggle('has-menu-left');
+    var $t = document.getElementById("body");
+    if ($t) {
+        $t.classList.toggle('has-menu-left');
     }
     app.ports.triggerMenuLeftFromJs.send(null)
 }

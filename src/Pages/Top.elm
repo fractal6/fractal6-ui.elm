@@ -216,7 +216,7 @@ viewHero : Model -> Html Msg
 viewHero model =
     div [ id "welcome", class "hero is-bold" ]
         [ div [ class "hero-body" ]
-            [ div [ class "columns is-centered section" ]
+            [ div [ class "columns is-centered" ]
                 [ div [ class "column is-6-desktop is-6-widescreen is-6-fullhd" ]
                     [ h1 [ class "title is-1" ]
                         --[ text "Build unstoppable organizations" ]
