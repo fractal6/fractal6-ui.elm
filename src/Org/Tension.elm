@@ -1583,11 +1583,11 @@ viewTension u t model =
             Maybe.map (\uctx -> t.createdBy.username == uctx.username) uctx_m |> withDefault False
     in
     div [ id "tensionPage" ]
-        [ div [ class "columns" ]
+        [ div [ class "columns is-marginless" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
             [ div [ class "column is-9" ]
-                [ h1 [ class "title tensionTitle mt-2" ] <|
+                [ h1 [ class "title tensionTitle" ] <|
                     if model.isTitleEdit then
                         let
                             title =

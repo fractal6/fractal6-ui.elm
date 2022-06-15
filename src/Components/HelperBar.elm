@@ -60,12 +60,10 @@ type alias Op msg =
 view : Op msg -> Html msg
 view op =
     -- @debug: padding-top overflow column.with is-paddingless
-    div [ id "helperBar", class "mb-3" ]
-        [ div [ class "columns is-centered" ]
-            [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ]
-                [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op ]
-                , viewNavLevel op
-                ]
+    div [ id "helperBar", class "columns is-centered is-marginless" ]
+        [ div [ class "column is-12 is-11-desktop is-10-fullhd is-paddingless" ]
+            [ div [ class "ml-3 mb-5 mx-mobile" ] [ viewPathLevel op ]
+            , viewNavLevel op
             ]
         ]
 
@@ -83,10 +81,10 @@ viewPathLevel op =
                 Nothing ->
                     ( "", False )
     in
-    nav [ class "level is-mobile" ]
+    nav [ class "level" ]
         [ div [ class "level-left" ]
             [ viewPath op.baseUri op.uriQuery op.path_data ]
-        , div [ class "level-right" ]
+        , div [ class "level-right mt-0" ]
             [ A.burger "rolesMenu"
             , div [ id "rolesMenu", class "navbar-menu" ]
                 [ case op.user of
@@ -205,26 +203,25 @@ viewPath baseUri uriQuery maybePath =
                                     ]
 
                             else
-                                li [ class "is-acti has-text-weight-semibold" ]
-                                    [ a [ href (uriFromNameid baseUri p.nameid ++ q) ]
-                                        [ div [] [ text p.name ] ]
+                                li []
+                                    [ a [ class "has-text-weight-semibold", href (uriFromNameid baseUri p.nameid ++ q) ] [ text p.name ]
                                     , if g.focus.type_ == NodeType.Circle && List.length (List.filter (\c -> nid2type c.nameid == NodeType.Circle) g.focus.children) > 0 then
                                         viewTree baseUri uriQuery g
 
                                       else
                                         text ""
+                                    , case maybePath of
+                                        Just lg ->
+                                            span [ class "tag is-rounded ml-1 has-border", attribute "style" "weight: 500 !important;" ] [ text (NodeVisibility.toString lg.focus.visibility) ]
+
+                                        Nothing ->
+                                            text ""
                                     ]
                         )
                     |> ul [ attribute "style" "display: inline-flex;" ]
 
             Nothing ->
                 div [ class "ph-line is-1" ] []
-        , case maybePath of
-            Just p ->
-                span [ class "tag is-rounded ml-1 has-border" ] [ text (NodeVisibility.toString p.focus.visibility) ]
-
-            Nothing ->
-                text ""
         ]
 
 

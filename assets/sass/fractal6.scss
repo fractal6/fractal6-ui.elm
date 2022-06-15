@@ -21,14 +21,14 @@
     //padding-top: 1.25rem;
 
     @include until($fullhd) {
-    @include desktop {
-        &.has-menu-left {
-            // menu-left-width - 1rem
-            min-width: calc(100vw - 40px);
-            max-midth: calc(100vw - 40px);
-            width:     calc(100vw - 40px);
-            margin-left: 40px;
-        }
+        @include desktop {
+            &.has-menu-left {
+                // menu-left-width - 1rem
+                min-width: calc(100vw - 40px);
+                max-midth: calc(100vw - 40px);
+                width:     calc(100vw - 40px);
+                margin-left: 40px;
+            }
         }
     }
 
@@ -41,7 +41,7 @@ html.has-modal-active, html.has-modal-active2 {
     overflow: hidden !important;
     padding-right: 14px; /* Avoid width reflow */
 
-    .tabs:not(.modal .tabs) {
+    .tabs:not(.modal .tabs), .table-container {
         overflow: hidden;
     }
     .modal .tabs {
@@ -580,6 +580,9 @@ strong {
 .table-container {
     overflow-x: auto;
     overflow-y: inherit;
+    @include desktop {
+        overflow: visible !important;
+    }
 }
 
 .table, table.table {
@@ -666,6 +669,12 @@ strong {
         padding-right: 6px !important;
     }
 
+    // Prevent NavbarTop overflow
+    & > .columns {
+        // .is-marginless
+        margin: 0 !important;
+    }
+
 }
 
 .menu .menu-label {
@@ -721,7 +730,7 @@ strong {
 #helperBar {
     background-color: var(--header-background-color) !important;
     margin-top: 0;
-    padding-top: 2.5rem;
+    padding-top: 2rem;
 
     .breadcrumb {
         font-size: 1.15rem;
@@ -2079,6 +2088,10 @@ tr.mediaBox {
             border-bottom-right-radius: 15px !important;
         }
     }
+
+    @include mobile {
+        display: contents;
+    }
 }
 
 #searchList {
@@ -2765,13 +2778,16 @@ input:checked + .acc .acc-content {
 	display: block;
 	content: '\203a';
 	font-size: 18pt;
-	right: 20px;
-	top: -2px;
+	right: 15px;
+	top: 0px;
 	transition: transform .15s ease-in-out;
 	opacity: 0.5;
 }
 input:checked + section.acc .acc-title:before {
 	transform: rotate(90deg);
+}
+.arrows-right .acc-title {
+    padding-right: 20px;
 }
 
 .quickHelp { // Style for accordion (acc)

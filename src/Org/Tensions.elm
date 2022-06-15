@@ -1211,7 +1211,7 @@ view_ global model =
             model.viewMode == CircleView
     in
     div []
-        [ div [ class "columns is-centered", classList [ ( "mb-0", isFullwidth ) ] ]
+        [ div [ class "columns is-centered is-marginless" ]
             [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
                 [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
                     [ div [ class "column is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
@@ -1322,7 +1322,7 @@ viewSearchBar model =
                             , textH T.type_
                             , A.icon "ml-2 icon-chevron-down1 icon-tiny"
                             ]
-                        , div [ id "type-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
+                        , div [ id "type-filter", class "dropdown-menu", attribute "role" "menu" ]
                             [ div
                                 [ class "dropdown-content" ]
                                 ([ div [ class "dropdown-item button-light", onClick <| ChangeTypeFilter AllTypes ]
@@ -1416,34 +1416,43 @@ viewTensionsListHeader model =
             A.icon1 "icon-check has-text-success is-invisible" ""
     in
     div
-        [ class "level is-marginless pt-3 pb-3 has-border-light has-background-header"
+        [ class "pt-3 pb-3 has-border-light has-background-header"
         , attribute "style" "border-top-left-radius: 6px; border-top-right-radius: 6px;"
         ]
-        [ div [ class "level-left px-3" ]
-            [ viewTensionsCount model
-            , if model.node_focus.nameid /= model.node_focus.rootnameid then
-                span [ class "help-label is-grey-light button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
-
-              else
-                text ""
+        [ div
+            [ class "level is-marginless is-mobile"
             ]
-        , div [ class "level-right px-3" ]
-            [ div [ class "control dropdown" ]
-                [ div [ class "dropdown-trigger button-light is-h is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
-                    [ textH T.sort
-                    , A.icon "ml-1 icon-chevron-down1 icon-tiny"
-                    ]
-                , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
-                    [ div [ class "dropdown-content" ] <|
-                        List.map
-                            (\t ->
-                                div [ class "dropdown-item button-light", onClick <| ChangeSortFilter t ]
-                                    [ ternary (model.sortFilter == t) checked unchecked, t |> sortFilterEncoder |> textH ]
-                            )
-                            sortFilterList
+            [ div [ class "level-left px-3" ]
+                [ viewTensionsCount model
+                , if model.node_focus.nameid /= model.node_focus.rootnameid then
+                    span [ class "is-hidden-mobile help-label is-grey-light button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+
+                  else
+                    text ""
+                ]
+            , div [ class "level-right px-3" ]
+                [ div [ class "control dropdown" ]
+                    [ div [ class "dropdown-trigger button-light is-h is-size-7 has-text-weight-semibold", attribute "aria-controls" "sort-filter" ]
+                        [ textH T.sort
+                        , A.icon "ml-1 icon-chevron-down1 icon-tiny"
+                        ]
+                    , div [ id "sort-filter", class "dropdown-menu is-right", attribute "role" "menu" ]
+                        [ div [ class "dropdown-content" ] <|
+                            List.map
+                                (\t ->
+                                    div [ class "dropdown-item button-light", onClick <| ChangeSortFilter t ]
+                                        [ ternary (model.sortFilter == t) checked unchecked, t |> sortFilterEncoder |> textH ]
+                                )
+                                sortFilterList
+                        ]
                     ]
                 ]
             ]
+        , if model.node_focus.nameid /= model.node_focus.rootnameid then
+            div [ class "is-hidden-tablet help-label is-grey-light button-light is-h has-text-weight-light px-5 pb-2", onClick OnGoRoot ] [ A.icon "arrow-up", text T.goRoot ]
+
+          else
+            text ""
         ]
 
 

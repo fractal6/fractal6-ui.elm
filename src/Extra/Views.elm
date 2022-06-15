@@ -39,8 +39,7 @@ showMsg id_ cls icon header message =
                     [ A.icon1 icon (upH header) ]
                 , label [ class "acc-close", for "acc-close" ] []
                 , div [ class "acc-content " ]
-                    [ renderMarkdown ("message-body " ++ mkdCls) message
-                    ]
+                    [ renderMarkdown ("message-body " ++ mkdCls) message ]
                 ]
             , input [ id "acc-close", name "accordion", type_ "radio" ] []
             ]

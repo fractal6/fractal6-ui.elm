@@ -466,20 +466,27 @@ view_ us model =
                     False
     in
     div [ class "columns is-centered" ]
-        [ div [ class "column is-11 is-11-desktop is-10-fullhd" ]
-            [ if isAdmin then
-                div [ class "button is-primary is-pulled-right mt-3", onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne)) ]
-                    [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
+            [ div [ class "section pt-0" ]
+                [ if isAdmin then
+                    div
+                        [ class "button is-primary is-pulled-right"
+                        , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                        ]
+                        [ A.icon1 "icon-user-plus" (upH T.inviteMember) ]
 
-              else
-                text ""
-            , div [ class "columns" ]
-                [ Lazy.lazy3 viewMembers model.now model.members_top model.node_focus ]
-            , div [ class "columns" ]
-                [ Lazy.lazy3 viewMembersSub model.now model.members_sub model.node_focus ]
-            , div [ class "columns" ]
-                [ div [ class "column is-3" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
-                , div [ class "column is-3" ] [ Lazy.lazy7 viewPending model.now model.members_top "pending" model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                  else
+                    text ""
+                , div [ class "columns mb-6" ]
+                    [ Lazy.lazy3 viewMembers model.now model.members_top model.node_focus ]
+
+                -- pl-3 because "is-pulled-right" causes a uwanted padding to the next element.
+                , div [ class "columns mb-6", classList [ ( "pl-3", isAdmin ) ] ]
+                    [ Lazy.lazy3 viewMembersSub model.now model.members_sub model.node_focus ]
+                , div [ class "columns mb-6", classList [ ( "pl-3", isAdmin ) ] ]
+                    [ div [ class "column is-3 pl-0" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
+                    , div [ class "column is-3" ] [ Lazy.lazy7 viewPending model.now model.members_top "pending" model.node_focus model.pending_hover model.pending_hover_i rtid ]
+                    ]
                 ]
             ]
         ]
@@ -523,16 +530,12 @@ viewMembers now data focus =
             in
             case members of
                 [] ->
-                    div [ class "section" ] [ [ "No", T.member, "yet." ] |> String.join " " |> text, goToParent ]
+                    div [] [ [ "No", T.member, "yet." ] |> String.join " " |> text, goToParent ]
 
                 mbs ->
-                    div [ class "section" ]
-                        [ h2 [ class "subtitle has-text-weight-semibold" ]
-                            [ textH T.directMembers
-                            , goToParent
-                            ]
-                        , div [ class "table-containe" ]
-                            -- @DEBUG: table-container with width=100%, do not work !
+                    div []
+                        [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.directMembers, goToParent ]
+                        , div [ class "table-container" ]
                             [ div [ class "table is-fullwidth" ]
                                 [ thead []
                                     [ tr [ class "has-background-header" ]
@@ -580,24 +583,26 @@ viewMembersSub now data focus =
             in
             case members of
                 [] ->
-                    div [ class "section" ] [ [ "No sub-circle", T.member, "yet." ] |> String.join " " |> text ]
+                    div [] [ [ "No sub-circle", T.member, "yet." ] |> String.join " " |> text ]
 
                 mbs ->
-                    div [ class "section" ]
+                    div []
                         [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH T.subMembers ]
-                        , div [ class "table is-fullwidth" ]
-                            [ thead []
-                                [ tr [ class "has-background-header" ]
-                                    [ th [] []
-                                    , th [] [ textH T.username ]
-                                    , th [] [ textH T.name ]
-                                    , th [ class "" ] [ textH T.roles ]
+                        , div [ class "table-container" ]
+                            [ div [ class "table is-fullwidth" ]
+                                [ thead []
+                                    [ tr [ class "has-background-header" ]
+                                        [ th [] []
+                                        , th [] [ textH T.username ]
+                                        , th [] [ textH T.name ]
+                                        , th [ class "" ] [ textH T.roles ]
+                                        ]
                                     ]
+                                , tbody [] <|
+                                    List.map
+                                        (\m -> viewUserRow now m)
+                                        mbs
                                 ]
-                            , tbody [] <|
-                                List.map
-                                    (\m -> viewUserRow now m)
-                                    mbs
                             ]
                         ]
 
@@ -625,24 +630,26 @@ viewGuest now members_d title focus =
                     )
     in
     if List.length guests > 0 then
-        div [ class "section" ]
+        div []
             [ h2 [ class "subtitle has-text-weight-semibold" ] [ textH title ]
-            , div [ class "table is-fullwidth" ]
-                [ thead []
-                    [ tr [ class "has-background-header" ]
-                        [ th [] [ textH T.username ]
-                        , th [] [ textH T.name ]
+            , div [ class "table-container" ]
+                [ div [ class "table is-fullwidth" ]
+                    [ thead []
+                        [ tr [ class "has-background-header" ]
+                            [ th [] [ textH T.username ]
+                            , th [] [ textH T.name ]
+                            ]
                         ]
+                    , tbody [] <|
+                        List.indexedMap
+                            (\i m ->
+                                tr []
+                                    [ td [] [ viewUsernameLink m.username ]
+                                    , td [] [ m.name |> withDefault "--" |> text ]
+                                    ]
+                            )
+                            guests
                     ]
-                , tbody [] <|
-                    List.indexedMap
-                        (\i m ->
-                            tr []
-                                [ td [] [ viewUsernameLink m.username ]
-                                , td [] [ m.name |> withDefault "--" |> text ]
-                                ]
-                        )
-                        guests
                 ]
             ]
 
@@ -664,7 +671,7 @@ viewPending now members_d title focus pending_hover pending_hover_i tid =
                     )
     in
     if List.length guests > 0 then
-        div [ class "section" ]
+        div []
             [ h2 [ class "subtitle has-text-weight-semibold", onMouseEnter (OnPendingHover True), onMouseLeave (OnPendingHover False) ]
                 [ textH title
                 , a
@@ -674,27 +681,29 @@ viewPending now members_d title focus pending_hover pending_hover_i tid =
                     ]
                     [ text "Go to contracts" ]
                 ]
-            , div [ class "table is-fullwidth" ]
-                [ thead []
-                    [ tr [ class "has-background-header" ]
-                        [ th [] [ textH T.username ]
-                        , th [] [ textH T.name ]
+            , div [ class "table-container" ]
+                [ div [ class "table is-fullwidth" ]
+                    [ thead []
+                        [ tr [ class "has-background-header" ]
+                            [ th [] [ textH T.username ]
+                            , th [] [ textH T.name ]
+                            ]
                         ]
-                    ]
-                , tbody [] <|
-                    List.indexedMap
-                        (\i m ->
-                            tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
-                                [ td [] [ viewUsernameLink m.username ]
-                                , td [] [ m.name |> withDefault "--" |> text ]
-                                , if Just i == pending_hover_i then
-                                    td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text "Go to contract" ] ]
+                    , tbody [] <|
+                        List.indexedMap
+                            (\i m ->
+                                tr [ onMouseEnter (OnPendingRowHover (Just i)), onMouseLeave (OnPendingRowHover Nothing) ]
+                                    [ td [] [ viewUsernameLink m.username ]
+                                    , td [] [ m.name |> withDefault "--" |> text ]
+                                    , if Just i == pending_hover_i then
+                                        td [] [ div [ class "button is-small is-primary", onClick (OnGoToContract m.username) ] [ text "Go to contract" ] ]
 
-                                  else
-                                    text ""
-                                ]
-                        )
-                        guests
+                                      else
+                                        text ""
+                                    ]
+                            )
+                            guests
+                    ]
                 ]
             ]
 

@@ -347,7 +347,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ id "notifications", class "section columns" ]
+    div [ id "notifications", class "section columns is-marginless" ]
         [ div [ class "column is-6 is-offset-3" ]
             [ div [ class "is-strong arrow-left is-w is-h mb-3", title "Go back", onClick GoBack ] []
             , h2 [ class "title" ] [ text "Notifications" ]
