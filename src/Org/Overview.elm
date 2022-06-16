@@ -1259,8 +1259,46 @@ viewCanvas us model =
             _ ->
                 text ""
         , canvas [ id "canvasOrga", class "is-invisible" ] []
+
+        {- Hidden classes use in graphpack_d3.js -}
+        --
+        -- Welcom buttons
+        --
+        , withMaybeData model.orga_data
+            |> withDefault Dict.empty
+            |> (\orga ->
+                    if isFreshOrga orga then
+                        div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
+                            [ div
+                                [ class "button is-success"
+                                , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                                ]
+                                [ textH "Invite member" ]
+                            , div
+                                [ class "button is-success"
+                                , onClick (NewTensionMsg <| NTF.OnOpen (FromNameid model.node_focus.rootnameid))
+                                ]
+                                [ textH "Create tension" ]
+                            , div
+                                [ class "button is-success"
+                                , onClick (NewTensionMsg <| NTF.OnOpenRole (FromNameid model.node_focus.rootnameid))
+                                ]
+                                [ textH "Create role" ]
+                            , div
+                                [ class "button is-success"
+                                , onClick (NewTensionMsg <| NTF.OnOpenCircle (FromNameid model.node_focus.rootnameid))
+                                ]
+                                [ textH "Create sub-circle" ]
+                            ]
+
+                    else
+                        text ""
+               )
+
+        --
+        -- Graphpack Control buttons
+        --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            -- Hidden class use in graphpack_d3.js
             ([ div
                 [ class "button tooltip has-tooltip-arrow has-tooltip-left"
                 , attribute "data-tooltip" (upH T.goRoot)

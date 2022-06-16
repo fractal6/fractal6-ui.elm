@@ -1024,12 +1024,14 @@ viewPanel op model =
                                     Nothing ->
                                         div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.orga_data) ]
                                             [ A.icon1 "icon-user-plus" (action2str LinkAction) ]
+                        ]
 
-                        --
-                        , hr [ class "dropdown-divider" ] []
-
-                        -- Archive Action
-                        , case Maybe.map (\c -> c.action_type) op.tc of
+                    else
+                        []
+                   )
+                -- ARCHIVE ACTION
+                ++ (if model.form.node.parent /= Nothing then
+                        [ case Maybe.map (\c -> c.action_type) op.tc of
                             Just EDIT ->
                                 div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
                                     [ A.icon1 "icon-archive" (action2str ArchiveAction) ]
@@ -1041,6 +1043,7 @@ viewPanel op model =
                             _ ->
                                 div [] [ text "not implemented" ]
                         ]
+                            |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
                     else
                         []

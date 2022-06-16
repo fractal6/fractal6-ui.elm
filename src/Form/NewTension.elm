@@ -538,6 +538,8 @@ type Msg
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Modal control
     | OnOpen NewTensionInput
+    | OnOpenRole NewTensionInput
+    | OnOpenCircle NewTensionInput
     | OnResetModel
     | OnClose ModalData
     | OnCloseSafe String String
@@ -701,6 +703,12 @@ update_ apis message model =
 
                 LoggedOut ->
                     ( setStep AuthNeeded model |> open, out0 [ Ports.open_modal "tensionModal" ] )
+
+        OnOpenRole t ->
+            ( { model | activeTab = NewRoleTab }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t) ] )
+
+        OnOpenCircle t ->
+            ( model, out0 [ send (OnSwitchTab NewCircleTab), send (OnOpen t) ] )
 
         OnClose data ->
             let

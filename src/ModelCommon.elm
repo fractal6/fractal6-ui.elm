@@ -455,6 +455,18 @@ type InputViewMode
 --
 
 
+isFreshOrga : NodesDict -> Bool
+isFreshOrga data =
+    (Dict.filter
+        (\k v ->
+            v.role_type /= Just RoleType.Owner && v.role_type /= Just RoleType.Pending
+        )
+        data
+        |> Dict.size
+    )
+        == 1
+
+
 getTargets : GqlData LocalGraph -> List RoleType.RoleType -> List PNode
 getTargets lg exclude_role_types =
     case lg of

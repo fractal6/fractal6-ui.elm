@@ -262,7 +262,7 @@ view global model =
 
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
-    div [ class "columns is-centered section is-marginless" ]
+    div [ class "columns is-centered mt-4 p-4 is-marginless" ]
         [ div [ class "" ]
             [ case model.token_reset of
                 Just t ->

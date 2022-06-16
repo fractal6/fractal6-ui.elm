@@ -234,6 +234,7 @@ export const GraphPack = {
     $nextToChart: null,
     $canvas: null,
     $hiddenCanvas: null,
+    $welcomeButtons: null,
     $canvasButtons: null,
     $tooltip: null,
     // Canvas ctx
@@ -286,10 +287,20 @@ export const GraphPack = {
         var scrollLeft = b.left;
         var scrollTop = b.top;
         var r = this.$canvas.getBoundingClientRect();
+
+        // Draw canvas buttons
         this.$canvasButtons.style.left = r.left + r.width - this.$canvasButtons.offsetWidth -8 -scrollLeft +"px";
         this.$canvasButtons.style.top = r.top + 13 -scrollTop +"px";
         this.$canvasButtons.classList.remove("is-invisible");
 
+        // Draw welcome buttons
+        if (this.$welcomeButtons) {
+            this.$welcomeButtons.style.left = r.left + r.width/2 - this.$welcomeButtons.offsetWidth/2 +8 -scrollLeft +"px";
+            this.$welcomeButtons.style.top = r.top + 100 -scrollTop +"px";
+            this.$welcomeButtons.classList.remove("is-invisible");
+        }
+
+        // Tooltip
         this.$tooltip.classList.remove("is-invisible");
     },
 
@@ -1262,6 +1273,7 @@ export const GraphPack = {
 
             this.$canvasButtons.classList.add("is-invisible");
             this.$tooltip.classList.add("is-invisible");
+            if (this.$welcomeButtons) this.$welcomeButtons.classList.add("is-invisible");
 
             this.computeGeometry();
             this.sizeDom();
@@ -1431,8 +1443,9 @@ export const GraphPack = {
         this.$nextToChart.style.flexDirection = "column";
         //this.$nextToChart.style.overflowY = "auto";
 
-        // Setup canvasButtons Buttons
+        // Setup Buttons
         this.$canvasButtons = document.getElementById('canvasButtons');
+        this.$welcomeButtons = document.getElementById('welcomeButtons');
 
         // Setup nodeTooltip Tooltip
         this.$tooltip = document.getElementById('nodeTooltip');

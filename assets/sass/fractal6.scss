@@ -797,6 +797,10 @@ strong {
             padding: 0;
         }
     }
+
+    @include desktop {
+        margin-top: 2rem;
+    }
 }
 
 #loginForm, #signupForm {
@@ -1411,6 +1415,17 @@ tr.mediaBox {
     .tag {
         margin-right: 8px !important;
     }
+    .tag + .tag {
+        //margin-top: 8px;
+    }
+}
+.tension-labelsList {
+    margin-top: -8px;
+    .labelsList {
+        .tag:not(:first-child) {
+            margin-top: 8px;
+        }
+    }
 }
 
 .usersList {
@@ -1592,10 +1607,20 @@ tr.mediaBox {
     }
 }
 
-#canvasButtons {
-    //display: flex;
+#welcomeButtons {
     position: absolute;
     flex-direction: column;
+
+    .button {
+        border-radius: 25px;
+        min-width: 11.5rem;
+    }
+}
+
+#canvasButtons {
+    position: absolute;
+    flex-direction: column;
+    //display: flex;
 
     .button {
         margin-right: 0;

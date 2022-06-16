@@ -2458,7 +2458,7 @@ viewSidePane u t model =
                     LoggedOut ->
                         [ h2 [ class "subtitle" ] [ textH T.labels ] ]
                 )
-                    ++ [ div []
+                    ++ [ div [ class "tension-labelsList" ]
                             [ if List.length labels > 0 then
                                 viewLabels labels
 
