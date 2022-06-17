@@ -175,6 +175,7 @@ type alias Model =
     , node_hovered : Maybe Node
     , next_focus : Maybe String
     , activity_tab : ActivityTab
+    , depth : Maybe Int
 
     -- common
     , helperBar : HelperBar
@@ -238,7 +239,7 @@ type Msg
       -- GP JS Interop
     | NodeClicked String
     | NodeHovered String
-    | NodeFocused String
+    | NodeFocused ( String, Int )
     | OnFocus String
     | OnClearTooltip
     | ToggleGraphReverse
@@ -311,6 +312,7 @@ init global flags =
             , node_hovered = Nothing
             , next_focus = Nothing
             , activity_tab = TensionTab
+            , depth = Nothing
 
             -- Common
             , refresh_trial = 0
@@ -750,9 +752,8 @@ update global message model =
             in
             ( { model | node_hovered = node }, cmd, Cmd.none )
 
-        NodeFocused nameid ->
+        NodeFocused ( nameid, maxdepth ) ->
             -- May change the node_focus var
-            --
             case localGraphFromOrga nameid model.orga_data of
                 Just path ->
                     let
@@ -768,7 +769,7 @@ update global message model =
                                 Cmd.none
                             ]
                     in
-                    ( { model | path_data = Just path }
+                    ( { model | path_data = Just path, depth = Just maxdepth }
                     , Cmd.batch ([ Ports.drawButtonsGraphPack ] ++ cmds)
                     , send (UpdateSessionPath (Just path))
                     )
@@ -918,7 +919,7 @@ port nodeRightClickedFromJs : (String -> msg) -> Sub msg
 port nodeHoveredFromJs : (String -> msg) -> Sub msg
 
 
-port nodeFocusedFromJs : (String -> msg) -> Sub msg
+port nodeFocusedFromJs : (( String, Int ) -> msg) -> Sub msg
 
 
 
@@ -1243,6 +1244,10 @@ viewCanvas us model =
 
                 LoggedOut ->
                     False
+
+        isComplex =
+            --Maybe.map (\x -> x > 2) model.depth |> withDefault False
+            False
     in
     div [ id "canvasParent", classList [ ( "spinner", model.orga_data == LoadingSlowly ) ] ]
         [ case model.orga_data of
@@ -1299,42 +1304,58 @@ viewCanvas us model =
         -- Graphpack Control buttons
         --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            ([ div
-                [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                , attribute "data-tooltip" (upH T.goRoot)
-                , onClick (NodeClicked model.node_focus.rootnameid)
+            ((if isAdmin then
+                [ div
+                    [ class "button tooltip has-tooltip-arrow has-tooltip-left"
+                    , attribute "data-tooltip" (upH T.inviteMember)
+                    , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                    ]
+                    [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
                 ]
-                [ A.icon "icon-chevrons-up" ]
-             , div
-                [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                , attribute "data-tooltip" (upH T.goParent)
-                , case model.path_data of
-                    Just g ->
-                        LE.getAt 1 (List.reverse g.path)
-                            |> Maybe.map (\x -> x.nameid)
-                            |> withDefault g.focus.nameid
-                            |> NodeClicked
-                            |> onClick
 
-                    Nothing ->
-                        onClick NoMsg
-                ]
-                [ A.icon "icon-chevron-up" ]
-             , div
-                [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-left"
-                , attribute "data-tooltip" (upH T.reverseTooltip)
-                , onClick ToggleGraphReverse
-                ]
-                [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
-             ]
-                ++ (if isAdmin then
-                        [ div [ class "is-hbar" ] []
+              else
+                []
+             )
+                ++ [ if model.node_focus.nameid /= model.node_focus.rootnameid || isComplex then
+                        div [ class "is-hbar" ] []
+
+                     else
+                        text ""
+                   ]
+                ++ (if model.node_focus.nameid == model.node_focus.rootnameid then
+                        []
+
+                    else
+                        [ div
+                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
+                            , attribute "data-tooltip" (upH T.goRoot)
+                            , onClick (NodeClicked model.node_focus.rootnameid)
+                            ]
+                            [ A.icon "icon-chevrons-up" ]
                         , div
                             [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                            , attribute "data-tooltip" (upH T.inviteMember)
-                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                            , attribute "data-tooltip" (upH T.goParent)
+                            , case model.path_data of
+                                Just g ->
+                                    LE.getAt 1 (List.reverse g.path)
+                                        |> Maybe.map (\x -> x.nameid)
+                                        |> withDefault g.focus.nameid
+                                        |> NodeClicked
+                                        |> onClick
+
+                                Nothing ->
+                                    onClick NoMsg
                             ]
-                            [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
+                            [ A.icon "icon-chevron-up" ]
+                        ]
+                   )
+                ++ (if isComplex then
+                        [ div
+                            [ class "button buttonToggle tooltip has-tooltip-arrow has-tooltip-left"
+                            , attribute "data-tooltip" (upH T.reverseTooltip)
+                            , onClick ToggleGraphReverse
+                            ]
+                            [ span [ style "padding" "2px" ] [ A.icon "icon-sort-amount-desc icon-xs" ] ]
                         ]
 
                     else

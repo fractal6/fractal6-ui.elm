@@ -1250,7 +1250,7 @@ export const GraphPack = {
     nodeFocusedFromJs(node) {
         // @DEBUG: why / where would node be undefined ?
         if (!node) return
-        this.app.ports.nodeFocusedFromJs.send(node.data.nameid);
+        this.app.ports.nodeFocusedFromJs.send([node.data.nameid, this.gStats.maxdepth]);
     },
 
     sendNodeLeftClickFromJs(node) {
