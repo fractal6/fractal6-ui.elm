@@ -1307,11 +1307,11 @@ tensionTypeHeader =
 
 tensionTypeDoc : String
 tensionTypeDoc =
-    """ There is three main categories of tension:
-* **Operational**: A general category of tension which can be a task, an issue or whatever that need to be share in the organisation.
-* **Governance**: concerning the structure of the organisation its mandates etc.
-* **Help**: for help requests, questions or clarifications.
-* **Alert**: for alert requests, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
+    """ There are three main categories of tension:
+* **Operational**: A general category, it can be task, an issue or whatever that need to be share in the organisation.
+* **Governance**: Concerning the structure of the organisation, the mandates etc.
+* **Help**: For help requests, questions or clarifications.
+* **Alert**: For alert requests, this are used for global annoncement. All the member behind the circle alerted will be notified (Coordinator level to trigger).
     """
 
 

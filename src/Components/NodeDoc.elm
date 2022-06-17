@@ -631,6 +631,9 @@ viewMandateInput txt mandate op =
 
         showPolicies =
             op.data.doAddPolicies || policies /= ""
+
+        purpose_len =
+            List.length <| String.lines purpose
     in
     div [ class "pb-0" ]
         [ div [ class "field" ]
@@ -640,7 +643,7 @@ viewMandateInput txt mandate op =
                 [ textarea
                     [ id "textAreaModal"
                     , class "textarea"
-                    , rows 5
+                    , rows (min 15 (max purpose_len 5))
                     , placeholder (upH txt.ph_purpose)
                     , value purpose
                     , onInput <| op.onChangePost "purpose"
@@ -650,12 +653,16 @@ viewMandateInput txt mandate op =
                 ]
             ]
         , if showResponsabilities then
+            let
+                responsabilities_len =
+                    List.length <| String.lines purpose
+            in
             div [ class "field" ]
                 [ div [ class "label" ] [ textH T.responsabilities ]
                 , div [ class "control" ]
                     [ textarea
                         [ class "textarea"
-                        , rows 5
+                        , rows (min 15 (max responsabilities_len 5))
                         , placeholder (upH txt.ph_responsabilities)
                         , value responsabilities
                         , onInput <| op.onChangePost "responsabilities"

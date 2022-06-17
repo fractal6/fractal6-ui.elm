@@ -1283,12 +1283,12 @@ viewCanvas us model =
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpenRole (FromNameid model.node_focus.rootnameid))
                                 ]
-                                [ textH "Create role" ]
+                                [ textH "Add role" ]
                             , div
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpenCircle (FromNameid model.node_focus.rootnameid))
                                 ]
-                                [ textH "Create sub-circle" ]
+                                [ textH "Add sub-circle" ]
                             ]
 
                     else

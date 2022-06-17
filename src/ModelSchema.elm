@@ -657,7 +657,7 @@ type alias UserFull =
     --, utc: Maybe String
     --, links : Maybe (List String)
     --, skills : Maybe (List String)
-    -- private
+    -- Private
     , email : String
     }
 
