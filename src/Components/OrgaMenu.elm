@@ -283,7 +283,7 @@ viewOrgas hover focus orgs_result op =
 
             Failure err ->
                 --viewGqlErrors err
-                [ span [ class "has-text-danger" ] [ text "Error." ] ]
+                [ span [ class "m-3 has-text-danger" ] [ text "Error" ] ]
 
             _ ->
                 []

@@ -577,6 +577,10 @@ viewAskQuestion op (State model) =
                 ]
 
         other ->
+            let
+                line_len =
+                    List.length <| String.lines message
+            in
             div [ class "section pt-0" ]
                 [ p [ class "field" ]
                     [ text "Have you checked if your question is answered in the "
@@ -609,7 +613,7 @@ viewAskQuestion op (State model) =
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
-                                    , rows 5
+                                    , rows (min 10 (max line_len 5))
                                     , placeholder "Write your question here..."
                                     , required True
                                     , value message
@@ -682,6 +686,10 @@ viewFeedback op (State model) =
                 ]
 
         other ->
+            let
+                line_len =
+                    List.length <| String.lines message
+            in
             div [ class "section pt-0" ]
                 [ div [ class "field is-horizontal" ]
                     [ div [ class "field-label is-norma" ] [ label [ class "label" ] [ text "Type" ] ]
@@ -749,7 +757,7 @@ viewFeedback op (State model) =
                                 [ textarea
                                     [ id "textAreaModal"
                                     , class "textarea"
-                                    , rows 5
+                                    , rows (min 10 (max line_len 5))
                                     , placeholder "Write your feedback here..."
                                     , required True
                                     , value message

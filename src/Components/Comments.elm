@@ -132,10 +132,14 @@ viewUpdateInput op uctx comment form result =
                 [ div [ class "control submitFocus" ]
                     [ case viewMode of
                         Write ->
+                            let
+                                line_len =
+                                    List.length <| String.lines message
+                            in
                             textarea
                                 [ id "updateCommentInput"
                                 , class "textarea defaultSubmit"
-                                , rows 7
+                                , rows (min 15 (max line_len 7))
                                 , placeholder (upH T.leaveComment)
                                 , value message
                                 , onInput (op.doChangePost "message")
@@ -222,10 +226,14 @@ viewCommentInput op uctx tension form result viewMode =
                         [ div [ class "control submitFocus" ]
                             [ case viewMode of
                                 Write ->
+                                    let
+                                        line_len =
+                                            List.length <| String.lines message
+                                    in
                                     textarea
                                         [ id "commentInput"
                                         , class "textarea defaultSubmit"
-                                        , rows op.rows
+                                        , rows (min 15 (max line_len op.rows))
                                         , placeholder "Leave a comment"
                                         , value message
                                         , onInput (op.doChangePost "message")

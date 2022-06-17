@@ -1424,10 +1424,14 @@ viewTension model =
                                 [ div [ class "control" ]
                                     [ case model.viewMode of
                                         Write ->
+                                            let
+                                                line_len =
+                                                    List.length <| String.lines message
+                                            in
                                             textarea
                                                 [ id "textAreaModal"
                                                 , class "textarea"
-                                                , rows 5
+                                                , rows (min 10 (max line_len 5))
                                                 , placeholder (upH T.leaveCommentOpt)
                                                 , value message
                                                 , onInput (OnChangePost "message")

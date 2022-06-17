@@ -25,10 +25,18 @@
             &.has-menu-left {
                 // menu-left-width - 1rem
                 min-width: calc(100vw - 40px);
-                max-midth: calc(100vw - 40px);
                 width:     calc(100vw - 40px);
                 margin-left: 40px;
+
+                .kb-board {
+                    margin-left: calc(#{$orga-menu-width} - 40px) !important;
+                }
             }
+        }
+    }
+    @include fullhd {
+        &.has-menu-left .kb-board {
+            margin-left: $orga-menu-width !important;
         }
     }
 
@@ -870,7 +878,7 @@ strong {
   height: 100%;
   // Do not work but foopage has a higher z-index, or maybe because it has a delay !
   //height: calc(100vh - #{$navbar-height});
-  width: 63px;
+  width: $orga-menu-width;
   position: fixed;
   //position: sticky;
   top: calc(#{$navbar-height});

@@ -1408,11 +1408,9 @@ viewActivies model =
                         Success tensions ->
                             if List.length tensions > 0 then
                                 List.map (\x -> mediaTension model.now model.node_focus x False True "is-size-6" Navigate) tensions
-                                    ++ ternary (List.length tensions > 5)
-                                        [ div [ class "is-aligned-center mt-1 mb-2" ]
+                                    ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
                                             [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
-                                        ]
-                                        []
+                                       ]
                                     |> div [ id "tensionsTab" ]
 
                             else

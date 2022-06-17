@@ -1266,6 +1266,8 @@ export const GraphPack = {
     //
 
     resizeMe() {
+        if (!this.$canvas) return
+
         if (new Date() - this.rtime < this.delta) {
             setTimeout(() => this.resizeMe(), this.delta);
         } else {

@@ -383,11 +383,6 @@ view_ tid data op_m =
         type_ =
             withDefault NodeType.Role data.node.type_
 
-        --isLinksHidden =
-        --    if type_ == NodeType.Circle && data.source == TensionBaseUri then
-        --        data.hasBeenPushed
-        --    else
-        --        False
         txt =
             getNodeTextFromNodeType type_
 
