@@ -9,12 +9,13 @@ import Json.Decode as Decode exposing (Decoder)
 
 type UserType
     = Regular
+    | Pro
     | Root
 
 
 list : List UserType
 list =
-    [ Regular, Root ]
+    [ Regular, Pro, Root ]
 
 
 decoder : Decoder UserType
@@ -25,6 +26,9 @@ decoder =
                 case string of
                     "Regular" ->
                         Decode.succeed Regular
+
+                    "Pro" ->
+                        Decode.succeed Pro
 
                     "Root" ->
                         Decode.succeed Root
@@ -41,6 +45,9 @@ toString enum____ =
     case enum____ of
         Regular ->
             "Regular"
+
+        Pro ->
+            "Pro"
 
         Root ->
             "Root"
@@ -62,6 +69,9 @@ fromString enumString____ =
     case enumString____ of
         "Regular" ->
             Just Regular
+
+        "Pro" ->
+            Just Pro
 
         "Root" ->
             Just Root
