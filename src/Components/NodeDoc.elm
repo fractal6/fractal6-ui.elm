@@ -24,7 +24,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
@@ -462,13 +462,13 @@ viewAboutSection editView data =
                         [ nameid |> uriFromNameid OverviewBaseUri |> href ]
                         [ withDefault "" data.node.name |> text ]
 
-                  else if data.source == OverviewBaseUri then
+                  else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
                     a
                         [ Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href ]
                         [ withDefault "" data.node.name |> text ]
 
                   else
-                    text ""
+                    span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
                 ]
             , case data.toolbar of
                 Just tb ->
@@ -566,10 +566,10 @@ viewAboutInput hasBeenPushed source txt node op =
                             [ div [ class "field-body control" ]
                                 [ div [] [ text "URL" ]
                                 , input
-                                    [ class "input px-1"
+                                    [ class "input px-0"
                                     , disabled True
-                                    , value "https://fractale.co/o/"
-                                    , attribute "style" "width: 11em"
+                                    , value " https://fractale.co/o/"
+                                    , attribute "style" "width: 11.1em"
                                     ]
                                     []
                                 , input

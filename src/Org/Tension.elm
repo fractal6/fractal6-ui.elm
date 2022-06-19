@@ -734,7 +734,8 @@ update global message model =
             ( { model | tension_blobs = result }, Cmd.none, Ports.bulma_driver "" )
 
         ExpandEvent i ->
-            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Cmd.none )
+            -- @fix/bulma: dropdown clidk handler lost during the operation
+            ( { model | expandedEvents = model.expandedEvents ++ [ i ] }, Cmd.none, Ports.bulma_driver "" )
 
         ToggleSubscription username ->
             case model.tension_head of
@@ -1972,7 +1973,7 @@ viewEventStatus now event status =
                 TensionStatus.Closed ->
                     ( "icon-alert-circle", T.closed )
     in
-    [ span [ class "media-left" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
+    [ span [ class "media-left", style "margin-left" "-4px" ] [ A.icon (actionIcon ++ " icon-1half has-text-" ++ statusColor status) ]
     , span [ class "media-content", attribute "style" "padding-top: 4px;margin-left: -4px" ]
         [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text actionText ], text (formatDate now event.createdAt) ]
         ]
@@ -2134,7 +2135,7 @@ viewEventArchived now event action_m isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text (actionNameStr action), text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
         ]
     ]
 

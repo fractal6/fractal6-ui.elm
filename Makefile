@@ -8,11 +8,7 @@ uglifyjs := node_modules/uglify-js/bin/uglifyjs
 default: run
 
 run:
-	# Run dev
 	npm run webdev
-
-run_localprod:
-	npm run localprod
 
 run_prod:
 	npm run webprod

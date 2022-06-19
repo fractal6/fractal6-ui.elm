@@ -183,7 +183,7 @@ viewNavLevel op =
 viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html msg
 viewPath baseUri uriQuery maybePath =
     div
-        [ class "breadcrumb"
+        [ class "breadcrumb has-arrow-separato"
         , attribute "aria-label" "breadcrumbs"
         ]
         [ A.icon0 "icon-layers icon-lg"

@@ -997,8 +997,12 @@ viewPanel op model =
                    )
                 -- ACTION
                 ++ (if op.isAdmin then
+                        let
+                            isRoot =
+                                nid2rootid model.form.node.nameid == model.form.node.nameid
+                        in
                         [ -- Move Action
-                          if model.form.node.parent /= Nothing then
+                          if not isRoot then
                             div [ class "dropdown-item button-light", onClick OnActionMove ]
                                 [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
 
@@ -1025,25 +1029,25 @@ viewPanel op model =
                                         div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.orga_data) ]
                                             [ A.icon1 "icon-user-plus" (action2str LinkAction) ]
                         ]
+                            ++ -- ARCHIVE ACTION
+                               (if not isRoot then
+                                    [ case Maybe.map (\c -> c.action_type) op.tc of
+                                        Just EDIT ->
+                                            div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
+                                                [ A.icon1 "icon-archive" (action2str ArchiveAction) ]
 
-                    else
-                        []
-                   )
-                -- ARCHIVE ACTION
-                ++ (if model.form.node.parent /= Nothing then
-                        [ case Maybe.map (\c -> c.action_type) op.tc of
-                            Just EDIT ->
-                                div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
-                                    [ A.icon1 "icon-archive" (action2str ArchiveAction) ]
+                                        Just ARCHIVE ->
+                                            div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
+                                                [ A.icon1 "icon-archive" (action2str UnarchiveAction) ]
 
-                            Just ARCHIVE ->
-                                div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
-                                    [ A.icon1 "icon-archive" (action2str UnarchiveAction) ]
+                                        _ ->
+                                            div [] [ text "not implemented" ]
+                                    ]
+                                        |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
-                            _ ->
-                                div [] [ text "not implemented" ]
-                        ]
-                            |> List.append [ hr [ class "dropdown-divider" ] [] ]
+                                else
+                                    []
+                               )
 
                     else
                         []
@@ -1223,7 +1227,7 @@ viewVisibility : Op -> Model -> Html Msg
 viewVisibility op model =
     let
         isRoot =
-            model.form.node.parent == Nothing
+            nid2rootid model.form.node.nameid == model.form.node.nameid
     in
     div []
         [ -- Show the help information

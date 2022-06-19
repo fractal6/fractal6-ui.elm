@@ -52,7 +52,7 @@ const formatGraph = dataset =>  {
     var dataTree = [];
     var dataDict = Object.create(null);
 
-    dataset.forEach( (aData, i) => {
+    dataset.forEach((aData, i) => {
         dataDict[aData.nameid] = {
             ...aData,
             children : [],
@@ -171,7 +171,7 @@ export const GraphPack = {
     focusCircleWidth: 6, // warning, can break stroke with canvas drawing.
     hoverCircleColor: "#555", //  grey-black>"#3f3f3f"
     hoverCircleWidth: 2,
-    outsideZoomOpacity: "85",
+    outsideZoomOpacity: "75",
 
     // Html element ID
     canvasParentId: "canvasParent",
@@ -217,7 +217,9 @@ export const GraphPack = {
     focusedNode : null, // The node that has the active focus
     zoomedNode  : null, // The node that has is centered
     hoveredNode : null, // The node that is curently hoovered
-    isFrozen    : false, // prevent mouse move glitching thing
+    isFrozen    : false, // Tooltip click state
+    isFrozenMenu: false, // Tooltip right click state
+    handlers: [],
 
     // Zooming
     ease: d3.easePolyInOut.exponent(4),
@@ -721,7 +723,7 @@ export const GraphPack = {
         var $tooltip = this.$tooltip
         // == add tooltip
         // @warning: tooltip neeed to be displayed to get its clientWidth.
-        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
+        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventTension);
         if (!$subTooltip) return
         $subTooltip.childNodes[0].textContent = node.data.name;
         $tooltip.classList.remove("fadeOut");
@@ -1158,16 +1160,17 @@ export const GraphPack = {
     // n: node pr element currently hovering
     // cond: what to test
     checkIf(p, cond, n) {
-        var test;
+        var test = false;
         switch(cond) {
             case 'InCanvas':
+                if (!this.$canvas) break
                 var r = this.$canvas.getBoundingClientRect();
                 var x2 = r.width;
                 var y2 = r.height;
                 test = (p.mouseX > 0) && (p.mouseY > 0) && (p.mouseX < x2) && (p.mouseY < y2);
                 break
             case "InButtons":
-                if (!n) break
+                if (!n || !n.getBoundingClientRect || !this.$canvas) break
                 var r = this.$canvas.getBoundingClientRect();
                 var rBtn = n.getBoundingClientRect();
                 var x1 = rBtn.left - r.left;
@@ -1177,7 +1180,7 @@ export const GraphPack = {
                 test = (p.mouseX > x1) && (p.mouseY > y1) && (p.mouseX < x2) && (p.mouseY < y2);
                 break
             case 'InTooltip':
-                if (!n) break
+                if (!n || !this.$tooltip) break
                 // Intial version
                 //var h = this.$tooltip.clientHeight +12;
                 //var w = this.$tooltip.clientWidth/2 +6;
@@ -1573,50 +1576,31 @@ export const GraphPack = {
             return false
         };
 
-
-        // On Resize handle
-        window.onresize = () => {
-            if (!this.focusedNode) return
-            this.rtime = new Date();
-            if (this.timeout === false) {
-                this.timeout = true;
-
-                // Smooth redraw
-                setTimeout( () => this.resizeMe(), this.delta);
-            }
-        };
-
-        //////////////////////////////////////////////////////////////
-        /////////////////////// Initiate /////////////////////////////
-        //////////////////////////////////////////////////////////////
-
-        if (!this.graph) return
-        console.log("Orga Canvas Initalization");
-        this.isLoading = false;
-		this.drawCanvas(true); // to add node.ctx
-
-        //
-        // Event listeners
-        //
-
-        // Canvas mouse event
-        this.$canvas.addEventListener("mousemove", canvasMouseMoveEvent);
-        this.$canvas.addEventListener("mouseenter", canvasMouseEnterEvent);
-        this.$canvas.addEventListener("mouseleave", canvasMouseLeaveEvent);
-        this.$canvas.addEventListener("mousedown", nodeClickEvent);
-        this.$canvas.addEventListener("contextmenu", e => {
-            if (!this.isFrozen) {
+        // Catch right click context menu
+        var contextMenuEvent = e => {
+            console.log("got the menue click")
+            if (!this.isFrozen && !this.isFrozenMenu) {
                 e.preventDefault();
                 this.sendNodeRightClickFromJs(this.hoveredNode);
                 this.isFrozen = true;
+                this.isFrozenMenu = true;
                 return false
             } else {
-                //@DEBUG: context menu is not reactivated !
+                // do not works well
+                e.preventDefault();
+                this.isFrozenMenu = false;
+                this.isFrozen = false;
+                // Simulate on click to close the action panel
+                var $c = document.getElementById(this.$tooltip.dataset.eventAction).querySelector(".clickMe");
+                if ($c) {
+                    $c.click();
+                }
                 return true
             }
-        }, false);
+        };
 
-		//this.$canvas.addEventListener("wheel", e => { // or window.addEventListener("scroll"....
+        // Mouse wheel To study
+		//canvasMouseWheelEvent =  e => {
         //    if (this.isZooming || this.isFrozen) { return e.preventDefault() }
         //    if (e.deltaY < 0){
         //        // upscroll code
@@ -1633,11 +1617,11 @@ export const GraphPack = {
         //            this.nodeClickedFromJs(node);
         //        }
 		//	}
-		//}, false);
+		//}
 
         // Canvas button events redirection
         // Review -- Better implementation ?
-        this.$canvasButtons.addEventListener("mousedown", e => {
+        var canvasButtonsClick = e => {
             var p = this.getPointerCtx(e);
             var isInButtons = false;
             this.$canvasButtons.childNodes.forEach( o => {
@@ -1647,8 +1631,8 @@ export const GraphPack = {
                 return nodeClickEvent(e)
             }
             return true
-        });
-        this.$canvasButtons.addEventListener("mousemove", e => {
+        };
+        var canvasButtonsMove = e => {
             var p = this.getPointerCtx(e);
             var isInButtons = false;
             this.$canvasButtons.childNodes.forEach( o => {
@@ -1658,11 +1642,10 @@ export const GraphPack = {
                 return canvasMouseMoveEvent(e)
             }
             return true
-        });
+        };
 
-        // Node Tooltip events
-        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventClick);
-        $subTooltip.addEventListener("mousedown", e => {
+        // Tooltip Clicks
+        var tooltipTensionClick = e => {
             if (this.isFrozen) {
                 this.isFrozen = false;
                 return false
@@ -1670,13 +1653,69 @@ export const GraphPack = {
             this.sendNodeLeftClickFromJs(this.hoveredNode);
             this.isFrozen = false;
             return true
-        });
-
-        var $subTooltip = document.getElementById(this.$tooltip.dataset.eventHover);
-        $subTooltip.addEventListener("mousedown", e => {
-            this.isFrozen = true;
+        };
+        var tooltipActionClick = e => {
+            this.isFrozen = !this.isFrozen;
             return true
-        });
+        };
+
+        // On Resize handle
+        window.onresize = () => {
+            if (!this.focusedNode) return
+            this.rtime = new Date();
+            if (this.timeout === false) {
+                this.timeout = true;
+
+                // Smooth redraw
+                setTimeout(() => this.resizeMe(), this.delta);
+            }
+        };
+
+        //////////////////////////////////////////////////////////////
+        /////////////////////// Initiate /////////////////////////////
+        //////////////////////////////////////////////////////////////
+
+        if (!this.graph) return
+        console.log("Orga Canvas Initalization");
+        this.isLoading = false;
+        this.isZooming = false;
+        this.isFrozen = false;
+        this.isFrozenMenu = false;
+
+		this.drawCanvas(true); // to add node.ctx
+
+        //
+        // Event listeners
+        //
+
+        var $subTooltipTension = document.getElementById(this.$tooltip.dataset.eventTension);
+        var $subTooltipAction = document.getElementById(this.$tooltip.dataset.eventAction);
+
+        // Cleanup old handlers to avoid dragons !
+        for (var i=0; i<this.handlers.length; i++) {
+            this.handlers[i][0].removeEventListener(this.handlers[i][1], this.handlers[i][2]);
+        }
+
+        this.handlers = [
+            // Canvas mouse event
+            [this.$canvas, "mousemove", canvasMouseMoveEvent],
+            [this.$canvas, "mouseenter", canvasMouseEnterEvent],
+            [this.$canvas, "mouseleave", canvasMouseLeaveEvent],
+            [this.$canvas, "mousedown", nodeClickEvent],
+            [this.$canvas, "contextmenu", contextMenuEvent],
+            //[this.$canvas, "wheel", contextMenuEvent], // or "scroll" ?
+            // Canvas buttons events
+            [this.$canvasButtons, "mousedown", canvasButtonsClick],
+            [this.$canvasButtons, "mousemove", canvasButtonsMove],
+            // Tooltip events
+            [$subTooltipTension, "mousedown", tooltipTensionClick],
+            [$subTooltipAction, "mousedown", tooltipActionClick],
+        ];
+
+        // Setup handlers
+        for (var i=0; i<this.handlers.length; i++) {
+            this.handlers[i][0].addEventListener(this.handlers[i][1], this.handlers[i][2]);
+        }
 
         //
         // ELM Subscriptions

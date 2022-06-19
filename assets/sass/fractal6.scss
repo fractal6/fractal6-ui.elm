@@ -1,7 +1,7 @@
 
 /*
  *
- * Bulma fixes
+ * Bulma Fixes
  *
  */
 
@@ -128,6 +128,8 @@ hr {
     &:focus {
         border-color: var(--input-focus-border-color) !important;
         background-color: var(--input-focus-background-color) !important;
+        box-shadow: rgba(40, 87, 164, 0.25) 0px 0px 0px 2px;
+
         &:hover {
             border-color: var(--input-focus-border-color) !important;
             background-color: var(--input-focus-background-color) !important;
@@ -145,6 +147,7 @@ hr {
     }
     &.is-disabled, &[disabled] {
         color: var(--text-light2);
+        -webkit-text-fill-color: var(--text-light2); // chrome f*ck !
         background-color: var(--input-disabled-background-color) !important;
     }
 }
@@ -264,6 +267,9 @@ a.is-link {
 }
 .discrete-link {
     color: inherit;
+    &:visited {
+        color: inherit;
+    }
     &:hover {
         color: var(--link) !important;
     }
@@ -673,8 +679,8 @@ strong {
 
 #mainPane {
     @include until($desktop) {
-        padding-left: 6px !important;
-        padding-right: 6px !important;
+        //padding-left: 6px !important;
+        //padding-right: 6px !important;
     }
 
     // Prevent NavbarTop overflow
@@ -822,55 +828,13 @@ strong {
         padding-top: 8px;
         padding-bottom: 8px;
         justify-content: left;
+        font-weight: 600;
         // protect from breadcrumb nowrap option.
         white-space: initial !important;
     }
     a:not(:last-child) {
         border-bottom: 1px solid var(--grey-dark);
     }
-}
-
-#leftPane {
-  min-width: 155px !important;
-  max-width: 225px !important;
-  width: 13% !important;
-  position: sticky;
-  top: calc(#{$navbar-height} - #{$size-small});
-
-  background-color: var(--menu-left-background-color);
-  box-shadow: inset -1px 0 0 var(--menu-left-border-color);
-  transform: translate3d(0, 0, 0);
-
-  &.column {
-    margin-top: 0;
-  }
-
-  .menu .hero {
-    margin-bottom: 20px;
-    margin-right: -$size-small + 0.05rem;
-  }
-
-  #secondHeroLabel {
-      padding-right: 0;
-  }
-
-  .menu-list {
-    //padding-left: 0;
-    margin-left: 0;
-    border-left: none;
-  }
-
-  .menu-list > li {
-    padding-bottom: 7px;
-
-    .hero-body {
-        padding-right: 0.5rem;
-    }
-
-    li > a {
-        padding-right: 0;
-    }
-  }
 }
 
 #orga-menu {
@@ -951,46 +915,19 @@ strong {
   }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-.divider {
-    opacity: 0.24;
-    &:hover {
-        opacity: 1;
-        transition: opacity 0.1s;
-        cursor: pointer;
-    }
-
-    &.is-small::after,
-    &.is-small::before {
-        width: 2px;
-    }
-
-    @include touch {
-        &.is-vertical {
-            margin-left: -10px;
-            margin-right: -10px;
-        }
+#explore,
+#createOrga,
+#notifications,
+#profile,
+#settings {
+    @include desktop {
+        margin-top: 3rem !important;
     }
 }
 
-#explore {
-     .media {
-        padding-top: 1.2rem !important;
-    }
-}
-
-#profile {
-    .media {
-        padding-top: 1.2rem !important;
+#createOrga {
+    h1.title {
+        margin-bottom: 3rem !important;
     }
 }
 
@@ -1003,11 +940,6 @@ strong {
     }
 }
 
-#createOrga {
-    h1.title {
-        margin-bottom: 3rem !important;
-    }
-}
 
 //
 // Overview and Doc
@@ -1199,7 +1131,7 @@ strong {
 
     .media {
         border-top: 1px solid var(--border-color-light) !important;
-        margin:0;
+        margin: 0;
         padding-bottom: 2rem;
     }
 
@@ -1423,16 +1355,14 @@ tr.mediaBox {
     .tag {
         margin-right: 8px !important;
     }
-    .tag + .tag {
-        //margin-top: 8px;
-    }
 }
 .tension-labelsList {
     margin-top: -8px;
-    .labelsList {
-        .tag:not(:first-child) {
-            margin-top: 8px;
-        }
+    .labelsList .tag {
+        margin-top: 8px;
+    }
+    .help {
+        margin-top: 22px !important;
     }
 }
 
@@ -1547,8 +1477,8 @@ tr.mediaBox {
     background-color: rgba($node-tooltip-background, 0.9);
 
     // Box style
-    padding: 2px 0px 1px 8px;
-    border: 2px solid #333;
+    padding: 0px 0px 0px 8px;
+    border: 2px solid black;
     border-style: solid;
     border-radius: 8px;
 
@@ -1567,19 +1497,19 @@ tr.mediaBox {
     &::after {
         margin-left: -6px;
         border-width: 6px;
-        border-top-color: var(--node-tooltip-background);
+        border-top-color: $node-tooltip-background;
     }
     &::before {
         margin-left: -7px;
         border-width: 7px;
-        border-top-color: #333;
+        border-top-color: black;
     }
 
     // -> on hover
     cursor: pointer;
     &:hover {
-        box-shadow: 0 0 1px 2px var(--node-tooltip-shadow);
-        background-color: rgba($node-tooltip-background, 1);
+        box-shadow: 0 0 1px 2px --node-tooltip-shadow;
+        background-color: $node-tooltip-background;
     }
 
     // Animate the tooltip
@@ -1590,7 +1520,7 @@ tr.mediaBox {
         opacity: 1;
         transition: opacity 0.3s;
         &:hover {
-            background-color: rgba($node-tooltip-background, 1);
+            background-color: $node-tooltip-background;
             transition: background-color 0s;
         }
     }
@@ -1604,14 +1534,17 @@ tr.mediaBox {
         margin-left: 5px !important;
         margin-right: 5px !important;
         color: var(--link2) !important;
-        font-size: 16px !important;
     }
 
     #doAction > span > span > .button {
+        // Vertical separator
         border-left-color: var(--grey) !important;
         border-left-width: 1px !important;
         border-left-style: solid;
         max-height: 1.5rem;
+        &:hover {
+            background-color: darken($node-tooltip-background, 10) !important;
+        }
     }
 }
 
@@ -2202,6 +2135,15 @@ tr.mediaBox {
  *
  */
 
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
 
 .is-w {
     &:hover {
@@ -2366,6 +2308,33 @@ tr.mediaBox {
     overflow: hidden;
     white-space: nowrap;
 }
+
+.divider {
+    opacity: 0.24;
+    &:hover {
+        opacity: 1;
+        transition: opacity 0.1s;
+        cursor: pointer;
+    }
+
+    &.is-small::after,
+    &.is-small::before {
+        width: 2px;
+    }
+
+    &.is-vertical {
+        margin-top: 0px !important;
+        @include touch {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        @include desktop {
+            margin-left: 0px;
+            margin-right: 0px;
+        }
+    }
+}
+
 
 .Circle {
     //padding-top: 4px;

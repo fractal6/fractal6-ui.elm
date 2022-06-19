@@ -3,6 +3,12 @@
     npm install
 
 
+NOTE: current fix to instakk elm-hot-webpack-loader@1.1.8 with webpavk v5
+
+    npm install --save-dev --legacy-peer-deps elm-hot-webpack-loader
+    npm install --save-dev --legacy-peer-deps node-sass
+
+
 # Creating new components
 
 A components is a reusable piece of code use in a application to implement a given functionality. 

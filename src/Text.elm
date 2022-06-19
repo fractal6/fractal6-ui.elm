@@ -77,7 +77,7 @@ createAccount =
 
 orSignin : String
 orSignin =
-    "or sign in"
+    "already an account? Sign-in"
 
 
 passwordForgotten : String

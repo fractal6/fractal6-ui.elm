@@ -1182,7 +1182,7 @@ view global model =
 view_ : Model -> Html Msg
 view_ model =
     div [ class "columns is-centered" ]
-        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-4" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
             [ div [ class "section_" ]
                 [ div [ class "columns" ]
                     [ div [ class "column is-one-fifth" ] [ viewSettingsMenu model ]

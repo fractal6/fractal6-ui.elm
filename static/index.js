@@ -40,21 +40,23 @@ window.addEventListener('load', _ => {
 
     // Init Elm
     // --
-    window.ports.init(App.Elm.Main.init({
-        node: document.getElementById('main'),
-        flags: {
-            uctx: uctx,
-            window_pos: window_pos,
-            menu_left: menu_left,
-            apis: {
-                auth: AUTH_API,
-                gql: GRAPHQL_API,
-                rest: REST_API,
-                doc: DOC_API,
-                version: VERSION
-            },
-            screen: { w: window.innerWidth, h: window.innerHeight }
-        }
-    }));
+    window.ports.init(
+        App.Elm.Main.init({
+            node: document.getElementById('main'),
+            flags: {
+                uctx: uctx,
+                window_pos: window_pos,
+                menu_left: menu_left,
+                apis: {
+                    auth: AUTH_API,
+                    gql: GRAPHQL_API,
+                    rest: REST_API,
+                    doc: DOC_API,
+                    version: VERSION
+                },
+                screen: { w: window.innerWidth, h: window.innerHeight }
+            }
+        })
+    );
 
 });

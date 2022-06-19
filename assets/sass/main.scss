@@ -45,7 +45,7 @@
 @import "colorscheme";
 
 // Bulma Sass
-//@import "@bulvar/bulma/bulma"; // do not work ?
+//@import "../../node_modules/@bulvar/bulma/bulma.sass" // does not work !?;
 @import "../../node_modules/bulma/bulma.sass";
 // Bulma Extension
 @import '@creativebulma/bulma-tooltip/src/sass/index';

@@ -1,16 +1,16 @@
 'use strict';
-const path = require("path");
-const webpack = require("webpack");
+const path = require('path');
+const webpack = require('webpack');
 const { merge } = require('webpack-merge');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin')
 
 // Production CSS assets - separate, minimised file
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const safePostCssParser = require('postcss-safe-parser');
 
 // deprecated
@@ -26,47 +26,48 @@ module.exports = (env, argv) => {
     // determine build env
     var CMD = process.env.npm_lifecycle_event;
     var MODE = argv.mode;
-    const isDev = MODE == "development";
-    const isProd = MODE == "production";
+    const isDev = MODE == 'development';
+    const isProd = MODE == 'production';
 
     var API_URL;
-    if (isDev || CMD == "localprod") {
+    if (isDev || CMD == 'webprod') {
         API_URL = {
-            auth: "http://localhost:8888/auth",
-            graphql: "http://localhost:8888/api",
-            rest: "http://localhost:8888/q",
-            doc: "http://localhost:8888/data"
+            auth: 'http://localhost:8888/auth',
+            graphql: 'http://localhost:8888/api',
+            rest: 'http://localhost:8888/q',
+            doc: 'http://localhost:8888/data'
             // @debug: CORS error.
             // Would it be possible to get that data from the browser? CORS doesn seems to allow it.
-            //doc: "https://gitlab.com/fractal6/doc/-/raw/master/data"
+            //doc: 'https://gitlab.com/fractal6/doc/-/raw/master/data'
         }
     }
     else if (isProd) {
         API_URL = {
-            auth: "https://api.fractale.co/auth",
-            graphql: "https://api.fractale.co/api",
-            rest: "https://api.fractale.co/q",
-            doc: "https://api.fractale.co/data"
+            auth: 'https://api.fractale.co/auth',
+            graphql: 'https://api.fractale.co/api',
+            rest: 'https://api.fractale.co/q',
+            doc: 'https://api.fractale.co/data'
         }
     }
 
     // entry and output path/filename variables
     const entryPath = path.join(__dirname, 'static/index.js');
     const outputPath = path.join(__dirname, 'dist');
-    const outputFilename = isProd ? '[name]-[hash].js' : '[name].js'
+    const outputFilename = isProd ? '[name]-[fullhash].js' : '[name].js'
 
     console.log(
-        "\x1b[36m%s\x1b[0m",
+        '\x1b[36m%s\x1b[0m',
         `Webpack run: Building for "${MODE}"\n`
     );
 
     // common webpack config (valid for dev and prod)
     var common = {
+        stats: { colors: true }, // "error-only"
         mode: MODE,
         entry: entryPath,
         output: {
             path: outputPath,
-            publicPath: "/",
+            publicPath: '/',
             filename: `static/js/${outputFilename}`,
         },
         resolve: {
@@ -92,31 +93,21 @@ module.exports = (env, argv) => {
                 {
                     test: /\.js$/,
                     exclude: /node_modules/,
-                    loader: 'babel-loader',
-                },
-                {
-                    test: /\.scss$/,
-                    exclude: [/elm-stuff/, /node_modules/],
-                    // see https://github.com/webpack-contrib/css-loader#url
-                    loaders: ["style-loader", "css-loader", "sass-loader"]
-                },
-                {
-                    test: /\.css$/,
-                    exclude: [/elm-stuff/, /node_modules/],
-                    loaders: ["style-loader", "css-loader"]
+                    use: [
+                        { loader: 'babel-loader' },
+                        //options: {
+                        //    presets: ['@babel/preset-env']
+                        //}
+                    ],
                 },
                 // fonts
-                {test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-                    loader: 'file-loader?mimetype=image/svg+xml&name=static/fonts/[name].[ext]'
+                {
+                    test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+                    type: 'asset/resource',
                 },
-                {test: /\.(woff(\?v=\d+\.\d+\.\d+)?|woff2(\?v=\d+\.\d+\.\d+)?)$/,
-                    loader: "file-loader?mimetype=application/font-woff&name=static/fonts/[name].[ext]"
-                },
-                {test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-                    loader: "file-loader?mimetype=application/octet-stream&name=static/fonts/[name].[ext]"
-                },
-                {test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-                    loader: "file-loader?&name=static/fonts/[name].[ext]"
+                {
+                    test: /\.(woff|woff2|eot|ttf|otf)$/i,
+                    type: 'asset/resource',
                 },
             ]
         }
@@ -125,6 +116,7 @@ module.exports = (env, argv) => {
     // additional webpack settings for prod env (when invoked via --mode
     if (isDev) {
         return merge(common, {
+            optimization: {moduleIds: 'named'},
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
@@ -132,23 +124,30 @@ module.exports = (env, argv) => {
                     inject: 'body',
                     filename: 'index.html'
                 }),
-                // Suggested for hot-loading
-                new webpack.NamedModulesPlugin(),
                 // Prevents compilation errors causing the hot loader to lose state
                 new webpack.NoEmitOnErrorsPlugin()
             ],
             module: {
-                rules: [{
+                rules: [
+                    {
+                        test: /\.(sa|sc|c)ss$/,
+                        exclude: [/elm-stuff/, /node_modules/],
+                        use: [
+                            { loader: "style-loader" },
+                            { loader: "css-loader" },
+                            { loader: "sass-loader" },
+                        ],
+                    },
+                    {
                     test: /\.elm$/,
                     exclude: [/elm-stuff/, /node_modules/, /tests/],
                     use: [
-                        { loader: "elm-hot-webpack-loader" },
+                        { loader: 'elm-hot-webpack-loader' },
                         {
-                            loader: "elm-webpack-loader",
+                            loader: 'elm-webpack-loader',
                             options: {
                                 // add Elm's debug overlay to output
                                 debug: true,
-                                forceWatch: true
                             }
                         }
                     ]
@@ -158,7 +157,6 @@ module.exports = (env, argv) => {
                 // serve index.html in place of 404 responses
                 hot: true,
                 historyApiFallback: true,
-                stats: { colors: true }, // "error-only"
                 //contentBase: './static',
                 //proxy: [],
                 // feel free to delete this section if you don't need anything like this
@@ -206,9 +204,9 @@ module.exports = (env, argv) => {
                         globOptions: { ignore: ['*.swp'] }
                     }],
                 }),
-                // Note: this won't work without ExtractTextPlugin.extract(..) in `loaders`.
+                // Note: this won't work without ExtractTextPlugin.extract(..) with rule loader.
                 new MiniCssExtractPlugin({
-                    filename: 'static/css/[name].[hash].css',
+                    filename: 'static/css/[name].[fullhash].css',
                     //chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
                 }),
             ],
@@ -218,20 +216,25 @@ module.exports = (env, argv) => {
                         test: /\.elm$/,
                         exclude: [/elm-stuff/, /node_modules/, /tests/],
                         use: {
-                            loader: "elm-webpack-loader",
+                            loader: 'elm-webpack-loader',
                             options: { optimize: true }
                         }
                     },
                     {
-                        test: /\.scss$/,
+                        test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
                             MiniCssExtractPlugin.loader,
-                            {
-                                loader: require.resolve('css-loader'),
-                                options: { importLoaders: 1, },
-                            },
+                            "css-loader",
                             "sass-loader",
+                            {
+                                loader: "postcss-loader",
+                                options: {
+                                    postcssOptions: {
+                                        parser: "postcss-scss", // allow inline comment (//)
+                                    },
+                                },
+                            },
                         ],
                     },
                 ]
@@ -241,19 +244,16 @@ module.exports = (env, argv) => {
                 minimizer: [
                     // extract CSS into a separate file
                     // minify & mangle JS/CSS
-                    new UglifyJsPlugin({
-                        uglifyOptions: {
-                            //ecma: 5,
-                            minimize: true, compressor: { warnings: false },
-                            output: {
-                                comments: false,
+                    new TerserPlugin({
+                        parallel: true,
+                        terserOptions: {
+                            format: {
                                 // Turned on because emoji and regex is not minified properly using default
                                 // https://github.com/facebook/create-react-app/issues/2488
                                 ascii_only: true,
                             },
                             compress: {
                                 passes: 3,
-                                warnings: false,
                                 // Disabled because of an issue with Uglify breaking seemingly valid code:
                                 // https://github.com/facebook/create-react-app/issues/2376
                                 // Pending further investigation:
@@ -267,17 +267,16 @@ module.exports = (env, argv) => {
                                 pure_funcs: [ 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
                                 //keep_fnames: true,
                             },
-                            mangle: true, //{ keep_fnames: true, }
                         },
-                        // Use multi-process parallel running to improve the build speed
-                        // Default number of concurrent runs: os.cpus().length - 1
-                        parallel: true,
-                        // Enable file caching
-                        cache: true,
                     }),
 
-                    new OptimizeCSSAssetsPlugin({
-                        cssProcesorOptions: { parser: safePostCssParser, },
+                    new CssMinimizerPlugin({
+                        // @debug: Causes errors.
+                        //minimizerOptions: {
+                        //    processorOptions: {
+                        //        parser: safePostCssParser,
+                        //    },
+                        //},
                     }),
                 ]
             }

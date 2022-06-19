@@ -329,6 +329,20 @@ isCircle nid =
     nid2type nid == NodeType.Circle
 
 
+isBaseMember : String -> Bool
+isBaseMember nameid =
+    case String.split "#" nameid of
+        [ a, b, c ] ->
+            if String.left 1 c == "@" then
+                True
+
+            else
+                False
+
+        _ ->
+            False
+
+
 nid2eor : String -> EmitterOrReceiver
 nid2eor nid =
     let
@@ -375,7 +389,10 @@ nodeIdCodec parentid targetid type_ =
             String.join "#" [ rootnameid, targetid ]
 
         NodeType.Role ->
-            if rootnameid == parentid then
+            if isBaseMember targetid then
+                targetid
+
+            else if rootnameid == parentid then
                 String.join "#" [ rootnameid, "", targetid ]
 
             else

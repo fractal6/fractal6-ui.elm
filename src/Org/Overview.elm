@@ -883,12 +883,15 @@ update global message model =
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
+
+    -- @CODEFACTOR: since node_hovered is know, leftClick and rightClick could be replace by a JS .click() function on #doTension and #doAction...
     , nodeLeftClickedFromJs (\nameid -> NewTensionMsg <| NTF.OnOpen (FromNameid nameid))
     , case model.node_hovered of
         Just node ->
             nodeRightClickedFromJs (\_ -> OpenActionPanel "actionPanelContentTooltip" node)
 
         Nothing ->
+            --nodeRightClickedFromJs (\_ -> ActionPanelMsg ActionPanel.OnClose)
             Sub.none
     , nodeHoveredFromJs NodeHovered
     , nodeFocusedFromJs NodeFocused
@@ -949,8 +952,7 @@ view global model =
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ -- div [ class "column is-1 is-fullheight is-hidden-mobile", id "leftPane" ] [ viewLeftPane model ]
-          Lazy.lazy HelperBar.view helperData
+        [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
         , NTF.view { users_data = model.users_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
@@ -1030,34 +1032,6 @@ view_ global model =
         ]
 
 
-viewLeftPane : Model -> Html Msg
-viewLeftPane model =
-    nav [ class "menu" ]
-        [ p [ class "menu-label" ]
-            [ div [ class "hero is-small is-primary is-bold" ]
-                [ div [ class "hero-body has-text-centered" ] [ text model.node_focus.rootnameid ] ]
-            ]
-        , ul [ class "menu-list" ]
-            [ li [ class "menu-label" ]
-                [ div [ class "hero is-small is-info is-bold" ]
-                    [ div [ class "hero-body" ]
-                        [ A.icon1 "icon-git-branch icon-lg" model.node_focus.nameid ]
-                    ]
-                ]
-            , li []
-                [ ul [ class "menu-list" ]
-                    [ li [] [ a [] [ A.icon1 "icon-book-open icon-xs" "Mandates" ] ]
-                    , li [] [ a [] [ A.icon1 "icon-exchange icon-xs" "Tensions" ] ]
-                    , li [] [ a [] [ A.icon1 "icon-history icon-xs" "Journal" ] ]
-                    , li []
-                        [ a [] [ A.icon1 "icon-user icon-xs" "Members" ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-
 viewSearchBar : UserState -> Model -> Html Msg
 viewSearchBar us model =
     div
@@ -1133,6 +1107,9 @@ viewActionPanel domid us node o actionPanel =
             if hasConfig then
                 let
                     panelData =
+                        -- @DEBUG/@FIX: archive circle can be query now...
+                        -- Action type should be queried with queryNodesSub !
+                        -- @TODO: special color/sape for archive circle.
                         { tc = Just { action_type = EDIT, doc_type = NODE }
                         , isAdmin = isAdmin
                         , hasRole = hasRole
@@ -1144,7 +1121,7 @@ viewActionPanel domid us node o actionPanel =
                 span []
                     [ span [ id domid ]
                         [ span
-                            [ class "button is-small is-link2"
+                            [ class "button is-small is-link2 clickMe"
                             , classList [ ( "is-light", domid == "actionPanelContentTooltip" ) ]
                             , onClick (OpenActionPanel domid node)
                             ]
@@ -1274,27 +1251,35 @@ viewCanvas us model =
             |> (\orga ->
                     if isFreshOrga orga then
                         div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
-                            [ div
-                                [ class "button is-success"
-                                , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
-                                ]
-                                [ textH "Invite member" ]
-                            , div
+                            ([ div
                                 [ class "button is-success"
                                 , onClick (NewTensionMsg <| NTF.OnOpen (FromNameid model.node_focus.rootnameid))
                                 ]
                                 [ textH "Create tension" ]
-                            , div
-                                [ class "button is-success"
-                                , onClick (NewTensionMsg <| NTF.OnOpenRole (FromNameid model.node_focus.rootnameid))
-                                ]
-                                [ textH "Add role" ]
-                            , div
-                                [ class "button is-success"
-                                , onClick (NewTensionMsg <| NTF.OnOpenCircle (FromNameid model.node_focus.rootnameid))
-                                ]
-                                [ textH "Add sub-circle" ]
-                            ]
+                             ]
+                                ++ (if isAdmin || True then
+                                        [ div [ class "is-hbar" ] []
+                                        , div
+                                            [ class "button is-success"
+                                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                                            ]
+                                            [ textH "Invite member" ]
+                                        , div
+                                            [ class "button is-success"
+                                            , onClick (NewTensionMsg <| NTF.OnOpenRole (FromNameid model.node_focus.rootnameid))
+                                            ]
+                                            [ textH "Add role" ]
+                                        , div
+                                            [ class "button is-success"
+                                            , onClick (NewTensionMsg <| NTF.OnOpenCircle (FromNameid model.node_focus.rootnameid))
+                                            ]
+                                            [ textH "Add sub-circle" ]
+                                        ]
+
+                                    else
+                                        []
+                                   )
+                            )
 
                     else
                         text ""
@@ -1316,7 +1301,7 @@ viewCanvas us model =
               else
                 []
              )
-                ++ [ if model.node_focus.nameid /= model.node_focus.rootnameid || isComplex then
+                ++ [ if (model.node_focus.nameid /= model.node_focus.rootnameid || isComplex) && isAdmin then
                         div [ class "is-hbar" ] []
 
                      else
@@ -1365,15 +1350,16 @@ viewCanvas us model =
         , div
             [ id "nodeTooltip"
             , class "is-invisible"
-            , attribute "data-modal" "actionModal"
-            , attribute "data-event-click" "doTension"
-            , attribute "data-event-hover" "doAction"
+
+            -- @Warning: data used in graphpack.js
+            , attribute "data-event-tension" "doTension"
+            , attribute "data-event-action" "doAction"
             ]
             [ span [ id "doTension" ]
-                [ span [] [ text "void" ] -- Node name
+                [ span [] [ text "void" ] -- Node name from JS
 
                 --, i [ class "icon-plus1 custom-style" ] []
-                , i [ class "icon-send custom-style" ] []
+                , i [ class "icon-plus custom-style" ] []
                 ]
             , span [ id "doAction" ]
                 [ case model.node_hovered of

@@ -395,7 +395,7 @@ view global model =
 
 view_ : Model -> Html Msg
 view_ model =
-    div [ class "columns is-centered is-marginless" ]
+    div [ id "settings", class "columns is-centered is-marginless" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd" ]
             [ div [ class "section" ]
                 [ div [ class "columns" ]

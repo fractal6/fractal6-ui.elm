@@ -467,7 +467,7 @@ view_ us model =
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
-            [ div [ class "section pt-0" ]
+            [ div [ class "section mt-2" ]
                 [ if isAdmin then
                     div
                         [ class "button is-primary is-pulled-right"

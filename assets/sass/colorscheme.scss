@@ -55,6 +55,7 @@ $yellow-invert: #fff;
 // Dimensions
 //
 // @debug: bulba var(--size-small) does not seems to work ?
+$size-small: 0.75rem;
 $size-small2: 0.65rem;
 
 // Navbar
@@ -141,6 +142,8 @@ $orga-menu-width: 63px;
     //
     // Dimmension
     //
+    --size-small: #{$size-small};
+    --size-small2: #{$size-small2};
 
     // Navbar
     --navbar-height: #{$navbar-height};
@@ -153,7 +156,6 @@ $orga-menu-width: 63px;
     --tooltip-color: #{$tooltip-color};
     //-- Node tooltip
     --node-tooltip-background: #{$node-tooltip-background};
-    //--node-tooltip-background: #{$node-tooltip-background};
     --node-tooltip-shadow: #{$node-tooltip-shadow};
     --tooltip-transition-duration: #{$tooltip-transition-duration};
 
@@ -166,6 +168,7 @@ $orga-menu-width: 63px;
 
     // divider
     --divider-color: #{$divider-color};
+    --breadcrumb-li-content: "\0002f";
 
     // quick help
     --acc-height-title: #{$acc-height-title};
@@ -190,6 +193,7 @@ $link-light: lighten($link, 20);
 $link-hover: lighten($link, 10);
 $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
+$link-visited: $link;
 $link-focus-border: $grey-light;
 $link-discrete: $blue-grey;
 $danger-hover: lighten($danger, 5);
@@ -322,6 +326,7 @@ $button-vote-danger-background: $danger;
 :root.light, .modal.is-light {
   --primary: #{$primary};
   --link: #{$link};
+  --link-visited: #{$link-visited};
   --info: #{$info};
   --success: #{$success};
   --warning: #{$warning};
@@ -487,6 +492,7 @@ $link-light: lighten($link, 20);
 $link-hover: darken($link, 20);
 $link-focus: darken($link, 5);
 $link-active: darken($link, 5);
+$link-visited: $link;
 $link-focus-border: $grey-light;
 $link-discrete: $blue-light;
 $danger-hover: lighten($danger, 5);
@@ -625,6 +631,7 @@ $button-vote-danger-background: $danger-light;
   // Default colors
   --primary: #{$primary};
   --link: #{$link};
+  --link-visited: #{$link-visited};
   --info: #{$info};
   --success: #{$success};
   --warning: #{$warning};

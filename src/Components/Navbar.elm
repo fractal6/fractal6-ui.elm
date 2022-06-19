@@ -51,11 +51,11 @@ view op =
                                         |> withDefault False
                             in
                             [ if hasLeftMenuBurger then
-                                div [ class "navbar-item button-light pr-0 is-hidden-touch menuLeftTrigger" ] [ A.icon "icon-menu" ]
+                                div [ class "navbar-item button-light is-hidden-touch menuLeftTrigger" ] [ A.icon "icon-menu" ]
 
                               else
                                 text ""
-                            , a [ class "navbar-item", href (toHref Route.Top) ] [ textH T.yourOrg ]
+                            , a [ class "navbar-item pl-1", href (toHref Route.Top) ] [ textH T.yourOrg ]
                             ]
 
                         LoggedOut ->

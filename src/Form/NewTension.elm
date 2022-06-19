@@ -103,6 +103,7 @@ type alias Model =
     , nodeStep : NodeStep
     , txt : FormText
     , roles_result : GqlData (List RoleExtFull)
+    , force_init : Bool
 
     -- Common
     , refresh_trial : Int
@@ -182,6 +183,7 @@ initModel user =
     , path_data = NotAsked
     , action_result = NotAsked
     , doInvite = False
+    , force_init = False
 
     -- Role/Circle
     , nodeStep = RoleAuthorityStep -- will change
@@ -218,6 +220,7 @@ initTensionTab model =
         , nodeDoc = NodeDoc.setForm newForm model.nodeDoc
         , result = NotAsked
         , txt = getTensionText
+        , force_init = False
     }
 
 
@@ -247,6 +250,7 @@ initCircleTab type_ model =
                 , result = NotAsked
                 , nodeStep = RoleAuthorityStep
                 , txt = getNodeTextFromNodeType type_
+                , force_init = False
             }
 
         NodeType.Circle ->
@@ -256,6 +260,7 @@ initCircleTab type_ model =
                 , result = NotAsked
                 , nodeStep = CircleVisibilityStep
                 , txt = getNodeTextFromNodeType type_
+                , force_init = False
             }
 
 
@@ -325,7 +330,7 @@ setPath p model =
 
 switchTab : TensionTab -> Model -> Model
 switchTab tab model =
-    if tab == model.activeTab then
+    if tab == model.activeTab && not model.force_init then
         model
 
     else
@@ -705,10 +710,10 @@ update_ apis message model =
                     ( setStep AuthNeeded model |> open, out0 [ Ports.open_modal "tensionModal" ] )
 
         OnOpenRole t ->
-            ( { model | activeTab = NewRoleTab }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t) ] )
+            ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t) ] )
 
         OnOpenCircle t ->
-            ( model, out0 [ send (OnSwitchTab NewCircleTab), send (OnOpen t) ] )
+            ( { model | activeTab = NewCircleTab, force_init = True }, out0 [ send (OnSwitchTab NewCircleTab), send (OnOpen t) ] )
 
         OnClose data ->
             let
@@ -1208,12 +1213,12 @@ viewTensionTabs tab targ =
     div [ id "tensionTabTop", class "tabs bulma-issue-33 is-boxed" ]
         [ ul []
             [ li [ classList [ ( "is-active", tab == NewTensionTab ) ] ]
-                [ a [ class "tootltip has-tooltip-bottom", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
+                [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create a new tension.", onClickPD (OnSwitchTab NewTensionTab), target "_blank" ]
                     [ A.icon1 "icon-exchange" "Tension" ]
                 ]
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
                         [ A.icon1 "icon-leaf" "Role" ]
                     ]
 
@@ -1221,7 +1226,7 @@ viewTensionTabs tab targ =
                 text ""
             , if type_ == NodeType.Circle then
                 li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
                         [ A.icon1 "icon-git-branch" "Circle" ]
                     ]
 

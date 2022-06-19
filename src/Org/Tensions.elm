@@ -128,6 +128,7 @@ type alias Model =
     , tensions_ext : GqlData TensionsList
     , tensions_all : GqlData TensionsList
     , boardHeight : Maybe Float
+    , query : Dict String (List String)
     , offset : Int
     , pattern : Maybe String
     , initPattern : Maybe String
@@ -180,6 +181,7 @@ queryIsEmpty model =
         == defaultAuthorsFilter
         && model.labels
         == defaultLabelsFilter
+        && not (Dict.member "q" model.query)
 
 
 type TensionsView
@@ -568,10 +570,11 @@ init global flags =
             , path_data = fromMaybeData global.session.path_data Loading
             , children = fromMaybeWebData global.session.children RemoteData.Loading
             , boardHeight = Nothing
-            , offset = ternary fs.refresh 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
             , tensions_int = fromMaybeData global.session.tensions_int Loading
             , tensions_ext = fromMaybeData global.session.tensions_ext Loading
             , tensions_all = fromMaybeData global.session.tensions_all Loading
+            , query = query
+            , offset = ternary fs.refresh 0 (Dict.get "load" query |> withDefault [] |> List.head |> withDefault "" |> loadDecoder)
             , authorsPanel =
                 UserSearchPanel.load global.session.authorsPanel global.session.user
             , labelsPanel =

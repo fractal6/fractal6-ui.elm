@@ -38,7 +38,7 @@ view op =
             , attribute "data-tooltip" (upH T.view)
             ]
             [ a
-                [ class "button is-small is-rounded"
+                [ class "button is-small is-rounded is-discrete"
                 , classList [ ( "is-active", op.actionView == Just DocView ) ]
                 , href
                     (Route.Tension_Dynamic_Dynamic_Action { param1 = op.focus.rootnameid, param2 = op.tid } |> toHref)
@@ -50,7 +50,7 @@ view op =
             , attribute "data-tooltip" (upH T.edit)
             ]
             [ a
-                [ class "button is-small is-rounded"
+                [ class "button is-small is-rounded  is-discrete"
                 , classList [ ( "is-active", op.actionView == Just DocEdit ) ]
                 , href
                     ((Route.Tension_Dynamic_Dynamic_Action { param1 = op.focus.rootnameid, param2 = op.tid } |> toHref) ++ "?v=edit")
@@ -62,7 +62,7 @@ view op =
             , attribute "data-tooltip" (upH T.revisions)
             ]
             [ a
-                [ class "button is-small is-rounded"
+                [ class "button is-small is-rounded  is-discrete"
                 , classList [ ( "is-active", op.actionView == Just DocVersion ) ]
                 , href
                     ((Route.Tension_Dynamic_Dynamic_Action { param1 = op.focus.rootnameid, param2 = op.tid } |> toHref) ++ "?v=history")
