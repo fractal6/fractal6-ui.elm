@@ -3,7 +3,7 @@ module Components.Navbar exposing (view)
 import Assets as A
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
-import Html.Attributes as Attr exposing (attribute, class, href, id, style, target, title)
+import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
@@ -55,13 +55,33 @@ view op =
 
                               else
                                 text ""
-                            , a [ class "navbar-item pl-1", href (toHref Route.Top) ] [ textH T.yourOrg ]
+                            , a
+                                [ class "navbar-item pl-1"
+                                , classList
+                                    [ ( "is-active"
+                                      , case fromUrl op.url of
+                                            Just (Dynamic _) ->
+                                                True
+
+                                            _ ->
+                                                False
+                                      )
+                                    ]
+                                , href (toHref Top)
+                                ]
+                                [ textH T.yourOrg ]
                             ]
 
                         LoggedOut ->
                             []
                     )
-                        ++ [ a [ class "navbar-item", href (toHref Route.Explore) ] [ textH T.explore ] ]
+                        ++ [ a
+                                [ class "navbar-item"
+                                , classList [ ( "is-active", fromUrl op.url == Just Explore ) ]
+                                , href (toHref Explore)
+                                ]
+                                [ textH T.explore ]
+                           ]
                 , div [ class "navbar-end" ]
                     [ notificationButton op
                     , helpButton op
@@ -78,9 +98,15 @@ notificationButton op =
     case op.user of
         LoggedIn _ ->
             a
-                [ class "navbar-item", href (Route.toHref Route.Notifications), title (upH T.notifications) ]
+                [ class "navbar-item"
+                , classList [ ( "is-active", fromUrl op.url == Just Notifications ) ]
+                , href (toHref Notifications)
+                , title (upH T.notifications)
+                ]
                 [ div
-                    [ class "navbar-link is-arrowless is-rounded is-small notifTrigger" ]
+                    [ class "navbar-link is-arrowless is-rounded is-small notifTrigger"
+                    , classList [ ( "is-active", fromUrl op.url == Just Notifications ) ]
+                    ]
                     [ A.icon "icon-bg icon-bell" ]
                 ]
 
@@ -117,7 +143,7 @@ newButton op =
                     ]
                     [ A.icon "icon-plus icon-bg" ]
                 , div [ class "navbar-dropdown is-right" ]
-                    [ a [ class "navbar-item", href (Route.toHref Route.New_Orga) ]
+                    [ a [ class "navbar-item", href (toHref New_Orga) ]
                         [ textH T.newOrganisation ]
                     ]
                 ]
@@ -137,16 +163,16 @@ userButton op =
                     ]
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
-                    [ a [ class "navbar-item", href (toHref <| Route.Dynamic { param1 = uctx.username }) ]
+                    [ a [ class "navbar-item", href (toHref <| Dynamic { param1 = uctx.username }) ]
                         [ A.icon1 "icon-user" (upH T.profile) ]
-                    , a [ class "navbar-item", href (toHref <| Route.Dynamic_Settings { param1 = uctx.username }) ]
+                    , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" (upH T.settings) ]
                     , span [ id "themeTrigger", class "navbar-item is-w" ]
                         [ A.icon1 "icon-moon" "Toggle dark mode" ]
                     , hr [ class "navbar-divider" ] []
 
                     -- Prevout logout to be log in the browser history (@debug do not work)
-                    , div [ class "navbar-item button-light", onClick (op.replaceUrl (toHref Route.Logout)) ]
+                    , div [ class "navbar-item button-light", onClick (op.replaceUrl (toHref Logout)) ]
                         [ A.icon1 "icon-power" (upH T.signout) ]
                     ]
                 ]
@@ -157,6 +183,6 @@ userButton op =
 
             else
                 div [ class "navbar-item" ]
-                    [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Route.Signup) ]
+                    [ a [ class "button is-small is-success has-text-weight-bold", href (toHref Signup) ]
                         [ textH T.join ]
                     ]

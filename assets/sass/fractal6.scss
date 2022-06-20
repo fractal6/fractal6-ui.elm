@@ -707,7 +707,7 @@ strong {
     .navbar-item, .navbar-link {
         padding-top: 0 0;
         color: var(--white-ter);
-        &:hover{
+        &:hover, &.is-active {
             color: var(--link2);
         }
     }
