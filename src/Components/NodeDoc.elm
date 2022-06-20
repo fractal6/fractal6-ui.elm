@@ -561,27 +561,7 @@ viewAboutInput hasBeenPushed source txt node op =
                     ]
                     []
                 , if (source == TensionBaseUri && hasBeenPushed == False) || (source == OverviewBaseUri && isFailure op.result) then
-                    div [ class "urlForm" ]
-                        [ div [ class "field is-horizontal" ]
-                            [ div [ class "field-body control" ]
-                                [ div [] [ text "URL" ]
-                                , input
-                                    [ class "input px-0"
-                                    , disabled True
-                                    , value " https://fractale.co/o/"
-                                    , attribute "style" "width: 11.1em"
-                                    ]
-                                    []
-                                , input
-                                    [ class "input pl-1"
-                                    , type_ "text"
-                                    , value (withDefault "" node.nameid)
-                                    , onInput <| op.onChangePost "nameid"
-                                    ]
-                                    []
-                                ]
-                            ]
-                        ]
+                    viewUrlForm node.nameid (op.onChangePost "nameid") False
 
                   else
                     text ""
@@ -999,3 +979,28 @@ updateNodeForm field value form =
         _ ->
             -- title, message...
             { form | post = Dict.insert field value form.post }
+
+
+viewUrlForm nameid_m onChangePost hasBorderDanger =
+    div [ class "urlForm" ]
+        [ div [ class "field is-horizontal" ]
+            [ div [ class "field-body control" ]
+                [ div [] [ text "URL" ]
+                , input
+                    [ class "input px-0"
+                    , disabled True
+                    , value " https://fractale.co/o/"
+                    , attribute "style" "width: 11.1em"
+                    ]
+                    []
+                , input
+                    [ class "input pl-1"
+                    , classList [ ( "has-border-danger", hasBorderDanger ) ]
+                    , type_ "text"
+                    , value (withDefault "" nameid_m)
+                    , onInput <| onChangePost
+                    ]
+                    []
+                ]
+            ]
+        ]

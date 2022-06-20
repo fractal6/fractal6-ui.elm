@@ -8,6 +8,7 @@ module Query.QueryNode exposing
     , fetchNodeData
     , getCircleRights
     , getLabels
+    , getNodeId
     , getRoles
     , labelFullPayload
     , labelPayload
@@ -439,8 +440,13 @@ fetchNode url nid msg =
         (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
-
--- Usage with Query.getNode
+getNodeId url nid msg =
+    makeGQLQuery url
+        (Query.getNode
+            (nidFilter nid)
+            nodeIdPayload
+        )
+        (RemoteData.fromResult >> decodeResponse identity >> msg)
 
 
 nidFilter : String -> Query.GetNodeOptionalArguments -> Query.GetNodeOptionalArguments

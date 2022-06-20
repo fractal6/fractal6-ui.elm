@@ -1859,22 +1859,25 @@ tr.mediaBox {
 
     .field-body {
         div:nth-child(1) {
-            //background-clip: padding-box !important;
-            background: var(--grey-lighter) !important;
+            background: var(--input-disabled-background-color2);
             padding: 0.35rem 1.5rem 0 1.5rem;
             font-size: 0.8rem;
+            font-weight: 600;
         }
         .input:nth-child(2) {
             width: unset;
             padding-right: 5px !important;
             border-radius: unset !important;
-            border: 1px solid var(--grey-light2);
+            border: 1px solid var(--border-color);
         }
         .input:nth-child(3) {
-            background: #fbfbfb !important;
             border-radius: unset !important;
         }
     }
+}
+
+.has-border-danger {
+    border-color: var(--danger) !important;
 }
 
 .select.is-orange, .select.is-orange::after,

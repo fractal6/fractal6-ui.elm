@@ -3,7 +3,8 @@ module Pages.New.Orga exposing (Flags, Model, Msg, page)
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, HttpError(..), RequestResult(..), WebData, viewHttpErrors, withDefaultData, withMapData, withMaybeData, withMaybeDataMap)
+import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onKeydown)
@@ -29,6 +30,7 @@ import ModelCommon.Requests exposing (createOrga, login)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
+import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
 import Task
@@ -80,6 +82,10 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { form : OrgaForm
     , result : WebData NodeId
+    , isDuplicate : Bool
+    , hasBeenDuplicated : Bool
+    , isWriting : Maybe Bool
+    , exist_result : GqlData IdPayload
 
     -- common
     , help : Help.State
@@ -114,6 +120,10 @@ init global flags =
             in
             ( { form = form
               , result = RemoteData.NotAsked
+              , isDuplicate = False
+              , hasBeenDuplicated = False
+              , isWriting = Nothing
+              , exist_result = NotAsked
               , help = Help.init global.session.user
               , refresh_trial = 0
               , authModal = AuthModal.init global.session.user Nothing
@@ -129,6 +139,10 @@ init global flags =
             in
             ( { form = form
               , result = RemoteData.NotAsked
+              , isDuplicate = False
+              , hasBeenDuplicated = False
+              , isWriting = Nothing
+              , exist_result = NotAsked
 
               --common
               , help = Help.init global.session.user
@@ -150,6 +164,8 @@ type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
     | PushOrga OrgaForm
     | ChangeNodePost String String -- {field value}
+    | CheckExist
+    | CheckExistAck (GqlData { nameid : String })
     | SubmitOrga OrgaForm Time.Posix -- Send form
     | OrgaAck (WebData NodeId)
       -- Common
@@ -187,13 +203,22 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep (PushOrga model.form) 500, send UpdateUserToken )
 
                 OkAuth n ->
-                    ( { model | result = result }
+                    ( { model | result = result, isDuplicate = False }
                     , sendSleep (Navigate (uriFromNameid OverviewBaseUri n.nameid)) 500
                     , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrgs Nothing) ]
                     )
 
+                DuplicateErr ->
+                    ( { model
+                        | result = RemoteData.Failure (BadBody "Duplicate error: this name (URL) is already taken.")
+                        , isDuplicate = True
+                      }
+                    , Cmd.none
+                    , Cmd.none
+                    )
+
                 _ ->
-                    ( { model | result = result }, Cmd.none, Cmd.none )
+                    ( { model | result = result, isDuplicate = False }, Cmd.none, Cmd.none )
 
         ChangeNodePost field value ->
             let
@@ -210,10 +235,48 @@ update global message model =
                                         |> Dict.insert "nameid" (nameidEncoder value)
                             }
 
+                        "nameid" ->
+                            { f | post = Dict.insert field (nameidEncoder value) f.post }
+
                         _ ->
                             { f | post = Dict.insert field value f.post }
+
+                ( isWriting, cmd ) =
+                    if List.member field [ "name", "nameid" ] then
+                        if model.isWriting == Nothing then
+                            ( Just False, sendSleep CheckExist 1000 )
+
+                        else
+                            ( Just True, Cmd.none )
+
+                    else
+                        ( model.isWriting, Cmd.none )
             in
-            ( { model | form = newForm }, Cmd.none, Cmd.none )
+            ( { model | form = newForm, isWriting = isWriting }, cmd, Cmd.none )
+
+        CheckExist ->
+            case model.isWriting of
+                Just False ->
+                    case Dict.get "nameid" model.form.post of
+                        Just nameid ->
+                            ( { model | isWriting = Nothing }, getNodeId apis nameid CheckExistAck, Cmd.none )
+
+                        Nothing ->
+                            ( { model | isWriting = Nothing }, Cmd.none, Cmd.none )
+
+                Just True ->
+                    ( { model | isWriting = Just False }, sendSleep CheckExist 1000, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none, Cmd.none )
+
+        CheckExistAck result ->
+            case result of
+                Success _ ->
+                    ( { model | isDuplicate = True, hasBeenDuplicated = True }, Cmd.none, Cmd.none )
+
+                _ ->
+                    ( { model | isDuplicate = False }, Cmd.none, Cmd.none )
 
         -- Common
         Navigate url ->
@@ -322,8 +385,18 @@ viewOrgaForm global model =
                     , required True
                     ]
                     []
+                , if model.hasBeenDuplicated then
+                    viewUrlForm (Dict.get "nameid" post) (ChangeNodePost "nameid") model.isDuplicate
+
+                  else
+                    text ""
                 ]
             , p [ class "help" ] [ textH T.orgaNameHelp ]
+            , if model.isDuplicate then
+                div [ class "has-text-danger" ] [ text "This name (URL) is already taken." ]
+
+              else
+                text ""
             ]
         , div [ class "field" ]
             [ div [ class "label" ] [ textH T.about ]
