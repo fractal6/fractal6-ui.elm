@@ -885,7 +885,16 @@ subscriptions _ model =
     [ nodeClickedFromJs NodeClicked
 
     -- @CODEFACTOR: since node_hovered is know, leftClick and rightClick could be replace by a JS .click() function on #doTension and #doAction...
-    , nodeLeftClickedFromJs (\nameid -> NewTensionMsg <| NTF.OnOpen (FromNameid nameid))
+    -- wha would be the advantage of using .click instead of ports ?
+    , nodeLeftClickedFromJs
+        (\nameid ->
+            case localGraphFromOrga nameid model.orga_data of
+                Just path ->
+                    NewTensionMsg <| NTF.OnOpen (FromPath path)
+
+                Nothing ->
+                    NewTensionMsg <| NTF.OnOpen (FromNameid nameid)
+        )
     , case model.node_hovered of
         Just node ->
             nodeRightClickedFromJs (\_ -> OpenActionPanel "actionPanelContentTooltip" node)
@@ -1250,10 +1259,19 @@ viewCanvas us model =
             |> withDefault Dict.empty
             |> (\orga ->
                     if isFreshOrga orga then
+                        let
+                            p =
+                                case model.path_data of
+                                    Just path ->
+                                        FromPath path
+
+                                    Nothing ->
+                                        FromNameid model.node_focus.rootnameid
+                        in
                         div [ id "welcomeButtons", class "buttons re-small is-invisible" ]
                             ([ div
                                 [ class "button is-success"
-                                , onClick (NewTensionMsg <| NTF.OnOpen (FromNameid model.node_focus.rootnameid))
+                                , onClick (NewTensionMsg <| NTF.OnOpen p)
                                 ]
                                 [ textH "Create tension" ]
                              ]
@@ -1266,12 +1284,12 @@ viewCanvas us model =
                                             [ textH "Invite member" ]
                                         , div
                                             [ class "button is-success"
-                                            , onClick (NewTensionMsg <| NTF.OnOpenRole (FromNameid model.node_focus.rootnameid))
+                                            , onClick (NewTensionMsg <| NTF.OnOpenRole p)
                                             ]
                                             [ textH "Add role" ]
                                         , div
                                             [ class "button is-success"
-                                            , onClick (NewTensionMsg <| NTF.OnOpenCircle (FromNameid model.node_focus.rootnameid))
+                                            , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
                                             ]
                                             [ textH "Add sub-circle" ]
                                         ]
@@ -1289,18 +1307,31 @@ viewCanvas us model =
         -- Graphpack Control buttons
         --
         , div [ id "canvasButtons", class "buttons are-small is-invisible" ]
-            ((if isAdmin then
-                [ div
-                    [ class "button tooltip has-tooltip-arrow has-tooltip-left"
-                    , attribute "data-tooltip" (upH T.inviteMember)
-                    , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+            ((Maybe.map
+                (\path ->
+                    [ div
+                        [ class "button tooltip has-tooltip-arrow has-tooltip-left"
+                        , attribute "data-tooltip" (upH "Add...")
+                        , onClick <| NewTensionMsg (NTF.OnOpen (FromPath path))
+                        ]
+                        [ span [ style "padding" "2px" ] [ A.icon "icon-plus icon-xs" ] ]
                     ]
-                    [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
-                ]
-
-              else
-                []
+                )
+                model.path_data
+                |> withDefault []
              )
+                ++ (if isAdmin then
+                        [ div
+                            [ class "button tooltip has-tooltip-arrow has-tooltip-left"
+                            , attribute "data-tooltip" (upH T.inviteMember)
+                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                            ]
+                            [ span [ style "padding" "2px" ] [ A.icon "icon-user-plus icon-xs" ] ]
+                        ]
+
+                    else
+                        []
+                   )
                 ++ [ if (model.node_focus.nameid /= model.node_focus.rootnameid || isComplex) && isAdmin then
                         div [ class "is-hbar" ] []
 

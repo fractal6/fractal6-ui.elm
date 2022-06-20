@@ -1,5 +1,6 @@
 module Pages.New.Orga exposing (Flags, Model, Msg, page)
 
+import Assets as A
 import Auth exposing (ErrState(..), parseErr2)
 import Browser.Navigation as Nav
 import Components.AuthModal as AuthModal
@@ -7,17 +8,18 @@ import Components.Loading as Loading exposing (GqlData, HttpError(..), RequestRe
 import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
-import Extra.Events exposing (onKeydown)
+import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isLoginSendable, isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
 import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
+import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
@@ -81,6 +83,7 @@ mapGlobalOutcmds gcmds =
 
 type alias Model =
     { form : OrgaForm
+    , step : OrgaStep
     , result : WebData NodeId
     , isDuplicate : Bool
     , hasBeenDuplicated : Bool
@@ -100,6 +103,43 @@ type alias OrgaForm =
     }
 
 
+type OrgaStep
+    = OrgaVisibilityStep
+    | OrgaValidateStep
+
+
+orgaStepToString : OrgaForm -> OrgaStep -> String
+orgaStepToString form step =
+    case step of
+        OrgaVisibilityStep ->
+            "Circle Visibility"
+                ++ (case Dict.get "visibility" form.post of
+                        Just visibility ->
+                            " (" ++ visibility ++ ")"
+
+                        Nothing ->
+                            ""
+                   )
+
+        OrgaValidateStep ->
+            "Review and validate"
+
+
+initModel : UserState -> Model
+initModel user =
+    { form = { post = Dict.empty, uctx = uctxFromUser user }
+    , step = OrgaVisibilityStep
+    , result = RemoteData.NotAsked
+    , isDuplicate = False
+    , hasBeenDuplicated = False
+    , isWriting = Nothing
+    , exist_result = NotAsked
+    , help = Help.init user
+    , refresh_trial = 0
+    , authModal = AuthModal.init user Nothing
+    }
+
+
 
 --
 -- Init
@@ -114,44 +154,13 @@ init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
     case global.session.user of
         LoggedOut ->
-            let
-                form =
-                    { post = Dict.empty, uctx = initUserctx }
-            in
-            ( { form = form
-              , result = RemoteData.NotAsked
-              , isDuplicate = False
-              , hasBeenDuplicated = False
-              , isWriting = Nothing
-              , exist_result = NotAsked
-              , help = Help.init global.session.user
-              , refresh_trial = 0
-              , authModal = AuthModal.init global.session.user Nothing
-              }
+            ( initModel global.session.user
             , send (Navigate "/")
             , Cmd.none
             )
 
         LoggedIn uctx ->
-            let
-                form =
-                    { post = Dict.empty, uctx = uctx }
-            in
-            ( { form = form
-              , result = RemoteData.NotAsked
-              , isDuplicate = False
-              , hasBeenDuplicated = False
-              , isWriting = Nothing
-              , exist_result = NotAsked
-
-              --common
-              , help = Help.init global.session.user
-              , refresh_trial = 0
-              , authModal = AuthModal.init global.session.user Nothing
-              }
-            , Cmd.none
-            , Cmd.none
-            )
+            ( initModel global.session.user, Cmd.none, Cmd.none )
 
 
 
@@ -163,6 +172,8 @@ init global flags =
 type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
     | PushOrga OrgaForm
+    | OnChangeStep OrgaStep
+    | OnSelectVisibility NodeVisibility.NodeVisibility
     | ChangeNodePost String String -- {field value}
     | CheckExist
     | CheckExistAck (GqlData { nameid : String })
@@ -170,6 +181,7 @@ type Msg
     | OrgaAck (WebData NodeId)
       -- Common
     | Navigate String
+    | NoMsg
       -- Help
     | HelpMsg Help.Msg
     | AuthModalMsg AuthModal.Msg
@@ -219,6 +231,18 @@ update global message model =
 
                 _ ->
                     ( { model | result = result, isDuplicate = False }, Cmd.none, Cmd.none )
+
+        OnChangeStep step ->
+            ( { model | step = step }, Cmd.none, Cmd.none )
+
+        OnSelectVisibility visibility ->
+            ( model
+            , Cmd.batch
+                [ send (ChangeNodePost "visibility" (NodeVisibility.toString visibility))
+                , send (OnChangeStep OrgaValidateStep)
+                ]
+            , Cmd.none
+            )
 
         ChangeNodePost field value ->
             let
@@ -282,6 +306,9 @@ update global message model =
         Navigate url ->
             ( model, Cmd.none, Nav.pushUrl global.key url )
 
+        NoMsg ->
+            ( model, Cmd.none, Cmd.none )
+
         -- Help
         HelpMsg msg ->
             let
@@ -326,7 +353,7 @@ subscriptions global model =
 
 view : Global.Model -> Model -> Document Msg
 view global model =
-    { title = "Login"
+    { title = "Create your organisation"
     , body =
         [ view_ global model
         , Help.view {} model.help |> Html.map HelpMsg
@@ -340,13 +367,79 @@ view_ global model =
     div [ id "createOrga", class "columns is-centered section" ]
         [ div [ class "column is-4-fullhd is-5-desktop" ]
             [ h1 [ class "title has-text-centered" ] [ text "Create your organisation" ]
-            , viewOrgaForm global model
+            , viewBreadcrumb model
+            , case model.step of
+                OrgaVisibilityStep ->
+                    viewOrgaVisibility model
+
+                OrgaValidateStep ->
+                    viewOrgaValidate model
             ]
         ]
 
 
-viewOrgaForm : Global.Model -> Model -> Html Msg
-viewOrgaForm global model =
+viewBreadcrumb : Model -> Html Msg
+viewBreadcrumb model =
+    let
+        path =
+            [ OrgaVisibilityStep, OrgaValidateStep ]
+    in
+    nav [ class "breadcrumb has-succeeds-separator is-small", attribute "aria-labels" "breadcrumbs" ]
+        [ ul [] <|
+            List.map
+                (\x ->
+                    li [ classList [ ( "is-active", x == model.step ) ] ] [ a [ onClickPD NoMsg, target "_blank" ] [ text (orgaStepToString model.form x) ] ]
+                )
+                path
+        ]
+
+
+viewOrgaVisibility : Model -> Html Msg
+viewOrgaVisibility model =
+    let
+        form =
+            model.form
+    in
+    div [ class "content" ]
+        [ div [ class "subtitle" ] [ text "Organisation visibility" ]
+
+        -- Show the choices as card.
+        , NodeVisibility.list
+            |> List.map
+                (\x ->
+                    let
+                        isActive =
+                            Just x == NodeVisibility.fromString (Dict.get "visibility" form.post |> withDefault "")
+
+                        ( icon, description ) =
+                            case x of
+                                NodeVisibility.Public ->
+                                    ( "icon-globe", T.visibilityPublic )
+
+                                NodeVisibility.Private ->
+                                    ( "icon-users", T.visibilityPrivate )
+
+                                NodeVisibility.Secret ->
+                                    ( "icon-lock", T.visibilitySeccret )
+                    in
+                    div
+                        [ class "card has-border column is-paddingless m-3 is-h"
+                        , classList [ ( "is-selected is-selectable", isActive ) ]
+
+                        -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
+                        ]
+                        [ div [ class "card-content p-4", onClick (OnSelectVisibility x) ]
+                            [ h2 [ class "is-strong is-size-5 mb-5" ] [ A.icon1 (icon ++ " icon-bg") (NodeVisibility.toString x) ]
+                            , div [ class "content is-smaller2" ] [ text description ]
+                            ]
+                        ]
+                )
+            |> div [ class "columns" ]
+        ]
+
+
+viewOrgaValidate : Model -> Html Msg
+viewOrgaValidate model =
     let
         post =
             model.form.post
@@ -431,8 +524,12 @@ viewOrgaForm global model =
                 ]
             , p [ class "help" ] [ textH T.purposeHelpOrga ]
             ]
-        , div [ class "field is-grouped is-grouped-right" ]
-            [ div [ class "control" ]
+        , div [ class "field pt-3" ]
+            [ div [ class "is-pulled-left" ]
+                [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
+                    [ A.icon0 "icon-chevron-left", textH T.back ]
+                ]
+            , div [ class "is-pulled-right" ]
                 [ div [ class "buttons" ]
                     [ button
                         ([ class "button has-text-weight-semibold"

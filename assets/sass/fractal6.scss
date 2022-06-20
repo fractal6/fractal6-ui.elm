@@ -1779,16 +1779,18 @@ tr.mediaBox {
     .panel-block, .panel-icon {
         color: var(--text-light2);
     }
-    .breadcrumb {
-        a, a:hover {
-            color: var(--link-discrete);
-            cursor: initial;
-        }
-        li.is-active a {
-            color: var(--is-highlight);
-        }
-    }
 
+}
+
+.breadcrumb.has-succeeds-separator {
+    a, a:hover {
+        color: var(--link-discrete);
+        cursor: initial;
+    }
+    li.is-active a {
+        color: var(--is-highlight3);
+        font-weight: 600;
+    }
 }
 
 .modal.fixed-top {

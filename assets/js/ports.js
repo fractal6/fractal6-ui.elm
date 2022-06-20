@@ -336,7 +336,12 @@ const actions = {
         // If version is outdated, reload.
         if (user_ctx.data.client_version != "" && VERSION != "" && user_ctx.data.client_version != VERSION) {
             var loc = window.location;
-            window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
+
+            // Prevent bad redirection because /new/orga send a navigate rediction with a timeout.
+            // @debug: catch re redirection here.
+            if (loc.pathname != "/new/orga") {
+                window.location = loc.protocol + '//' + loc.host + loc.pathname + loc.search;
+            }
         }
 
         // Update Page/Components accordingly
