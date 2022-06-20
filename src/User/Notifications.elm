@@ -380,7 +380,7 @@ viewNotifications notifications model =
     notifications
         |> List.map
             (\ue -> Lazy.lazy2 viewUserEvent model.now ue)
-        |> div []
+        |> div [ class "box is-shrinked" ]
 
 
 viewUserEvent : Time.Posix -> UserEvent -> Html Msg
@@ -450,7 +450,7 @@ viewUserEvent now ue =
                         , ( "icon", eventToIcon c.event.event_type )
                         ]
             in
-            div [ class "media mt-1" ]
+            div [ class "media mediaBox is-hoverable" ]
                 [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
                 , div [ class "media-content" ] [ viewContractMedia now ev ]
                 , if not ue.isRead then
@@ -520,7 +520,7 @@ viewUserEvent now ue =
 
 viewNotif : UserEvent -> PNode -> Html Msg -> Html Msg
 viewNotif ue node content =
-    div [ class "media mt-1" ]
+    div [ class "media mediaBox is-hoverable" ]
         [ div [ class "media-left" ] [ p [ class "image is-64x64" ] [ viewOrga True node.nameid ] ]
         , div [ class "media-content" ] [ content ]
         , if not ue.isRead then

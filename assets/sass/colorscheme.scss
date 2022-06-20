@@ -209,7 +209,8 @@ $danger-light: lighten($danger, 50);
 $nbc: $primary;
 $nbbc: $nbc;
 $hbc: #e6eaec;
-$bbc: white;
+//$bbc: white;
+$bbc: $white;
 //$chbc: $hbc;
 $background-evidence: darken($bbc, 5); // hover
 $ph-background: $grey-lighter;
@@ -243,9 +244,8 @@ $box-color: $text;
 $box-background-color: $hbc;
 
 // Input
-$input-focus-background-color: lighten($white-dimmed, 25);
-$input-background-color: lighten($white-dimmed, 25);
-//$input-focus-background-color: lighten($white-dimmed, 25);
+$input-focus-background-color: darken($white, 1);
+$input-background-color: $white;
 $input-disabled-background-color: $grey-lighter;
 $input-disabled-background-color2: darken($grey-lighter, 10);
 $input-disabled-color: $grey-lightest;
@@ -545,9 +545,8 @@ $box-color: $text;
 $box-background-color: $hbc;
 
 // Input
-$input-focus-background-color: $darker-dimmed;
+$input-focus-background-color: lighten($darker-dimmed, 2);
 $input-background-color: $darker-dimmed;
-//$input-focus-background-color: darken($darker-dimmed, 5);
 $input-disabled-background-color: $grey-dark;
 $input-disabled-background-color2: lighten($grey-dark, 10);
 $input-disabled-color: $grey;
