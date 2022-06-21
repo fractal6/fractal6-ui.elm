@@ -279,7 +279,7 @@ update global message model =
         ChangeMenuFocus menu ->
             let
                 url =
-                    Route.toHref (Route.Dynamic_Settings { param1 = model.username })
+                    toHref (Route.Dynamic_Settings { param1 = model.username })
 
                 query =
                     queryBuilder

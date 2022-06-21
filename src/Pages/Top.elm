@@ -83,7 +83,7 @@ init global flags =
         gcmd =
             case global.session.user of
                 LoggedIn uctx ->
-                    Nav.replaceUrl global.key <| Route.toHref <| Route.Dynamic { param1 = uctx.username }
+                    Nav.replaceUrl global.key <| toHref <| Route.Dynamic { param1 = uctx.username }
 
                 LoggedOut ->
                     Cmd.none
@@ -322,7 +322,7 @@ viewLogin model =
         , div [ attribute "style" "width: 225px;" ]
             [ a [ class "is-size-7 is-pulled-left mb-2", onClickPD (ChangeViewMode Signup), target "_blank" ]
                 [ textH T.createAccount ]
-            , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.PasswordReset) ]
+            , a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
                 [ textH T.passwordForgotten ]
             ]
         , div [ class "field is-grouped is-grouped-right" ]

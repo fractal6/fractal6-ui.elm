@@ -2,6 +2,7 @@ module Components.HelperBar exposing (HelperBar, collapse, create, expand, view)
 
 import Array
 import Assets as A
+import Components.Loading as Loading exposing (GqlData, RequestResult(..))
 import Form.NewTension exposing (NewTensionInput(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
@@ -12,7 +13,7 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
+import ModelCommon exposing (UserState(..), getIdsFromPath, getParentFragmentFromRole)
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (roleColor, viewRole)
 import ModelSchema exposing (LocalGraph, UserRole)
@@ -210,12 +211,17 @@ viewPath baseUri uriQuery maybePath =
 
                                       else
                                         text ""
-                                    , case maybePath of
-                                        Just lg ->
-                                            span [ class "tag is-rounded ml-1 has-border", attribute "style" "weight: 500 !important;" ] [ text (NodeVisibility.toString lg.focus.visibility) ]
+                                    , a
+                                        [ class "stealth-link tag is-rounded ml-1 has-border"
+                                        , attribute "style" "weight: 500 !important;padding: 10px 10px;"
+                                        , case getIdsFromPath (Success g) of
+                                            Just ( nid, tid ) ->
+                                                href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nid, param2 = tid }))
 
-                                        Nothing ->
-                                            text ""
+                                            Nothing ->
+                                                href "#"
+                                        ]
+                                        [ text (NodeVisibility.toString g.focus.visibility) ]
                                     ]
                         )
                     |> ul [ attribute "style" "display: inline-flex;" ]

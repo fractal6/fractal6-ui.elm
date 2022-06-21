@@ -8,7 +8,7 @@ import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onKeydown)
 import Form exposing (isPostEmpty, isPostSendable)
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
@@ -152,7 +152,7 @@ update_ apis message model =
                         ( model, noOut )
 
                     else if uctx.username == "" then
-                        ( model, out0 [ send (DoCloseAuthModal (Route.toHref Route.Logout)) ] )
+                        ( model, out0 [ send (DoCloseAuthModal (toHref Route.Logout)) ] )
 
                     else
                         ( { model
@@ -339,7 +339,7 @@ refreshModal op model =
                                 ]
                             ]
                         , div [ attribute "style" "width: 225px;" ]
-                            [ a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.PasswordReset) ]
+                            [ a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
                                 [ textH T.passwordForgotten ]
                             ]
                         , div [ class "field is-grouped is-grouped-right" ]

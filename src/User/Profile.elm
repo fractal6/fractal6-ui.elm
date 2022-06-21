@@ -327,10 +327,10 @@ viewProfileRight user model =
                     , p [] <|
                         List.intersperse (text " ") <|
                             [ text "You can"
-                            , a [ href (Route.toHref Route.Explore) ] [ text "Explore" ]
+                            , a [ href (toHref Route.Explore) ] [ text "Explore" ]
                             , text "public organisations"
                             , text ", or create your"
-                            , a [ href (Route.toHref Route.New_Orga) ] [ textH "first organisation." ]
+                            , a [ href (toHref Route.New_Orga) ] [ textH "first organisation." ]
                             ]
                     ]
 

@@ -465,6 +465,6 @@ showContractForm f =
                         ]
 
                     _ ->
-                        [ text "not implemented" ]
+                        [ text T.notImplemented ]
             ]
         ]

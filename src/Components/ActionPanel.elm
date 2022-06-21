@@ -39,7 +39,7 @@ import ModelCommon
         , makeCandidateContractForm
         )
 import ModelCommon.Codecs exposing (ActionType(..), DocType(..), TensionCharac, nearestCircleid, nid2rootid)
-import ModelCommon.View exposing (roleColor, viewUserFull)
+import ModelCommon.View exposing (auth2icon, auth2str, roleColor, viewUserFull)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -115,8 +115,8 @@ init user =
     initModel user |> State
 
 
-action2str : PanelState -> String
-action2str action =
+panelAction2str : PanelState -> String
+panelAction2str action =
     case action of
         MoveAction ->
             upH T.move
@@ -141,16 +141,6 @@ action2str action =
 
         LeaveAction ->
             upH T.leaveRole
-
-
-auth2str : NodeType.NodeType -> String
-auth2str type_ =
-    case type_ of
-        NodeType.Circle ->
-            upH T.governance
-
-        NodeType.Role ->
-            upH T.authority
 
 
 action2submitstr : PanelState -> Bool -> String
@@ -555,8 +545,9 @@ type Msg
       --| ActionStep1 xxx
     | GotTensionToMove (GqlData TensionHead)
     | PushAck (GqlData IdPayload)
-      -- move tension
+      -- Autonomous action (components)
     | DoMove TensionHead
+    | Do (List GlobalCmd)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -566,7 +557,6 @@ type Msg
     | LogErr String
     | UpdateUctx UserCtx
     | Navigate String
-    | Do (List GlobalCmd)
       -- Components
     | MoveTensionMsg MoveTension.Msg
     | UserInputMsg UserInput.Msg
@@ -613,10 +603,7 @@ update_ apis message model =
                 ( open domid tid bid node model, noOut )
 
             else
-                -- Ports.click: unlock canvas Tooltip. when clickinb back.
-                ( close model
-                , out0 [ ternary (model.domid == "actionPanelContentTooltip") (Ports.click "canvasOrga") Cmd.none ]
-                )
+                ( close model, noOut )
 
         OnClose ->
             ( close model, noOut )
@@ -650,6 +637,7 @@ update_ apis message model =
                         |> openModal
                         |> setAction action
                         |> setStep StepOne
+                        |> close
             in
             ( newModel, out0 [ Ports.open_modal ("actionPanelModal" ++ model.domid) ] )
 
@@ -660,6 +648,7 @@ update_ apis message model =
                         |> openModal
                         |> setAction action
                         |> setStep StepOne
+                        |> close
 
                 cmds =
                     case action of
@@ -815,7 +804,10 @@ update_ apis message model =
                     ( model, noOut )
 
         DoMove t ->
-            ( model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ] )
+            ( close model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ] )
+
+        Do gcmds ->
+            ( close model, out1 gcmds )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -843,9 +835,6 @@ update_ apis message model =
 
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
-
-        Do gcmds ->
-            ( model, out1 gcmds )
 
         OnCloseModalSafe link onCloseTxt ->
             if canExitSafe model then
@@ -935,7 +924,7 @@ subscriptions (State model) =
 
 
 type alias Op =
-    { tc : Maybe TensionCharac
+    { tc : TensionCharac
     , isAdmin : Bool
     , hasRole : Bool
     , isRight : Bool -- view option
@@ -1004,44 +993,44 @@ viewPanel op model =
                         [ -- Move Action
                           if not isRoot then
                             div [ class "dropdown-item button-light", onClick OnActionMove ]
-                                [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (action2str MoveAction) ]
+                                [ span [ class "arrow-right2 pl-0 pr-3" ] [], text (panelAction2str MoveAction) ]
 
                           else
                             text ""
 
                         -- Authority Action
                         , div [ class "dropdown-item button-light", onClick (OnOpenModal AuthorityAction) ]
-                            [ A.icon1 "icon-key" (auth2str model.form.node.type_) ]
+                            [ A.icon1 (auth2icon op.tc) (auth2str op.tc) ]
                         , case model.form.node.type_ of
                             -- Visibility Action
                             NodeType.Circle ->
                                 div [ class "dropdown-item button-light", onClick (OnOpenModal VisibilityAction) ]
-                                    [ A.icon1 "icon-lock" (action2str VisibilityAction) ]
+                                    [ A.icon1 "icon-lock" (panelAction2str VisibilityAction) ]
 
                             -- Link/Unlink Action
                             NodeType.Role ->
                                 case model.form.node.first_link of
                                     Just user ->
                                         div [ class "dropdown-item button-light", onClick (OnOpenModal (UnLinkAction user)) ]
-                                            [ A.icon1 "icon-user-plus" (action2str (UnLinkAction user)) ]
+                                            [ A.icon1 "icon-user-plus" (panelAction2str (UnLinkAction user)) ]
 
                                     Nothing ->
                                         div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.orga_data) ]
-                                            [ A.icon1 "icon-user-plus" (action2str LinkAction) ]
+                                            [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
                         ]
                             ++ -- ARCHIVE ACTION
                                (if not isRoot then
-                                    [ case Maybe.map (\c -> c.action_type) op.tc of
-                                        Just EDIT ->
+                                    [ case op.tc.action_type of
+                                        EDIT ->
                                             div [ class "dropdown-item button-light is-warning", onClick (OnOpenModal ArchiveAction) ]
-                                                [ A.icon1 "icon-archive" (action2str ArchiveAction) ]
+                                                [ A.icon1 "icon-archive" (panelAction2str ArchiveAction) ]
 
-                                        Just ARCHIVE ->
+                                        ARCHIVE ->
                                             div [ class "dropdown-item button-light", onClick (OnOpenModal UnarchiveAction) ]
-                                                [ A.icon1 "icon-archive" (action2str UnarchiveAction) ]
+                                                [ A.icon1 "icon-archive" (panelAction2str UnarchiveAction) ]
 
-                                        _ ->
-                                            div [] [ text "not implemented" ]
+                                        NEW ->
+                                            div [] [ text T.notImplemented ]
                                     ]
                                         |> List.append [ hr [ class "dropdown-divider" ] [] ]
 
@@ -1056,7 +1045,7 @@ viewPanel op model =
                 ++ (if op.hasRole then
                         [ div [ class "dropdown-item button-light is-danger", onClick (OnOpenModal LeaveAction) ]
                             [ p []
-                                [ A.icon1 "icon-log-out" (action2str LeaveAction) ]
+                                [ A.icon1 "icon-log-out" (panelAction2str LeaveAction) ]
                             ]
                         ]
                             |> List.append [ hr [ class "dropdown-divider" ] [] ]

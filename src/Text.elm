@@ -1147,6 +1147,16 @@ addPolicies =
     "add policies"
 
 
+unknown : String
+unknown =
+    "unknown"
+
+
+notImplemented : String
+notImplemented =
+    "not implemented"
+
+
 
 -- Action
 --@Todo
@@ -1349,7 +1359,7 @@ circleAuthorityDoc : String
 circleAuthorityDoc =
     """
 * Create and edit roles and circles
-* Edit tensions (Title, assignees etc)
+* Edit tensions (title, status (Open/Close), assignees, etc)
 * Edit mandates
 * invite new members
 

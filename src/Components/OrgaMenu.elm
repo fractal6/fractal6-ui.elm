@@ -257,23 +257,7 @@ viewOrgas hover focus orgs_result op =
     div []
         ((case orgs_result of
             Success data ->
-                List.map
-                    (\x ->
-                        div
-                            [ class "orgaMenu"
-                            , classList [ ( "is-active", focus.rootnameid == x.nameid ) ]
-                            , onMouseEnter (OnOrgHover (Just x.nameid))
-                            , onMouseLeave (OnOrgHover Nothing)
-                            ]
-                            [ if hover == Just x.nameid then
-                                div [ class "here box" ] [ text x.name ]
-
-                              else
-                                text ""
-                            , viewOrga0 True x.nameid
-                            ]
-                    )
-                    data
+                List.map (\x -> Lazy.lazy3 viewOrga hover focus x) data
 
             LoadingSlowly ->
                 [ div [ class "m-3 image circleBase circle1 ph-circle" ] []
@@ -291,10 +275,27 @@ viewOrgas hover focus orgs_result op =
             ++ [ div [ class "m-5 pb-5" ]
                     [ a
                         [ class "is-discrete-2"
-                        , href (Route.toHref Route.New_Orga)
+                        , href (toHref Route.New_Orga)
                         , title "Create new organizatinon"
                         ]
                         [ A.icon "icon-plus icon-lg" ]
                     ]
                ]
         )
+
+
+viewOrga : Maybe String -> NodeFocus -> OrgaNode -> Html Msg
+viewOrga hover focus x =
+    div
+        [ class "orgaMenu"
+        , classList [ ( "is-active", focus.rootnameid == x.nameid ) ]
+        , onMouseEnter (OnOrgHover (Just x.nameid))
+        , onMouseLeave (OnOrgHover Nothing)
+        ]
+        [ if hover == Just x.nameid then
+            div [ class "here box" ] [ text x.name ]
+
+          else
+            text ""
+        , viewOrga0 True x.nameid
+        ]

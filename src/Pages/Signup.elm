@@ -238,7 +238,7 @@ viewSignup global model =
                     ]
                 ]
             , br [] []
-            , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.Login) ]
+            , a [ class "is-size-7 is-pulled-left", href (toHref Route.Login) ]
                 [ textH T.orSignin ]
             , div [ class "field is-grouped is-grouped-right" ]
                 [ div [ class "control" ]

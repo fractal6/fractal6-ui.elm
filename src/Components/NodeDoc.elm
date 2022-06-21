@@ -24,8 +24,8 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (Ev, TensionForm, UserForm, UserState(..), initTensionForm)
-import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
-import ModelCommon.View exposing (FormText, actionNameStr, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
+import ModelCommon.Codecs exposing (ActionType(..), FractalBaseRoute(..), NodeFocus, isBaseMember, isTensionBaseUri, nameidEncoder, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
+import ModelCommon.View exposing (FormText, action2str, blobTypeStr, byAt, getNodeTextFromNodeType, roleColor, viewUser)
 import ModelSchema exposing (..)
 import String.Extra as SE
 import Text as T exposing (textH, textT, upH)
@@ -457,7 +457,7 @@ viewAboutSection editView data =
                 [ A.icon "icon-info icon-lg mr-2"
                 , textH T.about
                 , text T.space_
-                , if data.source == TensionBaseUri && data.hasBeenPushed then
+                , if isTensionBaseUri data.source && data.hasBeenPushed then
                     a
                         [ nameid |> uriFromNameid OverviewBaseUri |> href ]
                         [ withDefault "" data.node.name |> text ]
@@ -560,7 +560,7 @@ viewAboutInput hasBeenPushed source txt node op =
                     , required True
                     ]
                     []
-                , if (source == TensionBaseUri && hasBeenPushed == False) || (source == OverviewBaseUri && isFailure op.result) then
+                , if (isTensionBaseUri source && hasBeenPushed == False) || (source == OverviewBaseUri && isFailure op.result) then
                     viewUrlForm node.nameid (op.onChangePost "nameid") False
 
                   else
@@ -963,7 +963,7 @@ updateNodeForm field value form =
                             newPost =
                                 ternary (value == "")
                                     (Dict.insert "title" value form.post)
-                                    (Dict.insert "title" ("[" ++ actionNameStr action ++ "] " ++ value) form.post)
+                                    (Dict.insert "title" ("[" ++ action2str action ++ "] " ++ value) form.post)
 
                             newData =
                                 { node

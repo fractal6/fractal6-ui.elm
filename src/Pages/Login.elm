@@ -7,7 +7,7 @@ import Components.Loading as Loading exposing (WebData, expectJson, viewHttpErro
 import Dict exposing (Dict)
 import Extra.Events exposing (onKeydown)
 import Form exposing (isLoginSendable)
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, name, placeholder, required, rows, type_, value)
@@ -220,9 +220,9 @@ viewLogin global model =
                 ]
             , br [] []
             , div [ attribute "style" "width: 225px;" ]
-                [ a [ class "is-size-7 is-pulled-left mb-2", href (Route.toHref Route.Signup) ]
+                [ a [ class "is-size-7 is-pulled-left mb-2", href (toHref Route.Signup) ]
                     [ textH T.createAccount ]
-                , a [ class "is-size-7 is-pulled-left", href (Route.toHref Route.PasswordReset) ]
+                , a [ class "is-size-7 is-pulled-left", href (toHref Route.PasswordReset) ]
                     [ textH T.passwordForgotten ]
                 ]
             , div [ class "field is-grouped is-grouped-right" ]

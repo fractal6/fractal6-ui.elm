@@ -497,7 +497,7 @@ viewModalContent op (State model) =
                                 |> withDefault (text "error: node is empty")
 
                         else
-                            text "not implemented"
+                            text T.notImplemented
                 ]
             ]
         , div [ class "modal-card-body" ]

@@ -45,6 +45,7 @@ import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
+import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
 import Fractal.Enum.TensionEvent as TensionEvent
@@ -79,13 +80,14 @@ import ModelCommon.Codecs
 import ModelCommon.Requests exposing (getQuickDoc, login, signupValidate)
 import ModelCommon.View
     exposing
-        ( actionNameStr
+        ( action2icon
+        , action2str
         , archiveActionToggle
+        , auth2icon
+        , auth2val
         , statusColor
         , tensionIcon2
         , tensionTypeColor
-        , viewActionIcon
-        , viewActionIconLink
         , viewJoinNeeded
         , viewLabel
         , viewLabels
@@ -96,6 +98,7 @@ import ModelCommon.View
         , viewUpdated
         , viewUser0
         , viewUser2
+        , viewUserFull
         , viewUsernameLink
         , viewUsers
         )
@@ -402,7 +405,7 @@ init global flags =
 
         -- What has changed
         fs =
-            focusState TensionBaseUri global.session.referer global.url global.session.node_focus newFocus
+            focusState TensionBaseUri_ global.session.referer global.url global.session.node_focus newFocus
 
         model =
             { node_focus = newFocus
@@ -1025,7 +1028,7 @@ update global message model =
                     case th.action of
                         Just action ->
                             case (getTensionCharac action).doc_type of
-                                NODE ->
+                                NODE _ ->
                                     let
                                         doc =
                                             NodeDoc.create model.tensionid global.session.user
@@ -1493,15 +1496,15 @@ subscriptions _ model =
     ]
         ++ (Help.subscriptions |> List.map (\s -> Sub.map HelpMsg s))
         ++ (NTF.subscriptions model.tensionForm |> List.map (\s -> Sub.map NewTensionMsg s))
+        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
+        ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
+        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
+        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         ++ (UserSearchPanel.subscriptions model.assigneesPanel |> List.map (\s -> Sub.map UserSearchPanelMsg s))
         ++ (LabelSearchPanel.subscriptions model.labelsPanel |> List.map (\s -> Sub.map LabelSearchPanelMsg s))
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
-        ++ (ActionPanel.subscriptions model.actionPanel |> List.map (\s -> Sub.map ActionPanelMsg s))
-        ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
-        ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
-        ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
         |> Sub.batch
 
 
@@ -1517,7 +1520,7 @@ view global model =
             , uriQuery = global.url.query
             , path_data = withMaybeData model.path_data
             , focus = model.node_focus
-            , baseUri = TensionsBaseUri
+            , baseUri = TensionBaseUri_
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
@@ -2115,7 +2118,7 @@ viewEventPushed now event action_m =
     in
     [ div [ class "media-left" ] [ A.icon "icon-share" ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text T.published ], text T.this, text (action2str action), text (formatDate now event.createdAt) ]
         ]
     ]
 
@@ -2135,7 +2138,7 @@ viewEventArchived now event action_m isArchived =
     in
     [ div [ class "media-left" ] [ icon ]
     , div [ class "media-content" ]
-        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, text (actionNameStr action), text (formatDate now event.createdAt) ]
+        [ span [] <| List.intersperse (text " ") [ viewUsernameLink event.createdBy.username, strong [] [ text txt ], text T.this, text (action2str action), text (formatDate now event.createdAt) ]
         ]
     ]
 
@@ -2188,7 +2191,7 @@ viewEventUserLeft now event action_m =
                             T.role
 
                 Nothing ->
-                    actionNameStr action
+                    action2str action
     in
     [ div [ class "media-left" ] [ A.icon "icon-log-out" ]
     , div [ class "media-content" ]
@@ -2282,7 +2285,7 @@ viewDocument u t b model =
                     { data = Success t.id
                     , node = b.node |> withDefault (initNodeFragment Nothing)
                     , isLazy = False
-                    , source = TensionBaseUri
+                    , source = TensionBaseUri_
 
                     --, focus = model.node_focus
                     , hasBeenPushed = t.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
@@ -2328,7 +2331,7 @@ viewDocument u t b model =
 viewSidePane : UserState -> TensionHead -> Model -> Html Msg
 viewSidePane u t model =
     let
-        tc =
+        tc_m =
             Maybe.map (\a -> getTensionCharac a) t.action
 
         assignees =
@@ -2377,7 +2380,7 @@ viewSidePane u t model =
             isAdmin || isAuthor
 
         hasBlobRight =
-            isAdmin && Maybe.map .action_type tc /= Just NEW && blob_m /= Nothing
+            isAdmin && Maybe.map .action_type tc_m /= Just NEW && blob_m /= Nothing
 
         rid =
             nid2rootid t.receiver.nameid
@@ -2470,67 +2473,90 @@ viewSidePane u t model =
             ]
 
         -- Document
-        , -- Hide if there is no document
-          if t.action == Nothing then
-            text ""
+        , case tc_m of
+            -- Hide if there is no document
+            Nothing ->
+                text ""
 
-          else
-            div
-                [ class "media" ]
-                [ div [ class "media-content" ] <|
-                    (case u of
-                        LoggedIn _ ->
-                            let
-                                domid =
-                                    "actionPanelContent"
-                            in
-                            [ div [ id domid ]
-                                [ h2
-                                    [ class "subtitle is-h"
-                                    , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                                    , Maybe.map (\b -> onClick (OpenActionPanel domid b)) blob_m |> withDefault (onClick NoMsg)
-                                    ]
-                                    [ textH T.document
-                                    , if ActionPanel.isOpen_ model.actionPanel then
-                                        A.icon "icon-x is-pulled-right"
+            Just tc ->
+                let
+                    domid =
+                        "actionPanelContent"
 
-                                      else if hasBlobRight || hasRole then
-                                        A.icon "icon-settings is-pulled-right"
+                    node =
+                        blob_m |> Maybe.map .node |> withDefault Nothing |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
+                in
+                div [ class "media" ]
+                    [ div [ class "media-content" ] <|
+                        (case u of
+                            LoggedIn _ ->
+                                [ div [ id domid ]
+                                    [ h2
+                                        [ class "subtitle is-h"
+                                        , classList [ ( "is-w", hasBlobRight || hasRole ) ]
+                                        , Maybe.map (\b -> onClick (OpenActionPanel domid b)) blob_m |> withDefault (onClick NoMsg)
+                                        ]
+                                        [ textH T.document
+                                        , if ActionPanel.isOpen_ model.actionPanel then
+                                            A.icon "icon-x is-pulled-right"
+
+                                          else if hasBlobRight || hasRole then
+                                            A.icon "icon-settings is-pulled-right"
+
+                                          else
+                                            text ""
+                                        ]
+                                    , if hasBlobRight || hasRole then
+                                        let
+                                            panelData =
+                                                { tc = tc
+                                                , isAdmin = hasBlobRight
+                                                , hasRole = hasRole
+                                                , isRight = False
+                                                , domid = domid
+                                                , orga_data = model.orga_data
+                                                }
+                                        in
+                                        ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
 
                                       else
                                         text ""
                                     ]
-                                , if hasBlobRight || hasRole then
-                                    let
-                                        panelData =
-                                            { tc = tc
-                                            , isAdmin = hasBlobRight
-                                            , hasRole = hasRole
-                                            , isRight = False
-                                            , domid = domid
-                                            , orga_data = model.orga_data
-                                            }
-                                    in
-                                    ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
+                                ]
 
-                                  else
+                            LoggedOut ->
+                                [ h2 [ class "subtitle" ] [ textH T.document ] ]
+                        )
+                            ++ [ div [ class "level is-mobile" ] <|
+                                    case tc.doc_type of
+                                        NODE NodeType.Circle ->
+                                            [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                                            , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                            , span [ class "level-item" ] [ A.icon1 "icon-eye" (NodeVisibility.toString node.visibility) ]
+                                            ]
+
+                                        NODE NodeType.Role ->
+                                            [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                                            , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                            ]
+
+                                        MD ->
+                                            [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
+                               ]
+                            ++ [ Maybe.map
+                                    (\fs ->
+                                        span [] [ span [ class "is-highlight mr-2" ] [ text "First-link:" ], viewUserFull 0 True False fs ]
+                                    )
+                                    node.first_link
+                                    |> withDefault (text "")
+                               ]
+                            ++ [ if tc.action_type == ARCHIVE then
+                                    span [ class "has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
+
+                                 else
                                     text ""
-                                ]
-                            ]
-
-                        LoggedOut ->
-                            [ h2 [ class "subtitle" ] [ textH T.document ] ]
-                    )
-                        ++ [ div []
-                                [ case t.action of
-                                    Just action ->
-                                        viewActionIconLink action model.node_focus.rootnameid t.id (SE.humanize (actionNameStr action)) ""
-
-                                    Nothing ->
-                                        div [ class "help is-italic" ] [ textH T.noDocument ]
-                                ]
-                           ]
-                ]
+                               ]
+                    ]
         , -- Subscriptions
           case u of
             LoggedIn uctx ->
@@ -2571,6 +2597,18 @@ viewSidePane u t model =
         ]
             -- Extra action (Move, Lock, ...)
             ++ (if not isRoot && (isAdmin || isAuthor) then
+                    let
+                        hasNode =
+                            Maybe.map .doc_type tc_m
+                                |> (\x ->
+                                        case x of
+                                            Just (NODE _) ->
+                                                True
+
+                                            _ ->
+                                                False
+                                   )
+                    in
                     [ hr [ class "has-background-border-light" ] [] ]
                         ++ [-- div [][]
                            ]
@@ -2585,7 +2623,7 @@ viewSidePane u t model =
                             else
                                 []
                            )
-                        ++ (if isAdmin && (Maybe.map .doc_type tc /= Just NODE) then
+                        ++ (if isAdmin && not hasNode then
                                 [ div
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                     , onClick <| SelectTypeMsg (SelectType.OnOpen t.type_)

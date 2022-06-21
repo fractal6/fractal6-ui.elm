@@ -1578,7 +1578,6 @@ export const GraphPack = {
 
         // Catch right click context menu
         var contextMenuEvent = e => {
-            console.log("got the menue click")
             if (!this.isFrozen && !this.isFrozenMenu) {
                 e.preventDefault();
                 this.sendNodeRightClickFromJs(this.hoveredNode);

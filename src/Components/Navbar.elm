@@ -46,7 +46,7 @@ view op =
                                     urlToFractalRoute op.url
                                         |> Maybe.map
                                             (\url ->
-                                                List.member url [ OverviewBaseUri, TensionsBaseUri, TensionBaseUri, MembersBaseUri, SettingsBaseUri ]
+                                                List.member url [ OverviewBaseUri, TensionsBaseUri, MembersBaseUri, SettingsBaseUri ]
                                             )
                                         |> withDefault False
                             in

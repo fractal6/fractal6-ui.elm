@@ -18,7 +18,7 @@ import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.TensionEvent as TensionEvent
 import Fractal.Enum.TensionStatus as TensionStatus
 import Fractal.Enum.TensionType as TensionType
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
@@ -268,7 +268,7 @@ update global message model =
         OnChangeStep step ->
             let
                 url =
-                    Url.toString global.url ++ "?" ++ queryBuilder [ ( "step", stepEncoder step ) ]
+                    toHref Route.New_Orga ++ "?" ++ queryBuilder [ ( "step", stepEncoder step ) ]
             in
             ( { model | step = step }
             , Cmd.batch [ send SaveData, sendSleep (Navigate url) 333 ]

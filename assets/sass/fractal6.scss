@@ -211,6 +211,9 @@ a.is-link {
         color: var(--link2) !important;
     }
 }
+.is-highlight {
+    color: var(--is-highlight) !important;
+}
 .is-highlight-3 {
     color: var(--is-highlight3) !important;
 }
@@ -277,6 +280,11 @@ a.is-link {
     &:hover {
         color: var(--link) !important;
     }
+}
+
+.stealth-link {
+    text-decoration: none !important;
+    color: var(--text) !important;
 }
 
 .is-flex-grow {
@@ -1384,12 +1392,8 @@ tr.mediaBox {
 }
 
 .icons-list {
-    .level-item {
-        justify-content: right;
-    }
-
     .level-item:not(:last-child) {
-        margin-right: 0px !important;
+        margin-right: $size-small !important;
     }
 }
 

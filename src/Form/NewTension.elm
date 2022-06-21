@@ -69,7 +69,7 @@ import ModelCommon
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
-import ModelCommon.View exposing (FormText, action2SourceStr, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
+import ModelCommon.View exposing (FormText, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -677,6 +677,9 @@ update_ apis message model =
                             in
                             ( { model | path_data = Success newPath }, out0 [ queryLocalGraph apis nameid (GotPath False) ] )
 
+                Failure err ->
+                    ( { model | path_data = result }, out0 [ Ports.logErr (String.join " | " err) ] )
+
                 _ ->
                     ( { model | path_data = result }, noOut )
 
@@ -1130,7 +1133,7 @@ viewStep op (State model) =
                 ]
 
         TensionSource ->
-            viewSources model TensionFinal
+            text "not implemented; remove in commit 7169bad"
 
         TensionFinal ->
             case model.activeTab of
@@ -1331,27 +1334,6 @@ viewRecipients model =
                             |> List.sortWith sortNode
                         )
                 ]
-            ]
-        ]
-
-
-viewSources : Model -> TensionStep -> Html Msg
-viewSources model nextStep =
-    div [ class "modal-card submitFocus" ]
-        [ div [ class "modal-card-head" ]
-            [ span [ class "has-text-weight-medium" ] [ "You have several roles in this organisation. Please select the role from which you want to " ++ action2SourceStr model.nodeDoc.form.action |> text ] ]
-        , div [ class "modal-card-body" ]
-            [ div [ class "buttons buttonRadio", attribute "style" "margin-bottom: 2em; margin-right: 2em; margin-left: 2em;" ] <|
-                List.map
-                    (\r ->
-                        button
-                            [ class ("button buttonRole tooltip has-tooltip-arrow defaultSubmit has-tooltip-bottom is-" ++ roleColor r.role_type)
-                            , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r ] |> String.join " ")
-                            , onClick (OnTensionStep nextStep)
-                            ]
-                            [ text r.name ]
-                    )
-                    model.sources
             ]
         ]
 

@@ -89,12 +89,12 @@ update msg model =
         UrlChanged_ url ->
             let
                 global =
-                    model.global
+                    model.global |> (\g -> { g | url = url })
 
                 ( page, pageCmd, globalCmd ) =
-                    Pages.init (fromUrl url) { global | url = url }
+                    Pages.init (fromUrl url) global
             in
-            ( { model | url = url, page = page }
+            ( { model | url = url, page = page, global = global }
             , Cmd.batch
                 [ Cmd.map Page pageCmd
                 , Cmd.map Global globalCmd

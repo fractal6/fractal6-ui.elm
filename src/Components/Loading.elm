@@ -2,7 +2,7 @@ module Components.Loading exposing (..)
 
 import Assets as A
 import Extra.Events exposing (onClickPD)
-import Generated.Route as Route exposing (Route)
+import Generated.Route as Route exposing (Route, toHref)
 import Graphql.Http as GqlHttp
 import Html exposing (Html, a, button, div, img, p, span, text)
 import Html.Attributes exposing (alt, attribute, class, height, href, src, width)
@@ -316,11 +316,11 @@ viewAuthNeeded forward =
             [ p []
                 [ text "Please "
                 , button
-                    [ class "button is-small is-primary", onClickPD (forward { reset = True, link = Route.toHref Route.Login }) ]
+                    [ class "button is-small is-primary", onClickPD (forward { reset = True, link = toHref Route.Login }) ]
                     [ text "Login" ]
                 , text " or "
                 , button
-                    [ class "button is-small is-success", onClickPD (forward { reset = True, link = Route.toHref Route.Signup }) ]
+                    [ class "button is-small is-success", onClickPD (forward { reset = True, link = toHref Route.Signup }) ]
                     [ text "Signup" ]
                 , text " to perform this action."
                 ]

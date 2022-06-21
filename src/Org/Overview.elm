@@ -748,6 +748,7 @@ update global message model =
                             ( Just n, Cmd.none )
 
                         Nothing ->
+                            -- Will close the panel when the a the modal raise
                             ( Nothing, Cmd.map ActionPanelMsg (send ActionPanel.OnClose) )
             in
             ( { model | node_hovered = node }, cmd, Cmd.none )
@@ -1119,7 +1120,7 @@ viewActionPanel domid us node o actionPanel =
                         -- @DEBUG/@FIX: archive circle can be query now...
                         -- Action type should be queried with queryNodesSub !
                         -- @TODO: special color/sape for archive circle.
-                        { tc = Just { action_type = EDIT, doc_type = NODE }
+                        { tc = { action = TensionAction.EditCircle, action_type = EDIT, doc_type = NODE NodeType.Circle }
                         , isAdmin = isAdmin
                         , hasRole = hasRole
                         , isRight = True

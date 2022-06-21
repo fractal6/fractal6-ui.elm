@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Extra exposing (colorAttr, ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
+import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -23,8 +24,10 @@ import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
 import ModelCommon.Codecs
     exposing
         ( ActionType(..)
+        , DocType(..)
         , FractalBaseRoute(..)
         , NodeFocus
+        , TensionCharac
         , getOrgaRoles
         , getTensionCharac
         , nid2rootid
@@ -35,6 +38,7 @@ import ModelSchema
     exposing
         ( EmitterOrReceiver
         , Label
+        , Node
         , NodeExt
         , PNode
         , Post
@@ -187,16 +191,26 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
         , div [ class "media-right" ]
             [ ternary showRecip (viewCircleTarget "is-pulled-right" tension.receiver) (text "")
             , br [] []
-            , span [ class "level is-mobile icons-list" ]
+            , span [ class "level icons-list" ]
                 [ case tension.action of
                     Just action ->
-                        viewActionIconLink action focus.rootnameid tension.id "" "is-small level-item"
+                        let
+                            tc =
+                                getTensionCharac action
+                        in
+                        a
+                            [ class "level-item discrete-link tooltip has-tooltip-arrow"
+                            , classList [ ( "has-text-warning", tc.action_type == ARCHIVE ) ]
+                            , attribute "data-tooltip" ("1 " ++ action2str action ++ " attached")
+                            , href (Route.Tension_Dynamic_Dynamic_Action { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
+                            ]
+                            [ A.icon0 (action2icon tc ++ " icon-sm") ]
 
                     Nothing ->
                         text ""
                 , if n_comments > 1 then
                     a
-                        [ class "tooltip has-tooltip-arrow level-item discrete-link"
+                        [ class "level-item discrete-link tooltip has-tooltip-arrow "
                         , attribute "data-tooltip" (String.fromInt (n_comments - 1) ++ " comments")
                         , href (Route.Tension_Dynamic_Dynamic { param1 = focus.rootnameid, param2 = tension.id } |> toHref)
                         ]
@@ -765,8 +779,23 @@ getAvatarOrga name =
 -}
 
 
-actionNameStr : TensionAction.TensionAction -> String
-actionNameStr action =
+auth2str : TensionCharac -> String
+auth2str tc =
+    case tc.doc_type of
+        NODE nt ->
+            case nt of
+                NodeType.Circle ->
+                    upH T.governance
+
+                NodeType.Role ->
+                    upH T.authority
+
+        MD ->
+            T.notImplemented
+
+
+action2str : TensionAction.TensionAction -> String
+action2str action =
     case action of
         TensionAction.NewCircle ->
             upH T.circle
@@ -796,88 +825,49 @@ actionNameStr action =
             upH T.document
 
 
-viewActionIconLink : TensionAction.TensionAction -> String -> String -> String -> String -> Html msg
-viewActionIconLink action org tid words cls =
-    let
-        charac =
-            getTensionCharac action
-    in
-    a
-        [ class ("actionLink tooltip has-tooltip-arrow discrete-link " ++ cls)
-        , classList [ ( "has-text-warning", charac.action_type == ARCHIVE ) ]
-        , attribute "data-tooltip" ("1 " ++ actionNameStr action ++ " attached")
-        , href (Route.Tension_Dynamic_Dynamic_Action { param1 = org, param2 = tid } |> toHref)
-        ]
-        [ viewActionIcon action
-        , text words
-        ]
+auth2val : Node -> TensionCharac -> String
+auth2val node tc =
+    case tc.doc_type of
+        NODE nt ->
+            case nt of
+                NodeType.Circle ->
+                    NodeMode.toString node.mode
+
+                NodeType.Role ->
+                    Maybe.map RoleType.toString node.role_type |> withDefault T.unknown
+
+        MD ->
+            T.notImplemented
 
 
-viewActionIcon : TensionAction.TensionAction -> Html msg
-viewActionIcon action =
-    case action of
-        TensionAction.NewRole ->
-            A.icon1 "icon-leaf" ""
+auth2icon : TensionCharac -> String
+auth2icon tc =
+    case tc.doc_type of
+        NODE nt ->
+            case nt of
+                NodeType.Circle ->
+                    "icon-shield"
 
-        TensionAction.NewCircle ->
-            A.icon1 "icon-git-branch" ""
+                NodeType.Role ->
+                    "icon-key"
 
-        TensionAction.NewMd ->
-            A.icon1 "icon-markdown" ""
-
-        TensionAction.EditRole ->
-            A.icon1 "icon-leaf" ""
-
-        TensionAction.EditCircle ->
-            A.icon1 "icon-git-branch" ""
-
-        TensionAction.EditMd ->
-            A.icon1 "icon-markdown" ""
-
-        TensionAction.ArchivedCircle ->
-            A.icon1 "icon-archive" ""
-
-        TensionAction.ArchivedRole ->
-            A.icon1 "icon-archive" ""
-
-        TensionAction.ArchivedMd ->
-            A.icon1 "icon-archive" ""
+        MD ->
+            T.notImplemented
 
 
-action2SourceStr : Maybe TensionAction.TensionAction -> String
-action2SourceStr action_m =
-    case action_m of
-        Nothing ->
-            "create this Tension"
+action2icon : TensionCharac -> String
+action2icon tc =
+    case tc.doc_type of
+        NODE nt ->
+            case nt of
+                NodeType.Circle ->
+                    "icon-git-branch"
 
-        Just action ->
-            case action of
-                TensionAction.NewCircle ->
-                    "create this circle"
+                NodeType.Role ->
+                    "icon-leaf"
 
-                TensionAction.EditCircle ->
-                    "edit this circle"
-
-                TensionAction.ArchivedCircle ->
-                    "archived this role"
-
-                TensionAction.NewRole ->
-                    "create this role"
-
-                TensionAction.EditRole ->
-                    "edit this role"
-
-                TensionAction.ArchivedRole ->
-                    "archived this role"
-
-                TensionAction.NewMd ->
-                    "create this document"
-
-                TensionAction.EditMd ->
-                    "edit this document"
-
-                TensionAction.ArchivedMd ->
-                    "archived this document"
+        MD ->
+            "icon-markdown"
 
 
 archiveActionToggle : Maybe TensionAction.TensionAction -> Maybe TensionAction.TensionAction

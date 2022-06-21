@@ -940,7 +940,7 @@ viewContractBox c op model =
                                 ]
 
                     _ ->
-                        text "not implemented"
+                        text T.notImplemented
                 ]
             ]
         , div [ class "field pb-2" ] [ span [ class "is-pulled-right" ] [ textH (T.created ++ T.space_), byAt op.now c.createdBy c.createdAt ] ]

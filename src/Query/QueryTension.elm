@@ -14,6 +14,7 @@ module Query.QueryTension exposing
     )
 
 import Dict exposing (Dict)
+import Extra exposing (ternary)
 import Fractal.Enum.BlobOrderable as BlobOrderable
 import Fractal.Enum.ContractStatus as ContractStatus
 import Fractal.Enum.ContractType as ContractType
@@ -259,7 +260,7 @@ nodeFragmentPayload =
         |> with Fractal.Object.NodeFragment.mode
         |> with Fractal.Object.NodeFragment.about
         |> with (Fractal.Object.NodeFragment.mandate identity mandatePayload)
-        |> with Fractal.Object.NodeFragment.first_link
+        |> with (Fractal.Object.NodeFragment.first_link |> SelectionSet.map (Maybe.map (\x -> ternary (x == "") Nothing (Just x)) >> withDefault Nothing))
         |> with
             (Fractal.Object.NodeFragment.children identity
                 (SelectionSet.succeed SubNodeFragment

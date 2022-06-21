@@ -8,7 +8,7 @@ import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Fractal.Enum.TensionAction as TensionAction
-import Generated.Route as Route exposing (Route(..), fromUrl)
+import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import List.Extra as LE
 import Maybe exposing (withDefault)
 import ModelSchema
@@ -37,11 +37,26 @@ type alias Flags_ =
 type FractalBaseRoute
     = OverviewBaseUri
     | TensionsBaseUri
-    | TensionBaseUri
+    | TensionBaseUri String String
+    | TensionBaseUri_ -- To pass as argument
     | MandateBaseUri String String
+    | MandateBaseUri_ -- To pass as argument
     | MembersBaseUri
     | SettingsBaseUri
     | UsersBaseUri
+
+
+isTensionBaseUri : FractalBaseRoute -> Bool
+isTensionBaseUri r =
+    case r of
+        TensionBaseUri _ _ ->
+            True
+
+        TensionBaseUri_ ->
+            True
+
+        _ ->
+            False
 
 
 
@@ -76,11 +91,11 @@ toString route =
         TensionsBaseUri ->
             "/t"
 
-        TensionBaseUri ->
-            "/tension"
+        TensionBaseUri nameid tid ->
+            toHref (Route.Tension_Dynamic_Dynamic { param1 = nameid, param2 = tid })
 
         MandateBaseUri nameid tid ->
-            Route.toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nameid, param2 = tid })
+            toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nameid, param2 = tid })
 
         MembersBaseUri ->
             "/m"
@@ -92,7 +107,15 @@ toString route =
             -- /user
             ""
 
+        TensionBaseUri_ ->
+            "/tension"
 
+        MandateBaseUri_ ->
+            "/tension"
+
+
+{-| Just use to check if you are in organisation tab...
+-}
 urlToFractalRoute : Url -> Maybe FractalBaseRoute
 urlToFractalRoute url =
     fromUrl url
@@ -108,14 +131,13 @@ urlToFractalRoute url =
                     O_Dynamic_Dynamic_Dynamic _ ->
                         Just OverviewBaseUri
 
-                    T_Dynamic _ ->
-                        Just TensionBaseUri
+                    T_Dynamic_Dynamic a ->
+                        --Just (TensionBaseUri a.param1 a.param2)
+                        Just TensionsBaseUri
 
-                    T_Dynamic_Dynamic _ ->
-                        Just TensionBaseUri
-
-                    T_Dynamic_Dynamic_Dynamic _ ->
-                        Just TensionBaseUri
+                    T_Dynamic_Dynamic_Dynamic a ->
+                        --Just (MandateBaseUri a.param1 a.param2)
+                        Just TensionsBaseUri
 
                     M_Dynamic _ ->
                         Just MembersBaseUri
@@ -135,17 +157,17 @@ urlToFractalRoute url =
                     S_Dynamic_Dynamic_Dynamic _ ->
                         Just SettingsBaseUri
 
-                    Tension_Dynamic_Dynamic _ ->
-                        Just TensionBaseUri
+                    Tension_Dynamic_Dynamic a ->
+                        Just (TensionBaseUri a.param1 a.param2)
 
-                    Tension_Dynamic_Dynamic_Action _ ->
-                        Just TensionBaseUri
+                    Tension_Dynamic_Dynamic_Action a ->
+                        Just (MandateBaseUri a.param1 a.param2)
 
                     Tension_Dynamic_Dynamic_Contract _ ->
-                        Just TensionBaseUri
+                        Just TensionsBaseUri
 
                     Tension_Dynamic_Dynamic_Contract_Dynamic _ ->
-                        Just TensionBaseUri
+                        Just TensionsBaseUri
 
                     Dynamic _ ->
                         Just UsersBaseUri
@@ -216,8 +238,15 @@ basePathChanged loc url =
 uriFromNameid : FractalBaseRoute -> String -> String
 uriFromNameid loc nameid =
     case loc of
+        TensionBaseUri _ _ ->
+            toString loc
+
         MandateBaseUri _ _ ->
             toString loc
+
+        --@TODO / REMOVE
+        TensionBaseUri_ ->
+            uriFromNameid TensionsBaseUri nameid
 
         _ ->
             if nameid == "" then
@@ -227,6 +256,23 @@ uriFromNameid loc nameid =
                 [ toString loc ]
                     ++ String.split "#" nameid
                     |> String.join "/"
+
+
+uriFromNameid2 : FractalBaseRoute -> String -> String -> String
+uriFromNameid2 loc nameid tid =
+    let
+        newLoc =
+            case loc of
+                TensionBaseUri_ ->
+                    TensionBaseUri nameid tid
+
+                MandateBaseUri_ ->
+                    MandateBaseUri nameid tid
+
+                _ ->
+                    loc
+    in
+    uriFromNameid newLoc nameid
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
@@ -386,7 +432,12 @@ nodeIdCodec parentid targetid type_ =
     in
     case type_ of
         NodeType.Circle ->
-            String.join "#" [ rootnameid, targetid ]
+            if targetid == "" then
+                -- root node has empty nameid in its blob source !
+                rootnameid
+
+            else
+                String.join "#" [ rootnameid, targetid ]
 
         NodeType.Role ->
             if isBaseMember targetid then
@@ -544,6 +595,7 @@ hasAdminRole uctx nameid =
 type alias TensionCharac =
     { action_type : ActionType
     , doc_type : DocType
+    , action : TensionAction.TensionAction
     }
 
 
@@ -554,7 +606,7 @@ type ActionType
 
 
 type DocType
-    = NODE
+    = NODE NodeType.NodeType
     | MD
 
 
@@ -562,31 +614,31 @@ getTensionCharac : TensionAction.TensionAction -> TensionCharac
 getTensionCharac action =
     case action of
         TensionAction.NewRole ->
-            { action_type = NEW, doc_type = NODE }
+            { action = action, action_type = NEW, doc_type = NODE NodeType.Role }
 
         TensionAction.EditRole ->
-            { action_type = EDIT, doc_type = NODE }
+            { action = action, action_type = EDIT, doc_type = NODE NodeType.Role }
 
         TensionAction.ArchivedRole ->
-            { action_type = ARCHIVE, doc_type = NODE }
+            { action = action, action_type = ARCHIVE, doc_type = NODE NodeType.Role }
 
         TensionAction.NewCircle ->
-            { action_type = NEW, doc_type = NODE }
+            { action = action, action_type = NEW, doc_type = NODE NodeType.Circle }
 
         TensionAction.EditCircle ->
-            { action_type = EDIT, doc_type = NODE }
+            { action = action, action_type = EDIT, doc_type = NODE NodeType.Circle }
 
         TensionAction.ArchivedCircle ->
-            { action_type = ARCHIVE, doc_type = NODE }
+            { action = action, action_type = ARCHIVE, doc_type = NODE NodeType.Circle }
 
         TensionAction.NewMd ->
-            { action_type = NEW, doc_type = MD }
+            { action = action, action_type = NEW, doc_type = MD }
 
         TensionAction.EditMd ->
-            { action_type = EDIT, doc_type = MD }
+            { action = action, action_type = EDIT, doc_type = MD }
 
         TensionAction.ArchivedMd ->
-            { action_type = ARCHIVE, doc_type = MD }
+            { action = action, action_type = ARCHIVE, doc_type = MD }
 
 
 tensionAction2NodeType : Maybe TensionAction.TensionAction -> Maybe NodeType.NodeType
@@ -632,5 +684,5 @@ nodeFromFragment parentid f =
     , mode = withDefault NodeMode.Coordinated f.mode
     , source = Nothing
     , userCanJoin = Nothing
-    , first_link = Nothing
+    , first_link = Maybe.map (\fs -> { username = fs, name = Nothing }) f.first_link
     }
