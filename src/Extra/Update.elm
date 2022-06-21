@@ -16,15 +16,19 @@ update msg model =
 
 -- Inspired from https://github.com/ccapndave/elm-update-extra
 -- @future: move to elm-spa for simple message tuple update.
+--
+--
+-- Do NOT WORK ! tried wih SaveData |> andThen (Navigate url)...
+--
 
 
-andThen : (msg -> model -> ( model, Cmd a )) -> msg -> ( model, Cmd a ) -> ( model, Cmd a )
-andThen update msg ( model, cmd ) =
+andThen : global -> (global -> msg -> model -> ( model, Cmd a, Cmd b )) -> msg -> ( model, Cmd a, Cmd b ) -> ( model, Cmd a, Cmd b )
+andThen global update msg ( model, cmd, gcmd ) =
     let
-        ( model_, cmd_ ) =
-            update msg model
+        ( model_, cmd_, gcmd_ ) =
+            update global msg model
     in
-    ( model_, Cmd.batch [ cmd, cmd_ ] )
+    ( model_, Cmd.batch [ cmd, cmd_ ], Cmd.batch [ gcmd, gcmd_ ] )
 
 
 {-| Allows you to update the model in an update pipeline.

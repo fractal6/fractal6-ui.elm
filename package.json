@@ -57,7 +57,7 @@
     "css-minimizer-webpack-plugin": "^4.0.0",
     "elm-hot-webpack-loader": "^1.1.8",
     "elm-live": "4.0.2",
-    "elm-spa": "6.0.4",
+    "elm-spa": "4.1.0",
     "elm-webpack-loader": "^8.0.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",

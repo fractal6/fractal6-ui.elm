@@ -327,6 +327,12 @@ initUserProfileForm username =
     UserProfileForm username Nothing Nothing Dict.empty
 
 
+type alias OrgaForm =
+    { uctx : UserCtx
+    , post : Post
+    }
+
+
 
 {-
    Contract Form

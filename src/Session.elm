@@ -11,7 +11,7 @@ import Fractal.Enum.NodeMode as NodeMode
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
 import Json.Decode as JD
-import ModelCommon exposing (AssigneeForm, LabelForm, UserState(..))
+import ModelCommon exposing (AssigneeForm, LabelForm, OrgaForm, UserState(..))
 import ModelCommon.Codecs exposing (NodeFocus)
 import ModelSchema exposing (..)
 import Ports
@@ -72,6 +72,7 @@ type alias Session =
     , screen : Screen
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
+    , newOrgaData : Maybe OrgaForm
     }
 
 
@@ -88,7 +89,8 @@ type GlobalCmd
     | DoSetMenuLeft Bool
     | DoUpdateOrgs (Maybe (List OrgaNode))
       -- @FIX: Make this in Global to define the mapGlobalOutcms only once ?!
-      -- OR better: User only Ports, and add Subscription in Global to trigger update from JS !
+      -- OR: User only Ports, and add Subscription in Global to trigger update from JS !
+      -- Or: use a type to return directly Global.Cmd !
     | DoFetchNode String
     | DoPushTension Tension
     | DoAddNodes (List Node)
@@ -133,6 +135,7 @@ resetSession flags =
     , screen = flags.screen
     , authorsPanel = Nothing
     , labelsPanel = Nothing
+    , newOrgaData = Nothing
     }
 
 
@@ -189,6 +192,7 @@ fromLocalSession flags =
       , screen = flags.screen
       , authorsPanel = Nothing
       , labelsPanel = Nothing
+      , newOrgaData = Nothing
       }
     , [ cmd1, cmd2 ]
     )

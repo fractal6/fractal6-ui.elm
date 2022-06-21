@@ -9,6 +9,8 @@ import Components.NodeDoc exposing (viewUrlForm)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onKeydown)
+import Extra.Update as Update
+import Extra.Url exposing (queryBuilder, queryParser)
 import Form exposing (isLoginSendable, isPostSendable)
 import Form.Help as Help
 import Fractal.Enum.NodeType as NodeType
@@ -20,7 +22,7 @@ import Generated.Route as Route exposing (Route)
 import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, autocomplete, class, classList, disabled, href, id, name, placeholder, required, rows, target, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onBlur, onClick, onInput)
 import Http
 import Iso8601 exposing (fromTime)
 import Json.Decode as JD
@@ -35,10 +37,10 @@ import Ports
 import Query.QueryNode exposing (getNodeId)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..))
-import Task
+import Task exposing (Task)
 import Text as T exposing (textH, textT, upH)
 import Time
-import Url as Url
+import Url as Url exposing (Url)
 
 
 page : Page Flags Model Msg
@@ -97,15 +99,29 @@ type alias Model =
     }
 
 
-type alias OrgaForm =
-    { uctx : UserCtx
-    , post : Post
-    }
-
-
 type OrgaStep
     = OrgaVisibilityStep
     | OrgaValidateStep
+
+
+stepEncoder : OrgaStep -> String
+stepEncoder menu =
+    case menu of
+        OrgaVisibilityStep ->
+            "0"
+
+        OrgaValidateStep ->
+            "1"
+
+
+stepDecoder : String -> OrgaStep
+stepDecoder menu =
+    case menu of
+        "1" ->
+            OrgaValidateStep
+
+        _ ->
+            OrgaVisibilityStep
 
 
 orgaStepToString : OrgaForm -> OrgaStep -> String
@@ -125,9 +141,9 @@ orgaStepToString form step =
             "Review and validate"
 
 
-initModel : UserState -> Model
-initModel user =
-    { form = { post = Dict.empty, uctx = uctxFromUser user }
+initModel : UserState -> Maybe OrgaForm -> Model
+initModel user form_m =
+    { form = withDefault { post = Dict.empty, uctx = uctxFromUser user } form_m
     , step = OrgaVisibilityStep
     , result = RemoteData.NotAsked
     , isDuplicate = False
@@ -152,15 +168,28 @@ type alias Flags =
 
 init : Global.Model -> Flags -> ( Model, Cmd Msg, Cmd Global.Msg )
 init global flags =
+    let
+        query =
+            queryParser global.url
+    in
     case global.session.user of
         LoggedOut ->
-            ( initModel global.session.user
+            ( initModel global.session.user Nothing
             , send (Navigate "/")
             , Cmd.none
             )
 
         LoggedIn uctx ->
-            ( initModel global.session.user, Cmd.none, Cmd.none )
+            ( initModel global.session.user global.session.newOrgaData
+                |> (\m ->
+                        { m
+                            | step =
+                                Dict.get "step" query |> withDefault [] |> List.head |> withDefault "" |> stepDecoder
+                        }
+                   )
+            , Cmd.none
+            , Cmd.none
+            )
 
 
 
@@ -171,6 +200,7 @@ init global flags =
 
 type Msg
     = Submit (Time.Posix -> Msg) -- Get Current Time
+    | SaveData
     | PushOrga OrgaForm
     | OnChangeStep OrgaStep
     | OnSelectVisibility NodeVisibility.NodeVisibility
@@ -194,11 +224,14 @@ update global message model =
             global.session.apis
     in
     case message of
-        PushOrga form ->
-            ( model, createOrga apis form.post OrgaAck, Cmd.none )
-
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
+
+        SaveData ->
+            ( model, Cmd.none, send (UpdateSessionNewOrgaData (Just model.form)) )
+
+        PushOrga form ->
+            ( model, createOrga apis form.post OrgaAck, Cmd.none )
 
         SubmitOrga form time ->
             ( { model | form = model.form, result = RemoteData.Loading }
@@ -217,7 +250,7 @@ update global message model =
                 OkAuth n ->
                     ( { model | result = result, isDuplicate = False }
                     , sendSleep (Navigate (uriFromNameid OverviewBaseUri n.nameid)) 500
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrgs Nothing) ]
+                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrgs Nothing), send (UpdateSessionNewOrgaData Nothing) ]
                     )
 
                 DuplicateErr ->
@@ -233,7 +266,14 @@ update global message model =
                     ( { model | result = result, isDuplicate = False }, Cmd.none, Cmd.none )
 
         OnChangeStep step ->
-            ( { model | step = step }, Cmd.none, Cmd.none )
+            let
+                url =
+                    Url.toString global.url ++ "?" ++ queryBuilder [ ( "step", stepEncoder step ) ]
+            in
+            ( { model | step = step }
+            , Cmd.batch [ send SaveData, sendSleep (Navigate url) 333 ]
+            , Cmd.none
+            )
 
         OnSelectVisibility visibility ->
             ( model
@@ -475,6 +515,7 @@ viewOrgaValidate model =
                     , placeholder (upH T.name)
                     , value name
                     , onInput <| ChangeNodePost "name"
+                    , onBlur SaveData
                     , required True
                     ]
                     []
@@ -503,6 +544,7 @@ viewOrgaValidate model =
                     , placeholder (upH T.aboutOpt)
                     , value about
                     , onInput <| ChangeNodePost "about"
+                    , onBlur SaveData
                     ]
                     []
                 ]
@@ -518,13 +560,14 @@ viewOrgaValidate model =
                     , placeholder (upH T.purpose)
                     , value purpose
                     , onInput <| ChangeNodePost "purpose"
+                    , onBlur SaveData
                     , required True
                     ]
                     []
                 ]
             , p [ class "help" ] [ textH T.purposeHelpOrga ]
             ]
-        , div [ class "field pt-3" ]
+        , div [ class "field pt-3 clearfix" ]
             [ div [ class "is-pulled-left" ]
                 [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
                     [ A.icon0 "icon-chevron-left", textH T.back ]

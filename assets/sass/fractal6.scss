@@ -109,6 +109,10 @@ hr {
     }
 }
 
+.clearfix {
+    display: flow-root;
+}
+
 .mx-mobile {
     @include touch {
         margin-left: 25px !important;
@@ -2866,11 +2870,11 @@ input:checked + section.acc .acc-title:before {
  */
 
 
-*:focus {
-  /* no outline for non-keyboard-inputs elements (other see *:focus:not(:focus-visible) */
-  outline: none !important;
-}
-button::-moz-focus-inner { // remove outline inside button !
-    border: 0 !important;
-}
+//*:focus {
+//  /* no outline for non-keyboard-inputs elements (other see *:focus:not(:focus-visible) */
+//  outline: none !important;
+//}
+//button::-moz-focus-inner { // remove outline inside button !
+//    border: 0 !important;
+//}
 

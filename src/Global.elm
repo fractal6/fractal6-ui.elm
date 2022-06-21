@@ -121,6 +121,7 @@ type Msg
     | UpdateSessionScreen Screen
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
+    | UpdateSessionNewOrgaData (Maybe OrgaForm)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -401,6 +402,13 @@ update msg model =
                     model.session
             in
             ( { model | session = { session | labelsPanel = data } }, Cmd.none )
+
+        UpdateSessionNewOrgaData data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | newOrgaData = data } }, Cmd.none )
 
 
 
