@@ -2249,13 +2249,17 @@ viewBlobToolBar u t b model =
                         div [ class "field has-addons" ]
                             [ div [ class "has-text-warning text-status" ]
                                 [ textH T.revisionNotPublished ]
-                            , div
-                                [ class "button is-small is-success has-text-weight-semibold"
-                                , onClick (Submit <| PushBlob b.id)
-                                ]
-                                [ A.icon1 "icon-share" (upH T.publish)
-                                , loadingSpin isLoading
-                                ]
+                            , if model.isTensionAdmin then
+                                div
+                                    [ class "button is-small is-success has-text-weight-semibold"
+                                    , onClick (Submit <| PushBlob b.id)
+                                    ]
+                                    [ A.icon1 "icon-share" (upH T.publish)
+                                    , loadingSpin isLoading
+                                    ]
+
+                              else
+                                text ""
                             ]
                 ]
             ]
@@ -2570,13 +2574,17 @@ viewSidePane u t model =
                                             div [ class "field has-addons" ]
                                                 [ div [ class "has-text-warning text-status" ]
                                                     [ textH T.revisionNotPublished ]
-                                                , div
-                                                    [ class "button is-small is-success has-text-weight-semibold"
-                                                    , onClick (Submit <| PushBlob blob.id)
-                                                    ]
-                                                    [ A.icon1 "icon-share" (upH T.publish)
-                                                    , loadingSpin isLoading
-                                                    ]
+                                                , if isAdmin then
+                                                    div
+                                                        [ class "button is-small is-success has-text-weight-semibold"
+                                                        , onClick (Submit <| PushBlob blob.id)
+                                                        ]
+                                                        [ A.icon1 "icon-share" (upH T.publish)
+                                                        , loadingSpin isLoading
+                                                        ]
+
+                                                  else
+                                                    text ""
                                                 ]
                                     ]
                                )
