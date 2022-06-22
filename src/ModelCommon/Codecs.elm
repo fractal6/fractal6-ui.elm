@@ -244,7 +244,7 @@ uriFromNameid loc nameid =
         MandateBaseUri _ _ ->
             toString loc
 
-        --@TODO / REMOVE
+        --@TODO / REMOVE when TensionBaseUrl is correctly redicrected
         TensionBaseUri_ ->
             uriFromNameid TensionsBaseUri nameid
 

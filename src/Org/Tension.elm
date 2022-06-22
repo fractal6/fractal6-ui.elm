@@ -2353,8 +2353,8 @@ viewSidePane u t model =
                     Nothing
 
         hasRole =
-            case t.blobs of
-                Just [ b ] ->
+            Maybe.map
+                (\b ->
                     let
                         fs =
                             b.node
@@ -2362,9 +2362,9 @@ viewSidePane u t model =
                                 |> withDefault Nothing
                     in
                     Maybe.map (\uctx -> Just uctx.username == fs) uctx_m |> withDefault False
-
-                _ ->
-                    False
+                )
+                blob_m
+                |> withDefault False
 
         --
         isAdmin =
@@ -2473,12 +2473,9 @@ viewSidePane u t model =
             ]
 
         -- Document
-        , case tc_m of
-            -- Hide if there is no document
-            Nothing ->
-                text ""
-
-            Just tc ->
+        , Maybe.map2
+            (\blob tc ->
+                -- Hide if there is no document
                 let
                     domid =
                         "actionPanelContent"
@@ -2494,7 +2491,7 @@ viewSidePane u t model =
                                     [ h2
                                         [ class "subtitle is-h"
                                         , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                                        , Maybe.map (\b -> onClick (OpenActionPanel domid b)) blob_m |> withDefault (onClick NoMsg)
+                                        , onClick (OpenActionPanel domid blob)
                                         ]
                                         [ textH T.document
                                         , if ActionPanel.isOpen_ model.actionPanel then
@@ -2556,7 +2553,38 @@ viewSidePane u t model =
                                  else
                                     text ""
                                ]
+                            ++ (if model.activeTab == Document then
+                                    []
+
+                                else
+                                    [ case blob.pushedFlag of
+                                        Just flag ->
+                                            div [ class "has-text-success text-status" ]
+                                                [ textH (T.published ++ " " ++ formatDate model.now flag) ]
+
+                                        Nothing ->
+                                            let
+                                                isLoading =
+                                                    model.publish_result == LoadingSlowly
+                                            in
+                                            div [ class "field has-addons" ]
+                                                [ div [ class "has-text-warning text-status" ]
+                                                    [ textH T.revisionNotPublished ]
+                                                , div
+                                                    [ class "button is-small is-success has-text-weight-semibold"
+                                                    , onClick (Submit <| PushBlob blob.id)
+                                                    ]
+                                                    [ A.icon1 "icon-share" (upH T.publish)
+                                                    , loadingSpin isLoading
+                                                    ]
+                                                ]
+                                    ]
+                               )
                     ]
+            )
+            blob_m
+            tc_m
+            |> withDefault (text "")
         , -- Subscriptions
           case u of
             LoggedIn uctx ->
