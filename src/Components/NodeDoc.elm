@@ -182,7 +182,7 @@ setTargetShort nameid data =
 
         newForm =
             -- only nameid is used
-            { f | target = { nameid = nameid, name = "" } }
+            { f | target = initPNode |> (\x -> { x | nameid = nameid }) }
     in
     { data | form = newForm }
 

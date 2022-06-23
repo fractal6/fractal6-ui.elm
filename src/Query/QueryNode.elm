@@ -21,7 +21,6 @@ module Query.QueryNode exposing
     , notifEventPayload
     , pNodePayload
     , queryFocusNode
-    , queryGraphPack
     , queryJournal
     , queryLabels
     , queryLabelsDown
@@ -31,6 +30,7 @@ module Query.QueryNode exposing
     , queryNodeExt
     , queryNodesSub
     , queryOrgaNode
+    , queryOrgaTree
     , queryPublicOrga
     , queryRoles
     , roleFullPayload
@@ -285,7 +285,7 @@ nodeOrgaDecoder data =
         |> withDefault Nothing
 
 
-queryGraphPack url rootid msg =
+queryOrgaTree url rootid msg =
     makeGQLQuery url
         (Query.queryNode
             (nodeOrgaFilter rootid)
@@ -376,9 +376,10 @@ userPayload =
 
 pNodePayload : SelectionSet PNode Fractal.Object.Node
 pNodePayload =
-    SelectionSet.map2 PNode
-        Fractal.Object.Node.name
-        Fractal.Object.Node.nameid
+    SelectionSet.succeed PNode
+        |> with Fractal.Object.Node.name
+        |> with Fractal.Object.Node.nameid
+        |> hardcoded Nothing
 
 
 tidPayload : SelectionSet IdPayload Fractal.Object.Tension
@@ -515,6 +516,7 @@ type alias LocalRootNode =
     , name : String
     , nameid : String
     , userCanJoin : Maybe Bool
+    , source : Maybe BlobId
     }
 
 
@@ -533,27 +535,23 @@ lgDecoder data =
             (\n ->
                 case n.parent of
                     Just p ->
-                        let
-                            focus =
-                                ln2fn n
-
-                            path =
-                                [ PNode p.name p.nameid, PNode n.name n.nameid ]
-                        in
                         if p.isRoot then
                             { root = RNode p.name p.nameid p.userCanJoin |> Just
-                            , path = path
-                            , focus = focus
+                            , path = [ shrinkNode p, shrinkNode n ]
+                            , focus = ln2fn n
                             }
 
                         else
                             -- partial path
-                            { root = Nothing, path = path, focus = focus }
+                            { root = Nothing
+                            , path = [ shrinkNode p, shrinkNode n ]
+                            , focus = ln2fn n
+                            }
 
                     Nothing ->
                         -- Assume Root node
                         { root = RNode n.name n.nameid n.userCanJoin |> Just
-                        , path = [ PNode n.name n.nameid ]
+                        , path = [ shrinkNode n ]
                         , focus = ln2fn n
                         }
             )
@@ -589,6 +587,7 @@ lg2Payload =
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with Fractal.Object.Node.userCanJoin
+        |> with (Fractal.Object.Node.source identity blobIdPayload)
 
 
 nArchivedFilter : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments

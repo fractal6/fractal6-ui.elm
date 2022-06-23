@@ -60,7 +60,6 @@ import ModelCommon
         , getCircles
         , getNode
         , getParentFragmentFromRole
-        , getTargets
         , initTensionForm
         , isSelfContract
         , localGraphFromOrga
@@ -1220,17 +1219,17 @@ viewTensionTabs tab targ =
                     [ A.icon1 "icon-exchange" "Tension" ]
                 ]
             , if type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
-                        [ A.icon1 "icon-leaf" "Role" ]
+                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
+                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
+                        [ A.icon1 "icon-git-branch" "Circle" ]
                     ]
 
               else
                 text ""
             , if type_ == NodeType.Circle then
-                li [ classList [ ( "is-active", tab == NewCircleTab ) ] ]
-                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new circle.", onClickPD (OnSwitchTab NewCircleTab), target "_blank" ]
-                        [ A.icon1 "icon-git-branch" "Circle" ]
+                li [ classList [ ( "is-active", tab == NewRoleTab ) ] ]
+                    [ a [ class "tootltip has-tooltip-bottom has-tooltip-arrow", attribute "data-tooltip" "Create or propose a new role.", onClickPD (OnSwitchTab NewRoleTab), target "_blank" ]
+                        [ A.icon1 "icon-leaf" "Role" ]
                     ]
 
               else
@@ -1329,10 +1328,13 @@ viewRecipients model =
                                 ]
                                 [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
                         )
-                        (getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
-                            |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
-                            |> List.sortWith sortNode
-                        )
+                        []
+
+                -- @deprectated
+                --(getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
+                --    |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
+                --    |> List.sortWith sortNode
+                --)
                 ]
             ]
         ]
@@ -1701,23 +1703,23 @@ viewRoleExt model =
                             l
                                 ++ [ div [ class "card-content", attribute "style" (ternary (List.length l == 0) "margin-top: -1rem;" "") ]
                                         [ if List.length l == 0 then
-                                            span [ class "content is-small" ] [ text "No template role yet.", br [ class "mb-4" ] [], text "You can " ]
+                                            span [ class "content is-small" ] [ text "No template role yet.", br [ class "mb-4" ] [], text "You can create a " ]
 
                                           else
                                             text ""
                                         , span
                                             [ class "button is-small has-text-link"
-                                            , title "A template role is a role that you can reuse in your organisation."
+                                            , title "A template role is a generic role that you can reuse in your organisation."
                                             , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid ++ "?m=roles&a=new") "")
                                             ]
-                                            [ textH "add a new template role" ]
-                                        , span [ class "content is-small px-2" ] [ text "or" ]
+                                            [ textH "template role" ]
+                                        , span [ class "content is-small px-2" ] [ text "or make an" ]
                                         , span
                                             [ class "button is-small has-text-link"
                                             , title "An ad-hoc role is a role that you create from scratch."
                                             , onClick (OnChangeNodeStep NodeValidateStep)
                                             ]
-                                            [ textH "create an ad-hoc role" ]
+                                            [ textH "Ad-hoc role" ]
                                         ]
                                    ]
                        )

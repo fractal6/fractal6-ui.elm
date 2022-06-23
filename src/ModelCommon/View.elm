@@ -855,9 +855,9 @@ auth2icon tc =
             T.notImplemented
 
 
-action2icon : TensionCharac -> String
-action2icon tc =
-    case tc.doc_type of
+action2icon : { x | doc_type : DocType } -> String
+action2icon x =
+    case x.doc_type of
         NODE nt ->
             case nt of
                 NodeType.Circle ->

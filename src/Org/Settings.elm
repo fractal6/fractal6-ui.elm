@@ -493,11 +493,11 @@ update global message model =
         ChangeMenuFocus menu ->
             case menu of
                 EditMenu ->
-                    case getIdsFromPath model.path_data of
-                        Just ( nid, tid ) ->
-                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nid, param2 = tid }) ++ "?v=edit")), Cmd.none )
+                    case model.path_data of
+                        Success lg ->
+                            ( model, send (Navigate (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid lg.focus.nameid, param2 = getSourceTid lg.focus }) ++ "?v=edit")), Cmd.none )
 
-                        Nothing ->
+                        _ ->
                             ( model, Cmd.none, Cmd.none )
 
                 _ ->

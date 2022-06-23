@@ -6,7 +6,6 @@ import Codecs
         , WindowPos
         , labelDecoder
         , labelsEncoder
-        , localGraphDecoder
         , modalDataDecoder
         , nodeDecoder
         , nodeEncoder
@@ -27,7 +26,6 @@ import ModelCommon.Codecs exposing (nearestCircleid)
 import ModelSchema
     exposing
         ( Label
-        , LocalGraph
         , Node
         , NodesDict
         , User

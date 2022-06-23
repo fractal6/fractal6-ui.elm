@@ -70,7 +70,9 @@ type alias Node =
     , visibility : NodeVisibility.NodeVisibility
     , mode : NodeMode.NodeMode
     , source : Maybe BlobId
-    , userCanJoin : Maybe Bool -- Only here tp build LocalGraph from OrgaData
+
+    -- Only here to build LocalGraph from OrgaData
+    , userCanJoin : Maybe Bool
     }
 
 
@@ -108,6 +110,13 @@ type alias LocalGraph =
     }
 
 
+type alias RNode =
+    { name : String
+    , nameid : String
+    , userCanJoin : Maybe Bool
+    }
+
+
 type alias FocusNode =
     { name : String
     , nameid : String
@@ -119,17 +128,33 @@ type alias FocusNode =
     }
 
 
-type alias RNode =
-    { name : String
-    , nameid : String
-    , userCanJoin : Maybe Bool
-    }
-
-
+{-| From root to focus node (both included)
+-}
 type alias PNode =
     { name : String
     , nameid : String
+
+    -- optional
+    , source : Maybe BlobId
     }
+
+
+type alias PNode_ n =
+    { n
+        | name : String
+        , nameid : String
+        , source : Maybe BlobId
+    }
+
+
+getSourceTid : PNode_ n -> String
+getSourceTid n =
+    case n.source of
+        Just blob ->
+            blob.tension.id
+
+        Nothing ->
+            ""
 
 
 type alias EmitterOrReceiver =
@@ -508,10 +533,11 @@ initPNode =
     shrinkNode initNode
 
 
+shrinkNode : PNode_ n -> PNode
 shrinkNode n =
-    --shrinkNode : n -> PNode
     { name = n.name
     , nameid = n.nameid
+    , source = n.source
     }
 
 

@@ -131,12 +131,13 @@ urlToFractalRoute url =
                     O_Dynamic_Dynamic_Dynamic _ ->
                         Just OverviewBaseUri
 
+                    T_Dynamic a ->
+                        Just TensionsBaseUri
+
                     T_Dynamic_Dynamic a ->
-                        --Just (TensionBaseUri a.param1 a.param2)
                         Just TensionsBaseUri
 
                     T_Dynamic_Dynamic_Dynamic a ->
-                        --Just (MandateBaseUri a.param1 a.param2)
                         Just TensionsBaseUri
 
                     M_Dynamic _ ->
@@ -158,10 +159,12 @@ urlToFractalRoute url =
                         Just SettingsBaseUri
 
                     Tension_Dynamic_Dynamic a ->
-                        Just (TensionBaseUri a.param1 a.param2)
+                        --Just (TensionBaseUri a.param1 a.param2)
+                        Just TensionsBaseUri
 
                     Tension_Dynamic_Dynamic_Action a ->
-                        Just (MandateBaseUri a.param1 a.param2)
+                        --Just (MandateBaseUri a.param1 a.param2)
+                        Just TensionsBaseUri
 
                     Tension_Dynamic_Dynamic_Contract _ ->
                         Just TensionsBaseUri

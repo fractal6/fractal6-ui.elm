@@ -218,39 +218,6 @@ nodeIdDecoder =
     JD.map NodeId (JD.field "nameid" JD.string)
 
 
-localGraphDecoder : JD.Decoder LocalGraph
-localGraphDecoder =
-    -- @Debug: manually update :
-    -- * the localGraph type in nodeFocusedFromJs port
-    -- * the nodeDecoder
-    -- * the nodeEncoder
-    JD.map3 LocalGraph
-        (JD.maybe <|
-            JD.field "root" <|
-                JD.map3 RNode
-                    (JD.field "name" JD.string)
-                    (JD.field "nameid" JD.string)
-                    (JD.maybe (JD.field "userCanJoin" JD.bool))
-        )
-        (JD.field "path"
-            (JD.list <|
-                JD.map2 PNode
-                    (JD.field "name" JD.string)
-                    (JD.field "nameid" JD.string)
-            )
-        )
-        (JD.field "focus" <|
-            JD.map7 FocusNode
-                (JD.field "name" JD.string)
-                (JD.field "nameid" JD.string)
-                (JD.field "type_" NodeType.decoder)
-                (JD.field "visibility" NodeVisibility.decoder)
-                (JD.field "mode" NodeMode.decoder)
-                (JD.field "children" (JD.list emitterOrReceiverDecoder))
-                (JD.maybe (JD.field "source" blobIdDecoder))
-        )
-
-
 emitterOrReceiverDecoder : JD.Decoder EmitterOrReceiver
 emitterOrReceiverDecoder =
     JD.map3 EmitterOrReceiver

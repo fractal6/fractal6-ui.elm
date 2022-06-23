@@ -91,6 +91,16 @@ i {
     &.icon-sm {
         font-size: 0.875rem;
     }
+    &.icon-1x {
+        font-size: 1rem;
+        vertical-align: -.1rem;
+    }
+
+    &.icon-bg {
+        font-size: 1.12rem;
+        // prtotect the navbar height
+        line-height: 0;
+    }
 	&.icon-lg {
 	/* makes the font 33% larger relative to the icon container */
 		font-size: (4rem / 3);
@@ -98,18 +108,8 @@ i {
 		vertical-align: -.0667rem;
 	}
 
-    &.icon-bg {
-        font-size: 1.12rem;
-        // prtotect the navbar height
-        line-height: 0;
-    }
     &.icon-1half {
         font-size: 1.5rem;
-    }
-
-    &.icon-1x {
-        font-size: 1rem;
-        vertical-align: -.1rem;
     }
 
     &.icon-2x {

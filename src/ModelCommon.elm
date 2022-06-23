@@ -473,21 +473,6 @@ isFreshOrga data =
         == 1
 
 
-getTargets : GqlData LocalGraph -> List RoleType.RoleType -> List PNode
-getTargets lg exclude_role_types =
-    case lg of
-        Success path ->
-            -- Exclude the roles givens in the list
-            let
-                exclude_role_types_ =
-                    List.map (\x -> Just x) exclude_role_types
-            in
-            path.path ++ (path.focus.children |> List.filter (\x -> not (List.member x.role_type exclude_role_types_)) |> List.map shrinkNode)
-
-        _ ->
-            []
-
-
 getCircles : GqlData LocalGraph -> List PNode
 getCircles lg =
     case lg of
@@ -569,21 +554,6 @@ getChildren nid odata =
         |> withDefault []
 
 
-getIdsFromPath : GqlData LocalGraph -> Maybe ( String, String )
-getIdsFromPath data =
-    case data of
-        Success d ->
-            case d.focus.source of
-                Just blob ->
-                    Just ( d.focus.nameid, blob.tension.id )
-
-                Nothing ->
-                    Nothing
-
-        _ ->
-            Nothing
-
-
 getParentFragmentFromRole role =
     let
         l =
@@ -647,6 +617,7 @@ localGraphFromOrga nameid orga_d =
                                 , type_ = n.type_
                                 , visibility = n.visibility
                                 , mode = n.mode
+                                , source = n.source
                                 , children =
                                     DE.filterMap
                                         (\_ c ->
@@ -663,7 +634,6 @@ localGraphFromOrga nameid orga_d =
                                         )
                                         orga
                                         |> Dict.values
-                                , source = n.source
                                 }
                             )
 
@@ -674,6 +644,7 @@ localGraphFromOrga nameid orga_d =
                             (\n ->
                                 { name = n.name
                                 , nameid = n.nameid
+                                , source = n.source
                                 }
                                     :: (case n.parent of
                                             Just p ->

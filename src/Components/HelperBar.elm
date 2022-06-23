@@ -13,10 +13,10 @@ import Html.Attributes exposing (attribute, class, classList, disabled, href, id
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserState(..), getIdsFromPath, getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
-import ModelCommon.View exposing (roleColor, viewRole)
-import ModelSchema exposing (LocalGraph, UserRole)
+import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
+import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
+import ModelCommon.View exposing (action2icon, roleColor, viewRole)
+import ModelSchema exposing (LocalGraph, UserRole, getSourceTid)
 import Ports
 import Text as T exposing (textH, textT)
 
@@ -83,8 +83,7 @@ viewPathLevel op =
                     ( "", False )
     in
     nav [ class "level" ]
-        [ div [ class "level-left" ]
-            [ viewPath op.baseUri op.uriQuery op.path_data ]
+        [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data ]
         , div [ class "level-right mt-0" ]
             [ A.burger "rolesMenu"
             , div [ id "rolesMenu", class "navbar-menu" ]
@@ -187,71 +186,40 @@ viewPath baseUri uriQuery maybePath =
         [ class "breadcrumb has-arrow-separato"
         , attribute "aria-label" "breadcrumbs"
         ]
-        [ A.icon0 "icon-layers icon-lg"
-        , case maybePath of
+    <|
+        --A.icon0 "icon-layers icon-lg" ,
+        case maybePath of
             Just g ->
                 let
                     q =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
-                g.path
-                    |> List.indexedMap
-                        (\i p ->
-                            if i < (List.length g.path - 1) then
-                                li []
-                                    [ a [ href (uriFromNameid baseUri p.nameid ++ q) ]
-                                        [ div [] [ text p.name ] ]
-                                    ]
+                [ A.icon0 ("button-light is-link has-text-weight-bold " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
+                    ++ [ g.path
+                            |> List.indexedMap
+                                (\i p ->
+                                    if i < (List.length g.path - 1) then
+                                        li []
+                                            [ a [ href (uriFromNameid baseUri p.nameid ++ q) ]
+                                                [ div [] [ text p.name ] ]
+                                            ]
 
-                            else
-                                li []
-                                    [ a [ class "has-text-weight-semibold", href (uriFromNameid baseUri p.nameid ++ q) ] [ text p.name ]
-                                    , if g.focus.type_ == NodeType.Circle && List.length (List.filter (\c -> nid2type c.nameid == NodeType.Circle) g.focus.children) > 0 then
-                                        viewTree baseUri uriQuery g
-
-                                      else
-                                        text ""
-                                    , a
-                                        [ class "stealth-link tag is-rounded ml-1 has-border"
-                                        , attribute "style" "weight: 500 !important;padding: 10px 10px;"
-                                        , case getIdsFromPath (Success g) of
-                                            Just ( nid, tid ) ->
-                                                href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nid, param2 = tid }))
-
-                                            Nothing ->
-                                                href "#"
-                                        ]
-                                        [ text (NodeVisibility.toString g.focus.visibility) ]
-                                    ]
-                        )
-                    |> ul [ attribute "style" "display: inline-flex;" ]
+                                    else
+                                        li []
+                                            [ a [ class "has-text-weight-semibold", href (uriFromNameid baseUri p.nameid ++ q) ] [ text p.name ]
+                                            , a
+                                                [ class "stealth-link tag is-rounded ml-1 has-border"
+                                                , attribute "style" "weight: 500 !important;padding: 10px 10px;"
+                                                , href (toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid p.nameid, param2 = getSourceTid p }))
+                                                ]
+                                                [ text (NodeVisibility.toString g.focus.visibility) ]
+                                            ]
+                                )
+                            |> ul [ attribute "style" "display: inline-flex;" ]
+                       ]
 
             Nothing ->
-                div [ class "ph-line is-1" ] []
-        ]
-
-
-viewTree : FractalBaseRoute -> Maybe String -> LocalGraph -> Html msg
-viewTree baseUri uriQuery g =
-    let
-        q =
-            uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
-    in
-    div [ class "dropdown" ]
-        [ div [ class "dropdown-trigger px-2 button-light" ]
-            [ div [ attribute "aria-controls" "tree-menu" ] [ A.icon "icon-chevron-down1" ]
-            ]
-        , div [ id "tree-menu", class "dropdown-menu", attribute "role" "menu" ]
-            [ div [ class "dropdown-content" ] <|
-                (g.focus.children
-                    |> List.filter (\c -> nid2type c.nameid == NodeType.Circle)
-                    |> List.map
-                        (\c ->
-                            a [ class "dropdown-item pl-2", href (uriFromNameid baseUri c.nameid ++ q) ] [ text c.name ]
-                        )
-                )
-            ]
-        ]
+                [ div [ class "ph-line is-1" ] [] ]
 
 
 joinButton : Html msg

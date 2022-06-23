@@ -458,10 +458,26 @@ export const GraphPack = {
         }
 
         // Draw node
-        ctx.beginPath();
-        ctx.fillStyle = circleColor;
-        ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon, 0, 2 * Math.PI, true);
-        ctx.fill();
+        switch (node.data.type_) {
+            case NodeType.Role:
+                //var r = node.ctx.rayon*0.75;
+                //var l = node.ctx.rayon/20;
+                //ctx.beginPath();
+                //ctx.fillStyle = circleColor;
+                //ctx.ellipse(node.ctx.centerX, node.ctx.centerY, r+l, r-l, 0, 0, Math.PI * 2, false);
+                //ctx.ellipse(node.ctx.centerX, node.ctx.centerY, r-l, r+l, 0, 0, Math.PI * 2, false);
+                //ctx.fill();
+                ctx.beginPath();
+                ctx.fillStyle = circleColor;
+                ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon, 0, 2 * Math.PI, true);
+                ctx.fill();
+                break;
+            default:
+                ctx.beginPath();
+                ctx.fillStyle = circleColor;
+                ctx.arc(node.ctx.centerX, node.ctx.centerY, node.ctx.rayon, 0, 2 * Math.PI, true);
+                ctx.fill();
+        }
 
         // Draw owned Role
         if ((!isHidden && this.uctx && node.data.first_link) && this.uctx.username == node.data.first_link.username) {
@@ -587,14 +603,21 @@ export const GraphPack = {
             ctx2d.beginPath();
             ctx2d.font = fontSize + "px " + this.fontstyleCircle;
             ctx2d.textAlign = "center";
+            // Color
             if (node.data.color) {
                 ctx2d.fillStyle = this.colorToTextColor(node.data.color);
             } else {
                 ctx2d.fillStyle = this.nameColor + opac;
             }
             ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY);
+            ctx2d.fill();
+            // tips
+            ctx2d.fillStyle = this.nameColor + "99";
             if (node.data.role_type == RoleType.Bot) {
-                ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY+node.ctx.rayon*0.7);
+                //ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.5);
+                ctx2d.fillText('\ue962', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
+            } else if (node.data.type_ == NodeType.Role) {
+                ctx2d.fillText('\uf06c', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.45);
             }
             ctx2d.fill();
 

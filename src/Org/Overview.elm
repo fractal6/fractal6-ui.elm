@@ -74,7 +74,7 @@ import ModelCommon.View exposing (mediaTension, viewUsernameLink)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
 import Ports
-import Query.QueryNode exposing (fetchNode, fetchNodeData, queryGraphPack, queryJournal, queryNodesSub)
+import Query.QueryNode exposing (fetchNode, fetchNodeData, queryJournal, queryNodesSub, queryOrgaTree)
 import Query.QueryTension exposing (queryAllTension)
 import RemoteData exposing (RemoteData)
 import Session exposing (GlobalCmd(..), NodesQuickSearch)
@@ -399,7 +399,7 @@ update global message model =
     in
     case message of
         LoadOrga ->
-            ( model, queryGraphPack apis model.node_focus.rootnameid GotOrga, Cmd.none )
+            ( model, queryOrgaTree apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
         PassedSlowLoadTreshold ->
             let
@@ -991,7 +991,7 @@ view_ global model =
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
-            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.view { focus = model.node_focus, tid = tid, actionView = Nothing })) Nothing
+            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.viewToolbar { focus = model.node_focus, tid = tid, actionView = Nothing })) Nothing
             , receiver = nearestCircleid model.node_focus.nameid
             }
 
@@ -1082,9 +1082,6 @@ viewSearchBar us model =
                                     , onClick <| NewTensionMsg (NTF.OnOpen (FromPath p))
                                     ]
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
-
-                                    --, i [ class "icon-plus1 custom-style" ] []
-                                    --, i [ class "icon-send custom-style" ] []
                                     , i [ class "px-1" ] []
                                     ]
                                 , viewActionPanel "actionPanelContentSearchBar" us node model.orga_data model.actionPanel
@@ -1280,19 +1277,20 @@ viewCanvas us model =
                                         [ div [ class "is-hbar" ] []
                                         , div
                                             [ class "button is-success"
-                                            , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                                            , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
                                             ]
-                                            [ textH "Invite member" ]
+                                            [ textH "Add sub-circle" ]
                                         , div
                                             [ class "button is-success"
                                             , onClick (NewTensionMsg <| NTF.OnOpenRole p)
                                             ]
                                             [ textH "Add role" ]
-                                        , div
-                                            [ class "button is-success"
-                                            , onClick (NewTensionMsg <| NTF.OnOpenCircle p)
-                                            ]
-                                            [ textH "Add sub-circle" ]
+
+                                        --, div
+                                        --    [ class "button is-success"
+                                        --    , onClick (JoinOrgaMsg (JoinOrga.OnOpen model.node_focus.rootnameid JoinOrga.InviteOne))
+                                        --    ]
+                                        --    [ textH "Invite member" ]
                                         ]
 
                                     else
@@ -1389,8 +1387,6 @@ viewCanvas us model =
             ]
             [ span [ id "doTension" ]
                 [ span [] [ text "void" ] -- Node name from JS
-
-                --, i [ class "icon-plus1 custom-style" ] []
                 , i [ class "icon-plus custom-style" ] []
                 ]
             , span [ id "doAction" ]

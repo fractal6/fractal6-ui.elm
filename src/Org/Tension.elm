@@ -107,7 +107,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.PatchUser exposing (markAsRead, toggleTensionSubscription)
-import Query.QueryNode exposing (fetchNode, queryFocusNode, queryGraphPack, queryLocalGraph)
+import Query.QueryNode exposing (fetchNode, queryFocusNode, queryLocalGraph, queryOrgaTree)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.QueryUser exposing (getIsSubscribe)
 import RemoteData exposing (RemoteData)
@@ -550,7 +550,7 @@ update global message model =
     in
     case message of
         LoadOrga ->
-            ( model, queryGraphPack apis model.node_focus.rootnameid GotOrga, Cmd.none )
+            ( model, queryOrgaTree apis model.node_focus.rootnameid GotOrga, Cmd.none )
 
         LoadTensionHead ->
             let
@@ -2231,37 +2231,25 @@ viewEventMoved now event =
 
 viewBlobToolBar : UserState -> TensionHead -> Blob -> Model -> Html Msg
 viewBlobToolBar u t b model =
+    let
+        op =
+            { focus = model.node_focus
+            , tid = t.id
+            , actionView = Just model.actionView
+            , blob = b
+            , isAdmin = model.isTensionAdmin
+            , now = model.now
+            , publish_result = model.publish_result
+            , onSubmit = Submit
+            , onPushBlob = PushBlob
+            }
+    in
     div [ class "blobToolBar" ]
         [ div [ class "level" ]
             [ div [ class "level-left" ]
-                [ DocToolBar.view { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
+                [ DocToolBar.viewToolbar { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
             , div [ class "level-right" ]
-                [ case b.pushedFlag of
-                    Just flag ->
-                        div [ class "has-text-success text-status" ]
-                            [ textH (T.published ++ " " ++ formatDate model.now flag) ]
-
-                    Nothing ->
-                        let
-                            isLoading =
-                                model.publish_result == LoadingSlowly
-                        in
-                        div [ class "field has-addons" ]
-                            [ div [ class "has-text-warning text-status" ]
-                                [ textH T.revisionNotPublished ]
-                            , if model.isTensionAdmin then
-                                div
-                                    [ class "button is-small is-success has-text-weight-semibold"
-                                    , onClick (Submit <| PushBlob b.id)
-                                    ]
-                                    [ A.icon1 "icon-share" (upH T.publish)
-                                    , loadingSpin isLoading
-                                    ]
-
-                              else
-                                text ""
-                            ]
-                ]
+                [ DocToolBar.viewStatus op ]
             ]
         , case model.publish_result of
             Failure err ->
@@ -2488,106 +2476,97 @@ viewSidePane u t model =
                         blob_m |> Maybe.map .node |> withDefault Nothing |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
                 in
                 div [ class "media" ]
-                    [ div [ class "media-content" ] <|
-                        (case u of
-                            LoggedIn _ ->
-                                [ div [ id domid ]
-                                    [ h2
-                                        [ class "subtitle is-h"
-                                        , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                                        , onClick (OpenActionPanel domid blob)
-                                        ]
-                                        [ textH T.document
-                                        , if ActionPanel.isOpen_ model.actionPanel then
-                                            A.icon "icon-x is-pulled-right"
+                    [ div [ class "media-content" ]
+                        [ div
+                            [ class "media-content"
+                            , classList [ ( "is-w", hasBlobRight || hasRole ) ]
+                            , onClick (OpenActionPanel domid blob)
+                            ]
+                          <|
+                            (case u of
+                                LoggedIn _ ->
+                                    [ div [ id domid ]
+                                        [ h2
+                                            [ class "subtitle is-h" ]
+                                            [ textH T.document
+                                            , if ActionPanel.isOpen_ model.actionPanel then
+                                                A.icon "icon-x is-pulled-right"
 
-                                          else if hasBlobRight || hasRole then
-                                            A.icon "icon-settings is-pulled-right"
+                                              else if hasBlobRight || hasRole then
+                                                A.icon "icon-settings is-pulled-right"
+
+                                              else
+                                                text ""
+                                            ]
+                                        , if hasBlobRight || hasRole then
+                                            let
+                                                panelData =
+                                                    { tc = tc
+                                                    , isAdmin = hasBlobRight
+                                                    , hasRole = hasRole
+                                                    , isRight = False
+                                                    , domid = domid
+                                                    , orga_data = model.orga_data
+                                                    }
+                                            in
+                                            ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
 
                                           else
                                             text ""
                                         ]
-                                    , if hasBlobRight || hasRole then
-                                        let
-                                            panelData =
-                                                { tc = tc
-                                                , isAdmin = hasBlobRight
-                                                , hasRole = hasRole
-                                                , isRight = False
-                                                , domid = domid
-                                                , orga_data = model.orga_data
-                                                }
-                                        in
-                                        ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg
-
-                                      else
-                                        text ""
                                     ]
-                                ]
 
-                            LoggedOut ->
-                                [ h2 [ class "subtitle" ] [ textH T.document ] ]
-                        )
-                            ++ [ div [ class "level is-mobile" ] <|
-                                    case tc.doc_type of
-                                        NODE NodeType.Circle ->
-                                            [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                                            , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                                            , span [ class "level-item" ] [ A.icon1 "icon-eye" (NodeVisibility.toString node.visibility) ]
-                                            ]
-
-                                        NODE NodeType.Role ->
-                                            [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                                            , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                                            ]
-
-                                        MD ->
-                                            [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
-                               ]
-                            ++ [ Maybe.map
-                                    (\fs ->
-                                        span [] [ span [ class "is-highlight mr-2" ] [ text "First-link:" ], viewUserFull 0 True False fs ]
-                                    )
-                                    node.first_link
-                                    |> withDefault (text "")
-                               ]
-                            ++ [ if tc.action_type == ARCHIVE then
-                                    span [ class "has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
-
-                                 else
-                                    text ""
-                               ]
-                            ++ (if model.activeTab == Document then
-                                    []
-
-                                else
-                                    [ case blob.pushedFlag of
-                                        Just flag ->
-                                            div [ class "has-text-success text-status" ]
-                                                [ textH (T.published ++ " " ++ formatDate model.now flag) ]
-
-                                        Nothing ->
-                                            let
-                                                isLoading =
-                                                    model.publish_result == LoadingSlowly
-                                            in
-                                            div [ class "field has-addons" ]
-                                                [ div [ class "has-text-warning text-status" ]
-                                                    [ textH T.revisionNotPublished ]
-                                                , if isAdmin then
-                                                    div
-                                                        [ class "button is-small is-success has-text-weight-semibold"
-                                                        , onClick (Submit <| PushBlob blob.id)
-                                                        ]
-                                                        [ A.icon1 "icon-share" (upH T.publish)
-                                                        , loadingSpin isLoading
-                                                        ]
-
-                                                  else
-                                                    text ""
+                                LoggedOut ->
+                                    [ h2 [ class "subtitle" ] [ textH T.document ] ]
+                            )
+                                ++ [ div [ class "level is-mobile" ] <|
+                                        case tc.doc_type of
+                                            NODE NodeType.Circle ->
+                                                [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                                                , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                                , span [ class "level-item" ] [ A.icon1 "icon-eye" (NodeVisibility.toString node.visibility) ]
                                                 ]
-                                    ]
-                               )
+
+                                            NODE NodeType.Role ->
+                                                [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                                                , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                                ]
+
+                                            MD ->
+                                                [ div [ class "help is-italic" ] [ text T.notImplemented ] ]
+                                   ]
+                                ++ [ Maybe.map
+                                        (\fs ->
+                                            span [] [ span [ class "is-highlight mr-2" ] [ text "First-link:" ], viewUserFull 0 True False fs ]
+                                        )
+                                        node.first_link
+                                        |> withDefault (text "")
+                                   ]
+                                ++ [ if tc.action_type == ARCHIVE then
+                                        span [ class "has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
+
+                                     else
+                                        text ""
+                                   ]
+                        , if model.activeTab == Document then
+                            text ""
+
+                          else
+                            let
+                                op =
+                                    { focus = model.node_focus
+                                    , tid = t.id
+                                    , actionView = Just model.actionView
+                                    , blob = blob
+                                    , isAdmin = model.isTensionAdmin
+                                    , now = model.now
+                                    , publish_result = model.publish_result
+                                    , onSubmit = Submit
+                                    , onPushBlob = PushBlob
+                                    }
+                            in
+                            div [ class "mt-3" ] [ DocToolBar.viewStatus op ]
+                        ]
                     ]
             )
             blob_m
