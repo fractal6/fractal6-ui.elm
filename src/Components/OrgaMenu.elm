@@ -272,7 +272,7 @@ viewOrgas hover focus orgs_result op =
             _ ->
                 []
          )
-            ++ [ div [ class "m-5 pb-5" ]
+            ++ [ div [ class "m-5 pb-6" ]
                     [ a
                         [ class "is-discrete-2"
                         , href (toHref Route.New_Orga)

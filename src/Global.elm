@@ -237,7 +237,7 @@ update msg model =
         LoggedOutUser ->
             case model.session.user of
                 LoggedIn uctx ->
-                    ( { model | session = resetSession model.flags }, Ports.removeSession uctx )
+                    ( { model | session = resetSession model.session model.flags }, Ports.removeSession uctx )
 
                 LoggedOut ->
                     ( model, Cmd.none )

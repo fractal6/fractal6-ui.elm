@@ -288,11 +288,12 @@ const actions = {
         // @TODO: make a list of item to delete instead !
         // see also static/index.js
         localStorage.removeItem(UCTX_KEY);
-        localStorage.removeItem("theme");
-        localStorage.removeItem("window_pos");
         localStorage.removeItem("orga_menu");
-        localStorage.removeItem("tree_menu");
-        // Remove classes available only if logged.
+        localStorage.removeItem("window_pos");
+        //localStorage.removeItem("theme");
+        //localStorage.removeItem("tree_menu");
+        // --
+        // Remove classes available only if logged-in.
         var $t;
         $t = document.getElementById("body");
         if ($t) {

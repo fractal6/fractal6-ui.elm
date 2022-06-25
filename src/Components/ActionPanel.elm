@@ -547,7 +547,6 @@ type Msg
     | PushAck (GqlData IdPayload)
       -- Autonomous action (components)
     | DoMove TensionHead
-    | Do (List GlobalCmd)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -557,6 +556,7 @@ type Msg
     | LogErr String
     | UpdateUctx UserCtx
     | Navigate String
+    | Do (List GlobalCmd)
       -- Components
     | MoveTensionMsg MoveTension.Msg
     | UserInputMsg UserInput.Msg
@@ -806,9 +806,6 @@ update_ apis message model =
         DoMove t ->
             ( close model, out0 [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ] )
 
-        Do gcmds ->
-            ( close model, out1 gcmds )
-
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
             ( { model | modal_confirm = ModalConfirm.open msg mess model.modal_confirm }, noOut )
@@ -835,6 +832,9 @@ update_ apis message model =
 
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
+
+        Do gcmds ->
+            ( close model, out1 gcmds )
 
         OnCloseModalSafe link onCloseTxt ->
             if canExitSafe model then

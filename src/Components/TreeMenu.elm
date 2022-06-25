@@ -7,6 +7,7 @@ import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessa
 import Dict
 import Dict.Extra as DE
 import Extra exposing (ternary)
+import Extra.Events exposing (onClickPD)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -181,6 +182,8 @@ type Msg
       -- Common
     | NoMsg
     | LogErr String
+    | Navigate String
+    | Do (List GlobalCmd)
 
 
 type alias Out =
@@ -290,6 +293,12 @@ update_ apis message model =
         LogErr err ->
             ( model, out0 [ Ports.logErr err ] )
 
+        Navigate link ->
+            ( model, out1 [ DoNavigate link ] )
+
+        Do gcmds ->
+            ( model, out1 gcmds )
+
 
 subscriptions : List (Sub Msg)
 subscriptions =
@@ -327,6 +336,7 @@ view op (State model) =
             , onClick OnToggle
             ]
             [ A.icon1 "icon-chevrons-left" "Collapse" ]
+        , div [ class "pb-6 is-invisible" ] [ text "nop" ]
         ]
 
 
@@ -361,31 +371,35 @@ viewSubTree : FractalBaseRoute -> String -> Maybe String -> NodeFocus -> Node ->
 viewSubTree baseUri q hover focus x children =
     ul [ class "menu-list" ]
         [ li []
-            ([ --if hover == Just x.nameid then
-               --  div [ class "here box" ] [ text x.name ]
-               --else
-               --  text ""
-               a
+            ([ a
                 [ class "treeMenu"
                 , classList [ ( "is-active", focus.nameid == x.nameid ) ]
                 , onMouseEnter (OnOrgHover (Just x.nameid))
                 , onMouseLeave (OnOrgHover Nothing)
-                , href (uriFromNameid baseUri x.nameid ++ q)
+                , onClickPD NoMsg
+                , target "_blank"
                 ]
-                [ case x.role_type of
-                    Just RoleType.Bot ->
-                        A.icon1 "icon-radio" x.name
+                [ span [ onClick (Navigate (uriFromNameid baseUri x.nameid ++ q)) ]
+                    [ case x.role_type of
+                        Just RoleType.Bot ->
+                            A.icon1 "icon-radio" x.name
 
-                    Just _ ->
-                        A.icon1 (action2icon { doc_type = NODE x.type_ }) x.name
+                        Just _ ->
+                            A.icon1 (action2icon { doc_type = NODE x.type_ }) x.name
 
-                    Nothing ->
-                        if List.length children > 0 then
-                            --A.icon1 (action2icon { doc_type = NODE x.type_ }) x.name
-                            text x.name
+                        Nothing ->
+                            if List.length children > 0 then
+                                --A.icon1 (action2icon { doc_type = NODE x.type_ }) x.name
+                                text x.name
 
-                        else
-                            text x.name
+                            else
+                                text x.name
+                    ]
+                , if hover == Just x.nameid then
+                    div [ class "here tag is-rounded has-border is-pulled-right", onClick (Do [ DoCreateTension x.nameid ]) ] [ A.icon "icon-plus" ]
+
+                  else
+                    text ""
                 ]
              ]
                 ++ (children

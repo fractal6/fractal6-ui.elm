@@ -932,13 +932,15 @@ strong {
 
   padding-top: 25px;
   & .menu-list {
+      font-size: 1em;
       border-left: 0;
       &:first-child {
-          margin-right: 1px;
+          margin-right: 2px;
+          margin-left: 2px;
       }
       & li ul {
-          margin: 0.6em 0 0.6em 0.25em ;
-          //padding-left: 0em;
+          margin: 0.5em 0 0.5em 0.25em ;
+          //padding-left: 0;
       }
   }
 
@@ -960,6 +962,20 @@ strong {
         background-color: var(--bbc) !important;
     }
     & > .here {
+        display: inline-block;
+        //width: 20%;
+        & > i {
+            position: relative;
+            top: 2px;
+        }
+        &:hover {
+            color: var(--link) !important;
+        }
+
+    }
+    & > span {
+        display: inline-block;
+        width: 80%;
     }
 
     transition: top,height .2s ease;

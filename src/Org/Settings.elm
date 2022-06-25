@@ -21,7 +21,7 @@ import Extra.Url exposing (queryBuilder, queryParser)
 import Extra.Views exposing (showMsg)
 import Form exposing (isPostSendable)
 import Form.Help as Help
-import Form.NewTension as NTF exposing (TensionTab(..))
+import Form.NewTension as NTF exposing (NewTensionInput(..), TensionTab(..))
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.NodeVisibility as NodeVisibility
 import Fractal.Enum.RoleType as RoleType
@@ -93,6 +93,9 @@ mapGlobalOutcmds gcmds =
 
                     DoUpdateTree tree ->
                         ( Cmd.none, send (UpdateSessionTree tree) )
+
+                    DoCreateTension nameid ->
+                        ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
 
                     _ ->
                         ( Cmd.none, Cmd.none )

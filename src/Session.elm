@@ -110,8 +110,8 @@ type alias NodesQuickSearch =
     }
 
 
-resetSession : SessionFlags -> Session
-resetSession flags =
+resetSession : Session -> SessionFlags -> Session
+resetSession session flags =
     { referer = Nothing
     , user = LoggedOut
     , token_data = RemoteData.NotAsked
@@ -131,7 +131,7 @@ resetSession flags =
     , node_quickSearch = Nothing
     , window_pos = Nothing
     , orga_menu = Nothing
-    , tree_menu = Nothing
+    , tree_menu = session.tree_menu
     , apis = flags.apis
     , screen = flags.screen
     , authorsPanel = Nothing
