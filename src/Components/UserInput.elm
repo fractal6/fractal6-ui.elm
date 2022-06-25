@@ -199,10 +199,10 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnLoad orga_data ->
+        OnLoad tree_data ->
             let
                 users_data =
-                    withMaybeData orga_data |> withDefault Dict.empty |> orgaToUsers
+                    withMaybeData tree_data |> withDefault Dict.empty |> orgaToUsers
             in
             ( { model | users_orga = users_data }
             , out0 [ Ports.focusOn "userInput" ]

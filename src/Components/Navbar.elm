@@ -51,7 +51,7 @@ view op =
                                         |> withDefault False
                             in
                             [ if hasLeftMenuBurger then
-                                div [ class "navbar-item button-light is-hidden-touch menuLeftTrigger" ] [ A.icon "icon-menu" ]
+                                div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
 
                               else
                                 text ""

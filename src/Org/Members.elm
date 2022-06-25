@@ -10,6 +10,7 @@ import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, fromMaybeData, viewAuthNeeded, viewGqlErrors, withDefaultData, withMaybeData)
 import Components.OrgaMenu as OrgaMenu
+import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
@@ -82,6 +83,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoUpdateTree tree ->
+                        ( Cmd.none, send (UpdateSessionTree tree) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -116,6 +120,7 @@ type alias Model =
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
+    , treeMenu : TreeMenu.State
     }
 
 
@@ -151,6 +156,7 @@ type Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
 
 
 
@@ -198,7 +204,8 @@ init global flags =
             , now = global.now
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
+            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
+            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         cmds =
@@ -208,6 +215,7 @@ init global flags =
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
+            , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
     in
     ( model
@@ -408,6 +416,16 @@ update global message model =
             in
             ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        TreeMenuMsg msg ->
+            let
+                ( data, out ) =
+                    TreeMenu.update apis msg model.treeMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -417,6 +435,7 @@ subscriptions _ model =
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
+        ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         |> Sub.batch
 
 
@@ -436,6 +455,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
+            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             }
     in
     { title = upH T.members ++ " · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -443,10 +463,11 @@ view global model =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global.session.user model ]
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view { baseUri = MembersBaseUri, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
         ]
     }
 
@@ -495,7 +516,7 @@ view_ us model =
 viewUserRow : Time.Posix -> Member -> Html Msg
 viewUserRow now m =
     tr []
-        [ td [ class "pr-0" ] [ viewUser True m.username ]
+        [ td [ class "pt-2 pr-0" ] [ viewUser True m.username ]
         , td [ class "pt-3" ] [ viewUsernameLink m.username ]
         , td [ class "pt-3" ] [ m.name |> withDefault "--" |> text ]
         , td [ class "pt-3" ] [ viewMemberRoles now OverviewBaseUri m.roles ]

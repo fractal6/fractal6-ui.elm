@@ -1061,9 +1061,7 @@ subscriptions (State model) =
 
 
 type alias Op =
-    -- @obsolete ?
-    { users_data : GqlData UsersDict
-    , path_data : GqlData LocalGraph
+    { path_data : GqlData LocalGraph
     }
 
 

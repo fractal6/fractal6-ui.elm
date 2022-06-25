@@ -417,7 +417,7 @@ subscriptions =
 
 
 type alias Op =
-    { orga_data : GqlData NodesDict }
+    { tree_data : GqlData NodesDict }
 
 
 view : Op -> State -> Html Msg
@@ -514,7 +514,7 @@ viewModalContent op (State model) =
                             ]
                         , div [ id "target-menu", class "dropdown-menu", attribute "role" "menu" ]
                             [ div [ class "dropdown-content has-border" ] <|
-                                case op.orga_data of
+                                case op.tree_data of
                                     Success data ->
                                         let
                                             roleTest r_ =

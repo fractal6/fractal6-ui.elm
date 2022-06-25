@@ -641,7 +641,7 @@ update_ apis message model =
             in
             ( newModel, out0 [ Ports.open_modal ("actionPanelModal" ++ model.domid) ] )
 
-        OnOpenModal2 action orga_data ->
+        OnOpenModal2 action tree_data ->
             let
                 newModel =
                     model
@@ -653,7 +653,7 @@ update_ apis message model =
                 cmds =
                     case action of
                         LinkAction ->
-                            [ Cmd.map UserInputMsg (send (UserInput.OnLoad orga_data)) ]
+                            [ Cmd.map UserInputMsg (send (UserInput.OnLoad tree_data)) ]
 
                         _ ->
                             []
@@ -929,7 +929,7 @@ type alias Op =
     , hasRole : Bool
     , isRight : Bool -- view option
     , domid : String
-    , orga_data : GqlData NodesDict
+    , tree_data : GqlData NodesDict
     }
 
 
@@ -945,7 +945,7 @@ view op (State model) =
             ]
                 ++ [ viewModal op model
                    , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-                   , MoveTension.view { orga_data = op.orga_data } model.moveTension |> Html.map MoveTensionMsg
+                   , MoveTension.view { tree_data = op.tree_data } model.moveTension |> Html.map MoveTensionMsg
                    ]
 
         else
@@ -1015,7 +1015,7 @@ viewPanel op model =
                                             [ A.icon1 "icon-user-plus" (panelAction2str (UnLinkAction user)) ]
 
                                     Nothing ->
-                                        div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.orga_data) ]
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.tree_data) ]
                                             [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
                         ]
                             ++ -- ARCHIVE ACTION

@@ -41,7 +41,8 @@ type alias Screen =
 type alias SessionFlags =
     { uctx : Maybe JD.Value
     , window_pos : Maybe JD.Value
-    , menu_left : Maybe Bool
+    , orga_menu : Maybe Bool
+    , tree_menu : Maybe Bool
     , apis : Apis
     , screen : Screen
     }
@@ -54,8 +55,6 @@ type alias Session =
     , node_focus : Maybe NodeFocus
     , path_data : Maybe LocalGraph
     , children : Maybe (List NodeId)
-    , orga_data : Maybe NodesDict
-    , users_data : Maybe UsersDict
     , node_data : Maybe NodeData
     , tensions_data : Maybe TensionsList
     , tensions_int : Maybe TensionsList
@@ -64,11 +63,13 @@ type alias Session =
     , tensions_count : Maybe TensionsCount
     , tension_head : Maybe TensionHead
     , orgs_data : Maybe (List OrgaNode)
+    , tree_data : Maybe NodesDict
     , isAdmin : Maybe Bool
     , node_quickSearch : Maybe NodesQuickSearch
     , apis : Apis
     , window_pos : Maybe WindowPos
-    , menu_left : Maybe Bool
+    , orga_menu : Maybe Bool
+    , tree_menu : Maybe Bool
     , screen : Screen
     , authorsPanel : Maybe UserSearchPanelModel
     , labelsPanel : Maybe LabelSearchPanelModel
@@ -86,10 +87,10 @@ type GlobalCmd
       -- Safe close modal
     | DoModalAsk String String
       -- Menu Left
-    | DoSetMenuLeft Bool
     | DoUpdateOrgs (Maybe (List OrgaNode))
+    | DoUpdateTree (Maybe NodesDict)
       -- @FIX: Make this in Global to define the mapGlobalOutcms only once ?!
-      -- OR: User only Ports, and add Subscription in Global to trigger update from JS !
+      -- Or: User only Ports, and add Subscription in Global to trigger update from JS !
       -- Or: use a type to return directly Global.Cmd !
     | DoFetchNode String
     | DoPushTension Tension
@@ -117,8 +118,6 @@ resetSession flags =
     , node_focus = Nothing
     , path_data = Nothing
     , children = Nothing
-    , orga_data = Nothing
-    , users_data = Nothing
     , node_data = Nothing
     , tensions_data = Nothing
     , tensions_int = Nothing
@@ -127,10 +126,12 @@ resetSession flags =
     , tensions_count = Nothing
     , tension_head = Nothing
     , orgs_data = Nothing
+    , tree_data = Nothing
     , isAdmin = Nothing
     , node_quickSearch = Nothing
     , window_pos = Nothing
-    , menu_left = Nothing
+    , orga_menu = Nothing
+    , tree_menu = Nothing
     , apis = flags.apis
     , screen = flags.screen
     , authorsPanel = Nothing
@@ -174,8 +175,6 @@ fromLocalSession flags =
       , node_focus = Nothing
       , path_data = Nothing
       , children = Nothing
-      , orga_data = Nothing
-      , users_data = Nothing
       , node_data = Nothing
       , tensions_data = Nothing
       , tensions_int = Nothing
@@ -184,10 +183,12 @@ fromLocalSession flags =
       , tensions_count = Nothing
       , tension_head = Nothing
       , orgs_data = Nothing
+      , tree_data = Nothing
       , isAdmin = Nothing
       , node_quickSearch = Nothing
       , window_pos = window_pos
-      , menu_left = flags.menu_left
+      , orga_menu = flags.orga_menu
+      , tree_menu = flags.tree_menu
       , apis = flags.apis
       , screen = flags.screen
       , authorsPanel = Nothing

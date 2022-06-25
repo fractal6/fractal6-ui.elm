@@ -19,8 +19,9 @@ window.addEventListener('load', _ => {
     var uctx = JSON.parse(localStorage.getItem("user_ctx"));
     // Window pos
     var window_pos = JSON.parse(localStorage.getItem("window_pos"));
-    // Menu left
-    var menu_left = JSON.parse(localStorage.getItem("menu_left"));
+    // Menu
+    var orga_menu = JSON.parse(localStorage.getItem("orga_menu"));
+    var tree_menu = JSON.parse(localStorage.getItem("tree_menu"));
     // Theme
     var theme = localStorage.getItem("theme");
     if (theme) document.documentElement.className = theme;
@@ -29,11 +30,27 @@ window.addEventListener('load', _ => {
     // ...
 
     // Setup the layout
-    if (menu_left == true) {
+    if (orga_menu == true) {
         setTimeout(() => {
             var $o = document.getElementById("body");
             if ($o) {
-                $o.classList.add('has-menu-left');
+                $o.classList.add('has-orga-menu');
+            }
+        }, 333);
+    }
+    if (tree_menu == true) {
+        setTimeout(() => {
+            var $o = document.getElementById("body");
+            if ($o) {
+                $o.classList.add('has-tree-menu');
+            }
+            $o = document.getElementById("helperBar");
+            if ($o) {
+                $o.classList.add('has-tree-menu');
+            }
+            $o = document.getElementById("mainPane");
+            if ($o) {
+                $o.classList.add('has-tree-menu');
             }
         }, 333);
     }
@@ -46,7 +63,8 @@ window.addEventListener('load', _ => {
             flags: {
                 uctx: uctx,
                 window_pos: window_pos,
-                menu_left: menu_left,
+                orga_menu: orga_menu,
+                tree_menu: tree_menu,
                 apis: {
                     auth: AUTH_API,
                     gql: GRAPHQL_API,

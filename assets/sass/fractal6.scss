@@ -12,20 +12,10 @@
     // For discrete footer.
     min-height: calc(100vh - #{$navbar-height}) !important;
 
-    // when Helpbar is active
-    /********** Bulma FIX ***********/
-    /* Adjust left offet is too large */
-    //margin-left: 5%;
-
-    /* is-paddingless compatibility */
-    //padding-top: 1.25rem;
-
-    @include until($fullhd) {
-        @include desktop {
-            &.has-menu-left {
-                // menu-left-width - 1rem
-                min-width: calc(100vw - 40px);
-                width:     calc(100vw - 40px);
+    @include desktop {
+        // Orga Menu adjustments
+        @include until($fullhd) {
+            &.has-orga-menu {
                 margin-left: 40px;
 
                 .kb-board {
@@ -33,15 +23,41 @@
                 }
             }
         }
-    }
-    @include fullhd {
-        &.has-menu-left .kb-board {
+
+        // Tree Menu adjustments
+        &.has-tree-menu {
+            margin-left: $tree-menu-width !important;
+        }
+        &.has-tree-menu.has-orga-menu {
+            margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
+        }
+        #helperBar.has-tree-menu, #mainPane.has-tree-menu {
+            padding-left: 2%;
+            //margin-left: $tree-menu-width !important;
+        }
+        #helperBar.has-tree-menu, #mainPane.has-tree-menu > .columns {
+            justify-content: normal;
+            &:not(#overview) > .column {
+                width: 95%;
+            }
+            &#overview > .column {
+                width: 47.5%;
+                &:first-child {
+                    padding-left:0;
+                }
+            }
+        }
+        &.has-orga-menu #tree-menu {
             margin-left: $orga-menu-width !important;
         }
     }
 
-    // @debug
-    //transition: all .2s ease;
+    // KB board adjustmenty with menus
+    @include fullhd {
+        &.has-orga-menu:not(.has-tree-menu) .kb-board {
+            margin-left: $orga-menu-width !important;
+        }
+    }
 }
 
 // Modal
@@ -575,6 +591,10 @@ strong {
     }
 }
 
+.menu .menu-label {
+    font-weight: bold !important;
+}
+
 // Message
 .message {
     background-color: var(--bbc);
@@ -650,26 +670,6 @@ strong {
     }
 }
 
-// Hero
-
-.hero {
-    // @deprecated for dark colors
-    //@each var(--name), var(--pair) in var(--colors) {
-    //  var(--color): nth($pair, 1);
-    //  var(--color-invert): nth($pair, 2);
-
-    //  &.is-#{$name} {
-    //    .navbar {
-    //      .navbar-dropdown {
-    //        .navbar-item:hover {
-    //          background-color: transparent;
-    //        }
-    //      }
-    //    }
-    //  }
-    //}
-}
-
 .is-primary {
     &:hover {
         background-color: var(--primary) !important;
@@ -682,25 +682,6 @@ strong {
  * My style
  *
  */
-
-
-#mainPane {
-    @include until($desktop) {
-        //padding-left: 6px !important;
-        //padding-right: 6px !important;
-    }
-
-    // Prevent NavbarTop overflow
-    & > .columns {
-        // .is-marginless
-        margin: 0 !important;
-    }
-
-}
-
-.menu .menu-label {
-    font-weight: bold !important;
-}
 
 #navbarTop {
     .navbar {
@@ -723,18 +704,6 @@ strong {
         padding-bottom: 0 !important;
     }
 
-    .navbar-brand svg {
-    }
-    //#logo {
-    //    height: var(--navbar-height) !important;
-    //    width: var(--navbar-height) !important;
-    //
-        //-webkit-transform: rotate(45deg);
-        //transform: rotate(45deg);
-        //-webkit-transition: -webkit-transform .666s ease-in-out;
-        //transition: transform .666s ease-in-out;
-    //}
-
     .navbar-link:not(.is-arrowless) {
         &:after {
             font-size: 12px !important;
@@ -745,6 +714,25 @@ strong {
         border-bottom: solid 1px var(--grey-darker);
         border-left: solid 1px var(--grey-darker);
         border-right: solid 1px var(--grey-darker);
+    }
+}
+
+#footBar {
+    z-index: 10;
+    position: relative;
+    box-shadow: 0 0 1px 0 var(--white-ter);
+    margin-top: 3rem;
+    padding: 3rem 1.5rem 3rem;
+
+    opacity: 0;
+    animation: fadeIn 0.5s;
+    animation-delay: 0.5s;
+    animation-fill-mode: forwards;
+
+    .contacts {
+        span + span {
+            padding-left: 15px !important;
+        }
     }
 }
 
@@ -785,20 +773,16 @@ strong {
     }
 }
 
-#footBar {
-    box-shadow: 0 0 1px 0 var(--white-ter);
-    margin-top: 3rem;
-    padding: 3rem 1.5rem 3rem;
+#mainPane {
+    @include until($desktop) {
+        //padding-left: 6px !important;
+        //padding-right: 6px !important;
+    }
 
-    opacity: 0;
-    animation: fadeIn 0.5s;
-    animation-delay: 0.5s;
-    animation-fill-mode: forwards;
-
-    .contacts {
-        span + span {
-            padding-left: 15px !important;
-        }
+    // Prevent NavbarTop overflow
+    & > .columns {
+        // .is-marginless
+        margin: 0 !important;
     }
 }
 
@@ -830,98 +814,6 @@ strong {
     }
 }
 
-#tree-menu {
-    a {
-        padding-top: 8px;
-        padding-bottom: 8px;
-        justify-content: left;
-        font-weight: 600;
-        // protect from breadcrumb nowrap option.
-        white-space: initial !important;
-    }
-    a:not(:last-child) {
-        border-bottom: 1px solid var(--grey-dark);
-    }
-}
-
-#orga-menu {
-  z-index: 0;
-  height: 100%;
-  // Do not work but foopage has a higher z-index, or maybe because it has a delay !
-  //height: calc(100vh - #{$navbar-height});
-  width: $orga-menu-width;
-  position: fixed;
-  //position: sticky;
-  top: calc(#{$navbar-height});
-  left: 0;
-
-  overflow-x: hidden;
-  overflow-y: scroll;
-  scrollbar-width: none; /* for Firefox */
-  &::-webkit-scrollbar {
-      display: none; /* for Chrome, Safari, and Opera */
-  }
-
-  // Copy from mattermost ?
-  display: flex;
-  justify-content: space-around;
-  //align-items: center;
-  //flex: 1 1 auto;
-
-  background-color: var(--header-background-color);
-  box-shadow: inset -1px 0 0 var(--border-color-light);
-
-  &.off {
-      width: 0 !important;
-  }
-  transition: width .2s ease;
-}
-
-.orgaMenu {
-//m-2 px-1 mb-3
-    margin-top: $size-small !important;
-    margin-left: 5px;
-    margin-right: 5px;
-    padding-left: 5px;
-    padding-right: 5px;
-    border-left: solid 3px var(--header-background-color);
-
-    &:hover {
-        border-left: solid 3px white;
-    }
-
-    &.is-active {
-        border-left: solid 3px var(--link);
-    }
-
-    & > .here {
-        //display: flex;
-        position: fixed !important;
-        margin-left: 3.5rem !important;
-        padding: 10px !important;
-        z-index: 100;
-    }
-
-    transition: top,height .2s ease;
-}
-
-#menuSettings {
-  border-right: solid 1px var(--border-color-light) !important;
-  margin-right: 2rem;
-  .menu-list {
-      li {
-          padding-bottom: $size-small;
-      }
-      a {
-          &.is-active {
-              font-weight: 600;
-              //background-color: var(--background);
-              //color: var(--link);
-          }
-      }
-  }
-}
-
 #explore,
 #createOrga,
 #notifications,
@@ -949,10 +841,153 @@ strong {
 
 
 //
+// Fixed Pos Menu
+//
+
+#orga-menu {
+  z-index: 5;
+  height: 100%;
+  // Do not work but foopage has a higher z-index, or maybe because it has a delay !
+  //height: calc(100vh - #{$navbar-height});
+  width: $orga-menu-width;
+  position: fixed;
+  //position: sticky;
+  top: calc(#{$navbar-height});
+  left: 0;
+
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none; /* for Firefox */
+  &::-webkit-scrollbar {
+      display: none; /* for Chrome, Safari, and Opera */
+  }
+
+  // Copy from mattermost ?
+  display: flex;
+  justify-content: space-around;
+  //align-items: center;
+  //flex: 1 1 auto;
+
+  background-color: var(--orga-menu-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
+
+  &.off {
+      width: 0 !important;
+  }
+  transition: width .2s ease;
+}
+
+.orgaMenu {
+    margin-top: $size-small !important;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-left: solid 3px var(--header-background-color);
+
+    &:hover {
+        border-left: solid 3px white;
+    }
+
+    &.is-active {
+        border-left: solid 3px var(--link);
+    }
+
+    & > .here {
+        //display: flex;
+        position: fixed !important;
+        margin-left: 3.5rem !important;
+        padding: 10px !important;
+        z-index: 100;
+    }
+
+    transition: top,height .2s ease;
+}
+
+#tree-menu {
+  z-index: 0;
+  height: 100%;
+  // Do not work but foopage has a higher z-index, or maybe because it has a delay !
+  //height: calc(100vh - #{$navbar-height});
+  width: $tree-menu-width;
+  position: fixed;
+  //position: sticky;
+  top: calc(#{$navbar-height});
+  left: 0;
+
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none; /* for Firefox */
+  &::-webkit-scrollbar {
+      display: none; /* for Chrome, Safari, and Opera */
+  }
+
+  background-color: var(--tree-menu-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
+
+  &.off {
+      width: 0 !important;
+  }
+  transition: width .2s ease;
+
+  padding-top: 25px;
+  & .menu-list {
+      border-left: 0;
+      &:first-child {
+          margin-right: 1px;
+      }
+      & li ul {
+          margin: 0.6em 0 0.6em 0.25em ;
+          //padding-left: 0em;
+      }
+  }
+
+  .bottom-button {
+      width: $tree-menu-width;
+      position: fixed;
+      bottom: 0px;
+      background-color: var(--tree-menu-background-color);
+  }
+
+}
+
+
+.treeMenu {
+    &:hover {
+        background-color: var(--background-evidence) !important;
+    }
+    &.is-active {
+        background-color: var(--bbc) !important;
+    }
+    & > .here {
+    }
+
+    transition: top,height .2s ease;
+}
+
+#menuSettings {
+  border-right: solid 1px var(--border-color-light) !important;
+  margin-right: 2rem;
+  .menu-list {
+      li {
+          padding-bottom: $size-small;
+      }
+      a {
+          &.is-active {
+              font-weight: 600;
+              //background-color: var(--background);
+              //color: var(--link);
+          }
+      }
+  }
+}
+
+
+//
 // Overview and Doc
 //
 
-#main-overview {
+#overview {
     & > .column {
         margin-top: 0;
         padding-top: 0;
@@ -2568,6 +2603,7 @@ tr.mediaBox {
 	border-radius: 20px;
     position: relative;
     top: 5px;
+    width: 100px;
 
     &.is-0 {
         width: 225px;

@@ -106,18 +106,19 @@ type Msg
     | UpdateSessionFocusOnly (Maybe NodeFocus)
     | UpdateSessionPath (Maybe LocalGraph)
     | UpdateSessionChildren (Maybe (List NodeId))
-    | UpdateSessionOrga (Maybe NodesDict)
+    | UpdateSessionTree (Maybe NodesDict)
     | UpdateSessionData (Maybe NodeData)
+    | UpdateSessionOrgs (Maybe (List OrgaNode))
     | UpdateSessionTensions (Maybe TensionsList)
     | UpdateSessionTensionsInt (Maybe TensionsList)
     | UpdateSessionTensionsExt (Maybe TensionsList)
     | UpdateSessionTensionsAll (Maybe TensionsList)
     | UpdateSessionTensionsCount (Maybe TensionsCount)
     | UpdateSessionTensionHead (Maybe TensionHead)
-    | UpdateSessionOrgs (Maybe (List OrgaNode))
     | UpdateSessionAdmin (Maybe Bool)
     | UpdateSessionWindow (Maybe WindowPos)
-    | UpdateSessionMenuleft (Maybe Bool)
+    | UpdateSessionMenuOrga (Maybe Bool)
+    | UpdateSessionMenuTree (Maybe Bool)
     | UpdateSessionScreen Screen
     | UpdateSessionAuthorsPanel (Maybe UserSearchPanelModel)
     | UpdateSessionLabelsPanel (Maybe LabelSearchPanelModel)
@@ -165,7 +166,7 @@ update msg model =
             in
             ( { model | session = { session | user = LoggedIn uctx } }
               -- Update Components when Uctx change !
-            , [ case model.session.orga_data of
+            , [ case model.session.tree_data of
                     Just ndata ->
                         [ Ports.saveUserCtx uctx
                         , Ports.redrawGraphPack ndata
@@ -294,16 +295,12 @@ update msg model =
             in
             ( { model | session = { session | children = data } }, Cmd.none )
 
-        UpdateSessionOrga data ->
+        UpdateSessionTree data ->
             let
                 session =
                     model.session
-
-                -- Make a dict of user per circle
-                users =
-                    Maybe.map (\d -> orgaToUsersData d) data
             in
-            ( { model | session = { session | orga_data = data, users_data = users } }, Cmd.none )
+            ( { model | session = { session | tree_data = data } }, Cmd.none )
 
         UpdateSessionData data ->
             let
@@ -375,12 +372,19 @@ update msg model =
             in
             ( { model | session = { session | window_pos = data } }, Cmd.none )
 
-        UpdateSessionMenuleft data ->
+        UpdateSessionMenuOrga data ->
             let
                 session =
                     model.session
             in
-            ( { model | session = { session | menu_left = data } }, Cmd.none )
+            ( { model | session = { session | orga_menu = data } }, Cmd.none )
+
+        UpdateSessionMenuTree data ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | tree_menu = data } }, Cmd.none )
 
         UpdateSessionScreen data ->
             let
@@ -419,7 +423,8 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Ports.loggedOutOkFromJs (always LoggedOutUserOk)
-        , Ports.updateMenuleftFromJs UpdateSessionMenuleft
+        , Ports.updateMenuOrgaFromJs UpdateSessionMenuOrga
+        , Ports.updateMenuTreeFromJs UpdateSessionMenuTree
         ]
 
 

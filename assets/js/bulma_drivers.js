@@ -16,7 +16,7 @@ export function InitBulma(app, session, eltId) {
     // to wait for the Html Msg to be updated by elm in order
     // to have new node accessible by Javascript.
     //document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(BulmaDriver, 300, app, eltId, handlers);
+        setTimeout(BulmaDriver, 333, app, eltId, handlers);
     //});
 }
 
@@ -163,10 +163,17 @@ export function BulmaDriver(app, target, handlers) {
         });
     }
 
-    const $menuLeftTrigger = $doc.querySelectorAll('.menuLeftTrigger');
-    if ($menuLeftTrigger.length > 0) {
-        $menuLeftTrigger.forEach( el => {
-            setupHandler("click", triggerMenuLeft, el, el, app);
+    const $menuOrgaTrigger = $doc.querySelectorAll('.menuOrgaTrigger');
+    if ($menuOrgaTrigger.length > 0) {
+        $menuOrgaTrigger.forEach( el => {
+            setupHandler("click", triggerMenuOrga, el, el, app);
+        });
+    }
+
+    const $menuTreeTrigger = $doc.querySelectorAll('.menuTreeTrigger');
+    if ($menuTreeTrigger.length > 0) {
+        $menuTreeTrigger.forEach( el => {
+            setupHandler("click", triggerMenuTree, el, el, app);
         });
     }
 
@@ -522,12 +529,16 @@ function triggerNotif(e, el, app) {
     //app.ports.triggerNotifFromJs.send(null)
 }
 
-function triggerMenuLeft(e, el, app) {
+function triggerMenuOrga(e, el, app) {
     var $t = document.getElementById("body");
     if ($t) {
-        $t.classList.toggle('has-menu-left');
+        $t.classList.toggle('has-orga-menu');
     }
-    app.ports.triggerMenuLeftFromJs.send(null)
+    app.ports.triggerMenuOrgaFromJs.send(null)
+}
+
+function triggerMenuTree(e, el, app) {
+    app.ports.triggerMenuTreeFromJs.send(null)
 }
 
 function triggerTheme(e, el, app) {

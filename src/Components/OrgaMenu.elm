@@ -160,7 +160,7 @@ update_ apis message model =
                             ( setDataResult (Success []) model, noOut )
 
                         rootids ->
-                            if not (isSuccess model.orgs_result) && model.isActive then
+                            if model.isActive && not (isSuccess model.orgs_result) then
                                 ( setDataResult LoadingSlowly model
                                 , out0 [ queryOrgaNode apis rootids OnDataAck ]
                                 )
@@ -199,7 +199,7 @@ update_ apis message model =
                     ( data, noOut )
 
         OnToggle ->
-            ( { model | isActive = not model.isActive }, out0 [ Ports.saveMenuleft (not model.isActive), send OnLoad ] )
+            ( { model | isActive = not model.isActive }, out0 [ Ports.saveMenuOrga (not model.isActive), send OnLoad ] )
 
         OnOrgHover v ->
             ( { model | hover = v }, noOut )
@@ -224,7 +224,7 @@ update_ apis message model =
 
 subscriptions : List (Sub Msg)
 subscriptions =
-    [ Ports.triggerMenuLeftFromJs (always OnToggle)
+    [ Ports.triggerMenuOrgaFromJs (always OnToggle)
     , Ports.uctxPD Ports.loadUserCtxFromJs LogErr OnReload
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]

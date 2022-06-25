@@ -28,6 +28,7 @@ import Components.Loading as Loading
         )
 import Components.NodeDoc as NodeDoc
 import Components.OrgaMenu as OrgaMenu
+import Components.TreeMenu as TreeMenu
 import Debug
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -150,6 +151,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoUpdateTree tree ->
+                        ( Cmd.none, send (UpdateSessionTree tree) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -163,8 +167,7 @@ mapGlobalOutcmds gcmds =
 type alias Model =
     { node_focus : NodeFocus
     , path_data : Maybe LocalGraph
-    , orga_data : GqlData NodesDict
-    , users_data : GqlData UsersDict
+    , tree_data : GqlData NodesDict
     , tensions_data : GqlData TensionsList
     , journal_data : GqlData (List EventNotif)
     , node_data : GqlData NodeData
@@ -189,6 +192,7 @@ type alias Model =
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
+    , treeMenu : TreeMenu.State
     }
 
 
@@ -257,6 +261,7 @@ type Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
 
 
 
@@ -283,7 +288,7 @@ init global flags =
             focusState OverviewBaseUri session.referer global.url session.node_focus newFocus
 
         isInit =
-            session.orga_data == Nothing || session.path_data == Nothing
+            session.tree_data == Nothing || session.path_data == Nothing
 
         fs =
             { fs_ | isInit = fs_.isInit || isInit }
@@ -298,8 +303,7 @@ init global flags =
         model =
             { node_focus = newFocus
             , path_data = ternary fs.orgChange Nothing session.path_data -- Loaded from GraphPack
-            , orga_data = fromMaybeData session.orga_data Loading
-            , users_data = fromMaybeData session.users_data Loading
+            , tree_data = fromMaybeData session.tree_data Loading
             , tensions_data = fromMaybeData session.tensions_data Loading
             , journal_data = NotAsked
             , node_data = fromMaybeData session.node_data Loading
@@ -325,7 +329,8 @@ init global flags =
             , actionPanel = ActionPanel.init session.user
             , joinOrga = JoinOrga.init newFocus.nameid session.user
             , authModal = AuthModal.init session.user Nothing
-            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
+            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
+            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         cmds_ =
@@ -343,7 +348,7 @@ init global flags =
                 --queryCircleTension apis newFocus.nameid GotTensions
                 ]
                     ++ (if fs.menuChange then
-                            case session.orga_data of
+                            case session.tree_data of
                                 Just _ ->
                                     [ send LoadOrga
                                     , Ports.initGraphPack Dict.empty "" --canvas loading effect
@@ -403,8 +408,8 @@ update global message model =
 
         PassedSlowLoadTreshold ->
             let
-                orga_data =
-                    ternary (model.orga_data == Loading) LoadingSlowly model.orga_data
+                tree_data =
+                    ternary (model.tree_data == Loading) LoadingSlowly model.tree_data
 
                 tensions_data =
                     ternary (model.tensions_data == Loading) LoadingSlowly model.tensions_data
@@ -412,7 +417,7 @@ update global message model =
                 node_data =
                     ternary (model.node_data == Loading) LoadingSlowly model.node_data
             in
-            ( { model | orga_data = orga_data, tensions_data = tensions_data, node_data = node_data }, Cmd.none, Cmd.none )
+            ( { model | tree_data = tree_data, tensions_data = tensions_data, node_data = node_data }, Cmd.none, Cmd.none )
 
         Submit nextMsg ->
             ( model, Task.perform nextMsg Time.now, Cmd.none )
@@ -438,24 +443,17 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
 
                 OkAuth data ->
-                    let
-                        users =
-                            orgaToUsersData data
-
-                        users_l =
-                            Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
-                    in
                     if Dict.size data > 0 then
-                        ( { model | orga_data = Success data, users_data = Success users }
-                        , Cmd.batch [ Ports.initGraphPack data model.node_focus.nameid, Ports.initUserSearch users_l ]
-                        , send (UpdateSessionOrga (Just data))
+                        ( { model | tree_data = Success data }
+                        , Cmd.batch [ Ports.initGraphPack data model.node_focus.nameid, Cmd.map TreeMenuMsg (send (TreeMenu.OnSetTree data)) ]
+                        , send (UpdateSessionTree (Just data))
                         )
 
                     else
-                        ( { model | orga_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
+                        ( { model | tree_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
 
                 _ ->
-                    ( { model | orga_data = result }, Cmd.none, send (UpdateSessionOrga Nothing) )
+                    ( { model | tree_data = result }, Cmd.none, Cmd.none )
 
         GotTensions result ->
             case result of
@@ -490,7 +488,7 @@ update global message model =
                 "" ->
                     case model.path_data of
                         Just path ->
-                            case model.orga_data of
+                            case model.tree_data of
                                 Success data ->
                                     let
                                         newLookup =
@@ -619,7 +617,7 @@ update global message model =
         OpenActionPanel domid node ->
             let
                 rootSource =
-                    getNode (nid2rootid node.nameid) model.orga_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
+                    getNode (nid2rootid node.nameid) model.tree_data |> Maybe.map (\n -> n.source) |> withDefault Nothing
 
                 ( tid, bid ) =
                     node.source
@@ -664,29 +662,29 @@ update global message model =
         AddNodes nodes ->
             let
                 ndata =
-                    hotNodePush nodes model.orga_data
+                    hotNodePush nodes model.tree_data
 
                 cmds =
                     model.next_focus
                         |> Maybe.map (\nid -> [ send (NodeClicked nid) ])
                         |> withDefault [ Cmd.none ]
             in
-            ( { model | orga_data = Success ndata, next_focus = Nothing }
+            ( { model | tree_data = Success ndata, next_focus = Nothing }
             , Cmd.batch ([ Ports.addQuickSearchNodes nodes, List.map (\n -> n.first_link) nodes |> List.filterMap identity |> Ports.addQuickSearchUsers ] ++ cmds)
-            , Cmd.batch [ sendSleep UpdateUserToken 300, send (UpdateSessionOrga (Just ndata)) ]
+            , Cmd.batch [ sendSleep UpdateUserToken 300, send (UpdateSessionTree (Just ndata)) ]
             )
 
         UpdateNode nameid fun ->
             let
                 node_m =
-                    getNode nameid model.orga_data
+                    getNode nameid model.tree_data
                         |> Maybe.map fun
             in
             case node_m of
                 Just n ->
                     let
                         ndata =
-                            hotNodeInsert n model.orga_data
+                            hotNodeInsert n model.tree_data
 
                         pdata =
                             if model.node_focus.nameid == nameid then
@@ -699,9 +697,9 @@ update global message model =
                             else
                                 model.path_data
                     in
-                    ( { model | orga_data = Success ndata, path_data = pdata }
+                    ( { model | tree_data = Success ndata, path_data = pdata }
                     , Cmd.none
-                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+                    , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTree (Just ndata)) ]
                     )
 
                 Nothing ->
@@ -710,27 +708,27 @@ update global message model =
         DelNodes nameids ->
             let
                 ( ndata, _ ) =
-                    hotNodePull nameids model.orga_data
+                    hotNodePull nameids model.tree_data
 
                 newFocus =
                     nameids
                         |> List.head
-                        |> Maybe.map (\nid -> getParentId nid model.orga_data)
+                        |> Maybe.map (\nid -> getParentId nid model.tree_data)
                         |> withDefault Nothing
                         |> withDefault model.node_focus.rootnameid
             in
-            ( { model | orga_data = Success ndata }
+            ( { model | tree_data = Success ndata }
               --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
             , Cmd.batch [ send (NodeClicked newFocus) ]
-            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrga (Just ndata)) ]
+            , Cmd.batch [ send UpdateUserToken, send (UpdateSessionTree (Just ndata)) ]
             )
 
         MoveNode nameid_old parentid_new nameid_new ->
             let
                 ( ndata, _ ) =
-                    hotNodePull [ nameid_old ] model.orga_data
+                    hotNodePull [ nameid_old ] model.tree_data
             in
-            ( { model | orga_data = Success ndata, next_focus = Just parentid_new }
+            ( { model | tree_data = Success ndata, next_focus = Just parentid_new }
               --, Cmd.batch [ Ports.addQuickSearchNodes nodes, nodes |> List.map (\n -> n.first_link) |> List.filterMap identity |> Ports.addQuickSearchUsers ]
             , Cmd.batch [ send (FetchNewNode nameid_new False) ]
             , Cmd.none
@@ -743,7 +741,7 @@ update global message model =
         NodeHovered nid ->
             let
                 ( node, cmd ) =
-                    case getNode nid model.orga_data of
+                    case getNode nid model.tree_data of
                         Just n ->
                             ( Just n, Cmd.none )
 
@@ -755,7 +753,7 @@ update global message model =
 
         NodeFocused ( nameid, maxdepth ) ->
             -- May change the node_focus var
-            case localGraphFromOrga nameid model.orga_data of
+            case localGraphFromOrga nameid model.tree_data of
                 Just path ->
                     let
                         nameids =
@@ -763,7 +761,7 @@ update global message model =
 
                         cmds =
                             [ queryAllTension apis nameids nfirstTensions 0 Nothing (Just TensionStatus.Open) Nothing GotTensions
-                            , if not (isFailure model.node_data) && (Dict.get model.node_focus.nameid (model.orga_data |> withMaybeData |> withDefault Dict.empty) == Nothing) then
+                            , if not (isFailure model.node_data) && (Dict.get model.node_focus.nameid (model.tree_data |> withMaybeData |> withDefault Dict.empty) == Nothing) then
                                 send (FetchNewNode model.node_focus.nameid True)
 
                               else
@@ -880,6 +878,16 @@ update global message model =
             in
             ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        TreeMenuMsg msg ->
+            let
+                ( data, out ) =
+                    TreeMenu.update apis msg model.treeMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -889,7 +897,7 @@ subscriptions _ model =
     -- wha would be the advantage of using .click instead of ports ?
     , nodeLeftClickedFromJs
         (\nameid ->
-            case localGraphFromOrga nameid model.orga_data of
+            case localGraphFromOrga nameid model.tree_data of
                 Just path ->
                     NewTensionMsg <| NTF.OnOpen (FromPath path)
 
@@ -913,6 +921,7 @@ subscriptions _ model =
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
+        ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         |> Sub.batch
 
 
@@ -958,6 +967,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
+            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             }
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -965,10 +975,11 @@ view global model =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = model.users_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
+        , NTF.view { path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view { baseUri = OverviewBaseUri, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
         ]
     }
 
@@ -977,7 +988,7 @@ view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     let
         focus_m =
-            getNode model.node_focus.nameid model.orga_data
+            getNode model.node_focus.nameid model.tree_data
 
         tid =
             focus_m |> Maybe.map (\nd -> nd.source |> Maybe.map (\b -> b.tension.id)) |> withDefault Nothing |> withDefault ""
@@ -996,7 +1007,7 @@ view_ global model =
             }
 
         nodeData =
-            case model.orga_data of
+            case model.tree_data of
                 Success d ->
                     let
                         node =
@@ -1028,7 +1039,7 @@ view_ global model =
                 _ ->
                     text "wrong position"
     in
-    div [ id "main-overview", class "columns is-centered" ]
+    div [ id "overview", class "columns is-centered" ]
         [ div [ class "column is-6 is-5-desktop is-5-fullhd" ]
             [ --viewSearchBar global.session.user model
               viewCanvas global.session.user model
@@ -1073,7 +1084,7 @@ viewSearchBar us model =
                         Just p ->
                             let
                                 node =
-                                    getNode p.focus.nameid model.orga_data |> withDefault initNode
+                                    getNode p.focus.nameid model.tree_data |> withDefault initNode
                             in
                             [ div [ class "control controlButtons" ]
                                 [ span
@@ -1084,7 +1095,7 @@ viewSearchBar us model =
                                     [ span [ class "has-text-weight-bold is-wrapped" ] [ text p.focus.name ]
                                     , i [ class "px-1" ] []
                                     ]
-                                , viewActionPanel "actionPanelContentSearchBar" us node model.orga_data model.actionPanel
+                                , viewActionPanel "actionPanelContentSearchBar" us node model.tree_data model.actionPanel
                                 ]
                             ]
 
@@ -1122,7 +1133,7 @@ viewActionPanel domid us node o actionPanel =
                         , hasRole = hasRole
                         , isRight = True
                         , domid = domid
-                        , orga_data = o
+                        , tree_data = o
                         }
                 in
                 span []
@@ -1233,8 +1244,8 @@ viewCanvas us model =
             --Maybe.map (\x -> x > 2) model.depth |> withDefault False
             False
     in
-    div [ id "canvasParent", classList [ ( "spinner", model.orga_data == LoadingSlowly ) ] ]
-        [ case model.orga_data of
+    div [ id "canvasParent", classList [ ( "spinner", model.tree_data == LoadingSlowly ) ] ]
+        [ case model.tree_data of
             Failure err ->
                 viewGqlErrors err
 
@@ -1253,7 +1264,7 @@ viewCanvas us model =
         --
         -- Welcom buttons
         --
-        , withMaybeData model.orga_data
+        , withMaybeData model.tree_data
             |> withDefault Dict.empty
             |> (\orga ->
                     if isFreshOrga orga then
@@ -1392,7 +1403,7 @@ viewCanvas us model =
             , span [ id "doAction" ]
                 [ case model.node_hovered of
                     Just node ->
-                        viewActionPanel "actionPanelContentTooltip" us node model.orga_data model.actionPanel
+                        viewActionPanel "actionPanelContentTooltip" us node model.tree_data model.actionPanel
 
                     Nothing ->
                         text ""

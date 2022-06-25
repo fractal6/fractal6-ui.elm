@@ -75,67 +75,6 @@ window.addEventListener('load', _ => {
 // Elm outgoing Ports Actions.
 // Maps actions to functions!
 const actions = {
-    //
-    // Utils
-    //
-    'LOG': (app, session, message) => {
-        console.log(`From Elm:`, message);
-    },
-    'SHOW': (app, session, id) => {
-        var $e = document.getElementById(id);
-        if (!$e) { return }
-        $e.style.display = "";
-        //$e.style.visibility = "hidden";
-    },
-    'HIDE': (app, session, id) => {
-        var $e = document.getElementById(id);
-        if (!$e) { return }
-        $e.style.display = "none";
-        //$e.style.visibility = "hidden";
-    },
-    'FIT_HEIGHT': (app, session, id) => {
-        var fitElement = id => {
-            // SOlved with Browser.Dom.getElement
-            var $e = document.getElementById(id);
-            if (!$e) { return }
-
-            var doc_h = document.body.scrollHeight;
-            var screen_h = window.innerHeight;
-            var elt_h = $e.offsetHeight; // $e.clientHeight -> smaller
-            var x = doc_h - elt_h; // header height (above the target)
-            var h = screen_h - x; // target size tha fit in screen
-
-            if (doc_h > screen_h) {
-                $e.style.height = h + "px";
-            } else {
-                var rect = $e.getBoundingClientRect();
-                $e.style.height = elt_h + (screen_h - (rect.top+elt_h)) + "px";
-            }
-            //document.getElementsByTagName('html')[0].style.overflow = "hidden"; // @debug: html overflow stay disable...
-            //document.body.style.overflowY = "hidden";
-
-            //$e.style.maxHeight = 0.8*screen_h + "px";
-
-            //console.log("document client:", document.body.clientHeight);
-            //console.log("document scroll:", document.body.scrollHeight);
-            //console.log("window inner:", window.innerHeight);
-            //console.log("window outer:", window.outerHeight);
-            //console.log("screen:", screen.height);
-            //console.log("screen avail:", screen.availHeight);
-            //console.log("elt client:", $e.clientHeight);
-            //console.log("elt scrol:", $e.scrollHeight);
-            //console.log("elt style:", $e.style.height);
-            //console.log("elt top:", $e.offsetTop);
-            //console.log("elt bottom:", $e.offsetTop + $e.clientHeight);
-        }
-
-        setTimeout(() => {
-            fitElement(id);
-        }, 300)
-    },
-    'LOGERR': (app, session, message) => {
-        console.warn(`Error from Elm:`, message);
-    },
     'BULMA': (app, session, id) => {
         InitBulma(app, session, id);
 
@@ -149,17 +88,6 @@ const actions = {
             app.ports.openAuthModalFromJs.send({uctx:uctx, refresh:true});
         }
     },
-    'SAVE_SESSION_ITEM' : (app, session, data) => {
-        localStorage.setItem(data.key, JSON.stringify(data.val));
-        if (data.key == "menu_left") {
-            app.ports.updateMenuleftFromJs.send(data.val);
-        }
-        session.gp.resizeMe();
-    },
-    'RELOAD_MENU_LEFT': (app, session, uctx) => {
-        app.ports.reloadMenuleftFromJs.send(uctx);
-    },
-
     //
     // Modal
     //
@@ -347,16 +275,28 @@ const actions = {
         // Update Page/Components accordingly
         app.ports.loadUserCtxFromJs.send(user_ctx.data);
     },
+    'SAVE_SESSION_ITEM' : (app, session, data) => {
+        localStorage.setItem(data.key, JSON.stringify(data.val));
+        if (data.key == "orga_menu") {
+            app.ports.updateMenuOrgaFromJs.send(data.val);
+        } else if (data.key == "tree_menu") {
+            app.ports.updateMenuTreeFromJs.send(data.val);
+        }
+        session.gp.resizeMe();
+    },
     'REMOVE_SESSION' : (app, session, _) => {
         // @TODO: make a list of item to delete instead !
         // see also static/index.js
         localStorage.removeItem(UCTX_KEY);
         localStorage.removeItem("theme");
         localStorage.removeItem("window_pos");
-        localStorage.removeItem("menu_left");
-        var $t = document.getElementById("body");
+        localStorage.removeItem("orga_menu");
+        localStorage.removeItem("tree_menu");
+        // Remove classes available only if logged.
+        var $t;
+        $t = document.getElementById("body");
         if ($t) {
-            $t.classList.remove('has-menu-left');
+            $t.classList.remove('has-orga-menu');
         }
         // Won't work for httpOnly cookie
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/";
@@ -432,11 +372,90 @@ const actions = {
         }, 50);
 
     },
+    //
+    // Menus
+    //
+    //
+    'TOGGLE_TREE_MENU': (app, session, _) => {
+        var $t = document.getElementById("body");
+        if ($t) {
+            $t.classList.toggle('has-tree-menu');
+        }
+        $t = document.getElementById("helperBar");
+        if ($t) {
+            $t.classList.toggle('has-tree-menu');
+        }
+        $t = document.getElementById("mainPane");
+        if ($t) {
+            $t.classList.toggle('has-tree-menu');
+        }
+    },
+    //
+    // Utils
+    //
+    'LOG': (app, session, message) => {
+        console.log(`From Elm:`, message);
+    },
+    'SHOW': (app, session, id) => {
+        var $e = document.getElementById(id);
+        if (!$e) { return }
+        $e.style.display = "";
+        //$e.style.visibility = "hidden";
+    },
+    'HIDE': (app, session, id) => {
+        var $e = document.getElementById(id);
+        if (!$e) { return }
+        $e.style.display = "none";
+        //$e.style.visibility = "hidden";
+    },
+    'LOGERR': (app, session, message) => {
+        console.warn(`Error from Elm:`, message);
+    },
     'CLICK': (app, session, target) => {
         var elt = document.getElementById(target);
         if (elt) elt.click();
     },
     'FORCE_RELOAD': (app, session, target) => {
         window.location.reload(true);
+    },
+    'FIT_HEIGHT': (app, session, id) => {
+        var fitElement = id => {
+            // SOlved with Browser.Dom.getElement
+            var $e = document.getElementById(id);
+            if (!$e) { return }
+
+            var doc_h = document.body.scrollHeight;
+            var screen_h = window.innerHeight;
+            var elt_h = $e.offsetHeight; // $e.clientHeight -> smaller
+            var x = doc_h - elt_h; // header height (above the target)
+            var h = screen_h - x; // target size tha fit in screen
+
+            if (doc_h > screen_h) {
+                $e.style.height = h + "px";
+            } else {
+                var rect = $e.getBoundingClientRect();
+                $e.style.height = elt_h + (screen_h - (rect.top+elt_h)) + "px";
+            }
+            //document.getElementsByTagName('html')[0].style.overflow = "hidden"; // @debug: html overflow stay disable...
+            //document.body.style.overflowY = "hidden";
+
+            //$e.style.maxHeight = 0.8*screen_h + "px";
+
+            //console.log("document client:", document.body.clientHeight);
+            //console.log("document scroll:", document.body.scrollHeight);
+            //console.log("window inner:", window.innerHeight);
+            //console.log("window outer:", window.outerHeight);
+            //console.log("screen:", screen.height);
+            //console.log("screen avail:", screen.availHeight);
+            //console.log("elt client:", $e.clientHeight);
+            //console.log("elt scrol:", $e.scrollHeight);
+            //console.log("elt style:", $e.style.height);
+            //console.log("elt top:", $e.offsetTop);
+            //console.log("elt bottom:", $e.offsetTop + $e.clientHeight);
+        }
+
+        setTimeout(() => {
+            fitElement(id);
+        }, 300)
     },
 }

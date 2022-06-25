@@ -55,7 +55,10 @@ port triggerInviteFromJs : (() -> msg) -> Sub msg
 port triggerNotifFromJs : (() -> msg) -> Sub msg
 
 
-port triggerMenuLeftFromJs : (() -> msg) -> Sub msg
+port triggerMenuOrgaFromJs : (() -> msg) -> Sub msg
+
+
+port triggerMenuTreeFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -65,7 +68,10 @@ port triggerMenuLeftFromJs : (() -> msg) -> Sub msg
 port loggedOutOkFromJs : (() -> msg) -> Sub msg
 
 
-port updateMenuleftFromJs : (Maybe Bool -> msg) -> Sub msg
+port updateMenuOrgaFromJs : (Maybe Bool -> msg) -> Sub msg
+
+
+port updateMenuTreeFromJs : (Maybe Bool -> msg) -> Sub msg
 
 
 port loadUserCtxFromJs : (JD.Value -> msg) -> Sub msg
@@ -134,48 +140,8 @@ port outgoing : { action : String, data : JE.Value } -> Cmd msg
 
 
 --
--- Utils drivers
+-- Bulma
 --
-
-
-log : String -> Cmd msg
-log message =
-    outgoing
-        { action = "LOG"
-        , data = JE.string message
-        }
-
-
-show : String -> Cmd msg
-show message =
-    outgoing
-        { action = "SHOW"
-        , data = JE.string message
-        }
-
-
-hide : String -> Cmd msg
-hide message =
-    outgoing
-        { action = "HIDE"
-        , data = JE.string message
-        }
-
-
-fitHeight : String -> Cmd msg
-fitHeight message =
-    outgoing
-        { action = "FIT_HEIGHT"
-        , data = JE.string message
-        }
-
-
-logErr : String -> Cmd msg
-logErr message =
-    outgoing
-        { action = "LOGERR"
-        , data = JE.string message
-        }
 
 
 bulma_driver : String -> Cmd msg
@@ -183,14 +149,6 @@ bulma_driver eltId =
     outgoing
         { action = "BULMA"
         , data = JE.string eltId
-        }
-
-
-toggle_theme : Cmd msg
-toggle_theme =
-    outgoing
-        { action = "TOGGLE_TH"
-        , data = JE.string ""
         }
 
 
@@ -285,13 +243,25 @@ saveWindowpos x =
         }
 
 
-saveMenuleft : Bool -> Cmd msg
-saveMenuleft x =
+saveMenuOrga : Bool -> Cmd msg
+saveMenuOrga x =
     outgoing
         { action = "SAVE_SESSION_ITEM"
         , data =
             JE.object
-                [ ( "key", JE.string "menu_left" )
+                [ ( "key", JE.string "orga_menu" )
+                , ( "val", JE.bool x )
+                ]
+        }
+
+
+saveMenuTree : Bool -> Cmd msg
+saveMenuTree x =
+    outgoing
+        { action = "SAVE_SESSION_ITEM"
+        , data =
+            JE.object
+                [ ( "key", JE.string "tree_menu" )
                 , ( "val", JE.bool x )
                 ]
         }
@@ -445,6 +415,52 @@ outsideClickClose msg target =
         }
 
 
+
+--
+-- Utils
+--
+
+
+log : String -> Cmd msg
+log message =
+    outgoing
+        { action = "LOG"
+        , data = JE.string message
+        }
+
+
+show : String -> Cmd msg
+show message =
+    outgoing
+        { action = "SHOW"
+        , data = JE.string message
+        }
+
+
+hide : String -> Cmd msg
+hide message =
+    outgoing
+        { action = "HIDE"
+        , data = JE.string message
+        }
+
+
+fitHeight : String -> Cmd msg
+fitHeight message =
+    outgoing
+        { action = "FIT_HEIGHT"
+        , data = JE.string message
+        }
+
+
+logErr : String -> Cmd msg
+logErr message =
+    outgoing
+        { action = "LOGERR"
+        , data = JE.string message
+        }
+
+
 click : String -> Cmd msg
 click target =
     outgoing
@@ -457,6 +473,14 @@ force_reload : Cmd msg
 force_reload =
     outgoing
         { action = "FORCE_RELOAD"
+        , data = JE.string ""
+        }
+
+
+toggleTreeMenu : Cmd msg
+toggleTreeMenu =
+    outgoing
+        { action = "TOGGLE_TREE_MENU"
         , data = JE.string ""
         }
 

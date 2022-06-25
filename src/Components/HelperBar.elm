@@ -55,6 +55,7 @@ type alias Op msg =
     , data : HelperBar
     , onExpand : msg
     , onCollapse : msg
+    , onToggleTreeMenu : msg
     }
 
 
@@ -83,7 +84,7 @@ viewPathLevel op =
                     ( "", False )
     in
     nav [ class "level" ]
-        [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data ]
+        [ div [ class "level-left" ] [ viewPath op.baseUri op.uriQuery op.path_data op.onToggleTreeMenu ]
         , div [ class "level-right mt-0" ]
             [ A.burger "rolesMenu"
             , div [ id "rolesMenu", class "navbar-menu" ]
@@ -180,8 +181,8 @@ viewNavLevel op =
         ]
 
 
-viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> Html msg
-viewPath baseUri uriQuery maybePath =
+viewPath : FractalBaseRoute -> Maybe String -> Maybe LocalGraph -> msg -> Html msg
+viewPath baseUri uriQuery maybePath onToggleTreeMenu =
     div
         [ class "breadcrumb has-arrow-separato"
         , attribute "aria-label" "breadcrumbs"
@@ -194,7 +195,7 @@ viewPath baseUri uriQuery maybePath =
                     q =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
-                [ A.icon0 ("button-light is-link has-text-weight-bold " ++ action2icon { doc_type = NODE g.focus.type_ }) ]
+                [ span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold " ++ action2icon { doc_type = NODE g.focus.type_ }) ] ]
                     ++ [ g.path
                             |> List.indexedMap
                                 (\i p ->

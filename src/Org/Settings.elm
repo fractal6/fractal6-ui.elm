@@ -13,6 +13,7 @@ import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Components.NodeDoc as NodeDoc exposing (NodeDoc, viewMandateInput, viewMandateSection, viewSelectAuthority)
 import Components.OrgaMenu as OrgaMenu
+import Components.TreeMenu as TreeMenu
 import Dict exposing (Dict)
 import Extra exposing (ternary)
 import Extra.Events exposing (onClickPD, onEnter, onKeydown, onTab)
@@ -90,6 +91,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoUpdateTree tree ->
+                        ( Cmd.none, send (UpdateSessionTree tree) )
+
                     _ ->
                         ( Cmd.none, Cmd.none )
             )
@@ -151,6 +155,7 @@ type alias Model =
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
+    , treeMenu : TreeMenu.State
     }
 
 
@@ -317,6 +322,7 @@ type Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
 
 
 
@@ -401,7 +407,8 @@ init global flags =
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
+            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
+            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         cmds =
@@ -409,6 +416,7 @@ init global flags =
             , sendSleep PassedSlowLoadTreshold 500
             , sendSleep InitModals 400
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
+            , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
                 ++ (case menu of
                         LabelsMenu ->
@@ -1133,6 +1141,16 @@ update global message model =
             in
             ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        TreeMenuMsg msg ->
+            let
+                ( data, out ) =
+                    TreeMenu.update apis msg model.treeMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1144,6 +1162,7 @@ subscriptions _ model =
         ++ (JoinOrga.subscriptions model.joinOrga |> List.map (\s -> Sub.map JoinOrgaMsg s))
         ++ (AuthModal.subscriptions |> List.map (\s -> Sub.map AuthModalMsg s))
         ++ (OrgaMenu.subscriptions |> List.map (\s -> Sub.map OrgaMenuMsg s))
+        ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         |> Sub.batch
 
 
@@ -1163,6 +1182,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
+            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             }
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
@@ -1170,11 +1190,12 @@ view global model =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ model ]
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+        , NTF.view { path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view { baseUri = SettingsBaseUri, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
+        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }
 

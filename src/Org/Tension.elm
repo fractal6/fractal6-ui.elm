@@ -34,6 +34,7 @@ import Components.MoveTension as MoveTension
 import Components.NodeDoc as NodeDoc exposing (NodeDoc)
 import Components.OrgaMenu as OrgaMenu
 import Components.SelectType as SelectType
+import Components.TreeMenu as TreeMenu
 import Components.UserSearchPanel as UserSearchPanel
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -107,7 +108,7 @@ import Page exposing (Document, Page)
 import Ports
 import Query.PatchTension exposing (actionRequest, patchComment, patchLiteral, publishBlob, pushTensionPatch)
 import Query.PatchUser exposing (markAsRead, toggleTensionSubscription)
-import Query.QueryNode exposing (fetchNode, queryFocusNode, queryLocalGraph, queryOrgaTree)
+import Query.QueryNode exposing (fetchNode, queryFocusNode, queryLocalGraph)
 import Query.QueryTension exposing (getTensionBlobs, getTensionComments, getTensionHead)
 import Query.QueryUser exposing (getIsSubscribe)
 import RemoteData exposing (RemoteData)
@@ -163,6 +164,9 @@ mapGlobalOutcmds gcmds =
                     DoUpdateOrgs orgs ->
                         ( Cmd.none, send (UpdateSessionOrgs orgs) )
 
+                    DoUpdateTree tree ->
+                        ( Cmd.none, send (UpdateSessionTree tree) )
+
                     DoCreateTension nameid ->
                         ( Cmd.map NewTensionMsg <| send (NTF.OnOpen (FromNameid nameid)), Cmd.none )
 
@@ -180,8 +184,6 @@ type alias Model =
     { -- Focus
       node_focus : NodeFocus
     , path_data : GqlData LocalGraph
-    , orga_data : GqlData NodesDict
-    , users_data : GqlData UsersDict
     , lookup_users : List User
 
     -- Page
@@ -236,6 +238,7 @@ type alias Model =
     , joinOrga : JoinOrga.State
     , authModal : AuthModal.State
     , orgaMenu : OrgaMenu.State
+    , treeMenu : TreeMenu.State
     }
 
 
@@ -287,7 +290,6 @@ actionViewDecoder x =
 
 type Msg
     = PassedSlowLoadTreshold -- timer
-    | LoadOrga
     | LoadTensionHead
     | LoadTensionComments
     | PushCommentPatch
@@ -295,9 +297,8 @@ type Msg
     | PushBlob_ TensionForm
     | PublishBlob
     | Submit (Time.Posix -> Msg) -- Get Current Time
-      -- Gql Data Queries
+      -- Data Queries
     | GotPath Bool (GqlData LocalGraph)
-    | GotOrga (GqlData NodesDict)
       -- Page
     | GotTensionHead (GqlData TensionHead)
     | GotIsSucribe (GqlData Bool)
@@ -370,6 +371,7 @@ type Msg
     | JoinOrgaMsg JoinOrga.Msg
     | AuthModalMsg AuthModal.Msg
     | OrgaMenuMsg OrgaMenu.Msg
+    | TreeMenuMsg TreeMenu.Msg
 
 
 
@@ -409,8 +411,6 @@ init global flags =
 
         model =
             { node_focus = newFocus
-            , orga_data = fromMaybeData global.session.orga_data NotAsked
-            , users_data = fromMaybeData global.session.users_data NotAsked
             , lookup_users = []
             , tensionid = tid
             , contractid = cid_m
@@ -463,7 +463,8 @@ init global flags =
             , now = global.now
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
-            , orgaMenu = OrgaMenu.init newFocus global.session.menu_left global.session.orgs_data global.session.user
+            , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
+            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         refresh =
@@ -535,6 +536,7 @@ refresh_cmds refresh global model =
             Cmd.none
     , Cmd.map AuthModalMsg (send AuthModal.OnStart)
     , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
+    , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
     ]
 
 
@@ -549,9 +551,6 @@ update global message model =
             global.session.apis
     in
     case message of
-        LoadOrga ->
-            ( model, queryOrgaTree apis model.node_focus.rootnameid GotOrga, Cmd.none )
-
         LoadTensionHead ->
             let
                 ( uctx, cmd ) =
@@ -658,34 +657,6 @@ update global message model =
 
                 _ ->
                     ( { model | path_data = result }, Cmd.none, Cmd.none )
-
-        GotOrga result ->
-            case parseErr result model.refresh_trial of
-                Authenticate ->
-                    ( model, Ports.raiseAuthModal (uctxFromUser global.session.user), Cmd.none )
-
-                RefreshToken i ->
-                    ( { model | refresh_trial = i }, sendSleep LoadOrga 500, send UpdateUserToken )
-
-                OkAuth data ->
-                    let
-                        users =
-                            orgaToUsersData data
-
-                        users_l =
-                            Dict.values users |> List.concat |> LE.uniqueBy (\u -> u.username)
-                    in
-                    if Dict.size data > 0 then
-                        ( { model | orga_data = Success data, users_data = Success users }
-                        , Cmd.batch [ Ports.inheritWith "usersSearchPanel", Ports.initUserSearch users_l ]
-                        , send (UpdateSessionOrga (Just data))
-                        )
-
-                    else
-                        ( { model | users_data = Failure [ T.nodeNotExist ] }, Cmd.none, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none, send (UpdateSessionOrga Nothing) )
 
         -- Page
         GotTensionHead result ->
@@ -1008,17 +979,11 @@ update global message model =
                     ( { model | title_result = result }, Cmd.none, Cmd.none )
 
         DoMove t ->
-            let
-                ( newModel, cmd ) =
-                    case model.orga_data of
-                        NotAsked ->
-                            ( { model | orga_data = Loading }, send LoadOrga )
-
-                        _ ->
-                            ( model, Cmd.none )
-            in
-            ( newModel
-            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))), cmd ]
+            ( model
+            , Cmd.batch
+                [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t)))
+                , Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData)
+                ]
             , Cmd.none
             )
 
@@ -1489,6 +1454,16 @@ update global message model =
             in
             ( { model | orgaMenu = data }, out.cmds |> List.map (\m -> Cmd.map OrgaMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
 
+        TreeMenuMsg msg ->
+            let
+                ( data, out ) =
+                    TreeMenu.update apis msg model.treeMenu
+
+                ( cmds, gcmds ) =
+                    mapGlobalOutcmds out.gcmds
+            in
+            ( { model | treeMenu = data }, out.cmds |> List.map (\m -> Cmd.map TreeMenuMsg m) |> List.append cmds |> Cmd.batch, Cmd.batch gcmds )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions _ model =
@@ -1505,6 +1480,7 @@ subscriptions _ model =
         ++ (MoveTension.subscriptions |> List.map (\s -> Sub.map MoveTensionMsg s))
         ++ (ContractsPage.subscriptions |> List.map (\s -> Sub.map ContractsPageMsg s))
         ++ (SelectType.subscriptions |> List.map (\s -> Sub.map SelectTypeMsg s))
+        ++ (TreeMenu.subscriptions |> List.map (\s -> Sub.map TreeMenuMsg s))
         |> Sub.batch
 
 
@@ -1524,6 +1500,7 @@ view global model =
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
+            , onToggleTreeMenu = TreeMenuMsg TreeMenu.OnToggle
             }
     in
     { title =
@@ -1537,12 +1514,13 @@ view global model =
         [ Lazy.lazy HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
         , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { users_data = fromMaybeData global.session.users_data NotAsked, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , MoveTension.view { orga_data = model.orga_data } model.moveTension |> Html.map MoveTensionMsg
+        , NTF.view { path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , MoveTension.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu } model.moveTension |> Html.map MoveTensionMsg
         , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
         , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
         , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
         , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view { baseUri = TensionBaseUri_, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
         ]
     }
 
@@ -2506,7 +2484,7 @@ viewSidePane u t model =
                                                     , hasRole = hasRole
                                                     , isRight = False
                                                     , domid = domid
-                                                    , orga_data = model.orga_data
+                                                    , tree_data = TreeMenu.getOrgaData_ model.treeMenu
                                                     }
                                             in
                                             ActionPanel.view panelData model.actionPanel |> Html.map ActionPanelMsg

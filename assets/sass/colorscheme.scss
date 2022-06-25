@@ -89,6 +89,7 @@ $acc-height: 48px;
 
 // Menu
 $orga-menu-width: 63px;
+$tree-menu-width: 240px;
 
 
 :root {
@@ -221,6 +222,9 @@ $header-background-color: $hbc;
 $body-background-color: $bbc;
 $footer-background-color: $hbc;
 $comment-header-background-color: $hbc;
+$orga-menu-background-color: $hbc;
+$tree-menu-background-color: darken($hbc, 5);
+
 
 // Text
 $text: $dark;
@@ -360,6 +364,8 @@ $button-vote-danger-background: $danger;
   --body-background-color: #{$body-background-color};
   --footer-background-color: #{$footer-background-color};
   --comment-header-background-color: #{$comment-header-background-color};
+  --orga-menu-background-color: #{$orga-menu-background-color};
+  --tree-menu-background-color: #{$tree-menu-background-color};
 
   // Text
   --text: #{$text};
@@ -522,6 +528,8 @@ $header-background-color: $hbc;
 $body-background-color: $bbc;
 $footer-background-color: $hbc;
 $comment-header-background-color: $chbc;
+$orga-menu-background-color: $hbc;
+$tree-menu-background-color: lighten($hbc, 1);
 
 // Text
 $text: $white-dimmed;
@@ -667,6 +675,8 @@ $button-vote-danger-background: $danger-light;
   --body-background-color: #{$body-background-color};
   --footer-background-color: #{$footer-background-color};
   --comment-header-background-color: #{$comment-header-background-color};
+  --orga-menu-background-color: #{$orga-menu-background-color};
+  --tree-menu-background-color: #{$tree-menu-background-color};
 
   // Text
   --text: #{$text};
