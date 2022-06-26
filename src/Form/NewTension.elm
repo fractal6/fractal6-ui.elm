@@ -1314,13 +1314,12 @@ viewRecipients op model =
           --                (List.filter (\n -> n.nameid /= model.nodeDoc.form.source.nameid) model.sources)
           --        ]
           --    ]
-          span [ class "has-text-grey-light" ] [ textH (T.to ++ ":" ++ T.space_) ]
-        , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger", onClick OnTargetClick ]
-                [ span [ attribute "aria-controls" "target-menu" ]
+          span [ class "has-text-grey-light", attribute "style" "position:relative;top:7px;" ] [ textH (T.to ++ ":" ++ T.space_) ]
+        , span [ class "dropdown " ]
+            [ span [ class "dropdown-trigger", onClick OnTargetClick, attribute "style" "max-width: 280px;" ]
+                [ span [ class "is-wrapped-50", attribute "aria-controls" "target-menu" ]
                     [ span
-                        -- @debug display: why is not alianged
-                        [ class "button is-small has-border is-rounded", style "display" "inline" ]
+                        [ class "button is-small is-rounded has-border", style "display" "inline-block" ]
                         [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                     ]
                 ]

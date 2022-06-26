@@ -2398,6 +2398,20 @@ tr.mediaBox {
     white-space: nowrap;
 }
 
+.is-wrapped-50 {
+    max-width: 50%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+
+    *:not(.dropdown-content) {
+        max-width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+}
+
 .nowrap {
     white-space: nowrap;
 }

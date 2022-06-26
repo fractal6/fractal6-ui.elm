@@ -188,7 +188,7 @@ mediaTension_ now focus tension showStatus showRecip size navigate =
                     []
                 ]
             ]
-        , div [ class "media-right" ]
+        , div [ class "media-right is-wrapped-50" ]
             [ ternary showRecip (viewCircleTarget "is-pulled-right" tension.receiver) (text "")
             , br [] []
             , span [ class "level icons-list" ]
@@ -613,7 +613,7 @@ viewNodeRef baseUri n =
             else
                 uriFromNameid baseUri n.nameid []
     in
-    a [ href ref ] [ n.name |> text ]
+    a [ href ref ] [ text n.name ]
 
 
 viewNodeRefShort : FractalBaseRoute -> String -> Html msg
@@ -625,7 +625,7 @@ viewNodeRefShort baseUri nid =
         name =
             nid |> String.split "#" |> List.reverse |> List.head |> withDefault nid
     in
-    a [ href ref ] [ name |> text ]
+    a [ href ref ] [ text name ]
 
 
 viewOrgaMedia : Maybe (UserCommon a) -> NodeExt -> Html msg
