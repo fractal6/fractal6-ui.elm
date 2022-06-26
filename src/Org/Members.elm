@@ -505,7 +505,7 @@ view_ us model =
                 , div [ class "columns mb-6", classList [ ( "pl-3", isAdmin ) ] ]
                     [ Lazy.lazy3 viewMembersSub model.now model.members_sub model.node_focus ]
                 , div [ class "columns mb-6", classList [ ( "pl-3", isAdmin ) ] ]
-                    [ div [ class "column is-3 pl-0" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
+                    [ div [ class "column is-4 pl-0" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
                     , div [ class "column is-3" ] [ Lazy.lazy7 viewPending model.now model.members_top "pending" model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]
                 ]
@@ -563,7 +563,7 @@ viewMembers now data focus =
                                         [ th [] []
                                         , th [] [ textH T.username ]
                                         , th [] [ textH T.name ]
-                                        , th [ class "" ] [ textH T.roles ]
+                                        , th [] [ textH T.roles ]
                                         ]
                                     ]
                                 , tbody [] <|
@@ -616,7 +616,7 @@ viewMembersSub now data focus =
                                         [ th [] []
                                         , th [] [ textH T.username ]
                                         , th [] [ textH T.name ]
-                                        , th [ class "" ] [ textH T.roles ]
+                                        , th [] [ textH T.roles ]
                                         ]
                                     ]
                                 , tbody [] <|
@@ -657,18 +657,15 @@ viewGuest now members_d title focus =
                 [ div [ class "table is-fullwidth" ]
                     [ thead []
                         [ tr [ class "has-background-header" ]
-                            [ th [] [ textH T.username ]
+                            [ th [] []
+                            , th [] [ textH T.username ]
                             , th [] [ textH T.name ]
+                            , th [] [ textH T.roles ]
                             ]
                         ]
                     , tbody [] <|
                         List.indexedMap
-                            (\i m ->
-                                tr []
-                                    [ td [] [ viewUsernameLink m.username ]
-                                    , td [] [ m.name |> withDefault "--" |> text ]
-                                    ]
-                            )
+                            (\i m -> viewUserRow now m)
                             guests
                     ]
                 ]

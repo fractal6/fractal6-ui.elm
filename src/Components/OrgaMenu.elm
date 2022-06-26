@@ -262,6 +262,7 @@ view op (State model) =
             [ id "orga-menu"
             , class "is-hidden-touch"
             , classList [ ( "off", not model.isActive ) ]
+            , onMouseLeave (OnOrgHover Nothing)
             ]
             [ Lazy.lazy4 viewOrgas model.hover model.focus model.orgs_result op
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
@@ -309,7 +310,6 @@ viewOrga hover focus x =
         [ class "orgaMenu"
         , classList [ ( "is-active", focus.rootnameid == x.nameid ) ]
         , onMouseEnter (OnOrgHover (Just x.nameid))
-        , onMouseLeave (OnOrgHover Nothing)
         ]
         [ if hover == Just x.nameid then
             div [ class "here box" ] [ text x.name ]

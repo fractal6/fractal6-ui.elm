@@ -854,12 +854,10 @@ strong {
 
 #orga-menu {
   z-index: 5;
-  height: 100%;
-  // Do not work but foopage has a higher z-index, or maybe because it has a delay !
-  //height: calc(100vh - #{$navbar-height});
-  width: $orga-menu-width;
-  position: fixed;
   //position: sticky;
+  position: fixed;
+  height: 100%;
+  width: $orga-menu-width;
   top: calc(#{$navbar-height});
   left: 0;
   transition: width .2s ease;
@@ -914,12 +912,9 @@ strong {
 
 #tree-menu {
   z-index: 0;
-  height: 100%;
-  // Do not work but foopage has a higher z-index, or maybe because it has a delay !
-  //height: calc(100vh - #{$navbar-height});
-  width: $tree-menu-width;
   position: fixed;
-  //position: sticky;
+  height: 100%;
+  width: $tree-menu-width;
   top: calc(#{$navbar-height});
   left: 0;
   transition: width .2s ease;
@@ -979,6 +974,39 @@ strong {
         }
     }
 
+}
+
+.hinter {
+  z-index: 1;
+  position: fixed;
+  height: 100%;
+  width: 0;
+  top: calc(#{$navbar-height});
+  left: 0;
+  transition: width .2s ease;
+  background-color: var(--tree-menu-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
+  &:hover::after {
+      position: relative;
+      top: 40%;
+      content: "\00BB";
+      font-weight: 700;
+      font-size: 1.4rem;
+      padding-left: 4px;
+  }
+}
+
+#tree-hinter {
+  z-index: 0;
+  position: fixed;
+  height: 100%;
+  width: 20px;
+  top: calc(#{$navbar-height});
+  left: 0;
+  &:hover > .hinter {
+      width: 25px;
+      cursor: pointer;
+  }
 }
 
 #menuSettings {

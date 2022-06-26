@@ -78,8 +78,8 @@ toString route param params =
     case route of
         -- User  url
         UsersBaseUri ->
-            --"/user/{param}"
-            param
+            --"/user/" ++ param
+            "/" ++ param
 
         -- Org Url
         OverviewBaseUri ->

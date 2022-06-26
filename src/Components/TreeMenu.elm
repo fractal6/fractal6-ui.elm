@@ -374,7 +374,8 @@ view op (State model) =
             ]
 
     else
-        text ""
+        div [ id "tree-hinter", class "is-hidden-touch", onClick OnToggle ]
+            [ div [ class "hinter" ] [] ]
 
 
 viewOrgas : Model -> Html Msg
