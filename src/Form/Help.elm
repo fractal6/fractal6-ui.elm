@@ -3,7 +3,7 @@ module Form.Help exposing (Msg, State, init, subscriptions, update, view)
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Codecs exposing (QuickDoc)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), WebData, isWebSuccess, loadingDiv, viewGqlErrors, viewHttpErrors, withMapData, withMaybeData)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -42,7 +42,8 @@ type State
 
 
 type alias Model =
-    { isModalActive : Bool
+    { isActive : Bool
+    , isActive2 : Bool
     , activeTab : HelpTab
     , doc : WebData QuickDoc
     , type_ : FeedbackType
@@ -99,7 +100,8 @@ initModel user =
         formFeedback =
             initFormFeedback form
     in
-    { isModalActive = False
+    { isActive = False
+    , isActive2 = False
     , activeTab = QuickHelp
     , doc = RemoteData.NotAsked
     , type_ = BugReport
@@ -132,16 +134,6 @@ initFormFeedback form =
 
 
 -- State Controls
-
-
-open : Model -> Model
-open data =
-    { data | isModalActive = True, doc = RemoteData.Loading }
-
-
-close : Model -> Model
-close data =
-    { data | isModalActive = False }
 
 
 changeTab : HelpTab -> Model -> Model
@@ -213,7 +205,8 @@ setLabelsFeedback data =
 
 
 type Msg
-    = OnOpen
+    = SetIsActive2 Bool
+    | OnOpen
     | OnClose ModalData
     | OnCloseSafe String String
     | OnReset HelpTab
@@ -273,20 +266,40 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
+        SetIsActive2 v ->
+            -- Prevent elm from computing the VDOM
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "helpModal" ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
+
         OnOpen ->
-            ( open model
-            , out0 [ getQuickDoc apis "en" OnGotQuickDoc, Ports.open_modal "helpModal" ]
+            ( { model | isActive2 = True, doc = RemoteData.Loading }
+            , if not (isWebSuccess model.doc) then
+                out0 [ getQuickDoc apis "en" OnGotQuickDoc, sendSleep (SetIsActive2 True) 10 ]
+
+              else
+                out0 [ sendSleep (SetIsActive2 True) 10 ]
             )
 
         OnClose data ->
             let
-                cmds =
-                    ternary data.reset [ sendSleep OnResetModel 333 ] []
+                ( newModel, gcmds ) =
+                    if data.link == "" then
+                        ( model, [] )
 
-                gcmds =
-                    ternary (data.link /= "") [ DoNavigate data.link ] []
+                    else
+                        ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
-            ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds Nothing )
+            ( { newModel | isActive = False }
+            , out2
+                [ Ports.close_modal
+                , ternary data.reset (sendSleep OnResetModel 333) Cmd.none
+                , sendSleep (SetIsActive2 False) 500
+                ]
+                gcmds
+            )
 
         OnReset tab ->
             ( resetForm tab model, noOut )
@@ -434,10 +447,14 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ viewModal op (State model)
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        ]
+    if model.isActive2 then
+        div []
+            [ viewModal op (State model)
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
+
+    else
+        text ""
 
 
 viewModal : Op -> State -> Html Msg
@@ -445,7 +462,7 @@ viewModal op (State model) =
     div
         [ id "helpModal"
         , class "modal is-light modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isModalActive ) ]
+        , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
         [ div

@@ -935,21 +935,20 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div [] <|
-        if model.domid == op.domid then
+    if model.domid == op.domid then
+        div []
             [ if model.isOpen then
                 viewPanel op model
 
               else
                 text ""
+            , viewModal op model
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , MoveTension.view { tree_data = op.tree_data } model.moveTension |> Html.map MoveTensionMsg
             ]
-                ++ [ viewModal op model
-                   , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-                   , MoveTension.view { tree_data = op.tree_data } model.moveTension |> Html.map MoveTensionMsg
-                   ]
 
-        else
-            []
+    else
+        text ""
 
 
 viewPanel : Op -> Model -> Html Msg

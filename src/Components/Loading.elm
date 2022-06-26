@@ -438,6 +438,26 @@ withMaybeSlowly result =
 --
 
 
+isWebSuccess : WebData a -> Bool
+isWebSuccess data =
+    case data of
+        RemoteData.Success _ ->
+            True
+
+        _ ->
+            False
+
+
+isWebFailure : WebData a -> Bool
+isWebFailure data =
+    case data of
+        RemoteData.Failure _ ->
+            True
+
+        _ ->
+            False
+
+
 withMapWebData :
     (a -> b)
     -> RemoteData e a

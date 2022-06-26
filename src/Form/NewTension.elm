@@ -729,7 +729,7 @@ update_ apis message model =
             , out2
                 [ Ports.close_modal
                 , ternary data.reset (sendSleep OnResetModel 333) Cmd.none
-                , sendSleep (SetIsActive2 False) 1000
+                , sendSleep (SetIsActive2 False) 500
                 ]
                 gcmds
             )

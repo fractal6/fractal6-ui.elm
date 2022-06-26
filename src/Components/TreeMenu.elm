@@ -284,7 +284,7 @@ update_ apis message model =
 
         OnToggle ->
             if model.isActive then
-                ( { model | isActive = False }, out0 [ Ports.saveMenuTree False, Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 1000 ] )
+                ( { model | isActive = False }, out0 [ Ports.saveMenuTree False, Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 500 ] )
 
             else
                 ( { model | isActive2 = True }, out0 [ Ports.saveMenuTree True, send OnLoad, sendSleep (SetIsActive2 True) 10 ] )
