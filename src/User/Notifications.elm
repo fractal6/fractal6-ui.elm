@@ -107,6 +107,7 @@ type alias Model =
     , help : Help.State
     , refresh_trial : Int
     , now : Time.Posix
+    , empty : {}
     , authModal : AuthModal.State
     }
 
@@ -163,6 +164,7 @@ init global flags =
             , help = Help.init global.session.user
             , refresh_trial = 0
             , now = global.now
+            , empty = {}
             , authModal = AuthModal.init global.session.user Nothing
             }
     in
@@ -339,8 +341,8 @@ view global model =
     { title = "Notifications"
     , body =
         [ view_ global model
-        , Help.view {} model.help |> Html.map HelpMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

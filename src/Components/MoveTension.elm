@@ -266,7 +266,7 @@ update_ apis message model =
     case message of
         OnOpen tid target blob_m ->
             ( open tid target blob_m model
-            , out0 [ Ports.open_modal "MoveTensionModal" ]
+            , out0 [ Ports.open_modal "MoveTensionModal", Ports.requireTreeData ]
             )
 
         OnClose data ->
@@ -423,14 +423,14 @@ type alias Op =
 view : Op -> State -> Html Msg
 view op (State model) =
     div []
-        [ viewModal op (State model)
+        [ viewModal op model
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         , ConfirmContract.view {} model.confirmContract |> Html.map ConfirmContractMsg
         ]
 
 
-viewModal : Op -> State -> Html Msg
-viewModal op (State model) =
+viewModal : Op -> Model -> Html Msg
+viewModal op model =
     div
         [ id "MoveTensionModal"
         , class "modal is-light modal-fx-fadeIn"
@@ -452,14 +452,14 @@ viewModal op (State model) =
                         ]
 
                 _ ->
-                    viewModalContent op (State model)
+                    viewModalContent op model
             ]
         , button [ class "modal-close is-large", onClick (OnCloseSafe "" "") ] []
         ]
 
 
-viewModalContent : Op -> State -> Html Msg
-viewModalContent op (State model) =
+viewModalContent : Op -> Model -> Html Msg
+viewModalContent op model =
     let
         color =
             "warning"

@@ -34,6 +34,7 @@ type State
 type alias Model =
     { user : UserState
     , isActive : Bool
+    , isActive2 : Bool
     , focus : NodeFocus
     , orgs_result : GqlData (List OrgaNode)
     , hover : Maybe String
@@ -48,6 +49,7 @@ initModel : NodeFocus -> Maybe Bool -> Maybe (List OrgaNode) -> UserState -> Mod
 initModel focus isActive orgs user =
     { user = user
     , isActive = withDefault False isActive
+    , isActive2 = withDefault False isActive
     , focus = focus
     , orgs_result =
         case orgs of
@@ -106,6 +108,7 @@ type Msg
     | OnReload UserCtx
     | OnDataAck (GqlData (List OrgaNode))
     | OnToggle
+    | SetIsActive2 Bool
     | OnOrgHover (Maybe String)
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
@@ -160,7 +163,7 @@ update_ apis message model =
                             ( setDataResult (Success []) model, noOut )
 
                         rootids ->
-                            if model.isActive && not (isSuccess model.orgs_result) then
+                            if model.isActive2 && not (isSuccess model.orgs_result) then
                                 ( setDataResult LoadingSlowly model
                                 , out0 [ queryOrgaNode apis rootids OnDataAck ]
                                 )
@@ -199,7 +202,19 @@ update_ apis message model =
                     ( data, noOut )
 
         OnToggle ->
-            ( { model | isActive = not model.isActive }, out0 [ Ports.saveMenuOrga (not model.isActive), send OnLoad ] )
+            if model.isActive then
+                ( { model | isActive = False }, out0 [ Ports.saveMenuOrga False, Ports.closeOrgaMenu, sendSleep (SetIsActive2 False) 1000 ] )
+
+            else
+                ( { model | isActive2 = True }, out0 [ Ports.saveMenuOrga True, send OnLoad, sendSleep (SetIsActive2 True) 10 ] )
+
+        SetIsActive2 v ->
+            -- Prevent elm from computing the VDOM
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.openOrgaMenu ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
 
         OnOrgHover v ->
             ( { model | hover = v }, noOut )
@@ -242,14 +257,18 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div
-        [ id "orga-menu"
-        , class "is-hidden-touch"
-        , classList [ ( "off", not model.isActive ) ]
-        ]
-        [ Lazy.lazy4 viewOrgas model.hover model.focus model.orgs_result op
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        ]
+    if model.isActive2 then
+        div
+            [ id "orga-menu"
+            , class "is-hidden-touch"
+            , classList [ ( "off", not model.isActive ) ]
+            ]
+            [ Lazy.lazy4 viewOrgas model.hover model.focus model.orgs_result op
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            ]
+
+    else
+        text ""
 
 
 viewOrgas : Maybe String -> NodeFocus -> GqlData (List OrgaNode) -> Op -> Html Msg

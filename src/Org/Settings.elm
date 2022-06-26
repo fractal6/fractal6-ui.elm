@@ -151,6 +151,7 @@ type alias Model =
     , modal_confirm : ModalConfirm Msg
     , refresh_trial : Int
     , url : Url
+    , empty : {}
 
     -- Components
     , help : Help.State
@@ -309,7 +310,6 @@ type Msg
     | SelectColor String
       -- Common
     | NoMsg
-    | InitModals
     | LogErr String
     | Navigate String
     | ExpandRoles
@@ -405,19 +405,19 @@ init global flags =
             , helperBar = HelperBar.create
             , refresh_trial = 0
             , url = global.url
+            , empty = {}
             , help = Help.init global.session.user
             , tensionForm = NTF.init global.session.user
             , modal_confirm = ModalConfirm.init NoMsg
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init SettingsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         cmds =
             [ ternary fs.focusChange (queryLocalGraph apis newFocus.nameid (GotPath True)) Cmd.none
             , sendSleep PassedSlowLoadTreshold 500
-            , sendSleep InitModals 400
             , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
             , Cmd.map TreeMenuMsg (send TreeMenu.OnLoad)
             ]
@@ -1048,9 +1048,6 @@ update global message model =
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
-        InitModals ->
-            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
-
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
@@ -1190,14 +1187,14 @@ view global model =
     in
     { title = "Settings · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ Lazy.lazy HelperBar.view helperData
+        [ HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ model ]
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view { baseUri = SettingsBaseUri, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
         ]
     }

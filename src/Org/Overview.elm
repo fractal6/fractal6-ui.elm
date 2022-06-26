@@ -184,6 +184,7 @@ type alias Model =
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
+    , empty : {}
 
     -- Components
     , help : Help.State
@@ -249,7 +250,6 @@ type Msg
     | ToggleGraphReverse
       -- Common
     | NoMsg
-    | InitModals
     | LogErr String
     | Navigate String
     | ExpandRoles
@@ -321,6 +321,7 @@ init global flags =
             -- Common
             , refresh_trial = 0
             , now = global.now
+            , empty = {}
 
             -- Components
             , helperBar = HelperBar.create
@@ -330,7 +331,7 @@ init global flags =
             , joinOrga = JoinOrga.init newFocus.nameid session.user
             , authModal = AuthModal.init session.user Nothing
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init OverviewBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         cmds_ =
@@ -378,7 +379,6 @@ init global flags =
         cmds =
             cmds_
                 ++ [ sendSleep PassedSlowLoadTreshold 500
-                   , sendSleep InitModals 400
                    , Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad)
                    ]
     in
@@ -789,9 +789,6 @@ update global message model =
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
-        InitModals ->
-            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
-
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
@@ -972,14 +969,14 @@ view global model =
     in
     { title = "Overview · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ Lazy.lazy HelperBar.view helperData
+        [ HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view { baseUri = OverviewBaseUri, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , NTF.view { tree_data = model.tree_data, path_data = Maybe.map (\x -> Success x) model.path_data |> withDefault Loading } model.tensionForm |> Html.map NewTensionMsg
+        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         ]
     }
 

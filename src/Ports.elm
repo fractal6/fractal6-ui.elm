@@ -52,13 +52,13 @@ port triggerJoinPendingFromJs : (() -> msg) -> Sub msg
 port triggerInviteFromJs : (() -> msg) -> Sub msg
 
 
-port triggerNotifFromJs : (() -> msg) -> Sub msg
-
-
 port triggerMenuOrgaFromJs : (() -> msg) -> Sub msg
 
 
 port triggerMenuTreeFromJs : (() -> msg) -> Sub msg
+
+
+port triggerNotifFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -104,6 +104,13 @@ port cancelActionFromJs : (() -> msg) -> Sub msg
 
 
 port cancelLookupFsFromJs : (() -> msg) -> Sub msg
+
+
+
+-- Menus
+
+
+port requireTreeDataFromJs : (() -> msg) -> Sub msg
 
 
 
@@ -417,6 +424,52 @@ outsideClickClose msg target =
 
 
 --
+-- Menus
+--
+
+
+openOrgaMenu : Cmd msg
+openOrgaMenu =
+    outgoing
+        { action = "OPEN_ORGA_MENU"
+        , data = JE.string ""
+        }
+
+
+closeOrgaMenu : Cmd msg
+closeOrgaMenu =
+    outgoing
+        { action = "CLOSE_ORGA_MENU"
+        , data = JE.string ""
+        }
+
+
+openTreeMenu : Cmd msg
+openTreeMenu =
+    outgoing
+        { action = "OPEN_TREE_MENU"
+        , data = JE.string ""
+        }
+
+
+closeTreeMenu : Cmd msg
+closeTreeMenu =
+    outgoing
+        { action = "CLOSE_TREE_MENU"
+        , data = JE.string ""
+        }
+
+
+requireTreeData : Cmd msg
+requireTreeData =
+    outgoing
+        { action = "REQUIRE_TREE_DATA"
+        , data = JE.string ""
+        }
+
+
+
+--
 -- Utils
 --
 
@@ -469,18 +522,10 @@ click target =
         }
 
 
-force_reload : Cmd msg
-force_reload =
+forceReload : Cmd msg
+forceReload =
     outgoing
         { action = "FORCE_RELOAD"
-        , data = JE.string ""
-        }
-
-
-toggleTreeMenu : Cmd msg
-toggleTreeMenu =
-    outgoing
-        { action = "TOGGLE_TREE_MENU"
         , data = JE.string ""
         }
 

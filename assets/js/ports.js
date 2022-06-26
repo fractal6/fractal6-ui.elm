@@ -3,12 +3,12 @@ import { BulmaDriver, InitBulma, catchEsc } from './bulma_drivers'
 import { GraphPack } from './graphpack_d3'
 import { sleep } from './custom.js'
 
+export const UCTX_KEY = "user_ctx";
+
 function initQuickSearch(qs, data) {
     qs.removeAll();
     qs.addAll(data);
 }
-
-const UCTX_KEY = "user_ctx";
 
 // On load, listen to Elm!
 window.addEventListener('load', _ => {
@@ -74,7 +74,7 @@ window.addEventListener('load', _ => {
 
 // Elm outgoing Ports Actions.
 // Maps actions to functions!
-const actions = {
+export const actions = {
     'BULMA': (app, session, id) => {
         InitBulma(app, session, id);
 
@@ -250,7 +250,7 @@ const actions = {
         if ($canvas) {
             var gp = session.gp;
             setTimeout( () => {
-                gp.drawButtons()}, 300);
+                gp.drawButtons()}, 333);
         }
     },
     //
@@ -288,12 +288,13 @@ const actions = {
         // @TODO: make a list of item to delete instead !
         // see also static/index.js
         localStorage.removeItem(UCTX_KEY);
-        localStorage.removeItem("orga_menu");
         localStorage.removeItem("window_pos");
         //localStorage.removeItem("theme");
-        //localStorage.removeItem("tree_menu");
         // --
         // Remove classes available only if logged-in.
+        // i.e. tree_menu do not depend of a session.
+        //localStorage.removeItem("tree_menu");
+        localStorage.removeItem("orga_menu");
         var $t;
         $t = document.getElementById("body");
         if ($t) {
@@ -376,20 +377,48 @@ const actions = {
     //
     // Menus
     //
-    //
-    'TOGGLE_TREE_MENU': (app, session, _) => {
+    'OPEN_ORGA_MENU': (app, session, _) => {
         var $t = document.getElementById("body");
         if ($t) {
-            $t.classList.toggle('has-tree-menu');
+            $t.classList.add('has-orga-menu');
+        }
+    },
+    'CLOSE_ORGA_MENU': (app, session, _) => {
+        var $t = document.getElementById("body");
+        if ($t) {
+            $t.classList.remove('has-orga-menu');
+        }
+    },
+    'OPEN_TREE_MENU': (app, session, _) => {
+        var $t = document.getElementById("body");
+        if ($t) {
+            $t.classList.add('has-tree-menu');
         }
         $t = document.getElementById("helperBar");
         if ($t) {
-            $t.classList.toggle('has-tree-menu');
+            $t.classList.add('has-tree-menu');
         }
         $t = document.getElementById("mainPane");
         if ($t) {
-            $t.classList.toggle('has-tree-menu');
+            $t.classList.add('has-tree-menu');
         }
+    },
+    'CLOSE_TREE_MENU': (app, session, _) => {
+        var $t = document.getElementById("body");
+        if ($t) {
+            $t.classList.remove('has-tree-menu');
+        }
+        $t = document.getElementById("helperBar");
+        if ($t) {
+            $t.classList.remove('has-tree-menu');
+        }
+        $t = document.getElementById("mainPane");
+        if ($t) {
+            $t.classList.remove('has-tree-menu');
+        }
+    },
+    'REQUIRE_TREE_DATA': (app, session, _) => {
+        app.ports.requireTreeDataFromJs.send(null);
     },
     //
     // Utils
@@ -457,6 +486,6 @@ const actions = {
 
         setTimeout(() => {
             fitElement(id);
-        }, 300)
+        }, 333)
     },
 }

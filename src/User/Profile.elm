@@ -16,6 +16,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, li, nav, p, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, classList, disabled, href, id, placeholder, rows, type_)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -91,6 +92,7 @@ type alias Model =
     , help : Help.State
     , refresh_trial : Int
     , authModal : AuthModal.State
+    , empty : {}
     }
 
 
@@ -137,6 +139,7 @@ init global flags =
             , refresh_trial = 0
             , help = Help.init global.session.user
             , authModal = AuthModal.init global.session.user Nothing
+            , empty = {}
             }
 
         cmds =
@@ -296,8 +299,8 @@ view global model =
 
             Failure err ->
                 viewGqlErrors err
-        , Help.view {} model.help |> Html.map HelpMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , Lazy.lazy2 Help.view model.empty model.help |> Html.map HelpMsg
+        , Lazy.lazy2 AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

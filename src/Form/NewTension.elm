@@ -46,6 +46,7 @@ import Global exposing (Msg(..), send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, datalist, div, h1, h2, hr, i, input, label, li, nav, option, p, span, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, autofocus, class, classList, contenteditable, disabled, href, id, list, placeholder, required, rows, spellcheck, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Markdown exposing (renderMarkdown)
@@ -90,7 +91,8 @@ type alias Model =
     , result : GqlData Tension
     , sources : List UserRole
     , step : TensionStep
-    , isModalActive : Bool
+    , isActive : Bool
+    , isActive2 : Bool -- Let minimze VDOM load + prevent glitch while keeping css effects
     , activeTab : TensionTab
     , viewMode : InputViewMode
     , activeButton : Maybe Int -- 0: creating role, 1: creating tension (no pushing blob)
@@ -106,7 +108,6 @@ type alias Model =
 
     -- Common
     , refresh_trial : Int
-    , preventGlitch : Bool -- Debug flag to avoid have a glitch when clikin on a link in the modal that will reset it and make its border likeliy to change (from success to init)
     , modal_confirm : ModalConfirm Msg
 
     -- Components
@@ -133,6 +134,7 @@ type NodeStep
     = RoleAuthorityStep
     | CircleVisibilityStep
     | NodeValidateStep
+    | InviteStep
 
 
 type NewTensionInput
@@ -162,6 +164,9 @@ nodeStepToString form step =
         NodeValidateStep ->
             "Review and Validate"
 
+        InviteStep ->
+            "Invite"
+
 
 init : UserState -> State
 init user =
@@ -174,7 +179,8 @@ initModel user =
     , result = NotAsked
     , sources = []
     , step = TensionFinal
-    , isModalActive = False
+    , isActive = False
+    , isActive2 = False
     , activeTab = NewTensionTab
     , viewMode = Write
     , activeButton = Nothing
@@ -191,7 +197,6 @@ initModel user =
 
     -- Common
     , refresh_trial = 0
-    , preventGlitch = True
     , modal_confirm = ModalConfirm.init NoMsg
 
     -- Components
@@ -265,20 +270,8 @@ initCircleTab type_ model =
 
 
 -- Global methods
-
-
-fixGlitch_ : State -> State
-fixGlitch_ (State model) =
-    { model | preventGlitch = False } |> State
-
-
-
+--  nothing here
 --- State Controls
-
-
-open : Model -> Model
-open data =
-    { data | isModalActive = True }
 
 
 setPath : LocalGraph -> Model -> Model
@@ -369,7 +362,7 @@ changeNodeStep step model =
 
 close : Model -> Model
 close data =
-    { data | isModalActive = False }
+    { data | isActive = False }
 
 
 setActiveButton : Bool -> Model -> Model
@@ -474,11 +467,7 @@ resetPost data =
 
 resetModel : Model -> Model
 resetModel data =
-    let
-        m =
-            initModel data.user
-    in
-    { m | preventGlitch = False }
+    initModel data.user
 
 
 
@@ -541,6 +530,7 @@ type Msg
     | OnSubmit (Time.Posix -> Msg)
     | GotPath Bool (GqlData LocalGraph) -- GraphQL
       -- Modal control
+    | SetIsActive2 Bool
     | OnOpen NewTensionInput
     | OnOpenRole NewTensionInput
     | OnOpenCircle NewTensionInput
@@ -552,13 +542,14 @@ type Msg
     | OnChangeNodeStep NodeStep
     | OnTensionStep TensionStep
     | OnChangeInputViewMode InputViewMode
+    | OnTargetClick
     | DoInvite
     | OnInvite Time.Posix
     | PushAck (GqlData IdPayload)
       -- Doc change
     | OnChangeTensionType TensionType.TensionType
     | OnChangeTensionSource UserRole
-    | OnChangeTensionTarget PNode
+    | OnChangeTensionTarget Node
     | OnChangeRoleAuthority RoleType.RoleType
     | OnChangeCircleGovernance NodeMode.NodeMode
     | OnChangePost String String
@@ -683,6 +674,14 @@ update_ apis message model =
                     ( { model | path_data = result }, noOut )
 
         -- Modal control
+        SetIsActive2 v ->
+            -- Prevent elm from computing the VDOM
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "tensionModal" ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
+
         OnOpen t ->
             case model.user of
                 LoggedIn uctx ->
@@ -699,17 +698,17 @@ update_ apis message model =
                                 ( { data | refresh_trial = 1 }, Out [ sendSleep (OnOpen (FromPath p)) 500 ] [ DoUpdateToken ] Nothing )
 
                             else if data.sources == [] then
-                                ( setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ]) data |> open
-                                , out0 [ Ports.open_modal "tensionModal" ]
+                                ( { data | isActive2 = True } |> setStep (TensionNotAuthorized [ T.notOrgMember, T.joinForTension ])
+                                , out0 [ sendSleep (SetIsActive2 True) 10 ]
                                 )
 
                             else
-                                ( data |> setUctx uctx |> open
-                                , out0 [ Ports.open_modal "tensionModal" ]
+                                ( { data | isActive2 = True } |> setUctx uctx
+                                , out0 [ sendSleep (SetIsActive2 True) 10 ]
                                 )
 
                 LoggedOut ->
-                    ( setStep AuthNeeded model |> open, out0 [ Ports.open_modal "tensionModal" ] )
+                    ( { model | isActive2 = True } |> setStep AuthNeeded, out0 [ send (SetIsActive2 True) ] )
 
         OnOpenRole t ->
             ( { model | activeTab = NewRoleTab, force_init = True }, out0 [ sendSleep (OnSwitchTab NewRoleTab) 333, send (OnOpen t) ] )
@@ -719,17 +718,21 @@ update_ apis message model =
 
         OnClose data ->
             let
-                cmds =
-                    ternary data.reset [ sendSleep OnResetModel 333 ] []
-
                 ( newModel, gcmds ) =
                     if data.link == "" then
                         ( model, [] )
 
                     else
-                        ( { model | preventGlitch = True }, [ DoNavigate data.link ] )
+                        ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
-            ( close newModel, out2 ([ Ports.close_modal ] ++ cmds) gcmds )
+            ( { newModel | isActive = False }
+            , out2
+                [ Ports.close_modal
+                , ternary data.reset (sendSleep OnResetModel 333) Cmd.none
+                , sendSleep (SetIsActive2 False) 1000
+                ]
+                gcmds
+            )
 
         OnResetModel ->
             ( resetModel model, noOut )
@@ -779,6 +782,9 @@ update_ apis message model =
 
         OnChangeInputViewMode viewMode ->
             ( setViewMode viewMode model, noOut )
+
+        OnTargetClick ->
+            ( model, out0 [ Ports.requireTreeData ] )
 
         DoInvite ->
             ( { model | doInvite = True }, noOut )
@@ -845,7 +851,7 @@ update_ apis message model =
             ( setSource source model, noOut )
 
         OnChangeTensionTarget target ->
-            ( setTarget target model, noOut )
+            ( setTarget (shrinkNode target) model, noOut )
 
         OnChangeRoleAuthority role_type ->
             ( { model | nodeDoc = NodeDoc.updatePost "role_type" (RoleType.toString role_type) model.nodeDoc }, noOut )
@@ -1062,25 +1068,27 @@ subscriptions (State model) =
 
 type alias Op =
     { path_data : GqlData LocalGraph
+    , tree_data : GqlData NodesDict
     }
 
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    if model.preventGlitch then
-        text ""
-
-    else
-        div []
+    div []
+        (if model.isActive2 then
             [ viewModal op (State model)
             , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-            , viewButton op model
             ]
+
+         else
+            []
+                ++ [ viewButton op model ]
+        )
 
 
 viewButton : Op -> Model -> Html Msg
 viewButton op model =
-    div [ class "tensionButton", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isModalActive ) ] ]
+    div [ class "tensionButton", classList [ ( "is-invisible", not (isSuccess op.path_data) || model.isActive ) ] ]
         [ button ([ class "button is-success" ] ++ (withMaybeData op.path_data |> Maybe.map (\p -> [ onClick (OnOpen (FromPath p)) ]) |> withDefault []))
             [ A.icon "icon-plus icon-2x" ]
         ]
@@ -1091,7 +1099,7 @@ viewModal op (State model) =
     div
         [ id "tensionModal"
         , class "modal is-light modal-fx-slideTop"
-        , classList [ ( "is-active", model.isModalActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
+        , classList [ ( "is-active", model.isActive ), ( "fixed-top", model.step == TensionFinal && withMaybeData model.result == Nothing ) ]
         , attribute "data-modal-close" "closeModalTensionFromJs"
         ]
         [ div
@@ -1135,13 +1143,13 @@ viewStep op (State model) =
         TensionFinal ->
             case model.activeTab of
                 NewTensionTab ->
-                    viewTension model
+                    viewTension op model
 
                 NewRoleTab ->
-                    viewCircle model
+                    viewCircle op model
 
                 NewCircleTab ->
-                    viewCircle model
+                    viewCircle op model
 
         TensionNotAuthorized errMsg ->
             viewRoleNeeded errMsg
@@ -1190,14 +1198,14 @@ viewSuccess res model =
         ]
 
 
-viewHeader : Model -> Html Msg
-viewHeader model =
+viewHeader : Op -> Model -> Html Msg
+viewHeader op model =
     div [ class "panel-heading pt-4 pb-3" ]
         [ div [ class "level modal-card-title is-size-6" ]
             [ div [ class "level-left" ]
                 [ span [ class "has-text-weight-semibold" ] [ textT model.txt.title ] ]
             , div [ class "level-item" ]
-                [ viewRecipients model ]
+                [ viewRecipients op model ]
             , div [ class "level-right" ]
                 [ viewTensionType model ]
             ]
@@ -1276,8 +1284,8 @@ viewTensionType model =
         ]
 
 
-viewRecipients : Model -> Html Msg
-viewRecipients model =
+viewRecipients : Op -> Model -> Html Msg
+viewRecipients op model =
     let
         form =
             model.nodeDoc.form
@@ -1308,7 +1316,7 @@ viewRecipients model =
           --    ]
           span [ class "has-text-grey-light" ] [ textH (T.to ++ ":" ++ T.space_) ]
         , span [ class "dropdown" ]
-            [ span [ class "dropdown-trigger" ]
+            [ span [ class "dropdown-trigger", onClick OnTargetClick ]
                 [ span [ attribute "aria-controls" "target-menu" ]
                     [ span
                         -- @debug display: why is not alianged
@@ -1316,8 +1324,8 @@ viewRecipients model =
                         [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                     ]
                 ]
-            , div [ id "target-menu", class "dropdown-menu is-right", attribute "role" "menu" ]
-                [ div [ class "dropdown-content" ] <|
+            , div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
+                [ div [ class "dropdown-content", style "max-height" "420px" ] <|
                     List.map
                         (\t ->
                             div
@@ -1326,13 +1334,16 @@ viewRecipients model =
                                 ]
                                 [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
                         )
-                        []
-
-                -- @deprectated
-                --(getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
-                --    |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
-                --    |> List.sortWith sortNode
-                --)
+                        --(getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
+                        (withMaybeData op.tree_data
+                            |> Maybe.map
+                                (\d ->
+                                    Dict.values d
+                                        |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
+                                        |> List.sortWith sortNode
+                                )
+                            |> withDefault [ initNode ]
+                        )
                 ]
             ]
         ]
@@ -1344,8 +1355,8 @@ viewRecipients model =
 ---
 
 
-viewTension : Model -> Html Msg
-viewTension model =
+viewTension : Op -> Model -> Html Msg
+viewTension op model =
     let
         form =
             model.nodeDoc.form
@@ -1374,8 +1385,8 @@ viewTension model =
 
         other ->
             div [ class "panel modal-card submitFocus" ]
-                [ viewHeader model
-                , viewTensionTabs model.activeTab form.target
+                [ viewHeader op model
+                , Lazy.lazy2 viewTensionTabs model.activeTab form.target
                 , div [ class "modal-card-body" ]
                     [ div [ class "field" ]
                         [ div [ class "control" ]
@@ -1476,8 +1487,8 @@ viewTension model =
                 ]
 
 
-viewCircle : Model -> Html Msg
-viewCircle model =
+viewCircle : Op -> Model -> Html Msg
+viewCircle op model =
     let
         form =
             model.nodeDoc.form
@@ -1503,8 +1514,8 @@ viewCircle model =
 
         other ->
             div [ class "panel modal-card submitFocus" ] <|
-                [ viewHeader model
-                , viewTensionTabs model.activeTab form.target
+                [ viewHeader op model
+                , Lazy.lazy2 viewTensionTabs model.activeTab form.target
                 ]
                     ++ (case model.nodeStep of
                             RoleAuthorityStep ->
@@ -1566,6 +1577,10 @@ viewCircle model =
                                         ]
                                     ]
                                 ]
+
+                            InviteStep ->
+                                -- This View is implemented in the success view !
+                                []
                        )
 
 
@@ -1578,7 +1593,7 @@ viewNodeBreadcrumb form step =
         path =
             case node_type of
                 NodeType.Role ->
-                    [ RoleAuthorityStep, NodeValidateStep ]
+                    [ RoleAuthorityStep, NodeValidateStep, InviteStep ]
 
                 NodeType.Circle ->
                     [ CircleVisibilityStep, NodeValidateStep ]
@@ -1674,7 +1689,7 @@ viewRoleExt model =
                 List.map
                     (\role ->
                         let
-                            isActive =
+                            isSelected =
                                 Just role.id == form.node.role_ext
 
                             icon =
@@ -1682,7 +1697,7 @@ viewRoleExt model =
                         in
                         div
                             [ class "card has-border column is-paddingless m-3 is-h"
-                            , classList [ ( "is-selected", isActive ) ]
+                            , classList [ ( "is-selected", isSelected ) ]
                             , attribute "style" "min-width: 150px;"
 
                             -- @debug: onClick here do not work sometimes (for the 2nd element of the list ???
@@ -1746,7 +1761,7 @@ viewCircleVisibility model =
             |> List.map
                 (\x ->
                     let
-                        isActive =
+                        isSelected =
                             Just x == form.node.visibility
 
                         ( icon, description ) =
@@ -1762,7 +1777,7 @@ viewCircleVisibility model =
                     in
                     div
                         [ class "card has-border column is-paddingless m-3 is-h"
-                        , classList [ ( "is-selected is-selectable", isActive ) ]
+                        , classList [ ( "is-selected is-selectable", isSelected ) ]
 
                         -- @debug: onCLick here do not work sometimes (for the 2nd element of the list ???
                         ]

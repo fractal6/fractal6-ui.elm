@@ -530,10 +530,6 @@ function triggerNotif(e, el, app) {
 }
 
 function triggerMenuOrga(e, el, app) {
-    var $t = document.getElementById("body");
-    if ($t) {
-        $t.classList.toggle('has-orga-menu');
-    }
     app.ports.triggerMenuOrgaFromJs.send(null)
 }
 
@@ -542,8 +538,8 @@ function triggerMenuTree(e, el, app) {
 }
 
 function triggerTheme(e, el, app) {
-    var theme;
     // Toggle theme color
+    var theme;
     if (document.documentElement.classList.contains("dark")) {
         theme = "light";
     } else if (document.documentElement.classList.contains("light")) {

@@ -19,6 +19,7 @@ import Global exposing (Msg(..), send, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, h3, h4, h5, h6, hr, i, input, label, li, nav, option, p, select, span, strong, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, name, placeholder, rows, selected, spellcheck, style, target, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
@@ -100,6 +101,7 @@ type alias Model =
     , help : Help.State
     , refresh_trial : Int
     , authModal : AuthModal.State
+    , empty : {}
     }
 
 
@@ -215,6 +217,7 @@ init global flags =
             , refresh_trial = 0
             , help = Help.init global.session.user
             , authModal = AuthModal.init global.session.user Nothing
+            , empty = {}
             }
 
         cmds =
@@ -387,8 +390,8 @@ view global model =
     { title = model.username ++ "'s settings"
     , body =
         [ view_ model
-        , Help.view {} model.help |> Html.map HelpMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
         ]
     }
 

@@ -35,24 +35,6 @@ export function setpixelated(ctx2d, v) {
 }
 
 
-const toggleTheme = () => {
-    var is_dark = document
-        .getElementById('cssTheme')
-        .classList[0] === 'dark_theme';
-
-    var element = document.getElementById('cssTheme');
-
-    if (is_dark) {
-        element.href = '/light.css';
-        element.classList.remove('dark_theme')
-        element.classList.add('light_theme');
-    } else {
-        element.href = '/dark.css';
-        element.classList.remove('light_theme')
-        element.classList.add('dark_theme');
-    }
-}
-
 // sleep time expects milliseconds
 // usage: sleep(1000).then(() => {...})
 export function sleep (time) {
@@ -73,4 +55,29 @@ export function ptInTriangle(p, p0, p1, p2) {
     var t = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY;
     if (D<0) return s<=0 && t<=0 && s+t>=D;
     return s>=0 && t>=0 && s+t<=D;
+}
+
+
+/*
+ *
+ * Old / @deprecated
+ *
+ */
+
+const toggleTheme = () => {
+    var is_dark = document
+        .getElementById('cssTheme')
+        .classList[0] === 'dark_theme';
+
+    var element = document.getElementById('cssTheme');
+
+    if (is_dark) {
+        element.href = '/light.css';
+        element.classList.remove('dark_theme')
+        element.classList.add('light_theme');
+    } else {
+        element.href = '/dark.css';
+        element.classList.remove('light_theme')
+        element.classList.add('dark_theme');
+    }
 }

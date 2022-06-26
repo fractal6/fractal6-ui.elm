@@ -12,15 +12,8 @@ import Text as T exposing (textH, textT, upH)
 import Url exposing (Url)
 
 
-type alias Op msg =
-    { user : UserState
-    , url : Url
-    , replaceUrl : String -> msg
-    }
-
-
-view : Op msg -> Html msg
-view op =
+view : UserState -> Url -> (String -> msg) -> Html msg
+view user url replaceUrl =
     header [ id "navbarTop", class "has-navbar-fixed-top" ]
         [ nav
             [ class "navbar is-fixed-top"
@@ -39,14 +32,14 @@ view op =
                 ]
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ] <|
-                    (case op.user of
+                    (case user of
                         LoggedIn _ ->
                             let
                                 hasLeftMenuBurger =
-                                    urlToFractalRoute op.url
+                                    urlToFractalRoute url
                                         |> Maybe.map
-                                            (\url ->
-                                                List.member url [ OverviewBaseUri, TensionsBaseUri, MembersBaseUri, SettingsBaseUri ]
+                                            (\u ->
+                                                List.member u [ OverviewBaseUri, TensionsBaseUri, MembersBaseUri, SettingsBaseUri ]
                                             )
                                         |> withDefault False
                             in
@@ -59,7 +52,7 @@ view op =
                                 [ class "navbar-item pl-1"
                                 , classList
                                     [ ( "is-active"
-                                      , case fromUrl op.url of
+                                      , case fromUrl url of
                                             Just (Dynamic _) ->
                                                 True
 
@@ -77,35 +70,35 @@ view op =
                     )
                         ++ [ a
                                 [ class "navbar-item"
-                                , classList [ ( "is-active", fromUrl op.url == Just Explore ) ]
+                                , classList [ ( "is-active", fromUrl url == Just Explore ) ]
                                 , href (toHref Explore)
                                 ]
                                 [ textH T.explore ]
                            ]
                 , div [ class "navbar-end" ]
-                    [ notificationButton op
-                    , helpButton op
-                    , newButton op
-                    , userButton op
+                    [ notificationButton user url
+                    , helpButton user
+                    , newButton user
+                    , userButton user url replaceUrl
                     ]
                 ]
             ]
         ]
 
 
-notificationButton : Op msg -> Html msg
-notificationButton op =
-    case op.user of
+notificationButton : UserState -> Url -> Html msg
+notificationButton user url =
+    case user of
         LoggedIn _ ->
             a
                 [ class "navbar-item"
-                , classList [ ( "is-active", fromUrl op.url == Just Notifications ) ]
+                , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 , href (toHref Notifications)
                 , title (upH T.notifications)
                 ]
                 [ div
                     [ class "navbar-link is-arrowless is-rounded is-small notifTrigger"
-                    , classList [ ( "is-active", fromUrl op.url == Just Notifications ) ]
+                    , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                     ]
                     [ A.icon "icon-bg icon-bell" ]
                 ]
@@ -114,9 +107,9 @@ notificationButton op =
             text ""
 
 
-helpButton : Op msg -> Html msg
-helpButton op =
-    case op.user of
+helpButton : UserState -> Html msg
+helpButton user =
+    case user of
         LoggedIn _ ->
             div
                 [ class "navbar-item" ]
@@ -131,9 +124,9 @@ helpButton op =
             text ""
 
 
-newButton : Op msg -> Html msg
-newButton op =
-    case op.user of
+newButton : UserState -> Html msg
+newButton user =
+    case user of
         LoggedIn _ ->
             div
                 [ class "navbar-item has-dropdown" ]
@@ -152,9 +145,9 @@ newButton op =
             text ""
 
 
-userButton : Op msg -> Html msg
-userButton op =
-    case op.user of
+userButton : UserState -> Url -> (String -> msg) -> Html msg
+userButton user url replaceUrl =
+    case user of
         LoggedIn uctx ->
             div [ class "navbar-item has-dropdown" ]
                 [ div
@@ -172,13 +165,13 @@ userButton op =
                     , hr [ class "navbar-divider" ] []
 
                     -- Prevout logout to be log in the browser history (@debug do not work)
-                    , div [ class "navbar-item button-light", onClick (op.replaceUrl (toHref Logout)) ]
+                    , div [ class "navbar-item button-light", onClick (replaceUrl (toHref Logout)) ]
                         [ A.icon1 "icon-power" (upH T.signout) ]
                     ]
                 ]
 
         LoggedOut ->
-            if fromUrl op.url == Just Signup then
+            if fromUrl url == Just Signup then
                 text ""
 
             else

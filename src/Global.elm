@@ -24,6 +24,7 @@ import Footbar
 import Generated.Route as Route exposing (Route)
 import Html exposing (Html, div, text)
 import Html.Attributes as Attr exposing (attribute, class, href, id, style)
+import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
@@ -230,7 +231,7 @@ update msg model =
                                     navigate home
 
                         LoggedOut ->
-                            sendSleep RedirectOnLoggedIn 300
+                            sendSleep RedirectOnLoggedIn 333
             in
             ( model, cmd )
 
@@ -250,7 +251,7 @@ update msg model =
         --
         UpdateSessionFocus data ->
             -- @here @warning: this Msg has side effect. It reset some session data, in order
-            -- to avoid glitch or bad UX (seeing uncoherent tensions data) when navigating app.
+            -- to avoid glitch or bad UX (seeing incoherent tensions data) when navigating app.
             -- * reset Tensions and Tension page data.
             -- * reset Panel data.
             let
@@ -433,25 +434,23 @@ subscriptions _ =
 --
 
 
-view : { page : Document msg, global : Model, url : Url, toMsg : Msg -> msg } -> Document msg
-view { page, global, url, toMsg } =
+view : { page : Document msg, global : Model, url : Url, msg1 : String -> msg } -> Document msg
+view { page, global, url, msg1 } =
     layout
         { page = page
         , url = url
         , session = global.session
-        , toMsg = toMsg
+        , msg1 = msg1
         }
 
 
-layout : { page : Document msg, url : Url, session : Session, toMsg : Msg -> msg } -> Document msg
-layout { page, url, session, toMsg } =
+layout : { page : Document msg, url : Url, session : Session, msg1 : String -> msg } -> Document msg
+layout { page, url, session, msg1 } =
     { title = page.title
     , body =
         [ div [ id "app" ]
-            [ Navbar.view { user = session.user, url = url, replaceUrl = toMsg << ReplaceUrl }
-            , div [ id "body" ] <|
-                --[ div [ class "notification is-info" ] [ div [ class "delete" ] [] , text session.referer.path ] ] ++
-                page.body
+            [ Lazy.lazy3 Navbar.view session.user url msg1
+            , div [ id "body" ] page.body
             , Footbar.view
             ]
         ]

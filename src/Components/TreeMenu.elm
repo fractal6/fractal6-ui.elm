@@ -2,12 +2,12 @@ module Components.TreeMenu exposing (Msg(..), State, getOrgaData_, init, subscri
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isFailure, isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict
 import Dict.Extra as DE
 import Extra exposing (ternary)
-import Extra.Events exposing (onClickPD)
+import Extra.Events exposing (onClickPD, onClickPD2)
 import Form exposing (isPostEmpty)
 import Fractal.Enum.NodeType as NodeType
 import Fractal.Enum.RoleType as RoleType
@@ -38,6 +38,7 @@ type State
 type alias Model =
     { user : UserState
     , isActive : Bool
+    , isActive2 : Bool
     , focus : NodeFocus
     , tree_result : GqlData NodesDict
     , tree : Tree Node
@@ -46,6 +47,8 @@ type alias Model =
     -- Common
     , refresh_trial : Int -- use to refresh user token
     , modal_confirm : ModalConfirm Msg
+    , baseUri : FractalBaseRoute
+    , uriQuery : Maybe String
     }
 
 
@@ -56,10 +59,11 @@ type Tree n
         }
 
 
-initModel : NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> Model
-initModel focus isActive tree user =
+initModel : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> Model
+initModel baseUri uriQuery focus isActive tree user =
     { user = user
     , isActive = withDefault False isActive
+    , isActive2 = withDefault False isActive
     , focus = focus
     , tree_result =
         case tree of
@@ -79,13 +83,15 @@ initModel focus isActive tree user =
     -- Common
     , refresh_trial = 0
     , modal_confirm = ModalConfirm.init NoMsg
+    , baseUri = baseUri
+    , uriQuery = uriQuery
     }
         |> setTree
 
 
-init : NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> State
-init focus isActive tree user =
-    initModel focus isActive tree user |> State
+init : FractalBaseRoute -> Maybe String -> NodeFocus -> Maybe Bool -> Maybe NodesDict -> UserState -> State
+init baseUri uriQuery focus isActive tree user =
+    initModel baseUri uriQuery focus isActive tree user |> State
 
 
 setTree : Model -> Model
@@ -150,7 +156,7 @@ getOrgaData_ (State model) =
 
 reset : Model -> Model
 reset model =
-    initModel model.focus (Just model.isActive) (withMaybeData model.tree_result) model.user
+    initModel model.baseUri Nothing model.focus (Just model.isActive) (withMaybeData model.tree_result) model.user
 
 
 setDataResult : GqlData NodesDict -> Model -> Model
@@ -174,7 +180,10 @@ type Msg
     | OnDataAck (GqlData NodesDict)
     | OnSetTree NodesDict
     | OnToggle
+    | SetIsActive2 Bool
     | OnOrgHover (Maybe String)
+      --
+    | OnUpdateFocus NodeFocus
       -- Confirm Modal
     | DoModalConfirmOpen Msg TextMessage
     | DoModalConfirmClose ModalData
@@ -183,6 +192,7 @@ type Msg
     | NoMsg
     | LogErr String
     | Navigate String
+    | NavigateNid String
     | Do (List GlobalCmd)
 
 
@@ -223,9 +233,11 @@ update_ apis message model =
     case message of
         -- Data
         OnLoad ->
-            if model.isActive && not (isSuccess model.tree_result) then
+            if model.isActive2 && (not (isSuccess model.tree_result) || (withMaybeDataMap (\d -> Dict.member model.focus.rootnameid d) model.tree_result == Just False)) then
                 ( setDataResult LoadingSlowly model
-                , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck ]
+                  -- openTreeMenu is needed here, because .has-tree-orga is lost on #helperBar and #mainPane
+                  -- when navigating from non orgs pages.
+                , out0 [ queryOrgaTree apis model.focus.rootnameid OnDataAck, Ports.openTreeMenu ]
                 )
 
             else
@@ -268,13 +280,28 @@ update_ apis message model =
                     ( data, noOut )
 
         OnSetTree data ->
-            ( setDataResult (Success data) model |> setTree, noOut )
+            ( setDataResult (Success data) model |> setTree, ternary model.isActive (out0 [ Ports.openTreeMenu ]) noOut )
 
         OnToggle ->
-            ( { model | isActive = not model.isActive }, out0 [ Ports.saveMenuTree (not model.isActive), send OnLoad, Ports.toggleTreeMenu ] )
+            if model.isActive then
+                ( { model | isActive = False }, out0 [ Ports.saveMenuTree False, Ports.closeTreeMenu, sendSleep (SetIsActive2 False) 1000 ] )
+
+            else
+                ( { model | isActive2 = True }, out0 [ Ports.saveMenuTree True, send OnLoad, sendSleep (SetIsActive2 True) 10 ] )
+
+        SetIsActive2 v ->
+            -- Prevent elm from computing the VDOM
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.openTreeMenu ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
 
         OnOrgHover v ->
             ( { model | hover = v }, noOut )
+
+        OnUpdateFocus focus ->
+            ( { model | focus = focus }, noOut )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -296,6 +323,13 @@ update_ apis message model =
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
 
+        NavigateNid nid ->
+            let
+                q =
+                    model.uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
+            in
+            ( model, out1 [ DoNavigate (uriFromNameid model.baseUri nid ++ q) ] )
+
         Do gcmds ->
             ( model, out1 gcmds )
 
@@ -305,6 +339,7 @@ subscriptions =
     [ Ports.triggerMenuTreeFromJs (always OnToggle)
 
     --, Ports.uctxPD Ports.loadUserCtxFromJs LogErr OnReload
+    , Ports.requireTreeDataFromJs (always OnRequireData)
     , Ports.mcPD Ports.closeModalConfirmFromJs LogErr DoModalConfirmClose
     ]
 
@@ -316,40 +351,38 @@ subscriptions =
 
 
 type alias Op =
-    { baseUri : FractalBaseRoute
-    , uriQuery : Maybe String
-    }
+    {}
 
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div
-        [ id "tree-menu"
-        , class "is-hidden-touch"
-        , classList [ ( "off", not model.isActive ) ]
-        ]
-        [ Lazy.lazy5 viewOrgas op model.hover model.focus model.tree model.tree_result
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        , div
-            [ class "button is-small bottom-button"
-            , classList [ ( "is-invisible", not model.isActive ) ]
-            , onClick OnToggle
+    if model.isActive2 then
+        div
+            [ id "tree-menu"
+            , class "is-hidden-touch"
+            , classList [ ( "off", not model.isActive ) ]
             ]
-            [ A.icon1 "icon-chevrons-left" "Collapse" ]
-        , div [ class "pb-6 is-invisible" ] [ text "nop" ]
-        ]
+            [ viewOrgas model
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , div
+                [ class "button is-small bottom-button"
+                , classList [ ( "is-invisible", not model.isActive ) ]
+                , onClick OnToggle
+                ]
+                [ A.icon1 "icon-chevrons-left" "Collapse" ]
+            , div [ class "pb-6 is-invisible" ] [ text "nop" ]
+            ]
+
+    else
+        text ""
 
 
-viewOrgas : Op -> Maybe String -> NodeFocus -> Tree Node -> GqlData NodesDict -> Html Msg
-viewOrgas op hover focus (Tree b) tree_result =
-    let
-        q =
-            op.uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
-    in
-    div [ class "menu" ]
-        [ case tree_result of
+viewOrgas : Model -> Html Msg
+viewOrgas model =
+    div [ class "menu", onMouseLeave (OnOrgHover Nothing) ]
+        [ case model.tree_result of
             Success data ->
-                viewSubTree op.baseUri q hover focus b.node b.children
+                Lazy.lazy4 viewSubTree 0 model.hover model.focus model.tree
 
             LoadingSlowly ->
                 ul [ class "menu-list" ]
@@ -367,41 +400,11 @@ viewOrgas op hover focus (Tree b) tree_result =
         ]
 
 
-viewSubTree : FractalBaseRoute -> String -> Maybe String -> NodeFocus -> Node -> List (Tree Node) -> Html Msg
-viewSubTree baseUri q hover focus x children =
-    ul [ class "menu-list" ]
+viewSubTree : Int -> Maybe String -> NodeFocus -> Tree Node -> Html Msg
+viewSubTree depth hover focus (Tree { node, children }) =
+    ul ([ class "menu-list" ] ++ ternary (depth == 0) [ onMouseLeave (OnOrgHover Nothing) ] [])
         [ li []
-            ([ a
-                [ class "treeMenu"
-                , classList [ ( "is-active", focus.nameid == x.nameid ) ]
-                , onMouseEnter (OnOrgHover (Just x.nameid))
-                , onMouseLeave (OnOrgHover Nothing)
-                , onClickPD NoMsg
-                , target "_blank"
-                ]
-                [ span [ onClick (Navigate (uriFromNameid baseUri x.nameid ++ q)) ]
-                    [ case x.role_type of
-                        Just RoleType.Bot ->
-                            A.icon1 "icon-radio" x.name
-
-                        Just _ ->
-                            A.icon1 (action2icon { doc_type = NODE x.type_ }) x.name
-
-                        Nothing ->
-                            if List.length children > 0 then
-                                --A.icon1 (action2icon { doc_type = NODE x.type_ }) x.name
-                                text x.name
-
-                            else
-                                text x.name
-                    ]
-                , if hover == Just x.nameid then
-                    div [ class "here tag is-rounded has-border is-pulled-right", onClick (Do [ DoCreateTension x.nameid ]) ] [ A.icon "icon-plus" ]
-
-                  else
-                    text ""
-                ]
-             ]
+            ([ Lazy.lazy3 viewLine hover focus node ]
                 ++ (children
                         |> List.map
                             (\(Tree c) ->
@@ -410,8 +413,40 @@ viewSubTree baseUri q hover focus x children =
                                     text ""
 
                                 else
-                                    viewSubTree baseUri q hover focus c.node c.children
+                                    viewSubTree (depth + 1) hover focus (Tree c)
                             )
                    )
             )
+        ]
+
+
+viewLine : Maybe String -> NodeFocus -> Node -> Html Msg
+viewLine hover focus node =
+    a
+        [ class "treeMenu"
+        , classList [ ( "is-active", focus.nameid == node.nameid ) ]
+        , onMouseEnter (OnOrgHover (Just node.nameid))
+        , onClickPD (NavigateNid node.nameid)
+        , target "_blank"
+        ]
+        [ div [ class "level is-mobile" ]
+            [ div [ class "level-left", attribute "style" "width:82%;" ]
+                [ case node.role_type of
+                    Just RoleType.Bot ->
+                        A.icon1 "icon-radio" node.name
+
+                    Just _ ->
+                        A.icon1 (action2icon { doc_type = NODE node.type_ }) node.name
+
+                    Nothing ->
+                        text node.name
+                ]
+            , if hover == Just node.nameid then
+                div [ class "level-right here" ]
+                    [ span [ class "tag is-rounded has-border", onClickPD2 (Do [ DoCreateTension node.nameid ]) ] [ A.icon "icon-plus" ]
+                    ]
+
+              else
+                text ""
+            ]
         ]

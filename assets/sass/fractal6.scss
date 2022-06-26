@@ -31,13 +31,14 @@
         &.has-tree-menu.has-orga-menu {
             margin-left: calc(#{$tree-menu-width} + #{$orga-menu-width}) !important;
         }
-        #helperBar.has-tree-menu, #mainPane.has-tree-menu {
+        #helperBar.has-tree-menu,
+        #mainPane.has-tree-menu > *:not(.kb-board) {
             padding-left: 2%;
-            //margin-left: $tree-menu-width !important;
         }
-        #helperBar.has-tree-menu, #mainPane.has-tree-menu > .columns {
+        #helperBar.has-tree-menu,
+        #mainPane.has-tree-menu > .columns {
             justify-content: normal;
-            &:not(#overview) > .column {
+            &:not(#overview):not(.kb-board) > .column:first-child {
                 width: 95%;
             }
             &#overview > .column {
@@ -677,6 +678,13 @@ strong {
     }
 }
 
+.is-center {
+    // Dropdown menu centering
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, 0) !important;
+}
+
 /*
  *
  * My style
@@ -854,9 +862,12 @@ strong {
   //position: sticky;
   top: calc(#{$navbar-height});
   left: 0;
+  transition: width .2s ease;
+  background-color: var(--orga-menu-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
 
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
   scrollbar-width: none; /* for Firefox */
   &::-webkit-scrollbar {
       display: none; /* for Chrome, Safari, and Opera */
@@ -868,13 +879,10 @@ strong {
   //align-items: center;
   //flex: 1 1 auto;
 
-  background-color: var(--orga-menu-background-color);
-  box-shadow: inset -1px 0 0 var(--border-color-light);
 
   &.off {
       width: 0 !important;
   }
-  transition: width .2s ease;
 }
 
 .orgaMenu {
@@ -884,6 +892,7 @@ strong {
     padding-left: 5px;
     padding-right: 5px;
     border-left: solid 3px var(--header-background-color);
+    transition: top,height .2s ease;
 
     &:hover {
         border-left: solid 3px white;
@@ -901,7 +910,6 @@ strong {
         z-index: 100;
     }
 
-    transition: top,height .2s ease;
 }
 
 #tree-menu {
@@ -914,71 +922,63 @@ strong {
   //position: sticky;
   top: calc(#{$navbar-height});
   left: 0;
+  transition: width .2s ease;
+  background-color: var(--tree-menu-background-color);
+  box-shadow: inset -1px 0 0 var(--border-color-light);
 
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
   scrollbar-width: none; /* for Firefox */
   &::-webkit-scrollbar {
       display: none; /* for Chrome, Safari, and Opera */
   }
 
-  background-color: var(--tree-menu-background-color);
-  box-shadow: inset -1px 0 0 var(--border-color-light);
-
   &.off {
       width: 0 !important;
   }
-  transition: width .2s ease;
 
   padding-top: 25px;
   & .menu-list {
-      font-size: 1em;
+      font-size: 0.95em;
       border-left: 0;
       &:first-child {
           margin-right: 2px;
           margin-left: 2px;
       }
       & li ul {
-          margin: 0.5em 0 0.5em 0.25em ;
-          //padding-left: 0;
+          //padding: 0.5em 0 0.5em 0.25em ;
+          padding: 0 0 0 1em ;
+          margin: 0;
       }
   }
 
   .bottom-button {
       width: $tree-menu-width;
       position: fixed;
-      bottom: 0px;
+      bottom: 1px;
       background-color: var(--tree-menu-background-color);
   }
 
 }
 
-
 .treeMenu {
+    padding: .6em .5em !important;
+    transition: top,height .2s ease;
+
     &:hover {
         background-color: var(--background-evidence) !important;
     }
     &.is-active {
         background-color: var(--bbc) !important;
     }
-    & > .here {
-        display: inline-block;
-        //width: 20%;
-        & > i {
-            position: relative;
-            top: 2px;
-        }
-        &:hover {
+
+    .here {
+        height: 1em; // prevent the tag. to increase the line height when hovering
+        &:hover > .tag {
             color: var(--link) !important;
         }
-
-    }
-    & > span {
-        display: inline-block;
-        width: 80%;
     }
 
-    transition: top,height .2s ease;
 }
 
 #menuSettings {
@@ -2367,6 +2367,10 @@ tr.mediaBox {
     max-width: 100%;
     text-overflow: ellipsis;
     overflow: hidden;
+    white-space: nowrap;
+}
+
+.nowrap {
     white-space: nowrap;
 }
 

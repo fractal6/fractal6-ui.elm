@@ -69,6 +69,7 @@ import ModelCommon.Codecs
         , FractalBaseRoute(..)
         , NodeFocus
         , focusFromNameid
+        , focusFromPath
         , focusState
         , getOrgaRoles
         , getTensionCharac
@@ -225,6 +226,7 @@ type alias Model =
     , helperBar : HelperBar
     , refresh_trial : Int
     , now : Time.Posix
+    , empty : {}
 
     -- Components
     , help : Help.State
@@ -350,7 +352,6 @@ type Msg
     | OpenActionPanel String Blob
       -- Common
     | NoMsg
-    | InitModals
     | LogErr String
     | Navigate String
     | ChangeInputViewMode InputViewMode
@@ -402,12 +403,22 @@ init global flags =
             flags.param4
 
         -- Focus
-        newFocus =
+        newFocus_ =
             NodeFocus rootnameid rootnameid NodeType.Circle
 
         -- What has changed
         fs =
-            focusState TensionBaseUri_ global.session.referer global.url global.session.node_focus newFocus
+            focusState TensionBaseUri_ global.session.referer global.url global.session.node_focus newFocus_
+
+        newFocus =
+            if fs.orgChange then
+                -- This allow TreeMenu to reload in case of orgChange
+                newFocus_
+
+            else
+                global.session.path_data
+                    |> Maybe.map (\p -> focusFromPath p)
+                    |> withDefault newFocus_
 
         model =
             { node_focus = newFocus
@@ -461,10 +472,11 @@ init global flags =
             , selectType = SelectType.init tid global.session.user
             , actionPanel = ActionPanel.init global.session.user
             , now = global.now
+            , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init TensionBaseUri_ global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         refresh =
@@ -527,7 +539,6 @@ refresh_cmds refresh global model =
       else
         Cmd.none
     , sendSleep PassedSlowLoadTreshold 500
-    , sendSleep InitModals 400
     , case Dict.get "eid" query |> Maybe.map List.head |> withDefault Nothing of
         Just eid ->
             send (MarkAsRead eid)
@@ -634,7 +645,10 @@ update global message model =
                                     focusFromNameid newPath.focus.nameid
                             in
                             ( { model | path_data = Success newPath, isTensionAdmin = isAdmin, node_focus = newFocus }
-                            , Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none
+                            , Cmd.batch
+                                [ Maybe.map (\did -> send (ScrollToElement did)) model.jumpTo |> withDefault Cmd.none
+                                , Cmd.map TreeMenuMsg (send (TreeMenu.OnUpdateFocus newFocus))
+                                ]
                             , Cmd.batch
                                 [ send (UpdateSessionPath (Just newPath))
                                 , send (UpdateSessionAdmin (Just isAdmin))
@@ -980,10 +994,7 @@ update global message model =
 
         DoMove t ->
             ( model
-            , Cmd.batch
-                [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t)))
-                , Cmd.map TreeMenuMsg (send TreeMenu.OnRequireData)
-                ]
+            , Cmd.batch [ Cmd.map MoveTensionMsg (send (MoveTension.OnOpen t.id t.receiver.nameid (blobFromTensionHead t))) ]
             , Cmd.none
             )
 
@@ -1286,9 +1297,6 @@ update global message model =
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
-        InitModals ->
-            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
-
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
@@ -1511,16 +1519,16 @@ view global model =
             _ ->
                 "Loading..."
     , body =
-        [ Lazy.lazy HelperBar.view helperData
+        [ HelperBar.view helperData
         , div [ id "mainPane" ] [ view_ global model ]
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
         , MoveTension.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu } model.moveTension |> Html.map MoveTensionMsg
-        , SelectType.view {} model.selectType |> Html.map SelectTypeMsg
-        , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view { baseUri = TensionBaseUri_, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
+        , SelectType.view model.empty model.selectType |> Html.map SelectTypeMsg
+        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         ]
     }
 
@@ -2603,9 +2611,7 @@ viewSidePane u t model =
                                    )
                     in
                     [ hr [ class "has-background-border-light" ] [] ]
-                        ++ [-- div [][]
-                           ]
-                        ++ (if not isRoot then
+                        ++ (if not hasNode then
                                 [ div
                                     [ class "is-smaller2 has-text-weight-semibold button-light is-link mb-4"
                                     , onClick (DoMove t)

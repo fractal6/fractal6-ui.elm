@@ -1,15 +1,10 @@
 // pull in desired CSS/SASS files
 require( '../assets/sass/main.scss' );
-// JS entry point
-require( '../assets/js/ports.js' )
 
-// inject bundled Elm app into div#main
-//var Elm = require( '../elm/Main.elm' );
-//Elm.Main.embed( document.getElementById( 'main' ) );
+// JS entry point
+var Ports = require( '../assets/js/ports.js' )
+// Inject bundled Elm app into div#main
 var App = require( '../src/Main' );
-//Elm.Elm.Main.init({
-//      node: document.getElementById("main")
-//});
 
 window.addEventListener('load', _ => {
 
@@ -29,31 +24,6 @@ window.addEventListener('load', _ => {
     // Lang
     // ...
 
-    // Setup the layout
-    if (orga_menu == true) {
-        setTimeout(() => {
-            var $o = document.getElementById("body");
-            if ($o) {
-                $o.classList.add('has-orga-menu');
-            }
-        }, 333);
-    }
-    if (tree_menu == true) {
-        setTimeout(() => {
-            var $o = document.getElementById("body");
-            if ($o) {
-                $o.classList.add('has-tree-menu');
-            }
-            $o = document.getElementById("helperBar");
-            if ($o) {
-                $o.classList.add('has-tree-menu');
-            }
-            $o = document.getElementById("mainPane");
-            if ($o) {
-                $o.classList.add('has-tree-menu');
-            }
-        }, 333);
-    }
 
     // Init Elm
     // --
@@ -70,11 +40,21 @@ window.addEventListener('load', _ => {
                     gql: GRAPHQL_API,
                     rest: REST_API,
                     doc: DOC_API,
-                    version: VERSION
+                    version: VERSION,
                 },
-                screen: { w: window.innerWidth, h: window.innerHeight }
+                screen: { w: window.innerWidth, h: window.innerHeight },
             }
         })
     );
+
+    // Setup Actions
+    // --
+    // Setup the layout
+    if (orga_menu == true) {
+        setTimeout(Ports.actions["OPEN_ORGA_MENU"], 333);
+    }
+    if (tree_menu == true) {
+        setTimeout(Ports.actions["OPEN_TREE_MENU"], 333);
+    }
 
 });

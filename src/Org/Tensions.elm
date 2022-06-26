@@ -154,6 +154,7 @@ type alias Model =
     , refresh_trial : Int
     , url : Url
     , now : Time.Posix
+    , empty : {}
 
     -- Components
     , help : Help.State
@@ -527,7 +528,6 @@ type Msg
     | SetOffset Int
       -- Common
     | NoMsg
-    | InitModals
     | LogErr String
     | Navigate String
     | ExpandRoles
@@ -606,10 +606,11 @@ init global flags =
             , refresh_trial = 0
             , url = global.url
             , now = global.now
+            , empty = {}
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init TensionsBaseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         --
@@ -665,7 +666,6 @@ init global flags =
               else
                 []
             , [ sendSleep PassedSlowLoadTreshold 500 ]
-            , [ sendSleep InitModals 400 ]
             , [ Cmd.map OrgaMenuMsg (send OrgaMenu.OnLoad) ]
             , [ Cmd.map TreeMenuMsg (send TreeMenu.OnLoad) ]
             ]
@@ -1086,9 +1086,6 @@ update global message model =
         NoMsg ->
             ( model, Cmd.none, Cmd.none )
 
-        InitModals ->
-            ( { model | tensionForm = NTF.fixGlitch_ model.tensionForm }, Cmd.none, Cmd.none )
-
         LogErr err ->
             ( model, Ports.logErr err, Cmd.none )
 
@@ -1219,14 +1216,14 @@ view global model =
     in
     { title = "Tensions · " ++ (String.join "/" <| LE.unique [ model.node_focus.rootnameid, model.node_focus.nameid |> String.split "#" |> List.reverse |> List.head |> withDefault "" ])
     , body =
-        [ Lazy.lazy HelperBar.view helperData
-        , div [ id "mainPane" ] [ view_ global model ]
-        , Help.view {} model.help |> Html.map HelpMsg
-        , NTF.view { path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
-        , JoinOrga.view {} model.joinOrga |> Html.map JoinOrgaMsg
-        , AuthModal.view {} model.authModal |> Html.map AuthModalMsg
-        , OrgaMenu.view {} model.orgaMenu |> Html.map OrgaMenuMsg
-        , TreeMenu.view { baseUri = TensionsBaseUri, uriQuery = global.url.query } model.treeMenu |> Html.map TreeMenuMsg
+        [ HelperBar.view helperData
+        , div [ id "mainPane" ] [ view_ global model, ternary (model.viewMode == CircleView) (viewCircleTensions model) (text "") ]
+        , Help.view model.empty model.help |> Html.map HelpMsg
+        , NTF.view { tree_data = TreeMenu.getOrgaData_ model.treeMenu, path_data = model.path_data } model.tensionForm |> Html.map NewTensionMsg
+        , JoinOrga.view model.empty model.joinOrga |> Html.map JoinOrgaMsg
+        , AuthModal.view model.empty model.authModal |> Html.map AuthModalMsg
+        , OrgaMenu.view model.empty model.orgaMenu |> Html.map OrgaMenuMsg
+        , TreeMenu.view model.empty model.treeMenu |> Html.map TreeMenuMsg
         ]
     }
 
@@ -1237,48 +1234,41 @@ view_ global model =
         isFullwidth =
             model.viewMode == CircleView
     in
-    div []
-        [ div [ class "columns is-centered is-marginless" ]
-            [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
-                [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
-                    [ div [ class "column is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
-                , case model.children of
-                    RemoteData.Failure err ->
-                        viewHttpErrors err
+    div [ id "tensions", class "columns is-centered is-marginless" ]
+        [ div [ class "column is-12 is-11-desktop is-9-fullhd", classList [ ( "pb-0", isFullwidth ) ] ]
+            [ div [ class "columns is-centered", classList [ ( "mb-1", isFullwidth == False ), ( "mb-0", isFullwidth ) ] ]
+                [ div [ class "column is-12", classList [ ( "pb-0", isFullwidth ) ] ] [ viewSearchBar model ] ]
+            , case model.children of
+                RemoteData.Failure err ->
+                    viewHttpErrors err
 
-                    _ ->
-                        text ""
-                , case model.viewMode of
-                    ListView ->
-                        viewListTensions model
-
-                    IntExtView ->
-                        viewIntExtTensions model
-
-                    CircleView ->
-                        text ""
-                , if model.viewMode == CircleView && (withMaybeData model.tensions_all |> Maybe.map (\ts -> List.length ts == 1000) |> withDefault False) then
-                    div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
-                        [ button [ class "button is-small" ]
-                            -- @TODO: load more for CircleView
-                            [ text "Viewing only the 1000 more recent tensions" ]
-                        ]
-
-                  else if model.viewMode /= CircleView && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
-                    div [ class "column is-12 is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
-                        [ button [ class "button is-small", onClick (DoLoad False) ]
-                            [ text "Load more" ]
-                        ]
-
-                  else
+                _ ->
                     text ""
-                ]
-            ]
-        , if model.viewMode == CircleView then
-            viewCircleTensions model
+            , case model.viewMode of
+                ListView ->
+                    viewListTensions model
 
-          else
-            text ""
+                IntExtView ->
+                    viewIntExtTensions model
+
+                CircleView ->
+                    text ""
+            , if model.viewMode == CircleView && (withMaybeData model.tensions_all |> Maybe.map (\ts -> List.length ts == 1000) |> withDefault False) then
+                div [ class "column is-12  is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
+                    [ button [ class "button is-small" ]
+                        -- @TODO: load more for CircleView
+                        [ text "Viewing only the 1000 more recent tensions" ]
+                    ]
+
+              else if model.viewMode /= CircleView && (hasLoadMore model.tensions_int model.offset || hasLoadMore model.tensions_ext model.offset) then
+                div [ class "column is-12 is-aligned-center", attribute "style" "margin-left: 0.5rem;" ]
+                    [ button [ class "button is-small", onClick (DoLoad False) ]
+                        [ text "Load more" ]
+                    ]
+
+              else
+                text ""
+            ]
         ]
 
 

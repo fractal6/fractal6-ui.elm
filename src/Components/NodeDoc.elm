@@ -453,9 +453,9 @@ viewAboutSection editView data =
     in
     div []
         [ div [ class "level subtitle" ]
-            [ div [ class "level-left" ]
+            [ div [ class "level-left", attribute "style" "width:85%;" ]
                 [ A.icon "icon-info icon-lg mr-2"
-                , textH T.about
+                , span [ class "nowrap" ] [ textH T.about ]
                 , text T.space_
                 , if isTensionBaseUri data.source && data.hasBeenPushed then
                     a
