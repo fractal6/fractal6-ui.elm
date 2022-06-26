@@ -189,6 +189,7 @@ type alias Model =
 
     -- Page
     , tensionid : String
+    , baseUri : FractalBaseRoute
     , contractid : Maybe String
     , activeTab : TensionTab
     , actionView : ActionView
@@ -407,8 +408,19 @@ init global flags =
             NodeFocus rootnameid rootnameid NodeType.Circle
 
         -- What has changed
+        baseUri =
+            case tab of
+                Conversation ->
+                    TensionBaseUri
+
+                Document ->
+                    MandateBaseUri
+
+                Contracts ->
+                    ContractsBaseUri
+
         fs =
-            focusState TensionBaseUri_ global.session.referer global.url global.session.node_focus newFocus_
+            focusState baseUri global.session.referer global.url global.session.node_focus newFocus_
 
         newFocus =
             if fs.orgChange then
@@ -424,6 +436,7 @@ init global flags =
             { node_focus = newFocus
             , lookup_users = []
             , tensionid = tid
+            , baseUri = baseUri
             , contractid = cid_m
             , activeTab = tab
             , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
@@ -476,7 +489,7 @@ init global flags =
             , joinOrga = JoinOrga.init newFocus.nameid global.session.user
             , authModal = AuthModal.init global.session.user (Dict.get "puid" query |> Maybe.map List.head |> withDefault Nothing)
             , orgaMenu = OrgaMenu.init newFocus global.session.orga_menu global.session.orgs_data global.session.user
-            , treeMenu = TreeMenu.init TensionBaseUri_ global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
+            , treeMenu = TreeMenu.init baseUri global.url.query newFocus global.session.tree_menu global.session.tree_data global.session.user
             }
 
         refresh =
@@ -1504,7 +1517,7 @@ view global model =
             , uriQuery = global.url.query
             , path_data = withMaybeData model.path_data
             , focus = model.node_focus
-            , baseUri = TensionBaseUri_
+            , baseUri = model.baseUri
             , data = model.helperBar
             , onExpand = ExpandRoles
             , onCollapse = CollapseRoles
@@ -2263,7 +2276,7 @@ viewDocument u t b model =
                     { data = Success t.id
                     , node = b.node |> withDefault (initNodeFragment Nothing)
                     , isLazy = False
-                    , source = TensionBaseUri_
+                    , source = model.baseUri
 
                     --, focus = model.node_focus
                     , hasBeenPushed = t.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed

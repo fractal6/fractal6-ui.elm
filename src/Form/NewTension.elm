@@ -1723,7 +1723,7 @@ viewRoleExt model =
                                         , span
                                             [ class "button is-small has-text-link"
                                             , title "A template role is a generic role that you can reuse in your organisation."
-                                            , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid ++ "?m=roles&a=new") "")
+                                            , onClick (OnCloseSafe (uriFromNameid SettingsBaseUri form.target.nameid [] ++ "?m=roles&a=new") "")
                                             ]
                                             [ textH "template role" ]
                                         , span [ class "content is-small px-2" ] [ text "or make an" ]

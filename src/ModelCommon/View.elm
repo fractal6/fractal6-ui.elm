@@ -376,7 +376,7 @@ viewOrga0 isLinked nameid =
     if isLinked then
         a
             [ class "image circleBase circle1 is-orga"
-            , href (uriFromNameid OverviewBaseUri rid)
+            , href (uriFromNameid OverviewBaseUri rid [])
             ]
             [ getAvatarOrga rid ]
 
@@ -395,7 +395,7 @@ viewOrga isLinked nameid =
     if isLinked then
         a
             [ class "image circleBase circle2 is-orga"
-            , href (uriFromNameid OverviewBaseUri rid)
+            , href (uriFromNameid OverviewBaseUri rid [])
             ]
             [ getAvatarOrga rid ]
 
@@ -405,12 +405,12 @@ viewOrga isLinked nameid =
             [ getAvatarOrga rid ]
 
 
-viewMemberRole : Time.Posix -> FractalBaseRoute -> UserRoleExtended -> Html msg
-viewMemberRole now baseUri r =
+viewMemberRole : Time.Posix -> String -> UserRoleExtended -> Html msg
+viewMemberRole now link r =
     a
         [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
         , attribute "data-tooltip" ([ r.name, "of", getParentFragmentFromRole r, "since the", formatDate now r.createdAt ] |> String.join " ")
-        , href <| uriFromNameid baseUri r.nameid
+        , href link
         ]
         [ if r.role_type == RoleType.Guest then
             textH T.guest
@@ -427,12 +427,12 @@ viewMemberRole now baseUri r =
         ]
 
 
-viewRole : FractalBaseRoute -> UserRole -> Html msg
-viewRole baseUri r =
+viewRole : String -> UserRole -> Html msg
+viewRole link r =
     a
         [ class ("button buttonRole is-small tooltip has-tooltip-arrow has-tooltip-bottom is-" ++ roleColor r.role_type)
         , attribute "data-tooltip" (r.name ++ " of " ++ getParentFragmentFromRole r)
-        , href <| uriFromNameid baseUri r.nameid
+        , href link
         ]
         [ if r.role_type == RoleType.Coordinator then
             span [ class "is-queen" ] []
@@ -611,7 +611,7 @@ viewNodeRef baseUri n =
                 "#"
 
             else
-                uriFromNameid baseUri n.nameid
+                uriFromNameid baseUri n.nameid []
     in
     a [ href ref ] [ n.name |> text ]
 
@@ -620,7 +620,7 @@ viewNodeRefShort : FractalBaseRoute -> String -> Html msg
 viewNodeRefShort baseUri nid =
     let
         ref =
-            uriFromNameid baseUri nid
+            uriFromNameid baseUri nid []
 
         name =
             nid |> String.split "#" |> List.reverse |> List.head |> withDefault nid
@@ -647,7 +647,7 @@ viewOrgaMedia_ user_m root =
         , div [ class "media-content" ]
             ([ div [ class "columns" ]
                 [ div [ class "column is-8" ]
-                    [ a [ href (uriFromNameid OverviewBaseUri root.nameid) ] [ text root.name ]
+                    [ a [ href (uriFromNameid OverviewBaseUri root.nameid []) ] [ text root.name ]
                     , case root.about of
                         Just ab ->
                             p [ class "is-human pt-1" ] [ text ab ]
@@ -691,7 +691,7 @@ viewOrgaMedia_ user_m root =
                             [ ternary (List.length roles > 0) (hr [ class "has-background-border-light" ] []) (text "")
                             , div [ class "buttons" ] <|
                                 (roles
-                                    |> List.map (\r -> viewRole OverviewBaseUri r)
+                                    |> List.map (\r -> viewRole (uriFromNameid OverviewBaseUri r.nameid []) r)
                                 )
                             ]
 

@@ -249,7 +249,7 @@ update global message model =
 
                 OkAuth n ->
                     ( { model | result = result, isDuplicate = False }
-                    , sendSleep (Navigate (uriFromNameid OverviewBaseUri n.nameid)) 500
+                    , sendSleep (Navigate (uriFromNameid OverviewBaseUri n.nameid [])) 500
                     , Cmd.batch [ send UpdateUserToken, send (UpdateSessionOrgs Nothing), send (UpdateSessionNewOrgaData Nothing) ]
                     )
 

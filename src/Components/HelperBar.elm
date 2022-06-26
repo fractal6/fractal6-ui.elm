@@ -131,9 +131,9 @@ viewNavLevel op =
     nav [ class "tabs is-boxed" ]
         [ ul [ class "" ]
             ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
-                [ a [ href (uriFromNameid OverviewBaseUri focusid) ] [ A.icon1 "icon-sun" "Overview" ] ]
+                [ a [ href (uriFromNameid OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" "Overview" ] ]
              , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri ) ] ]
-                [ a [ href (uriFromNameid TensionsBaseUri focusid) ] [ A.icon1 "icon-exchange" "Tensions" ] ]
+                [ a [ href (uriFromNameid TensionsBaseUri focusid []) ] [ A.icon1 "icon-exchange" "Tensions" ] ]
 
              --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
              --    [ div [ class "dropdown is-hoverable" ]
@@ -147,14 +147,14 @@ viewNavLevel op =
              --    ]
              --]
              , li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
-                [ a [ href (uriFromNameid MembersBaseUri focusid) ] [ A.icon1 "icon-user" "Members" ] ]
+                [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" "Members" ] ]
              ]
                 ++ (Maybe.map
                         (\path ->
                             if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "is-vbar-2" ] []
                                 , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
-                                    [ a [ href (uriFromNameid SettingsBaseUri focusid) ] [ A.icon1 "icon-settings" "Settings" ] ]
+                                    [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" "Settings" ] ]
                                 ]
 
                             else
@@ -201,13 +201,13 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                                 (\i p ->
                                     if i < (List.length g.path - 1) then
                                         li []
-                                            [ a [ href (uriFromNameid baseUri p.nameid ++ q) ]
+                                            [ a [ href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ]
                                                 [ div [] [ text p.name ] ]
                                             ]
 
                                     else
                                         li []
-                                            [ a [ class "has-text-weight-semibold", href (uriFromNameid baseUri p.nameid ++ q) ] [ text p.name ]
+                                            [ a [ class "has-text-weight-semibold", href (uriFromNameid baseUri p.nameid [ getSourceTid p ] ++ q) ] [ text p.name ]
                                             , a
                                                 [ class "stealth-link tag is-rounded ml-1 has-border"
                                                 , attribute "style" "weight: 500 !important;padding: 10px 10px;"
@@ -265,7 +265,7 @@ memberButtons roles_ op =
                     [ text "" ]
 
                 else
-                    [ viewRole op.baseUri r
+                    [ viewRole (uriFromNameid op.baseUri r.nameid []) r
 
                     --++ [ span [ class "is-vbar-1" ] [] ]
                     ]

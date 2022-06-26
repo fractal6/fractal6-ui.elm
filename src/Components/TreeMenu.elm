@@ -192,7 +192,7 @@ type Msg
     | NoMsg
     | LogErr String
     | Navigate String
-    | NavigateNid String
+    | NavigateNode Node
     | Do (List GlobalCmd)
 
 
@@ -323,12 +323,12 @@ update_ apis message model =
         Navigate link ->
             ( model, out1 [ DoNavigate link ] )
 
-        NavigateNid nid ->
+        NavigateNode n ->
             let
                 q =
                     model.uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, out1 [ DoNavigate (uriFromNameid model.baseUri nid ++ q) ] )
+            ( model, out1 [ DoNavigate (uriFromNameid model.baseUri n.nameid [ getSourceTid n ] ++ q) ] )
 
         Do gcmds ->
             ( model, out1 gcmds )
@@ -426,7 +426,7 @@ viewLine hover focus node =
         [ class "treeMenu"
         , classList [ ( "is-active", focus.nameid == node.nameid ) ]
         , onMouseEnter (OnOrgHover (Just node.nameid))
-        , onClickPD (NavigateNid node.nameid)
+        , onClickPD (NavigateNode node)
         , target "_blank"
         ]
         [ div [ class "level is-mobile" ]

@@ -350,7 +350,7 @@ update global message model =
                 query =
                     global.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, send (Navigate (uriFromNameid MembersBaseUri model.node_focus.rootnameid ++ query)), Cmd.none )
+            ( model, send (Navigate (uriFromNameid MembersBaseUri model.node_focus.rootnameid [] ++ query)), Cmd.none )
 
         -- Components
         NewTensionMsg msg ->
@@ -760,5 +760,5 @@ viewMemberRoles : Time.Posix -> FractalBaseRoute -> List UserRoleExtended -> Htm
 viewMemberRoles now baseUri roles =
     div [ class "buttons" ] <|
         List.map
-            (\r -> viewMemberRole now baseUri r)
+            (\r -> viewMemberRole now (uriFromNameid baseUri r.nameid []) r)
             roles

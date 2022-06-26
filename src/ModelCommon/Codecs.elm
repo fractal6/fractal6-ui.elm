@@ -37,26 +37,17 @@ type alias Flags_ =
 type FractalBaseRoute
     = OverviewBaseUri
     | TensionsBaseUri
-    | TensionBaseUri String String
-    | TensionBaseUri_ -- To pass as argument
-    | MandateBaseUri String String
-    | MandateBaseUri_ -- To pass as argument
     | MembersBaseUri
     | SettingsBaseUri
     | UsersBaseUri
+    | TensionBaseUri
+    | MandateBaseUri
+    | ContractsBaseUri
 
 
 isTensionBaseUri : FractalBaseRoute -> Bool
 isTensionBaseUri r =
-    case r of
-        TensionBaseUri _ _ ->
-            True
-
-        TensionBaseUri_ ->
-            True
-
-        _ ->
-            False
+    List.member r [ TensionBaseUri, MandateBaseUri, ContractsBaseUri ]
 
 
 
@@ -82,36 +73,35 @@ type alias FocusState =
     }
 
 
-toString : FractalBaseRoute -> String
-toString route =
+toString : FractalBaseRoute -> String -> List String -> String
+toString route param params =
     case route of
+        -- User  url
+        UsersBaseUri ->
+            --"/user/{param}"
+            param
+
+        -- Org Url
         OverviewBaseUri ->
-            "/o"
+            [ "/o" ] ++ String.split "#" param |> String.join "/"
 
         TensionsBaseUri ->
-            "/t"
-
-        TensionBaseUri nameid tid ->
-            toHref (Route.Tension_Dynamic_Dynamic { param1 = nameid, param2 = tid })
-
-        MandateBaseUri nameid tid ->
-            toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nameid, param2 = tid })
+            [ "/t" ] ++ String.split "#" param |> String.join "/"
 
         MembersBaseUri ->
-            "/m"
+            [ "/m" ] ++ String.split "#" param |> String.join "/"
 
         SettingsBaseUri ->
-            "/s"
+            [ "/s" ] ++ String.split "#" param |> String.join "/"
 
-        UsersBaseUri ->
-            -- /user
-            ""
+        TensionBaseUri ->
+            toHref (Route.Tension_Dynamic_Dynamic { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
 
-        TensionBaseUri_ ->
-            "/tension"
+        MandateBaseUri ->
+            toHref (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
 
-        MandateBaseUri_ ->
-            "/tension"
+        ContractsBaseUri ->
+            toHref (Route.Tension_Dynamic_Dynamic_Contract { param1 = nid2rootid param, param2 = LE.getAt 0 params |> withDefault "" })
 
 
 {-| Just use to check if you are in organisation tab...
@@ -158,19 +148,17 @@ urlToFractalRoute url =
                     S_Dynamic_Dynamic_Dynamic _ ->
                         Just SettingsBaseUri
 
-                    Tension_Dynamic_Dynamic a ->
-                        --Just (TensionBaseUri a.param1 a.param2)
-                        Just TensionsBaseUri
+                    Tension_Dynamic_Dynamic _ ->
+                        Just TensionBaseUri
 
-                    Tension_Dynamic_Dynamic_Action a ->
-                        --Just (MandateBaseUri a.param1 a.param2)
-                        Just TensionsBaseUri
+                    Tension_Dynamic_Dynamic_Action _ ->
+                        Just MandateBaseUri
 
                     Tension_Dynamic_Dynamic_Contract _ ->
-                        Just TensionsBaseUri
+                        Just ContractsBaseUri
 
                     Tension_Dynamic_Dynamic_Contract_Dynamic _ ->
-                        Just TensionsBaseUri
+                        Just ContractsBaseUri
 
                     Dynamic _ ->
                         Just UsersBaseUri
@@ -182,6 +170,16 @@ urlToFractalRoute url =
                         Nothing
             )
         |> withDefault Nothing
+
+
+isOrgUrl : Url -> Bool
+isOrgUrl url =
+    urlToFractalRoute url
+        |> Maybe.map
+            (\u ->
+                List.member u [ OverviewBaseUri, TensionsBaseUri, MembersBaseUri, SettingsBaseUri ] || isTensionBaseUri u
+            )
+        |> withDefault False
 
 
 focusState : FractalBaseRoute -> Maybe Url -> Url -> Maybe NodeFocus -> NodeFocus -> FocusState
@@ -218,16 +216,10 @@ basePathChanged : FractalBaseRoute -> Maybe Url -> Bool
 basePathChanged loc url =
     let
         baseRef =
-            loc |> toString |> String.dropLeft 1
+            toString loc "" [] |> String.dropLeft 1 |> String.split "/" |> List.head |> withDefault ""
 
         base =
-            url
-                |> Maybe.map (\u -> u.path)
-                |> withDefault "/"
-                |> String.dropLeft 1
-                |> String.split "/"
-                |> List.head
-                |> withDefault ""
+            url |> Maybe.map (\u -> u.path) |> withDefault "/" |> String.dropLeft 1 |> String.split "/" |> List.head |> withDefault ""
     in
     base /= baseRef
 
@@ -238,44 +230,13 @@ basePathChanged loc url =
 -}
 
 
-uriFromNameid : FractalBaseRoute -> String -> String
-uriFromNameid loc nameid =
-    case loc of
-        TensionBaseUri _ _ ->
-            toString loc
+uriFromNameid : FractalBaseRoute -> String -> List String -> String
+uriFromNameid loc nameid params =
+    if nameid == "" then
+        "#"
 
-        MandateBaseUri _ _ ->
-            toString loc
-
-        --@TODO / REMOVE when TensionBaseUrl is correctly redicrected
-        TensionBaseUri_ ->
-            uriFromNameid TensionsBaseUri nameid
-
-        _ ->
-            if nameid == "" then
-                "#"
-
-            else
-                [ toString loc ]
-                    ++ String.split "#" nameid
-                    |> String.join "/"
-
-
-uriFromNameid2 : FractalBaseRoute -> String -> String -> String
-uriFromNameid2 loc nameid tid =
-    let
-        newLoc =
-            case loc of
-                TensionBaseUri_ ->
-                    TensionBaseUri nameid tid
-
-                MandateBaseUri_ ->
-                    MandateBaseUri nameid tid
-
-                _ ->
-                    loc
-    in
-    uriFromNameid newLoc nameid
+    else
+        toString loc nameid params
 
 
 uriFromUsername : FractalBaseRoute -> String -> String
@@ -284,8 +245,7 @@ uriFromUsername loc username =
         "#"
 
     else
-        [ toString loc, username ]
-            |> String.join "/"
+        toString loc username []
 
 
 nameidFromFlags : Flags_ -> String

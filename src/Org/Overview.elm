@@ -736,7 +736,7 @@ update global message model =
 
         -- JS interop
         NodeClicked nameid ->
-            ( model, Cmd.none, ReplaceUrl (uriFromNameid OverviewBaseUri nameid) |> send )
+            ( model, Cmd.none, ReplaceUrl (uriFromNameid OverviewBaseUri nameid []) |> send )
 
         NodeHovered nid ->
             let
@@ -1452,7 +1452,7 @@ viewActivies model =
                             if List.length tensions > 0 then
                                 List.map (\x -> mediaTension model.now model.node_focus x False True "is-size-6" Navigate) tensions
                                     ++ [ div [ class "is-aligned-center mt-1 mb-2" ]
-                                            [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid) ] [ textH T.seeMore ] ]
+                                            [ a [ href (uriFromNameid TensionsBaseUri model.node_focus.nameid []) ] [ textH T.seeMore ] ]
                                        ]
                                     |> div [ id "tensionsTab" ]
 

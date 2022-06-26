@@ -7,7 +7,7 @@ import Html.Attributes as Attr exposing (attribute, class, classList, href, id, 
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), urlToFractalRoute)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl)
 import Text as T exposing (textH, textT, upH)
 import Url exposing (Url)
 
@@ -34,16 +34,7 @@ view user url replaceUrl =
                 [ div [ class "navbar-start" ] <|
                     (case user of
                         LoggedIn _ ->
-                            let
-                                hasLeftMenuBurger =
-                                    urlToFractalRoute url
-                                        |> Maybe.map
-                                            (\u ->
-                                                List.member u [ OverviewBaseUri, TensionsBaseUri, MembersBaseUri, SettingsBaseUri ]
-                                            )
-                                        |> withDefault False
-                            in
-                            [ if hasLeftMenuBurger then
+                            [ if isOrgUrl url then
                                 div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
 
                               else

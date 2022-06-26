@@ -517,7 +517,7 @@ update global message model =
                             queryBuilder
                                 [ ( "m", menuEncoder menu ) ]
                     in
-                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid ++ "?" ++ query) )
+                    ( model, Cmd.none, Nav.pushUrl global.key (uriFromNameid SettingsBaseUri model.node_focus.nameid [] ++ "?" ++ query) )
 
         ChangeArtefactPost field value ->
             let
@@ -1065,7 +1065,7 @@ update global message model =
                 query =
                     model.url.query |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
             in
-            ( model, send (Navigate (uriFromNameid SettingsBaseUri model.node_focus.rootnameid ++ query)), Cmd.none )
+            ( model, send (Navigate (uriFromNameid SettingsBaseUri model.node_focus.rootnameid [] ++ query)), Cmd.none )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->

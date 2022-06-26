@@ -25,7 +25,7 @@ import List.Extra as LE
 import Markdown exposing (renderMarkdown)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (CommentPatchForm, InputViewMode(..), UserState(..), initCommentPatchForm, nodeFromTension, uctxFromUser)
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromUsername)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), contractIdCodec, getCoordoRoles, getOrgaRoles, memberIdDecodec, nid2eor, nid2rootid, nodeIdCodec, uriFromNameid, uriFromUsername)
 import ModelCommon.Event exposing (cev2c, cev2p, contractEventToText, contractTypeToText)
 import ModelCommon.View
     exposing
@@ -917,8 +917,7 @@ viewContractBox c op model =
                                 }
 
                             baseUri =
-                                -- Works even in receiverid is "".
-                                MandateBaseUri (nid2rootid op.receiverid) c.tension.id
+                                uriFromNameid MandateBaseUri role.nameid [ c.tension.id ]
                         in
                         div [ class "subtitle", attribute "style" "line-height: 2.5; " ] <|
                             List.intersperse (text " ") <|

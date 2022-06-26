@@ -464,6 +464,10 @@ viewLabelSelectors : Bool -> List Label -> Op -> Model -> Html Msg
 viewLabelSelectors isInternal labels op model =
     let
         viewEdit =
+            let
+                editLink =
+                    uriFromNameid SettingsBaseUri (List.map .nameid op.targets |> List.head |> withDefault "") [] ++ "?m=labels&a=new"
+            in
             p
                 [ class "panel-block is-md is-w discrete-link"
                 , if isInternal then
@@ -472,10 +476,10 @@ viewLabelSelectors isInternal labels op model =
                   else
                     attribute "style" "border-top: 1px solid;"
                 , if isInternal then
-                    onClick (OnModalAsk (uriFromNameid SettingsBaseUri ((List.map .nameid op.targets |> List.head |> withDefault "") ++ "?m=labels&a=new")) "")
+                    onClick (OnModalAsk editLink "")
 
                   else
-                    onClick (Navigate (uriFromNameid SettingsBaseUri ((List.map .nameid op.targets |> List.head |> withDefault "") ++ "?m=labels&a=new")))
+                    onClick (Navigate editLink)
                 ]
                 [ A.icon1 "icon-edit-2" <| upH T.editLabels ]
     in

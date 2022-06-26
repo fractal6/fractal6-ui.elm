@@ -459,13 +459,13 @@ viewAboutSection editView data =
                 , text T.space_
                 , if isTensionBaseUri data.source && data.hasBeenPushed then
                     a
-                        [ nameid |> uriFromNameid OverviewBaseUri |> href ]
-                        [ withDefault "" data.node.name |> text ]
+                        [ href <| uriFromNameid OverviewBaseUri nameid [] ]
+                        [ text <| withDefault "" data.node.name ]
 
                   else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
                     a
-                        [ Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } |> toHref |> href ]
-                        [ withDefault "" data.node.name |> text ]
+                        [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } ]
+                        [ text <| withDefault "" data.node.name ]
 
                   else
                     span [ class "is-name" ] [ withDefault "" data.node.name |> text ]

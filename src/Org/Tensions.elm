@@ -962,7 +962,7 @@ update global message model =
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
             ( model
-            , Cmd.batch [ Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), send ResetData ]
+            , Cmd.batch [ Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ query), send ResetData ]
             , Cmd.none
             )
 
@@ -990,7 +990,7 @@ update global message model =
                         )
                         |> (\q -> ternary (q == "") "" ("?" ++ q))
             in
-            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid ++ query), Cmd.none )
+            ( model, Nav.pushUrl global.key (uriFromNameid TensionsBaseUri model.node_focus.nameid [] ++ query), Cmd.none )
 
         GoView viewMode ->
             let
