@@ -39,7 +39,7 @@
     "bulma": "^0.9.4",
     "bulma-modal-fx": "^1.1.1",
     "bulma-switch": "^2.0.4",
-    "d3": "^7.4.4",
+    "d3": "^7.5.0",
     "d3-scale": "^4.0.2",
     "elm": "0.19.1-5",
     "minisearch": "^5.0.0"
@@ -66,7 +66,7 @@
     "postcss-loader": "^7.0.0",
     "postcss-safe-parser": "^6.0.0",
     "postcss-scss": "^4.0.4",
-    "sass-loader": "^13.0.0",
+    "sass-loader": "^13.0.2",
     "style-loader": "^3.3.1",
     "terser-webpack-plugin": "^5.3.3",
     "uglify-js": "^3.16.1",
