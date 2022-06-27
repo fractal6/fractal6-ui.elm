@@ -7,9 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unrealeased]
 
 ### New
+
+### Changed 
+
+### Fixed
+
+
+## v0.6
+
+### New
 - Orga quick switcher in a left menu.
+- Orga tree menu in a left menu.
 - Landing of the User settings page !
 - Support of multiple invitation on the invivation form.
+- Improve creatin of ne organiation. (Visibility choice)
 
 ### Changed 
 - User url is now root uri ie fractale.co/dtrckd
@@ -18,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 - Token update in JoinOrga and  component using port subscription
+- many optimization and code factorization.
 
 
 ## v0.5

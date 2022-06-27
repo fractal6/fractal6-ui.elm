@@ -287,7 +287,7 @@ update_ apis message model =
                         , out0
                             [ Ports.open_modal "JoinOrgaModal"
                             , fetchNode apis rootnameid OnGetNode
-                            , Cmd.map UserInputMsg (send (UserInput.OnLoad NotAsked))
+                            , Cmd.map UserInputMsg (send (UserInput.OnLoad True))
                             ]
                         )
 

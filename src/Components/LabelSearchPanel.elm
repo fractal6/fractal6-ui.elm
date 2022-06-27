@@ -402,8 +402,8 @@ type alias Op =
     }
 
 
-view_ : Bool -> Op -> State -> Html Msg
-view_ isInternal op (State model) =
+view_ : Bool -> Op -> Model -> Html Msg
+view_ isInternal op model =
     nav [ id "labelSearchPanel", class "panel sidePanel" ]
         [ case model.labels_data of
             Success labels_d ->
@@ -546,7 +546,7 @@ view : Op -> State -> Html Msg
 view op (State model) =
     div [ id id_target_name ]
         [ if model.isOpen then
-            view_ False op (State model)
+            view_ False op model
 
           else
             text ""
@@ -558,7 +558,7 @@ viewNew op (State model) =
     div []
         [ div [ id id_target_name, class "is-reversed" ]
             [ if model.isOpen then
-                view_ True op (State model)
+                view_ True op model
 
               else
                 text ""

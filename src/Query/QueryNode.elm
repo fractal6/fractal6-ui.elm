@@ -575,7 +575,7 @@ lgPayload =
         |> with Fractal.Object.Node.visibility
         |> with Fractal.Object.Node.mode
         |> with Fractal.Object.Node.userCanJoin
-        |> with (Fractal.Object.Node.children nArchivedFilter emiterOrReceiverPayload)
+        |> with (Fractal.Object.Node.children nArchivedFilterPlus emiterOrReceiverPayload)
         |> with (Fractal.Object.Node.source identity blobIdPayload)
         |> with (Fractal.Object.Node.parent identity lg2Payload)
 
@@ -598,6 +598,20 @@ nArchivedFilter a =
                 (\b ->
                     { b
                         | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Retired ] }) |> Present
+                    }
+                )
+                |> Present
+    }
+
+
+nArchivedFilterPlus : Query.QueryNodeOptionalArguments -> Query.QueryNodeOptionalArguments
+nArchivedFilterPlus a =
+    { a
+        | filter =
+            Input.buildNodeFilter
+                (\b ->
+                    { b
+                        | not = Input.buildNodeFilter (\sd -> { sd | isArchived = Present True, or = matchAnyRoleType [ RoleType.Member, RoleType.Guest, RoleType.Pending, RoleType.Retired ] }) |> Present
                     }
                 )
                 |> Present

@@ -17,7 +17,7 @@ import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (UserForm, UserState(..), initUserForm, orgaToUsers, uctxFromUser)
+import ModelCommon exposing (UserForm, UserState(..), initUserForm, uctxFromUser)
 import ModelCommon.View exposing (viewUserFull)
 import ModelSchema exposing (..)
 import Ports
@@ -38,7 +38,7 @@ type alias Model =
     , pattern : String
     , lookup : List User
     , multiSelect : Bool
-    , users_orga : List User -- base user from orga
+    , isInvite : Bool
     , lastPattern : String -- last pattern used to fetch data
     , lastTime : Time.Posix -- last time data were fetch
     , isOpen : Bool -- state of the selectors panel
@@ -57,7 +57,7 @@ initModel multiSelect user =
     , pattern = ""
     , lookup = []
     , multiSelect = multiSelect
-    , users_orga = []
+    , isInvite = False
     , lastPattern = ""
     , lastTime = Time.millisToPosix 0
     , isOpen = False
@@ -142,7 +142,7 @@ setDataResult result model =
 
 type Msg
     = -- Data
-      OnLoad (GqlData NodesDict)
+      OnLoad Bool
     | OnReset
     | OnInput Bool String
     | OnClickUser User
@@ -199,14 +199,8 @@ update apis message (State model) =
 update_ apis message model =
     case message of
         -- Data
-        OnLoad tree_data ->
-            let
-                users_data =
-                    withMaybeData tree_data |> withDefault Dict.empty |> orgaToUsers
-            in
-            ( { model | users_orga = users_data }
-            , out0 [ Ports.focusOn "userInput" ]
-            )
+        OnLoad isInvite ->
+            ( { model | isInvite = isInvite }, out0 [ Ports.focusOn "userInput" ] )
 
         --Ports.inheritWith "usersSearchPanel"  @need it ?
         OnReset ->
@@ -256,7 +250,7 @@ update_ apis message model =
                     ( { data | refresh_trial = i }, out2 [ sendSleep DoQueryUser 500 ] [ DoUpdateToken ] )
 
                 OkAuth users ->
-                    ( data, out0 [ Ports.initUserSearchSeek (users ++ model.users_orga) model.pattern ] )
+                    ( data, out0 [ Ports.initUserSearchSeek users model.pattern ] )
 
                 _ ->
                     ( data, noOut )

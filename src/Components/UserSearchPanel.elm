@@ -385,15 +385,15 @@ view op (State model) =
                         op.selectedAssignees
                         |> List.concat
             in
-            view_ { op | selectedAssignees = selectedAssignees } (State model)
+            view_ { op | selectedAssignees = selectedAssignees } model
 
           else
             text ""
         ]
 
 
-view_ : Op -> State -> Html Msg
-view_ op (State model) =
+view_ : Op -> Model -> Html Msg
+view_ op model =
     nav [ id "usersSearchPanel", class "panel sidePanel" ]
         [ case model.assignees_data of
             Success assignees_d ->

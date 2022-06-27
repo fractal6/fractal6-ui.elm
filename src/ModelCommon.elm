@@ -736,6 +736,8 @@ blobFromTensionHead th =
             Nothing
 
 
+{-| @obsolete
+-}
 orgaToUsersData : NodesDict -> UsersDict
 orgaToUsersData nd =
     nd
@@ -745,6 +747,8 @@ orgaToUsersData nd =
         |> toMapOfList
 
 
+{-| @obsolete
+-}
 orgaToUsers : NodesDict -> List User
 orgaToUsers nd =
     nd

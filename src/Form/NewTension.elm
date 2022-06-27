@@ -1318,8 +1318,7 @@ viewRecipients op model =
         , span [ class "dropdown " ]
             [ span [ class "dropdown-trigger", onClick OnTargetClick, attribute "style" "max-width: 280px;" ]
                 [ span [ class "is-wrapped-50", attribute "aria-controls" "target-menu" ]
-                    [ span
-                        [ class "button is-small is-rounded has-border", style "display" "inline-block" ]
+                    [ span [ class "button is-small is-rounded has-border", style "display" "inline-block" ]
                         [ text form.target.name, span [ class "ml-2 icon-chevron-down1" ] [] ]
                     ]
                 ]

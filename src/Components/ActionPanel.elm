@@ -532,7 +532,6 @@ type Msg
     | PushAction ActionForm PanelState
     | OnSubmit (Time.Posix -> Msg)
     | OnOpenModal PanelState
-    | OnOpenModal2 PanelState (GqlData NodesDict)
     | OnCloseModal ModalData
     | OnCloseModalSafe String String
     | OnChangePost String String
@@ -638,22 +637,11 @@ update_ apis message model =
                         |> setAction action
                         |> setStep StepOne
                         |> close
-            in
-            ( newModel, out0 [ Ports.open_modal ("actionPanelModal" ++ model.domid) ] )
-
-        OnOpenModal2 action tree_data ->
-            let
-                newModel =
-                    model
-                        |> openModal
-                        |> setAction action
-                        |> setStep StepOne
-                        |> close
 
                 cmds =
                     case action of
                         LinkAction ->
-                            [ Cmd.map UserInputMsg (send (UserInput.OnLoad tree_data)) ]
+                            [ Cmd.map UserInputMsg (send (UserInput.OnLoad False)) ]
 
                         _ ->
                             []
@@ -1014,7 +1002,7 @@ viewPanel op model =
                                             [ A.icon1 "icon-user-plus" (panelAction2str (UnLinkAction user)) ]
 
                                     Nothing ->
-                                        div [ class "dropdown-item button-light", onClick (OnOpenModal2 LinkAction op.tree_data) ]
+                                        div [ class "dropdown-item button-light", onClick (OnOpenModal LinkAction) ]
                                             [ A.icon1 "icon-user-plus" (panelAction2str LinkAction) ]
                         ]
                             ++ -- ARCHIVE ACTION

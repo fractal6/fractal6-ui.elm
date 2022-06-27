@@ -611,7 +611,7 @@ export const GraphPack = {
             }
             ctx2d.fillText(text, node.ctx.centerX, node.ctx.centerY);
             ctx2d.fill();
-            // tips
+            // Icon Tips
             ctx2d.fillStyle = this.nameColor + "99";
             if (node.data.role_type == RoleType.Bot) {
                 //ctx2d.fillText('🤖', node.ctx.centerX, node.ctx.centerY-node.ctx.rayon*0.5);
