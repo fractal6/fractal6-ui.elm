@@ -18,6 +18,7 @@ import Components.Loading as Loading
         , withMaybeData
         )
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
+import Components.MoveTension exposing (viewNodeSelect)
 import Components.NodeDoc as NodeDoc
     exposing
         ( NodeDoc
@@ -534,7 +535,7 @@ type Msg
     | OnOpen NewTensionInput
     | OnOpenRole NewTensionInput
     | OnOpenCircle NewTensionInput
-    | OnResetModel
+    | OnReset
     | OnClose ModalData
     | OnCloseSafe String String
     | OnSwitchTab TensionTab
@@ -728,13 +729,13 @@ update_ apis message model =
             ( { newModel | isActive = False }
             , out2
                 [ Ports.close_modal
-                , ternary data.reset (sendSleep OnResetModel 333) Cmd.none
+                , ternary data.reset (sendSleep OnReset 333) Cmd.none
                 , sendSleep (SetIsActive2 False) 500
                 ]
                 gcmds
             )
 
-        OnResetModel ->
+        OnReset ->
             ( resetModel model, noOut )
 
         OnCloseSafe link onCloseTxt ->
@@ -1323,39 +1324,18 @@ viewRecipients op model =
                     ]
                 ]
             , div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
-                [ div [ class "dropdown-content", style "max-height" "420px" ] <|
-                    List.map
-                        (\n ->
-                            div
-                                [ class <| "dropdown-item has-text-weight-semibold button-light"
-                                , onClick (OnChangeTensionTarget n)
-                                ]
-                                [ case nid2type n.nameid of
-                                    NodeType.Circle ->
-                                        A.icon1 (action2icon { doc_type = NODE NodeType.Circle }) n.name
-
-                                    NodeType.Role ->
-                                        span []
-                                            [ A.icon1 (action2icon { doc_type = NODE NodeType.Role }) n.name
-                                            , case n.first_link of
-                                                Just f ->
-                                                    span [ class "is-username is-size-7" ] [ text (" @" ++ f.username) ]
-
-                                                Nothing ->
-                                                    text ""
-                                            ]
-                                ]
-                        )
-                        --(getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
-                        (withMaybeData op.tree_data
-                            |> Maybe.map
-                                (\d ->
-                                    Dict.values d
-                                        |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
-                                        |> List.sortWith sortNode
+                [ div [ class "dropdown-content has-border", style "max-height" "420px" ] <|
+                    case op.tree_data of
+                        Success data ->
+                            List.map
+                                (\n -> Lazy.lazy2 viewNodeSelect n OnChangeTensionTarget)
+                                (Dict.values data
+                                    |> List.filter (\n -> n.nameid /= model.nodeDoc.form.target.nameid)
+                                    |> List.sortWith sortNode
                                 )
-                            |> withDefault [ initNode ]
-                        )
+
+                        _ ->
+                            [ div [ class "spinner" ] [] ]
                 ]
             ]
         ]

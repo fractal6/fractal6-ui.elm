@@ -411,7 +411,9 @@ init global flags =
         baseUri =
             case tab of
                 Conversation ->
-                    TensionBaseUri
+                    --TensionBaseUri
+                    -- better UX to redirect to tensions list when navigating tensions.
+                    TensionsBaseUri
 
                 Document ->
                     MandateBaseUri

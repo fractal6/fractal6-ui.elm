@@ -209,8 +209,8 @@ type Msg
     | OnOpen
     | OnClose ModalData
     | OnCloseSafe String String
-    | OnReset HelpTab
-    | OnResetModel
+    | OnReset
+    | OnResetForm HelpTab
     | OnGotQuickDoc (WebData QuickDoc)
     | OnChangeTab HelpTab
     | OnChangePostAsk String String
@@ -295,17 +295,17 @@ update_ apis message model =
             ( { newModel | isActive = False }
             , out2
                 [ Ports.close_modal
-                , ternary data.reset (sendSleep OnResetModel 333) Cmd.none
+                , ternary data.reset (sendSleep OnReset 333) Cmd.none
                 , sendSleep (SetIsActive2 False) 500
                 ]
                 gcmds
             )
 
-        OnReset tab ->
-            ( resetForm tab model, noOut )
-
-        OnResetModel ->
+        OnReset ->
             ( resetModel model, noOut )
+
+        OnResetForm tab ->
+            ( resetForm tab model, noOut )
 
         OnCloseSafe link onCloseTxt ->
             let
@@ -590,7 +590,7 @@ viewAskQuestion op (State model) =
                         ]
                         [ textH T.checkItOut ]
                     ]
-                , a [ onClickPD (OnReset AskQuestion), target "_blank" ] [ textH T.askAnotherQuestion ]
+                , a [ onClickPD (OnResetForm AskQuestion), target "_blank" ] [ textH T.askAnotherQuestion ]
                 ]
 
         other ->
@@ -699,7 +699,7 @@ viewFeedback op (State model) =
                     ]
                 , span [ class "is-italic" ] [ text "Thank you for your feedback, we will get back to you shortly." ]
                 , br [] []
-                , a [ onClickPD (OnReset Feedback), target "_blank" ] [ textH T.giveAnotherFeedback ]
+                , a [ onClickPD (OnResetForm Feedback), target "_blank" ] [ textH T.giveAnotherFeedback ]
                 ]
 
         other ->

@@ -1,9 +1,9 @@
-module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view)
+module Components.MoveTension exposing (Msg(..), State, init, subscriptions, update, view, viewNodeSelect)
 
 import Assets as A
 import Auth exposing (ErrState(..), parseErr)
 import Components.ConfirmContract as ConfirmContract
-import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), viewGqlErrors, withMaybeData, withMaybeDataMap)
+import Components.Loading as Loading exposing (GqlData, ModalData, RequestResult(..), isSuccess, viewGqlErrors, withMaybeData, withMaybeDataMap)
 import Components.ModalConfirm as ModalConfirm exposing (ModalConfirm, TextMessage)
 import Dict exposing (Dict)
 import Extra exposing (ternary)
@@ -15,12 +15,13 @@ import Global exposing (send, sendNow, sendSleep)
 import Html exposing (Html, a, br, button, div, h1, h2, hr, i, input, label, li, nav, option, p, pre, section, select, span, text, textarea, ul)
 import Html.Attributes exposing (attribute, checked, class, classList, disabled, for, href, id, list, name, placeholder, required, rows, selected, target, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
+import Html.Lazy as Lazy
 import Iso8601 exposing (fromTime)
 import List.Extra as LE
 import Maybe exposing (withDefault)
-import ModelCommon exposing (Ev, UserState(..))
-import ModelCommon.Codecs exposing (nid2type, nodeIdCodec)
-import ModelCommon.View exposing (roleColor)
+import ModelCommon exposing (Ev, UserState(..), sortNode)
+import ModelCommon.Codecs exposing (DocType(..), nid2type, nodeIdCodec)
+import ModelCommon.View exposing (action2icon, roleColor)
 import ModelSchema exposing (..)
 import Ports
 import Query.PatchTension exposing (moveTension)
@@ -35,7 +36,8 @@ type State
 
 type alias Model =
     { user : UserState
-    , isOpen : Bool
+    , isActive : Bool
+    , isActive2 : Bool
     , move_result : GqlData TensionId
     , target : String -- keep origin target (receiverid)
     , form : MoveForm
@@ -85,7 +87,8 @@ init user =
 initModel : UserState -> Model
 initModel user =
     { user = user
-    , isOpen = False
+    , isActive = False
+    , isActive2 = False
     , move_result = NotAsked
     , form = initForm user
     , target = ""
@@ -106,7 +109,7 @@ initModel user =
 
 isOpen_ : State -> Bool
 isOpen_ (State model) =
-    model.isOpen
+    model.isActive
 
 
 
@@ -130,12 +133,12 @@ open tid target blob_m model =
                     )
                 |> withDefault ( "", Nothing )
     in
-    { model | isOpen = True, target = target, form = { form | tid = tid }, blob = blob_m, encoded_nid = encoded_nid, decoded_type_m = decoded_type_m }
+    { model | isActive2 = True, target = target, form = { form | tid = tid }, blob = blob_m, encoded_nid = encoded_nid, decoded_type_m = decoded_type_m }
 
 
 close : Model -> Model
 close model =
-    { model | isOpen = False }
+    { model | isActive = False }
 
 
 reset : Model -> Model
@@ -206,6 +209,7 @@ buildOutResult model =
 
 type Msg
     = DoMoveTension
+    | SetIsActive2 Bool
     | OnOpen String String (Maybe Blob)
     | OnClose ModalData
     | OnCloseSafe String String
@@ -264,25 +268,42 @@ update apis message (State model) =
 
 update_ apis message model =
     case message of
+        SetIsActive2 v ->
+            -- Prevent elm from computing the VDOM
+            if v then
+                ( { model | isActive = model.isActive2 }, out0 [ Ports.open_modal "MoveTensionModal" ] )
+
+            else
+                ( { model | isActive2 = model.isActive }, noOut )
+
         OnOpen tid target blob_m ->
             ( open tid target blob_m model
-            , out0 [ Ports.open_modal "MoveTensionModal", Ports.requireTreeData ]
+            , out0 [ sendSleep (SetIsActive2 True) 10, Ports.requireTreeData ]
             )
 
         OnClose data ->
             let
-                cmds =
-                    ternary data.reset [ sendSleep OnReset 333 ] []
+                ( newModel, gcmds ) =
+                    if data.link == "" then
+                        ( model, [] )
 
-                gcmds =
-                    ternary (data.link /= "") [ DoNavigate data.link ] []
+                    else
+                        ( { model | isActive2 = True }, [ DoNavigate data.link ] )
             in
-            case model.move_result of
-                Success _ ->
-                    ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds (Just ( True, Just <| buildOutResult model )) )
+            ( { newModel | isActive = False }
+            , Out
+                [ Ports.close_modal
+                , ternary data.reset (sendSleep OnReset 333) Cmd.none
+                , sendSleep (SetIsActive2 False) 500
+                ]
+                gcmds
+                (if isSuccess model.move_result then
+                    Just ( True, Just (buildOutResult model) )
 
-                _ ->
-                    ( close model, Out ([ Ports.close_modal ] ++ cmds) gcmds (Just ( True, Nothing )) )
+                 else
+                    Just ( True, Nothing )
+                )
+            )
 
         OnReset ->
             ( reset model, noOut )
@@ -422,11 +443,15 @@ type alias Op =
 
 view : Op -> State -> Html Msg
 view op (State model) =
-    div []
-        [ viewModal op model
-        , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
-        , ConfirmContract.view {} model.confirmContract |> Html.map ConfirmContractMsg
-        ]
+    if model.isActive2 then
+        div []
+            [ viewModal op model
+            , ModalConfirm.view { data = model.modal_confirm, onClose = DoModalConfirmClose, onConfirm = DoModalConfirmSend }
+            , ConfirmContract.view {} model.confirmContract |> Html.map ConfirmContractMsg
+            ]
+
+    else
+        text ""
 
 
 viewModal : Op -> Model -> Html Msg
@@ -434,7 +459,7 @@ viewModal op model =
     div
         [ id "MoveTensionModal"
         , class "modal is-light modal-fx-fadeIn"
-        , classList [ ( "is-active", model.isOpen ) ]
+        , classList [ ( "is-active", model.isActive ) ]
         , attribute "data-modal-close" "closeModalFromJs"
         ]
         [ div
@@ -517,31 +542,19 @@ viewModalContent op model =
                                 case op.tree_data of
                                     Success data ->
                                         let
-                                            roleTest r_ =
-                                                case model.decoded_type_m of
-                                                    Just _ ->
-                                                        -- keep circle
-                                                        r_ == Nothing
-
-                                                    Nothing ->
-                                                        -- filter special roles
-                                                        List.member r_ [ Just RoleType.Member, Just RoleType.Guest ] == False
-
                                             decoded_nid =
                                                 nodeIdCodec model.target model.encoded_nid (withDefault NodeType.Circle model.decoded_type_m)
-
-                                            targets =
-                                                Dict.values data
-                                                    |> List.filter
-                                                        (\n ->
-                                                            (n.nameid /= model.form.target.nameid)
-                                                                && (n.nameid /= model.target)
-                                                                && roleTest n.role_type
-                                                                && (n.nameid /= decoded_nid)
-                                                                && (decoded_nid /= (Maybe.map (\p -> p.nameid) n.parent |> withDefault ""))
-                                                        )
                                         in
-                                        viewNodesSelector targets
+                                        List.map
+                                            (\n -> Lazy.lazy2 viewNodeSelect n OnChangeTarget)
+                                            (Dict.values data
+                                                |> List.filter
+                                                    (\n ->
+                                                        not (List.member n.nameid [ model.form.target.nameid, model.target, decoded_nid ])
+                                                     --&& (decoded_nid /= (Maybe.map (\p -> p.nameid) n.parent |> withDefault ""))
+                                                    )
+                                                |> List.sortWith sortNode
+                                            )
 
                                     _ ->
                                         [ div [ class "spinner" ] [] ]
@@ -593,23 +606,24 @@ viewModalContent op model =
         ]
 
 
-viewNodesSelector : List Node -> List (Html Msg)
-viewNodesSelector targets =
-    List.map
-        (\n ->
-            let
-                color =
-                    case n.role_type of
-                        Just r ->
-                            roleColor r |> String.replace "primary" "info"
+viewNodeSelect : Node -> (Node -> msg) -> Html msg
+viewNodeSelect n onChangeTarget =
+    div
+        [ class <| "dropdown-item has-text-weight-semibold button-light"
+        , onClick (onChangeTarget n)
+        ]
+        [ case nid2type n.nameid of
+            NodeType.Circle ->
+                A.icon1 (action2icon { doc_type = NODE NodeType.Circle }) n.name
+
+            NodeType.Role ->
+                span []
+                    [ A.icon1 (action2icon { doc_type = NODE NodeType.Role }) n.name
+                    , case n.first_link of
+                        Just f ->
+                            span [ class "is-username is-size-7" ] [ text (" @" ++ f.username) ]
 
                         Nothing ->
-                            ""
-            in
-            div
-                [ class <| ("dropdown-item has-text-weight-semibold button-light has-text-" ++ color)
-                , onClick (OnChangeTarget n)
-                ]
-                [ A.icon1 (ternary (nid2type n.nameid == NodeType.Role) "icon-user" "icon-circle") n.name ]
-        )
-        targets
+                            text ""
+                    ]
+        ]
