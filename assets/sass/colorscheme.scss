@@ -29,7 +29,6 @@ $dark-dimmed: #22272e;
 $darker-dimmed: #1c2128;
 $dark-dimmed-top: #2d333b;
 $white-dimmed: #c1cdd9;
-//$white-dimmed: #adbac7;
 
 $blue: #3498db;
 $red: #e74c3c;
@@ -48,8 +47,6 @@ $orange-frac6: #d38e23;
 $green-frac6: #3ffba3;
 $green-frac6-lighter: #7af2bf;
 $blue-frac6: #2176d0;
-
-$yellow-invert: #fff;
 
 //
 // Dimensions
@@ -138,8 +135,6 @@ $tree-menu-width: 240px;
     --green-frac6-lighter: #{$green-frac6-lighter};
     --blue-frac6: #{$blue-frac6};
 
-    --yellow-invert: #{$yellow-invert};
-
     //
     // Dimmension
     //
@@ -184,12 +179,12 @@ $tree-menu-width: 240px;
 // Default colors
 $primary: #375a7f;
 $link: $blue-frac6;
+$link2: $blue;
 $info:    hsl(204, 86%, 53%);
 $success: hsl(141, 71%, 38%);
 //$warning: hsl(48, 100%, 47%);
 $warning: $orange;
 $danger:  hsl(368, 100%, 61%);
-$link2: $blue;
 $link-light: lighten($link, 20);
 $link-hover: lighten($link, 10);
 $link-focus: darken($link, 5);
@@ -209,10 +204,9 @@ $danger-light: lighten($danger, 50);
 // Background colors
 $nbc: $primary;
 $nbbc: $nbc;
-$hbc: #e6eaec;
-//$bbc: white;
-$bbc: $white;
-//$chbc: $hbc;
+$hbc: #f5f7f9;
+$bbc: white; // $white
+$chbc: $hbc;
 $background-evidence: darken($bbc, 5); // hover
 $ph-background: $grey-lighter;
 // $background = kind of grey-lighter
@@ -221,7 +215,7 @@ $ph-background: $grey-lighter;
 $header-background-color: $hbc;
 $body-background-color: $bbc;
 $footer-background-color: $hbc;
-$comment-header-background-color: $hbc;
+$comment-header-background-color: $chbc;
 $orga-menu-background-color: $hbc;
 $tree-menu-background-color: darken($hbc, 5);
 
@@ -353,11 +347,9 @@ $button-vote-danger-background: $danger;
   --nbbc: #{$nbbc};
   --hbc: #{$hbc};
   --bbc: #{$bbc};
-  //--chbc: #{$chbc};
+  --chbc: #{$chbc};
   --background-evidence: #{$background-evidence};
-  //--background-evidence: #{$background-evidence};
   --ph-background: #{$ph-background};
-  // --background = kind of grey-lighter
 
   // Alias background
   --header-background-color: #{$header-background-color};
@@ -490,12 +482,12 @@ $button-vote-danger-background: $danger;
 // Default colors
 $primary: #375a7f;
 $link: $green-frac6;
+$link2: $green;
 $info:    hsl(204, 86%, 53%);
 $success: hsl(141, 71%, 38%);
 //$warning: hsl(48, 100%, 47%);
 $warning: $orange;
 $danger:  hsl(368, 100%, 61%);
-$link2: $green;
 $link-light: lighten($link, 20);
 $link-hover: darken($link, 20);
 $link-focus: darken($link, 5);
@@ -666,7 +658,6 @@ $button-vote-danger-background: $danger-light;
   --bbc: #{$bbc};
   --chbc: #{$chbc};
   --background-evidence: #{$background-evidence};
-  //--background-evidence: #{$background-evidence};
   --background: #{$background};
   --ph-background: #{$ph-background};
 
