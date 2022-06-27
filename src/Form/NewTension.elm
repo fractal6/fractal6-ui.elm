@@ -68,8 +68,8 @@ import ModelCommon
         , sortNode
         , tensionToActionForm
         )
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
-import ModelCommon.View exposing (FormText, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
+import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
+import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -1325,12 +1325,26 @@ viewRecipients op model =
             , div [ id "target-menu", class "dropdown-menu is-center", attribute "role" "menu" ]
                 [ div [ class "dropdown-content", style "max-height" "420px" ] <|
                     List.map
-                        (\t ->
+                        (\n ->
                             div
                                 [ class <| "dropdown-item has-text-weight-semibold button-light"
-                                , onClick (OnChangeTensionTarget t)
+                                , onClick (OnChangeTensionTarget n)
                                 ]
-                                [ A.icon1 (ternary (nid2type t.nameid == NodeType.Role) "icon-user" "icon-circle") t.name ]
+                                [ case nid2type n.nameid of
+                                    NodeType.Circle ->
+                                        A.icon1 (action2icon { doc_type = NODE NodeType.Circle }) n.name
+
+                                    NodeType.Role ->
+                                        span []
+                                            [ A.icon1 (action2icon { doc_type = NODE NodeType.Role }) n.name
+                                            , case n.first_link of
+                                                Just f ->
+                                                    span [ class "is-username is-size-7" ] [ text (" @" ++ f.username) ]
+
+                                                Nothing ->
+                                                    text ""
+                                            ]
+                                ]
                         )
                         --(getTargets model.path_data [ RoleType.Guest, RoleType.Member ]
                         (withMaybeData op.tree_data
