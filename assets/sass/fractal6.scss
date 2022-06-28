@@ -2548,7 +2548,7 @@ tr.mediaBox {
  */
 
 .slider {
-    @include desktop {
+    @include tablet {
         transition: transform .5s ease, opacity .5s ease;
         &.is-slide-left {
             transform: translateX(-100%);
