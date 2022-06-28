@@ -380,10 +380,10 @@ setActionForm data =
 
                 LinkAction ->
                     [ Ev TensionEvent.MemberLinked
-                        (node.first_link |> Maybe.map (\x -> x.username) |> withDefault "")
+                        (node.first_link |> Maybe.map .username |> withDefault "")
                         (mor
                             (List.head data.form.users |> Maybe.map (\x -> ternary (x.email == "") x.username x.email))
-                            (node.first_link |> Maybe.map (\x -> x.username))
+                            (node.first_link |> Maybe.map .username)
                             |> withDefault ""
                         )
                     ]

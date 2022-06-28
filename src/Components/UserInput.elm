@@ -102,7 +102,10 @@ clickUser user model =
         form =
             initUserForm
     in
-    { model | form = model.form ++ [ { form | username = user.username, name = user.name } ], pattern = "" }
+    { model
+        | form = model.form ++ [ { form | username = user.username, name = user.name } ] |> LE.uniqueBy .username
+        , pattern = ""
+    }
 
 
 clickEmail : String -> Model -> Model
@@ -111,7 +114,10 @@ clickEmail email model =
         form =
             initUserForm
     in
-    { model | form = model.form ++ [ { form | email = String.toLower email |> String.trim } ], pattern = "" }
+    { model
+        | form = model.form ++ [ { form | email = String.toLower email |> String.trim } ] |> LE.uniqueBy .email
+        , pattern = ""
+    }
 
 
 unselect : Int -> Model -> Model
@@ -258,7 +264,7 @@ update_ apis message model =
         ChangeUserLookup data ->
             case data of
                 Ok d ->
-                    ( { model | lookup = LE.uniqueBy (\u -> u.username) d }, noOut )
+                    ( { model | lookup = d }, noOut )
 
                 Err err ->
                     ( model, out0 [ Ports.logErr err ] )

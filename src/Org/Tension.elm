@@ -431,7 +431,7 @@ init global flags =
 
             else
                 global.session.path_data
-                    |> Maybe.map (\p -> focusFromPath p)
+                    |> Maybe.map focusFromPath
                     |> withDefault newFocus_
 
         model =
@@ -677,7 +677,7 @@ update global message model =
                                     { prevPath | path = path.path ++ (List.tail prevPath.path |> withDefault []) }
 
                                 nameid =
-                                    List.head path.path |> Maybe.map (\p -> p.nameid) |> withDefault ""
+                                    List.head path.path |> Maybe.map .nameid |> withDefault ""
                             in
                             ( { model | path_data = Success newPath }
                             , queryLocalGraph apis nameid (GotPath False)

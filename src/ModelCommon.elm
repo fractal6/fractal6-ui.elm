@@ -503,7 +503,7 @@ getNodeName nameid orga =
     case orga of
         Success nodes ->
             Dict.get nameid nodes
-                |> Maybe.map (\n -> n.name)
+                |> Maybe.map .name
                 |> withDefault errMsg
 
         _ ->
@@ -516,9 +516,9 @@ getParentId nameid odata =
         Success data ->
             data
                 |> Dict.get nameid
-                |> Maybe.map (\n -> n.parent)
+                |> Maybe.map .parent
                 |> withDefault Nothing
-                |> Maybe.map (\p -> p.nameid)
+                |> Maybe.map .nameid
 
         _ ->
             Nothing
@@ -528,7 +528,7 @@ getParents : String -> GqlData NodesDict -> List Node
 getParents nameid odata =
     case odata of
         Success data ->
-            case Maybe.map (\n -> n.parent) (Dict.get nameid data) |> withDefault Nothing of
+            case Maybe.map .parent (Dict.get nameid data) |> withDefault Nothing of
                 Just p ->
                     case getNode p.nameid odata of
                         Just n ->
@@ -549,7 +549,7 @@ getChildren nid odata =
     odata
         |> withMaybeDataMap
             (\x ->
-                x |> Dict.values |> List.filter (\n -> Just (nearestCircleid nid) == Maybe.map (\m -> m.nameid) n.parent)
+                x |> Dict.values |> List.filter (\n -> Just (nearestCircleid nid) == Maybe.map .nameid n.parent)
             )
         |> withDefault []
 
@@ -568,7 +568,7 @@ nodeFromTension t =
     t.blobs
         |> withDefault []
         |> List.head
-        |> Maybe.map (\h -> h.node)
+        |> Maybe.map .node
         |> withDefault Nothing
         |> withDefault (initNodeFragment Nothing)
 
@@ -577,7 +577,7 @@ mdFromTension t =
     t.blobs
         |> withDefault []
         |> List.head
-        |> Maybe.map (\h -> h.md)
+        |> Maybe.map .md
         |> withDefault Nothing
 
 
@@ -755,7 +755,7 @@ orgaToUsers nd =
         |> Dict.toList
         |> List.map (\( k, n ) -> n.first_link)
         |> List.filterMap identity
-        |> LE.uniqueBy (\u -> u.username)
+        |> LE.uniqueBy .username
 
 
 

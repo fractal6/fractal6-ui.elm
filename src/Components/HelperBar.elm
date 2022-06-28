@@ -76,7 +76,7 @@ viewPathLevel op =
         ( rootnameid, userCanJoin ) =
             case op.path_data of
                 Just path ->
-                    ( path.root |> Maybe.map (\r -> r.nameid) |> withDefault ""
+                    ( path.root |> Maybe.map .nameid |> withDefault ""
                     , path.root |> Maybe.map (\r -> r.userCanJoin == Just True) |> withDefault False
                     )
 

@@ -324,7 +324,7 @@ circleTensionDecoder data =
                 in
                 List.sortBy .createdAt (tchild ++ tin ++ List.filter (\t -> t.emitter.nameid /= t.receiver.nameid) tout)
                     |> List.reverse
-                    |> uniqueBy (\t -> t.id)
+                    |> uniqueBy .id
                     |> List.take nCircleTensionPpg
                     |> Just
             )

@@ -551,7 +551,7 @@ viewModalContent op model =
                                                 |> List.filter
                                                     (\n ->
                                                         not (List.member n.nameid [ model.form.target.nameid, model.target, decoded_nid ])
-                                                     --&& (decoded_nid /= (Maybe.map (\p -> p.nameid) n.parent |> withDefault ""))
+                                                     --&& (decoded_nid /= (Maybe.map .nameid n.parent |> withDefault ""))
                                                     )
                                                 |> List.sortWith sortNode
                                             )

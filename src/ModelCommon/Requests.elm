@@ -260,10 +260,10 @@ fetchTensionEncoder nameids first offset query_ status_ authors labels type_ sor
         , ( "offset", JE.int offset )
         , ( "query", JEE.maybe JE.string query_ )
         , ( "sort", JEE.maybe JE.string sort_ )
-        , ( "status", JEE.maybe JE.string <| Maybe.map (\t -> TensionStatus.toString t) status_ )
-        , ( "authors", JE.list JE.string <| List.map (\x -> x.username) authors )
-        , ( "labels", JE.list JE.string <| List.map (\x -> x.name) labels )
-        , ( "type_", JEE.maybe JE.string <| Maybe.map (\t -> TensionType.toString t) type_ )
+        , ( "status", JEE.maybe JE.string <| Maybe.map TensionStatus.toString status_ )
+        , ( "authors", JE.list JE.string <| List.map .username authors )
+        , ( "labels", JE.list JE.string <| List.map .name labels )
+        , ( "type_", JEE.maybe JE.string <| Maybe.map TensionType.toString type_ )
         ]
 
 

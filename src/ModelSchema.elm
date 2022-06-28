@@ -422,17 +422,17 @@ type alias SubNodeFragment =
 
 node2NodeFragment : Maybe Node -> Maybe (List SubNodeFragment) -> Maybe NodeData -> NodeFragment
 node2NodeFragment node_m children nData =
-    { name = Maybe.map (\n -> n.name) node_m
-    , nameid = Maybe.map (\n -> n.nameid) node_m
-    , type_ = Maybe.map (\n -> n.type_) node_m
-    , visibility = Maybe.map (\n -> n.visibility) node_m
-    , mode = Maybe.map (\n -> n.mode) node_m
-    , role_type = Maybe.map (\n -> n.role_type) node_m |> withDefault Nothing
+    { name = Maybe.map .name node_m
+    , nameid = Maybe.map .nameid node_m
+    , type_ = Maybe.map .type_ node_m
+    , visibility = Maybe.map .visibility node_m
+    , mode = Maybe.map .mode node_m
+    , role_type = Maybe.map .role_type node_m |> withDefault Nothing
     , role_ext = Nothing
-    , color = Maybe.map (\n -> n.color) node_m |> withDefault Nothing
-    , about = Maybe.map (\n -> n.about) nData |> withDefault Nothing
-    , mandate = Maybe.map (\n -> n.mandate) nData |> withDefault Nothing
-    , first_link = Maybe.map (\n -> n.first_link |> Maybe.map (\u -> u.username)) node_m |> withDefault Nothing
+    , color = Maybe.map .color node_m |> withDefault Nothing
+    , about = Maybe.map .about nData |> withDefault Nothing
+    , mandate = Maybe.map .mandate nData |> withDefault Nothing
+    , first_link = Maybe.map (\n -> Maybe.map .username n.first_link) node_m |> withDefault Nothing
     , children = children
     }
 
