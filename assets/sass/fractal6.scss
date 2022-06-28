@@ -2548,17 +2548,19 @@ tr.mediaBox {
  */
 
 .slider {
-  transition: transform .5s ease, opacity .5s ease;
-  &.is-slide-left {
-      transform: translateX(-100%);
-      -webkit-transform: translateX(-100%);
-      //opacity: 0;
-  }
-  &.is-slide-right {
-      transform: translateX(100%);
-      -webkit-transform: translateX(100%);
-      //opacity: 0;
-  }
+    @include desktop {
+        transition: transform .5s ease, opacity .5s ease;
+        &.is-slide-left {
+            transform: translateX(-100%);
+            -webkit-transform: translateX(-100%);
+            //opacity: 0;
+        }
+        &.is-slide-right {
+            transform: translateX(100%);
+            -webkit-transform: translateX(100%);
+            //opacity: 0;
+        }
+    }
 }
 
 /*
