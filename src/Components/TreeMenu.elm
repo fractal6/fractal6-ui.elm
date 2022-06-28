@@ -27,6 +27,7 @@ import ModelSchema exposing (..)
 import Ports
 import Query.QueryNode exposing (queryOrgaTree)
 import Session exposing (Apis, GlobalCmd(..))
+import String
 import Text as T exposing (textH, textT, upH)
 import Time
 
@@ -301,7 +302,11 @@ update_ apis message model =
             ( { model | hover = v }, noOut )
 
         OnUpdateFocus focus ->
-            ( { model | focus = focus }, noOut )
+            if isSuccess model.tree_result then
+                ( { model | focus = focus }, noOut )
+
+            else
+                ( { model | focus = focus }, out0 [ send OnLoad ] )
 
         -- Confirm Modal
         DoModalConfirmOpen msg mess ->
@@ -393,8 +398,20 @@ viewOrgas model =
                     ]
 
             Failure err ->
-                --viewGqlErrors err
-                span [ class "m-3 has-text-danger" ] [ text "Error" ]
+                case err of
+                    [] ->
+                        text ""
+
+                    f :: _ ->
+                        if f |> String.toLower |> String.startsWith "no data returned" then
+                            ul [ class "menu-list" ]
+                                [ li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]
+                                , li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]
+                                , li [] [ a [] [ div [ class "ph-line is-block" ] [] ] ]
+                                ]
+
+                        else
+                            viewGqlErrors err
 
             _ ->
                 text ""
