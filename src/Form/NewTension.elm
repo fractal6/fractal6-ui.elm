@@ -1454,15 +1454,15 @@ viewTension op model =
 
                         _ ->
                             text ""
-                    , div [ class "field" ]
-                        [ div [ class "is-pulled-left" ]
+                    , div [ class "field level is-mobile" ]
+                        [ div [ class "level-left" ]
                             [ button
                                 [ class "button is-light"
                                 , onClick (OnCloseSafe "" "")
                                 ]
                                 [ textH T.cancel ]
                             ]
-                        , div [ class "is-pulled-right" ]
+                        , div [ class "level-right" ]
                             [ div [ class "buttons" ]
                                 [ button
                                     ([ class "button is-success defaultSubmit"
@@ -1539,12 +1539,12 @@ viewCircle op model =
 
                                         _ ->
                                             text ""
-                                    , div [ class "field" ]
-                                        [ div [ class "is-pulled-left" ]
+                                    , div [ class "field level is-mobile" ]
+                                        [ div [ class "level-left" ]
                                             [ button [ class "button is-light", onClick <| OnChangeNodeStep (ternary (model.activeTab == NewRoleTab) RoleAuthorityStep CircleVisibilityStep) ]
                                                 [ A.icon0 "icon-chevron-left", textH T.back ]
                                             ]
-                                        , div [ class "is-pulled-right" ]
+                                        , div [ class "level-right" ]
                                             [ div [ class "buttons" ]
                                                 [ button
                                                     ([ class "button is-success defaultSubmit"
@@ -1805,12 +1805,11 @@ viewInviteRole model =
             , div [ class "field" ]
                 [ div [ class "is-pulled-right" ]
                     [ button
-                        ([ class "button is-light is-link"
-                         , classList [ ( "is-loading", isLoading ) ]
-                         , disabled (not (isUsersSendable form.users) || isLoading)
-                         ]
-                            ++ [ onClick (OnSubmit OnInvite) ]
-                        )
+                        [ class "button is-light is-link"
+                        , classList [ ( "is-loading", isLoading ) ]
+                        , disabled (not (isUsersSendable form.users) || isLoading)
+                        , onClick (OnSubmit OnInvite)
+                        ]
                         [ ternary (isSelfContract form.uctx form.users) T.link T.invite |> textH ]
                     ]
                 ]

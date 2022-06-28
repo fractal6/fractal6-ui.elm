@@ -298,7 +298,7 @@ export const GraphPack = {
         // Draw welcome buttons
         if (this.$welcomeButtons) {
             this.$welcomeButtons.style.left = r.left + r.width/2 - this.$welcomeButtons.offsetWidth/2 +8 -scrollLeft +"px";
-            this.$welcomeButtons.style.top = r.top + 100 -scrollTop +"px";
+            this.$welcomeButtons.style.top = r.top + this.$welcomeButtons.offsetHeight*0.75 -scrollTop +"px";
             this.$welcomeButtons.classList.remove("is-invisible");
         }
 

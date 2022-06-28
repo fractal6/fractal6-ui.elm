@@ -1591,7 +1591,7 @@ viewTension u t model =
         [ div [ class "columns is-marginless" ]
             -- @DEBUG: width corresponding to is-9 is hard-coded in modal-content (below) to
             -- avoid overflow with no scroll caude by <pre> tag
-            [ div [ class "column is-9" ]
+            [ div [ class "column is-9 px-0" ]
                 [ h1 [ class "title tensionTitle" ] <|
                     if model.isTitleEdit then
                         let

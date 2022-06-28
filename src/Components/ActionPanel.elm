@@ -1151,15 +1151,15 @@ viewStep1 op model =
 
                 _ ->
                     text ""
-            , div [ class "field" ]
-                [ div [ class "is-pulled-left" ]
+            , div [ class "field level is-mobile" ]
+                [ div [ class "level-left" ]
                     [ button
                         [ class "button is-light"
                         , onClick (OnCloseModalSafe "" "")
                         ]
                         [ textH T.cancel ]
                     ]
-                , div [ class "is-pulled-right" ]
+                , div [ class "level-right" ]
                     [ button
                         ([ class ("button defaultSubmit is-light is-" ++ color)
                          , classList [ ( "is-loading", isLoading ) ]

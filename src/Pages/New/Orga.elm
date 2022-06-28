@@ -567,12 +567,12 @@ viewOrgaValidate model =
                 ]
             , p [ class "help" ] [ textH T.purposeHelpOrga ]
             ]
-        , div [ class "field pt-3 clearfix" ]
-            [ div [ class "is-pulled-left" ]
+        , div [ class "field pt-3 level is-mobile" ]
+            [ div [ class "level-left" ]
                 [ button [ class "button", onClick <| OnChangeStep OrgaVisibilityStep ]
                     [ A.icon0 "icon-chevron-left", textH T.back ]
                 ]
-            , div [ class "is-pulled-right" ]
+            , div [ class "level-right" ]
                 [ div [ class "buttons" ]
                     [ button
                         ([ class "button has-text-weight-semibold"

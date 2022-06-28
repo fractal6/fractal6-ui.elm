@@ -369,15 +369,15 @@ viewModalContent op (State model) =
 
                 _ ->
                     text ""
-            , div [ class "field" ]
-                [ div [ class "is-pulled-left" ]
+            , div [ class "field level is-mobile" ]
+                [ div [ class "level-left" ]
                     [ button
                         [ class "button is-light"
                         , onClick (OnCloseSafe "" "")
                         ]
                         [ textH T.cancel ]
                     ]
-                , div [ class "is-pulled-right" ]
+                , div [ class "level-right" ]
                     [ button
                         ([ class "button is-light is-success"
                          , classList [ ( "is-loading", isLoading ) ]
