@@ -195,7 +195,7 @@ viewPath baseUri uriQuery maybePath onToggleTreeMenu =
                     q =
                         uriQuery |> Maybe.map (\uq -> "?" ++ uq) |> Maybe.withDefault ""
                 in
-                [ span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold " ++ action2icon { doc_type = NODE g.focus.type_ }) ] ]
+                [ span [ onClick onToggleTreeMenu ] [ A.icon0 ("button-light is-link has-text-weight-bold icon-bg " ++ action2icon { doc_type = NODE g.focus.type_ }) ] ]
                     ++ [ g.path
                             |> List.indexedMap
                                 (\i p ->

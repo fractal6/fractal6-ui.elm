@@ -246,7 +246,11 @@ export function BulmaDriver(app, target, handlers) {
         setupHandler("esc", closeBurgers, document, $burgers);
 
         // For each burger, add event handler to close if a click occurs outside.
+        // Note:  Only for those define in closeOnClickBurger
         setupHandler("click", closeBurgersClick, document, $burgers);
+
+        // Close dropdown on init (navbar dropdown don't close on click !)
+        closeBurgersClick(document, $burgers);
     }
 
     //

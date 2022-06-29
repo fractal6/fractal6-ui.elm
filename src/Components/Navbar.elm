@@ -34,13 +34,17 @@ view user url replaceUrl =
                 [ div [ class "navbar-start" ] <|
                     (case user of
                         LoggedIn _ ->
-                            [ if isOrgUrl url then
+                            let
+                                orgUrl =
+                                    isOrgUrl url
+                            in
+                            [ if orgUrl then
                                 div [ class "navbar-item button-light is-hidden-touch menuOrgaTrigger" ] [ A.icon "icon-menu" ]
 
                               else
                                 text ""
                             , a
-                                [ class "navbar-item pl-1"
+                                [ class "navbar-item"
                                 , classList
                                     [ ( "is-active"
                                       , case fromUrl url of
@@ -83,12 +87,12 @@ notificationButton user url =
         LoggedIn _ ->
             a
                 [ class "navbar-item"
-                , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 , href (toHref Notifications)
                 , title (upH T.notifications)
+                , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                 ]
                 [ div
-                    [ class "navbar-link is-arrowless is-rounded is-small notifTrigger"
+                    [ class "navbar-link is-arrowless notifTrigger"
                     , classList [ ( "is-active", fromUrl url == Just Notifications ) ]
                     ]
                     [ A.icon "icon-bg icon-bell" ]
@@ -103,12 +107,14 @@ helpButton user =
     case user of
         LoggedIn _ ->
             div
-                [ class "navbar-item" ]
+                [ class "navbar-item"
+                , title "Help and feedback"
+                ]
                 [ div
-                    [ class "navbar-link is-arrowless has-background-navbar button is-rounded is-small helpTrigger"
-                    , title "Help and feedback"
+                    [ class "navbar-link is-arrowless helpTrigger" ]
+                    [ div [ class "button is-rounded is-small has-background-navbar", style "height" "inherit" ]
+                        [ A.icon "icon-question" ]
                     ]
-                    [ A.icon "icon-question" ]
                 ]
 
         LoggedOut ->
@@ -120,7 +126,7 @@ newButton user =
     case user of
         LoggedIn _ ->
             div
-                [ class "navbar-item has-dropdown" ]
+                [ class "navbar-item has-dropdown is-hoverabl" ]
                 [ div
                     [ class "navbar-link is-small"
                     , attribute "style" "padding-right: 1.65rem;"
@@ -140,7 +146,7 @@ userButton : UserState -> Url -> (String -> msg) -> Html msg
 userButton user url replaceUrl =
     case user of
         LoggedIn uctx ->
-            div [ class "navbar-item has-dropdown" ]
+            div [ class "navbar-item has-dropdown is-hoverabl" ]
                 [ div
                     [ class "navbar-link"
                     , attribute "style" "padding-right: 1.85rem;"

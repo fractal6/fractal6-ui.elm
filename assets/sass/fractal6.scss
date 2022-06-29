@@ -701,10 +701,17 @@ strong {
         font-size: 0.9rem !important;
     }
     .navbar-item, .navbar-link {
-        padding-top: 0 0;
         color: var(--white-ter);
-        &:hover, &.is-active {
+        & > * {
+            color: var(--white-ter);
+        }
+        &:hover, &.is-active, *:hover {
             color: var(--link2);
+        }
+        @include mobile {
+            & > .button {
+                margin-left: -10px;
+            }
         }
     }
 
