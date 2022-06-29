@@ -63,8 +63,12 @@
 
 // Modal
 html.has-modal-active, html.has-modal-active2 {
-    overflow: hidden !important;
-    padding-right: 14px; /* Avoid width reflow */
+    @include desktop {
+        // @DEBUG: breaks the body scroll on mobile
+        // is user click "< precedent pag"...
+        overflow: hidden !important;
+        padding-right: 14px; /* Avoid width reflow */
+    }
 
     .tabs:not(.modal .tabs), .table-container {
         overflow: hidden;
@@ -74,8 +78,10 @@ html.has-modal-active, html.has-modal-active2 {
     }
 }
 #navbarTop.has-modal-active, #navbarTop.has-modal-active2 {
-    .navbar {
-        padding-right: 14px; /* Avoid width reflow */
+    @include desktop {
+        .navbar {
+            padding-right: 14px; /* Avoid width reflow */
+        }
     }
 }
 
