@@ -1885,11 +1885,14 @@ tr.mediaBox {
 }
 
 .modal.fixed-top {
-    .modal-content {
-        position: absolute;
-        top: 5%;
-        overflow: hidden;
+    @include desktop {
+        .modal-content {
+            position: absolute;
+            top: 5%;
+            overflow-x: hidden;
+        }
     }
+
 
     .modal-card-body {
         overflow: auto !important;
