@@ -1251,9 +1251,11 @@ strong {
     position: absolute;
     background: var(--background-evidence);
     border: 1px solid var(--grey-light);
-    min-width: 350px;
     max-width: 450px;
     z-index: 25;
+    @include touch {
+        min-width: 350px;
+    }
 
     .control {
         .icon { color: var(--grey) !important; }
