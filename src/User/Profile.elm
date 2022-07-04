@@ -286,7 +286,7 @@ view global model =
     , body =
         [ case model.user of
             Success user ->
-                view_ user model
+                view_ global.session.user user model
 
             NotAsked ->
                 text ""
@@ -305,8 +305,8 @@ view global model =
     }
 
 
-view_ : UserProfile -> Model -> Html Msg
-view_ user model =
+view_ : UserState -> UserProfile -> Model -> Html Msg
+view_ user_s user model =
     div [ id "profile", class "section" ]
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
@@ -314,28 +314,32 @@ view_ user model =
                     [ viewProfileC user ]
                 ]
             , div [ class "column is-7 " ]
-                [ viewProfileRight user model ]
+                [ viewProfileRight user_s user model ]
             ]
         ]
 
 
-viewProfileRight : UserProfile -> Model -> Html Msg
-viewProfileRight user model =
+viewProfileRight : UserState -> UserProfile -> Model -> Html Msg
+viewProfileRight user_s user model =
     div []
         [ h1 [ class "subtitle" ] [ textH T.organisations ]
         , if List.length (getRoles user) == 0 then
             p [ class "section content" ] <|
-                List.intersperse (text " ")
-                    [ p [] [ text "Welcome," ]
-                    , p [] <|
-                        List.intersperse (text " ") <|
-                            [ text "You can"
-                            , a [ href (toHref Route.Explore) ] [ text "Explore" ]
-                            , text "public organisations"
-                            , text ", or create your"
-                            , a [ href (toHref Route.New_Orga) ] [ textH "first organisation." ]
-                            ]
-                    ]
+                if (uctxFromUser user_s).username == model.username then
+                    List.intersperse (text " ")
+                        [ p [] [ text "Welcome," ]
+                        , p [] <|
+                            List.intersperse (text " ") <|
+                                [ text "You can"
+                                , a [ href (toHref Route.Explore) ] [ text "Explore" ]
+                                , text "public organisations"
+                                , text ", or create your"
+                                , a [ href (toHref Route.New_Orga) ] [ textH "first organisation." ]
+                                ]
+                        ]
+
+                else
+                    [ p [] [ text "Nothing to show yet." ] ]
 
           else
             case model.orgas of

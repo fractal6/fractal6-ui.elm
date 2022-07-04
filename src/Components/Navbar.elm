@@ -1,6 +1,7 @@
 module Components.Navbar exposing (view)
 
 import Assets as A
+import Extra exposing (ternary)
 import Generated.Route as Route exposing (Route(..), fromUrl, toHref)
 import Html exposing (Html, a, button, div, header, hr, i, nav, span, text)
 import Html.Attributes as Attr exposing (attribute, class, classList, href, id, style, target, title)
@@ -33,7 +34,7 @@ view user url replaceUrl =
             , div [ id "userMenu", class "navbar-menu" ]
                 [ div [ class "navbar-start" ] <|
                     (case user of
-                        LoggedIn _ ->
+                        LoggedIn uctx ->
                             let
                                 orgUrl =
                                     isOrgUrl url
@@ -48,8 +49,8 @@ view user url replaceUrl =
                                 , classList
                                     [ ( "is-active"
                                       , case fromUrl url of
-                                            Just (Dynamic _) ->
-                                                True
+                                            Just (Dynamic a) ->
+                                                ternary (a.param1 == uctx.username) True False
 
                                             _ ->
                                                 False
