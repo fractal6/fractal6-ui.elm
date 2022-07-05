@@ -399,12 +399,13 @@ subscriptions (State model) =
 type alias Op =
     { selectedLabels : List Label
     , targets : List PNode
+    , isRight : Bool
     }
 
 
 view_ : Bool -> Op -> Model -> Html Msg
 view_ isInternal op model =
-    nav [ id "labelSearchPanel", class "panel sidePanel" ]
+    nav [ id "labelSearchPanel", class "panel sidePanel", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.labels_data of
             Success labels_d ->
                 let

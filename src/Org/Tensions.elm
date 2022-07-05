@@ -1363,6 +1363,7 @@ viewSearchBar model =
                         , LabelSearchPanel.view
                             { selectedLabels = model.labels
                             , targets = model.path_data |> withMaybeDataMap (\x -> [ shrinkNode x.focus ]) |> withDefault []
+                            , isRight = False
                             }
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg
@@ -1376,6 +1377,7 @@ viewSearchBar model =
                         , UserSearchPanel.view
                             { selectedAssignees = model.authors
                             , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , isRight = True
                             }
                             model.authorsPanel
                             |> Html.map UserSearchPanelMsg

@@ -2406,6 +2406,7 @@ viewSidePane u t model =
                         , UserSearchPanel.view
                             { selectedAssignees = t.assignees |> withDefault []
                             , targets = model.path_data |> withMaybeDataMap (\x -> List.map (\y -> y.nameid) x.path) |> withDefault []
+                            , isRight = False
                             }
                             model.assigneesPanel
                             |> Html.map UserSearchPanelMsg
@@ -2447,6 +2448,7 @@ viewSidePane u t model =
                         , LabelSearchPanel.view
                             { selectedLabels = t.labels |> withDefault []
                             , targets = model.path_data |> withMaybeDataMap (\x -> [ shrinkNode x.focus ]) |> withDefault []
+                            , isRight = False
                             }
                             model.labelsPanel
                             |> Html.map LabelSearchPanelMsg

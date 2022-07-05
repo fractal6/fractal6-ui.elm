@@ -368,6 +368,7 @@ subscriptions (State model) =
 type alias Op =
     { selectedAssignees : List User
     , targets : List String
+    , isRight : Bool
     }
 
 
@@ -394,7 +395,7 @@ view op (State model) =
 
 view_ : Op -> Model -> Html Msg
 view_ op model =
-    nav [ id "usersSearchPanel", class "panel sidePanel" ]
+    nav [ id "usersSearchPanel", class "panel sidePanel", classList [ ( "is-right", op.isRight ) ] ]
         [ case model.assignees_data of
             Success assignees_d ->
                 let

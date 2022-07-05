@@ -128,7 +128,7 @@ hr {
     &.flex-gap {
         display: inline-flex;
         flex-wrap: wrap;
-        gap: 8px;
+        //gap: 8px;
     }
 }
 
@@ -1259,8 +1259,11 @@ strong {
     border: 1px solid var(--grey-light);
     max-width: 450px;
     z-index: 25;
+    @include tablet {
+        min-width: 300px;
+    }
     @include touch {
-        min-width: 350px;
+        min-width: 200px;
     }
 
     .control {
@@ -1272,6 +1275,11 @@ strong {
         @media screen and (min-width: var(--tablet)) {
             margin-left: 135px;
         }
+    }
+
+    &.is-right {
+        left: auto;
+        right: 0;
     }
 
 }

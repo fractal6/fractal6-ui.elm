@@ -1442,6 +1442,7 @@ viewTension op model =
                             [ LabelSearchPanel.viewNew
                                 { selectedLabels = form.labels
                                 , targets = getCircles model.path_data
+                                , isRight = False
                                 }
                                 model.labelsPanel
                                 |> Html.map LabelSearchPanelMsg
