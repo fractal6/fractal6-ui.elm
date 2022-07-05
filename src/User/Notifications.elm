@@ -350,9 +350,11 @@ view global model =
 view_ : Global.Model -> Model -> Html Msg
 view_ global model =
     div [ id "notifications", class "section columns is-marginless" ]
-        [ div [ class "column is-6 is-offset-3" ]
-            [ div [ class "is-strong arrow-left is-w is-h mb-3", title "Go back", onClick GoBack ] []
-            , h2 [ class "title" ] [ text "Notifications" ]
+        [ div [ class "column is-3" ]
+            [ div [ class "is-strong arrow-left is-w is-h bc is-pulled-right", title "Go back", onClick GoBack ] []
+            ]
+        , div [ class "column is-6" ]
+            [ h2 [ class "title" ] [ text "Notifications" ]
             , case model.notifications_data of
                 Success notifications ->
                     if List.length notifications == 0 then
