@@ -445,6 +445,7 @@ viewOrgaVisibility model =
 
         -- Show the choices as card.
         , NodeVisibility.list
+            |> List.filter (\x -> x /= NodeVisibility.Secret)
             |> List.map
                 (\x ->
                     let
