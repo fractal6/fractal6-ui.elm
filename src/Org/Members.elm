@@ -488,7 +488,7 @@ view_ us model =
     in
     div [ class "columns is-centered" ]
         [ div [ class "column is-12 is-11-desktop is-9-fullhd mt-5" ]
-            [ div [ class "section mt-2" ]
+            [ div [ class "section_ mt-2" ]
                 [ if isAdmin then
                     div
                         [ class "button is-primary is-pulled-right"
@@ -498,13 +498,13 @@ view_ us model =
 
                   else
                     text ""
-                , div [ class "columns mb-6" ]
+                , div [ class "columns mb-6 px-3-mobile" ]
                     [ Lazy.lazy3 viewMembers model.now model.members_top model.node_focus ]
 
                 -- pl-3 because "is-pulled-right" causes a uwanted padding to the next element.
-                , div [ class "columns mb-6", classList [ ( "pl-3", isAdmin ) ] ]
+                , div [ class "columns mb-6 px-3" ]
                     [ Lazy.lazy3 viewMembersSub model.now model.members_sub model.node_focus ]
-                , div [ class "columns mb-6", classList [ ( "pl-3", isAdmin ) ] ]
+                , div [ class "columns mb-6 px-3" ]
                     [ div [ class "column is-4 pl-0" ] [ Lazy.lazy4 viewGuest model.now model.members_top T.guest model.node_focus ]
                     , div [ class "column is-3" ] [ Lazy.lazy7 viewPending model.now model.members_top "pending" model.node_focus model.pending_hover model.pending_hover_i rtid ]
                     ]

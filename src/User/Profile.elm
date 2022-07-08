@@ -310,7 +310,7 @@ view_ user_s user model =
     div [ id "profile", class "section" ]
         [ div [ class "columns" ]
             [ div [ class "column is-3" ]
-                [ div [ class "columns is-centered" ]
+                [ div [ class "columns is-centered m-0" ]
                     [ viewProfileC user ]
                 ]
             , div [ class "column is-7 " ]

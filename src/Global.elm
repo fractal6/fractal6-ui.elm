@@ -28,7 +28,7 @@ import Html.Lazy as Lazy
 import Http
 import Json.Decode as JD
 import ModelCommon exposing (..)
-import ModelCommon.Codecs exposing (NodeFocus)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), NodeFocus, toString)
 import ModelCommon.Requests exposing (tokenack)
 import ModelSchema exposing (..)
 import Ports
@@ -218,17 +218,17 @@ update msg model =
                         LoggedIn uctx ->
                             let
                                 home =
-                                    Route.Dynamic { param1 = uctx.username }
+                                    toString UsersBaseUri uctx.username []
                             in
                             case model.session.referer of
                                 Just referer ->
                                     referer
-                                        |> Route.fromUrl
-                                        |> Maybe.withDefault home
-                                        |> navigate
+                                        |> Url.toString
+                                        |> NavigateRaw
+                                        |> send
 
                                 Nothing ->
-                                    navigate home
+                                    send (NavigateRaw home)
 
                         LoggedOut ->
                             sendSleep RedirectOnLoggedIn 333

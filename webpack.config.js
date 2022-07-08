@@ -51,7 +51,7 @@ module.exports = (env, argv) => {
     }
 
     // entry and output path/filename variables
-    const entryPath = path.join(__dirname, 'static/index.js');
+    const entryPath = path.join(__dirname, 'public/index.js');
     const outputPath = path.join(__dirname, 'dist');
     const outputFilename = isProd ? '[name]-[fullhash].js' : '[name].js'
 
@@ -86,7 +86,15 @@ module.exports = (env, argv) => {
                 options: {
                     postcss: [autoprefixer()]
                 }
-            })
+            }),
+            // Copy images
+            new CopyPlugin({
+                patterns: [{
+                    from: 'assets/images',
+                    to: 'static/images/' ,
+                    globOptions: { ignore: ['*.swp'] }
+                }],
+            }),
         ],
         module: {
             rules: [
@@ -100,14 +108,20 @@ module.exports = (env, argv) => {
                         //}
                     ],
                 },
-                // fonts
+                // Copy fonts
                 {
                     test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
                     type: 'asset/resource',
+                    generator: {
+                        filename: './static/fonts/[name]-[hash][ext]',
+                    },
                 },
                 {
                     test: /\.(woff|woff2|eot|ttf|otf)$/i,
                     type: 'asset/resource',
+                    generator: {
+                        filename: './static/fonts/[name]-[hash][ext]',
+                    },
                 },
             ]
         }
@@ -120,7 +134,7 @@ module.exports = (env, argv) => {
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
-                    template: 'static/index.html',
+                    template: 'public/index.html',
                     inject: 'body',
                     filename: 'index.html'
                 }),
@@ -130,28 +144,29 @@ module.exports = (env, argv) => {
             module: {
                 rules: [
                     {
+                        test: /\.elm$/,
+                        exclude: [/elm-stuff/, /node_modules/, /tests/],
+                        use: [
+                            { loader: 'elm-hot-webpack-loader' },
+                            {
+                                loader: 'elm-webpack-loader',
+                                options: {
+                                    // add Elm's debug overlay to output
+                                    debug: true,
+                                }
+                            }
+                        ]
+                    },
+                    {
                         test: /\.(sa|sc|c)ss$/,
                         exclude: [/elm-stuff/, /node_modules/],
                         use: [
-                            { loader: "style-loader" },
-                            { loader: "css-loader" },
-                            { loader: "sass-loader" },
+                            "style-loader",
+                            "css-loader",
+                            "sass-loader",
                         ],
                     },
-                    {
-                    test: /\.elm$/,
-                    exclude: [/elm-stuff/, /node_modules/, /tests/],
-                    use: [
-                        { loader: 'elm-hot-webpack-loader' },
-                        {
-                            loader: 'elm-webpack-loader',
-                            options: {
-                                // add Elm's debug overlay to output
-                                debug: true,
-                            }
-                        }
-                    ]
-                }]
+                ]
             },
             devServer: {
                 // serve index.html in place of 404 responses
@@ -173,7 +188,7 @@ module.exports = (env, argv) => {
             plugins: [
                 // Generates an `index.html` file with the <script> injected.
                 new HtmlWebpackPlugin({
-                    template: 'static/index.html',
+                    template: 'public/index.html',
                     inject: 'body',
                     filename: 'index.html',
                     minify: {
@@ -196,17 +211,8 @@ module.exports = (env, argv) => {
                     verbose: true,
                     dry: false
                 }),
-                // Copy public images to the build folder
-                new CopyPlugin({
-                    patterns: [{
-                        from: 'assets/images',
-                        to: 'static/images/' ,
-                        globOptions: { ignore: ['*.swp'] }
-                    }],
-                }),
-                // Note: this won't work without ExtractTextPlugin.extract(..) with rule loader.
                 new MiniCssExtractPlugin({
-                    filename: 'static/css/[name].[fullhash].css',
+                    filename: 'static/css/[name]-[fullhash].css',
                     //chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
                 }),
             ],
@@ -238,7 +244,6 @@ module.exports = (env, argv) => {
                         ],
                     },
                 ]
-
             },
             optimization: {
                 minimizer: [

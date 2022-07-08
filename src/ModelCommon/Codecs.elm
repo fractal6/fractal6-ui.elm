@@ -78,8 +78,25 @@ toString route param params =
     case route of
         -- User  url
         UsersBaseUri ->
-            --"/user/" ++ param
-            "/" ++ param
+            if
+                List.member param
+                    [ "explore"
+                    , "login"
+                    , "logout"
+                    , "notifications"
+                    , "signup"
+                    , "verification"
+                    , "new"
+                    , "tension"
+                    , "tensions"
+                    , "user"
+                    , "org"
+                    ]
+            then
+                "/user/" ++ param
+
+            else
+                "/" ++ param
 
         -- Org Url
         OverviewBaseUri ->

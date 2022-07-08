@@ -17,6 +17,7 @@ import Json.Decode as JD
 import Json.Encode as JE
 import Maybe exposing (withDefault)
 import ModelCommon exposing (..)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), toString)
 import ModelCommon.Requests exposing (login, signup)
 import ModelSchema exposing (..)
 import Page exposing (Document, Page)
@@ -83,7 +84,7 @@ init global flags =
         gcmd =
             case global.session.user of
                 LoggedIn uctx ->
-                    Nav.replaceUrl global.key <| toHref <| Route.Dynamic { param1 = uctx.username }
+                    Nav.replaceUrl global.key <| toString UsersBaseUri uctx.username []
 
                 LoggedOut ->
                     Cmd.none

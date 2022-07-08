@@ -1,6 +1,6 @@
 .ONESHELL:
 SHELL := /bin/bash
-OUTPUT := public/dist
+OUTPUT := dist
 elm-js := elm.js
 elm-min-js := elm.min.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
@@ -22,17 +22,32 @@ build_: assets
 prod:
 	npm run prod
 
+
+dev:
+	npm run dev
+
 deploy: prod
+	git rev-parse --short HEAD > ../public-build/client_version
+	rm -rf ../public-build/static
+	cp -r dist/* ../public-build/
+	cd ../public-build/
+	git add *
+	git commit -m all
+	git push origin main
+	cd -
+
+deploy_netlify: prod
 	cd ../build
-	rm -r static
-	cp -r ../fractal6-ui.elm/dist/* .
+	rm static -rf
+	cp ../fractal6-ui.elm/dist/* . -r
+	cp ../fractal6-ui.elm/netlify.toml .
 	git add *
 	git commit -m all
 	git push origin master
 	cd -
 
 gen:
-	# Remove all directive due to a big of elm-graphql who
+	# Remove all directive due to a bug of elm-graphql who
 	# does not support multiple directive on the same field.
 	sed -E  "s/^directive .*$$//g;  s/@[[:alnum:]_]+\([^\)]+\)//g; s/@[[:alnum:]_]+//g;"  ../schema/gen/schema.graphql  > schema.gql
 	npm run graphql_build
@@ -55,8 +70,8 @@ elm:
 	elm make src/Main.elm --optimize --output=$(elm-js)
 	$(uglifyjs) elm.js --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | $(uglifyjs) --mangle --output=$(OUTPUT)/$(elm-min-js)
 	#@echo Compiled size:$(shelllll cat elm.js | du -k) Kb
-	#@echo Minified size:$(shelllll cat public/dist/elm.min.js | du -k) Kb
-	#@echo Gzipped size: $(shelllll cat public/dist/elm.min.js) | gzip -c | du -k) Kb
+	#@echo Minified size:$(shelllll cat dist/elm.min.js | du -k) Kb
+	#@echo Gzipped size: $(shelllll cat dist/elm.min.js) | gzip -c | du -k) Kb
 
 css:
 	npm run css_build
@@ -67,7 +82,6 @@ js:
 icon:
 	cp ../fractal6-logo/img/v1/favicon.ico assets/images/logo/favicon.ico
 	cp ../fractal6-logo/img/v1/favicon*.png assets/images/logo/
-	cp assets/images/logo/favicon.ico public/
 
 generate_starwars:
 	./node_modules/.bin/elm-graphql https://elm-graphql.herokuapp.com/ --base StarWars --output ./src

@@ -92,10 +92,6 @@ init global flags =
             queryParser global.url
 
         gcmd =
-            --case global.session.user of
-            --    LoggedIn uctx ->
-            --        Global.navigate <| Route.Dynamic { param1 = uctx.username }
-            --    LoggedOut ->
             Cmd.none
 
         model =

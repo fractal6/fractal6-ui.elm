@@ -211,7 +211,7 @@ viewVerification global model =
 welcome : UserCtx -> Html Msg
 welcome uctx =
     div []
-        [ div [ class "px-3 mt-2 mb-2" ]
+        [ div [ class "mt-2 mb-6 is-size-6" ]
             [ T.welcomeLetter
                 |> Format.namedValue "username" uctx.username
                 |> renderMarkdown "is-human"

@@ -143,6 +143,12 @@ hr {
         margin-right: 25px !important;
     }
 }
+.px-3-mobile {
+    @include mobile {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+}
 
 .form {
     .field-label {
@@ -836,16 +842,6 @@ strong {
     }
 }
 
-#explore,
-#createOrga,
-#notifications,
-#profile,
-#settings {
-    @include desktop {
-        margin-top: 3rem !important;
-    }
-}
-
 #createOrga {
     h1.title {
         margin-bottom: 3rem !important;
@@ -1378,7 +1374,7 @@ strong {
         position: absolute;
         top: 4px;
         left: 11px;
-        z-index: 100;
+        z-index: 80;
     }
 }
 
@@ -1501,7 +1497,7 @@ tr.mediaBox {
     -webkit-backface-visibility: hidden;
     bottom: 0;
     right: 0;
-    z-index: 900;
+    z-index: 90;
     margin: 50px;
     @media (max-width: $tablet){
         margin: 25px;
@@ -2034,6 +2030,7 @@ tr.mediaBox {
 }
 
 #helpModal {
+    z-index: 90 !important;
     .modal-content, .modal-card {
         @media (min-width: $fullhd){
             height: 90%;
@@ -2855,7 +2852,7 @@ tr.mediaBox {
 	pointer-events: none;
 }
 header.acc {
-	z-index: 100;
+	z-index: 50;
 	cursor: initial;
 }
 header .acc-title {

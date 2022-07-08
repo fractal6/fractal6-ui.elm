@@ -51,9 +51,10 @@ $blue-frac6: #2176d0;
 //
 // Dimensions
 //
-// @debug: bulba var(--size-small) does not seems to work ?
+// @debug: bulma undefined var ?
 $size-small: 0.75rem;
 $size-small2: 0.65rem;
+$section-padding-desktop: 3rem 1.5rem;
 
 // Navbar
 $navbar-height: 2.6rem;
@@ -140,6 +141,7 @@ $tree-menu-width: 240px;
     //
     --size-small: #{$size-small};
     --size-small2: #{$size-small2};
+    --section-padding-desktop: #{$section-padding-desktop};
 
     // Navbar
     --navbar-height: #{$navbar-height};

@@ -889,6 +889,7 @@ update global message model =
 
                     -- Note: make tension query only based on tensions_int (receiver). see fractal6.go commit e9cfd8a.
                     --, fetchTensionExt apis nameids first skip model.pattern status model.authors model.labels type_ GotTensionsExt
+                    --
                     , fetchTensionCount apis nameids model.pattern model.authors model.labels type_ Nothing GotTensionsCount
                     ]
                 , Ports.show "footBar"

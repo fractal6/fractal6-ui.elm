@@ -23,21 +23,17 @@ type Image
 -- IMAGES
 
 
+image : String -> String
+image filename =
+    "/assets/images/" ++ filename
+
+
 error =
     image "error.jpg"
 
 
 loading =
     image "loading.svg"
-
-
-defaultAvatar =
-    image "smiley-cyrus.jpg"
-
-
-image : String -> String
-image filename =
-    "/assets/images/" ++ filename
 
 
 

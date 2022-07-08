@@ -390,7 +390,7 @@ signupModal op model =
                     Active form result ->
                         case result of
                             RemoteData.Success uctx ->
-                                [ div [ class "px-3 mt-2 mb-2" ]
+                                [ div [ class "px-3 mt-2 mb-6" ]
                                     [ T.welcomeLetter
                                         |> Format.namedValue "username" uctx.username
                                         |> renderMarkdown "is-human"

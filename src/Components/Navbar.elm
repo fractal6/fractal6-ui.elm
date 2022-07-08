@@ -8,7 +8,7 @@ import Html.Attributes as Attr exposing (attribute, class, classList, href, id, 
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onMouseEnter)
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..))
-import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl)
+import ModelCommon.Codecs exposing (FractalBaseRoute(..), isOrgUrl, toString)
 import Text as T exposing (textH, textT, upH)
 import Url exposing (Url)
 
@@ -50,6 +50,9 @@ view user url replaceUrl =
                                     [ ( "is-active"
                                       , case fromUrl url of
                                             Just (Dynamic a) ->
+                                                ternary (a.param1 == uctx.username) True False
+
+                                            Just (User_Dynamic a) ->
                                                 ternary (a.param1 == uctx.username) True False
 
                                             _ ->
@@ -154,7 +157,7 @@ userButton user url replaceUrl =
                     ]
                     [ text uctx.username ]
                 , div [ class "navbar-dropdown is-right" ]
-                    [ a [ class "navbar-item", href (toHref <| Dynamic { param1 = uctx.username }) ]
+                    [ a [ class "navbar-item", href (toString UsersBaseUri uctx.username []) ]
                         [ A.icon1 "icon-user" (upH T.profile) ]
                     , a [ class "navbar-item", href (toHref <| Dynamic_Settings { param1 = uctx.username }) ]
                         [ A.icon1 "icon-tool" (upH T.settings) ]
