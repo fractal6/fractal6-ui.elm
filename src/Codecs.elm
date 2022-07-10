@@ -151,8 +151,7 @@ nodesEncoder nodes =
 
 nodeEncoder : Node -> List ( String, JE.Value )
 nodeEncoder node =
-    [ ( "createdAt", JE.string node.createdAt )
-    , ( "name", JE.string node.name )
+    [ ( "name", JE.string node.name )
     , ( "nameid", JE.string node.nameid )
     , ( "parent"
       , JEE.maybe JE.object <|
@@ -187,7 +186,6 @@ nodeEncoder node =
 nodeDecoder : JD.Decoder Node
 nodeDecoder =
     JD.succeed Node
-        |> JDE.andMap (JD.field "createdAt" JD.string)
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "nameid" JD.string)
         |> JDE.andMap (JD.maybe (JD.field "parent" nodeIdDecoder))

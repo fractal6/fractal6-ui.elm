@@ -42,6 +42,7 @@ import ModelSchema
         , NodeExt
         , PNode
         , Post
+        , RoleCommon
         , RoleExt
         , RoleExtFull
         , Tension
@@ -446,35 +447,19 @@ viewRole link r =
         ]
 
 
-viewRoleExt : String -> RoleExt -> Html msg
-viewRoleExt cls r =
+viewRoleExt : String -> RoleCommon a -> Html msg
+viewRoleExt cls_ r =
     let
-        color =
-            r.color
-                |> Maybe.map (\c -> [ colorAttr c ])
-                |> withDefault []
-    in
-    span
-        ([ class ("button buttonRole " ++ cls) ] ++ color)
-        [ if r.role_type == RoleType.Coordinator then
-            span [ class "is-queen" ] []
+        f =
+            Debug.log "coloe" r
 
-          else if r.role_type == RoleType.Owner then
-            span [ class "is-king" ] []
+        ( cls, color ) =
+            case r.color of
+                Nothing ->
+                    ( cls_ ++ " is-" ++ roleColor r.role_type, [] )
 
-          else
-            text ""
-        , text r.name
-        ]
-
-
-viewRoleExt2 : String -> RoleExtFull -> Html msg
-viewRoleExt2 cls r =
-    let
-        color =
-            r.color
-                |> Maybe.map (\c -> [ colorAttr c ])
-                |> withDefault []
+                Just c ->
+                    ( cls_, [ colorAttr c ] )
     in
     span
         ([ class ("button buttonRole " ++ cls) ] ++ color)

@@ -243,7 +243,7 @@ menuToIcon menu =
 resetForm : Model -> Model
 resetForm model =
     { model
-        | artefact_form = initArtefactNodeForm (LoggedIn model.artefact_form.uctx) model.node_focus.nameid
+        | artefact_form = initArtefactNodeForm (LoggedIn model.artefact_form.uctx) model.node_focus.nameid ColorPicker.initColor
         , hasUnsavedData = False
         , label_result = NotAsked
         , label_result_del = NotAsked
@@ -373,7 +373,7 @@ init global flags =
             , menuFocus = menu
             , menuList = menuList
             , colorPicker = ColorPicker.init
-            , artefact_form = initArtefactNodeForm global.session.user newFocus.nameid
+            , artefact_form = initArtefactNodeForm global.session.user newFocus.nameid ColorPicker.initColor
             , hasUnsavedData = False
 
             -- Labels
@@ -386,7 +386,7 @@ init global flags =
             , label_result_del = NotAsked
 
             -- Roles
-            , nodeDoc = NodeDoc.create "" global.session.user
+            , nodeDoc = NodeDoc.init "" NodeDoc.NoView global.session.user
             , showMandate = ""
             , roles = Loading
             , roles_top = RemoteData.Loading
@@ -800,7 +800,7 @@ update global message model =
                 , role_edit = Nothing
                 , role_result = NotAsked
                 , role_result_del = NotAsked
-                , nodeDoc = NodeDoc.create "" global.session.user
+                , nodeDoc = NodeDoc.init "" NodeDoc.NoView global.session.user
               }
                 |> resetForm
             , Cmd.none
@@ -1709,7 +1709,7 @@ viewRoles model =
                                                 ]
                                         ]
                                             ++ (if model.showMandate == d.id then
-                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection (text "") d.mandate (Just d.role_type) ] ] ]
+                                                    [ tr [] [ td [ class "px-5", colspan 5 ] [ viewMandateSection d.mandate (Just d.role_type) ] ] ]
 
                                                 else
                                                     []

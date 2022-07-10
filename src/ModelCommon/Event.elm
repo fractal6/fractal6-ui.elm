@@ -2,7 +2,7 @@ module ModelCommon.Event exposing (..)
 
 import Assets as A
 import Dict exposing (Dict)
-import Extra exposing (colorToTextColor, ternary)
+import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
 import Fractal.Enum.BlobType as BlobType
 import Fractal.Enum.ContractType as ContractType
@@ -92,10 +92,10 @@ contractEventToText c =
             "Move tension"
 
         TensionEvent.MemberLinked ->
-            "New first-link"
+            "New lead link"
 
         TensionEvent.MemberUnlinked ->
-            "Retired first-link"
+            "Retired lead link"
 
         TensionEvent.UserJoined ->
             "New member"

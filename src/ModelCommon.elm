@@ -241,8 +241,8 @@ type alias ArtefactNodeForm =
     }
 
 
-initArtefactNodeForm : UserState -> String -> ArtefactNodeForm
-initArtefactNodeForm user nameid =
+initArtefactNodeForm : UserState -> String -> String -> ArtefactNodeForm
+initArtefactNodeForm user nameid initColor =
     { uctx =
         case user of
             LoggedIn uctx ->
@@ -252,7 +252,7 @@ initArtefactNodeForm user nameid =
                 initUserctx
     , id = ""
     , nameid = nameid
-    , post = Dict.fromList [ ( "color", "#dddddd" ) ]
+    , post = Dict.fromList [ ( "color", initColor ) ]
     , mandate = initMandate
     }
 

@@ -653,8 +653,7 @@ tensionAction2NodeType action_m =
 
 nodeFromFragment : String -> NodeFragment -> Node
 nodeFromFragment parentid f =
-    { createdAt = ""
-    , name = withDefault "" f.name
+    { name = withDefault "" f.name
     , nameid = nodeIdCodec parentid (withDefault "" f.nameid) (withDefault NodeType.Circle f.type_)
     , parent = Nothing
     , type_ = withDefault NodeType.Circle f.type_

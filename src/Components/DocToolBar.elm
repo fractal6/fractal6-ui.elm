@@ -1,4 +1,4 @@
-module Components.DocToolBar exposing (ActionView(..), viewStatus, viewToolbar)
+module Components.DocToolBar exposing (viewNodeStatus, viewToolbar)
 
 import Assets as A
 import Components.Loading exposing (GqlData, RequestResult(..), loadingSpin)
@@ -88,8 +88,8 @@ viewToolbar op =
         ]
 
 
-viewStatus : Op2 msg -> Html msg
-viewStatus op =
+viewNodeStatus : Op2 msg -> Html msg
+viewNodeStatus op =
     case op.blob.pushedFlag of
         Just flag ->
             div [ class "has-text-success is-italic" ]

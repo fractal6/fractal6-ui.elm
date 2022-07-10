@@ -835,7 +835,7 @@ viewContractPage c op model =
                                 , doChangePost = ChangeCommentPost
                                 , doSubmit = OnSubmit
                                 , doSubmitComment = SubmitCommentPost
-                                , rows = 3
+                                , rows = 4
                                 }
                         in
                         viewContractCommentInput opNew uctx model.comment_form model.comment_result model.inputViewMode
@@ -924,7 +924,7 @@ viewContractBox c op model =
                                 [ viewUserFull 1 True True { username = user, name = Nothing }
                                 , text "has been invited"
                                 , text "to play the role"
-                                , span [ class "is-text-aligned" ] [ viewRole baseUri role, text "." ]
+                                , span [ class "is-text-aligned" ] [ viewRole baseUri role ]
                                 ]
 
                     TensionEvent.UserJoined ->

@@ -8,7 +8,6 @@ import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
 import Components.Comments exposing (viewComment, viewCommentInput)
 import Components.ContractsPage as ContractsPage
-import Components.DocToolBar as DocToolBar exposing (ActionView(..))
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.LabelSearchPanel as LabelSearchPanel
@@ -31,7 +30,7 @@ import Components.Loading as Loading
         , withMaybeDataMap
         )
 import Components.MoveTension as MoveTension
-import Components.NodeDoc as NodeDoc exposing (NodeDoc)
+import Components.NodeDoc as NodeDoc exposing (NodeDoc, NodeView(..))
 import Components.OrgaMenu as OrgaMenu
 import Components.SelectType as SelectType
 import Components.TreeMenu as TreeMenu
@@ -90,10 +89,12 @@ import ModelCommon.View
         , statusColor
         , tensionIcon2
         , tensionTypeColor
+        , viewCircleTarget
         , viewJoinNeeded
         , viewLabel
         , viewLabels
         , viewNodeRefShort
+        , viewRoleExt
         , viewTensionArrow
         , viewTensionDateAndUser
         , viewTensionDateAndUserC
@@ -192,7 +193,7 @@ type alias Model =
     , baseUri : FractalBaseRoute
     , contractid : Maybe String
     , activeTab : TensionTab
-    , actionView : ActionView
+    , nodeView : NodeView
     , jumpTo : Maybe String
     , tension_head : GqlData TensionHead
     , tension_comments : GqlData TensionComments
@@ -255,38 +256,6 @@ type TensionTab
     | Contracts
 
 
-actionViewEncoder : ActionView -> String
-actionViewEncoder x =
-    case x of
-        DocView ->
-            ""
-
-        DocEdit ->
-            "edit"
-
-        DocVersion ->
-            "history"
-
-        NoView ->
-            "noview"
-
-
-actionViewDecoder : String -> ActionView
-actionViewDecoder x =
-    case x of
-        "edit" ->
-            DocEdit
-
-        "history" ->
-            DocVersion
-
-        "noview" ->
-            NoView
-
-        _ ->
-            DocView
-
-
 
 ---- MSG ----
 
@@ -329,9 +298,6 @@ type Msg
     | CancelTitle
     | SubmitTitle Time.Posix
     | TitleAck (GqlData IdPayload)
-      -- Blob control
-    | DoBlobEdit BlobType.BlobType
-    | CancelBlob
       -- Blob doc edit
     | ChangeBlobPost String String
     | AddDomains
@@ -343,6 +309,7 @@ type Msg
     | BlobAck (GqlData PatchTensionPayloadID)
     | PushBlob String Time.Posix
     | PushBlobAck (GqlData BlobFlag)
+    | CancelBlob
       -- Assignees
     | DoAssigneeEdit
       -- Labels
@@ -422,7 +389,7 @@ init global flags =
                     ContractsBaseUri
 
         fs =
-            focusState baseUri global.session.referer global.url global.session.node_focus newFocus_
+            focusState TensionBaseUri global.session.referer global.url global.session.node_focus newFocus_
 
         newFocus =
             if fs.orgChange then
@@ -434,6 +401,9 @@ init global flags =
                     |> Maybe.map focusFromPath
                     |> withDefault newFocus_
 
+        nodeView =
+            Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> NodeDoc.nodeViewDecoder
+
         model =
             { node_focus = newFocus
             , lookup_users = []
@@ -441,7 +411,7 @@ init global flags =
             , baseUri = baseUri
             , contractid = cid_m
             , activeTab = tab
-            , actionView = Dict.get "v" query |> withDefault [] |> List.head |> withDefault "" |> actionViewDecoder
+            , nodeView = nodeView
             , jumpTo = Dict.get "goto" query |> Maybe.map List.head |> withDefault Nothing
             , path_data = fromMaybeData global.session.path_data Loading
             , tension_head = fromMaybeData global.session.tension_head Loading
@@ -466,7 +436,16 @@ init global flags =
             , comment_result = NotAsked
 
             -- Blob Edit
-            , nodeDoc = NodeDoc.create tid global.session.user
+            , nodeDoc =
+                NodeDoc.init tid nodeView global.session.user
+                    |> (\x ->
+                            case global.session.tension_head of
+                                Just th ->
+                                    NodeDoc.initBlob (nodeFromTension th) x
+
+                                Nothing ->
+                                    x
+                       )
             , publish_result = NotAsked
 
             -- Side Pane
@@ -527,18 +506,11 @@ refresh_cmds refresh global model =
             getTensionComments apis model.tensionid GotTensionComments
 
         Document ->
-            case model.actionView of
-                DocView ->
-                    Cmd.none
+            if NodeDoc.getNodeView model.nodeDoc == NodeVersions then
+                getTensionBlobs apis model.tensionid GotTensionBlobs
 
-                DocEdit ->
-                    Cmd.none
-
-                DocVersion ->
-                    getTensionBlobs apis model.tensionid GotTensionBlobs
-
-                NoView ->
-                    Cmd.none
+            else
+                Cmd.none
 
         Contracts ->
             Cmd.map ContractsPageMsg (send (ContractsPage.OnLoad model.tensionid model.contractid))
@@ -697,7 +669,24 @@ update global message model =
                     ( { model | refresh_trial = i }, sendSleep LoadTensionHead 500, send UpdateUserToken )
 
                 OkAuth th ->
-                    ( { model | tension_head = result, subscribe_result = fromMaybeData th.isSubscribed NotAsked }
+                    ( { model
+                        | tension_head = result
+                        , subscribe_result = fromMaybeData th.isSubscribed NotAsked
+                        , nodeDoc =
+                            case th.action of
+                                Just action ->
+                                    case (getTensionCharac action).doc_type of
+                                        NODE _ ->
+                                            NodeDoc.initBlob (nodeFromTension th) model.nodeDoc
+
+                                        MD ->
+                                            -- not implemented
+                                            model.nodeDoc
+
+                                Nothing ->
+                                    -- No Document attached or Unknown format
+                                    model.nodeDoc
+                      }
                     , Cmd.batch
                         [ queryLocalGraph apis th.receiver.nameid (GotPath True)
                         , Ports.bulma_driver ""
@@ -1013,40 +1002,6 @@ update global message model =
             , Cmd.none
             )
 
-        DoBlobEdit blobType ->
-            case model.tension_head of
-                Success th ->
-                    case th.action of
-                        Just action ->
-                            case (getTensionCharac action).doc_type of
-                                NODE _ ->
-                                    let
-                                        doc =
-                                            NodeDoc.create model.tensionid global.session.user
-                                                |> NodeDoc.initBlob blobType (nodeFromTension th)
-                                                |> NodeDoc.edit
-                                    in
-                                    ( { model | nodeDoc = doc }, Cmd.none, Cmd.none )
-
-                                MD ->
-                                    -- @Debug: Not implemented
-                                    --let
-                                    --    doc =
-                                    --        MdDoc.create model.tensionid global.session.user
-                                    --            |> MdDoc.initBlob blobType (mdFromTension th)
-                                    --            |> MdDoc.edit
-                                    --in
-                                    --( { model | mdDoc = doc }, Cmd.none, Cmd.none )
-                                    ( model, Cmd.none, Cmd.none )
-
-                        Nothing ->
-                            -- No Document attached or Unknown format
-                            ( model, Cmd.none, Cmd.none )
-
-                _ ->
-                    -- Loading or Error
-                    ( model, Cmd.none, Cmd.none )
-
         ChangeBlobPost field value ->
             ( { model | nodeDoc = NodeDoc.updatePost field value model.nodeDoc }, Cmd.none, Cmd.none )
 
@@ -1113,8 +1068,16 @@ update global message model =
 
                                 other ->
                                     other
+
+                        nd =
+                            case th of
+                                Success t ->
+                                    NodeDoc.initBlob (nodeFromTension t) newDoc
+
+                                _ ->
+                                    newDoc
                     in
-                    ( { model | tension_head = th, nodeDoc = NodeDoc.cancelEdit newDoc }
+                    ( { model | tension_head = th, nodeDoc = nd }
                     , Ports.bulma_driver ""
                     , send (UpdateSessionTensionHead (withMaybeData th))
                     )
@@ -1123,7 +1086,7 @@ update global message model =
                     ( { model | nodeDoc = newDoc }, Cmd.none, Cmd.none )
 
         CancelBlob ->
-            ( { model | nodeDoc = NodeDoc.cancelEdit model.nodeDoc }
+            ( { model | nodeDoc = NodeDoc.reset model.nodeDoc }
             , Cmd.none
             , Ports.bulma_driver ""
             )
@@ -2230,89 +2193,49 @@ viewEventMoved now event =
 --
 
 
-viewBlobToolBar : UserState -> TensionHead -> Blob -> Model -> Html Msg
-viewBlobToolBar u t b model =
-    let
-        op =
-            { focus = model.node_focus
-            , tid = t.id
-            , actionView = Just model.actionView
-            , blob = b
-            , isAdmin = model.isTensionAdmin
-            , now = model.now
-            , publish_result = model.publish_result
-            , onSubmit = Submit
-            , onPushBlob = PushBlob
-            }
-    in
-    div [ class "blobToolBar" ]
-        [ div [ class "level" ]
-            [ div [ class "level-left" ]
-                [ DocToolBar.viewToolbar { focus = model.node_focus, tid = t.id, actionView = Just model.actionView } ]
-            , div [ class "level-right" ]
-                [ DocToolBar.viewStatus op ]
-            ]
-        , case model.publish_result of
-            Failure err ->
-                viewGqlErrors err
-
-            _ ->
-                text ""
-        ]
-
-
 viewDocument : UserState -> TensionHead -> Blob -> Model -> Html Msg
 viewDocument u t b model =
-    div []
-        [ div [ class "mb-4" ] [ viewBlobToolBar u t b model ]
-        , if b.md /= Nothing then
-            -- Markdown Document
-            case model.actionView of
-                _ ->
-                    div [] [ text "@todo show markdown" ]
+    if b.md /= Nothing then
+        -- Markdown Document
+        div [] [ text "Markdown view not implemented" ]
 
-          else
-            -- Node Document
-            let
-                nodeData =
-                    { data = Success t.id
-                    , node = b.node |> withDefault (initNodeFragment Nothing)
-                    , isLazy = False
-                    , source = model.baseUri
+    else
+        -- Node Document
+        let
+            nodeData =
+                { focus = model.node_focus
+                , tid_r = Success t.id
+                , node = b.node |> withDefault (initNodeFragment Nothing)
+                , isLazy = False
+                , source = model.baseUri
 
-                    --, focus = model.node_focus
-                    , hasBeenPushed = t.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
-                    , toolbar = Nothing
-                    , receiver = t.receiver.nameid
-                    }
-            in
-            case model.actionView of
-                DocView ->
-                    NodeDoc.view nodeData Nothing
+                --, focus = model.node_focus
+                , hasBeenPushed = t.history |> withDefault [] |> List.map (\e -> e.event_type) |> List.member TensionEvent.BlobPushed
+                , receiver = t.receiver.nameid
+                , hasInnerToolbar = False
+                }
 
-                DocEdit ->
-                    let
-                        msgs =
-                            { data = model.nodeDoc
-                            , result = NotAsked
-                            , onBlobEdit = DoBlobEdit
-                            , onCancelBlob = CancelBlob
-                            , onSubmitBlob = SubmitBlob
-                            , onSubmit = Submit
-                            , onChangePost = ChangeBlobPost
-                            , onAddDomains = AddDomains
-                            , onAddPolicies = AddPolicies
-                            , onAddResponsabilities = AddResponsabilities
-                            }
-                    in
-                    NodeDoc.view nodeData (Just msgs)
+            msgs =
+                { data = model.nodeDoc
+                , result = NotAsked
+                , now = model.now
+                , publish_result = model.publish_result
+                , blob = b
+                , isAdmin = model.isTensionAdmin
+                , tension_blobs = model.tension_blobs
 
-                DocVersion ->
-                    NodeDoc.viewVersions model.now model.tension_blobs
-
-                NoView ->
-                    text ""
-        ]
+                --, onBlobEdit = DoBlobEdit
+                , onSubmit = Submit
+                , onSubmitBlob = SubmitBlob
+                , onCancelBlob = CancelBlob
+                , onPushBlob = PushBlob
+                , onChangePost = ChangeBlobPost
+                , onAddDomains = AddDomains
+                , onAddPolicies = AddPolicies
+                , onAddResponsabilities = AddResponsabilities
+                }
+        in
+        NodeDoc.view nodeData (Just msgs)
 
 
 
@@ -2472,18 +2395,25 @@ viewSidePane u t model =
             (\blob tc ->
                 -- Hide if there is no document
                 let
+                    isOpen =
+                        ActionPanel.isOpen_ model.actionPanel
+
                     domid =
                         "actionPanelContent"
 
                     node =
-                        blob_m |> Maybe.map .node |> withDefault Nothing |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
+                        blob.node |> withDefault (initNodeFragment Nothing) |> nodeFromFragment t.receiver.nameid
                 in
                 div [ class "media" ]
                     [ div [ class "media-content" ]
                         [ div
                             [ class "media-content"
                             , classList [ ( "is-w", hasBlobRight || hasRole ) ]
-                            , onClick (OpenActionPanel domid blob)
+                            , if not isOpen then
+                                onClick (OpenActionPanel domid blob)
+
+                              else
+                                onClick (ActionPanelMsg ActionPanel.OnClose)
                             ]
                           <|
                             (case u of
@@ -2492,7 +2422,7 @@ viewSidePane u t model =
                                         [ h2
                                             [ class "subtitle is-h" ]
                                             [ textH T.document
-                                            , if ActionPanel.isOpen_ model.actionPanel then
+                                            , if isOpen then
                                                 A.icon "icon-x is-pulled-right"
 
                                               else if hasBlobRight || hasRole then
@@ -2522,17 +2452,23 @@ viewSidePane u t model =
                                 LoggedOut ->
                                     [ h2 [ class "subtitle" ] [ textH T.document ] ]
                             )
-                                ++ [ div [ class "level is-mobile" ] <|
+                                ++ [ div [] <|
                                         case tc.doc_type of
                                             NODE NodeType.Circle ->
-                                                [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                                                , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
-                                                , span [ class "level-item" ] [ A.icon1 "icon-eye" (NodeVisibility.toString node.visibility) ]
+                                                [ div [ class "level is-mobile mb-3" ] <|
+                                                    [ span [ class "level-left" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                                                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                                    , span [ class "level-right" ] [ A.icon1 "icon-eye" (NodeVisibility.toString node.visibility) ]
+                                                    ]
+                                                , viewCircleTarget "mb-3 is-medium" { name = node.name, nameid = node.nameid, role_type = node.role_type }
                                                 ]
 
                                             NODE NodeType.Role ->
-                                                [ span [ class "level-item" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
-                                                , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                                [ div [ class "level is-mobile mb-3" ] <|
+                                                    [ span [ class "level-left" ] [ A.icon1 (action2icon tc) (SE.humanize (action2str tc.action)) ]
+                                                    , span [ class "level-item" ] [ A.icon1 (auth2icon tc) (auth2val node tc) ]
+                                                    ]
+                                                , viewRoleExt "is-small mb-3" (RoleExt "" node.name node.color (withDefault RoleType.Pending node.role_type))
                                                 ]
 
                                             MD ->
@@ -2540,13 +2476,13 @@ viewSidePane u t model =
                                    ]
                                 ++ [ Maybe.map
                                         (\fs ->
-                                            span [] [ span [ class "is-highlight mr-2" ] [ text "First-link:" ], viewUserFull 0 True False fs ]
+                                            div [] [ span [ class "is-highlight mt-3" ] [ text T.firstLink, text ": " ], viewUserFull 0 True False fs ]
                                         )
                                         node.first_link
                                         |> withDefault (text "")
                                    ]
                                 ++ [ if tc.action_type == ARCHIVE then
-                                        span [ class "has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
+                                        div [ class "mt-3 has-text-warning" ] [ A.icon1 "icon-archive" T.archived ]
 
                                      else
                                         text ""
@@ -2556,19 +2492,27 @@ viewSidePane u t model =
 
                           else
                             let
-                                op =
-                                    { focus = model.node_focus
-                                    , tid = t.id
-                                    , actionView = Just model.actionView
-                                    , blob = blob
-                                    , isAdmin = model.isTensionAdmin
+                                op2 =
+                                    { data = model.nodeDoc
+                                    , result = NotAsked
                                     , now = model.now
                                     , publish_result = model.publish_result
+                                    , blob = blob
+                                    , isAdmin = model.isTensionAdmin
+                                    , tension_blobs = model.tension_blobs
+
+                                    --, onBlobEdit = DoBlobEdit
                                     , onSubmit = Submit
+                                    , onSubmitBlob = SubmitBlob
+                                    , onCancelBlob = CancelBlob
                                     , onPushBlob = PushBlob
+                                    , onChangePost = ChangeBlobPost
+                                    , onAddDomains = AddDomains
+                                    , onAddPolicies = AddPolicies
+                                    , onAddResponsabilities = AddResponsabilities
                                     }
                             in
-                            div [ class "mt-3" ] [ DocToolBar.viewStatus op ]
+                            div [ class "mt-3" ] [ NodeDoc.viewNodeStatus op2 ]
                         ]
                     ]
             )

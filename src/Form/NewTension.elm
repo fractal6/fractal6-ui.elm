@@ -22,6 +22,7 @@ import Components.MoveTension exposing (viewNodeSelect)
 import Components.NodeDoc as NodeDoc
     exposing
         ( NodeDoc
+        , NodeView(..)
         , viewAboutInput
         , viewMandateInput
         , viewSelectAuthority
@@ -70,7 +71,7 @@ import ModelCommon
         , tensionToActionForm
         )
 import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), getOrgaRoles, nearestCircleid, nid2rootid, nid2type, nodeIdCodec, uriFromNameid)
-import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt2)
+import ModelCommon.View exposing (FormText, action2icon, getNodeTextFromNodeType, getTensionText, roleColor, tensionIcon2, tensionTypeColor, viewRoleExt)
 import ModelSchema exposing (..)
 import Ports
 import Query.AddContract exposing (addOneContract)
@@ -149,10 +150,10 @@ nodeStepToString form step =
         RoleAuthorityStep ->
             case form.node.role_type of
                 Just x ->
-                    "Role Authority (" ++ RoleType.toString x ++ ")"
+                    "Role (" ++ RoleType.toString x ++ ")"
 
                 Nothing ->
-                    "Role Authority"
+                    "Role"
 
         CircleVisibilityStep ->
             case form.node.visibility of
@@ -185,7 +186,7 @@ initModel user =
     , activeTab = NewTensionTab
     , viewMode = Write
     , activeButton = Nothing
-    , nodeDoc = NodeDoc.create "" user
+    , nodeDoc = NodeDoc.init "" NodeEdit user
     , path_data = NotAsked
     , action_result = NotAsked
     , doInvite = False
@@ -1513,7 +1514,7 @@ viewCircle op model =
                 ]
                     ++ (case model.nodeStep of
                             RoleAuthorityStep ->
-                                [ viewRoleExt model
+                                [ viewRolesExt model
                                 , div [ class "modal-card-foot", attribute "style" "display: block;" ]
                                     [ div [ class "field" ]
                                         [ div [ class "is-pulled-left" ]
@@ -1647,27 +1648,28 @@ viewNodeValidate model =
                     , viewSelectGovernance "" { onSelect = OnChangeCircleGovernance, selection = mode }
                     ]
         , viewMandateInput model.txt form.node.mandate op_
-        , br [] []
-        , br [] []
-        , div [ class "field" ]
-            [ div [ class "control" ]
-                [ textarea
-                    [ class "textarea"
-                    , rows 3
-                    , placeholder (upH T.leaveCommentOpt)
-                    , value message
-                    , onInput <| OnChangePost "message"
-                    ]
-                    []
-                ]
-            , p [ class "help-label" ] [ textH model.txt.message_help ]
-            ]
+
+        --, br [] []
+        --, br [] []
+        --, div [ class "field" ]
+        --    [ div [ class "control" ]
+        --        [ textarea
+        --            [ class "textarea"
+        --            , rows 3
+        --            , placeholder (upH T.leaveCommentOpt)
+        --            , value message
+        --            , onInput <| OnChangePost "message"
+        --            ]
+        --            []
+        --        ]
+        --    , p [ class "help-label" ] [ textH model.txt.message_help ]
+        --    ]
         , br [] []
         ]
 
 
-viewRoleExt : Model -> Html Msg
-viewRoleExt model =
+viewRolesExt : Model -> Html Msg
+viewRolesExt model =
     let
         form =
             model.nodeDoc.form
@@ -1682,25 +1684,14 @@ viewRoleExt model =
             Success roles ->
                 List.map
                     (\role ->
-                        let
-                            isSelected =
-                                Just role.id == form.node.role_ext
-
-                            icon =
-                                "icon-user"
-                        in
                         div
                             [ class "card has-border column is-paddingless m-3 is-h"
-                            , classList [ ( "is-selected", isSelected ) ]
+                            , classList [ ( "is-selected", Just role.id == form.node.role_ext ) ]
                             , attribute "style" "min-width: 150px;"
-
-                            -- @debug: onClick here do not work sometimes (for the 2nd element of the list ???
                             ]
                             [ div [ class "card-content p-4", onClick (OnSelectRoleExt role) ]
                                 [ h2 [ class "level mb-3 is-size-5" ]
-                                    [ -- div [ class "level-left" ] [ A.icon (icon ++ " icon-bg") ]
-                                      div [ class "level-left" ] [ viewRoleExt2 "" role ]
-                                    ]
+                                    [ div [ class "level-left" ] [ viewRoleExt "" role ] ]
                                 , div [ class "content is-small" ] [ text (withDefault "" role.about) ]
                                 ]
                             ]

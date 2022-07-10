@@ -340,7 +340,6 @@ matchAnyRoleType alls =
 nodeOrgaPayload : SelectionSet Node Fractal.Object.Node
 nodeOrgaPayload =
     SelectionSet.succeed Node
-        |> with (Fractal.Object.Node.createdAt |> SelectionSet.map decodedTime)
         |> with Fractal.Object.Node.name
         |> with Fractal.Object.Node.nameid
         |> with (Fractal.Object.Node.parent identity nodeIdPayload)

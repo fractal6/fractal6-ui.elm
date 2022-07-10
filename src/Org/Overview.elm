@@ -7,7 +7,6 @@ import Browser.Navigation as Nav
 import Codecs exposing (LookupResult, QuickDoc, WindowPos, nodeDecoder)
 import Components.ActionPanel as ActionPanel
 import Components.AuthModal as AuthModal
-import Components.DocToolBar as DocToolBar
 import Components.HelperBar as HelperBar exposing (HelperBar)
 import Components.JoinOrga as JoinOrga
 import Components.Loading as Loading
@@ -994,13 +993,14 @@ view_ global model =
             focus_m |> Maybe.map (\n -> n.role_type) |> withDefault Nothing
 
         nodeData_ =
-            { data = withMapData (\_ -> tid) model.node_data
+            { focus = model.node_focus
+            , tid_r = withMapData (\_ -> tid) model.node_data
             , node = initNodeFragment Nothing
             , isLazy = model.init_data
             , source = OverviewBaseUri
             , hasBeenPushed = True
-            , toolbar = ternary (roletype /= Just RoleType.Guest) (Just (DocToolBar.viewToolbar { focus = model.node_focus, tid = tid, actionView = Nothing })) Nothing
             , receiver = nearestCircleid model.node_focus.nameid
+            , hasInnerToolbar = ternary (roletype /= Just RoleType.Guest) True False
             }
 
         nodeData =
@@ -1016,7 +1016,7 @@ view_ global model =
                                 { nodeData_ | node = nodeFragmentFromOrga node model.node_data path.focus.children d }
 
                             else
-                                { nodeData_ | data = Failure [ T.nodeNotExist ] }
+                                { nodeData_ | tid_r = Failure [ T.nodeNotExist ] }
 
                         Nothing ->
                             nodeData_
@@ -1433,7 +1433,7 @@ viewActivies model =
                         [ ul []
                             [ li [ classList [ ( "is-active", model.activity_tab == TensionTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab TensionTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= TensionTab ) ] ]
-                                    [ A.icon1 "icon-exchange icon-sm" (upH T.tension) ]
+                                    [ A.icon1 "icon-exchange icon-sm" (upH T.tensions) ]
                                 ]
                             , li [ classList [ ( "is-active", model.activity_tab == JournalTab ) ] ]
                                 [ a [ onClickPD (ChangeActivityTab JournalTab), target "_blank", classList [ ( "has-text-grey", model.activity_tab /= JournalTab ) ] ]

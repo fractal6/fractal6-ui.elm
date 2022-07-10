@@ -59,8 +59,7 @@ type alias Post =
 
 
 type alias Node =
-    { createdAt : String
-    , name : String
+    { name : String
     , nameid : String
     , parent : Maybe NodeId
     , type_ : NodeType.NodeType
@@ -242,6 +241,14 @@ type alias RoleExtFull =
     , mandate : Maybe Mandate
     , n_nodes : Maybe Int
     , n_roles : Maybe Int
+    }
+
+
+type alias RoleCommon a =
+    { a
+        | name : String
+        , color : Maybe String
+        , role_type : RoleType.RoleType
     }
 
 
@@ -513,8 +520,7 @@ initNodeData =
 
 initNode : Node
 initNode =
-    { createdAt = ""
-    , name = ""
+    { name = ""
     , nameid = ""
     , parent = Nothing
     , type_ = NodeType.Circle

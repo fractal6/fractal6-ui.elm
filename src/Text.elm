@@ -23,6 +23,11 @@ upA t =
     String.toUpper t
 
 
+decap : String -> String
+decap t =
+    SE.decapitalize t
+
+
 toText : List String -> Html msg
 toText l =
     l
@@ -44,6 +49,11 @@ textT s =
 textA : String -> Html msg
 textA s =
     s |> upA |> text
+
+
+textD : String -> Html msg
+textD s =
+    s |> decap |> text
 
 
 space_ : String
@@ -115,11 +125,6 @@ profile =
     "profile"
 
 
-settings : String
-settings =
-    "settings"
-
-
 yourOrg : String
 yourOrg =
     "organisations"
@@ -133,11 +138,6 @@ loading =
 seeMore : String
 seeMore =
     "see more"
-
-
-welcomIn : String
-welcomIn =
-    "welcome in"
 
 
 organisations : String
@@ -178,6 +178,36 @@ newOrganisation =
 view : String
 view =
     "view"
+
+
+overview : String
+overview =
+    "Overview"
+
+
+tensions : String
+tensions =
+    "Tensions"
+
+
+members : String
+members =
+    "Members"
+
+
+settings : String
+settings =
+    "Settings"
+
+
+journal : String
+journal =
+    "Journal"
+
+
+labels : String
+labels =
+    "Labels"
 
 
 versions : String
@@ -282,12 +312,12 @@ authority =
 
 linkAction : String
 linkAction =
-    "Invite a first-link for the role"
+    "Invite an user to this role"
 
 
 unlinkAction : String
 unlinkAction =
-    "Unlink the first-link for the role"
+    "Unlink user to the role"
 
 
 invite : String
@@ -615,11 +645,6 @@ member =
     "member"
 
 
-members : String
-members =
-    "members"
-
-
 owner : String
 owner =
     "owner"
@@ -637,7 +662,7 @@ parent =
 
 firstLink : String
 firstLink =
-    "first Link"
+    "Lead link"
 
 
 phQS : String
@@ -701,11 +726,6 @@ about =
 aboutOpt : String
 aboutOpt =
     "about (optional)"
-
-
-links : String
-links =
-    "links"
 
 
 mandate : String
@@ -780,12 +800,12 @@ phRolePolicies =
 
 noFirstLinksRole : String
 noFirstLinksRole =
-    "No members are linked to this role yet."
+    "No member is linked to this role yet."
 
 
 noFirstLinksCircle : String
 noFirstLinksCircle =
-    "No members are linked to this circle yet."
+    "No member is linked to this circle yet."
 
 
 addedThe : String
@@ -852,21 +872,6 @@ depth =
     "depth"
 
 
-tension : String
-tension =
-    "tensions"
-
-
-journal : String
-journal =
-    "journal"
-
-
-labels : String
-labels =
-    "labels"
-
-
 subLabels : String
 subLabels =
     "sub-circle labels"
@@ -894,32 +899,32 @@ noDocument =
 
 noOpenTensionRole : String
 noOpenTensionRole =
-    "no open tensions for this Role yet."
+    "no open tensions for this role yet."
 
 
 noOpenTensionCircle : String
 noOpenTensionCircle =
-    "no open tensions for this Circle yet."
+    "no open tensions for this circle yet."
 
 
 noTensionRole : String
 noTensionRole =
-    "no tensions for this Role yet."
+    "no tensions for this role yet."
 
 
 noTensionCircle : String
 noTensionCircle =
-    "no tensions for this Circle yet."
+    "no tensions for this circle yet."
 
 
 internalTensions : String
 internalTensions =
-    "internal Tensions"
+    "internal tensions"
 
 
 externalTensions : String
 externalTensions =
-    "external Tensions"
+    "external tensions"
 
 
 noIntTensionRole : String
@@ -1045,16 +1050,6 @@ roleAdded =
 circleAdded : String
 circleAdded =
     "circle added."
-
-
-roleEdited : String
-roleEdited =
-    "role edited."
-
-
-circleEdited : String
-circleEdited =
-    "circle edited."
 
 
 tensionCircleAdded : String
@@ -1430,7 +1425,7 @@ Welcome @{{username}},
 
 **Your account has been successfully activated.**
 
-Fractale is a platform for communities and organisations. We are working to provide you the best experience and tools to enact collective intelligence and bring collaboration to its next level.
+Fractale is a platform for communities and organisations. We are working to provide you the best experience and tools to enact collective intelligence and bring asynchronous communication to its next level.
 
 You can also use it for individual projects to organise and manage your tasks and ideas.
 

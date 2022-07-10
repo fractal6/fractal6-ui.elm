@@ -1,8 +1,7 @@
 module Components.NodeDoc exposing (..)
 
 import Assets as A
-import Components.DocToolBar exposing (ActionView(..))
-import Components.Loading as Loading exposing (GqlData, RequestResult(..), isFailure, viewGqlErrors, withDefaultData, withMaybeData)
+import Components.Loading as Loading exposing (GqlData, RequestResult(..), isFailure, isSuccess, loadingSpin, viewGqlErrors, withDefaultData, withMaybeData)
 import Dict
 import Extra exposing (ternary)
 import Extra.Date exposing (formatDate)
@@ -45,50 +44,88 @@ import Time
 type alias NodeDoc =
     { form : TensionForm
     , result : GqlData PatchTensionPayloadID
-    , isBlobEdit : Bool
-    , isLookupOpen : Bool
+    , mode : NodeView
     , doAddResponsabilities : Bool
     , doAddDomains : Bool
     , doAddPolicies : Bool
     }
 
 
-create : String -> UserState -> NodeDoc
-create tid user =
+type NodeView
+    = NodeView
+    | NodeEdit
+    | NodeVersions
+    | NoView
+
+
+init : String -> NodeView -> UserState -> NodeDoc
+init tid mode user =
     { form = initTensionForm tid user
     , result = NotAsked
-    , isBlobEdit = False
-    , isLookupOpen = False
+    , mode = mode
     , doAddResponsabilities = False
     , doAddDomains = False
     , doAddPolicies = False
     }
 
 
-initBlob : BlobType.BlobType -> NodeFragment -> NodeDoc -> NodeDoc
-initBlob blobType nf data =
+initBlob : NodeFragment -> NodeDoc -> NodeDoc
+initBlob nf data =
     let
         form =
             data.form
-
-        newForm =
-            { form | blob_type = Just blobType, node = nf }
     in
-    { data | form = newForm, result = NotAsked }
+    { data | form = { form | node = nf }, result = NotAsked }
+
+
+nodeViewEncoder : NodeView -> String
+nodeViewEncoder x =
+    case x of
+        NodeView ->
+            ""
+
+        NodeEdit ->
+            "edit"
+
+        NodeVersions ->
+            "history"
+
+        NoView ->
+            "noview"
+
+
+nodeViewDecoder : String -> NodeView
+nodeViewDecoder x =
+    case x of
+        "edit" ->
+            NodeEdit
+
+        "history" ->
+            NodeVersions
+
+        "noview" ->
+            NoView
+
+        _ ->
+            NodeView
+
+
+
+-- Global method
+
+
+getNodeView : NodeDoc -> NodeView
+getNodeView data =
+    data.mode
 
 
 
 -- State Controls
 
 
-edit : NodeDoc -> NodeDoc
-edit data =
-    { data | isBlobEdit = True }
-
-
-cancelEdit : NodeDoc -> NodeDoc
-cancelEdit data =
-    { data | isBlobEdit = False }
+changeMode : NodeView -> NodeDoc -> NodeDoc
+changeMode mode data =
+    { data | mode = mode }
 
 
 setResult : GqlData PatchTensionPayloadID -> NodeDoc -> NodeDoc
@@ -259,6 +296,11 @@ resetNode data =
     { data | form = { form | node = initNodeFragment Nothing } }
 
 
+reset : NodeDoc -> NodeDoc
+reset data =
+    data |> initBlob data.form.node
+
+
 
 -- Getters
 
@@ -330,28 +372,35 @@ updateFromRoleExt role data =
 --
 
 
-type alias OrgaNodeData msg =
-    { node : NodeFragment
+type alias OrgaNodeData =
+    -- should be merge with Op in the @future Model Components
+    { focus : NodeFocus
+    , tid_r : GqlData String
+    , node : NodeFragment
     , isLazy : Bool
     , source : FractalBaseRoute
     , hasBeenPushed : Bool
-    , toolbar : Maybe (Html msg)
     , receiver : String
-    , data : GqlData String
+    , hasInnerToolbar : Bool
     }
 
 
 type alias Op msg =
     { data : NodeDoc
     , result : GqlData Tension -- result from new tension components
+    , now : Time.Posix
+    , publish_result : GqlData BlobFlag
+    , blob : Blob
+    , isAdmin : Bool
+    , tension_blobs : GqlData TensionBlobs
 
     -- Blob control
-    , onBlobEdit : BlobType.BlobType -> msg
-    , onCancelBlob : msg
-    , onSubmitBlob : NodeDoc -> Time.Posix -> msg
     , onSubmit : (Time.Posix -> msg) -> msg
+    , onSubmitBlob : NodeDoc -> Time.Posix -> msg
+    , onCancelBlob : msg
+    , onPushBlob : String -> Time.Posix -> msg
 
-    -- Doc change
+    -- Blob change
     , onChangePost : String -> String -> msg
     , onAddResponsabilities : msg
     , onAddDomains : msg
@@ -359,89 +408,185 @@ type alias Op msg =
     }
 
 
-view : OrgaNodeData msg -> Maybe (Op msg) -> Html msg
+view : OrgaNodeData -> Maybe (Op msg) -> Html msg
 view data op_m =
-    div [ id "DocContainer", class "box" ]
-        [ case data.data of
-            Success tid ->
-                Lazy.lazy3 view_ tid data op_m
-
-            Failure err ->
-                viewGqlErrors err
-
-            LoadingSlowly ->
-                div [ class "spinner" ] []
-
-            _ ->
-                text ""
-        ]
+    Lazy.lazy2 view_ data op_m
 
 
-view_ : String -> OrgaNodeData msg -> Maybe (Op msg) -> Html msg
-view_ tid data op_m =
+view_ : OrgaNodeData -> Maybe (Op msg) -> Html msg
+view_ data op_m =
+    case data.tid_r of
+        Success tid ->
+            div []
+                [ if not data.hasInnerToolbar then
+                    case op_m of
+                        Just op ->
+                            div [ class "mb-4" ]
+                                [ div [ class "level" ]
+                                    [ div [ class "level-left" ]
+                                        [ viewToolbar op.data.mode data ]
+                                    , div [ class "level-right" ]
+                                        [ viewNodeStatus op ]
+                                    ]
+                                , case op.publish_result of
+                                    Failure err ->
+                                        viewGqlErrors err
+
+                                    _ ->
+                                        text ""
+                                ]
+
+                        Nothing ->
+                            text ""
+
+                  else
+                    text ""
+                , div [ id "DocContainer", class "box" ]
+                    [ viewBlob data op_m ]
+                ]
+
+        Failure err ->
+            viewGqlErrors err
+
+        LoadingSlowly ->
+            div [ class "spinner" ] []
+
+        _ ->
+            text ""
+
+
+viewToolbar : NodeView -> OrgaNodeData -> Html msg
+viewToolbar mode data =
     let
-        type_ =
-            withDefault NodeType.Role data.node.type_
+        tid =
+            withDefaultData "" data.tid_r
 
-        txt =
-            getNodeTextFromNodeType type_
-
-        -- Function of Op
-        blobTypeEdit =
-            op_m
-                |> Maybe.map (\op -> ternary op.data.isBlobEdit op.data.form.blob_type Nothing)
-                |> withDefault Nothing
-
-        isLoading =
-            op_m
-                |> Maybe.map (\op -> op.data.result == LoadingSlowly)
-                |> withDefault False
+        iconOpts =
+            ternary data.hasInnerToolbar "icon-xs" ""
     in
-    div [ classList [ ( "is-lazy", data.isLazy ) ] ]
-        [ if blobTypeEdit == Just BlobType.OnAbout then
-            op_m
-                |> Maybe.map
-                    (\op ->
-                        let
-                            isSendable =
-                                data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
-                        in
-                        div []
-                            [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
-                            , viewBlobButtons isSendable isLoading op
-                            ]
-                    )
-                |> withDefault (text "")
-
-          else
-            viewAboutSection (doEditView op_m BlobType.OnAbout) data
-        , hr [ class "has-background-border-light" ] []
-        , if blobTypeEdit == Just BlobType.OnMandate then
-            op_m
-                |> Maybe.map
-                    (\op ->
-                        let
-                            isSendable =
-                                data.node.mandate /= op.data.form.node.mandate
-                        in
-                        div []
-                            [ viewMandateInput txt op.data.form.node.mandate op
-                            , viewBlobButtons isSendable isLoading op
-                            ]
-                    )
-                |> withDefault (text "")
-
-          else
-            viewMandateSection (doEditView op_m BlobType.OnMandate) data.node.mandate data.node.role_type
+    div [ class "field has-addons docToolbar" ]
+        [ p
+            [ class "control tooltip has-tooltip-arrow"
+            , attribute "data-tooltip" (upH T.view)
+            ]
+            [ a
+                [ class "button is-small is-rounded is-discrete"
+                , classList [ ( "is-active", mode == NodeView ) ]
+                , href
+                    (Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref)
+                ]
+                [ A.icon ("icon-eye " ++ iconOpts) ]
+            ]
+        , p
+            [ class "control tooltip has-tooltip-arrow"
+            , attribute "data-tooltip" (upH T.edit)
+            ]
+            [ a
+                [ class "button is-small is-rounded  is-discrete"
+                , classList [ ( "is-active", mode == NodeEdit ) ]
+                , href
+                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=edit")
+                ]
+                [ A.icon ("icon-edit-2 " ++ iconOpts) ]
+            ]
+        , p
+            [ class "control tooltip has-tooltip-arrow"
+            , attribute "data-tooltip" (upH T.revisions)
+            ]
+            [ a
+                [ class "button is-small is-rounded  is-discrete"
+                , classList [ ( "is-active", mode == NodeVersions ) ]
+                , href
+                    ((Route.Tension_Dynamic_Dynamic_Action { param1 = data.focus.rootnameid, param2 = tid } |> toHref) ++ "?v=history")
+                ]
+                [ A.icon ("icon-history " ++ iconOpts) ]
+            ]
         ]
+
+
+viewNodeStatus : Op msg -> Html msg
+viewNodeStatus op =
+    case op.blob.pushedFlag of
+        Just flag ->
+            div [ class "has-text-success is-italic" ]
+                [ textH (T.published ++ " " ++ formatDate op.now flag) ]
+
+        Nothing ->
+            let
+                isLoading =
+                    op.publish_result == LoadingSlowly
+            in
+            div [ class "field has-addons" ]
+                [ div [ class "has-text-warning is-italic mr-3" ]
+                    [ textH T.revisionNotPublished ]
+                , if op.isAdmin then
+                    div
+                        [ class "button is-small is-success has-text-weight-semibold"
+                        , onClick (op.onSubmit <| op.onPushBlob op.blob.id)
+                        ]
+                        [ A.icon1 "icon-share" (upH T.publish)
+                        , loadingSpin isLoading
+                        ]
+
+                  else
+                    text ""
+                ]
+
+
+viewBlob : OrgaNodeData -> Maybe (Op msg) -> Html msg
+viewBlob data op_m =
+    case op_m of
+        Just op ->
+            case op.data.mode of
+                NodeView ->
+                    div [ classList [ ( "is-lazy", data.isLazy ) ] ]
+                        [ viewAboutSection data
+                        , hr [ class "has-background-border-light" ] []
+                        , viewMandateSection data.node.mandate data.node.role_type
+                        ]
+
+                NodeEdit ->
+                    let
+                        txt =
+                            getNodeTextFromNodeType (withDefault NodeType.Role data.node.type_)
+
+                        isLoading =
+                            op.data.result == LoadingSlowly
+
+                        isSendable1 =
+                            data.node.name /= op.data.form.node.name || data.node.about /= op.data.form.node.about
+
+                        isSendable2 =
+                            data.node.mandate /= op.data.form.node.mandate
+                    in
+                    div []
+                        [ viewAboutInput data.hasBeenPushed data.source txt op.data.form.node op
+                        , viewBlobButtons isSendable1 isLoading op
+                        , hr [ class "has-background-border-light" ] []
+                        , viewMandateInput txt op.data.form.node.mandate op
+                        , viewBlobButtons isSendable2 isLoading op
+                        ]
+
+                NodeVersions ->
+                    viewVersions op.now op.tension_blobs
+
+                NoView ->
+                    text ""
+
+        Nothing ->
+            div [ classList [ ( "is-lazy", data.isLazy ) ] ]
+                [ viewAboutSection data
+                , hr [ class "has-background-border-light" ] []
+                , viewMandateSection data.node.mandate data.node.role_type
+                ]
 
 
 
 --- Template view
 
 
-viewAboutSection : Html msg -> OrgaNodeData msg -> Html msg
-viewAboutSection editView data =
+viewAboutSection : OrgaNodeData -> Html msg
+viewAboutSection data =
     let
         type_ =
             withDefault NodeType.Role data.node.type_
@@ -464,19 +609,17 @@ viewAboutSection editView data =
 
                   else if data.source == OverviewBaseUri && not (isBaseMember nameid) then
                     a
-                        [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.data } ]
+                        [ href <| toHref <| Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid nameid, param2 = withDefaultData "" data.tid_r } ]
                         [ text <| withDefault "" data.node.name ]
 
                   else
                     span [ class "is-name" ] [ withDefault "" data.node.name |> text ]
                 ]
-            , case data.toolbar of
-                Just tb ->
-                    -- from OverviewBaseUri: show toolbar that is linked to the tension id.
-                    div [ class "level-right is-marginless is-small" ] [ tb ]
+            , if data.hasInnerToolbar && isSuccess data.tid_r then
+                div [ class "level-right is-marginless is-small" ] [ viewToolbar NoView data ]
 
-                Nothing ->
-                    div [ class "level-right is-marginless buttonEdit" ] [ editView ]
+              else
+                text ""
             ]
         , case data.node.about of
             Just ab ->
@@ -487,15 +630,14 @@ viewAboutSection editView data =
         ]
 
 
-viewMandateSection : Html msg -> Maybe Mandate -> Maybe RoleType.RoleType -> Html msg
-viewMandateSection editView mandate_m role_type_m =
+viewMandateSection : Maybe Mandate -> Maybe RoleType.RoleType -> Html msg
+viewMandateSection mandate_m role_type_m =
     div []
         [ div [ class "level subtitle" ]
             [ div [ class "level-left" ]
                 [ A.icon "icon-book-open icon-lg mr-2"
                 , textH T.mandate
                 ]
-            , div [ class "level-right is-marginless buttonEdit" ] [ editView ]
             ]
         , case mandate_m of
             Just mandate ->
@@ -519,10 +661,7 @@ viewMandateSection editView mandate_m role_type_m =
                         renderMarkdown "is-human" md
 
                     Nothing ->
-                        div [ class "is-italic" ]
-                            [ text "No description for this node."
-                            , editView
-                            ]
+                        div [ class "is-italic" ] [ text "No description for this node." ]
 
         --, p [ class "column is-fullwidth" ] []
         ]
@@ -689,7 +828,7 @@ viewMandateInput txt mandate op =
             text ""
         , if showResponsabilities == False then
             span [ class "pr-2" ]
-                [ div [ class "button is-small is-success", onClick op.onAddResponsabilities ]
+                [ div [ class "button is-small", onClick op.onAddResponsabilities ]
                     [ A.icon1 "icon-plus" "", textH T.addResponsabilities ]
                 ]
 
@@ -697,7 +836,7 @@ viewMandateInput txt mandate op =
             text ""
         , if showDomains == False then
             span [ class "pr-2" ]
-                [ div [ class "button is-small is-success", onClick op.onAddDomains ]
+                [ div [ class "button is-small", onClick op.onAddDomains ]
                     [ A.icon1 "icon-plus" "", textH T.addDomains ]
                 ]
 
@@ -705,7 +844,7 @@ viewMandateInput txt mandate op =
             text ""
         , if showPolicies == False then
             span [ class "pr-2" ]
-                [ div [ class "button is-small is-success", onClick op.onAddPolicies ]
+                [ div [ class "button is-small", onClick op.onAddPolicies ]
                     [ A.icon1 "icon-plus" "", textH T.addPolicies ]
                 ]
 
@@ -716,24 +855,6 @@ viewMandateInput txt mandate op =
 
 
 ---- Components view
-
-
-doEditView : Maybe (Op msg) -> BlobType.BlobType -> Html msg
-doEditView op_m btype =
-    case op_m of
-        Just op ->
-            if op.data.isBlobEdit && Just btype == op.data.form.blob_type then
-                span [] []
-
-            else
-                span
-                    [ class "button has-text-weight-normal is-pulled-right is-small"
-                    , onClick (op.onBlobEdit btype)
-                    ]
-                    [ A.icon "icon-edit-2" ]
-
-        Nothing ->
-            span [] []
 
 
 viewBlobButtons : Bool -> Bool -> Op msg -> Html msg

@@ -88,6 +88,11 @@ colorAttr color =
     attribute "style" ("background-color:" ++ color ++ "; color:" ++ colorToTextColor color ++ ";")
 
 
+{-|
+
+    Adjust the text color for dark background color
+
+-}
 colorToTextColor : String -> String
 colorToTextColor color =
     if

@@ -128,7 +128,7 @@ panelAction2str action =
             upH T.authority
 
         LinkAction ->
-            upH T.invite
+            upH T.firstLink
 
         UnLinkAction _ ->
             upH T.unlink
@@ -193,10 +193,10 @@ action2header action type_ =
                     "Change Authority of: "
 
         LinkAction ->
-            "New first-link for Role: "
+            "New lead for role: "
 
         UnLinkAction _ ->
-            "Unlink the Role: "
+            "Unlink lead for role: "
 
         ArchiveAction ->
             "Archive {{type}}: "
@@ -272,7 +272,7 @@ action2color action =
 
 isOpen_ : State -> Bool
 isOpen_ (State model) =
-    model.isOpen
+    model.isOpen || model.isModalActive
 
 
 
@@ -942,10 +942,26 @@ view op (State model) =
 viewPanel : Op -> Model -> Html Msg
 viewPanel op model =
     div [ class "actionPanelStyle" ]
-        [ div [ class "dropdown-content", classList [ ( "is-right", op.isRight ) ] ] <|
+        [ div
+            [ class "dropdown-content"
+
+            --, onClick OnClose
+            , classList [ ( "is-right", op.isRight ) ]
+            ]
+          <|
             (-- EDIT ACTION
              if model.form.node.role_type /= Just RoleType.Guest then
                 [ div
+                    -- View
+                    [ class "dropdown-item button-light"
+                    , onClick
+                        (Navigate
+                            (Route.Tension_Dynamic_Dynamic_Action { param1 = nid2rootid model.form.node.nameid, param2 = model.form.tid } |> toHref)
+                        )
+                    ]
+                    [ A.icon1 "icon-eye" (upH T.view) ]
+                , div
+                    -- Edit
                     [ class "dropdown-item button-light"
                     , onClick
                         (Navigate

@@ -74,7 +74,7 @@ fetchChildren api targetid msg =
 
 {-|
 
-    Get all member ** Nodes ** below the given node (role with first link) recursively
+    Get all member ** Nodes ** below the given node (role with lead link) recursively
 
 -}
 fetchMembersSub api targetid msg =

@@ -1,6 +1,6 @@
 #!/bin/python
 
-'''Elm spa parser/generator.
+'''Elm module generator from templates.
 
 Usage:
     melm add  [-w] [-t TEMPLATE ] MODULE_NAME...
@@ -33,8 +33,8 @@ class ElmSpa(object):
     # An Elm module name. CamelCase, dot separated.
     component_path = "src/"
     templates = {
-        "default": "tests/component-default.template.elm", # @todo
-        "modal": "tests/component-modal.template.elm",
+        "default": "templates/component-default.template.elm",
+        "modal": "templates/component-modal.template.elm",
     }
     default_template = "default"
 
@@ -274,7 +274,7 @@ class ElmSpa(object):
 
 
 if __name__ == "__main__":
-    args = docopt(__doc__, version="melm 0")
+    args = docopt(__doc__, version="melm v0")
     p = ElmSpa(args)
     p.run()
 

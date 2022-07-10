@@ -14,7 +14,7 @@ import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Maybe exposing (withDefault)
 import ModelCommon exposing (UserState(..), getParentFragmentFromRole)
-import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, nid2rootid, nid2type, uriFromNameid)
+import ModelCommon.Codecs exposing (DocType(..), FractalBaseRoute(..), NodeFocus, getOrgaRoles, isPending, isTensionBaseUri, nid2rootid, nid2type, uriFromNameid)
 import ModelCommon.View exposing (action2icon, roleColor, viewRole)
 import ModelSchema exposing (LocalGraph, UserRole, getSourceTid)
 import Ports
@@ -131,9 +131,9 @@ viewNavLevel op =
     nav [ class "tabs is-boxed" ]
         [ ul [ class "" ]
             ([ li [ classList [ ( "is-active", op.baseUri == OverviewBaseUri ) ] ]
-                [ a [ href (uriFromNameid OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" "Overview" ] ]
-             , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri ) ] ]
-                [ a [ href (uriFromNameid TensionsBaseUri focusid []) ] [ A.icon1 "icon-exchange" "Tensions" ] ]
+                [ a [ href (uriFromNameid OverviewBaseUri focusid []) ] [ A.icon1 "icon-sun" T.overview ] ]
+             , li [ classList [ ( "is-active", op.baseUri == TensionsBaseUri || isTensionBaseUri op.baseUri ) ] ]
+                [ a [ href (uriFromNameid TensionsBaseUri focusid []) ] [ A.icon1 "icon-exchange" T.tensions ] ]
 
              --[ a [ href (uriFromNameid TensionsBaseUri focusid) ]
              --    [ div [ class "dropdown is-hoverable" ]
@@ -147,14 +147,14 @@ viewNavLevel op =
              --    ]
              --]
              , li [ classList [ ( "is-active", op.baseUri == MembersBaseUri ) ] ]
-                [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" "Members" ] ]
+                [ a [ href (uriFromNameid MembersBaseUri focusid []) ] [ A.icon1 "icon-user" T.members ] ]
              ]
                 ++ (Maybe.map
                         (\path ->
                             if op.user /= LoggedOut && path.focus.type_ == NodeType.Circle then
                                 [ li [ class "is-vbar-2" ] []
                                 , li [ classList [ ( "is-active", op.baseUri == SettingsBaseUri ) ] ]
-                                    [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" "Settings" ] ]
+                                    [ a [ href (uriFromNameid SettingsBaseUri focusid []) ] [ A.icon1 "icon-settings" T.settings ] ]
                                 ]
 
                             else

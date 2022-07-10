@@ -18,9 +18,7 @@ init =
     { isOpen = False
     , color = initColor
     , colors =
-        [ "#DDDDDD"
-        , "#AAAAAA"
-        , "#001f3f"
+        [ "#154b84"
         , "#0074D9"
         , "#7FDBFF"
         , "#39CCCC"
@@ -33,6 +31,8 @@ init =
         , "#85144b"
         , "#F012BE"
         , "#B10DC9"
+        , "#DDDDDD"
+        , "#AAAAAA"
         , "#111111"
         ]
     }
@@ -40,7 +40,7 @@ init =
 
 initColor : String
 initColor =
-    "#DDDDDD"
+    "#154b84"
 
 
 

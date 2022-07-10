@@ -1321,6 +1321,11 @@ strong {
         width: 256px;
     }
 
+    @include mobile { // is-right
+        left: auto;
+        right: 0;
+    }
+
 }
 .buttonColor {
     width: 28px !important;

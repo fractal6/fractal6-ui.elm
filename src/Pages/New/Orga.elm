@@ -234,7 +234,7 @@ update global message model =
             ( model, createOrga apis form.post OrgaAck, Cmd.none )
 
         SubmitOrga form time ->
-            ( { model | form = model.form, result = RemoteData.Loading }
+            ( { model | form = model.form, result = RemoteData.Loading, isWriting = Nothing }
             , send (PushOrga form)
             , Cmd.none
             )

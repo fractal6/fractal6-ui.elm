@@ -1033,10 +1033,64 @@ export const GraphPack = {
         else
             graph = dataNodes;
 
-        // Determine the node order in the circle packing
-        const nodeOrder = (n1, n2) => {
-            // node order
-            return n1.data.createdAt > n2.data.createdAt
+        const getTypeValue = (n) => {
+            var v = ""
+            switch (n.data.role_type) {
+                case undefined:
+                    v = 100
+                case null:
+                    v = 100
+                case RoleType.Guest:
+                    v = 0
+                default:
+                    v = 0
+            }
+            return v
+        }
+
+        // Role type+name based order
+        const nodeNameTypeOrder = (n1, n2) => {
+            if (n1.data.type_ === n2.data.type_) {
+                // Circle case
+                if (n1.data.type_ == NodeType.Circle) {
+                    if (n1.value == n2.value) {
+                        // alphabetically
+                        return n1.data.name.localeCompare(n2.data.name)
+                    } else {
+                        // Draw the biggest circle first
+                        return (n1.value < n2.value ? 1 : -1)
+                    }
+                } else { // Role case
+                    // alphabetically
+                    return n1.data.name.localeCompare(n2.data.name)
+                }
+            } else if (n1.data.type_ == "Hidden") {
+                // Draw hidden node last
+                return 1
+            } else if (n2.data.type_ == "Hidden") {
+                return -1
+            } else {
+                // Circle in the center, roles surround
+                // Note: pre-order traversal: https://github.com/d3/d3-hierarchy#node_eachBefore
+                return 1
+            }
+        }
+        // Role type based order
+        const nodeTypeOrder = (n1, n2) => {
+            if (getTypeValue(n1) - getTypeValue(n2) > 0) {
+                return -1
+            } else {
+                return 1
+            }
+        }
+        // Name based order
+        const nodeNameOrder = (n1, n2) => {
+            return n1.data.name.localeCompare(n2.data.name)
+        }
+        // CreatedAt based order
+        // @WARNING: {createdAt} may not be querie, verify in ModelSchema.elm
+        const nodeNewestOrder = (n1, n2) => {
+            return n1.data.createdAt.localeCompare(n2.data.createdAt)
         }
 
         // Compute global statistics
@@ -1048,7 +1102,11 @@ export const GraphPack = {
             .size([this.rayon*2, this.rayon*2])
         (d3.hierarchy(graph)
             .sum(d => this.nodeSize(d, this.gStats))
-            .sort(nodeOrder));
+            //.sort(nodeNewestOrder)
+            //.sort(nodeNameOrder)
+            //.sort(nodeTypeOrder)
+            .sort(nodeNameTypeOrder)
+        );
 
         this.nodesDict = Object.create(null);
         this.nodes = this.gPack.descendants(graph);
